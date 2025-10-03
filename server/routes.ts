@@ -1142,7 +1142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gateway: 'razorpay',
         gatewayTransactionId: paymentId,
         gatewayOrderId: orderId,
-        amount: (payment.amount / 100).toString(),
+        amount: (Number(payment.amount) / 100).toString(),
         currency: payment.currency,
         status: 'completed',
         paymentMethod: payment.method,

@@ -28,6 +28,8 @@ import {
   type InsertSupportTicket,
   type AiGenerationHistory,
   type InsertAiGenerationHistory,
+  type PaymentTransaction,
+  type InsertPaymentTransaction,
   users, 
   products, 
   seoMeta, 
@@ -40,7 +42,8 @@ import {
   securitySettings,
   loginLogs,
   supportTickets,
-  aiGenerationHistory
+  aiGenerationHistory,
+  paymentTransactions
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 // Using Supabase for authentication - no local password handling needed
@@ -144,6 +147,13 @@ export interface IStorage {
   
   getAiGenerationHistory(userId: string, limit?: number): Promise<AiGenerationHistory[]>;
   createAiGenerationHistory(history: InsertAiGenerationHistory): Promise<AiGenerationHistory>;
+
+  // Payment transaction methods
+  createPaymentTransaction(transaction: any): Promise<any>;
+  getPaymentTransaction(transactionId: string): Promise<any>;
+  getPaymentTransactions(userId: string, filters?: any): Promise<any[]>;
+  getAllPaymentTransactions(filters?: any): Promise<any[]>;
+  updatePaymentTransaction(transactionId: string, updates: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -481,6 +491,61 @@ export class DatabaseStorage implements IStorage {
 
   async createAiGenerationHistory(history: InsertAiGenerationHistory): Promise<AiGenerationHistory> {
     throw new Error("Settings data not available in DatabaseStorage - use MemStorage");
+  }
+
+  // Payment transaction methods
+  async createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(paymentTransactions).values(transaction).returning();
+    return result[0];
+  }
+
+  async getPaymentTransaction(transactionId: string): Promise<PaymentTransaction | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(paymentTransactions).where(eq(paymentTransactions.id, transactionId));
+    return result[0];
+  }
+
+  async getPaymentTransactions(userId: string, filters?: any): Promise<PaymentTransaction[]> {
+    if (!db) throw new Error("Database not configured");
+    let query = db.select().from(paymentTransactions).where(eq(paymentTransactions.userId, userId));
+    
+    if (filters?.status) {
+      query = query.where(and(eq(paymentTransactions.userId, userId), eq(paymentTransactions.status, filters.status)));
+    }
+    if (filters?.gateway) {
+      query = query.where(and(eq(paymentTransactions.userId, userId), eq(paymentTransactions.gateway, filters.gateway)));
+    }
+    
+    const result = await query.orderBy(desc(paymentTransactions.createdAt)).limit(filters?.limit || 50);
+    return result;
+  }
+
+  async getAllPaymentTransactions(filters?: any): Promise<PaymentTransaction[]> {
+    if (!db) throw new Error("Database not configured");
+    let query = db.select().from(paymentTransactions);
+    
+    if (filters?.userId) {
+      query = query.where(eq(paymentTransactions.userId, filters.userId));
+    }
+    if (filters?.status) {
+      query = query.where(eq(paymentTransactions.status, filters.status));
+    }
+    if (filters?.gateway) {
+      query = query.where(eq(paymentTransactions.gateway, filters.gateway));
+    }
+    
+    const result = await query.orderBy(desc(paymentTransactions.createdAt)).limit(filters?.limit || 100);
+    return result;
+  }
+
+  async updatePaymentTransaction(transactionId: string, updates: Partial<PaymentTransaction>): Promise<PaymentTransaction> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(paymentTransactions)
+      .set(updates)
+      .where(eq(paymentTransactions.id, transactionId))
+      .returning();
+    return result[0];
   }
 }
 
@@ -1243,6 +1308,71 @@ export class MemStorage implements IStorage {
     };
     this.aiGenerationHistoryData.set(id, newHistory);
     return newHistory;
+  }
+
+  // Payment transaction methods (mock implementation)
+  private paymentTransactionsData: Map<string, any> = new Map();
+
+  async createPaymentTransaction(transaction: any): Promise<any> {
+    const id = randomUUID();
+    const newTransaction = {
+      id,
+      ...transaction,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.paymentTransactionsData.set(id, newTransaction);
+    return newTransaction;
+  }
+
+  async getPaymentTransaction(transactionId: string): Promise<any> {
+    return this.paymentTransactionsData.get(transactionId);
+  }
+
+  async getPaymentTransactions(userId: string, filters?: any): Promise<any[]> {
+    const transactions = Array.from(this.paymentTransactionsData.values())
+      .filter(t => t.userId === userId);
+    
+    let filtered = transactions;
+    if (filters?.status) {
+      filtered = filtered.filter(t => t.status === filters.status);
+    }
+    if (filters?.gateway) {
+      filtered = filtered.filter(t => t.gateway === filters.gateway);
+    }
+    
+    return filtered.slice(0, filters?.limit || 50);
+  }
+
+  async getAllPaymentTransactions(filters?: any): Promise<any[]> {
+    let transactions = Array.from(this.paymentTransactionsData.values());
+    
+    if (filters?.userId) {
+      transactions = transactions.filter(t => t.userId === filters.userId);
+    }
+    if (filters?.status) {
+      transactions = transactions.filter(t => t.status === filters.status);
+    }
+    if (filters?.gateway) {
+      transactions = transactions.filter(t => t.gateway === filters.gateway);
+    }
+    
+    return transactions.slice(0, filters?.limit || 100);
+  }
+
+  async updatePaymentTransaction(transactionId: string, updates: any): Promise<any> {
+    const transaction = this.paymentTransactionsData.get(transactionId);
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+    
+    const updated = {
+      ...transaction,
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.paymentTransactionsData.set(transactionId, updated);
+    return updated;
   }
 }
 
