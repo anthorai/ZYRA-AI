@@ -33,7 +33,6 @@ import {
 import {
   createPayoneerInvoice,
   getPayoneerInvoiceStatus,
-  handlePayoneerWebhook,
   isPayoneerConfigured
 } from "./payoneer";
 
@@ -1252,11 +1251,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error.message 
       });
     }
-  });
-
-  // Payoneer webhook
-  app.post("/api/webhooks/payoneer", async (req, res) => {
-    await handlePayoneerWebhook(req, res);
   });
 
   // === PAYMENT TRANSACTIONS ===

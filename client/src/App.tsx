@@ -25,6 +25,7 @@ const Products = lazy(() => import("@/pages/products"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Billing = lazy(() => import("@/pages/billing"));
 const Settings = lazy(() => import("@/pages/settings"));
+const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
 
 // Analytics pages
 const OptimizedProducts = lazy(() => import("@/pages/optimized-products"));
@@ -125,6 +126,13 @@ function Router() {
               <Billing />
             </Suspense>
           </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/checkout" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <CheckoutPage />
+          </Suspense>
         </ProtectedRoute>
       )} />
       <Route path="/settings" component={() => (

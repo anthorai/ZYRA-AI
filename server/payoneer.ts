@@ -44,26 +44,6 @@ export async function getPayoneerInvoiceStatus(invoiceId: string) {
   };
 }
 
-export async function handlePayoneerWebhook(req: Request, res: Response) {
-  try {
-    // Verify webhook signature
-    const signature = req.headers['x-payoneer-signature'] as string;
-    
-    if (!signature) {
-      return res.status(400).json({ error: 'Missing signature' });
-    }
-
-    const event = req.body;
-    console.log('Payoneer webhook event:', event);
-
-    // Process webhook event
-    res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Payoneer webhook error:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
-}
-
 export function getPayoneerMerchantCode(): string | undefined {
   return PAYONEER_MERCHANT_CODE;
 }
