@@ -35,7 +35,8 @@ import {
   User,
   Settings,
   LogOut,
-  Gift
+  Gift,
+  Award
 } from "lucide-react";
 
 interface SubscriptionPlan {
@@ -97,10 +98,10 @@ interface UsageStats {
 }
 
 const planIcons = {
-  "Forever Free": <Zap className="w-6 h-6 text-primary" />,
-  "Starter": <TrendingUp className="w-6 h-6 text-primary" />,
+  "7-Day Free Trial": <Gift className="w-6 h-6 text-primary" />,
+  "Starter": <Zap className="w-6 h-6 text-primary" />,
+  "Growth": <Award className="w-6 h-6 text-primary" />,
   "Pro": <Crown className="w-6 h-6 text-primary" />,
-  "Growth": <Globe className="w-6 h-6 text-primary" />,
   "Enterprise": <Building className="w-6 h-6 text-primary" />
 };
 
@@ -145,19 +146,113 @@ export default function BillingPage() {
       id: "trial",
       planName: "7-Day Free Trial",
       price: 0,
-      description: "Perfect for trying out Zyra's AI-powered optimization tools",
-      features: ["Up to 5 products", "10 AI generations", "Basic analytics", "Email support"],
+      description: "Try ZYRA risk-free for 7 days.",
+      features: [
+        "✨ 100 credits / 7 days",
+        "🔧 Product Optimization & SEO:",
+        "• Optimized Products – 20 credits",
+        "• SEO Keyword Density Analysis – 10 credits",
+        "📈 Conversion Boosting & Sales Automation:",
+        "• AI-Powered Growth Intelligence – 20 credits",
+        "• Basic A/B Testing – 10 credits",
+        "🎨 Content & Branding at Scale:",
+        "• Smart Product Descriptions – 20 credits",
+        "• Limited Dynamic Templates – 10 credits",
+        "📊 Performance Tracking & ROI Insights:",
+        "• Email Performance Analytics – 10 credits",
+        "⚡ Workflow & Integration Tools:",
+        "• One-Click Shopify Publish – 10 credits",
+        "• Rollback Button – included"
+      ],
       limits: { products: 5, emails: 100, sms: 0, aiGenerations: 10, seoOptimizations: 5 },
       currency: "USD",
-      interval: "week"
+      interval: "7 days"
     },
     {
       id: "starter", 
       planName: "Starter",
-      price: 15,
-      description: "For small businesses ready to optimize their product listings",
-      features: ["Up to 50 products", "100 AI generations", "SEO optimization", "Email & SMS campaigns", "Priority support"],
+      price: 49,
+      description: "Best for new Shopify stores just getting started.",
+      features: [
+        "✨ 1,000 credits / month",
+        "🔧 Product Optimization & SEO:",
+        "• Optimized Products – 200 credits",
+        "• SEO Keyword Density Analysis – 100 credits",
+        "• AI Image Alt-Text Generator – 100 credits",
+        "• Smart SEO Titles & Meta Tags – 100 credits",
+        "📈 Conversion Boosting & Sales Automation:",
+        "• AI-Powered Growth Intelligence – 150 credits",
+        "• A/B Testing – 50 credits",
+        "• Upsell Email Receipts – 100 credits",
+        "• Abandoned Cart SMS – 50 credits",
+        "🎨 Content & Branding at Scale:",
+        "• Smart Product Descriptions – 100 credits",
+        "• Dynamic Templates – 50 credits",
+        "• Brand Voice Memory – included",
+        "📊 Performance Tracking & ROI Insights:",
+        "• Email & SMS Conversion Analytics – included",
+        "⚡ Workflow & Integration Tools:",
+        "• CSV Import/Export – included",
+        "• One-Click Shopify Publish – included",
+        "• Rollback Button – included",
+        "• Smart Bulk Suggestions – included"
+      ],
       limits: { products: 50, emails: 1000, sms: 100, aiGenerations: 100, seoOptimizations: 50 },
+      currency: "USD",
+      interval: "month"
+    },
+    {
+      id: "growth",
+      planName: "Growth",
+      price: 299,
+      description: "Made for scaling merchants ready to grow.",
+      features: [
+        "✨ 5,000 credits / month",
+        "🔧 Product Optimization & SEO:",
+        "• All Starter features +",
+        "• SEO Ranking Tracker – 200 credits",
+        "• Bulk Optimization & Smart Bulk Suggestions – 500 credits",
+        "• Scheduled Refresh for Content & SEO Updates – 300 credits",
+        "📈 Conversion Boosting & Sales Automation:",
+        "• AI Upsell Suggestions & Triggers – 300 credits",
+        "• Dynamic Segmentation of Customers – 200 credits",
+        "• Behavioral Targeting – 200 credits",
+        "• Full A/B Test Results Dashboard – included",
+        "🎨 Content & Branding at Scale:",
+        "• Custom Templates – included",
+        "• Multimodal AI (text + image + insights) – 300 credits",
+        "• Multi-Channel Content Repurposing – 300 credits",
+        "📊 Performance Tracking & ROI Insights:",
+        "• Full Email & SMS tracking – included",
+        "• Content ROI Tracking – included",
+        "• Revenue Impact Attribution – included",
+        "• Product Management Dashboard – included",
+        "⚡ Workflow & Integration Tools:",
+        "• Unlimited Starter workflow tools"
+      ],
+      limits: { products: 500, emails: 10000, sms: 1000, aiGenerations: 1000, seoOptimizations: 500 },
+      currency: "USD",
+      interval: "month"
+    },
+    {
+      id: "pro",
+      planName: "Pro",
+      price: 999,
+      description: "Perfect for high-revenue brands & enterprises.",
+      features: [
+        "✨ 20,000 credits / month",
+        "🔧 Product Optimization & SEO:",
+        "• All Growth features + priority processing",
+        "📈 Conversion Boosting & Sales Automation:",
+        "• Full AI-driven automation for campaigns, upsells, and behavioral targeting",
+        "🎨 Content & Branding at Scale:",
+        "• Full template library, advanced brand voice memory, multimodal AI insights, multi-channel automation",
+        "📊 Performance Tracking & ROI Insights:",
+        "• Enterprise-grade analytics and revenue attribution dashboard",
+        "⚡ Workflow & Integration Tools:",
+        "• Enterprise bulk management, CSV import/export, rollback, smart bulk suggestions at scale"
+      ],
+      limits: { products: 9999, emails: 100000, sms: 10000, aiGenerations: 10000, seoOptimizations: 5000 },
       currency: "USD",
       interval: "month"
     }
@@ -463,7 +558,7 @@ export default function BillingPage() {
                 const isCurrentPlan = plan.id === currentSubscription?.planId;
                 const isUpgrade = plan.price > (currentPlan?.price || 0);
                 const isDowngrade = plan.price < (currentPlan?.price || 0);
-                const isPlanPopular = plan.price > 50 && plan.price < 500; // Mark mid-range plans as popular
+                const isPlanPopular = plan.planName === "Growth"; // Growth is the popular plan
                 const isFreeTrialPlan = plan.price === 0 || plan.planName?.toLowerCase().includes('trial'); // Highlight free trial
                 
                 return (
@@ -491,11 +586,11 @@ export default function BillingPage() {
                           {formatPrice(plan.price)}
                         </div>
                         <div className="text-xs sm:text-sm text-slate-300 mb-2 sm:mb-3" data-testid={`text-plan-period-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                          per {plan.interval}
+                          {plan.interval}
                         </div>
                         {plan.description && (
-                          <p className="text-xs sm:text-sm text-slate-300 font-medium px-2 sm:px-0" data-testid={`text-plan-description-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                            Who it's for: {plan.description}
+                          <p className="text-xs sm:text-sm text-primary/80 font-medium px-2 sm:px-0" data-testid={`text-plan-description-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                            {plan.planName !== "7-Day Free Trial" && "Who it's for: "}{plan.description}
                           </p>
                         )}
                       </div>
