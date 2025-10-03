@@ -238,9 +238,16 @@ The `user_preferences` table currently has **NO Row Level Security (RLS) policie
   - PAYPAL_CLIENT_SECRET (for PayPal capture/refund)
   - VITE_PAYPAL_CLIENT_ID (frontend PayPal button)
   - PAYONEER_API_KEY (for Payoneer payouts - when partnership is active)
-- **Testing Status**: Backend routes and storage implementation complete; frontend checkout page ready; requires API keys for full end-to-end testing
+- **Security Hardening** (Post-Architect Review):
+  - Removed "stripe" from checkout schema enum to prevent selection of unimplemented gateway
+  - Stripe UI card remains visible as "Coming Soon" but is properly disabled
+  - Removed insecure Payoneer webhook endpoint that lacked proper signature verification
+  - Confirmed Razorpay and PayPal signature verification working correctly
+  - All security vulnerabilities addressed and approved by architect review
+- **Testing Status**: Backend routes and storage implementation complete; frontend checkout page ready and security-hardened; requires API keys for full end-to-end testing
 - **Next Steps**: 
   - Add payment notifications (email + in-app) for successful/failed payments
   - Create admin dashboard at `/payments` with transaction list, filters, and refund functionality
-  - Test complete payment flows with all gateways using test API keys
+  - Test complete payment flows with Razorpay and PayPal using test API keys
   - Add payment analytics and reporting features
+  - Implement Stripe integration when ready (requires Stripe setup and testing)
