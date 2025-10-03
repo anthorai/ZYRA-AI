@@ -32,7 +32,7 @@ export default function BehavioralTriggersPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   const aiRecommendations = [

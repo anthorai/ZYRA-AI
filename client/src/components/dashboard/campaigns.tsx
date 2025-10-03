@@ -116,6 +116,8 @@ export default function Campaigns() {
     
     const route = routeMap[toolId];
     if (route) {
+      // Store navigation source so dashboard knows to return to campaigns tab
+      sessionStorage.setItem('navigationSource', 'campaigns');
       setLocation(route);
     }
   };

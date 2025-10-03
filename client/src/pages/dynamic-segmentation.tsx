@@ -35,7 +35,7 @@ export default function DynamicSegmentationPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   return (

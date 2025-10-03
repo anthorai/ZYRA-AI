@@ -34,7 +34,7 @@ export default function SmsConversion() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   // Mock SMS campaign data

@@ -26,7 +26,7 @@ export default function UpsellEmailReceiptsPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   return (

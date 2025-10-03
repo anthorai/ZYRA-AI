@@ -41,7 +41,7 @@ export default function CustomTemplatesPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   return (

@@ -38,7 +38,7 @@ export default function AIUpsellSuggestionsPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   return (

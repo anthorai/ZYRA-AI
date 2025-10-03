@@ -33,7 +33,7 @@ export default function AbandonedCartSMSPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   return (

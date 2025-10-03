@@ -28,7 +28,7 @@ export default function MultiChannelRepurposingPage() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   return (

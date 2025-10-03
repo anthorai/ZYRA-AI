@@ -33,7 +33,7 @@ export default function EmailPerformance() {
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    setLocation('/dashboard');
   };
 
   // Mock email campaign data
