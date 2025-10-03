@@ -8,6 +8,9 @@ export const supportTicketCategoryEnum = pgEnum('support_ticket_category', ['bug
 export const supportTicketPriorityEnum = pgEnum('support_ticket_priority', ['low', 'medium', 'high', 'urgent']);
 export const supportTicketStatusEnum = pgEnum('support_ticket_status', ['open', 'in_progress', 'resolved', 'closed']);
 export const integrationTypeEnum = pgEnum('integration_type', ['email', 'sms', 'analytics', 'automation']);
+export const paymentGatewayEnum = pgEnum('payment_gateway', ['stripe', 'razorpay', 'paypal', 'payoneer']);
+export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded', 'cancelled']);
+export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['card', 'upi', 'netbanking', 'wallet', 'bank_transfer', 'paypal', 'payoneer']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -493,6 +496,41 @@ export const billingHistory = pgTable("billing_history", {
   createdAt: timestamp("created_at").default(sql`NOW()`),
 });
 
+// Payment gateway transactions table
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  gateway: text("gateway").notNull(), // 'stripe', 'razorpay', 'paypal', 'payoneer'
+  gatewayTransactionId: text("gateway_transaction_id").notNull(), // Payment ID from gateway
+  gatewayOrderId: text("gateway_order_id"), // Order ID from gateway (if applicable)
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  status: text("status").notNull(), // 'pending', 'processing', 'completed', 'failed', 'refunded', etc.
+  paymentMethod: text("payment_method"), // 'card', 'upi', 'netbanking', 'wallet', 'paypal', etc.
+  paymentDetails: jsonb("payment_details"), // Card last4, UPI ID, etc.
+  description: text("description"),
+  invoiceId: varchar("invoice_id").references(() => invoices.id),
+  subscriptionId: varchar("subscription_id").references(() => subscriptions.id),
+  signature: text("signature"), // Razorpay/gateway signature for verification
+  webhookReceived: boolean("webhook_received").default(false),
+  webhookData: jsonb("webhook_data"), // Store webhook payload
+  refundAmount: numeric("refund_amount", { precision: 10, scale: 2 }), // If partially/fully refunded
+  refundReason: text("refund_reason"),
+  refundedAt: timestamp("refunded_at"),
+  errorCode: text("error_code"), // If payment failed
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata"), // Additional data
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => {
+  return {
+    userIdIdx: sql`INDEX payment_transactions_user_id_idx ON payment_transactions(${table.userId})`,
+    gatewayIdx: sql`INDEX payment_transactions_gateway_idx ON payment_transactions(${table.gateway})`,
+    statusIdx: sql`INDEX payment_transactions_status_idx ON payment_transactions(${table.status})`,
+    createdAtIdx: sql`INDEX payment_transactions_created_at_idx ON payment_transactions(${table.createdAt})`,
+  }
+});
+
 // Billing table schemas
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
@@ -510,6 +548,12 @@ export const insertBillingHistorySchema = createInsertSchema(billingHistory).omi
   createdAt: true,
 });
 
+export const insertPaymentTransactionSchema = createInsertSchema(paymentTransactions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Additional billing types
 export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
@@ -517,6 +561,8 @@ export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
 export type BillingHistory = typeof billingHistory.$inferSelect;
 export type InsertBillingHistory = z.infer<typeof insertBillingHistorySchema>;
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type InsertPaymentTransaction = z.infer<typeof insertPaymentTransactionSchema>;
 
 // New Settings Types
 export type UserPreferences = typeof userPreferences.$inferSelect;

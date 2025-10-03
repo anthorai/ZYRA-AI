@@ -19,6 +19,23 @@ import { testSupabaseConnection } from "./lib/supabase";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import {
+  createRazorpayOrder,
+  verifyRazorpaySignature,
+  captureRazorpayPayment,
+  fetchRazorpayPayment,
+  refundRazorpayPayment,
+  getRazorpayKeyId,
+  isRazorpayConfigured,
+  handleRazorpayWebhook
+} from "./razorpay";
+import {
+  createPayoneerInvoice,
+  getPayoneerInvoiceStatus,
+  handlePayoneerWebhook,
+  isPayoneerConfigured
+} from "./payoneer";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -1031,6 +1048,342 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to change subscription plan",
         message: error.message 
       });
+    }
+  });
+
+  // ==================== PAYMENT GATEWAY ROUTES ====================
+  
+  // Get payment gateway configuration (for frontend)
+  app.get("/api/payments/config", requireAuth, async (req, res) => {
+    try {
+      res.json({
+        stripe: {
+          enabled: !!stripe,
+          publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null
+        },
+        razorpay: {
+          enabled: isRazorpayConfigured(),
+          keyId: isRazorpayConfigured() ? getRazorpayKeyId() : null
+        },
+        paypal: {
+          enabled: !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
+          clientId: process.env.PAYPAL_CLIENT_ID || null
+        },
+        payoneer: {
+          enabled: isPayoneerConfigured()
+        }
+      });
+    } catch (error: any) {
+      console.error("Error fetching payment config:", error);
+      res.status(500).json({ error: "Failed to fetch payment configuration" });
+    }
+  });
+
+  // === RAZORPAY ROUTES ===
+  
+  // Create Razorpay order
+  app.post("/api/payments/razorpay/create-order", requireAuth, async (req, res) => {
+    try {
+      if (!isRazorpayConfigured()) {
+        return res.status(503).json({ error: "Razorpay is not configured" });
+      }
+
+      const { amount, currency = 'INR', notes } = req.body;
+      const user = (req as AuthenticatedRequest).user;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      const order = await createRazorpayOrder({
+        amount,
+        currency,
+        receipt: `order_${user.id}_${Date.now()}`,
+        notes: { userId: user.id, ...notes }
+      });
+
+      res.json({
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: getRazorpayKeyId()
+      });
+    } catch (error: any) {
+      console.error("Error creating Razorpay order:", error);
+      res.status(500).json({ 
+        error: "Failed to create order",
+        message: error.message 
+      });
+    }
+  });
+
+  // Verify Razorpay payment
+  app.post("/api/payments/razorpay/verify", requireAuth, async (req, res) => {
+    try {
+      const { orderId, paymentId, signature } = req.body;
+      const user = (req as AuthenticatedRequest).user;
+
+      if (!orderId || !paymentId || !signature) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const isValid = await verifyRazorpaySignature(orderId, paymentId, signature);
+
+      if (!isValid) {
+        return res.status(400).json({ error: "Invalid payment signature" });
+      }
+
+      // Fetch payment details
+      const payment = await fetchRazorpayPayment(paymentId);
+
+      // Store transaction in database
+      await storage.createPaymentTransaction({
+        userId: user.id,
+        gateway: 'razorpay',
+        gatewayTransactionId: paymentId,
+        gatewayOrderId: orderId,
+        amount: (payment.amount / 100).toString(),
+        currency: payment.currency,
+        status: 'completed',
+        paymentMethod: payment.method,
+        paymentDetails: {
+          card_id: payment.card_id,
+          email: payment.email,
+          contact: payment.contact
+        },
+        signature,
+        webhookReceived: false,
+        metadata: { payment }
+      });
+
+      res.json({ 
+        success: true, 
+        paymentId,
+        status: payment.status 
+      });
+    } catch (error: any) {
+      console.error("Error verifying Razorpay payment:", error);
+      res.status(500).json({ 
+        error: "Payment verification failed",
+        message: error.message 
+      });
+    }
+  });
+
+  // Razorpay webhook
+  app.post("/api/webhooks/razorpay", async (req, res) => {
+    await handleRazorpayWebhook(req, res);
+  });
+
+  // === PAYPAL ROUTES (Blueprint integration) ===
+  
+  // From PayPal blueprint - referenced integration: blueprint:javascript_paypal
+  app.get("/api/paypal/setup", async (req, res) => {
+    try {
+      await loadPaypalDefault(req, res);
+    } catch (error: any) {
+      console.error("PayPal setup error:", error);
+      res.status(500).json({ error: "PayPal setup failed" });
+    }
+  });
+
+  app.post("/api/paypal/order", async (req, res) => {
+    try {
+      await createPaypalOrder(req, res);
+    } catch (error: any) {
+      console.error("PayPal order creation error:", error);
+      res.status(500).json({ error: "Failed to create PayPal order" });
+    }
+  });
+
+  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
+    try {
+      await capturePaypalOrder(req, res);
+    } catch (error: any) {
+      console.error("PayPal capture error:", error);
+      res.status(500).json({ error: "Failed to capture PayPal payment" });
+    }
+  });
+
+  // === PAYONEER ROUTES ===
+  
+  // Create Payoneer invoice (B2B)
+  app.post("/api/payments/payoneer/create-invoice", requireAuth, async (req, res) => {
+    try {
+      if (!isPayoneerConfigured()) {
+        return res.status(503).json({ error: "Payoneer is not configured" });
+      }
+
+      const { amount, currency, description } = req.body;
+      const user = (req as AuthenticatedRequest).user;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      const invoice = await createPayoneerInvoice({
+        amount,
+        currency: currency || 'USD',
+        customerId: user.id,
+        description: description || 'Zyra subscription payment',
+        invoiceNumber: `INV-${Date.now()}`
+      });
+
+      res.json(invoice);
+    } catch (error: any) {
+      console.error("Error creating Payoneer invoice:", error);
+      res.status(500).json({ 
+        error: "Failed to create invoice",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get Payoneer invoice status
+  app.get("/api/payments/payoneer/invoice/:invoiceId", requireAuth, async (req, res) => {
+    try {
+      const { invoiceId } = req.params;
+      const status = await getPayoneerInvoiceStatus(invoiceId);
+      res.json(status);
+    } catch (error: any) {
+      console.error("Error fetching Payoneer invoice:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch invoice status",
+        message: error.message 
+      });
+    }
+  });
+
+  // Payoneer webhook
+  app.post("/api/webhooks/payoneer", async (req, res) => {
+    await handlePayoneerWebhook(req, res);
+  });
+
+  // === PAYMENT TRANSACTIONS ===
+  
+  // Get all payment transactions for user
+  app.get("/api/payments/transactions", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { status, gateway, limit = 50, offset = 0 } = req.query;
+      
+      const transactions = await storage.getPaymentTransactions(user.id, {
+        status: status as string,
+        gateway: gateway as string,
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ error: "Failed to fetch transactions" });
+    }
+  });
+
+  // Get single payment transaction
+  app.get("/api/payments/transactions/:transactionId", requireAuth, async (req, res) => {
+    try {
+      const { transactionId } = req.params;
+      const user = (req as AuthenticatedRequest).user;
+      
+      const transaction = await storage.getPaymentTransaction(transactionId);
+      
+      if (!transaction || transaction.userId !== user.id) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+
+      res.json(transaction);
+    } catch (error: any) {
+      console.error("Error fetching transaction:", error);
+      res.status(500).json({ error: "Failed to fetch transaction" });
+    }
+  });
+
+  // Request refund
+  app.post("/api/payments/refund/:transactionId", requireAuth, async (req, res) => {
+    try {
+      const { transactionId } = req.params;
+      const { amount, reason } = req.body;
+      const user = (req as AuthenticatedRequest).user;
+
+      const transaction = await storage.getPaymentTransaction(transactionId);
+      
+      if (!transaction || transaction.userId !== user.id) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+
+      if (transaction.status !== 'completed') {
+        return res.status(400).json({ error: "Only completed payments can be refunded" });
+      }
+
+      let refundResult;
+
+      switch (transaction.gateway) {
+        case 'razorpay':
+          refundResult = await refundRazorpayPayment(
+            transaction.gatewayTransactionId,
+            amount ? Number(amount) : undefined
+          );
+          break;
+        case 'stripe':
+          if (!stripe) {
+            return res.status(503).json({ error: "Stripe not configured" });
+          }
+          refundResult = await stripe.refunds.create({
+            payment_intent: transaction.gatewayTransactionId,
+            amount: amount ? Math.round(Number(amount) * 100) : undefined,
+            reason: 'requested_by_customer'
+          });
+          break;
+        default:
+          return res.status(400).json({ error: `Refunds not supported for ${transaction.gateway}` });
+      }
+
+      // Update transaction status
+      await storage.updatePaymentTransaction(transactionId, {
+        status: amount ? 'partially_refunded' : 'refunded',
+        refundAmount: amount || transaction.amount,
+        refundReason: reason,
+        refundedAt: new Date()
+      });
+
+      res.json({ 
+        success: true, 
+        refund: refundResult 
+      });
+    } catch (error: any) {
+      console.error("Error processing refund:", error);
+      res.status(500).json({ 
+        error: "Failed to process refund",
+        message: error.message 
+      });
+    }
+  });
+
+  // Admin: Get all transactions with filters
+  app.get("/api/admin/payments/transactions", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const { status, gateway, userId, limit = 100, offset = 0 } = req.query;
+      
+      const transactions = await storage.getAllPaymentTransactions({
+        status: status as string,
+        gateway: gateway as string,
+        userId: userId as string,
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching admin transactions:", error);
+      res.status(500).json({ error: "Failed to fetch transactions" });
     }
   });
 
