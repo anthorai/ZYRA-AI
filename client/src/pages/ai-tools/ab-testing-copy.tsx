@@ -267,9 +267,9 @@ export default function ABTestingCopy() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1c] via-[#1a1f2e] to-[#2d1b69] text-white">
+    <div className="min-h-screen dark-theme-bg text-white">
       {/* Header */}
-      <header className="dark-theme-bg backdrop-blur-sm border-b /50 px-4 sm:px-6 py-3 sm:py-4">
+      <header className="dark-theme-bg backdrop-blur-sm border-b border-border/50 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <Button
@@ -300,7 +300,7 @@ export default function ABTestingCopy() {
         </div>
       </header>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8 bg-[#04214d]">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
         {/* A/B Testing Overview */}
         <Card className="gradient-card">
           <CardContent className="p-6">

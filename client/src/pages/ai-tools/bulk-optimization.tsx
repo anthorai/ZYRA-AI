@@ -180,7 +180,7 @@ export default function BulkOptimization() {
         </div>
       </header>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8 bg-[#031c41]">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
         {/* Process Overview */}
         <Card className="border-0 gradient-card rounded-xl">
           <CardContent className="p-6">

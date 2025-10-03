@@ -197,7 +197,7 @@ export default function ScheduledRefresh() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1c] via-[#1a1f2e] to-[#2d1b69] text-white">
+    <div className="min-h-screen dark-theme-bg text-white">
       {/* Header */}
       <header className="dark-theme-bg backdrop-blur-sm border-b border-border/50 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -230,7 +230,7 @@ export default function ScheduledRefresh() {
         </div>
       </header>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8 bg-[#04204b]">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
         {/* Benefits Overview */}
         <Card className="gradient-card">
           <CardContent className="p-6">
