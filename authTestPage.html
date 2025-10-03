@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #4338ca;
+        }
+        .button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .status.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Supabase Authentication Test</h1>
+        <p>This page tests Supabase authentication functionality for your Zyra project.</p>
+        
+        <div id="status" class="status info">
+            ⏳ Initializing Supabase client...
+        </div>
+
+        <div class="form-group">
+            <h3>Test User Credentials</h3>
+            <label for="testEmail">Email:</label>
+            <input type="email" id="testEmail" value="test@zyra.dev" />
+            
+            <label for="testPassword">Password:</label>
+            <input type="password" id="testPassword" value="TestPassword123!" />
+            
+            <label for="testFullName">Full Name:</label>
+            <input type="text" id="testFullName" value="Test User" />
+        </div>
+
+        <div>
+            <h3>Authentication Tests</h3>
+            <button class="button" onclick="clearSession()">🧹 Clear Session</button>
+            <button class="button" onclick="testSignUp()">📝 Test Sign Up</button>
+            <button class="button" onclick="testSignIn()">🔑 Test Sign In</button>
+            <button class="button" onclick="testGetUser()">👤 Get Current User</button>
+            <button class="button" onclick="testSignOut()">🚪 Sign Out</button>
+        </div>
+
+        <div>
+            <h3>Batch Tests</h3>
+            <button class="button" onclick="runAllTests()">🚀 Run All Tests</button>
+            <button class="button" onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+
+        <div id="log" class="log">Ready to test authentication...\n</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuration
+        const SUPABASE_URL = 'https://uqahonxcssfxrlmynrjo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxYWhvbnhjc3NmeHJsbXlucmpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MDIzMzIsImV4cCI6MjA3NDI3ODMzMn0.aYwwvU5gFordwtqSkjQMeM510C3yb_ECmtBcpZ7k8Bw';
+
+        // Initialize Supabase
+        let supabase;
+        
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            updateStatus('✅ Supabase client initialized successfully', 'success');
+            log('🔧 Supabase client initialized');
+            log(`📍 URL: ${SUPABASE_URL}`);
+            log(`🔑 Anon Key: ${SUPABASE_ANON_KEY ? 'Set' : 'Missing'}`);
+        } catch (error) {
+            updateStatus('❌ Failed to initialize Supabase client: ' + error.message, 'error');
+            log('💥 Initialization error: ' + error.message);
+        }
+
+        // Utility functions
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = 'Log cleared...\n';
+        }
+
+        function getTestCredentials() {
+            return {
+                email: document.getElementById('testEmail').value,
+                password: document.getElementById('testPassword').value,
+                fullName: document.getElementById('testFullName').value
+            };
+        }
+
+        // Test functions
+        async function clearSession() {
+            log('\n🧹 Clearing session...');
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    log('❌ Error clearing session: ' + error.message);
+                } else {
+                    log('✅ Session cleared successfully');
+                    updateStatus('Session cleared', 'success');
+                }
+            } catch (error) {
+                log('💥 Exception clearing session: ' + error.message);
+            }
+        }
+
+        async function testSignUp() {
+            log('\n🧪 Testing Sign Up...');
+            const credentials = getTestCredentials();
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: credentials.email,
+                    password: credentials.password,
+                    options: {
+                        data: {
+                            full_name: credentials.fullName,
+                        }
+                    }
+                });
+
+                if (error) {
+                    log('❌ Sign up error: ' + error.message);
+                    updateStatus('Sign up failed: ' + error.message, 'error');
+                    return false;
+                }
+
+                if (data.user) {
+                    log('✅ Sign up successful');
+                    log(`   User ID: ${data.user.id}`);
+                    log(`   Email: ${data.user.email}`);
+                    log(`   Email confirmed: ${data.user.email_confirmed_at ? 'Yes' : 'No'}`);
+                    updateStatus('Sign up successful!', 'success');
+                    return true;
+                } else {
+                    log('⚠️ No user data returned');
+                    updateStatus('Sign up completed but no user data returned', 'error');
+                    return false;
+                }
+            } catch (error) {
+                log('💥 Sign up exception: ' + error.message);
+                updateStatus('Sign up exception: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function testSignIn() {
+            log('\n🧪 Testing Sign In...');
+            const credentials = getTestCredentials();
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: credentials.email,
+                    password: credentials.password
+                });
+
+                if (error) {
+                    log('❌ Sign in error: ' + error.message);
+                    updateStatus('Sign in failed: ' + error.message, 'error');
+                    return false;
+                }
+
+                if (data.user) {
+                    log('✅ Sign in successful');
+                    log(`   User ID: ${data.user.id}`);
+                    log(`   Email: ${data.user.email}`);
+                    log(`   Session expires: ${data.session?.expires_at}`);
+                    updateStatus('Sign in successful!', 'success');
+                    return true;
+                } else {
+                    log('⚠️ No user data returned');
+                    updateStatus('Sign in failed - no user data', 'error');
+                    return false;
+                }
+            } catch (error) {
+                log('💥 Sign in exception: ' + error.message);
+                updateStatus('Sign in exception: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function testGetUser() {
+            log('\n🧪 Testing Get Current User...');
+            
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+
+                if (error) {
+                    log('❌ Get user error: ' + error.message);
+                    updateStatus('Get user failed: ' + error.message, 'error');
+                    return false;
+                }
+
+                if (user) {
+                    log('✅ Current user retrieved');
+                    log(`   User ID: ${user.id}`);
+                    log(`   Email: ${user.email}`);
+                    log(`   Created: ${user.created_at}`);
+                    updateStatus('Current user retrieved successfully', 'success');
+                    return true;
+                } else {
+                    log('⚠️ No current user');
+                    updateStatus('No current user found', 'info');
+                    return false;
+                }
+            } catch (error) {
+                log('💥 Get user exception: ' + error.message);
+                updateStatus('Get user exception: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function testSignOut() {
+            log('\n🧪 Testing Sign Out...');
+            
+            try {
+                const { error } = await supabase.auth.signOut();
+
+                if (error) {
+                    log('❌ Sign out error: ' + error.message);
+                    updateStatus('Sign out failed: ' + error.message, 'error');
+                    return false;
+                }
+
+                log('✅ Sign out successful');
+                updateStatus('Sign out successful', 'success');
+                return true;
+            } catch (error) {
+                log('💥 Sign out exception: ' + error.message);
+                updateStatus('Sign out exception: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            log('\n🚀 Starting comprehensive authentication test...');
+            updateStatus('Running all authentication tests...', 'info');
+
+            const results = {
+                signUp: false,
+                signIn: false,
+                getUser: false,
+                signOut: false
+            };
+
+            try {
+                // Clear session first
+                await clearSession();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Run tests in sequence
+                results.signUp = await testSignUp();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                results.signIn = await testSignIn();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                results.getUser = await testGetUser();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                results.signOut = await testSignOut();
+
+                // Summary
+                const passedTests = Object.values(results).filter(Boolean).length;
+                log('\n📊 Test Results Summary:');
+                log(`   Sign Up: ${results.signUp ? '✅ PASS' : '❌ FAIL'}`);
+                log(`   Sign In: ${results.signIn ? '✅ PASS' : '❌ FAIL'}`);
+                log(`   Get User: ${results.getUser ? '✅ PASS' : '❌ FAIL'}`);
+                log(`   Sign Out: ${results.signOut ? '✅ PASS' : '❌ FAIL'}`);
+                log(`\n🎯 Overall: ${passedTests}/4 tests passed`);
+
+                if (passedTests === 4) {
+                    updateStatus('🎉 All authentication tests passed!', 'success');
+                } else {
+                    updateStatus(`⚠️ ${passedTests}/4 tests passed - check log for details`, 'error');
+                }
+
+            } catch (error) {
+                log('💥 Test runner error: ' + error.message);
+                updateStatus('Test runner failed: ' + error.message, 'error');
+            }
+        }
+
+        // Auth state listener
+        supabase.auth.onAuthStateChange((event, session) => {
+            log(`🔔 Auth state changed: ${event}`);
+            if (session) {
+                log(`   Authenticated user: ${session.user.email}`);
+            } else {
+                log('   No authenticated user');
+            }
+        });
+
+        log('✅ Authentication test page loaded successfully');
+        log('💡 Click "Run All Tests" to start comprehensive testing');
+    </script>
+</body>
+</html>

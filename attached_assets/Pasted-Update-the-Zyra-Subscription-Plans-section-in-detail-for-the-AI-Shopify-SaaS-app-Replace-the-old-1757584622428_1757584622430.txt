@@ -1,0 +1,42 @@
+Update the Zyra Subscription Plans section in detail for the AI Shopify SaaS app.  
+Replace the old short descriptions with the following **merchant-friendly detailed version**, including benefits, limits, and feature highlights for each plan:
+
+---
+
+### 🔹 Free Trial – 7 Days
+- Try **all premium features** free for 7 days.  
+- No credit card required (optional).  
+- Cancel anytime before trial ends.  
+- Perfect for testing Zyra on your own store before upgrading.  
+
+### ⭐ Starter – $15/month
+**Who it’s for:** Small Shopify stores just getting started with AI.  
+**Features:**  
+- ✅ Optimize up to **100 products** with AI-generated descriptions.  
+- ✅ Send up to **500 AI-crafted emails per month** (upsells, receipts).  
+- ✅ Access to **SEO title + meta tag generator**.  
+- ✅ **AI image alt-text generator** for accessibility + SEO boost.  
+- ✅ **Basic analytics dashboard** (track optimized products + email open rates).  
+
+### 🚀 Pro – $25/month
+**Who it’s for:** Established stores with medium traffic looking to grow faster.  
+**Features:**  
+- ✅ **Unlimited product optimizations** (no limits on AI copy).  
+- ✅ Send up to **2,000 AI-crafted emails per month**.  
+- ✅ Recover abandoned carts with **500 SMS reminders per month**.  
+- ✅ **Advanced analytics dashboard** (email CTR, SMS conversion, keyword density).  
+- ✅ **Priority AI processing** → faster response + reduced wait times.  
+
+### 🌟 Growth – $49/month
+**Who it’s for:** High-volume stores that want maximum automation and advanced growth tools.  
+**Features:**  
+- ✅ **Unlimited everything** → products, emails, and SMS recovery.  
+- ✅ **Full analytics suite** → keyword insights, revenue from emails/SMS, product optimization impact.  
+- ✅ **A/B testing** for AI-generated content → test multiple product descriptions, email subjects, and SMS messages.  
+- ✅ **Premium template library** → advanced email & SMS layouts designed to convert.  
+- ✅ **Early access to new AI tools** (before Starter/Pro users).  
+- ✅ **Priority support** for faster help.  
+
+---
+
+Also include a **comparison table** with each plan side by side (Free Trial, Starter, Pro, Growth), showing limits, analytics access, AI processing, A/B testing, templates, early access, and support.

@@ -1,0 +1,148 @@
+Card Functionalities & Implementation Details
+1. Optimized Products Card Page
+
+Work: Track # of products enhanced by Zyra AI.
+
+Functionality:
+
+Fetch count from Supabase table optimized_products.
+
+Show “X Products Optimized” with trend graph (last 30 days).
+
+CTA → Show full product list with “Before/After” descriptions.
+
+APIs: Supabase (data fetch), GPT-4o-mini (for logs & version history).
+
+Data Storage:
+
+Table: optimized_products (id, product_id, old_desc, new_desc, optimized_at).
+
+2. Email Performance Card Page
+
+Work: Open rates + CTR for email campaigns.
+
+Functionality:
+
+Fetch from SendGrid API → open %, CTR %, bounce %.
+
+Show bar chart (campaign-wise).
+
+CTA → Detailed campaign performance.
+
+APIs: SendGrid API + Supabase (cache history).
+
+Data Storage:
+
+Table: email_performance (campaign_id, opens, ctr, bounces, timestamp).
+
+3. SMS Conversion Card Page
+
+Work: Track abandoned cart + SMS conversions.
+
+Functionality:
+
+Fetch from Twilio API → delivered, clicked, converted.
+
+Show revenue recovered + CTR.
+
+CTA → Show SMS logs + per-campaign stats.
+
+APIs: Twilio + Supabase.
+
+Data Storage:
+
+Table: sms_performance (campaign_id, delivered, clicks, conversions, revenue, timestamp).
+
+4. SEO Keyword Density Card Page
+
+Work: Analyze AI-optimized product content for keyword usage.
+
+Functionality:
+
+Send product description to GPT-4o-mini → extract keyword frequency + density.
+
+Show density % with word cloud chart.
+
+CTA → “Optimize Further” button triggers re-analysis.
+
+APIs: GPT-4o-mini + Supabase.
+
+Data Storage:
+
+Table: seo_analysis (product_id, keywords, density %, suggestions, analyzed_at).
+
+5. Content ROI Tracking Card Page
+
+Work: Track sales uplift due to AI content.
+
+Functionality:
+
+Fetch orders from Shopify/WooCommerce API.
+
+Compare sales “before” vs “after” content optimization.
+
+Show ROI % uplift + revenue impact.
+
+APIs: Shopify/WooCommerce + Supabase.
+
+Data Storage:
+
+Table: content_roi (product_id, old_revenue, new_revenue, uplift %, tracked_at).
+
+6. Revenue Impact Card Page
+
+Work: Show Zyra’s total revenue impact.
+
+Functionality:
+
+Aggregate revenue uplift from:
+
+Optimized Products
+
+Email Performance
+
+SMS Conversions
+
+Display “Zyra added $X revenue this month.”
+
+APIs: Supabase + Shopify API + GPT-4o-mini (data insights).
+
+Data Storage:
+
+Table: revenue_impact (month, revenue_added, breakdown JSON).
+
+7. SEO Ranking Tracker Card Page
+
+Work: Track keyword rankings over time.
+
+Functionality:
+
+Fetch rankings via SEMrush/Ahrefs/SerpAPI.
+
+Show trend chart (keywords vs positions).
+
+CTA → Detailed per-keyword report.
+
+APIs: SEO API + Supabase.
+
+Data Storage:
+
+Table: seo_rankings (keyword, rank, tracked_at, source).
+
+8. A/B Test Results Card Page
+
+Work: Track which AI-generated version performed better.
+
+Functionality:
+
+Compare Version A vs Version B.
+
+Metrics: CTR, conversions (from SendGrid + Twilio).
+
+Show winner with a “trophy” badge.
+
+APIs: Supabase + SendGrid + Twilio.
+
+Data Storage:
+
+Table: ab_tests (test_id, variant_a CTR, variant_b CTR, winner, tracked_at).

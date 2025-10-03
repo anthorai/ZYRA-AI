@@ -1,0 +1,89 @@
+Update Zyra’s frontend to be fully responsive across all devices (mobile, tablet, laptop, desktop, ultra-wide) with a sticky header that stays visible when users scroll up and down.
+
+🎨 Layout & Responsiveness Rules
+
+Use TailwindCSS responsive utilities (sm:, md:, lg:, xl:, 2xl:).
+
+Mobile-first approach → stack vertically on small screens, expand into grids/cards on larger screens.
+
+Ensure spacing & readability:
+
+Mobile text: text-sm → text-base.
+
+Desktop text: text-lg → text-xl.
+
+Buttons should remain tap-friendly on mobile (min-h-[44px]).
+
+Keep Zyra’s gradient theme consistent everywhere.
+
+📱 Component Responsiveness
+
+Header (NEW: Sticky)
+
+Always stays at the top (sticky top-0 z-50).
+
+Gradient background with subtle shadow for visibility.
+
+On mobile → collapsible hamburger menu.
+
+On desktop → full navbar with logo + nav items.
+
+Sidebar Navigation
+
+Mobile → hidden by default, slide-in menu when toggled.
+
+Tablet/Desktop → persistent sidebar.
+
+Smooth animation for open/close.
+
+Cards (AI Tools, Automate, Campaigns, Dashboard, Settings)
+
+Mobile → grid-cols-2.
+
+Tablet → grid-cols-2.
+
+Desktop → grid-cols-3 or grid-cols-4.
+
+Maintain aspect ratio & spacing.
+
+Dashboard & Analytics
+
+Mobile → stacked vertical charts.
+
+Desktop → grid/side-by-side layout.
+
+Tables use overflow-x-auto on small screens.
+
+Forms (Login, Signup, Settings)
+
+Inputs expand w-full on mobile.
+
+Align side-by-side only on larger screens.
+
+Subscription Plans Page
+
+Mobile → 1 plan per row.
+
+Desktop → 3-column layout.
+
+CTA buttons stay visible without overflow.
+
+🌈 Styling Consistency
+
+Dark gradient Zyra theme everywhere.
+
+Hover → tap animation adjustments for mobile.
+
+Scalable icons (w-5 h-5 sm:w-6 h-6 lg:w-8 h-8).
+
+🛠 Testing Checklist
+
+Test in Chrome DevTools responsive mode (iPhone, iPad, Galaxy, Macbook, 4K).
+
+Confirm sticky header works across all devices.
+
+No content hidden behind header → use padding/margin fix.
+
+Smooth scrolling + no layout breaks.
+
+⚡ This ensures Zyra looks professional, smooth, and always accessible with the header pinned to the top.

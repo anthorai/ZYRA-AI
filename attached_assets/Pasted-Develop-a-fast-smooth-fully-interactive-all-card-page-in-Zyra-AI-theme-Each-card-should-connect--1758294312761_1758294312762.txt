@@ -1,0 +1,142 @@
+Develop a fast, smooth, fully interactive all card page  in Zyra AI theme. Each card should connect with live data, APIs, and Supabase for storage. Add skeleton loaders for UX smoothness, and preload essential settings data. aloso visible header on every cards page same theme as a ai tools page [skip api keys for now ]
+
+🔹 Functionalities & Cards
+1. Profile & Account Card page
+
+Work: Manage personal info, connected stores, password, languages.
+
+Functionality:
+
+Edit profile (name, email, image) → Supabase Auth + DB.
+
+Change password → Supabase Auth.
+
+Connected Stores → Shopify API + WooCommerce API sync.
+
+Multi-language UI + auto-translation → GPT-4o-mini (translation memory).
+
+APIs: Supabase Auth, Supabase DB, Shopify/WooCommerce API, GPT-4o-mini.
+
+2. Subscription & Billing Card page 
+
+Work: Show billing plan + allow upgrades/downgrades.
+
+Functionality:
+
+Current Plan Overview → Supabase subscription table.
+
+Upgrade/Downgrade → Stripe API for billing.
+
+Billing History + Invoices → Stripe API (invoices).
+
+Payment Method Management → Stripe customer portal.
+
+APIs: Stripe, Supabase (store plan & logs).
+
+3. AI Preferences Card page
+
+Work: Customize AI behavior.
+
+Functionality:
+
+Brand Voice Memory → save style presets in Supabase.
+
+Default Content Style (Sales, SEO) → AI output preference in DB.
+
+Auto-save AI Outputs → Supabase storage toggle.
+
+Scheduled AI Updates (3–6 months) → CRON job in Supabase Functions.
+
+APIs: Supabase + GPT-4o-mini (style memory).
+
+4. Notifications & Alerts Card page
+
+Work: Control alerts & notifications.
+
+Functionality:
+
+Email notifications (SendGrid).
+
+In-app performance alerts (Supabase real-time triggers).
+
+Mobile push notifications (Firebase Cloud Messaging).
+
+AI Recommendation Alerts (GPT-4o-mini event triggers).
+
+APIs: SendGrid, Supabase Realtime, Firebase Push, GPT-4o-mini.
+
+5. Integrations Card page
+
+Work: Connect to external tools.
+
+Functionality:
+
+Email (Gmail/Outlook/SMTP) → OAuth + SMTP relay.
+
+SMS (Twilio, Vonage).
+
+Analytics (Google Analytics, Meta Pixel).
+
+Zapier/Make Automation integration → API Webhooks.
+
+APIs: Gmail API, Outlook API, Twilio, Vonage, GA4 API, Meta Pixel API, Zapier Webhooks.
+
+6. Security Card page
+
+Work: Account security & API management.
+
+Functionality:
+
+Two-Factor Authentication → Supabase + Authenticator app.
+
+Login Activity Log → Supabase (store logs).
+
+API Key Management → Supabase secure table + JWT.
+
+Data Export/Delete (GDPR) → downloadable JSON/CSV via Supabase function.
+
+APIs: Supabase Auth + Functions.
+
+7. Support & Resources Card page
+
+Work: Provide user help & feedback.
+
+Functionality:
+
+Help Center → link to docs/tutorials.
+
+Contact Support (Live chat + email).
+
+Feedback & Feature Requests → Supabase forms.
+
+Community Forum → Slack/Discord integration.
+
+APIs: Supabase (feedback DB), Slack/Discord API, Chat Support SDK.
+
+🔹 Performance & Smoothness Rules
+
+Preload data → show skeleton loaders.
+
+Use Supabase caching for repeated queries.
+
+Optimize API calls with serverless functions.
+
+Cards load asynchronously (non-blocking).
+
+Smooth transitions & hover animations with Zyra theme colors:
+
+Base: #0D0D1F
+
+Primary: #00F0FF
+
+Secondary: #00FFE5
+
+Accent: #FF00F5
+
+⚡ Deliverable
+
+A fully functional Settings & Configuration Page where each card:
+✅ Loads instantly with skeletons.
+✅ Connects to APIs & Supabase in real time.
+✅ Allows user actions (edit, toggle, connect, manage).
+✅ Matches Zyra Theme UI with animations + neon effects.

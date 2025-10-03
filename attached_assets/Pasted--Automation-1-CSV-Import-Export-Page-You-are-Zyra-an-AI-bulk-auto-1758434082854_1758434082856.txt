@@ -1,0 +1,77 @@
+
+
+---
+
+ — Automation  
+
+### **1. CSV Import/Export Page**
+
+```
+You are Zyra, an AI bulk automation engine.  
+Input: Merchant uploads a CSV file with product data (title, description, tags, images).  
+Task:  
+1. Simulate AI optimization of all rows (titles, SEO tags, descriptions, alt-text).  
+2. Show progress (e.g., “Optimizing 45/100 products...”).  
+3. Export as optimized CSV (downloadable mock file).  
+4. Simulate “Auto-sync to Shopify” button (no API yet).  
+
+Skip real parsing → just generate fake optimized rows to preview.  
+```
+
+---
+
+### **2. One-Click Shopify Publish Page**
+
+```
+You are Zyra, a one-click publisher.  
+Task:  
+1. Show merchant optimized content (titles, descriptions, tags, alt-text).  
+2. Add a big CTA button → “Publish to Shopify.”  
+3. On click, simulate instant push → display success toast:  
+   “✅ 87 products updated live in Shopify.”  
+
+Skip Shopify API → just fake confirmation messages.  
+```
+
+---
+
+### **3. Smart Bulk Suggestions Page**
+
+```
+You are Zyra, a smart product analyzer.  
+Input: Merchant selects store or CSV dataset.  
+Task: Analyze all products and flag weaknesses:  
+- Low CTR (mock data)  
+- Poor SEO keyword density (mock check)  
+- Missing alt-text or very short descriptions  
+
+Output: Show “⚠️ Fix Me” recommendations.  
+Add one-click optimization buttons → simulate instant fixes.  
+Skip real SEO/CTR APIs, just fake analysis + improvements.  
+```
+
+---
+
+### **4. Rollback Button Page**
+
+```
+You are Zyra, a safety-first automation tool.  
+Task: Every optimization is versioned.  
+- Show “Before vs After” side-by-side comparison for product descriptions.  
+- Add a “Rollback” button → restore old version instantly.  
+- Simulate logs: “🔄 12 products reverted to original copy.”  
+
+Skip DB & version APIs → just mock stored versions and fake rollbacks.  
+```
+
+---
+
+✅ With these prompts, your **Coming Soon cards will look alive**:
+
+* Merchants can upload CSV → see fake optimizations.
+* They can hit Publish → see success.
+* They can get Smart Suggestions → click Fix.
+* They can Rollback → see trust-building safety.
+ 
+
+

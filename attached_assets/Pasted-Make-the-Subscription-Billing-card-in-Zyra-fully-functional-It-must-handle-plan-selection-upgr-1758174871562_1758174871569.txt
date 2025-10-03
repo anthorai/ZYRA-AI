@@ -1,0 +1,75 @@
+Make the "Subscription & Billing" card in Zyra fully functional. It must handle plan selection, upgrades/downgrades, billing history, invoices, and payment methods, connected with our 5 Zyra plans.
+
+🔹 Core Plans
+
+Forever Free ($0) → 5 products, 1 email, 1 SMS, basic analytics.
+
+Starter ($39/mo) → 50 products, CSV import/export, Shopify/Woo sync, 500 emails, 200 SMS.
+
+Pro ($99/mo) → Unlimited products, smart suggestions, rollback, 5000 emails, 1000 SMS, segmentation, SEO tracker, A/B tests.
+
+Growth ($299/mo) → Everything in Pro + multi-language, ad export, repurposing, 25k emails, 5k SMS, revenue dashboard, white-label.
+
+Enterprise ($999+/mo) → Unlimited, custom AI tuning, API access, SLA, dedicated support.
+
+🔹 What to Build
+
+A billing dashboard card with:
+
+Current Plan overview
+
+Upgrade/Downgrade option
+
+Billing history & invoices
+
+Payment method management
+
+Plan enforcement logic:
+
+Free → cap at 5 products
+
+Starter → cap at 50 products, 500 emails, 200 SMS
+
+Pro → unlimited products, 5000 emails, 1000 SMS
+
+Growth → 25k emails, 5k SMS
+
+Enterprise → custom unlimited
+
+Stripe (or Razorpay in India) for subscription management.
+
+Supabase as database for storing: user_id, plan, status, invoices, payment method.
+
+Webhook system: after successful payment → update Supabase subscription record.
+
+Invoices: fetch from Stripe (or Razorpay) and display in billing history.
+
+Upgrade/Downgrade: users can switch plans; handle prorated billing.
+
+Cancel/Resume subscription: update in Stripe + Supabase.
+
+🔹 APIs Needed
+
+Stripe/Razorpay API → subscription checkout, invoices, payment methods.
+
+Supabase → store subscription info + enforce limits.
+
+OpenAI GPT-4o-mini + GPT-4o → usage caps per plan.
+
+SendGrid + Twilio → enforce email/SMS quotas.
+
+Shopify/WooCommerce API → sync plan-based features.
+
+🔹 Deliverables
+
+A working Subscription & Billing page in Zyra with the above functionality.
+
+Plan enforcement: users on lower plans cannot exceed usage.
+
+Upgrade flow: user clicks “Upgrade” → payment → auto-update plan in Supabase.
+
+Billing history: invoices shown inside card.
+
+Admin control: ability to override plans manually in Supabase.
+
+⚡ Final Note: Make it clean, responsive, and consistent with Zyra’s gradient theme.

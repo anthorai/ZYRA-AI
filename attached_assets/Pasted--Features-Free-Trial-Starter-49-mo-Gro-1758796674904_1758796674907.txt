@@ -1,0 +1,32 @@
+| **Features**                                 | **Free Trial** | **🟢 Starter ($49/mo)** | **🟡 Growth ($299/mo)** | **🔴 Pro ($999/mo)**        |
+| -------------------------------------------- | -------------- | ----------------------- | ----------------------- | --------------------------- |
+| **Credits / Month**                          | Limited        | 1,000                   | 10,000                  | Unlimited                   |
+| **Product Optimization & SEO**               | ✅ Core only    | ✅ Full                  | ✅ Full                  | ✅ Full + Enterprise-level   |
+| Optimized Products (AI)                      | ✅              | ✅                       | ✅                       | ✅                           |
+| SEO Keyword Density Analysis                 | ✅              | ✅                       | ✅                       | ✅                           |
+| SEO Ranking Tracker                          | ✅              | ✅                       | ✅                       | ✅                           |
+| AI Image Alt-Text Generator                  | ✅              | ✅                       | ✅                       | ✅                           |
+| Smart SEO Titles & Meta Tags                 | ✅              | ✅                       | ✅                       | ✅                           |
+| Bulk Optimization & Smart Suggestions        | ✅              | ✅                       | ✅                       | ✅                           |
+| Scheduled Content Refresh                    | ✅              | ✅                       | ✅                       | ✅                           |
+| One-Click Shopify Publish                    | ✅              | ✅                       | ✅                       | ✅                           |
+| Rollback Button                              | ✅              | ✅                       | ✅                       | ✅                           |
+| **Conversion Boosting & Sales Automation**   | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Advanced + Full AI Growth |
+| A/B Testing                                  | ❌              | ❌                       | ✅                       | ✅                           |
+| AI Upsell Suggestions & Triggers             | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Advanced                  |
+| Abandoned Cart SMS & Emails                  | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Advanced                  |
+| Customer Segmentation & Behavioral Targeting | ❌              | ❌                       | ✅                       | ✅                           |
+| **Content & Branding**                       | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Full + Multimodal AI      |
+| Smart Product Descriptions                   | ❌              | ✅                       | ✅                       | ✅                           |
+| Dynamic & Custom Templates                   | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Advanced                  |
+| Multi-Channel Content Repurposing            | ❌              | ❌                       | ✅                       | ✅                           |
+| Brand Voice Memory                           | ❌              | ✅                       | ✅                       | ✅ Full                      |
+| **Performance Tracking & ROI Insights**      | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Full Advanced             |
+| Email & SMS Analytics                        | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Full Advanced             |
+| Content ROI Tracking                         | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Full Advanced             |
+| Revenue Impact Attribution                   | ❌              | ❌                       | ✅                       | ✅ Full Advanced             |
+| Product Management Dashboard                 | ❌              | ✅                       | ✅                       | ✅ Full Advanced             |
+| **Workflow & Integration Tools**             | ❌              | ✅ Basic                 | ✅ Advanced              | ✅ Full Advanced             |
+| CSV Import/Export                            | ❌              | ✅                       | ✅                       | ✅                           |
+| Smart Bulk Suggestions                       | ❌              | ✅                       | ✅                       | ✅                           |
+| Priority Support                             | ❌              | ❌                       | ❌                       | ✅                           |

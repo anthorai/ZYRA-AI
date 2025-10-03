@@ -1,0 +1,76 @@
+Make Zyra’s subscription & billing system support global payments so merchants anywhere in the world can purchase any plan.
+
+🔹 Payment Processor Setup
+
+Use Stripe as the primary gateway (supports 135+ currencies, cards, wallets, ACH, etc.).
+
+For India & regions where Stripe is limited → add Razorpay or PayPal fallback.
+
+Ensure multi-currency support: users see prices in USD by default, but Stripe auto-converts & bills in their local currency.
+
+Enable recurring billing (monthly subscriptions).
+
+🔹 Features to Implement
+
+Checkout Flow (Global)
+
+Users select a plan → checkout → pay with card, wallet, UPI (India), etc.
+
+Localized currencies (e.g., INR, GBP, EUR, AUD).
+
+Tax & Compliance
+
+Enable Stripe Tax to auto-calculate VAT/GST based on country.
+
+Store tax invoices inside Supabase billing history.
+
+Invoices & Receipts
+
+Generate professional invoices in user’s local currency.
+
+Email invoice/receipt via SendGrid.
+
+Payment Methods
+
+Support Cards (Visa, Mastercard, AmEx).
+
+Apple Pay / Google Pay.
+
+PayPal (as optional integration).
+
+UPI/NetBanking (via Razorpay in India).
+
+Failed Payments Handling
+
+Auto-retry failed payments 3 times.
+
+Notify via email + SMS (Twilio).
+
+Downgrade to Free Plan if billing fails for >7 days.
+
+🔹 APIs to Use
+
+Stripe API → Global subscriptions, currency conversion, tax, invoices, payment methods.
+
+Razorpay API (fallback) → UPI & INR billing support.
+
+Supabase → Store subscription data, invoices, and plan enforcement.
+
+SendGrid → Email invoices + failed payment alerts.
+
+Twilio → SMS reminders for billing failures.
+
+🔹 Deliverables
+
+Global subscription checkout page (Stripe-hosted or custom).
+
+Localized pricing & currencies (USD default, local supported).
+
+Invoices/tax receipts for compliance.
+
+Multi-gateway support (Stripe + Razorpay/PayPal fallback).
+
+Automatic plan updates in Supabase after successful payment.
+
+⚡ Final Note:
+This ensures Zyra can be sold worldwide, in multiple currencies, with smooth subscription upgrades and compliance-ready invoices.

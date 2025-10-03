@@ -1,0 +1,135 @@
+Build Fast, Smooth, Fully Interactive Settings & Configuration cards Pages (Zyra Theme)
+
+🔹 Page Requirements
+
+Theme: Zyra AI Theme
+
+Base: #0D0D1F
+
+Primary: #00F0FF
+
+Secondary: #00FFE5
+
+Accent: #FF00F5
+
+Use cyberwave-style glowing borders, neon hover effects, and fluid transitions.
+
+Layout:
+
+Global Header (always visible) matching AI Tools Page design.
+
+Under header → Grid/Flex layout for cards.
+
+Each card is an independent page-section, fully interactive, collapsible/expandable.
+
+Performance Rules:
+
+Preload data & show skeleton loaders before content.
+
+Cache frequent queries in Supabase.
+
+Load cards asynchronously (non-blocking).
+
+Use smooth hover/slide animations for cards & toggles.
+
+🔹 Functional Cards & Works
+1. Profile & Account Card Page
+
+Manage personal info, connected stores, password, languages.
+
+Functions:
+
+Edit profile (name, email, image) → Supabase Auth + DB.
+
+Change password → Supabase Auth.
+
+Connected Stores → Shopify API + WooCommerce API sync.
+
+Multi-language UI + auto-translation → GPT-4o-mini.
+
+2. Subscription & Billing Card Page
+
+Show billing plan + allow upgrades/downgrades.
+
+Functions:
+
+Current plan overview (Supabase subscription table).
+
+Upgrade/Downgrade (Stripe).
+
+Billing history & invoices (Stripe).
+
+Payment method management (Stripe portal).
+
+3. AI Preferences Card Page
+
+Customize AI behavior.
+
+Functions:
+
+Brand Voice Memory → save presets in Supabase.
+
+Default Content Style (SEO, Sales) → stored in DB.
+
+Auto-save AI outputs → Supabase storage toggle.
+
+Scheduled AI updates (3–6 months) → CRON via Supabase Functions.
+
+4. Notifications & Alerts Card Page
+
+Control alerts & notifications.
+
+Functions:
+
+Email notifications (SendGrid).
+
+In-app alerts (Supabase Realtime triggers).
+
+Push notifications (Firebase).
+
+AI recommendation alerts (GPT-4o-mini).
+
+5. Integrations Card Page
+
+Connect external tools.
+
+Functions:
+
+Email → Gmail API, Outlook API, SMTP relay.
+
+SMS → Twilio, Vonage.
+
+Analytics → GA4 API, Meta Pixel API.
+
+Automation → Zapier / Make webhooks.
+
+6. Security Card Page
+
+Account security & API management.
+
+Functions:
+
+Two-factor authentication → Supabase + Authenticator.
+
+Login activity log → Supabase (secure logs).
+
+API Key Management → Supabase secure storage + JWT.
+
+Data export/delete (GDPR) → JSON/CSV via Supabase function.
+
+7. Support & Resources Card Page
+
+Provide user help & feedback.
+
+Functions:
+
+Help Center (docs/tutorials).
+
+Contact Support (live chat + email).
+
+Feedback & feature requests → Supabase forms.
+
+Community Forum → Slack/Discord integration.
+
+
+

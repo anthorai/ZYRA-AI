@@ -1,0 +1,121 @@
+Build a fully functional Growth Analytics Dashboard with smooth, fast-loading analytics cards. Each card should connect to live data, APIs, and Supabase for storage + tracking.
+
+🔹 Page Layout & UX
+
+Use a grid-based responsive layout (3 cards per row on desktop, 1–2 on mobile).
+
+Each card must have:
+
+Title + short description.
+
+"Action Button" (e.g., View Products, View Analytics).
+
+Smooth hover animation + subtle shadow for interactivity.
+
+Dashboard should load instantly, using lazy data fetching (fetch data only when user clicks "View").
+
+🔹 Card Functionalities & API Connections
+1. Optimized Products
+
+Work: Show # of products enhanced by Zyra AI.
+Functionality:
+
+Fetch from Supabase DB: count of optimized products.
+
+On click: show product list + before/after content.
+APIs: Supabase + GPT-4o-mini (for optimization logs).
+
+2. Email Performance
+
+Work: Track open rates + CTR for email campaigns.
+Functionality:
+
+Fetch stats from SendGrid API (open rate, CTR, bounce).
+
+Show chart (line or bar).
+APIs: SendGrid + Supabase (store history).
+
+3. SMS Conversion
+
+Work: Track abandoned cart recovery + SMS sales conversions.
+Functionality:
+
+Fetch metrics from Twilio API (delivered, clicked, converted).
+
+Show CTR + recovery % + revenue.
+APIs: Twilio + Supabase.
+
+4. SEO Keyword Density
+
+Work: Keyword optimization + improvements in ranking.
+Functionality:
+
+Analyze product descriptions with GPT-4o-mini for keyword usage.
+
+Show density % and keyword suggestions.
+APIs: GPT-4o-mini + Supabase logs.
+
+5. Content ROI Tracking
+
+Work: Track sales impact of AI-generated content.
+Functionality:
+
+Attribute optimized product content → track sales uplift vs old copy.
+
+Fetch order data via Shopify/WooCommerce API.
+
+Compare revenue before/after optimization.
+APIs: Supabase + Shopify/WooCommerce API.
+
+6. Revenue Impact
+
+Work: Show “Zyra added $X in revenue this month.”
+Functionality:
+
+Aggregate all revenue uplift from optimized products, emails, and SMS.
+
+Display total monthly contribution.
+APIs: Supabase + Shopify/WooCommerce API + GPT-4o-mini (analysis).
+
+7. SEO Ranking Tracker
+
+Work: Track keyword positions over time.
+Functionality:
+
+Call 3rd-party SEO API (SEMrush, Ahrefs, or SerpAPI).
+
+Show keyword ranking history in graph.
+APIs: SEO API + Supabase (store historical data).
+
+8. A/B Test Results
+
+Work: Track which copy performed better.
+Functionality:
+
+Compare two AI-generated versions (CTR, conversions).
+
+Show results with a simple winner badge.
+APIs: Supabase + SendGrid (email CTR) + Twilio (SMS CTR).
+
+🔹 Tech Stack
+
+Frontend: Next.js + Tailwind + Recharts (charts).
+
+Backend: Supabase (auth, DB, analytics logging).
+
+AI/Automation: GPT-4o-mini + GPT-4o.
+
+3rd-Party APIs: SendGrid, Twilio, Shopify, WooCommerce, SEO API.
+
+🔹 Performance & Smoothness
+
+Implement data caching with Supabase.
+
+Use serverless functions for API calls (avoid blocking UI).
+
+Charts must be animated but lightweight.
+
+Preload card stats with skeleton loaders for smooth UX.
+
+⚡ Deliverable:
+A fully functional Growth Analytics Dashboard page where every card is interactive, pulls live data from APIs, and displays insights in a smooth, real-time, visually engaging way.

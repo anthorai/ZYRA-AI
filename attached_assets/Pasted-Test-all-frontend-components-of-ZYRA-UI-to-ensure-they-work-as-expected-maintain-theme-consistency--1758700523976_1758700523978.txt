@@ -1,0 +1,106 @@
+Test all frontend components of ZYRA UI to ensure they work as expected, maintain theme consistency, and respond correctly to interactions.
+General Theme & Colors
+
+
+Backgrounds
+
+Headers
+
+Buttons
+
+Tabs
+
+Cards
+
+Modals
+
+Confirm text and icon colors are readable on the background.
+
+Navigation & Tabs
+
+Ensure all navigation menus (sidebar, top nav) open, close, and highlight correctly.
+
+Test all tabs in multi-tab components for proper content switching.
+
+Verify active tab is visually distinct.
+
+Buttons
+
+Check all buttons (primary, secondary, accent) for:
+
+Correct colors
+
+
+
+Click animation / ripple
+
+Disabled state styling
+
+Test all functional buttons trigger expected actions or modals.
+
+Forms & Inputs
+
+Validate all input fields:
+
+Text inputs, selects, toggles, checkboxes, radio buttons
+
+Focus styles, placeholder text, label alignment
+
+Test form submission triggers expected validation messages or actions.
+
+Cards & Lists
+
+Check all cards render with correct shadows, spacing, and neon border accents.
+
+Test interactive elements inside cards (edit, delete, publish buttons).
+
+Verify hover effects appear correctly.
+
+Modals & Popups
+
+Open all modals and check:
+
+Background overlay color and opacity
+
+Close button works
+
+Smooth transitions in/out
+
+Content displays correctly
+
+Notifications & Alerts
+
+Test in-app notifications appear at correct positions with proper colors and icons.
+
+Verify dismiss and snooze buttons work as expected.
+
+Check animated entry/exit transitions.
+
+Responsiveness
+
+Resize the viewport to test desktop, tablet, and mobile layouts.
+
+Ensure text, icons, buttons, and tabs scale and reposition properly.
+
+Check hamburger menu works on small screens.
+
+Miscellaneous Interactions
+
+Test drag & drop (if any)
+
+Test scroll behaviors (smooth scroll, sticky headers)
+
+Check tooltips, popovers, dropdowns display and close correctly.
+
+Verify loading states / skeleton loaders appear during async operations.
+
+Consistency & Accessibility
+
+Confirm fonts, font sizes, spacing, and alignment are consistent across all pages.
+
+Verify contrast ratios meet accessibility standards.
+
+Check keyboard navigation works for all interactive elements.
+
+✅ Output:
+For each test, mark Pass / Fail, note bug description, page / component, and steps to reproduce.

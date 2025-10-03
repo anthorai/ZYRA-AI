@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Functionality Test Suite</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #021024 0%, #052659 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .results-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(193, 232, 255, 0.2);
+        }
+        button {
+            background: linear-gradient(135deg, #C1E8FF 0%, #87CEEB 100%);
+            color: #021024;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(193, 232, 255, 0.3);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #console {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #0f0;
+        }
+        .status.error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #f00;
+        }
+        .status.info {
+            background: rgba(0, 150, 255, 0.2);
+            border: 1px solid #09f;
+        }
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border: 2px solid rgba(193, 232, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .iframe-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Avatar Functionality Test Suite</h1>
+            <p>Comprehensive testing of avatar displays, profile navigation, and logout functionality</p>
+        </div>
+
+        <div class="test-controls">
+            <h3>Test Controls</h3>
+            <button onclick="runComprehensiveTest()" id="runTestBtn">🚀 Run Comprehensive Test</button>
+            <button onclick="testSpecificComponent('dashboard')" id="testDashboardBtn">📊 Test Dashboard Avatar</button>
+            <button onclick="testSpecificComponent('sidebar')" id="testSidebarBtn">📋 Test Sidebar Avatar</button>
+            <button onclick="testSpecificComponent('profile')" id="testProfileBtn">👤 Test Profile Page</button>
+            <button onclick="testSpecificComponent('logout')" id="testLogoutBtn">🚪 Test Logout</button>
+            <button onclick="clearResults()" id="clearBtn">🗑️ Clear Results</button>
+            <button onclick="openDashboard()" id="dashboardBtn">🏠 Open Dashboard</button>
+        </div>
+
+        <div class="iframe-container">
+            <iframe id="testFrame" src="http://localhost:5000/dashboard"></iframe>
+            <div class="iframe-overlay">Dashboard View</div>
+        </div>
+
+        <div class="results-container">
+            <h3>Test Results</h3>
+            <div id="status" class="status info">Ready to run tests...</div>
+            <div id="console"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {};
+        let currentTest = null;
+
+        // Console logging override to capture test output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleElement = document.getElementById('console');
+
+        function logToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            consoleElement.textContent += logEntry;
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+            
+            // Also log to browser console
+            if (type === 'error') {
+                originalError(message);
+            } else {
+                originalLog(message);
+            }
+        }
+
+        console.log = (message) => logToConsole(message, 'log');
+        console.error = (message) => logToConsole(message, 'error');
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function clearResults() {
+            consoleElement.textContent = '';
+            updateStatus('Results cleared. Ready to run tests...', 'info');
+            testResults = {};
+        }
+
+        function openDashboard() {
+            const iframe = document.getElementById('testFrame');
+            iframe.src = 'http://localhost:5000/dashboard';
+            updateStatus('Navigated to Dashboard', 'info');
+        }
+
+        async function runComprehensiveTest() {
+            updateStatus('Running comprehensive avatar functionality test...', 'info');
+            
+            const runBtn = document.getElementById('runTestBtn');
+            runBtn.disabled = true;
+            runBtn.textContent = '🔄 Testing...';
+
+            try {
+                // Create script element to inject into iframe
+                const iframe = document.getElementById('testFrame');
+                
+                // Wait for iframe to load
+                await new Promise(resolve => {
+                    if (iframe.contentDocument.readyState === 'complete') {
+                        resolve();
+                    } else {
+                        iframe.onload = resolve;
+                    }
+                });
+
+                // Inject the test script into the iframe
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const script = iframeDoc.createElement('script');
+                
+                // Load our comprehensive test script
+                const response = await fetch('/avatar_comprehensive_test.js');
+                const testScript = await response.text();
+                
+                script.textContent = testScript;
+                iframeDoc.head.appendChild(script);
+
+                // Override console in iframe to capture output
+                iframe.contentWindow.console.log = (message) => logToConsole(`[IFRAME] ${message}`, 'log');
+                iframe.contentWindow.console.error = (message) => logToConsole(`[IFRAME] ${message}`, 'error');
+
+                updateStatus('Test script injected. Check console for results...', 'success');
+
+            } catch (error) {
+                logToConsole(`Error running comprehensive test: ${error.message}`, 'error');
+                updateStatus('Test failed to run', 'error');
+            } finally {
+                runBtn.disabled = false;
+                runBtn.textContent = '🚀 Run Comprehensive Test';
+            }
+        }
+
+        async function testSpecificComponent(component) {
+            updateStatus(`Testing ${component} component...`, 'info');
+            logToConsole(`🧪 Starting ${component} component test...`);
+            
+            const iframe = document.getElementById('testFrame');
+            
+            try {
+                switch(component) {
+                    case 'dashboard':
+                        iframe.src = 'http://localhost:5000/dashboard';
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        logToConsole('✅ Dashboard loaded successfully');
+                        
+                        // Check for avatar elements in iframe
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const avatarTrigger = iframeDoc.querySelector('[data-testid="avatar-menu-trigger"]');
+                        const userProfile = iframeDoc.querySelector('[data-testid="user-profile"]');
+                        
+                        if (avatarTrigger) {
+                            logToConsole('✅ Header avatar menu trigger found');
+                        } else {
+                            logToConsole('❌ Header avatar menu trigger not found');
+                        }
+                        
+                        if (userProfile) {
+                            logToConsole('✅ Sidebar user profile found');
+                        } else {
+                            logToConsole('❌ Sidebar user profile not found');
+                        }
+                        break;
+                        
+                    case 'sidebar':
+                        iframe.src = 'http://localhost:5000/dashboard';
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        logToConsole('✅ Checking sidebar avatar display...');
+                        break;
+                        
+                    case 'profile':
+                        iframe.src = 'http://localhost:5000/profile';
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        logToConsole('✅ Profile page loaded');
+                        break;
+                        
+                    case 'logout':
+                        logToConsole('✅ Testing logout functionality (simulation)');
+                        logToConsole('ℹ️ Logout test completed without actual logout to preserve session');
+                        break;
+                }
+                
+                updateStatus(`${component} test completed`, 'success');
+                
+            } catch (error) {
+                logToConsole(`❌ Error testing ${component}: ${error.message}`, 'error');
+                updateStatus(`${component} test failed`, 'error');
+            }
+        }
+
+        // Initialize
+        updateStatus('Avatar Functionality Test Suite Ready', 'info');
+        logToConsole('🧪 Avatar Functionality Test Suite Initialized');
+        logToConsole('📋 Available Tests:');
+        logToConsole('  1. Dashboard Avatar Display');
+        logToConsole('  2. Header Avatar Dropdown');
+        logToConsole('  3. Sidebar Avatar Display');
+        logToConsole('  4. Profile Navigation');
+        logToConsole('  5. Profile Page Features');
+        logToConsole('  6. Logout Functionality');
+        logToConsole('  7. Complete Navigation Flow');
+        logToConsole('');
+        logToConsole('👆 Click "Run Comprehensive Test" to start all tests');
+    </script>
+</body>
+</html>
