@@ -546,109 +546,187 @@ export default function Settings() {
           </div>
         </div>
       </div>
-      {/* AI Preferences Modal */}
+      {/* AI Preferences Modal - Redesigned */}
       <Dialog open={aiConfigModalOpen} onOpenChange={setAiConfigModalOpen}>
-        <DialogContent className="sm:max-w-[500px] gradient-card border-0">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center space-x-2">
-              <Brain className="w-5 h-5 text-primary" />
+        <DialogContent className="sm:max-w-[650px] gradient-card border-0 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-slate-700 pb-4">
+            <DialogTitle className="text-white flex items-center space-x-3 text-2xl">
+              <div className="p-2 rounded-lg bg-primary/20">
+                <Brain className="w-6 h-6 text-primary" />
+              </div>
               <span>AI Preferences</span>
             </DialogTitle>
-            <DialogDescription className="text-slate-300">
+            <DialogDescription className="text-slate-400 text-base pt-1">
               Customize how Zyra AI adapts to your brand and creates content
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-6">
             {preferencesLoading ? (
               <div className="space-y-4">
-                <Skeleton className="h-4 w-full bg-slate-700" />
-                <Skeleton className="h-10 w-full bg-slate-700" />
-                <Skeleton className="h-4 w-3/4 bg-slate-700" />
-                <Skeleton className="h-10 w-full bg-slate-700" />
+                <Skeleton className="h-32 w-full bg-slate-700 rounded-xl" />
+                <Skeleton className="h-32 w-full bg-slate-700 rounded-xl" />
+                <Skeleton className="h-24 w-full bg-slate-700 rounded-xl" />
               </div>
             ) : (
               <>
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-white">Brand Voice</Label>
-                  <Select 
-                    value={userPreferences?.aiSettings?.defaultBrandVoice || "professional"}
-                    onValueChange={(value) => {
-                      updatePreferencesMutation.mutate({
-                        aiSettings: {
-                          ...(userPreferences?.aiSettings || {}),
-                          defaultBrandVoice: value
-                        }
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="form-select text-white" data-testid="select-brand-voice">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="gradient-surface">
-                      <SelectItem value="professional" data-testid="option-professional">Professional & Expert</SelectItem>
-                      <SelectItem value="casual" data-testid="option-casual">Casual & Friendly</SelectItem>
-                      <SelectItem value="luxury" data-testid="option-luxury">Luxury & Premium</SelectItem>
-                      <SelectItem value="playful" data-testid="option-playful">Playful & Creative</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Brand Voice Card */}
+                <Card className="bg-slate-800/50 border-slate-700 hover:border-primary/50 transition-colors">
+                  <CardContent className="p-5">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-3 rounded-lg bg-blue-500/10 flex-shrink-0">
+                        <MessageSquare className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h3 className="text-white font-semibold text-lg mb-1">Brand Voice</h3>
+                          <p className="text-slate-400 text-sm">Define how your AI communicates with your audience</p>
+                        </div>
+                        <Select 
+                          value={userPreferences?.aiSettings?.defaultBrandVoice || "professional"}
+                          onValueChange={(value) => {
+                            updatePreferencesMutation.mutate({
+                              aiSettings: {
+                                ...(userPreferences?.aiSettings || {}),
+                                defaultBrandVoice: value
+                              }
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-white hover:border-primary/50 transition-colors" data-testid="select-brand-voice">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="gradient-surface">
+                            <SelectItem value="professional" data-testid="option-professional">
+                              <div className="flex items-center space-x-2">
+                                <span>🎯</span>
+                                <span>Professional & Expert</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="casual" data-testid="option-casual">
+                              <div className="flex items-center space-x-2">
+                                <span>😊</span>
+                                <span>Casual & Friendly</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="luxury" data-testid="option-luxury">
+                              <div className="flex items-center space-x-2">
+                                <span>💎</span>
+                                <span>Luxury & Premium</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="playful" data-testid="option-playful">
+                              <div className="flex items-center space-x-2">
+                                <span>🎨</span>
+                                <span>Playful & Creative</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-white">Content Style</Label>
-                  <Select 
-                    value={userPreferences?.aiSettings?.contentStyle || "seo"}
-                    onValueChange={(value) => {
-                      updatePreferencesMutation.mutate({
-                        aiSettings: {
-                          ...(userPreferences?.aiSettings || {}),
-                          contentStyle: value
-                        }
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="form-select text-white" data-testid="select-content-style">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="gradient-surface">
-                      <SelectItem value="seo" data-testid="option-seo">SEO-Optimized</SelectItem>
-                      <SelectItem value="sales" data-testid="option-sales">Sales-Focused</SelectItem>
-                      <SelectItem value="educational" data-testid="option-educational">Educational & Informative</SelectItem>
-                      <SelectItem value="storytelling" data-testid="option-storytelling">Storytelling & Emotional</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Content Style Card */}
+                <Card className="bg-slate-800/50 border-slate-700 hover:border-primary/50 transition-colors">
+                  <CardContent className="p-5">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-3 rounded-lg bg-purple-500/10 flex-shrink-0">
+                        <Edit3 className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h3 className="text-white font-semibold text-lg mb-1">Content Style</h3>
+                          <p className="text-slate-400 text-sm">Choose the primary goal of your content generation</p>
+                        </div>
+                        <Select 
+                          value={userPreferences?.aiSettings?.contentStyle || "seo"}
+                          onValueChange={(value) => {
+                            updatePreferencesMutation.mutate({
+                              aiSettings: {
+                                ...(userPreferences?.aiSettings || {}),
+                                contentStyle: value
+                              }
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-white hover:border-primary/50 transition-colors" data-testid="select-content-style">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="gradient-surface">
+                            <SelectItem value="seo" data-testid="option-seo">
+                              <div className="flex items-center space-x-2">
+                                <span>🔍</span>
+                                <span>SEO-Optimized</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="sales" data-testid="option-sales">
+                              <div className="flex items-center space-x-2">
+                                <span>💰</span>
+                                <span>Sales-Focused</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="educational" data-testid="option-educational">
+                              <div className="flex items-center space-x-2">
+                                <span>📚</span>
+                                <span>Educational & Informative</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="storytelling" data-testid="option-storytelling">
+                              <div className="flex items-center space-x-2">
+                                <span>📖</span>
+                                <span>Storytelling & Emotional</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <Separator className="bg-slate-700" />
+                {/* Automation Settings Card */}
+                <Card className="bg-slate-800/50 border-slate-700 hover:border-primary/50 transition-colors">
+                  <CardContent className="p-5">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-3 rounded-lg bg-green-500/10 flex-shrink-0">
+                        <Zap className="w-5 h-5 text-green-400" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="text-white font-semibold text-lg mb-1">Auto-save AI Outputs</h3>
+                            <p className="text-slate-400 text-sm">Automatically save generated content to your library for easy access</p>
+                          </div>
+                          <Switch
+                            checked={userPreferences?.aiSettings?.autoSaveOutputs || false}
+                            onCheckedChange={(checked) => {
+                              updatePreferencesMutation.mutate({
+                                aiSettings: {
+                                  ...(userPreferences?.aiSettings || {}),
+                                  autoSaveOutputs: checked
+                                }
+                              });
+                            }}
+                            className="data-[state=checked]:bg-primary ml-4"
+                            data-testid="switch-auto-save"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label className="text-sm font-medium text-white">Auto-save AI Outputs</Label>
-                    <p className="text-xs text-slate-400">Automatically save generated content to your library</p>
-                  </div>
-                  <Switch
-                    checked={userPreferences?.aiSettings?.autoSaveOutputs || false}
-                    onCheckedChange={(checked) => {
-                      updatePreferencesMutation.mutate({
-                        aiSettings: {
-                          ...(userPreferences?.aiSettings || {}),
-                          autoSaveOutputs: checked
-                        }
-                      });
-                    }}
-                    className="data-[state=checked]:bg-primary"
-                    data-testid="switch-auto-save"
-                  />
-                </div>
-
-                <div className="pt-4 flex justify-end space-x-3">
+                {/* Footer Actions */}
+                <div className="pt-4 flex justify-between items-center border-t border-slate-700">
+                  <p className="text-xs text-slate-500">Changes are saved automatically</p>
                   <Button
-                    variant="outline"
                     onClick={() => setAiConfigModalOpen(false)}
-                    className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                    className="gradient-button font-medium"
                     data-testid="button-close-ai-modal"
                   >
-                    Close
+                    Done
                   </Button>
                 </div>
               </>
