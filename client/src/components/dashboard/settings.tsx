@@ -61,6 +61,7 @@ export default function Settings() {
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
   const [integrationsModalOpen, setIntegrationsModalOpen] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
 
   // Handle back navigation
   const handleGoBack = () => {
@@ -303,12 +304,7 @@ export default function Settings() {
         setIntegrationsModalOpen(true);
         break;
       case 'support-resources':
-        // For support, show a toast with helpful information
-        toast({
-          title: "Support Resources",
-          description: "Access our help center, live chat, and community forums for assistance",
-          duration: 4000,
-        });
+        setSupportModalOpen(true);
         break;
       default:
         toast({
@@ -466,7 +462,7 @@ export default function Settings() {
                     <Button
                       onClick={() => handleSettingsAction(card.id)}
                       disabled={preferencesLoading || securityLoading || integrationsLoading}
-                      className="w-full font-medium transition-all duration-300 gradient-button hover:scale-105"
+                      className="w-full font-medium transition-colors duration-300 gradient-button"
                       data-testid={`button-action-${card.id}`}
                     >
                       {(preferencesLoading || securityLoading || integrationsLoading) ? 
@@ -962,6 +958,157 @@ export default function Settings() {
                 </div>
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Support & Resources Modal */}
+      <Dialog open={supportModalOpen} onOpenChange={setSupportModalOpen}>
+        <DialogContent className="sm:max-w-[600px] gradient-card border-0">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center space-x-2">
+              <HelpCircle className="w-5 h-5 text-primary" />
+              <span>Support & Resources</span>
+            </DialogTitle>
+            <DialogDescription className="text-slate-300">
+              Access help documentation, contact support, and join our community
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Help Center */}
+            <div className="space-y-3">
+              <h3 className="text-white font-semibold flex items-center space-x-2">
+                <FileText className="w-4 h-4 text-primary" />
+                <span>Help Center</span>
+              </h3>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => {
+                    toast({
+                      title: "Opening Documentation",
+                      description: "Launching help documentation...",
+                      duration: 2000,
+                    });
+                  }}
+                  data-testid="button-documentation"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Documentation & FAQs
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => {
+                    toast({
+                      title: "Opening Tutorials",
+                      description: "Video tutorials loading...",
+                      duration: 2000,
+                    });
+                  }}
+                  data-testid="button-tutorials"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Video Tutorials
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="bg-slate-700" />
+
+            {/* Contact Support */}
+            <div className="space-y-3">
+              <h3 className="text-white font-semibold flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4 text-primary" />
+                <span>Contact Support</span>
+              </h3>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => {
+                    toast({
+                      title: "Live Chat",
+                      description: "Connecting to support team...",
+                      duration: 2000,
+                    });
+                  }}
+                  data-testid="button-live-chat"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Start Live Chat
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => {
+                    toast({
+                      title: "Email Support",
+                      description: "Opening email form...",
+                      duration: 2000,
+                    });
+                  }}
+                  data-testid="button-email-support"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email Support Team
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="bg-slate-700" />
+
+            {/* Community */}
+            <div className="space-y-3">
+              <h3 className="text-white font-semibold flex items-center space-x-2">
+                <Users className="w-4 h-4 text-primary" />
+                <span>Community</span>
+              </h3>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => {
+                    toast({
+                      title: "Community Forum",
+                      description: "Opening community forum...",
+                      duration: 2000,
+                    });
+                  }}
+                  data-testid="button-forum"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Join Community Forum
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => {
+                    toast({
+                      title: "Feedback",
+                      description: "Opening feedback form...",
+                      duration: 2000,
+                    });
+                  }}
+                  data-testid="button-feedback"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Submit Feedback
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-4 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setSupportModalOpen(false)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                data-testid="button-close-support-modal"
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

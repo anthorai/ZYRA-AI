@@ -1,0 +1,53 @@
+You are an expert full-stack developer and UI/UX engineer.
+
+Task:
+Update the current Settings section of the application.
+
+Objective:
+When a user clicks on any of the following setting cards:
+1. AI Preferences  
+2. Notifications & Alerts  
+3. Integrations  
+4. Security  
+5. Support & Resources  
+
+→ Instead of redirecting or opening a new page, it should open a **small centered popup window (modal)** within the same screen.
+
+Popup Window Behavior:
+- Each popup should display that card’s **functions, features, and controls** in a compact layout.  
+- The popup must appear smoothly with a fade + scale animation.  
+- Include a **close button (X)** at the top-right corner that closes the popup.  
+- The background behind the popup should slightly blur when active.  
+- Prevent background scrolling when the popup is open.  
+- Each popup content should be dynamically loaded based on which card is clicked.
+
+Functional Flow:
+1. Delete any existing modal or redirection logic currently applied to these cards.  
+2. Add a new `SettingsModal` component that receives props:
+   - `isOpen` (boolean)
+   - `onClose` (function)
+   - `contentType` (string: “ai”, “notifications”, “integrations”, “security”, “support”)  
+3. When a card is clicked:
+   - Update state to set the corresponding `contentType`.
+   - Open the modal dynamically with relevant content.
+
+Content Guidelines:
+- AI Preferences: show dropdowns, toggles, and sliders for AI behavior control.  
+- Notifications & Alerts: show switches for enabling/snoozing notifications.  
+- Integrations: show buttons or connection status for APIs or tools.  
+- Security: show password change, 2FA toggle, and session list mock.  
+- Support & Resources: show help center links and contact support form mock.  
+
+Implementation:
+- Use a shared state (`useState` or global context`) to manage open/close and type.  
+- Use clean, minimal UI with proper spacing and readable typography.  
+- Keep component responsive and centered for all screen sizes.  
+- Ensure modals can be extended easily with more cards in future.  
+
+Output:
+Provide the complete updated React (Next.js compatible) code including:
+- `SettingsPage` component
+- `SettingsModal` reusable component
+- Example `useState` logic for open/close handling
+- Mock data or sample features for each popup category
+- Smooth transitions for modal entry and exit
