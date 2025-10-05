@@ -276,35 +276,30 @@ export default function Settings() {
   });
 
   const handleSettingsAction = (cardId: string) => {
-    // Handle specific navigation pages
-    if (cardId === 'profile-account') {
-      sessionStorage.setItem('navigationSource', 'settings');
-      setLocation('/profile');
-      return;
-    }
+    // Handle all navigation pages
+    sessionStorage.setItem('navigationSource', 'settings');
     
-    if (cardId === 'subscription-billing') {
-      sessionStorage.setItem('navigationSource', 'settings');
-      setLocation('/billing');
-      return;
-    }
-
-    // Open interactive modals for each settings category
     switch (cardId) {
+      case 'profile-account':
+        setLocation('/profile');
+        break;
+      case 'subscription-billing':
+        setLocation('/billing');
+        break;
       case 'ai-preferences':
-        setAiConfigModalOpen(true);
+        setLocation('/settings/ai-preferences');
         break;
       case 'notifications-alerts':
-        setNotificationsModalOpen(true);
+        setLocation('/settings/notifications');
         break;
       case 'security':
-        setSecurityModalOpen(true);
+        setLocation('/settings/security');
         break;
       case 'integrations':
-        setIntegrationsModalOpen(true);
+        setLocation('/settings/integrations');
         break;
       case 'support-resources':
-        setSupportModalOpen(true);
+        setLocation('/settings/support');
         break;
       default:
         toast({
