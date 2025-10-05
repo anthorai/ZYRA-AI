@@ -1,0 +1,252 @@
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import { Brain, ArrowLeft, Sparkles, Zap, Clock } from "lucide-react";
+
+export default function AIPreferencesPage() {
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  
+  const [brandVoice, setBrandVoice] = useState("professional");
+  const [contentStyle, setContentStyle] = useState("seo");
+  const [autoSave, setAutoSave] = useState(true);
+  const [scheduledUpdates, setScheduledUpdates] = useState(true);
+  const [brandMemory, setBrandMemory] = useState(true);
+  const [creativity, setCreativity] = useState([70]);
+
+  const handleSave = () => {
+    toast({
+      title: "AI Preferences Saved",
+      description: "Your AI settings have been updated successfully",
+      duration: 3000,
+    });
+  };
+
+  return (
+    <div className="p-6 space-y-6 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex items-center space-x-4 mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => setLocation('/settings')}
+          className="text-slate-300 hover:text-white hover:bg-slate-800"
+          data-testid="button-back-to-settings"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Settings
+        </Button>
+      </div>
+
+      <div className="flex items-center space-x-4 mb-6">
+        <div className="p-3 rounded-lg bg-primary/20">
+          <Brain className="w-8 h-8 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-4xl font-bold text-white tracking-tight">
+            AI Preferences
+          </h1>
+          <p className="text-slate-300 text-lg mt-1">
+            Customize how Zyra AI adapts to your brand and creates content
+          </p>
+        </div>
+      </div>
+
+      {/* Brand Voice Selection */}
+      <Card className="gradient-card border-0">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <CardTitle className="text-white">Brand Voice & Tone</CardTitle>
+          </div>
+          <CardDescription className="text-slate-400">
+            Select the default voice that best matches your brand personality
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <Label htmlFor="brand-voice" className="text-white">Default Brand Voice</Label>
+            <Select value={brandVoice} onValueChange={setBrandVoice}>
+              <SelectTrigger 
+                id="brand-voice"
+                className="bg-slate-800/50 border-slate-600 text-white"
+                data-testid="select-brand-voice"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="professional">Professional & Authoritative</SelectItem>
+                <SelectItem value="casual">Casual & Friendly</SelectItem>
+                <SelectItem value="luxury">Luxury & Sophisticated</SelectItem>
+                <SelectItem value="genz">Gen Z & Trendy</SelectItem>
+                <SelectItem value="technical">Technical & Detailed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="content-style" className="text-white">Content Writing Style</Label>
+            <Select value={contentStyle} onValueChange={setContentStyle}>
+              <SelectTrigger 
+                id="content-style"
+                className="bg-slate-800/50 border-slate-600 text-white"
+                data-testid="select-content-style"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="seo">SEO-Optimized</SelectItem>
+                <SelectItem value="sales">Sales-Driven</SelectItem>
+                <SelectItem value="educational">Educational & Informative</SelectItem>
+                <SelectItem value="storytelling">Storytelling & Emotional</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <Label className="text-white">AI Creativity Level</Label>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-slate-400">Conservative</span>
+              <Slider
+                value={creativity}
+                onValueChange={setCreativity}
+                max={100}
+                step={10}
+                className="flex-1"
+                data-testid="slider-creativity"
+              />
+              <span className="text-sm text-slate-400">Creative</span>
+            </div>
+            <p className="text-xs text-slate-500">Current: {creativity[0]}%</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Automation Settings */}
+      <Card className="gradient-card border-0">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Zap className="w-5 h-5 text-primary" />
+            <CardTitle className="text-white">Automation Settings</CardTitle>
+          </div>
+          <CardDescription className="text-slate-400">
+            Configure automatic content generation and optimization features
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-white font-medium">Auto-Save AI Outputs</Label>
+              <p className="text-sm text-slate-400">Automatically save generated content to your library</p>
+            </div>
+            <Switch
+              checked={autoSave}
+              onCheckedChange={setAutoSave}
+              className="data-[state=checked]:bg-primary"
+              data-testid="switch-auto-save"
+            />
+          </div>
+
+          <Separator className="bg-slate-700" />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-white font-medium">Brand Voice Memory</Label>
+              <p className="text-sm text-slate-400">AI learns and remembers your preferred writing style</p>
+            </div>
+            <Switch
+              checked={brandMemory}
+              onCheckedChange={setBrandMemory}
+              className="data-[state=checked]:bg-primary"
+              data-testid="switch-brand-memory"
+            />
+          </div>
+
+          <Separator className="bg-slate-700" />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-white font-medium">Scheduled Content Updates</Label>
+              <p className="text-sm text-slate-400">Refresh product descriptions every 3-6 months</p>
+            </div>
+            <Switch
+              checked={scheduledUpdates}
+              onCheckedChange={setScheduledUpdates}
+              className="data-[state=checked]:bg-primary"
+              data-testid="switch-scheduled-updates"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Model Performance */}
+      <Card className="gradient-card border-0">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-primary" />
+            <CardTitle className="text-white">Performance Settings</CardTitle>
+          </div>
+          <CardDescription className="text-slate-400">
+            Choose between speed and quality for AI generation
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col items-start border-slate-600 hover:border-primary hover:bg-slate-800"
+              data-testid="button-mode-fast"
+            >
+              <Zap className="w-5 h-5 mb-2 text-primary" />
+              <div className="font-semibold text-white">Fast Mode</div>
+              <div className="text-xs text-slate-400 mt-1">Quick results, good quality</div>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col items-start border-primary bg-primary/10 hover:bg-primary/20"
+              data-testid="button-mode-balanced"
+            >
+              <Sparkles className="w-5 h-5 mb-2 text-primary" />
+              <div className="font-semibold text-white">Balanced</div>
+              <div className="text-xs text-slate-400 mt-1">Best quality-speed ratio</div>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col items-start border-slate-600 hover:border-primary hover:bg-slate-800"
+              data-testid="button-mode-quality"
+            >
+              <Brain className="w-5 h-5 mb-2 text-primary" />
+              <div className="font-semibold text-white">Quality Mode</div>
+              <div className="text-xs text-slate-400 mt-1">Highest quality, slower</div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Save Button */}
+      <div className="flex justify-end space-x-3 pt-4">
+        <Button
+          variant="outline"
+          onClick={() => setLocation('/settings')}
+          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+          data-testid="button-cancel"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          className="gradient-button"
+          data-testid="button-save-preferences"
+        >
+          Save Changes
+        </Button>
+      </div>
+    </div>
+  );
+}
