@@ -27,6 +27,13 @@ const Billing = lazy(() => import("@/pages/billing"));
 const Settings = lazy(() => import("@/pages/settings"));
 const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
 
+// Settings subpages
+const AIPreferencesPage = lazy(() => import("@/pages/settings/ai-preferences"));
+const NotificationsPage = lazy(() => import("@/pages/settings/notifications"));
+const IntegrationsPage = lazy(() => import("@/pages/settings/integrations"));
+const SecurityPage = lazy(() => import("@/pages/settings/security"));
+const SupportPage = lazy(() => import("@/pages/settings/support"));
+
 // Analytics pages
 const OptimizedProducts = lazy(() => import("@/pages/optimized-products"));
 const EmailPerformance = lazy(() => import("@/pages/email-performance"));
@@ -140,6 +147,51 @@ function Router() {
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
               <Settings />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/settings/ai-preferences" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <AIPreferencesPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/settings/notifications" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <NotificationsPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/settings/integrations" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <IntegrationsPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/settings/security" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <SecurityPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/settings/support" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <SupportPage />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>
