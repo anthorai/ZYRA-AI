@@ -1,0 +1,52 @@
+You are an expert full-stack developer and UI/UX engineer.
+
+Task:
+Update the current Settings section of the application.
+
+Objective:
+Remove the existing popup/modal window behavior for the following cards:
+1. AI Preferences  
+2. Notifications & Alerts  
+3. Integrations  
+4. Security  
+5. Support & Resources  
+
+→ Instead of opening a popup on click, each card should now open a **dedicated page** with its own route and component.
+
+Requirements:
+
+1. Delete:
+   - All current popup or dialog-related logic and components linked to these cards.
+   - Any modal state or overlay rendering related to Settings cards.
+
+2. Add:
+   - Separate pages/components for each card:
+     - `/settings/ai-preferences`
+     - `/settings/notifications`
+     - `/settings/integrations`
+     - `/settings/security`
+     - `/settings/support`
+
+3. Navigation Logic:
+   - When a user clicks a card, it should navigate to the correct page using client-side routing (`next/link` or `useRouter.push()`).
+   - The transition should be smooth with a fade or slide effect between pages.
+
+4. Page Structure:
+   Each page must include:
+   - A top header displaying the page title (e.g., “AI Preferences”).
+   - A short description under the header explaining the page purpose.
+   - A main content section displaying mock UI elements or real features:
+     - **AI Preferences:** toggles, dropdowns, and sliders for model selection, tone, and performance.  
+     - **Notifications & Alerts:** switches for enabling or snoozing alerts, alert categories list.  
+     - **Integrations:** API keys, connected apps, “Connect” and “Disconnect” buttons.  
+     - **Security:** password update, 2FA toggle, session device list.  
+     - **Support & Resources:** help links, documentation, and contact support form mock.  
+   - A back navigation button or breadcrumb to return to the main Settings page.
+
+5. Component Design:
+   - Use a clean, responsive layout consistent with the current app UI.
+   - Each page should reuse the same header and footer components for consistency.
+   - Ensure proper spacing and structure for readability.
+
+6. File & Folder Structure:
+   Inside `/app/settings/` (or `/pages/settings/` depending on your setup), create:
