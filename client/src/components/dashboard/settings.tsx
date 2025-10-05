@@ -412,7 +412,7 @@ export default function Settings() {
                   <CardContent className="pt-0">
                     <Button
                       onClick={retryQuery}
-                      className="w-full font-medium transition-colors duration-300 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50"
+                      className="w-full font-medium transition-all duration-300 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50"
                       data-testid={`button-retry-${card.id}`}
                     >
                       Try Again
@@ -425,7 +425,7 @@ export default function Settings() {
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-3">
-                        <div className="w-6 h-6 flex items-center justify-center">
+                        <div className="w-6 h-6 flex items-center justify-center transition-all duration-300">
                           <div className="w-5 h-5 flex items-center justify-center">
                             {card.icon}
                           </div>
@@ -484,7 +484,7 @@ export default function Settings() {
       <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card tabIndex={0} className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 p-6">
           <div className="flex items-center space-x-4">
-            <div className="p-3 rounded-full bg-slate-800/50">
+            <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
               <Store className="w-5 h-5 stroke-2 text-primary" />
             </div>
             <div>
@@ -496,7 +496,7 @@ export default function Settings() {
         
         <Card tabIndex={0} className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 p-6">
           <div className="flex items-center space-x-4">
-            <div className="p-3 rounded-full bg-slate-800/50">
+            <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
               <Zap className="w-5 h-5 stroke-2 text-primary" />
             </div>
             <div>
@@ -508,7 +508,7 @@ export default function Settings() {
         
         <Card tabIndex={0} className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 p-6">
           <div className="flex items-center space-x-4">
-            <div className="p-3 rounded-full bg-slate-800/50">
+            <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
               <Shield className="w-5 h-5 stroke-2 text-primary" />
             </div>
             <div>
@@ -521,7 +521,7 @@ export default function Settings() {
       {/* Account Status */}
       <div className="mt-8 p-6 gradient-card rounded-xl bg-[#16162c]">
         <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 flex items-center justify-center">
+          <div className="w-6 h-6 flex items-center justify-center transition-all duration-300">
             <div className="w-5 h-5 flex items-center justify-center">
               <SettingsIcon className="w-5 h-5 stroke-2 text-primary" />
             </div>
