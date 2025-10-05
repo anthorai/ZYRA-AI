@@ -367,7 +367,8 @@ export default function Settings() {
           return (
             <Card 
               key={card.id} 
-              className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+              tabIndex={0}
+              className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900"
               data-testid={`card-settings-${card.id}`}
             >
               {isLoading ? (
@@ -485,7 +486,7 @@ export default function Settings() {
       </div>
       {/* Quick Actions */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 p-6">
+        <Card tabIndex={0} className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
               <Store className="w-5 h-5 stroke-2 text-primary" />
@@ -497,7 +498,7 @@ export default function Settings() {
           </div>
         </Card>
         
-        <Card className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 p-6">
+        <Card tabIndex={0} className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
               <Zap className="w-5 h-5 stroke-2 text-primary" />
@@ -509,7 +510,7 @@ export default function Settings() {
           </div>
         </Card>
         
-        <Card className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 p-6">
+        <Card tabIndex={0} className="group relative overflow-hidden gradient-card rounded-xl shadow-md hover:shadow-lg focus:shadow-lg transition-shadow duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-slate-900 p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
               <Shield className="w-5 h-5 stroke-2 text-primary" />
