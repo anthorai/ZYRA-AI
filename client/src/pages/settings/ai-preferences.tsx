@@ -81,11 +81,11 @@ export default function AIPreferencesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="professional">Professional & Authoritative</SelectItem>
-                <SelectItem value="casual">Casual & Friendly</SelectItem>
-                <SelectItem value="luxury">Luxury & Sophisticated</SelectItem>
-                <SelectItem value="genz">Gen Z & Trendy</SelectItem>
-                <SelectItem value="technical">Technical & Detailed</SelectItem>
+                <SelectItem value="professional" data-testid="option-professional">Professional & Authoritative</SelectItem>
+                <SelectItem value="casual" data-testid="option-casual">Casual & Friendly</SelectItem>
+                <SelectItem value="luxury" data-testid="option-luxury">Luxury & Sophisticated</SelectItem>
+                <SelectItem value="genz" data-testid="option-genz">Gen Z & Trendy</SelectItem>
+                <SelectItem value="technical" data-testid="option-technical">Technical & Detailed</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -101,10 +101,10 @@ export default function AIPreferencesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="seo">SEO-Optimized</SelectItem>
-                <SelectItem value="sales">Sales-Driven</SelectItem>
-                <SelectItem value="educational">Educational & Informative</SelectItem>
-                <SelectItem value="storytelling">Storytelling & Emotional</SelectItem>
+                <SelectItem value="seo" data-testid="option-seo">SEO-Optimized</SelectItem>
+                <SelectItem value="sales" data-testid="option-sales">Sales-Driven</SelectItem>
+                <SelectItem value="educational" data-testid="option-educational">Educational & Informative</SelectItem>
+                <SelectItem value="storytelling" data-testid="option-storytelling">Storytelling & Emotional</SelectItem>
               </SelectContent>
             </Select>
           </div>
