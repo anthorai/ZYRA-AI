@@ -24,7 +24,12 @@ OpenAI GPT-4 powers core AI functionalities, including:
 - Content analysis for image alt-text generation.
 
 ## Authentication & Authorization
-Authentication is session-based with email/password login and bcrypt hashing. It supports secure session management, basic role-based access control with plan-based feature restrictions, and a 7-day trial system.
+Authentication uses Supabase Auth with email/password login, password reset functionality via email, and secure JWT-based session management. The system includes:
+- Frontend ProtectedRoute component for route-level authorization
+- Backend requireAuth middleware for API endpoint protection
+- Password reset flow with email verification
+- Automatic user profile provisioning
+- Session persistence and refresh token handling
 
 ## State Management
 Client-side state management uses TanStack Query for server state caching, React Hook Form with Zod for form validation, and React Context for global state like authentication and UI.
@@ -35,9 +40,11 @@ A multi-gateway payment system supports Razorpay (India), PayPal (International)
 # External Dependencies
 
 ## Database & Hosting
-- **Supabase**: PostgreSQL database.
-- **Drizzle ORM**: Type-safe database queries.
-- **Replit Deployment**: Full-stack hosting with autoscale.
+- **PostgreSQL**: Production database via Replit (configured and active)
+- **Supabase**: PostgreSQL database with built-in authentication
+- **Drizzle ORM**: Type-safe database queries with automatic migrations
+- **Replit Deployment**: Full-stack hosting with autoscale
+- **Database Schema**: Fully migrated with tables for users, products, campaigns, analytics, notifications, and more
 
 ## AI & Machine Learning
 - **OpenAI API**: GPT-4 for text generation and content optimization.
@@ -57,4 +64,45 @@ A multi-gateway payment system supports Razorpay (India), PayPal (International)
 - **Tailwind CSS**: Utility-first styling.
 
 ## Third-party Integrations
-- **Shopify API**: Planned for product sync and order processing.
+- **Shopify API**: Placeholder endpoints created for product sync (/api/shopify/products, /api/shopify/sync)
+- **CSV Import/Export**: Fully functional product import/export via CSV files (/api/products/export-csv, /api/products/import-csv)
+
+# Recent Changes (Phase 1: Core Foundation)
+
+## Implemented Features (Latest Session)
+
+### 1. Database Integration ✅
+- PostgreSQL database provisioned and connected
+- All tables migrated successfully via Drizzle
+- Switched from in-memory storage to persistent PostgreSQL storage via Supabase
+- Database now persists data across server restarts
+
+### 2. Authentication & User Management ✅
+- Supabase authentication fully integrated
+- Password reset functionality implemented:
+  - Forgot password page (/forgot-password)
+  - Reset password page (/reset-password)
+  - Email-based password reset flow
+- Protected route guards on frontend (ProtectedRoute component)
+- Backend authentication middleware (requireAuth)
+- Automatic user profile provisioning
+
+### 3. Product Management ✅
+- CSV import/export endpoints:
+  - GET /api/products/export-csv - Export all products to CSV
+  - POST /api/products/import-csv - Import products from CSV
+- Shopify integration placeholders:
+  - GET /api/shopify/products - Shopify product listing
+  - POST /api/shopify/sync - Sync products to Shopify
+- Product CRUD operations connected to database
+
+### 4. Routes Added
+- /forgot-password - Password reset request
+- /reset-password - Password reset completion
+- Protected routes with authentication guards
+
+### 5. Security Improvements
+- Session-based authentication with JWT tokens
+- Protected API endpoints requiring authentication
+- Password hashing with bcrypt
+- Secure password reset flow with email verification

@@ -150,7 +150,12 @@ export default function Auth() {
                     <Checkbox id="remember" />
                     <Label htmlFor="remember" className="text-xs sm:text-sm text-muted-foreground">Remember me</Label>
                   </div>
-                  <button type="button" className="text-xs sm:text-sm text-primary hover:underline">
+                  <button 
+                    type="button" 
+                    className="text-xs sm:text-sm text-primary hover:underline"
+                    onClick={() => setLocation("/forgot-password")}
+                    data-testid="button-forgot-password"
+                  >
                     Forgot password?
                   </button>
                 </div>

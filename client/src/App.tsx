@@ -20,6 +20,8 @@ import NotFound from "@/pages/not-found";
 const AboutPage = lazy(() => import("@/pages/about"));
 const PrivacyPolicyPage = lazy(() => import("@/pages/privacy-policy"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Products = lazy(() => import("@/pages/products"));
 const Profile = lazy(() => import("@/pages/profile"));
@@ -86,6 +88,16 @@ function Router() {
       {/* Public routes - no lazy loading for critical paths */}
       <Route path="/" component={Landing} />
       <Route path="/auth" component={Auth} />
+      <Route path="/forgot-password" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <ForgotPassword />
+        </Suspense>
+      )} />
+      <Route path="/reset-password" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <ResetPassword />
+        </Suspense>
+      )} />
       <Route path="/about" component={() => (
         <Suspense fallback={<PageLoader />}>
           <AboutPage />

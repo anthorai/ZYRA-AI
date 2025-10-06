@@ -20,6 +20,8 @@ import OpenAI from "openai";
 import Stripe from "stripe";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import multer from "multer";
+import csvParser from "csv-parser";
 import {
   createRazorpayOrder,
   verifyRazorpaySignature,
@@ -66,6 +68,12 @@ interface AuthenticatedRequest extends Request {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
   // Supabase authentication middleware
   const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -2190,6 +2198,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get AI generation history error:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // CSV Import/Export Routes
+  app.get('/api/products/export-csv', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const products = await supabaseStorage.getProducts(userId);
+      
+      const csvHeaders = ['ID', 'Name', 'Description', 'Price', 'Tags', 'Image URL', 'Category', 'Created At'];
+      const csvRows = products.map(p => [
+        p.id,
+        p.name || '',
+        p.description || '',
+        p.price?.toString() || '',
+        Array.isArray(p.tags) ? p.tags.join(';') : '',
+        p.image || '',
+        p.category || '',
+        p.createdAt?.toISOString() || ''
+      ]);
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="products_${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error('CSV export error:', error);
+      res.status(500).json({ error: 'Failed to export products' });
+    }
+  });
+
+  app.post('/api/products/import-csv', requireAuth, upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const file = (req as any).file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'No CSV file uploaded' });
+      }
+
+      const imported = [];
+      const errors = [];
+      const products: any[] = [];
+
+      // Parse CSV file
+      const stream = require('stream');
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(file.buffer);
+
+      await new Promise((resolve, reject) => {
+        bufferStream
+          .pipe(csvParser())
+          .on('data', (row: any) => {
+            products.push(row);
+          })
+          .on('end', resolve)
+          .on('error', reject);
+      });
+
+      // Import each product
+      for (const productData of products) {
+        try {
+          // Map CSV columns to product schema
+          const product = await supabaseStorage.createProduct({
+            name: productData.Name || productData.name || productData.Title || productData.title,
+            description: productData.Description || productData.description || '',
+            price: productData.Price || productData.price || '0',
+            category: productData.Category || productData.category || 'general',
+            userId,
+            stock: parseInt(productData.Stock || productData.stock) || 0,
+            tags: productData.Tags || productData.tags 
+              ? (typeof productData.Tags === 'string' ? productData.Tags.split(';') : productData.tags.split(';'))
+              : [],
+            image: productData['Image URL'] || productData.image || productData.Image || ''
+          });
+          imported.push(product);
+        } catch (error) {
+          errors.push({ 
+            product: productData, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        imported: imported.length,
+        errors: errors.length,
+        details: { imported, errors }
+      });
+    } catch (error) {
+      console.error('CSV import error:', error);
+      res.status(500).json({ error: 'Failed to import products', message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Shopify Integration placeholder - will be enhanced with actual Shopify API
+  app.get('/api/shopify/products', requireAuth, async (req, res) => {
+    try {
+      // Placeholder for Shopify product sync
+      res.json({ 
+        message: 'Shopify integration coming soon',
+        status: 'not_configured',
+        action: 'Please connect your Shopify store in Settings > Integrations'
+      });
+    } catch (error) {
+      console.error('Shopify sync error:', error);
+      res.status(500).json({ error: 'Shopify integration error' });
+    }
+  });
+
+  app.post('/api/shopify/sync', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productIds } = req.body;
+      
+      // Placeholder for Shopify sync functionality
+      res.json({ 
+        message: 'Shopify sync initiated',
+        status: 'pending',
+        synced: 0,
+        total: productIds?.length || 0,
+        note: 'Full Shopify integration will be available once you connect your store'
+      });
+    } catch (error) {
+      console.error('Shopify sync error:', error);
+      res.status(500).json({ error: 'Failed to sync with Shopify' });
     }
   });
 
