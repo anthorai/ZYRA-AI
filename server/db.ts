@@ -68,7 +68,7 @@ async function withErrorHandling<T>(
 // User operations
 export async function createUser(userData: InsertUser): Promise<User> {
   return withErrorHandling(async () => {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const hashedPassword = userData.password ? await bcrypt.hash(userData.password, 10) : null;
     const [user] = await db.insert(users).values({
       ...userData,
       password: hashedPassword,
