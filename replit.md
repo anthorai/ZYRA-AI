@@ -18,10 +18,14 @@ The server uses Express.js with TypeScript, providing RESTful API endpoints. Aut
 The application utilizes PostgreSQL with Drizzle ORM for type-safe operations. The schema includes tables for users (authentication, subscriptions, Stripe integration), products (Shopify integration, optimization status), SEO metadata, marketing campaigns, and analytics. Drizzle Kit manages database migrations.
 
 ## AI Integration
-OpenAI GPT-4 powers core AI functionalities, including:
-- Product description generation with various brand voice styles.
-- Automated SEO title and meta description generation with keyword analysis.
-- Content analysis for image alt-text generation.
+OpenAI GPT-5 (released August 7, 2025) powers core AI functionalities, including:
+- Product description generation with various brand voice styles and custom instructions
+- Automated SEO title and meta description generation with keyword analysis
+- Image alt-text generation using Vision API for accessibility and SEO
+- Bulk product optimization via CSV processing
+- Brand voice memory system that learns from user preferences and edits
+- Token accounting and usage tracking per user
+- Rate limiting per subscription plan
 
 ## Authentication & Authorization
 Authentication uses Supabase Auth with email/password login, password reset functionality via email, and secure JWT-based session management. The system includes:
@@ -47,7 +51,7 @@ A multi-gateway payment system supports Razorpay (India), PayPal (International)
 - **Database Schema**: Fully migrated with tables for users, products, campaigns, analytics, notifications, and more
 
 ## AI & Machine Learning
-- **OpenAI API**: GPT-4 for text generation and content optimization.
+- **OpenAI API**: GPT-5 for text generation, Vision API for image analysis, content optimization with token tracking.
 
 ## Payment Processing
 - **Razorpay**: Indian payment gateway.
@@ -125,11 +129,73 @@ A multi-gateway payment system supports Razorpay (India), PayPal (International)
 - Fixed TypeScript errors in route handlers
 - Proper error handling and validation throughout
 
-## Next Steps (Phase 2+)
-- Implement actual Shopify API integration
-- Add AI product description generation
-- Build out SEO optimization tools
-- Create marketing campaign management
-- Add analytics dashboard
-- Implement payment gateway integration
-- Add webhook handlers for Shopify events
+## Phase 2: Core AI Features ✅ COMPLETE
+
+### 1. Image Alt-Text Generation ✅
+- OpenAI Vision API integration for analyzing product images
+- Generates SEO-optimized alt-text, accessibility descriptions, and keywords
+- Real-time image analysis with multi-modal AI capabilities
+- Frontend: /ai-tools/image-alt-text with file upload and preview
+- Backend: POST /api/generate-alt-text with multipart/form-data handling
+
+### 2. Usage Limit Enforcement ✅
+- Middleware (checkAIUsageLimit) verifies plan limits before AI operations
+- Plan-based credit limits:
+  - Trial: 10 credits
+  - Starter: 50 credits  
+  - Growth: 1000 credits
+  - Pro: Unlimited (-1)
+- Returns 429 status when limits exceeded with upgrade suggestions
+- Applied to all AI endpoints (descriptions, SEO, alt-text, bulk optimization)
+
+### 3. Token Accounting System ✅
+- Tracks OpenAI token usage for all AI operations
+- trackAIUsage() function persists token counts to usage_stats table
+- createAiGenerationHistory() stores complete generation metadata:
+  - Input data, output data, brand voice used, tokens consumed, model version
+  - Enables historical analysis and learning from past generations
+- Real-time token tracking integrated into all AI endpoints
+
+### 4. Bulk Product Optimization ✅
+- CSV-based batch processing for multiple products
+- POST /api/products/bulk-optimize endpoint with file upload
+- Generates descriptions AND SEO optimization for each product in CSV
+- Real-time progress tracking with streaming responses
+- Frontend: /ai-tools/bulk-optimization with job status and results display
+- Proper error handling and partial success reporting
+
+### 5. Brand Voice Memory System ✅
+- User preference storage in user_preferences.aiSettings:
+  - Preferred brand voice (sales, professional, creative, etc.)
+  - Custom instructions for brand-specific guidelines
+  - Tone preferences (formal, casual, technical)
+  - Learning enabled/disabled toggle
+- Automatic preference integration into AI generation prompts
+- POST /api/brand-voice/learn endpoint captures user edits for future learning
+- GET/POST /api/brand-voice/preferences for managing preferences
+- Frontend integration shows current preferences in generation forms
+
+### 6. Rate Limiting ✅
+- Per-plan rate limiting middleware (checkRateLimit):
+  - Trial: 5 requests/minute
+  - Starter: 10 requests/minute
+  - Growth: 30 requests/minute
+  - Pro: 100 requests/minute
+- In-memory rate limit tracking with automatic cleanup
+- Returns 429 Too Many Requests when exceeded
+- Applied to all AI endpoints for fair usage enforcement
+
+### Technical Implementation Details
+- All AI endpoints follow middleware chain: requireAuth → checkRateLimit → checkAIUsageLimit → AI operation → trackAIUsage
+- Token accounting properly invokes createAiGenerationHistory for learning
+- Brand voice preferences seamlessly integrated into prompt engineering
+- Robust error handling and validation throughout
+- TypeScript type safety maintained across all new features
+
+## Next Steps (Phase 3+)
+- Implement actual Shopify API integration with webhooks
+- Create marketing campaign management (email/SMS)
+- Add analytics dashboard with usage visualization
+- Implement payment gateway for subscription upgrades
+- Build recommendation engine using AI generation history
+- Add A/B testing for product descriptions
