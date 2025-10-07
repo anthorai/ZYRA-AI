@@ -65,12 +65,45 @@ export const campaigns = pgTable("campaigns", {
   name: text("name").notNull(),
   subject: text("subject"),
   content: text("content").notNull(),
-  status: text("status").notNull().default("draft"),
+  templateId: varchar("template_id"),
+  status: text("status").notNull().default("draft"), // draft, scheduled, sending, sent, failed
+  scheduledFor: timestamp("scheduled_for"),
+  sentAt: timestamp("sent_at"),
   sentCount: integer("sent_count").default(0),
   openRate: integer("open_rate").default(0),
   clickRate: integer("click_rate").default(0),
   conversionRate: integer("conversion_rate").default(0),
+  recipientList: jsonb("recipient_list"), // array of email addresses or phone numbers
+  metadata: jsonb("metadata"), // additional campaign settings, tracking pixels, etc
   createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+export const campaignTemplates = pgTable("campaign_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'email' | 'sms'
+  subject: text("subject"),
+  content: text("content").notNull(),
+  variables: jsonb("variables"), // template variable placeholders
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+export const abandonedCarts = pgTable("abandoned_carts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone"),
+  cartItems: jsonb("cart_items").notNull(),
+  cartValue: numeric("cart_value", { precision: 10, scale: 2 }).notNull(),
+  recoveryCampaignSent: boolean("recovery_campaign_sent").default(false),
+  recoveredAt: timestamp("recovered_at"),
+  isRecovered: boolean("is_recovered").default(false),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
 });
 
 export const subscriptions = pgTable("subscriptions", {
@@ -236,6 +269,19 @@ export const insertSeoMetaSchema = createInsertSchema(seoMeta).omit({
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCampaignTemplateSchema = createInsertSchema(campaignTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAbandonedCartSchema = createInsertSchema(abandonedCarts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertAnalyticsSchema = createInsertSchema(analytics).omit({
@@ -429,6 +475,10 @@ export type SeoMeta = typeof seoMeta.$inferSelect;
 export type InsertSeoMeta = z.infer<typeof insertSeoMetaSchema>;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type CampaignTemplate = typeof campaignTemplates.$inferSelect;
+export type InsertCampaignTemplate = z.infer<typeof insertCampaignTemplateSchema>;
+export type AbandonedCart = typeof abandonedCarts.$inferSelect;
+export type InsertAbandonedCart = z.infer<typeof insertAbandonedCartSchema>;
 export type Analytics = typeof analytics.$inferSelect;
 export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
