@@ -55,11 +55,20 @@ export async function handleExpiredTrials(): Promise<{
           .limit(1);
 
         if (existingSubscription && existingSubscription.length > 0) {
-          // User already has active subscription, just update user plan status
-          await db
-            .update(users)
-            .set({ plan: existingSubscription[0].planId })
-            .where(eq(users.id, user.id));
+          // User already has active subscription - get the plan slug from subscription
+          const activePlan = await db
+            .select()
+            .from(subscriptionPlans)
+            .where(eq(subscriptionPlans.id, existingSubscription[0].planId))
+            .limit(1);
+
+          if (activePlan && activePlan.length > 0) {
+            // Update user plan to match subscription's plan NAME (slug)
+            await db
+              .update(users)
+              .set({ plan: activePlan[0].planName })
+              .where(eq(users.id, user.id));
+          }
           
           processedCount++;
           continue;
