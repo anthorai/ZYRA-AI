@@ -162,7 +162,14 @@ Use variables like:
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {savedTemplates.map((template) => (
+                {savedTemplates.length === 0 ? (
+                  <div className="text-center py-12" data-testid="empty-state-templates">
+                    <FileText className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No saved templates yet</h3>
+                    <p className="text-slate-300 mb-6">Create your first template above to save and reuse it</p>
+                  </div>
+                ) : (
+                  savedTemplates.map((template) => (
                   <div key={template.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
@@ -184,7 +191,8 @@ Use variables like:
                       </Button>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

@@ -72,7 +72,26 @@ export default function AbandonedCartSMSPage() {
           {/* Abandoned Carts List */}
           <div className="space-y-4">
             <h2 className="text-white text-2xl font-bold">Abandoned Carts ({mockAbandonedCarts.length})</h2>
-            {mockAbandonedCarts.map((cart) => (
+            {mockAbandonedCarts.length === 0 ? (
+              <Card className="gradient-card">
+                <CardContent className="p-12">
+                  <div className="text-center" data-testid="empty-state-abandoned-carts">
+                    <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No abandoned carts</h3>
+                    <p className="text-slate-300 mb-6">Great news! All customers completed their purchases</p>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setLocation('/dashboard')}
+                      className="border-slate-600 text-slate-300 hover:bg-white/10"
+                      data-testid="button-back-dashboard"
+                    >
+                      Back to Dashboard
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              mockAbandonedCarts.map((cart) => (
               <Card key={cart.id} className="dark-theme-bg  hover:shadow-cyan-500/20 transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -90,7 +109,8 @@ export default function AbandonedCartSMSPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))
+            )}
           </div>
 
           {/* SMS Template Editor */}

@@ -219,8 +219,23 @@ export default function EmailPerformance() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {campaigns.map((campaign) => (
-              <div key={campaign.id} className="bg-slate-800/30 rounded-lg p-4 space-y-3">
+            {campaigns.length === 0 ? (
+              <div className="text-center py-12" data-testid="empty-state-campaigns">
+                <Mail className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+                <h3 className="text-xl font-semibold text-white mb-2">No email campaigns yet</h3>
+                <p className="text-slate-300 mb-6">Create your first email campaign to start engaging with customers</p>
+                <Button 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setLocation('/email-campaigns')}
+                  data-testid="button-create-campaign"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Create Campaign
+                </Button>
+              </div>
+            ) : (
+              campaigns.map((campaign) => (
+                <div key={campaign.id} className="bg-slate-800/30 rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-white font-semibold text-lg">{campaign.name}</h3>
@@ -266,7 +281,8 @@ export default function EmailPerformance() {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

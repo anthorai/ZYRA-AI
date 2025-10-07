@@ -656,9 +656,18 @@ export default function BillingPage() {
                     <p className="mt-2 text-slate-300">Loading invoices...</p>
                   </div>
                 ) : invoices.length === 0 ? (
-                  <div className="text-center py-8 text-slate-300">
+                  <div className="text-center py-8 text-slate-300" data-testid="empty-state-invoices">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No invoices yet</p>
+                    <p className="text-lg font-medium mb-2">No invoices yet</p>
+                    <p className="text-sm mb-6">Invoices will appear here when you subscribe to a plan</p>
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                      className="border-slate-600 text-slate-300 hover:bg-white/10"
+                      data-testid="button-view-plans"
+                    >
+                      View Plans
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">

@@ -228,8 +228,23 @@ export default function SmsConversion() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {smsCampaigns.map((campaign) => (
-              <div key={campaign.id} className="bg-slate-800/30 rounded-lg p-4 space-y-3">
+            {smsCampaigns.length === 0 ? (
+              <div className="text-center py-12" data-testid="empty-state-sms-campaigns">
+                <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+                <h3 className="text-xl font-semibold text-white mb-2">No SMS campaigns yet</h3>
+                <p className="text-slate-300 mb-6">Send your first SMS campaign to recover abandoned carts</p>
+                <Button 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setLocation('/abandoned-cart-sms')}
+                  data-testid="button-create-sms-campaign"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Send SMS Campaign
+                </Button>
+              </div>
+            ) : (
+              smsCampaigns.map((campaign) => (
+                <div key={campaign.id} className="bg-slate-800/30 rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-white font-semibold text-lg">{campaign.name}</h3>
@@ -285,7 +300,8 @@ export default function SmsConversion() {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
