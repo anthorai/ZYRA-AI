@@ -47,45 +47,64 @@ export default function BulkOptimization() {
     setLocation('/dashboard');
   };
 
-  // Mock bulk processing mutation
+  // Real bulk processing mutation using API
   const bulkProcessMutation = useMutation({
     mutationFn: async (file: File) => {
       const jobId = Math.random().toString(36).substr(2, 9);
-      const totalProducts = Math.floor(Math.random() * 80) + 20; // 20-100 products
       
       // Initialize job
       const job: BulkJob = {
         id: jobId,
         fileName: file.name,
-        totalProducts,
+        totalProducts: 0,
         processedProducts: 0,
         status: 'uploading'
       };
       
       setCurrentJob(job);
+
+      const formData = new FormData();
+      formData.append('csv', file);
+
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || '';
+
+      const response = await fetch('/api/products/bulk-optimize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to process bulk optimization');
+      }
+
+      const result = await response.json();
       
-      // Simulate upload
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Start processing
-      setCurrentJob(prev => prev ? { ...prev, status: 'processing' } : null);
-      
-      // Simulate processing with progress updates
-      for (let i = 0; i <= totalProducts; i++) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-        const progressPercent = (i / totalProducts) * 100;
+      // Update job with total products
+      setCurrentJob(prev => prev ? { 
+        ...prev, 
+        totalProducts: result.totalProducts,
+        status: 'processing' 
+      } : null);
+
+      // Simulate progress for visual feedback
+      for (let i = 0; i <= result.optimized; i++) {
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const progressPercent = (i / result.optimized) * 100;
         setProgress(progressPercent);
         setCurrentJob(prev => prev ? { ...prev, processedProducts: i } : null);
       }
       
-      // Complete processing
-      const optimizedCount = Math.floor(totalProducts * 0.95);
-      const errorCount = totalProducts - optimizedCount;
-      
       return {
-        optimized: optimizedCount,
-        errors: errorCount,
-        downloadUrl: `bulk-optimized-${jobId}.csv`
+        optimized: result.optimized,
+        errors: result.errors,
+        downloadUrl: `bulk-optimized-${jobId}.csv`,
+        results: result.results
       };
     },
     onSuccess: (result) => {

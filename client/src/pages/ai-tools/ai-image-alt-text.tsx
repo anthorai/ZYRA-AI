@@ -47,53 +47,33 @@ export default function AIImageAltText() {
     setLocation('/dashboard');
   };
 
-  // Mock AI image analysis mutation
+  // AI image analysis mutation using real API
   const analyzeImageMutation = useMutation({
     mutationFn: async (data: { file: File; tags: string }) => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const fileName = data.file.name.toLowerCase();
-      const tags = data.tags;
-      
-      // Mock analysis based on filename and tags
-      let baseDescription = "";
-      let keywords: string[] = [];
-      
-      // Simulate AI vision analysis based on filename patterns
-      if (fileName.includes('headphone') || fileName.includes('audio')) {
-        baseDescription = "Professional product photography of wireless bluetooth headphones in black color";
-        keywords = ["wireless headphones", "bluetooth audio", "premium sound"];
-      } else if (fileName.includes('shirt') || fileName.includes('clothing')) {
-        baseDescription = "High-quality product image of a stylish shirt on white background";
-        keywords = ["fashion", "clothing", "apparel"];
-      } else if (fileName.includes('phone') || fileName.includes('mobile')) {
-        baseDescription = "Clean product shot of smartphone device showing modern design";
-        keywords = ["smartphone", "mobile device", "technology"];
-      } else {
-        baseDescription = "Professional product photography showing detailed view of item";
-        keywords = ["product", "e-commerce", "retail"];
+      const formData = new FormData();
+      formData.append('image', data.file);
+      if (data.tags) {
+        formData.append('additionalTags', data.tags);
       }
-      
-      // Add user tags to keywords
-      if (tags) {
-        keywords.push(...tags.split(',').map(tag => tag.trim()).filter(tag => tag));
+
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || '';
+
+      const response = await fetch('/api/generate-alt-text', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to generate alt-text');
       }
-      
-      // Generate comprehensive alt text
-      const altText = `${baseDescription}${tags ? `, featuring ${tags}` : ''}, shot in studio lighting for e-commerce use`;
-      
-      // Generate accessibility description
-      const accessibility = `Image shows ${baseDescription.toLowerCase()}. This image is suitable for screen readers and provides context for users with visual impairments.`;
-      
-      return {
-        fileName: data.file.name,
-        altText,
-        seoKeywords: keywords,
-        accessibility,
-        fileSize: `${(data.file.size / 1024).toFixed(1)} KB`,
-        dimensions: "1200x800" // Mock dimensions
-      };
+
+      return await response.json();
     },
     onSuccess: (result) => {
       setAnalysis(result);

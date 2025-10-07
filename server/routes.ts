@@ -129,6 +129,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Usage limit enforcement middleware for AI operations
+  const checkAIUsageLimit = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const userPlan = (req as AuthenticatedRequest).user.plan;
+
+      // Get user's usage stats
+      const usageStats = await supabaseStorage.getUserUsageStats(userId);
+      const aiGenerationsUsed = usageStats?.aiGenerationsUsed || 0;
+      const seoOptimizationsUsed = usageStats?.seoOptimizationsUsed || 0;
+
+      // Get plan limits from subscription plans
+      const plans = await supabaseStorage.getSubscriptionPlans();
+      const currentPlan = plans.find(p => p.planName.toLowerCase() === userPlan.toLowerCase());
+
+      if (!currentPlan) {
+        // If no plan found, allow trial users limited access
+        if (userPlan === 'trial') {
+          if (aiGenerationsUsed >= 10) {
+            return res.status(403).json({ 
+              message: "Trial limit reached. Upgrade to continue using AI features.",
+              upgradeRequired: true 
+            });
+          }
+        }
+      } else {
+        const limits = currentPlan.limits as any;
+        
+        // Check if plan has unlimited credits (-1) or is Pro plan
+        if (limits.credits !== -1 && currentPlan.planName !== 'Pro') {
+          // For trial: 10 AI generations, 5 SEO optimizations
+          if (userPlan === 'trial') {
+            if (aiGenerationsUsed >= 10) {
+              return res.status(403).json({ 
+                message: "Trial AI generation limit (10) reached. Upgrade to continue.",
+                upgradeRequired: true 
+              });
+            }
+          }
+          // For Starter: 50 AI generations, 50 SEO optimizations
+          else if (currentPlan.planName === 'Starter') {
+            if (aiGenerationsUsed >= 50) {
+              return res.status(403).json({ 
+                message: "Monthly AI generation limit (50) reached. Upgrade to Growth plan for 1,000 generations.",
+                upgradeRequired: true 
+              });
+            }
+          }
+          // For Growth: 1000 AI generations, 500 SEO optimizations
+          else if (currentPlan.planName === 'Growth') {
+            if (aiGenerationsUsed >= 1000) {
+              return res.status(403).json({ 
+                message: "Monthly AI generation limit (1,000) reached. Upgrade to Pro for unlimited access.",
+                upgradeRequired: true 
+              });
+            }
+          }
+        }
+      }
+
+      next();
+    } catch (error) {
+      console.error('Usage limit check error:', error);
+      // Don't block on errors, just log and continue
+      next();
+    }
+  };
+
+  // Track AI usage after successful operation
+  const trackAIUsage = async (userId: string, tokensUsed: number = 0) => {
+    try {
+      const stats = await supabaseStorage.getUserUsageStats(userId);
+      const currentUsage = stats?.aiGenerationsUsed || 0;
+      
+      await supabaseStorage.createOrUpdateUsageStats(userId, {
+        aiGenerationsUsed: currentUsage + 1,
+        lastUpdated: new Date()
+      });
+
+      // Also log to AI generation history
+      // This will be implemented when we add the history tracking
+    } catch (error) {
+      console.error('Failed to track AI usage:', error);
+    }
+  };
+
+  // Track SEO optimization usage
+  const trackSEOUsage = async (userId: string) => {
+    try {
+      const stats = await supabaseStorage.getUserUsageStats(userId);
+      const currentUsage = stats?.seoOptimizationsUsed || 0;
+      
+      await supabaseStorage.createOrUpdateUsageStats(userId, {
+        seoOptimizationsUsed: currentUsage + 1,
+        lastUpdated: new Date()
+      });
+    } catch (error) {
+      console.error('Failed to track SEO usage:', error);
+    }
+  };
+
+  // Rate limiting for AI operations
+  const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+  
+  const checkRateLimit = (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req as AuthenticatedRequest).user.id;
+    const userPlan = (req as AuthenticatedRequest).user.plan;
+    
+    // Define rate limits per plan (requests per minute)
+    const rateLimits: Record<string, number> = {
+      'trial': 5,      // 5 requests per minute
+      'Starter': 10,   // 10 requests per minute
+      'Growth': 30,    // 30 requests per minute
+      'Pro': 100       // 100 requests per minute
+    };
+    
+    const limit = rateLimits[userPlan] || 5;
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 minute window
+    
+    const userRateData = rateLimitMap.get(userId);
+    
+    if (!userRateData || now > userRateData.resetTime) {
+      // New window or expired window
+      rateLimitMap.set(userId, { count: 1, resetTime: now + windowMs });
+      next();
+    } else if (userRateData.count < limit) {
+      // Within limit
+      userRateData.count++;
+      next();
+    } else {
+      // Rate limit exceeded
+      const resetIn = Math.ceil((userRateData.resetTime - now) / 1000);
+      res.status(429).json({ 
+        message: `Rate limit exceeded. You can make ${limit} AI requests per minute. Try again in ${resetIn} seconds.`,
+        retryAfter: resetIn
+      });
+    }
+  };
+
+  // Clean up old rate limit entries periodically
+  setInterval(() => {
+    const now = Date.now();
+    const entries = Array.from(rateLimitMap.entries());
+    for (const [userId, data] of entries) {
+      if (now > data.resetTime) {
+        rateLimitMap.delete(userId);
+      }
+    }
+  }, 60 * 1000); // Clean up every minute
+
   // Registration is handled by Supabase Auth on frontend
   // User profiles are auto-provisioned by the auth middleware
   app.post("/api/register", async (req, res) => {
@@ -169,14 +320,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Product Description Generator
-  app.post("/api/generate-description", requireAuth, async (req, res) => {
+  app.post("/api/generate-description", requireAuth, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
       const { productName, category, features, audience, brandVoice, keywords, specs } = req.body;
+      const userId = (req as AuthenticatedRequest).user.id;
 
       // Validate input
       if (!productName?.trim()) {
         return res.status(400).json({ message: "Product name is required" });
       }
+      
+      // Get user's brand voice preferences
+      const userPrefs = await supabaseStorage.getUserPreferences(userId);
+      const aiSettings = (userPrefs?.aiSettings || {}) as any;
+      const savedBrandVoice = aiSettings.preferredBrandVoice;
+      const customInstructions = aiSettings.customInstructions || '';
+      const tonePreferences = aiSettings.tonePreferences || {};
       
       // Validate brand voice
       const availableVoices = getAvailableBrandVoices("Product Description");
@@ -196,11 +355,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         specs: specs || ""
       };
 
-      // Get available brand voices and fallback to 'sales' if not available  
-      const selectedBrandVoice = availableVoices.includes(brandVoice) ? brandVoice : "sales";
+      // Use provided brand voice, or fall back to saved preference, or default to 'sales'
+      const selectedBrandVoice = brandVoice || savedBrandVoice || "sales";
 
       // Generate the dynamic prompt using the template system
-      const selectedPrompt = processPromptTemplate("Product Description", selectedBrandVoice, templateVariables);
+      let selectedPrompt = processPromptTemplate("Product Description", selectedBrandVoice, templateVariables);
+      
+      // Enhance prompt with custom instructions if available
+      if (customInstructions) {
+        selectedPrompt += `\n\nAdditional brand guidelines: ${customInstructions}`;
+      }
+      
+      // Add tone preferences if available
+      if (Object.keys(tonePreferences).length > 0) {
+        selectedPrompt += `\n\nTone preferences: ${JSON.stringify(tonePreferences)}`;
+      }
 
       // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       const response = await openai.chat.completions.create({
@@ -210,7 +379,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const result = JSON.parse(response.choices[0].message.content || "{}");
-      res.json({ description: result.description });
+      
+      // Track usage and tokens
+      const tokensUsed = response.usage?.total_tokens || 0;
+      await trackAIUsage(userId, tokensUsed);
+      
+      // Store generation in AI history for learning
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'product_description',
+        inputData: { productName, category, features, audience, keywords, specs },
+        outputData: { description: result.description },
+        brandVoice: selectedBrandVoice,
+        tokensUsed,
+        model: 'gpt-5'
+      });
+      
+      res.json({ description: result.description, brandVoiceUsed: selectedBrandVoice });
     } catch (error: any) {
       console.error("AI generation error:", error);
       res.status(500).json({ message: "Failed to generate description" });
@@ -218,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SEO Optimization
-  app.post("/api/optimize-seo", requireAuth, async (req, res) => {
+  app.post("/api/optimize-seo", requireAuth, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
       const { currentTitle, keywords, currentMeta, category } = req.body;
 
@@ -251,10 +436,307 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const result = JSON.parse(response.choices[0].message.content || "{}");
+      
+      // Track SEO usage
+      await trackSEOUsage((req as AuthenticatedRequest).user.id);
+      
       res.json(result);
     } catch (error: any) {
       console.error("SEO optimization error:", error);
       res.status(500).json({ message: "Failed to optimize SEO" });
+    }
+  });
+
+  // Image Alt-Text Generation
+  app.post("/api/generate-alt-text", requireAuth, checkRateLimit, checkAIUsageLimit, upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const { additionalTags } = req.body;
+      
+      // Convert image buffer to base64
+      const base64Image = req.file.buffer.toString('base64');
+      const imageUrl = `data:${req.file.mimetype};base64,${base64Image}`;
+
+      // Use OpenAI Vision API to analyze the image
+      const response = await openai.chat.completions.create({
+        model: "gpt-5",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { 
+                type: "text", 
+                text: `Analyze this product image and generate:
+1. SEO-optimized alt-text (concise, descriptive, keyword-rich)
+2. Detailed accessibility description for screen readers
+3. 5-7 relevant SEO keywords
+4. Image dimensions analysis
+
+${additionalTags ? `Additional context/tags: ${additionalTags}` : ''}
+
+Respond with JSON in this exact format:
+{
+  "altText": "your seo-optimized alt text here",
+  "accessibility": "detailed screen reader friendly description",
+  "seoKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "imageAnalysis": "brief analysis of what the image shows"
+}` 
+              },
+              {
+                type: "image_url",
+                image_url: { url: imageUrl }
+              }
+            ]
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1000
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || "{}");
+      
+      // Get image dimensions
+      const dimensions = `${req.file.size > 0 ? Math.round(req.file.size / 1024) : 0} KB`;
+      
+      // Track usage and tokens
+      const tokensUsed = response.usage?.total_tokens || 0;
+      await trackAIUsage((req as AuthenticatedRequest).user.id, tokensUsed);
+      
+      res.json({
+        fileName: req.file.originalname,
+        altText: result.altText || "Product image",
+        seoKeywords: result.seoKeywords || [],
+        accessibility: result.accessibility || result.altText || "Product image",
+        fileSize: dimensions,
+        dimensions: "Analysis complete" // We don't have actual pixel dimensions from buffer
+      });
+    } catch (error: any) {
+      console.error("Alt-text generation error:", error);
+      res.status(500).json({ message: "Failed to generate alt-text" });
+    }
+  });
+
+  // Brand Voice Preferences
+  app.get("/api/brand-voice/preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const userPrefs = await supabaseStorage.getUserPreferences(userId);
+      const aiSettings = (userPrefs?.aiSettings || {}) as any;
+      
+      res.json({
+        preferredBrandVoice: aiSettings.preferredBrandVoice || 'sales',
+        customInstructions: aiSettings.customInstructions || '',
+        tonePreferences: aiSettings.tonePreferences || {},
+        learningEnabled: aiSettings.learningEnabled !== false
+      });
+    } catch (error: any) {
+      console.error("Get brand voice preferences error:", error);
+      res.status(500).json({ message: "Failed to get brand voice preferences" });
+    }
+  });
+
+  app.post("/api/brand-voice/preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { preferredBrandVoice, customInstructions, tonePreferences, learningEnabled } = req.body;
+      
+      const existingPrefs = await supabaseStorage.getUserPreferences(userId);
+      const currentAiSettings = (existingPrefs?.aiSettings || {}) as any;
+      
+      const updatedAiSettings = {
+        ...currentAiSettings,
+        preferredBrandVoice,
+        customInstructions,
+        tonePreferences,
+        learningEnabled
+      };
+
+      if (existingPrefs) {
+        await supabaseStorage.updateUserPreferences(userId, {
+          aiSettings: updatedAiSettings
+        });
+      } else {
+        await supabaseStorage.createUserPreferences({
+          userId,
+          aiSettings: updatedAiSettings
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Brand voice preferences saved successfully",
+        preferences: updatedAiSettings
+      });
+    } catch (error: any) {
+      console.error("Save brand voice preferences error:", error);
+      res.status(500).json({ message: "Failed to save brand voice preferences" });
+    }
+  });
+
+  // Learn from user edits to improve brand voice
+  app.post("/api/brand-voice/learn", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { originalContent, editedContent, contentType } = req.body;
+      
+      // Check if learning is enabled
+      const userPrefs = await supabaseStorage.getUserPreferences(userId);
+      const aiSettings = (userPrefs?.aiSettings || {}) as any;
+      if (aiSettings.learningEnabled === false) {
+        return res.json({ success: true, message: "Learning is disabled" });
+      }
+
+      // Store the edit pattern in AI generation history for future reference
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: `${contentType}_learning`,
+        inputData: { originalContent },
+        outputData: { editedContent, learningData: true },
+        brandVoice: aiSettings.preferredBrandVoice || 'custom',
+        tokensUsed: 0,
+        model: 'user_edit'
+      });
+
+      res.json({ success: true, message: "Learning data saved" });
+    } catch (error: any) {
+      console.error("Brand voice learning error:", error);
+      res.status(500).json({ message: "Failed to save learning data" });
+    }
+  });
+
+  // Bulk Product Optimization (special rate limit for bulk operations)
+  app.post("/api/products/bulk-optimize", requireAuth, checkRateLimit, checkAIUsageLimit, upload.single('csv'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No CSV file provided" });
+      }
+
+      const userId = (req as AuthenticatedRequest).user.id;
+      const results: any[] = [];
+      const errors: any[] = [];
+
+      // Parse CSV
+      const csvData: any[] = [];
+      const stream = require('stream');
+      const bufferStream = new stream.PassThrough();
+      bufferStream.end(req.file.buffer);
+
+      await new Promise((resolve, reject) => {
+        bufferStream
+          .pipe(csvParser())
+          .on('data', (row: any) => csvData.push(row))
+          .on('end', resolve)
+          .on('error', reject);
+      });
+
+      if (csvData.length === 0) {
+        return res.status(400).json({ message: "CSV file is empty" });
+      }
+
+      // Check if bulk operation would exceed usage limits
+      const stats = await supabaseStorage.getUserUsageStats(userId);
+      const currentUsage = stats?.aiGenerationsUsed || 0;
+      const userPlan = (req as AuthenticatedRequest).user.plan;
+      
+      // Calculate estimated usage (1 generation per product for description + SEO)
+      const estimatedUsage = csvData.length * 2;
+      
+      // Simple plan limits check
+      const planLimits: Record<string, number> = {
+        'trial': 10,
+        'Starter': 50,
+        'Growth': 1000,
+        'Pro': -1 // unlimited
+      };
+      
+      const limit = planLimits[userPlan] || 10;
+      if (limit !== -1 && (currentUsage + estimatedUsage) > limit) {
+        return res.status(403).json({ 
+          message: `Bulk operation would exceed your plan limit. Current usage: ${currentUsage}, Estimated: ${estimatedUsage}, Limit: ${limit}`,
+          upgradeRequired: true 
+        });
+      }
+
+      // Process each product
+      for (const row of csvData) {
+        try {
+          const productName = row.product_name || row.name || row.title;
+          if (!productName) {
+            errors.push({ row, error: 'Missing product name' });
+            continue;
+          }
+
+          const category = row.category || 'General';
+          const features = row.features || row.current_description || '';
+          const audience = row.target_audience || row.audience || 'General consumers';
+
+          // Generate optimized description
+          const templateVariables = {
+            product_name: productName,
+            category,
+            audience,
+            features,
+            keywords: row.keywords || '',
+            specs: row.specs || ''
+          };
+
+          const selectedPrompt = processPromptTemplate("Product Description", "seo", templateVariables);
+
+          const descResponse = await openai.chat.completions.create({
+            model: "gpt-5",
+            messages: [{ role: "user", content: selectedPrompt }],
+            response_format: { type: "json_object" },
+          });
+
+          const descResult = JSON.parse(descResponse.choices[0].message.content || "{}");
+
+          // Generate SEO optimization
+          const seoPrompt = `Optimize this product for SEO:
+            Title: "${productName}"
+            Category: "${category}"
+            Description: "${descResult.description || features}"
+            
+            Create an optimized SEO title (under 60 characters) and meta description (under 160 characters).
+            Respond with JSON: { "seoTitle": "...", "metaDescription": "..." }`;
+
+          const seoResponse = await openai.chat.completions.create({
+            model: "gpt-5",
+            messages: [{ role: "user", content: seoPrompt }],
+            response_format: { type: "json_object" },
+          });
+
+          const seoResult = JSON.parse(seoResponse.choices[0].message.content || "{}");
+
+          results.push({
+            ...row,
+            optimized_description: descResult.description,
+            seo_title: seoResult.seoTitle,
+            meta_description: seoResult.metaDescription
+          });
+
+          // Track usage for each product
+          await trackAIUsage(userId, (descResponse.usage?.total_tokens || 0) + (seoResponse.usage?.total_tokens || 0));
+
+        } catch (error: any) {
+          errors.push({ row, error: error.message });
+        }
+      }
+
+      res.json({
+        success: true,
+        totalProducts: csvData.length,
+        optimized: results.length,
+        errors: errors.length,
+        results,
+        errorDetails: errors
+      });
+
+    } catch (error: any) {
+      console.error("Bulk optimization error:", error);
+      res.status(500).json({ message: "Failed to process bulk optimization" });
     }
   });
 
