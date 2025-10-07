@@ -11,6 +11,7 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 - **Session Security**: 30-minute inactivity timeout with automatic logout and warning notifications
 - **Empty State UX**: User-friendly empty states with CTAs across 5 major pages (campaigns, templates, carts, etc.)
 - **Payment Webhooks**: Razorpay and PayPal webhook handlers with signature verification, state-based idempotency, database updates, and error logging
+- **Welcome Email Automation**: Professional branded welcome emails sent automatically to new users via SendGrid with non-blocking delivery
 
 ## Phase 5: Security, Compliance & Error Handling Complete
 - **Rate Limiting**: Multi-tier rate limiting (auth: 15/15min, AI: 10/min, campaigns: 20/min, payments: 10/min, uploads: 5/min)

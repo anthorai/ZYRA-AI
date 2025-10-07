@@ -3069,38 +3069,29 @@ Respond with JSON in this exact format:
     }
   });
 
-  // Shopify Integration placeholder - will be enhanced with actual Shopify API
+  // Shopify Integration - Future Feature (Not Implemented)
+  // NOTE: Infrastructure ready (store_connections table, frontend UI, storage methods)
+  // Future implementation will require Shopify API credentials and OAuth flow
   app.get('/api/shopify/products', requireAuth, async (req, res) => {
-    try {
-      // Placeholder for Shopify product sync
-      res.json({ 
-        message: 'Shopify integration coming soon',
-        status: 'not_configured',
-        action: 'Please connect your Shopify store in Settings > Integrations'
-      });
-    } catch (error) {
-      console.error('Shopify sync error:', error);
-      res.status(500).json({ error: 'Shopify integration error' });
-    }
+    res.status(501).json({ 
+      message: 'Shopify integration is not currently available',
+      status: 'not_implemented',
+      details: 'This feature is planned for a future release. The database schema and UI are ready for implementation.',
+      futureFeatures: [
+        'OAuth-based Shopify store connection',
+        'Automatic product sync',
+        'Inventory management',
+        'Order fulfillment integration'
+      ]
+    });
   });
 
   app.post('/api/shopify/sync', requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const { productIds } = req.body;
-      
-      // Placeholder for Shopify sync functionality
-      res.json({ 
-        message: 'Shopify sync initiated',
-        status: 'pending',
-        synced: 0,
-        total: productIds?.length || 0,
-        note: 'Full Shopify integration will be available once you connect your store'
-      });
-    } catch (error) {
-      console.error('Shopify sync error:', error);
-      res.status(500).json({ error: 'Failed to sync with Shopify' });
-    }
+    res.status(501).json({ 
+      message: 'Shopify sync is not currently available',
+      status: 'not_implemented',
+      details: 'This feature is planned for a future release.'
+    });
   });
 
   // ===== CAMPAIGN ROUTES =====
