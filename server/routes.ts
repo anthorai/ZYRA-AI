@@ -2166,6 +2166,94 @@ Respond with JSON in this exact format:
       // Create user using new helper (automatically creates profile)
       const user = await supabaseStorage.createUser(validatedData);
       
+      // Send welcome email (non-blocking - don't fail registration if email fails)
+      setImmediate(async () => {
+        try {
+          const welcomeEmailHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+                .header h1 { color: white; margin: 0; font-size: 32px; }
+                .content { padding: 40px 30px; }
+                .content h2 { color: #333; margin-top: 0; }
+                .content p { color: #666; line-height: 1.6; font-size: 16px; }
+                .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+                .features { background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }
+                .features h3 { color: #333; margin-top: 0; font-size: 18px; }
+                .features ul { color: #666; line-height: 1.8; padding-left: 20px; }
+                .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Welcome to Zyra AI! 🎉</h1>
+                </div>
+                <div class="content">
+                  <h2>Hi ${user.fullName || 'there'}!</h2>
+                  <p>We're thrilled to have you join the Zyra family! Your account has been successfully created, and you're now ready to transform your e-commerce store with the power of AI.</p>
+                  
+                  <div class="features">
+                    <h3>Here's what you can do with Zyra:</h3>
+                    <ul>
+                      <li><strong>AI Product Descriptions</strong> - Generate compelling, SEO-optimized product descriptions instantly</li>
+                      <li><strong>Smart Marketing Automation</strong> - Recover abandoned carts and boost sales with automated email & SMS campaigns</li>
+                      <li><strong>SEO Optimization</strong> - Improve your search rankings with AI-powered meta tags and titles</li>
+                      <li><strong>Analytics Dashboard</strong> - Track your performance and ROI in real-time</li>
+                      <li><strong>Brand Voice Memory</strong> - Train AI to write in your unique brand voice</li>
+                    </ul>
+                  </div>
+                  
+                  <p>Ready to get started? Log in to your dashboard and explore all the powerful features waiting for you!</p>
+                  
+                  <center>
+                    <a href="${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'https://zyra.ai'}/dashboard" class="cta-button">Go to Dashboard →</a>
+                  </center>
+                  
+                  <p style="margin-top: 30px;">If you have any questions or need help getting started, our support team is here for you. Just reply to this email!</p>
+                  
+                  <p>Happy selling!<br><strong>The Zyra Team</strong></p>
+                </div>
+                <div class="footer">
+                  <p>© ${new Date().getFullYear()} Zyra AI. All rights reserved.</p>
+                  <p>You're receiving this email because you signed up for Zyra AI.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          await sendEmail(
+            user.email,
+            'Welcome to Zyra AI - Let\'s Get Started! 🚀',
+            welcomeEmailHTML
+          );
+          console.log(`Welcome email sent to: ${user.email}`);
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Log to error tracking but don't block registration
+          const { ErrorLogger } = await import('./lib/errorLogger');
+          ErrorLogger.log(
+            emailError instanceof Error ? emailError : new Error(String(emailError)),
+            {
+              errorType: 'external_api_error',
+              statusCode: 500,
+              userId: user.id,
+              metadata: { 
+                service: 'sendgrid_welcome_email',
+                recipientEmail: user.email 
+              }
+            }
+          );
+        }
+      });
+      
       // Registration complete - Supabase Auth handles login
       // req.login(user, (err: any) => {
       res.status(201).json({ 

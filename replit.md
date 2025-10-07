@@ -10,6 +10,7 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 - **Health Monitoring**: /api/health endpoint with uptime, database status, and response time metrics
 - **Session Security**: 30-minute inactivity timeout with automatic logout and warning notifications
 - **Empty State UX**: User-friendly empty states with CTAs across 5 major pages (campaigns, templates, carts, etc.)
+- **Payment Webhooks**: Razorpay and PayPal webhook handlers with signature verification, state-based idempotency, database updates, and error logging
 
 ## Phase 5: Security, Compliance & Error Handling Complete
 - **Rate Limiting**: Multi-tier rate limiting (auth: 15/15min, AI: 10/min, campaigns: 20/min, payments: 10/min, uploads: 5/min)
@@ -50,7 +51,15 @@ Supabase Auth provides email/password login, password reset, and JWT-based sessi
 Client-side state uses TanStack Query for server state caching, React Hook Form with Zod for validation, and React Context for global state.
 
 ## Payment System
-A multi-gateway payment system supports Razorpay (India), PayPal (International), and planned Stripe integration. It includes database schema for transaction tracking, gateway-specific services, and webhook handling.
+A multi-gateway payment system supports Razorpay (India), PayPal (International), and planned Stripe integration.
+
+**Webhook Handlers:**
+- **Razorpay**: HMAC-SHA256 signature verification, handles payment.authorized, payment.captured, payment.failed, refund.created events
+- **PayPal**: OAuth-based signature verification via PayPal API, handles PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED, PAYMENT.CAPTURE.DECLINED, PAYMENT.CAPTURE.REFUNDED events
+- **Idempotency**: State-based checks prevent duplicate processing while allowing legitimate transitions (e.g., completed → refunded)
+- **Database Updates**: All webhook events update paymentTransactions table with status, webhookData, and metadata
+- **Error Logging**: Integrated with ErrorLogger for webhook processing failures
+- **Known Limitations**: Documented edge cases for future enhancement (multiple payment attempts, granular auth/capture states, per-event tracking)
 
 ## Marketing Automation System
 Real email/SMS delivery using SendGrid and Twilio via Replit connectors. Campaign scheduler runs every 5 minutes to process scheduled sends. Features include campaign templates, abandoned cart recovery, and performance tracking with open/click/conversion rates.
