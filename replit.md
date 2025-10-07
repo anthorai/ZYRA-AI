@@ -112,5 +112,5 @@ api_error, database_error, auth_error, payment_error, ai_error, validation_error
 - **Twilio**: SMS notifications and cart recovery.
 
 ## Third-party Integrations
-- **Shopify API**: Placeholder endpoints for product synchronization.
-- **CSV Import/Export**: Functionality for product data.
+- **Shopify API**: Infrastructure ready (database schema, UI, storage methods) but not yet implemented. Endpoints return HTTP 501 Not Implemented. Future implementation will require OAuth and Shopify API credentials.
+- **CSV Import/Export**: Fully functional product data import/export.

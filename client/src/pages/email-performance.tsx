@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import NotificationCenter from "@/components/dashboard/notification-center";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
@@ -23,10 +25,33 @@ import {
 } from "lucide-react";
 
 export default function EmailPerformance() {
-  const { user, appUser } = useAuth();
+  const { user, appUser} = useAuth();
   const { handleLogout } = useLogout();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Fetch real campaign data from API
+  const { data: campaignsData, isLoading } = useQuery<any[]>({ 
+    queryKey: ['/api/campaigns'],
+    select: (data) => {
+      // Transform API data to match expected format
+      return data
+        .filter((c: any) => c.status === 'sent' || c.status === 'completed')
+        .map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          subject: c.subject || c.name,
+          sent: c.sentCount || 0,
+          opens: Math.round((c.sentCount || 0) * (c.openRate || 0) / 100),
+          clicks: Math.round((c.sentCount || 0) * (c.clickRate || 0) / 100),
+          openRate: c.openRate || 0,
+          clickRate: c.clickRate || 0,
+          sentDate: c.sentDate || c.createdAt
+        }));
+    }
+  });
+
+  const campaigns = campaignsData || [];
 
   const onLogoutClick = () => {
     handleLogout("/auth"); // Standardized logout with error handling and notifications
@@ -36,42 +61,13 @@ export default function EmailPerformance() {
     setLocation('/dashboard');
   };
 
-  // Mock email campaign data
-  const campaigns = [
-    {
-      id: "1",
-      name: "Winter Sale Campaign",
-      subject: "🎉 50% Off Everything - Limited Time!",
-      sent: 15420,
-      opens: 5285,
-      clicks: 847,
-      openRate: 34.3,
-      clickRate: 5.5,
-      sentDate: "2024-01-18"
-    },
-    {
-      id: "2",
-      name: "New Product Launch",
-      subject: "Introducing Our Latest Innovation",
-      sent: 8750,
-      opens: 2980,
-      clicks: 536,
-      openRate: 34.1,
-      clickRate: 6.1,
-      sentDate: "2024-01-15"
-    },
-    {
-      id: "3",
-      name: "Cart Recovery",
-      subject: "Don't forget your items",
-      sent: 3240,
-      opens: 1134,
-      clicks: 227,
-      openRate: 35.0,
-      clickRate: 7.0,
-      sentDate: "2024-01-12"
-    }
-  ];
+  // Calculate summary stats from real data
+  const totalSent = campaigns.reduce((sum, c) => sum + c.sent, 0);
+  const totalOpens = campaigns.reduce((sum, c) => sum + c.opens, 0);
+  const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
+  const avgOpenRate = campaigns.length > 0 
+    ? (campaigns.reduce((sum, c) => sum + c.openRate, 0) / campaigns.length).toFixed(1)
+    : "0.0";
 
   return (
     <div className="min-h-screen dark-theme-bg">
@@ -160,7 +156,11 @@ export default function EmailPerformance() {
                   <Mail className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-2xl">27,410</h3>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20 mb-2" />
+                  ) : (
+                    <h3 className="text-white font-bold text-2xl">{totalSent.toLocaleString()}</h3>
+                  )}
                   <p className="text-slate-300 text-sm">Total Sent</p>
                 </div>
               </div>
@@ -174,7 +174,11 @@ export default function EmailPerformance() {
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-2xl">9,399</h3>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20 mb-2" />
+                  ) : (
+                    <h3 className="text-white font-bold text-2xl">{totalOpens.toLocaleString()}</h3>
+                  )}
                   <p className="text-slate-300 text-sm">Total Opens</p>
                 </div>
               </div>
@@ -188,7 +192,11 @@ export default function EmailPerformance() {
                   <MousePointer className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-2xl">1,610</h3>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20 mb-2" />
+                  ) : (
+                    <h3 className="text-white font-bold text-2xl">{totalClicks.toLocaleString()}</h3>
+                  )}
                   <p className="text-slate-300 text-sm">Total Clicks</p>
                 </div>
               </div>
@@ -202,7 +210,11 @@ export default function EmailPerformance() {
                   <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-2xl">34.2%</h3>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-20 mb-2" />
+                  ) : (
+                    <h3 className="text-white font-bold text-2xl">{avgOpenRate}%</h3>
+                  )}
                   <p className="text-slate-300 text-sm">Avg Open Rate</p>
                 </div>
               </div>
@@ -219,7 +231,33 @@ export default function EmailPerformance() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {campaigns.length === 0 ? (
+            {isLoading ? (
+              // Loading skeleton for campaign data
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-slate-800/30 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-1/3" />
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Skeleton className="h-8 w-20" />
+                      <Skeleton className="h-8 w-24" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="text-center space-y-2">
+                        <Skeleton className="h-8 w-20 mx-auto" />
+                        <Skeleton className="h-3 w-16 mx-auto" />
+                        <Skeleton className="h-5 w-14 mx-auto" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : campaigns.length === 0 ? (
               <div className="text-center py-12" data-testid="empty-state-campaigns">
                 <Mail className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
                 <h3 className="text-xl font-semibold text-white mb-2">No email campaigns yet</h3>
@@ -276,7 +314,9 @@ export default function EmailPerformance() {
                     </Badge>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-white">{Math.round(campaign.clicks / campaign.opens * 100)}%</p>
+                    <p className="text-2xl font-bold text-white">
+                      {campaign.opens > 0 ? Math.round(campaign.clicks / campaign.opens * 100) : 0}%
+                    </p>
                     <p className="text-slate-400 text-sm">Click-to-Open</p>
                   </div>
                 </div>
