@@ -1714,6 +1714,37 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Trial and subscription billing tasks (admin only or scheduled)
+  app.post("/api/admin/run-billing-tasks", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // SECURITY: Only allow admins to manually trigger billing tasks
+      if (user.role !== 'admin') {
+        return res.status(403).json({ 
+          error: "Forbidden",
+          message: "Only administrators can trigger billing tasks" 
+        });
+      }
+      
+      const { runBillingTasks } = await import('./lib/trial-expiration-service');
+      
+      // Run billing tasks
+      await runBillingTasks();
+      
+      res.json({ 
+        success: true, 
+        message: "Billing tasks completed successfully" 
+      });
+    } catch (error: any) {
+      console.error("Billing tasks error:", error);
+      res.status(500).json({ 
+        error: "Failed to run billing tasks",
+        message: error.message 
+      });
+    }
+  });
+
   // === PAYONEER ROUTES ===
   
   // Create Payoneer invoice (B2B)

@@ -1,0 +1,221 @@
+import { db } from "../db";
+import { users, subscriptions, subscriptionPlans } from "../../shared/schema";
+import { eq, and, lt } from "drizzle-orm";
+
+/**
+ * Checks for users with expired trials and handles subscription updates
+ * This should be called periodically (e.g., via a cron job or scheduled task)
+ */
+export async function handleExpiredTrials(): Promise<{
+  processedCount: number;
+  errors: string[];
+}> {
+  const now = new Date();
+  const errors: string[] = [];
+  let processedCount = 0;
+
+  try {
+    // Find users with expired trials that haven't been converted
+    const expiredTrialUsers = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          lt(users.trialEndDate, now),
+          eq(users.plan, "trial")
+        )
+      );
+
+    console.log(`[Trial Service] Found ${expiredTrialUsers.length} expired trial users`);
+
+    // Get the "Starter" plan as default fallback
+    const starterPlan = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.planName, "Starter"))
+      .limit(1);
+
+    if (!starterPlan || starterPlan.length === 0) {
+      errors.push("No starter plan found for trial conversion");
+      return { processedCount: 0, errors };
+    }
+
+    for (const user of expiredTrialUsers) {
+      try {
+        // Check if user already has an active subscription
+        const existingSubscription = await db
+          .select()
+          .from(subscriptions)
+          .where(
+            and(
+              eq(subscriptions.userId, user.id),
+              eq(subscriptions.status, "active")
+            )
+          )
+          .limit(1);
+
+        if (existingSubscription && existingSubscription.length > 0) {
+          // User already has active subscription, just update user plan status
+          await db
+            .update(users)
+            .set({ plan: existingSubscription[0].planId })
+            .where(eq(users.id, user.id));
+          
+          processedCount++;
+          continue;
+        }
+
+        // No active subscription - update subscription to "past_due" to trigger payment
+        const userSubscriptions = await db
+          .select()
+          .from(subscriptions)
+          .where(eq(subscriptions.userId, user.id))
+          .limit(1);
+
+        if (userSubscriptions && userSubscriptions.length > 0) {
+          // Update existing subscription to past_due
+          await db
+            .update(subscriptions)
+            .set({ 
+              status: "past_due",
+              trialEnd: now,
+            })
+            .where(eq(subscriptions.id, userSubscriptions[0].id));
+        } else {
+          // Create new subscription in past_due state
+          await db
+            .insert(subscriptions)
+            .values({
+              userId: user.id,
+              planId: starterPlan[0].id,
+              status: "past_due",
+              trialEnd: now,
+              currentPeriodStart: now,
+              currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days
+            });
+        }
+
+        // Update user status to reflect trial ended
+        await db
+          .update(users)
+          .set({ plan: "past_due" })
+          .where(eq(users.id, user.id));
+
+        console.log(`[Trial Service] Processed expired trial for user ${user.id}`);
+        processedCount++;
+
+        // TODO: Send trial expiration email/notification
+        // This would integrate with SendGrid or notification system
+
+      } catch (error: any) {
+        const errorMsg = `Failed to process user ${user.id}: ${error.message}`;
+        console.error(`[Trial Service] ${errorMsg}`);
+        errors.push(errorMsg);
+      }
+    }
+
+    return { processedCount, errors };
+  } catch (error: any) {
+    const errorMsg = `Trial expiration service failed: ${error.message}`;
+    console.error(`[Trial Service] ${errorMsg}`);
+    return { processedCount, errors: [errorMsg] };
+  }
+}
+
+/**
+ * Handles auto-billing for subscriptions at the end of billing period
+ * This should be called periodically to process renewals
+ */
+export async function handleSubscriptionRenewals(): Promise<{
+  processedCount: number;
+  errors: string[];
+}> {
+  const now = new Date();
+  const errors: string[] = [];
+  let processedCount = 0;
+
+  try {
+    // Find subscriptions that have reached their billing period end
+    const dueSubscriptions = await db
+      .select()
+      .from(subscriptions)
+      .where(
+        and(
+          lt(subscriptions.currentPeriodEnd, now),
+          eq(subscriptions.status, "active"),
+          eq(subscriptions.cancelAtPeriodEnd, false)
+        )
+      );
+
+    console.log(`[Billing Service] Found ${dueSubscriptions.length} subscriptions due for renewal`);
+
+    for (const subscription of dueSubscriptions) {
+      try {
+        // Calculate next billing period
+        const nextPeriodStart = subscription.currentPeriodEnd || now;
+        const nextPeriodEnd = new Date(nextPeriodStart);
+        
+        // Get subscription plan to determine interval
+        const plan = await db
+          .select()
+          .from(subscriptionPlans)
+          .where(eq(subscriptionPlans.id, subscription.planId))
+          .limit(1);
+
+        if (!plan || plan.length === 0) {
+          errors.push(`Plan not found for subscription ${subscription.id}`);
+          continue;
+        }
+
+        // Calculate next period end based on interval
+        if (plan[0].interval === "year") {
+          nextPeriodEnd.setFullYear(nextPeriodEnd.getFullYear() + 1);
+        } else {
+          nextPeriodEnd.setMonth(nextPeriodEnd.getMonth() + 1);
+        }
+
+        // Update subscription with new billing period
+        await db
+          .update(subscriptions)
+          .set({
+            currentPeriodStart: nextPeriodStart,
+            currentPeriodEnd: nextPeriodEnd,
+            updatedAt: now,
+          })
+          .where(eq(subscriptions.id, subscription.id));
+
+        console.log(`[Billing Service] Renewed subscription ${subscription.id} until ${nextPeriodEnd}`);
+        processedCount++;
+
+        // TODO: Trigger payment via payment gateway webhook or API
+        // This would integrate with Razorpay/PayPal subscription APIs
+
+      } catch (error: any) {
+        const errorMsg = `Failed to renew subscription ${subscription.id}: ${error.message}`;
+        console.error(`[Billing Service] ${errorMsg}`);
+        errors.push(errorMsg);
+      }
+    }
+
+    return { processedCount, errors };
+  } catch (error: any) {
+    const errorMsg = `Subscription renewal service failed: ${error.message}`;
+    console.error(`[Billing Service] ${errorMsg}`);
+    return { processedCount, errors: [errorMsg] };
+  }
+}
+
+/**
+ * Main scheduled task that runs both trial expiration and renewal checks
+ */
+export async function runBillingTasks(): Promise<void> {
+  console.log("[Billing Tasks] Starting scheduled billing tasks...");
+  
+  const trialResults = await handleExpiredTrials();
+  console.log(`[Billing Tasks] Trial processing: ${trialResults.processedCount} processed, ${trialResults.errors.length} errors`);
+  
+  const renewalResults = await handleSubscriptionRenewals();
+  console.log(`[Billing Tasks] Renewals: ${renewalResults.processedCount} processed, ${renewalResults.errors.length} errors`);
+  
+  console.log("[Billing Tasks] Completed billing tasks");
+}

@@ -55,6 +55,35 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
+  // Initialize billing tasks scheduler
+  async function initializeBillingScheduler() {
+    try {
+      const { runBillingTasks } = await import('./lib/trial-expiration-service');
+      
+      // Run billing tasks every 6 hours (21600000 ms)
+      const BILLING_INTERVAL = 6 * 60 * 60 * 1000;
+      
+      // Run once on startup (after a delay to allow server to start)
+      setTimeout(async () => {
+        log("[Scheduler] Running initial billing tasks...");
+        await runBillingTasks();
+      }, 30000); // 30 seconds after startup
+      
+      // Set up recurring execution
+      setInterval(async () => {
+        log("[Scheduler] Running scheduled billing tasks...");
+        await runBillingTasks();
+      }, BILLING_INTERVAL);
+      
+      log("[Scheduler] Billing tasks scheduler initialized (runs every 6 hours)");
+    } catch (error) {
+      log(`[Scheduler] Failed to initialize billing scheduler: ${error}`);
+    }
+  }
+
+  // Start billing scheduler
+  initializeBillingScheduler();
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
