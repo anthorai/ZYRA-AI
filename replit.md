@@ -2,6 +2,15 @@
 
 Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, and an analytics dashboard to enhance store performance and drive significant ROI.
 
+# Recent Changes (October 2025)
+
+## Phase 4: Real Marketing Automation & Analytics Complete
+- **Campaign Scheduler**: Runs every 5 minutes, processes scheduled campaigns and sends emails/SMS
+- **Real Analytics Tracking**: Dashboard with real revenue metrics, conversion rates, and campaign performance
+- **PDF/CSV Export**: Generate downloadable analytics reports in PDF and CSV formats
+- **Revenue Tracking**: Track campaign conversions and calculate ROI from abandoned cart recovery
+- **Abandoned Cart Recovery**: Automated email/SMS recovery with real SendGrid/Twilio delivery
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -28,6 +37,12 @@ Client-side state uses TanStack Query for server state caching, React Hook Form 
 
 ## Payment System
 A multi-gateway payment system supports Razorpay (India), PayPal (International), and planned Stripe integration. It includes database schema for transaction tracking, gateway-specific services, and webhook handling.
+
+## Marketing Automation System
+Real email/SMS delivery using SendGrid and Twilio via Replit connectors. Campaign scheduler runs every 5 minutes to process scheduled sends. Features include campaign templates, abandoned cart recovery, and performance tracking with open/click/conversion rates.
+
+## Analytics & Reporting
+Real-time analytics dashboard tracking campaigns, revenue, conversions, and ROI. Export capabilities include PDF reports (jsPDF) and CSV data exports. Tracks abandoned cart recovery rates and potential revenue.
 
 # External Dependencies
 

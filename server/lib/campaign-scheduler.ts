@@ -6,20 +6,20 @@ export async function processScheduledCampaigns() {
   console.log('[Campaign Scheduler] Checking for scheduled campaigns...');
 
   try {
-    // Get all campaigns scheduled for now or earlier that haven't been sent
+    // Get all campaigns that are scheduled and ready to send
     const now = new Date();
-    const { data: campaigns, error } = await (supabaseStorage as any).supabase
-      .from('campaigns')
-      .select('*')
-      .eq('status', 'scheduled')
-      .lte('scheduled_for', now.toISOString());
+    
+    // Get all scheduled campaigns using the storage layer
+    // Note: We'll filter by scheduledFor in code since we can't query by date directly
+    const allCampaigns = await supabaseStorage.getAllCampaigns();
+    
+    const campaigns = allCampaigns.filter((c: any) => 
+      c.status === 'scheduled' && 
+      c.scheduledFor && 
+      new Date(c.scheduledFor) <= now
+    );
 
-    if (error) {
-      console.error('[Campaign Scheduler] Error fetching scheduled campaigns:', error);
-      return { processed: 0, errors: 1 };
-    }
-
-    if (!campaigns || campaigns.length === 0) {
+    if (campaigns.length === 0) {
       console.log('[Campaign Scheduler] No scheduled campaigns to process');
       return { processed: 0, errors: 0 };
     }
@@ -31,7 +31,7 @@ export async function processScheduledCampaigns() {
 
     for (const campaign of campaigns) {
       try {
-        const recipientList = campaign.recipient_list as string[] || [];
+        const recipientList = campaign.recipientList as string[] || [];
         
         if (recipientList.length === 0) {
           console.log(`[Campaign Scheduler] Skipping campaign ${campaign.id} - no recipients`);
@@ -68,26 +68,22 @@ export async function processScheduledCampaigns() {
         }
 
         // Update campaign status
-        const { error: updateError } = await (supabaseStorage as any).supabase
-          .from('campaigns')
-          .update({
+        try {
+          await supabaseStorage.updateCampaign(campaign.id, {
             status: 'sent',
-            sent_at: new Date().toISOString(),
-            sent_count: sentCount
-          })
-          .eq('id', campaign.id);
-
-        if (updateError) {
-          console.error(`[Campaign Scheduler] Error updating campaign ${campaign.id}:`, updateError);
-          errors++;
-        } else {
+            sentAt: new Date() as any,
+            sentCount
+          });
           console.log(`[Campaign Scheduler] Successfully sent campaign ${campaign.id} to ${sentCount} recipients`);
           processed++;
+        } catch (updateError: any) {
+          console.error(`[Campaign Scheduler] Error updating campaign ${campaign.id}:`, updateError);
+          errors++;
         }
 
         // Track activity
         await supabaseStorage.trackActivity({
-          userId: campaign.user_id,
+          userId: campaign.userId,
           action: 'scheduled_campaign_sent',
           description: `Scheduled ${campaign.type} campaign sent: ${campaign.name}`,
           metadata: { campaignId: campaign.id, type: campaign.type, sentCount },

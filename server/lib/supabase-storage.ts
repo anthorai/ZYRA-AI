@@ -81,6 +81,7 @@ export interface ISupabaseStorage {
 
   // Campaign methods
   getCampaigns(userId: string): Promise<Campaign[]>;
+  getAllCampaigns(): Promise<Campaign[]>;
   getCampaign(id: string): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign>;
@@ -494,6 +495,15 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('userId', userId);
     
     if (error) throw new Error(`Failed to get campaigns: ${error.message}`);
+    return data || [];
+  }
+
+  async getAllCampaigns(): Promise<Campaign[]> {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*');
+    
+    if (error) throw new Error(`Failed to get all campaigns: ${error.message}`);
     return data || [];
   }
 
