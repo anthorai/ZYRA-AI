@@ -4,6 +4,13 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 
 # Recent Changes (October 2025)
 
+## Phase 5: Security, Compliance & Error Handling Complete
+- **Rate Limiting**: Multi-tier rate limiting (auth: 15/15min, AI: 10/min, campaigns: 20/min, payments: 10/min, uploads: 5/min)
+- **Input Sanitization**: Comprehensive input validation middleware using express-validator
+- **GDPR Compliance**: Data export and deletion endpoints with proper anonymization
+- **Privacy & Terms Pages**: Full Privacy Policy and Terms of Service with proper routing
+- **Error Handling**: Retry logic in API calls, proper loading states, and validation error messages
+
 ## Phase 4: Real Marketing Automation & Analytics Complete
 - **Campaign Scheduler**: Runs every 5 minutes, processes scheduled campaigns and sends emails/SMS
 - **Real Analytics Tracking**: Dashboard with real revenue metrics, conversion rates, and campaign performance
