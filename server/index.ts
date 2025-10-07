@@ -55,29 +55,46 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  // Initialize billing tasks scheduler
+  // Initialize billing tasks scheduler with singleton pattern
+  let billingSchedulerInitialized = false;
+  
   async function initializeBillingScheduler() {
+    // Prevent duplicate initialization (e.g., during hot reload)
+    if (billingSchedulerInitialized) {
+      log("[Scheduler] Billing scheduler already initialized, skipping");
+      return;
+    }
+    
     try {
       const { runBillingTasks } = await import('./lib/trial-expiration-service');
       
       // Run billing tasks every 6 hours (21600000 ms)
       const BILLING_INTERVAL = 6 * 60 * 60 * 1000;
       
+      // Wrapper to safely execute billing tasks with error handling
+      const safeBillingTasksExecution = async () => {
+        try {
+          log("[Scheduler] Running billing tasks...");
+          await runBillingTasks();
+          log("[Scheduler] Billing tasks completed successfully");
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          log(`[Scheduler] ERROR in billing tasks: ${errorMsg}`);
+          // Don't crash - log error and continue with next scheduled run
+        }
+      };
+      
       // Run once on startup (after a delay to allow server to start)
-      setTimeout(async () => {
-        log("[Scheduler] Running initial billing tasks...");
-        await runBillingTasks();
-      }, 30000); // 30 seconds after startup
+      setTimeout(safeBillingTasksExecution, 30000); // 30 seconds after startup
       
-      // Set up recurring execution
-      setInterval(async () => {
-        log("[Scheduler] Running scheduled billing tasks...");
-        await runBillingTasks();
-      }, BILLING_INTERVAL);
+      // Set up recurring execution with error handling
+      setInterval(safeBillingTasksExecution, BILLING_INTERVAL);
       
+      billingSchedulerInitialized = true;
       log("[Scheduler] Billing tasks scheduler initialized (runs every 6 hours)");
     } catch (error) {
-      log(`[Scheduler] Failed to initialize billing scheduler: ${error}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log(`[Scheduler] CRITICAL: Failed to initialize billing scheduler: ${errorMsg}`);
     }
   }
 
