@@ -18,7 +18,8 @@ import NotFound from "@/pages/not-found";
 
 // Lazy load all other pages for better performance
 const AboutPage = lazy(() => import("@/pages/about"));
-const PrivacyPolicyPage = lazy(() => import("@/pages/privacy-policy"));
+const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsOfServicePage = lazy(() => import("@/pages/TermsOfService"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
@@ -107,6 +108,11 @@ function Router() {
       <Route path="/privacy-policy" component={() => (
         <Suspense fallback={<PageLoader />}>
           <PrivacyPolicyPage />
+        </Suspense>
+      )} />
+      <Route path="/terms-of-service" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <TermsOfServicePage />
         </Suspense>
       )} />
       <Route path="/auth/callback" component={() => (

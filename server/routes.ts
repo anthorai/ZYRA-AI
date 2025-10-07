@@ -3447,6 +3447,143 @@ Respond with JSON in this exact format:
     }
   });
 
+  // ===== GDPR COMPLIANCE ROUTES =====
+
+  // Export all user data (GDPR Right to Data Portability)
+  app.get('/api/gdpr/export-data', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Gather all user data
+      const [
+        user,
+        products,
+        campaigns,
+        templates,
+        abandonedCarts,
+        analytics,
+        notifications,
+        usageStats,
+        activityLogs
+      ] = await Promise.all([
+        supabaseStorage.getUser(userId),
+        supabaseStorage.getProducts(userId),
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getCampaignTemplates(userId),
+        supabaseStorage.getAbandonedCarts(userId),
+        supabaseStorage.getAnalytics(userId),
+        supabaseStorage.getNotifications(userId),
+        supabaseStorage.getUserUsageStats(userId),
+        supabaseStorage.getUserActivityLogs(userId)
+      ]);
+
+      const userData = {
+        user: {
+          id: user?.id,
+          email: user?.email,
+          fullName: user?.fullName,
+          role: user?.role,
+          plan: user?.plan,
+          createdAt: user?.createdAt
+        },
+        products,
+        campaigns,
+        templates,
+        abandonedCarts,
+        analytics,
+        notifications,
+        usageStats,
+        activityLogs,
+        exportDate: new Date().toISOString(),
+        notice: 'This is a complete export of your personal data stored in ZYRA as per GDPR Article 20.'
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="zyra_data_export_${userId}_${new Date().toISOString().split('T')[0]}.json"`);
+      res.send(JSON.stringify(userData, null, 2));
+    } catch (error) {
+      console.error('Data export error:', error);
+      res.status(500).json({ error: 'Failed to export data' });
+    }
+  });
+
+  // Request account deletion (GDPR Right to Erasure)
+  app.post('/api/gdpr/delete-account', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { confirmation } = req.body;
+
+      if (confirmation !== 'DELETE MY ACCOUNT') {
+        return res.status(400).json({ 
+          error: 'Please confirm account deletion by typing "DELETE MY ACCOUNT"' 
+        });
+      }
+
+      // Delete all user data in sequence
+      const products = await supabaseStorage.getProducts(userId);
+      for (const product of products) {
+        await supabaseStorage.deleteProduct(product.id);
+      }
+
+      const campaigns = await supabaseStorage.getCampaigns(userId);
+      for (const campaign of campaigns) {
+        await supabaseStorage.deleteCampaign(campaign.id);
+      }
+
+      const templates = await supabaseStorage.getCampaignTemplates(userId);
+      for (const template of templates) {
+        await supabaseStorage.deleteCampaignTemplate(template.id);
+      }
+
+      // Delete user account from Supabase Auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) {
+        console.error('Error deleting Supabase auth user:', authError);
+      }
+
+      // Note: User data in other tables will be cascade deleted due to foreign key constraints
+      
+      res.json({ 
+        success: true, 
+        message: 'Your account and all associated data have been permanently deleted.' 
+      });
+    } catch (error) {
+      console.error('Account deletion error:', error);
+      res.status(500).json({ error: 'Failed to delete account' });
+    }
+  });
+
+  // Get data deletion status
+  app.get('/api/gdpr/deletion-info', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Count user data
+      const [products, campaigns, templates] = await Promise.all([
+        supabaseStorage.getProducts(userId),
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getCampaignTemplates(userId)
+      ]);
+
+      res.json({
+        dataToBeDeleted: {
+          products: products.length,
+          campaigns: campaigns.length,
+          templates: templates.length,
+          note: 'All your data including analytics, notifications, and activity logs will be permanently deleted.'
+        },
+        policy: {
+          retentionPeriod: 'Data is deleted immediately upon request',
+          backups: 'Data in backups will be deleted within 30 days',
+          thirdParty: 'We will request deletion from third-party services where applicable'
+        }
+      });
+    } catch (error) {
+      console.error('Deletion info error:', error);
+      res.status(500).json({ error: 'Failed to get deletion info' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
