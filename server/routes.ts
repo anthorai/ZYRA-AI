@@ -1694,6 +1694,26 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Payment Gateway Selection
+  app.get("/api/payments/gateway-selection", requireAuth, async (req, res) => {
+    try {
+      const { selectPaymentGateway, getAvailableGateways } = await import('./lib/payment-gateway-selector');
+      const { currency, countryCode } = req.query as { currency?: string; countryCode?: string };
+      
+      const recommended = selectPaymentGateway(currency, countryCode);
+      const available = getAvailableGateways(currency);
+      
+      res.json({
+        recommended,
+        available,
+        currentCurrency: currency || 'USD'
+      });
+    } catch (error: any) {
+      console.error("Gateway selection error:", error);
+      res.status(500).json({ error: "Failed to determine payment gateway" });
+    }
+  });
+
   // === PAYONEER ROUTES ===
   
   // Create Payoneer invoice (B2B)
