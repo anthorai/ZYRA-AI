@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
 
 // App user type for backend user profiles
 interface AppUser {
@@ -35,7 +36,13 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Session timeout constants (in milliseconds)
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const WARNING_BEFORE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const WARNING_TIME = INACTIVITY_TIMEOUT - WARNING_BEFORE_TIMEOUT; // Show warning at 25 minutes
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -44,8 +51,117 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Session timeout refs
+  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const warningShownRef = useRef(false);
+  const isMountedRef = useRef(true); // Track component mount state
+  const hasHadActivityRef = useRef(false); // Track if user has had any activity
+
+  // Clear all session timeout timers
+  const clearSessionTimers = () => {
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+    if (logoutTimeoutRef.current) {
+      clearTimeout(logoutTimeoutRef.current);
+      logoutTimeoutRef.current = null;
+    }
+    warningShownRef.current = false;
+  };
+
+  // Handle automatic logout due to inactivity
+  const handleInactivityLogout = async () => {
+    // Guard against component unmount
+    if (!isMountedRef.current) return;
+    
+    console.log('⏰ Session timeout - logging out due to inactivity');
+    toast({
+      title: "Session Expired",
+      description: "You have been logged out due to inactivity.",
+      variant: "destructive",
+    });
+    await supabase.auth.signOut();
+  };
+
+  // Show warning toast before logout
+  const showInactivityWarning = () => {
+    if (!warningShownRef.current) {
+      warningShownRef.current = true;
+      console.log('⚠️ Showing inactivity warning');
+      toast({
+        title: "Session Expiring Soon",
+        description: "You will be logged out in 5 minutes due to inactivity. Move your mouse or click to stay logged in.",
+        variant: "default",
+      });
+    }
+  };
+
+  // Reset session timeout timers on user activity
+  const resetSessionTimeout = () => {
+    // Only reset if user is authenticated
+    if (!user) return;
+
+    // Only start timers if we've had user activity (prevents premature timer start)
+    if (!hasHadActivityRef.current) return;
+
+    clearSessionTimers();
+
+    // Set warning timeout (25 minutes)
+    warningTimeoutRef.current = setTimeout(() => {
+      showInactivityWarning();
+    }, WARNING_TIME);
+
+    // Set logout timeout (30 minutes)
+    logoutTimeoutRef.current = setTimeout(() => {
+      handleInactivityLogout();
+    }, INACTIVITY_TIMEOUT);
+  };
+
+  // Track user activity for session timeout
+  useEffect(() => {
+    // Only set up activity tracking if user is authenticated
+    if (!user) {
+      clearSessionTimers();
+      hasHadActivityRef.current = false; // Reset activity flag when user logs out
+      return;
+    }
+
+    // Activity event types to track
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    const eventOptions: AddEventListenerOptions = { passive: true }; // Store options to reuse for both add and remove
+
+    // Reset timeout on any activity
+    const handleActivity = () => {
+      // Only start timers after first activity (prevents premature timer start)
+      if (!hasHadActivityRef.current) {
+        hasHadActivityRef.current = true;
+        console.log('🎯 First user activity detected - starting session timers');
+      }
+      resetSessionTimeout();
+    };
+
+    // Don't initialize timeout immediately - wait for first user activity
+    // This prevents timers from starting on page load/refresh before user interaction
+
+    // Add event listeners for user activity
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleActivity, eventOptions);
+    });
+
+    // Cleanup function
+    return () => {
+      clearSessionTimers();
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleActivity, eventOptions); // Now matches addEventListener
+      });
+    };
+  }, [user]); // Re-run when user authentication state changes
+
   useEffect(() => {
     let mounted = true;
+    isMountedRef.current = true; // Set to true on mount
     let initTimeoutId: NodeJS.Timeout;
 
     // Set a maximum timeout for initial auth setup to prevent infinite loading
@@ -141,6 +257,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       mounted = false;
+      isMountedRef.current = false; // Set to false on unmount
       clearTimeout(initTimeout);
       subscription.unsubscribe();
     };
