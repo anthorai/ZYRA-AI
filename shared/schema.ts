@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, jsonb, boolean, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, jsonb, boolean, numeric, pgEnum, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -44,7 +44,11 @@ export const products = pgTable("products", {
   isOptimized: boolean("is_optimized").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('products_user_id_idx').on(table.userId),
+  index('products_is_optimized_idx').on(table.isOptimized),
+  index('products_created_at_idx').on(table.createdAt),
+]);
 
 export const seoMeta = pgTable("seo_meta", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -77,7 +81,12 @@ export const campaigns = pgTable("campaigns", {
   metadata: jsonb("metadata"), // additional campaign settings, tracking pixels, etc
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('campaigns_user_id_idx').on(table.userId),
+  index('campaigns_status_idx').on(table.status),
+  index('campaigns_scheduled_for_idx').on(table.scheduledFor),
+  index('campaigns_created_at_idx').on(table.createdAt),
+]);
 
 export const campaignTemplates = pgTable("campaign_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -90,7 +99,10 @@ export const campaignTemplates = pgTable("campaign_templates", {
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('campaign_templates_user_id_idx').on(table.userId),
+  index('campaign_templates_created_at_idx').on(table.createdAt),
+]);
 
 export const abandonedCarts = pgTable("abandoned_carts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -104,7 +116,12 @@ export const abandonedCarts = pgTable("abandoned_carts", {
   isRecovered: boolean("is_recovered").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('abandoned_carts_user_id_idx').on(table.userId),
+  index('abandoned_carts_is_recovered_idx').on(table.isRecovered),
+  index('abandoned_carts_recovery_campaign_sent_idx').on(table.recoveryCampaignSent),
+  index('abandoned_carts_created_at_idx').on(table.createdAt),
+]);
 
 export const subscriptions = pgTable("subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -121,7 +138,11 @@ export const subscriptions = pgTable("subscriptions", {
   endDate: timestamp("end_date"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('subscriptions_user_id_idx').on(table.userId),
+  index('subscriptions_status_idx').on(table.status),
+  index('subscriptions_current_period_end_idx').on(table.currentPeriodEnd),
+]);
 
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -155,7 +176,10 @@ export const sessions = pgTable("sessions", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('sessions_user_id_idx').on(table.userId),
+  index('sessions_expires_at_idx').on(table.expiresAt),
+]);
 
 export const usageStats = pgTable("usage_stats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -174,7 +198,9 @@ export const usageStats = pgTable("usage_stats", {
   seoOptimizationsUsed: integer("seo_optimizations_used").default(0),
   lastUpdated: timestamp("last_updated").default(sql`NOW()`),
   lastResetDate: timestamp("last_reset_date").default(sql`NOW()`),
-});
+}, (table) => [
+  index('usage_stats_user_id_idx').on(table.userId),
+]);
 
 export const activityLogs = pgTable("activity_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -184,7 +210,9 @@ export const activityLogs = pgTable("activity_logs", {
   metadata: jsonb("metadata"), // store additional data like product name, campaign id, etc
   toolUsed: text("tool_used"), // 'ai-generator', 'seo-tools', 'campaigns', etc
   createdAt: timestamp("created_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('activity_logs_user_date_idx').on(table.userId, table.createdAt),
+]);
 
 export const toolsAccess = pgTable("tools_access", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -193,7 +221,10 @@ export const toolsAccess = pgTable("tools_access", {
   accessCount: integer("access_count").default(1),
   lastAccessed: timestamp("last_accessed").default(sql`NOW()`),
   firstAccessed: timestamp("first_accessed").default(sql`NOW()`),
-});
+}, (table) => [
+  index('tools_access_user_id_idx').on(table.userId),
+  index('tools_access_last_accessed_idx').on(table.lastAccessed),
+]);
 
 export const realtimeMetrics = pgTable("realtime_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -203,7 +234,10 @@ export const realtimeMetrics = pgTable("realtime_metrics", {
   changePercent: text("change_percent"),
   isPositive: boolean("is_positive").default(true),
   timestamp: timestamp("timestamp").default(sql`NOW()`),
-});
+}, (table) => [
+  index('realtime_metrics_user_id_idx').on(table.userId),
+  index('realtime_metrics_timestamp_idx').on(table.timestamp),
+]);
 
 export const analytics = pgTable("analytics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -212,7 +246,9 @@ export const analytics = pgTable("analytics", {
   value: integer("value").notNull(),
   date: timestamp("date").default(sql`NOW()`),
   metadata: jsonb("metadata"),
-});
+}, (table) => [
+  index('analytics_user_metric_date_idx').on(table.userId, table.metricType, table.date),
+]);
 
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -225,7 +261,11 @@ export const notifications = pgTable("notifications", {
   actionLabel: text("action_label"), // Optional label for action button
   createdAt: timestamp("created_at").default(sql`NOW()`),
   readAt: timestamp("read_at"),
-});
+}, (table) => [
+  index('notifications_user_id_idx').on(table.userId),
+  index('notifications_is_read_idx').on(table.isRead),
+  index('notifications_created_at_idx').on(table.createdAt),
+]);
 
 export const storeConnections = pgTable("store_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -239,7 +279,10 @@ export const storeConnections = pgTable("store_connections", {
   lastSyncAt: timestamp("last_sync_at"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('store_connections_user_id_idx').on(table.userId),
+  index('store_connections_status_idx').on(table.status),
+]);
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -358,14 +401,10 @@ export const integrationSettings = pgTable("integration_settings", {
   lastSync: timestamp("last_sync"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-}, (table) => {
-  return {
-    // Prevent duplicate integrations for same user/provider/type
-    uniqueUserIntegration: sql`UNIQUE(${table.userId}, ${table.integrationType}, ${table.provider})`,
-    // Performance indexes
-    userIdIdx: sql`INDEX integration_settings_user_id_idx ON integration_settings(${table.userId})`,
-  }
-});
+}, (table) => [
+  uniqueIndex('integration_settings_unique_user_integration_idx').on(table.userId, table.integrationType, table.provider),
+  index('integration_settings_user_id_idx').on(table.userId),
+]);
 
 export const securitySettings = pgTable("security_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -389,12 +428,9 @@ export const loginLogs = pgTable("login_logs", {
   success: boolean("success").notNull(),
   failureReason: text("failure_reason"), // if failed
   createdAt: timestamp("created_at").default(sql`NOW()`),
-}, (table) => {
-  return {
-    // Performance index for user activity queries
-    userDateIdx: sql`INDEX login_logs_user_date_idx ON login_logs(${table.userId}, ${table.createdAt})`,
-  }
-});
+}, (table) => [
+  index('login_logs_user_date_idx').on(table.userId, table.createdAt),
+]);
 
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -407,12 +443,9 @@ export const supportTickets = pgTable("support_tickets", {
   metadata: jsonb("metadata"), // attachments, user info, etc.
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-}, (table) => {
-  return {
-    // Performance index for user support queries
-    userIdIdx: sql`INDEX support_tickets_user_id_idx ON support_tickets(${table.userId})`,
-  }
-});
+}, (table) => [
+  index('support_tickets_user_id_idx').on(table.userId),
+]);
 
 export const aiGenerationHistory = pgTable("ai_generation_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -424,12 +457,9 @@ export const aiGenerationHistory = pgTable("ai_generation_history", {
   tokensUsed: integer("tokens_used"),
   model: text("model").default("gpt-4o-mini"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
-}, (table) => {
-  return {
-    // Performance index for user AI history queries
-    userDateIdx: sql`INDEX ai_generation_history_user_date_idx ON ai_generation_history(${table.userId}, ${table.createdAt})`,
-  }
-});
+}, (table) => [
+  index('ai_generation_history_user_date_idx').on(table.userId, table.createdAt),
+]);
 
 // Enhanced insert schemas for new tables
 export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
@@ -516,7 +546,11 @@ export const invoices = pgTable("invoices", {
   dueDate: timestamp("due_date"),
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('invoices_user_id_idx').on(table.userId),
+  index('invoices_status_idx').on(table.status),
+  index('invoices_created_at_idx').on(table.createdAt),
+]);
 
 export const paymentMethods = pgTable("payment_methods", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -530,7 +564,9 @@ export const paymentMethods = pgTable("payment_methods", {
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('payment_methods_user_id_idx').on(table.userId),
+]);
 
 export const billingHistory = pgTable("billing_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -544,7 +580,10 @@ export const billingHistory = pgTable("billing_history", {
   description: text("description"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('billing_history_user_id_idx').on(table.userId),
+  index('billing_history_created_at_idx').on(table.createdAt),
+]);
 
 // Payment gateway transactions table
 export const paymentTransactions = pgTable("payment_transactions", {
@@ -572,14 +611,12 @@ export const paymentTransactions = pgTable("payment_transactions", {
   metadata: jsonb("metadata"), // Additional data
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
-}, (table) => {
-  return {
-    userIdIdx: sql`INDEX payment_transactions_user_id_idx ON payment_transactions(${table.userId})`,
-    gatewayIdx: sql`INDEX payment_transactions_gateway_idx ON payment_transactions(${table.gateway})`,
-    statusIdx: sql`INDEX payment_transactions_status_idx ON payment_transactions(${table.status})`,
-    createdAtIdx: sql`INDEX payment_transactions_created_at_idx ON payment_transactions(${table.createdAt})`,
-  }
-});
+}, (table) => [
+  index('payment_transactions_user_id_idx').on(table.userId),
+  index('payment_transactions_gateway_idx').on(table.gateway),
+  index('payment_transactions_status_idx').on(table.status),
+  index('payment_transactions_created_at_idx').on(table.createdAt),
+]);
 
 // Billing table schemas
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
