@@ -2803,7 +2803,7 @@ Respond with JSON in this exact format:
       for (const productData of products) {
         try {
           // Map CSV columns to product schema
-          const product = await supabaseStorage.createProduct({
+          const productPayload = {
             name: productData.Name || productData.name || productData.Title || productData.title,
             description: productData.Description || productData.description || '',
             price: productData.Price || productData.price || '0',
@@ -2814,7 +2814,8 @@ Respond with JSON in this exact format:
               ? (typeof productData.Tags === 'string' ? productData.Tags.split(';') : productData.tags.split(';'))
               : [],
             image: productData['Image URL'] || productData.image || productData.Image || ''
-          });
+          };
+          const product = await supabaseStorage.createProduct(productPayload as any);
           imported.push(product);
         } catch (error) {
           errors.push({ 

@@ -264,7 +264,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       ...user,
       id: user.id || randomUUID(), // Accept provided id (for Supabase users) or generate new one
       password: hashedPassword,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString() as any
     });
 
     const { data, error } = await supabase

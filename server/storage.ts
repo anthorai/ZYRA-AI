@@ -182,7 +182,7 @@ export interface IStorage {
   updatePaymentTransaction(transactionId: string, updates: any): Promise<any>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class DatabaseStorage {
   async getUser(id: string): Promise<User | undefined> {
     if (!db) throw new Error("Database not configured");
     const result = await db.select().from(users).where(eq(users.id, id));
@@ -575,7 +575,7 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export class MemStorage implements IStorage {
+export class MemStorage {
   private users: Map<string, User> = new Map();
   private products: Map<string, Product> = new Map();
   private seoMetas: Map<string, SeoMeta> = new Map();
@@ -825,6 +825,12 @@ export class MemStorage implements IStorage {
       clickRate: 0,
       conversionRate: 0,
       createdAt: new Date(),
+      updatedAt: new Date(),
+      templateId: campaign.templateId || null,
+      scheduledFor: campaign.scheduledFor || null,
+      sentAt: campaign.sentAt || null,
+      recipientList: campaign.recipientList || null,
+      metadata: campaign.metadata || null,
     };
     this.campaigns.set(id, newCampaign);
     return newCampaign;
