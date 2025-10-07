@@ -10,7 +10,10 @@ import {
   insertSecuritySettingsSchema,
   insertLoginLogSchema,
   insertSupportTicketSchema,
-  insertAiGenerationHistorySchema
+  insertAiGenerationHistorySchema,
+  insertCampaignSchema,
+  insertCampaignTemplateSchema,
+  insertAbandonedCartSchema
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase } from "./lib/supabase";
@@ -37,6 +40,8 @@ import {
   getPayoneerInvoiceStatus,
   isPayoneerConfigured
 } from "./payoneer";
+import { sendEmail, sendBulkEmails } from "./lib/sendgrid-client";
+import { sendSMS, sendBulkSMS } from "./lib/twilio-client";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -2862,6 +2867,296 @@ Respond with JSON in this exact format:
     } catch (error) {
       console.error('Shopify sync error:', error);
       res.status(500).json({ error: 'Failed to sync with Shopify' });
+    }
+  });
+
+  // ===== CAMPAIGN ROUTES =====
+  
+  // Get all campaigns
+  app.get('/api/campaigns', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaigns = await supabaseStorage.getCampaigns(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error('Get campaigns error:', error);
+      res.status(500).json({ error: 'Failed to get campaigns' });
+    }
+  });
+
+  // Get single campaign
+  app.get('/api/campaigns/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+      
+      res.json(campaign);
+    } catch (error) {
+      console.error('Get campaign error:', error);
+      res.status(500).json({ error: 'Failed to get campaign' });
+    }
+  });
+
+  // Create campaign
+  app.post('/api/campaigns', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const validated = insertCampaignSchema.parse({ ...req.body, userId });
+      const campaign = await supabaseStorage.createCampaign(validated);
+      res.status(201).json(campaign);
+    } catch (error) {
+      console.error('Create campaign error:', error);
+      res.status(400).json({ error: 'Failed to create campaign' });
+    }
+  });
+
+  // Update campaign
+  app.patch('/api/campaigns/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+      
+      const updated = await supabaseStorage.updateCampaign(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error('Update campaign error:', error);
+      res.status(400).json({ error: 'Failed to update campaign' });
+    }
+  });
+
+  // Delete campaign
+  app.delete('/api/campaigns/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+      
+      await supabaseStorage.deleteCampaign(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete campaign error:', error);
+      res.status(500).json({ error: 'Failed to delete campaign' });
+    }
+  });
+
+  // Send campaign (email or SMS)
+  app.post('/api/campaigns/:id/send', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+
+      const recipients = campaign.recipientList as string[] || [];
+      if (recipients.length === 0) {
+        return res.status(400).json({ error: 'No recipients specified' });
+      }
+
+      let sentCount = 0;
+      const errors: any[] = [];
+
+      if (campaign.type === 'email') {
+        // Send emails
+        const messages = recipients.map(email => ({
+          to: email,
+          subject: campaign.subject || 'No Subject',
+          html: campaign.content
+        }));
+
+        try {
+          const result = await sendBulkEmails(messages);
+          sentCount = result.count;
+        } catch (error: any) {
+          console.error('Email sending error:', error);
+          errors.push({ error: error.message });
+        }
+      } else if (campaign.type === 'sms') {
+        // Send SMS
+        const messages = recipients.map(phone => ({
+          to: phone,
+          message: campaign.content
+        }));
+
+        const result = await sendBulkSMS(messages);
+        sentCount = result.sent;
+        errors.push(...result.errors);
+      }
+
+      // Update campaign status
+      await supabaseStorage.updateCampaign(req.params.id, {
+        status: 'sent',
+        sentAt: new Date() as any,
+        sentCount
+      });
+
+      // Track in analytics
+      await supabaseStorage.trackActivity({
+        userId,
+        action: 'sent_campaign',
+        description: `Sent ${campaign.type} campaign: ${campaign.name}`,
+        metadata: { campaignId: campaign.id, type: campaign.type, sentCount },
+        toolUsed: 'campaigns'
+      });
+
+      res.json({ 
+        success: true, 
+        sentCount,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Send campaign error:', error);
+      res.status(500).json({ error: 'Failed to send campaign' });
+    }
+  });
+
+  // ===== CAMPAIGN TEMPLATE ROUTES =====
+  
+  // Get all templates
+  app.get('/api/campaign-templates', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const templates = await supabaseStorage.getCampaignTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      console.error('Get templates error:', error);
+      res.status(500).json({ error: 'Failed to get templates' });
+    }
+  });
+
+  // Create template
+  app.post('/api/campaign-templates', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const validated = insertCampaignTemplateSchema.parse({ ...req.body, userId });
+      const template = await supabaseStorage.createCampaignTemplate(validated);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Create template error:', error);
+      res.status(400).json({ error: 'Failed to create template' });
+    }
+  });
+
+  // Update template
+  app.patch('/api/campaign-templates/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const template = await supabaseStorage.getCampaignTemplate(req.params.id);
+      
+      if (!template || template.userId !== userId) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+      
+      const updated = await supabaseStorage.updateCampaignTemplate(req.params.id, req.body);
+      res.json(updated);
+    } catch (error) {
+      console.error('Update template error:', error);
+      res.status(400).json({ error: 'Failed to update template' });
+    }
+  });
+
+  // Delete template
+  app.delete('/api/campaign-templates/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const template = await supabaseStorage.getCampaignTemplate(req.params.id);
+      
+      if (!template || template.userId !== userId) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+      
+      await supabaseStorage.deleteCampaignTemplate(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete template error:', error);
+      res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
+  // ===== ABANDONED CART ROUTES =====
+  
+  // Get abandoned carts
+  app.get('/api/abandoned-carts', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const carts = await supabaseStorage.getAbandonedCarts(userId);
+      res.json(carts);
+    } catch (error) {
+      console.error('Get abandoned carts error:', error);
+      res.status(500).json({ error: 'Failed to get abandoned carts' });
+    }
+  });
+
+  // Create abandoned cart
+  app.post('/api/abandoned-carts', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const validated = insertAbandonedCartSchema.parse({ ...req.body, userId });
+      const cart = await supabaseStorage.createAbandonedCart(validated);
+      res.status(201).json(cart);
+    } catch (error) {
+      console.error('Create abandoned cart error:', error);
+      res.status(400).json({ error: 'Failed to create abandoned cart' });
+    }
+  });
+
+  // Send recovery campaign for abandoned cart
+  app.post('/api/abandoned-carts/:id/recover', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const cart = await supabaseStorage.getAbandonedCart(req.params.id);
+      
+      if (!cart || cart.userId !== userId) {
+        return res.status(404).json({ error: 'Abandoned cart not found' });
+      }
+
+      if (cart.recoveryCampaignSent) {
+        return res.status(400).json({ error: 'Recovery campaign already sent' });
+      }
+
+      // Send email recovery
+      if (cart.customerEmail) {
+        const cartItems = cart.cartItems as any[];
+        const itemsList = cartItems.map(item => `- ${item.name} (${item.quantity}x)`).join('\n');
+        
+        const emailContent = `
+          <h2>Complete Your Purchase</h2>
+          <p>You left these items in your cart:</p>
+          <pre>${itemsList}</pre>
+          <p>Total Value: $${cart.cartValue}</p>
+          <p><a href="#">Complete your purchase now</a></p>
+        `;
+
+        await sendEmail(cart.customerEmail, 'Complete Your Purchase', emailContent);
+      }
+
+      // Send SMS recovery if phone available
+      if (cart.customerPhone) {
+        const message = `Complete your $${cart.cartValue} purchase! You left items in your cart. Check your email to finish checkout.`;
+        await sendSMS(cart.customerPhone, message);
+      }
+
+      // Update cart status
+      await supabaseStorage.updateAbandonedCart(req.params.id, {
+        recoveryCampaignSent: true
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Send recovery error:', error);
+      res.status(500).json({ error: 'Failed to send recovery campaign' });
     }
   });
 

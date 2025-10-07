@@ -10,6 +10,10 @@ import {
   type InsertSeoMeta,
   type Campaign,
   type InsertCampaign,
+  type CampaignTemplate,
+  type InsertCampaignTemplate,
+  type AbandonedCart,
+  type InsertAbandonedCart,
   type Analytics,
   type InsertAnalytics,
   type Notification,
@@ -81,6 +85,22 @@ export interface ISupabaseStorage {
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign>;
   deleteCampaign(id: string): Promise<void>;
+
+  // Campaign Template methods
+  getCampaignTemplates(userId: string): Promise<CampaignTemplate[]>;
+  getCampaignTemplate(id: string): Promise<CampaignTemplate | undefined>;
+  createCampaignTemplate(template: InsertCampaignTemplate): Promise<CampaignTemplate>;
+  updateCampaignTemplate(id: string, updates: Partial<CampaignTemplate>): Promise<CampaignTemplate>;
+  deleteCampaignTemplate(id: string): Promise<void>;
+
+  // Abandoned Cart methods
+  getAbandonedCarts(userId: string): Promise<AbandonedCart[]>;
+  getAbandonedCart(id: string): Promise<AbandonedCart | undefined>;
+  createAbandonedCart(cart: InsertAbandonedCart): Promise<AbandonedCart>;
+  updateAbandonedCart(id: string, updates: Partial<AbandonedCart>): Promise<AbandonedCart>;
+
+  // Activity tracking
+  trackActivity(activity: InsertActivityLog): Promise<ActivityLog>;
 
   // Analytics methods
   getAnalytics(userId: string): Promise<Analytics[]>;
@@ -528,6 +548,143 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('id', id);
     
     if (error) throw new Error(`Failed to delete campaign: ${error.message}`);
+  }
+
+  // Campaign Template methods
+  async getCampaignTemplates(userId: string): Promise<CampaignTemplate[]> {
+    const { data, error } = await supabase
+      .from('campaign_templates')
+      .select('*')
+      .eq('userId', userId);
+    
+    if (error) throw new Error(`Failed to get campaign templates: ${error.message}`);
+    return data || [];
+  }
+
+  async getCampaignTemplate(id: string): Promise<CampaignTemplate | undefined> {
+    const { data, error } = await supabase
+      .from('campaign_templates')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return undefined;
+      throw new Error(`Failed to get campaign template: ${error.message}`);
+    }
+    return data;
+  }
+
+  async createCampaignTemplate(template: InsertCampaignTemplate): Promise<CampaignTemplate> {
+    const templateData = {
+      ...template,
+      id: randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('campaign_templates')
+      .insert(templateData)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to create campaign template: ${error.message}`);
+    return data;
+  }
+
+  async updateCampaignTemplate(id: string, updates: Partial<CampaignTemplate>): Promise<CampaignTemplate> {
+    const { data, error } = await supabase
+      .from('campaign_templates')
+      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to update campaign template: ${error.message}`);
+    return data;
+  }
+
+  async deleteCampaignTemplate(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('campaign_templates')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw new Error(`Failed to delete campaign template: ${error.message}`);
+  }
+
+  // Abandoned Cart methods
+  async getAbandonedCarts(userId: string): Promise<AbandonedCart[]> {
+    const { data, error } = await supabase
+      .from('abandoned_carts')
+      .select('*')
+      .eq('userId', userId);
+    
+    if (error) throw new Error(`Failed to get abandoned carts: ${error.message}`);
+    return data || [];
+  }
+
+  async getAbandonedCart(id: string): Promise<AbandonedCart | undefined> {
+    const { data, error } = await supabase
+      .from('abandoned_carts')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return undefined;
+      throw new Error(`Failed to get abandoned cart: ${error.message}`);
+    }
+    return data;
+  }
+
+  async createAbandonedCart(cart: InsertAbandonedCart): Promise<AbandonedCart> {
+    const cartData = {
+      ...cart,
+      id: randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('abandoned_carts')
+      .insert(cartData)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to create abandoned cart: ${error.message}`);
+    return data;
+  }
+
+  async updateAbandonedCart(id: string, updates: Partial<AbandonedCart>): Promise<AbandonedCart> {
+    const { data, error } = await supabase
+      .from('abandoned_carts')
+      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to update abandoned cart: ${error.message}`);
+    return data;
+  }
+
+  // Activity tracking
+  async trackActivity(activity: InsertActivityLog): Promise<ActivityLog> {
+    const activityData = {
+      ...activity,
+      id: randomUUID(),
+      createdAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .insert(activityData)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to track activity: ${error.message}`);
+    return data;
   }
 
   // Analytics methods

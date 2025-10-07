@@ -10,6 +10,10 @@ import {
   type InsertSeoMeta,
   type Campaign,
   type InsertCampaign,
+  type CampaignTemplate,
+  type InsertCampaignTemplate,
+  type AbandonedCart,
+  type InsertAbandonedCart,
   type Analytics,
   type InsertAnalytics,
   type Notification,
@@ -30,10 +34,13 @@ import {
   type InsertAiGenerationHistory,
   type PaymentTransaction,
   type InsertPaymentTransaction,
+  type InsertActivityLog,
   users, 
   products, 
   seoMeta, 
-  campaigns, 
+  campaigns,
+  campaignTemplates,
+  abandonedCarts,
   analytics,
   notifications,
   storeConnections,
@@ -43,7 +50,8 @@ import {
   loginLogs,
   supportTickets,
   aiGenerationHistory,
-  paymentTransactions
+  paymentTransactions,
+  activityLogs
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 // Using Supabase for authentication - no local password handling needed
@@ -87,8 +95,26 @@ export interface IStorage {
 
   // Campaign methods
   getCampaigns(userId: string): Promise<Campaign[]>;
+  getCampaign(id: string): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign>;
+  deleteCampaign(id: string): Promise<void>;
+
+  // Campaign Template methods
+  getCampaignTemplates(userId: string): Promise<CampaignTemplate[]>;
+  getCampaignTemplate(id: string): Promise<CampaignTemplate | undefined>;
+  createCampaignTemplate(template: InsertCampaignTemplate): Promise<CampaignTemplate>;
+  updateCampaignTemplate(id: string, updates: Partial<CampaignTemplate>): Promise<CampaignTemplate>;
+  deleteCampaignTemplate(id: string): Promise<void>;
+
+  // Abandoned Cart methods
+  getAbandonedCarts(userId: string): Promise<AbandonedCart[]>;
+  getAbandonedCart(id: string): Promise<AbandonedCart | undefined>;
+  createAbandonedCart(cart: InsertAbandonedCart): Promise<AbandonedCart>;
+  updateAbandonedCart(id: string, updates: Partial<AbandonedCart>): Promise<AbandonedCart>;
+
+  // Activity tracking
+  trackActivity(activity: InsertActivityLog): Promise<void>;
 
   // Analytics methods
   getAnalytics(userId: string, metricType?: string): Promise<Analytics[]>;
