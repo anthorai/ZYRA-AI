@@ -101,6 +101,47 @@ app.use((req, res, next) => {
   // Start billing scheduler
   initializeBillingScheduler();
 
+  // Initialize campaign scheduler with singleton pattern
+  let campaignSchedulerInitialized = false;
+  
+  async function initializeCampaignScheduler() {
+    if (campaignSchedulerInitialized) {
+      log("[Campaign Scheduler] Already initialized, skipping");
+      return;
+    }
+    
+    try {
+      const { processScheduledCampaigns } = await import('./lib/campaign-scheduler');
+      
+      // Run campaign scheduler every 5 minutes (300000 ms)
+      const CAMPAIGN_INTERVAL = 5 * 60 * 1000;
+      
+      const safeCampaignExecution = async () => {
+        try {
+          await processScheduledCampaigns();
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          log(`[Campaign Scheduler] ERROR: ${errorMsg}`);
+        }
+      };
+      
+      // Run once on startup (after a delay)
+      setTimeout(safeCampaignExecution, 45000); // 45 seconds after startup
+      
+      // Set up recurring execution
+      setInterval(safeCampaignExecution, CAMPAIGN_INTERVAL);
+      
+      campaignSchedulerInitialized = true;
+      log("[Campaign Scheduler] Initialized (runs every 5 minutes)");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log(`[Campaign Scheduler] CRITICAL: Failed to initialize: ${errorMsg}`);
+    }
+  }
+
+  // Start campaign scheduler
+  initializeCampaignScheduler();
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

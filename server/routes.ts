@@ -3023,6 +3023,69 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Schedule campaign for future sending
+  app.post('/api/campaigns/:id/schedule', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+
+      const { scheduledFor } = req.body;
+      if (!scheduledFor) {
+        return res.status(400).json({ error: 'scheduledFor date is required' });
+      }
+
+      const scheduledDate = new Date(scheduledFor);
+      if (scheduledDate <= new Date()) {
+        return res.status(400).json({ error: 'Scheduled date must be in the future' });
+      }
+
+      await supabaseStorage.updateCampaign(req.params.id, {
+        status: 'scheduled',
+        scheduledFor: scheduledDate as any
+      });
+
+      res.json({ success: true, scheduledFor: scheduledDate });
+    } catch (error) {
+      console.error('Schedule campaign error:', error);
+      res.status(500).json({ error: 'Failed to schedule campaign' });
+    }
+  });
+
+  // Get campaign performance metrics
+  app.get('/api/campaigns/:id/metrics', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+
+      // Calculate metrics
+      const metrics = {
+        campaignId: campaign.id,
+        name: campaign.name,
+        type: campaign.type,
+        status: campaign.status,
+        sentCount: campaign.sentCount || 0,
+        openRate: campaign.openRate || 0,
+        clickRate: campaign.clickRate || 0,
+        conversionRate: campaign.conversionRate || 0,
+        sentAt: campaign.sentAt,
+        scheduledFor: campaign.scheduledFor
+      };
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Get campaign metrics error:', error);
+      res.status(500).json({ error: 'Failed to get campaign metrics' });
+    }
+  });
+
   // ===== CAMPAIGN TEMPLATE ROUTES =====
   
   // Get all templates
@@ -3158,6 +3221,214 @@ Respond with JSON in this exact format:
     } catch (error) {
       console.error('Send recovery error:', error);
       res.status(500).json({ error: 'Failed to send recovery campaign' });
+    }
+  });
+
+  // ===== REAL ANALYTICS & TRACKING ROUTES =====
+
+  // Get real analytics dashboard data
+  app.get('/api/analytics/dashboard', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get real data from database
+      const campaigns = await supabaseStorage.getCampaigns(userId);
+      const products = await supabaseStorage.getProducts(userId);
+      const abandonedCarts = await supabaseStorage.getAbandonedCarts(userId);
+      const stats = await supabaseStorage.getUserUsageStats(userId);
+      
+      // Calculate real metrics
+      const totalCampaignsSent = campaigns.filter(c => c.status === 'sent').length;
+      const totalEmailsSent = campaigns
+        .filter(c => c.type === 'email' && c.status === 'sent')
+        .reduce((sum, c) => sum + (c.sentCount || 0), 0);
+      const totalSMSSent = campaigns
+        .filter(c => c.type === 'sms' && c.status === 'sent')
+        .reduce((sum, c) => sum + (c.sentCount || 0), 0);
+      
+      // Calculate abandoned cart metrics
+      const totalAbandonedValue = abandonedCarts
+        .reduce((sum, cart) => sum + parseFloat(cart.cartValue as any || '0'), 0);
+      const recoveredCarts = abandonedCarts.filter(c => c.isRecovered).length;
+      const recoveryRate = abandonedCarts.length > 0 
+        ? (recoveredCarts / abandonedCarts.length * 100).toFixed(1) 
+        : '0';
+
+      // Calculate average campaign performance
+      const avgOpenRate = campaigns.length > 0
+        ? campaigns.reduce((sum, c) => sum + (c.openRate || 0), 0) / campaigns.length
+        : 0;
+      const avgClickRate = campaigns.length > 0
+        ? campaigns.reduce((sum, c) => sum + (c.clickRate || 0), 0) / campaigns.length
+        : 0;
+
+      const analytics = {
+        overview: {
+          totalProducts: products.length,
+          totalCampaigns: campaigns.length,
+          campaignsSent: totalCampaignsSent,
+          emailsSent: totalEmailsSent,
+          smsSent: totalSMSSent,
+          aiGenerationsUsed: stats?.aiGenerationsUsed || 0
+        },
+        campaigns: {
+          avgOpenRate: avgOpenRate.toFixed(1),
+          avgClickRate: avgClickRate.toFixed(1),
+          totalSent: totalCampaignsSent,
+          emailCampaigns: campaigns.filter(c => c.type === 'email').length,
+          smsCampaigns: campaigns.filter(c => c.type === 'sms').length
+        },
+        revenue: {
+          totalAbandonedValue: totalAbandonedValue.toFixed(2),
+          recoveredCarts,
+          recoveryRate,
+          potentialRevenue: (totalAbandonedValue * parseFloat(recoveryRate) / 100).toFixed(2)
+        },
+        trends: {
+          last7Days: campaigns.filter(c => {
+            const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            return sentDate && sentDate >= sevenDaysAgo;
+          }).length,
+          last30Days: campaigns.filter(c => {
+            const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            return sentDate && sentDate >= thirtyDaysAgo;
+          }).length
+        }
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error('Get analytics error:', error);
+      res.status(500).json({ error: 'Failed to get analytics' });
+    }
+  });
+
+  // Track conversion (when a campaign leads to a sale)
+  app.post('/api/analytics/track-conversion', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { campaignId, revenue, orderId } = req.body;
+
+      if (!campaignId) {
+        return res.status(400).json({ error: 'campaignId is required' });
+      }
+
+      const campaign = await supabaseStorage.getCampaign(campaignId);
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+
+      // Track the conversion
+      await supabaseStorage.trackActivity({
+        userId,
+        action: 'campaign_conversion',
+        description: `Conversion from campaign: ${campaign.name}`,
+        metadata: { campaignId, revenue: revenue || 0, orderId },
+        toolUsed: 'campaigns'
+      });
+
+      // Update campaign conversion rate (simplified - in real app, track clicks and conversions separately)
+      const newConversionRate = ((campaign.conversionRate || 0) + 1);
+      await supabaseStorage.updateCampaign(campaignId, {
+        conversionRate: newConversionRate
+      });
+
+      res.json({ success: true, conversionTracked: true });
+    } catch (error) {
+      console.error('Track conversion error:', error);
+      res.status(500).json({ error: 'Failed to track conversion' });
+    }
+  });
+
+  // Export analytics to PDF
+  app.get('/api/analytics/export/pdf', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { default: jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
+
+      // Get analytics data
+      const campaigns = await supabaseStorage.getCampaigns(userId);
+      const stats = await supabaseStorage.getUserUsageStats(userId);
+
+      // Create PDF
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text('ZYRA Analytics Report', 14, 20);
+      
+      doc.setFontSize(12);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+      
+      // Overview section
+      doc.setFontSize(16);
+      doc.text('Campaign Overview', 14, 45);
+      
+      doc.setFontSize(10);
+      const sentCampaigns = campaigns.filter(c => c.status === 'sent');
+      doc.text(`Total Campaigns: ${campaigns.length}`, 14, 55);
+      doc.text(`Sent Campaigns: ${sentCampaigns.length}`, 14, 62);
+      doc.text(`AI Generations Used: ${stats?.aiGenerationsUsed || 0}`, 14, 69);
+
+      // Campaign table
+      const tableData = sentCampaigns.slice(0, 20).map(c => [
+        c.name,
+        c.type,
+        c.sentCount || 0,
+        `${c.openRate || 0}%`,
+        `${c.clickRate || 0}%`,
+        c.sentAt ? new Date(c.sentAt).toLocaleDateString() : 'N/A'
+      ]);
+
+      (doc as any).autoTable({
+        startY: 80,
+        head: [['Campaign', 'Type', 'Sent', 'Open Rate', 'Click Rate', 'Date']],
+        body: tableData,
+        theme: 'grid'
+      });
+
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="analytics_${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      res.status(500).json({ error: 'Failed to export PDF' });
+    }
+  });
+
+  // Export analytics to CSV
+  app.get('/api/analytics/export/csv', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaigns = await supabaseStorage.getCampaigns(userId);
+
+      const csvHeaders = ['Campaign Name', 'Type', 'Status', 'Recipients Sent', 'Open Rate', 'Click Rate', 'Conversion Rate', 'Sent Date'];
+      const csvRows = campaigns.map(c => [
+        c.name,
+        c.type,
+        c.status,
+        c.sentCount || 0,
+        `${c.openRate || 0}%`,
+        `${c.clickRate || 0}%`,
+        `${c.conversionRate || 0}%`,
+        c.sentAt ? new Date(c.sentAt).toISOString() : 'Not sent'
+      ]);
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="campaigns_${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error('CSV export error:', error);
+      res.status(500).json({ error: 'Failed to export CSV' });
     }
   });
 
