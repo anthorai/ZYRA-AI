@@ -1807,6 +1807,12 @@ Respond with JSON in this exact format:
     await handleRazorpayWebhook(req, res);
   });
 
+  // PayPal webhook
+  app.post("/api/webhooks/paypal", async (req, res) => {
+    const { handlePaypalWebhook } = await import("./paypal");
+    await handlePaypalWebhook(req, res);
+  });
+
   // === PAYPAL ROUTES (Blueprint integration) ===
   
   // From PayPal blueprint - referenced integration: blueprint:javascript_paypal

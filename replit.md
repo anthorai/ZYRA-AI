@@ -59,14 +59,27 @@ Real email/SMS delivery using SendGrid and Twilio via Replit connectors. Campaig
 Real-time analytics dashboard tracking campaigns, revenue, conversions, and ROI. Export capabilities include PDF reports (jsPDF) and CSV data exports. Tracks abandoned cart recovery rates and potential revenue.
 
 ## Error Tracking & Monitoring
-Production-ready error logging system using database storage. Features include:
-- **ErrorLogger Utility** (`server/lib/errorLogger.ts`): Centralized error logging with context (user, endpoint, request data)
-- **Database Logging**: `error_logs` table tracks all errors with metadata, stack traces, and resolution status
-- **Global Error Middleware**: Catches all unhandled errors in Express routes
-- **Admin Endpoints**: 
-  - GET `/api/admin/error-logs` - View and filter error logs
-  - PATCH `/api/admin/error-logs/:id/resolve` - Mark errors as resolved
-- **Error Types**: api_error, database_error, auth_error, payment_error, ai_error, validation_error, external_api_error
+Production-ready error logging system with comprehensive tracking and non-blocking operations:
+
+**Architecture:**
+- **ErrorLogger Utility** (`server/lib/errorLogger.ts`): Centralized logging with context (user, endpoint, request data)
+- **Database Storage**: `error_logs` table with jsonb columns for metadata, stack traces, and resolution status
+- **Global Error Middleware**: Module-scope handler registered after routes using promise chain
+- **Non-Blocking Design**: Uses setImmediate for async DB writes, no request blocking
+- **Type Safety**: Proper Error type casting with instanceof checks and fallbacks
+
+**Admin Endpoints:**
+- GET `/api/admin/error-logs` - Paginated error logs with filters (status, errorType, userId, resolved)
+- PATCH `/api/admin/error-logs/:id/resolve` - Mark errors as resolved with optional notes
+- **Pagination**: Accurate counts using shared filter queries, validated limit/offset (1-1000)
+
+**Error Categories:**
+api_error, database_error, auth_error, payment_error, ai_error, validation_error, external_api_error
+
+**Implementation Details:**
+- Module-level import efficiency (static imports, no per-request dynamic loading)
+- Robust query validation with NaN handling and safe defaults
+- Context-rich logging with request body, metadata, and stack traces as native JSON
 
 # External Dependencies
 

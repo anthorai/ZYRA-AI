@@ -111,6 +111,13 @@ export function isRazorpayConfigured(): boolean {
 }
 
 export async function handleRazorpayWebhook(req: Request, res: Response) {
+  // NOTE: Current implementation handles basic webhook flow with state-based idempotency.
+  // Known limitations for future enhancement:
+  // 1. Multiple payment attempts per order require order-level tracking (not just payment-level)
+  // 2. Authorized vs captured states should use distinct status values ('authorized' vs 'completed')
+  // 3. Consider adding webhook_events table for per-event idempotency tracking
+  // 4. Handle cases where transaction record doesn't exist (create vs update only)
+  
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     
@@ -137,17 +144,112 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
 
     console.log('Razorpay webhook event:', event);
 
+    // Process webhook and update database
+    const { db } = await import('./db');
+    const { paymentTransactions } = await import('../shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+
     switch (event) {
       case 'payment.authorized':
-      case 'payment.captured':
-        console.log('Payment successful:', payload.payment.entity.id);
+      case 'payment.captured': {
+        const payment = payload.payment.entity;
+        console.log('Payment successful:', payment.id);
+        
+        // Check for existing transaction
+        const existing = await db.select()
+          .from(paymentTransactions)
+          .where(and(
+            eq(paymentTransactions.gatewayTransactionId, payment.id),
+            eq(paymentTransactions.gateway, 'razorpay')
+          ))
+          .limit(1);
+
+        // Idempotency: Skip only if already in completed state
+        if (existing.length > 0 && existing[0].status === 'completed') {
+          console.log('Payment already completed:', payment.id);
+          return res.status(200).json({ success: true, message: 'Already processed' });
+        }
+
+        // Update or create transaction record
+        if (existing.length > 0) {
+          await db.update(paymentTransactions)
+            .set({
+              status: 'completed',
+              webhookReceived: true,
+              webhookData: payload,
+              updatedAt: new Date()
+            })
+            .where(eq(paymentTransactions.id, existing[0].id));
+        }
         break;
-      case 'payment.failed':
-        console.log('Payment failed:', payload.payment.entity.id);
+      }
+
+      case 'payment.failed': {
+        const payment = payload.payment.entity;
+        console.log('Payment failed:', payment.id);
+        
+        const existing = await db.select()
+          .from(paymentTransactions)
+          .where(and(
+            eq(paymentTransactions.gatewayTransactionId, payment.id),
+            eq(paymentTransactions.gateway, 'razorpay')
+          ))
+          .limit(1);
+
+        // Idempotency: Skip only if already in failed state
+        if (existing.length > 0 && existing[0].status === 'failed') {
+          console.log('Payment already marked as failed:', payment.id);
+          return res.status(200).json({ success: true, message: 'Already processed' });
+        }
+
+        if (existing.length > 0) {
+          await db.update(paymentTransactions)
+            .set({
+              status: 'failed',
+              errorCode: payment.error_code || null,
+              errorMessage: payment.error_description || null,
+              webhookReceived: true,
+              webhookData: payload,
+              updatedAt: new Date()
+            })
+            .where(eq(paymentTransactions.id, existing[0].id));
+        }
         break;
-      case 'refund.created':
-        console.log('Refund created:', payload.refund.entity.id);
+      }
+
+      case 'refund.created': {
+        const refund = payload.refund.entity;
+        console.log('Refund created:', refund.id);
+        
+        const existing = await db.select()
+          .from(paymentTransactions)
+          .where(and(
+            eq(paymentTransactions.gatewayTransactionId, refund.payment_id),
+            eq(paymentTransactions.gateway, 'razorpay')
+          ))
+          .limit(1);
+
+        // Idempotency: Skip only if already in refunded state
+        if (existing.length > 0 && existing[0].status === 'refunded') {
+          console.log('Refund already processed:', refund.payment_id);
+          return res.status(200).json({ success: true, message: 'Already processed' });
+        }
+
+        if (existing.length > 0) {
+          await db.update(paymentTransactions)
+            .set({
+              status: 'refunded',
+              refundAmount: (refund.amount / 100).toString(), // Convert paise to rupees
+              refundReason: refund.notes?.reason || null,
+              webhookReceived: true,
+              webhookData: payload,
+              updatedAt: new Date()
+            })
+            .where(eq(paymentTransactions.id, existing[0].id));
+        }
         break;
+      }
+
       default:
         console.log('Unhandled webhook event:', event);
     }
@@ -155,6 +257,20 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Razorpay webhook error:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Log error to error tracking system
+    const { ErrorLogger } = await import('./lib/errorLogger');
+    ErrorLogger.logFromRequest(
+      error instanceof Error ? error : new Error(String(error)),
+      req,
+      {
+        errorType: 'payment_error',
+        statusCode: 500,
+        metadata: { service: 'razorpay_webhook' }
+      }
+    );
+    
+    res.status(500).json({ error: 'Webhook processing failed', message: errorMessage });
   }
 }
