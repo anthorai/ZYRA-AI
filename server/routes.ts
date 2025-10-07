@@ -88,10 +88,47 @@ interface AuthenticatedRequest extends Request {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Track server start time for uptime calculation
+  const serverStartTime = Date.now();
+
   // Configure multer for file uploads
   const upload = multer({ 
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
+  // Health check endpoint (no auth required) for monitoring
+  app.get("/api/health", async (req, res) => {
+    const startTime = Date.now();
+    const status: any = {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor((Date.now() - serverStartTime) / 1000), // seconds
+      environment: process.env.NODE_ENV || 'development',
+      services: {
+        api: "operational",
+        database: "checking...",
+      }
+    };
+
+    // Check database connectivity
+    try {
+      const dbConnected = await testSupabaseConnection();
+      status.services.database = dbConnected ? "operational" : "degraded";
+      if (!dbConnected) {
+        status.status = "degraded";
+      }
+    } catch (error) {
+      status.services.database = "unavailable";
+      status.status = "degraded";
+    }
+
+    // Calculate response time
+    status.responseTime = `${Date.now() - startTime}ms`;
+
+    // Return appropriate status code
+    const statusCode = status.status === "healthy" ? 200 : 503;
+    res.status(statusCode).json(status);
   });
 
   // Supabase authentication middleware
