@@ -42,6 +42,21 @@ import {
 } from "./payoneer";
 import { sendEmail, sendBulkEmails } from "./lib/sendgrid-client";
 import { sendSMS, sendBulkSMS } from "./lib/twilio-client";
+import { 
+  apiLimiter, 
+  authLimiter, 
+  aiLimiter, 
+  campaignLimiter, 
+  uploadLimiter,
+  paymentLimiter 
+} from "./middleware/rateLimiting";
+import { 
+  sanitizeBody, 
+  validateProduct, 
+  validateCampaign, 
+  validateUser,
+  checkValidation 
+} from "./middleware/sanitization";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -325,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Product Description Generator
-  app.post("/api/generate-description", requireAuth, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+  app.post("/api/generate-description", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
       const { productName, category, features, audience, brandVoice, keywords, specs } = req.body;
       const userId = (req as AuthenticatedRequest).user.id;
@@ -408,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SEO Optimization
-  app.post("/api/optimize-seo", requireAuth, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+  app.post("/api/optimize-seo", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
       const { currentTitle, keywords, currentMeta, category } = req.body;
 
@@ -2903,7 +2918,7 @@ Respond with JSON in this exact format:
   });
 
   // Create campaign
-  app.post('/api/campaigns', requireAuth, async (req, res) => {
+  app.post('/api/campaigns', requireAuth, campaignLimiter, sanitizeBody, validateCampaign, checkValidation, async (req: Request, res: Response) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const validated = insertCampaignSchema.parse({ ...req.body, userId });
