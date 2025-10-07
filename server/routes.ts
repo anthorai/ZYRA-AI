@@ -3454,11 +3454,13 @@ Respond with JSON in this exact format:
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
-      // Get real data from database
-      const campaigns = await supabaseStorage.getCampaigns(userId);
-      const products = await supabaseStorage.getProducts(userId);
-      const abandonedCarts = await supabaseStorage.getAbandonedCarts(userId);
-      const stats = await supabaseStorage.getUserUsageStats(userId);
+      // Fetch all data in parallel for better performance (avoid sequential queries)
+      const [campaigns, products, abandonedCarts, stats] = await Promise.all([
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getProducts(userId),
+        supabaseStorage.getAbandonedCarts(userId),
+        supabaseStorage.getUserUsageStats(userId)
+      ]);
       
       // Calculate real metrics
       const totalCampaignsSent = campaigns.filter(c => c.status === 'sent').length;
@@ -3727,20 +3729,30 @@ Respond with JSON in this exact format:
         });
       }
 
-      // Delete all user data in sequence
-      const products = await supabaseStorage.getProducts(userId);
-      for (const product of products) {
-        await supabaseStorage.deleteProduct(product.id);
-      }
+      // Fetch all user data in parallel
+      const [products, campaigns, templates] = await Promise.all([
+        supabaseStorage.getProducts(userId),
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getCampaignTemplates(userId)
+      ]);
 
-      const campaigns = await supabaseStorage.getCampaigns(userId);
-      for (const campaign of campaigns) {
-        await supabaseStorage.deleteCampaign(campaign.id);
-      }
+      // Delete all user data in parallel using allSettled to ensure all deletions are attempted
+      // (avoids N+1 sequential deletions while maintaining GDPR compliance)
+      const deletionResults = await Promise.allSettled([
+        ...products.map(product => supabaseStorage.deleteProduct(product.id)),
+        ...campaigns.map(campaign => supabaseStorage.deleteCampaign(campaign.id)),
+        ...templates.map(template => supabaseStorage.deleteCampaignTemplate(template.id))
+      ]);
 
-      const templates = await supabaseStorage.getCampaignTemplates(userId);
-      for (const template of templates) {
-        await supabaseStorage.deleteCampaignTemplate(template.id);
+      // Check for deletion failures - GDPR compliance requires complete data removal
+      const failures = deletionResults.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.error(`Account deletion failed: ${failures.length} items could not be deleted`, failures);
+        return res.status(500).json({ 
+          error: 'Account deletion incomplete',
+          message: 'Some data could not be deleted. Please try again or contact support.',
+          details: `${failures.length} items failed to delete`
+        });
       }
 
       // Delete user account from Supabase Auth
