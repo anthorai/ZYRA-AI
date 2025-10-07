@@ -618,6 +618,39 @@ export const paymentTransactions = pgTable("payment_transactions", {
   index('payment_transactions_created_at_idx').on(table.createdAt),
 ]);
 
+// Error logging table for production monitoring
+export const errorLogs = pgTable("error_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  errorType: text("error_type").notNull(), // 'api_error', 'database_error', 'auth_error', 'payment_error', etc.
+  message: text("message").notNull(),
+  stack: text("stack"),
+  endpoint: text("endpoint"), // API endpoint where error occurred
+  method: text("method"), // HTTP method
+  statusCode: integer("status_code"),
+  requestBody: jsonb("request_body"),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  metadata: jsonb("metadata"), // Additional context
+  resolved: boolean("resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('error_logs_user_id_idx').on(table.userId),
+  index('error_logs_error_type_idx').on(table.errorType),
+  index('error_logs_created_at_idx').on(table.createdAt),
+  index('error_logs_resolved_idx').on(table.resolved),
+]);
+
+export const insertErrorLogSchema = createInsertSchema(errorLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type InsertErrorLog = z.infer<typeof insertErrorLogSchema>;
+
 // Billing table schemas
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,

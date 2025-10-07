@@ -2,10 +2,35 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { testSupabaseConnection } from "./lib/supabase";
+import { ErrorLogger } from "./lib/errorLogger";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Define global error handler (registered after routes)
+const globalErrorHandler = (err: any, req: Request, res: Response, _next: NextFunction) => {
+  // Ensure error is Error-like
+  const error = err instanceof Error ? err : new Error(String(err));
+  const status = (err as any).status || (err as any).statusCode || 500;
+  const message = error.message || "Internal Server Error";
+
+  // Log error with full context (non-blocking)
+  ErrorLogger.logFromRequest(error, req, {
+    errorType: (err as any).errorType || 'api_error',
+    statusCode: status,
+    metadata: {
+      stack: error.stack,
+      code: (err as any).code,
+      name: error.name
+    }
+  });
+
+  res.status(status).json({ 
+    message,
+    error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+  });
+};
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -37,7 +62,8 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+// Start async initialization
+async function startServer() {
   // Test Supabase connection on startup
   try {
     log("🔄 Testing Supabase connection...");
@@ -53,7 +79,17 @@ app.use((req, res, next) => {
     // Don't exit - allow app to start anyway in case of DB issues
   }
 
-  const server = await registerRoutes(app);
+  return await registerRoutes(app);
+}
+
+// Start server initialization and register error handler immediately after routes
+const serverPromise = startServer();
+serverPromise.then((server) => {
+  // Register global error handler - must be after routes but at module scope
+  app.use(globalErrorHandler);
+
+  return server;
+}).then(async (server) => {
 
   // Initialize billing tasks scheduler with singleton pattern
   let billingSchedulerInitialized = false;
@@ -142,14 +178,6 @@ app.use((req, res, next) => {
   // Start campaign scheduler
   initializeCampaignScheduler();
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
@@ -171,4 +199,7 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
-})();
+}).catch((error) => {
+  console.error("Fatal startup error:", error);
+  process.exit(1);
+});

@@ -13,12 +13,15 @@ import {
   insertAiGenerationHistorySchema,
   insertCampaignSchema,
   insertCampaignTemplateSchema,
-  insertAbandonedCartSchema
+  insertAbandonedCartSchema,
+  errorLogs
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase } from "./lib/supabase";
 import { storage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
+import { db } from "./db";
+import { eq, desc, sql, and } from "drizzle-orm";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -185,6 +188,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(401).json({ message: "Authentication failed" });
     }
   };
+
+  // Error logs endpoints (admin only) - for production monitoring
+  app.get("/api/admin/error-logs", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Only allow admin users
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { resolved, errorType, limit, offset } = req.query;
+
+      // Validate and sanitize pagination params
+      const parsedLimit = parseInt(limit as string || '100', 10);
+      const parsedOffset = parseInt(offset as string || '0', 10);
+      const safeLimit = Math.min(Math.max(isNaN(parsedLimit) ? 100 : parsedLimit, 1), 1000);
+      const safeOffset = Math.max(isNaN(parsedOffset) ? 0 : parsedOffset, 0);
+
+      // Build filters array
+      const filters = [];
+      if (resolved === 'true') {
+        filters.push(eq(errorLogs.resolved, true));
+      } else if (resolved === 'false') {
+        filters.push(eq(errorLogs.resolved, false));
+      }
+      
+      if (errorType && typeof errorType === 'string') {
+        filters.push(eq(errorLogs.errorType, errorType));
+      }
+
+      // Build query with combined filters
+      let query = db.select().from(errorLogs);
+      if (filters.length > 0) {
+        query = query.where(and(...filters)) as any;
+      }
+
+      // Execute query with ordering and pagination
+      const errors = await query
+        .orderBy(desc(errorLogs.createdAt))
+        .limit(safeLimit)
+        .offset(safeOffset);
+      
+      // Get total count with same filters for accurate pagination
+      let countQuery = db.select({ count: sql<number>`count(*)` }).from(errorLogs);
+      if (filters.length > 0) {
+        countQuery = countQuery.where(and(...filters)) as any;
+      }
+      const totalResult = await countQuery;
+      const total = totalResult[0]?.count || 0;
+      
+      res.json({ errors, total, limit: safeLimit, offset: safeOffset });
+    } catch (error: any) {
+      console.error("Error fetching error logs:", error);
+      res.status(500).json({ message: "Failed to fetch error logs" });
+    }
+  });
+
+  // Mark error as resolved
+  app.patch("/api/admin/error-logs/:id/resolve", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { id } = req.params;
+
+      await db.update(errorLogs)
+        .set({
+          resolved: true,
+          resolvedAt: sql`NOW()`,
+          resolvedBy: user.id,
+        })
+        .where(eq(errorLogs.id, id));
+
+      res.json({ message: "Error marked as resolved" });
+    } catch (error: any) {
+      console.error("Error resolving error log:", error);
+      res.status(500).json({ message: "Failed to resolve error" });
+    }
+  });
 
   // Usage limit enforcement middleware for AI operations
   const checkAIUsageLimit = async (req: Request, res: Response, next: NextFunction) => {
