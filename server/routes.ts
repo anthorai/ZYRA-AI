@@ -1765,7 +1765,9 @@ Respond with JSON in this exact format:
       }
       
       // Use PostgreSQL updateUserSubscription instead of Supabase
-      const updatedUser = await updateUserSubscription(userId, planId);
+      // Pass user email for user creation if they don't exist in PostgreSQL
+      const userEmail = (req as AuthenticatedRequest).user.email;
+      const updatedUser = await updateUserSubscription(userId, planId, userEmail);
       
       // Initialize credits for the new plan
       await initializeUserCredits(userId, planId);

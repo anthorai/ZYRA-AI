@@ -99,12 +99,29 @@ export async function getUserById(userId: string): Promise<User | undefined> {
   }, "getUserById");
 }
 
-export async function updateUserSubscription(userId: string, planId: string): Promise<User> {
+export async function updateUserSubscription(userId: string, planId: string, userEmail?: string): Promise<User> {
   return withErrorHandling(async () => {
     // Get the subscription plan details
     const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
     if (!plan) {
       throw new Error(`Subscription plan with ID ${planId} not found`);
+    }
+
+    // Check if user exists in PostgreSQL, create if not
+    let [existingUser] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!existingUser) {
+      console.log(`[DB] User ${userId} not found in PostgreSQL, creating...`);
+      // Create user in PostgreSQL if they don't exist
+      // This handles users authenticated via Supabase
+      [existingUser] = await db.insert(users).values({
+        id: userId,
+        email: userEmail || 'user@example.com', // Use provided email or placeholder
+        password: null, // No password for Supabase users
+        plan: plan.planName,
+      }).returning();
+      
+      console.log(`[DB] Created user ${userId} in PostgreSQL`);
     }
 
     // Update user's plan
@@ -113,12 +130,24 @@ export async function updateUserSubscription(userId: string, planId: string): Pr
       .where(eq(users.id, userId))
       .returning();
 
-    // Create subscription record
-    await db.insert(subscriptions).values({
-      userId,
-      planId,
-      status: "active",
-    });
+    // Create or update subscription record
+    // Check if subscription already exists
+    const [existingSubscription] = await db.select().from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
+    
+    if (existingSubscription) {
+      // Update existing subscription
+      await db.update(subscriptions)
+        .set({ planId, status: "active" })
+        .where(eq(subscriptions.userId, userId));
+    } else {
+      // Create new subscription
+      await db.insert(subscriptions).values({
+        userId,
+        planId,
+        status: "active",
+      });
+    }
 
     console.log(`[DB] User ${userId} subscription updated to ${plan.planName}`);
     return updatedUser;
