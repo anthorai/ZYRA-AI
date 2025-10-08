@@ -110,27 +110,6 @@ export default function NotificationCenter({ className }: NotificationCenterProp
 
   return (
     <div className={cn("relative", className)}>
-      {/* Bell Button Trigger */}
-      <Button
-        ref={buttonRef}
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out"
-        data-testid="button-notifications"
-        data-tour="notifications"
-      >
-        <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
-          <Badge 
-            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs"
-            data-testid="badge-unread-count"
-          >
-            {unreadCount}
-          </Badge>
-        )}
-      </Button>
-
       {/* Full-Screen Modal Panel */}
       {isOpen && (
         <>
