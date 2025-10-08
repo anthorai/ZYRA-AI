@@ -125,7 +125,6 @@ export const subscriptions = pgTable("subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   planId: varchar("plan_id").references(() => subscriptionPlans.id).notNull(),
-  stripeSubscriptionId: text("stripe_subscription_id"),
   status: text("status").notNull().default("active"), // active, canceled, past_due, incomplete, trialing
   currentPeriodStart: timestamp("current_period_start"),
   currentPeriodEnd: timestamp("current_period_end"),
@@ -149,8 +148,6 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   interval: text("interval").notNull().default("month"), // 'month' or 'year'
   features: jsonb("features").notNull(),
   limits: jsonb("limits").notNull(), // product limits, email limits, SMS limits etc
-  stripePriceId: text("stripe_price_id"),
-  stripeProductId: text("stripe_product_id"),
   isActive: boolean("is_active").notNull().default(true),
   currency: text("currency").notNull().default("USD"),
   description: text("description"),
@@ -534,7 +531,7 @@ export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   subscriptionId: varchar("subscription_id").references(() => subscriptions.id),
-  stripeInvoiceId: text("stripe_invoice_id").unique(),
+  gatewayInvoiceId: text("gateway_invoice_id").unique(),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("USD"),
   status: text("status").notNull(), // paid, open, void, uncollectible
@@ -553,7 +550,7 @@ export const invoices = pgTable("invoices", {
 export const paymentMethods = pgTable("payment_methods", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  stripePaymentMethodId: text("stripe_payment_method_id").notNull().unique(),
+  gatewayPaymentMethodId: text("gateway_payment_method_id").notNull().unique(),
   type: text("type").notNull(), // card, bank_account, etc.
   cardBrand: text("card_brand"), // visa, mastercard, amex, etc.
   cardLast4: text("card_last4"),
@@ -587,7 +584,7 @@ export const billingHistory = pgTable("billing_history", {
 export const paymentTransactions = pgTable("payment_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  gateway: text("gateway").notNull(), // 'stripe', 'razorpay', 'paypal', 'payoneer'
+  gateway: text("gateway").notNull(), // 'razorpay', 'paypal'
   gatewayTransactionId: text("gateway_transaction_id").notNull(), // Payment ID from gateway
   gatewayOrderId: text("gateway_order_id"), // Order ID from gateway (if applicable)
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
