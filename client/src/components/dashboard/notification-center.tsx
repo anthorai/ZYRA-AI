@@ -141,7 +141,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
           ref={dropdownRef}
           className={cn(
             "absolute right-0 top-full mt-2 z-[9999]",
-            "w-full sm:w-80 md:w-96", // Responsive width - full width on mobile
+            "w-80 sm:w-80 md:w-96", // Fixed width for consistent layout
             "gradient-card",
             "rounded-lg border border-border/50 shadow-2xl",
             "backdrop-blur-sm",
