@@ -684,6 +684,119 @@ export type InsertBillingHistory = z.infer<typeof insertBillingHistorySchema>;
 export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
 export type InsertPaymentTransaction = z.infer<typeof insertPaymentTransactionSchema>;
 
+// Advanced Notification Preference System Enums
+export const notificationPresetEnum = pgEnum('notification_preset', ['work', 'focus', 'full_alerts', 'custom']);
+export const notificationChannelEnum = pgEnum('notification_channel', ['email', 'sms', 'in_app', 'push']);
+export const notificationFrequencyEnum = pgEnum('notification_frequency', ['instant', 'hourly_digest', 'daily_digest', 'weekly_summary']);
+export const notificationPriorityEnum = pgEnum('notification_priority', ['low', 'medium', 'high', 'urgent']);
+export const notificationCategoryEnum = pgEnum('notification_category', ['campaigns', 'products', 'billing', 'security', 'ai_insights', 'system']);
+
+// Advanced Notification Preferences - User-level defaults and preset modes
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  activePreset: text("active_preset").notNull().default("full_alerts"), // work, focus, full_alerts, custom
+  enableDigests: boolean("enable_digests").default(false),
+  defaultFrequency: text("default_frequency").notNull().default("instant"), // instant, hourly_digest, daily_digest, weekly_summary
+  digestTime: text("digest_time").default("09:00"), // HH:MM format for when to send digests
+  minPriority: text("min_priority").notNull().default("low"), // low, medium, high, urgent
+  enableQuietHours: boolean("enable_quiet_hours").default(false),
+  quietHoursStart: text("quiet_hours_start").default("22:00"), // HH:MM format
+  quietHoursEnd: text("quiet_hours_end").default("08:00"), // HH:MM format
+  allowUrgentInQuietHours: boolean("allow_urgent_in_quiet_hours").default(true),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('notification_preferences_user_id_idx').on(table.userId),
+]);
+
+// Notification Rules - Category and channel-specific preferences
+export const notificationRules = pgTable("notification_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  category: text("category").notNull(), // campaigns, products, billing, security, ai_insights, system
+  enabled: boolean("enabled").default(true),
+  channels: jsonb("channels").notNull(), // { email: true, sms: false, in_app: true, push: false }
+  frequency: text("frequency").notNull().default("instant"), // instant, hourly_digest, daily_digest, weekly_summary
+  minPriority: text("min_priority").notNull().default("low"), // only show notifications at or above this priority
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('notification_rules_user_category_idx').on(table.userId, table.category),
+  uniqueIndex('notification_rules_user_category_unique').on(table.userId, table.category),
+]);
+
+// Notification Channels - Device and channel-specific settings
+export const notificationChannels = pgTable("notification_channels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  channelType: text("channel_type").notNull(), // email, sms, in_app, push
+  channelValue: text("channel_value"), // email address, phone number, device token
+  deviceInfo: jsonb("device_info"), // device name, OS, browser info
+  enabled: boolean("enabled").default(true),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('notification_channels_user_id_idx').on(table.userId),
+  index('notification_channels_type_idx').on(table.channelType),
+]);
+
+// Notification Analytics - Track engagement and delivery
+export const notificationAnalytics = pgTable("notification_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  notificationId: varchar("notification_id").references(() => notifications.id),
+  category: text("category").notNull(),
+  channelType: text("channel_type").notNull(),
+  delivered: boolean("delivered").default(false),
+  deliveredAt: timestamp("delivered_at"),
+  viewed: boolean("viewed").default(false),
+  viewedAt: timestamp("viewed_at"),
+  clicked: boolean("clicked").default(false),
+  clickedAt: timestamp("clicked_at"),
+  dismissed: boolean("dismissed").default(false),
+  dismissedAt: timestamp("dismissed_at"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('notification_analytics_user_id_idx').on(table.userId),
+  index('notification_analytics_category_idx').on(table.category),
+]);
+
+// Insert schemas for advanced notification preferences
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationRuleSchema = createInsertSchema(notificationRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationChannelSchema = createInsertSchema(notificationChannels).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationAnalyticsSchema = createInsertSchema(notificationAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for advanced notification preferences
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
+export type NotificationRule = typeof notificationRules.$inferSelect;
+export type InsertNotificationRule = z.infer<typeof insertNotificationRuleSchema>;
+export type NotificationChannel = typeof notificationChannels.$inferSelect;
+export type InsertNotificationChannel = z.infer<typeof insertNotificationChannelSchema>;
+export type NotificationAnalytics = typeof notificationAnalytics.$inferSelect;
+export type InsertNotificationAnalytics = z.infer<typeof insertNotificationAnalyticsSchema>;
+
 // New Settings Types
 export type UserPreferences = typeof userPreferences.$inferSelect;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
