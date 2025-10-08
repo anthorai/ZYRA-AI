@@ -1702,7 +1702,29 @@ Respond with JSON in this exact format:
       
       // Enhanced plan features with organized categories
       const enhancedPlans = dbPlans.map(plan => {
-        if (plan.planName === 'Starter') {
+        if (plan.planName === '7-Day Free Trial') {
+          return {
+            ...plan,
+            description: "Try ZYRA for 7 Days",
+            features: [
+              "✨ 100 credits / 7 days",
+              "🔧 Product Optimization & SEO:",
+              "• Optimized Products – 20 credits",
+              "• SEO Keyword Density Analysis – 10 credits",
+              "📈 Conversion Boosting & Sales Automation:",
+              "• AI-Powered Growth Intelligence – 20 credits", 
+              "• Basic A/B Testing – 10 credits",
+              "🎨 Content & Branding at Scale:",
+              "• Smart Product Descriptions – 20 credits",
+              "• Limited Dynamic Templates – 10 credits",
+              "📊 Performance Tracking & ROI Insights:",
+              "• Email Performance Analytics – 10 credits",
+              "⚡ Workflow & Integration Tools:",
+              "• One-Click Shopify Publish – 10 credits",
+              "• Rollback Button – included"
+            ]
+          };
+        } else if (plan.planName === 'Starter') {
           return {
             ...plan,
             features: [
@@ -1779,43 +1801,14 @@ Respond with JSON in this exact format:
         return plan;
       });
       
-      // Always include the free trial plan at the beginning
-      const freeTrialPlan = {
-        id: "trial",
-        planName: "7-Day Free Trial",
-        price: 0,
-        description: "Try ZYRA for 7 Days",
-        features: [
-          "✨ 100 credits / 7 days",
-          "🔧 Product Optimization & SEO:",
-          "• Optimized Products – 20 credits",
-          "• SEO Keyword Density Analysis – 10 credits",
-          "📈 Conversion Boosting & Sales Automation:",
-          "• AI-Powered Growth Intelligence – 20 credits", 
-          "• Basic A/B Testing – 10 credits",
-          "🎨 Content & Branding at Scale:",
-          "• Smart Product Descriptions – 20 credits",
-          "• Limited Dynamic Templates – 10 credits",
-          "📊 Performance Tracking & ROI Insights:",
-          "• Email Performance Analytics – 10 credits",
-          "⚡ Workflow & Integration Tools:",
-          "• One-Click Shopify Publish – 10 credits",
-          "• Rollback Button – included"
-        ],
-        currency: "USD",
-        interval: "day",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        limits: {
-          credits: 100,
-          duration: 7
-        },
-        stripe_price_id: null,
-        stripe_product_id: null
-      };
+      // Sort plans to ensure trial is first
+      const sortedPlans = enhancedPlans.sort((a, b) => {
+        if (a.planName === '7-Day Free Trial') return -1;
+        if (b.planName === '7-Day Free Trial') return 1;
+        return 0;
+      });
       
-      // Return free trial first, then enhanced database plans
-      res.json([freeTrialPlan, ...enhancedPlans]);
+      res.json(sortedPlans);
     } catch (error: any) {
       console.error("Get subscription plans error:", error);
       

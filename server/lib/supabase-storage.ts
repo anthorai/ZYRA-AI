@@ -1232,7 +1232,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('usage_stats')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
@@ -1248,8 +1248,8 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (existingStats) {
       const { data, error } = await supabase
         .from('usage_stats')
-        .update({ ...stats, updatedAt: new Date().toISOString() })
-        .eq('userId', userId)
+        .update({ ...stats, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
         .select()
         .single();
       
@@ -1259,9 +1259,9 @@ export class SupabaseStorage implements ISupabaseStorage {
       const statsData = {
         ...stats,
         id: randomUUID(),
-        userId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        user_id: userId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase
