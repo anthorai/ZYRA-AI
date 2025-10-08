@@ -53,9 +53,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
   // Real mutations for API calls
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      return apiRequest(`/api/notifications/${notificationId}/read`, {
-        method: 'PATCH'
-      });
+      return apiRequest('PATCH', `/api/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
@@ -68,9 +66,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
 
   const clearAllMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/notifications/clear-all', {
-        method: 'POST'
-      });
+      return apiRequest('POST', '/api/notifications/clear-all');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
