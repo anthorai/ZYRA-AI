@@ -79,6 +79,16 @@ async function startServer() {
     // Don't exit - allow app to start anyway in case of DB issues
   }
 
+  // Initialize database (seed subscription plans)
+  try {
+    const { initializeDatabase } = await import('./init-db');
+    await initializeDatabase();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log(`⚠️ Database initialization warning: ${errorMessage}`);
+    // Don't exit - plans may already exist
+  }
+
   return await registerRoutes(app);
 }
 
