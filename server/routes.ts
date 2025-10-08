@@ -1752,7 +1752,8 @@ Respond with JSON in this exact format:
       const userId = (req as AuthenticatedRequest).user.id;
       
       // Verify plan exists before attempting to update subscription
-      const plans = await supabaseStorage.getSubscriptionPlans();
+      // Use the same data source as GET /api/subscription-plans
+      const plans = await getSubscriptionPlans();
       const planExists = plans.find(p => p.id === planId);
       console.log("[SUBSCRIPTION] Plan exists check:", !!planExists, "Available plan IDs:", plans.map(p => p.id));
       
