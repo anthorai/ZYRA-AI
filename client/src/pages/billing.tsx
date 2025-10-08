@@ -401,12 +401,12 @@ export default function BillingPage() {
 
           {/* Plan Selection */}
           <TabsContent value="plans" className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-white" data-testid="text-subscription-title">
-                Subscription Plans
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4" data-testid="text-pricing-title">
+                Choose Your Plan
               </h2>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Choose the perfect plan for your Shopify store
+              <p className="text-base sm:text-lg lg:text-xl text-muted-foreground px-4 sm:px-0">
+                Start with a 7-day free trial, upgrade anytime
               </p>
             </div>
 
@@ -447,41 +447,53 @@ export default function BillingPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {plans.map((plan: SubscriptionPlan, index) => {
                 const isCurrentPlan = plan.id === currentSubscription?.planId;
-                const isUpgrade = plan.price > (currentPlan?.price || 0);
-                const isDowngrade = plan.price < (currentPlan?.price || 0);
-                const isPlanPopular = plan.planName === "Growth"; // Growth is the popular plan
-                const isFreeTrialPlan = plan.price === 0 || plan.planName?.toLowerCase().includes('trial'); // Highlight free trial
+                const isPlanPopular = plan.planName === "Growth";
+                const isFreeTrialPlan = plan.price === 0 || plan.planName?.toLowerCase().includes('trial');
+                
+                // Format price to match landing page
+                const displayPrice = plan.price === 0 ? '$0' : `$${Math.floor(plan.price)}`;
+                const displayPeriod = plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 
+                                     plan.interval === 'month' ? 'per month' : 
+                                     plan.interval;
+                
+                // Icon size must be w-8 h-8 to match landing page
+                const iconMap = {
+                  "7-Day Free Trial": <Gift className="w-8 h-8" />,
+                  "Starter": <Zap className="w-8 h-8" />,
+                  "Growth": <Award className="w-8 h-8" />,
+                  "Pro": <Crown className="w-8 h-8" />,
+                };
                 
                 return (
                   <Card 
                     key={plan.id} 
-                    className={`gradient-card border-0 relative h-full ${isPlanPopular ? 'ring-2 ring-primary' : ''}`}
-                    data-testid={`card-plan-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}
+                    className={`pricing-card border-0 relative h-full ${isPlanPopular ? 'border-primary/50 lg:scale-105' : ''}`}
+                    data-testid={`card-plan-${index}`}
                   >
                     {isPlanPopular && (
-                      <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
-                        Most Popular
-                      </Badge>
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <Badge className="bg-primary text-primary-foreground">Popular</Badge>
+                      </div>
                     )}
                     <CardContent className="p-4 sm:p-6 h-full flex flex-col">
                       <div className="text-center mb-4 sm:mb-6">
-                        <div className="flex justify-center mb-2 text-primary">
-                          {plan.planName && planIcons[plan.planName as keyof typeof planIcons]}
+                        <div className="flex justify-center text-primary mb-2">
+                          {plan.planName && iconMap[plan.planName as keyof typeof iconMap]}
                         </div>
-                        <h3 className="text-lg sm:text-xl font-semibold mb-2 text-white" data-testid={`text-plan-name-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                          {plan.planName || 'Unknown Plan'}
+                        <h3 className="text-lg sm:text-xl font-semibold mb-2" data-testid={`text-plan-name-${index}`}>
+                          {plan.planName}
                         </h3>
-                        <div className="text-2xl sm:text-3xl font-bold text-white" data-testid={`text-plan-price-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                          ${plan.price == 0 ? '0' : Math.floor(Number(plan.price)).toString()}
-                          <span className="text-sm sm:text-base font-normal text-muted-foreground">
-                            /{plan.interval === 'day' ? (plan.planName?.includes('7') ? '7 days' : 'day') : plan.interval === 'month' ? 'per month' : plan.interval}
-                          </span>
+                        <div className="text-2xl sm:text-3xl font-bold" data-testid={`text-plan-price-${index}`}>
+                          {displayPrice}
+                        </div>
+                        <div className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3" data-testid={`text-plan-period-${index}`}>
+                          {displayPeriod}
                         </div>
                         {plan.description && (
-                          <p className="text-xs sm:text-sm text-muted-foreground mt-2" data-testid={`text-plan-description-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                          <p className="text-xs sm:text-sm text-primary/80 font-medium px-2 sm:px-0" data-testid={`text-plan-target-${index}`}>
                             {plan.description}
                           </p>
                         )}
@@ -489,8 +501,8 @@ export default function BillingPage() {
                       <div className="flex-1">
                         <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                           {plan.features.map((feature, featureIndex) => (
-                            <li key={featureIndex} className="flex items-start text-xs sm:text-sm text-slate-300" data-testid={`text-plan-feature-${index}-${featureIndex}`}>
-                              <Check className="w-3 h-3 sm:w-4 sm:h-4 mr-2 mt-0.5 flex-shrink-0 text-primary" />
+                            <li key={featureIndex} className="flex items-start text-xs sm:text-sm" data-testid={`text-plan-feature-${index}-${featureIndex}`}>
+                              <Check className="w-3 h-3 sm:w-4 sm:h-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
                               <span>{feature}</span>
                             </li>
                           ))}
@@ -500,23 +512,19 @@ export default function BillingPage() {
                         <Button
                           onClick={() => changePlanMutation.mutate(plan.id)}
                           disabled={changePlanMutation.isPending}
-                          className={`w-full text-sm sm:text-base ${
-                            isPlanPopular 
-                              ? 'gradient-button' 
-                              : 'border border-border hover:bg-muted'
-                          }`}
+                          className={`w-full ${isPlanPopular ? 'gradient-button' : 'border border-border hover:bg-muted'}`}
                           variant={isPlanPopular ? "default" : "outline"}
-                          data-testid={`button-change-plan-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}
+                          data-testid={`button-choose-plan-${index}`}
                         >
                           {changePlanMutation.isPending ? "Processing..." : 
-                           isFreeTrialPlan ? "Start Trial" :
+                           index === 0 ? "Start Trial" :
                            "Choose Plan"}
                         </Button>
                       ) : (
                         <Button
                           disabled
-                          className="w-full text-sm sm:text-base bg-muted text-muted-foreground cursor-not-allowed"
-                          data-testid={`button-current-plan-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}
+                          className="w-full bg-muted text-muted-foreground cursor-not-allowed"
+                          data-testid={`button-current-plan-${index}`}
                         >
                           Current Plan
                         </Button>
