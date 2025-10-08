@@ -302,7 +302,7 @@ export default function BillingPage() {
   // Upgrade/downgrade mutation
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      return apiRequest('/api/subscription/change-plan', 'POST', { planId });
+      return apiRequest('POST', '/api/subscription/change-plan', { planId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
@@ -324,7 +324,7 @@ export default function BillingPage() {
   // Add payment method mutation
   const addPaymentMethodMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/payment-methods/add', 'POST');
+      return apiRequest('POST', '/api/payment-methods/add');
     },
     onSuccess: (data: any) => {
       // Redirect to Stripe setup page
