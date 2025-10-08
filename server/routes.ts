@@ -24,7 +24,7 @@ import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase } from "./lib/supabase";
 import { storage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, getSubscriptionPlans } from "./db";
+import { db, getSubscriptionPlans, updateUserSubscription } from "./db";
 import { eq, desc, sql, and } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -1764,7 +1764,8 @@ Respond with JSON in this exact format:
         });
       }
       
-      const subscription = await supabaseStorage.updateUserSubscription(userId, { planId });
+      // Use PostgreSQL updateUserSubscription instead of Supabase
+      const updatedUser = await updateUserSubscription(userId, planId);
       
       // Initialize credits for the new plan
       await initializeUserCredits(userId, planId);
@@ -1772,7 +1773,7 @@ Respond with JSON in this exact format:
       // Send notification for subscription change
       await NotificationService.notifySubscriptionChanged(userId, planId || 'Unknown');
       
-      res.json({ user: subscription });
+      res.json({ user: updatedUser });
     } catch (error: any) {
       console.error("Error changing subscription plan:", error);
       res.status(500).json({ 
