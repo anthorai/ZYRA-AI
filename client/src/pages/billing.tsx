@@ -401,6 +401,15 @@ export default function BillingPage() {
 
           {/* Plan Selection */}
           <TabsContent value="plans" className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-white" data-testid="text-subscription-title">
+                Subscription Plans
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Choose the perfect plan for your Shopify store
+              </p>
+            </div>
+
             {plansLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -438,7 +447,7 @@ export default function BillingPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
                 {plans.map((plan: SubscriptionPlan, index) => {
                 const isCurrentPlan = plan.id === currentSubscription?.planId;
                 const isUpgrade = plan.price > (currentPlan?.price || 0);
@@ -449,15 +458,13 @@ export default function BillingPage() {
                 return (
                   <Card 
                     key={plan.id} 
-                    className={`pricing-card relative h-full ${isPlanPopular ? 'border-primary/50 shadow-primary/20 scale-[1.02] shadow-lg' : ''} ${isCurrentPlan ? 'border-primary/50 shadow-primary/20 ring-2 ring-primary/30' : ''} ${isFreeTrialPlan ? 'border-green-500/60 shadow-green-500/30 ring-2 ring-green-500/20 scale-[1.02]' : ''}`}
+                    className={`gradient-card border-0 relative h-full ${isPlanPopular ? 'ring-2 ring-primary' : ''}`}
                     data-testid={`card-plan-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}
                   >
-                    {(isPlanPopular || isCurrentPlan || isFreeTrialPlan) && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className={isFreeTrialPlan ? "bg-green-500 text-white animate-pulse" : "bg-primary text-primary-foreground"}>
-                          {isCurrentPlan ? "Current Plan" : isFreeTrialPlan ? "FREE TRIAL" : "Popular"}
-                        </Badge>
-                      </div>
+                    {isPlanPopular && (
+                      <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
+                        Most Popular
+                      </Badge>
                     )}
                     <CardContent className="p-4 sm:p-6 h-full flex flex-col">
                       <div className="text-center mb-4 sm:mb-6">
@@ -468,14 +475,14 @@ export default function BillingPage() {
                           {plan.planName || 'Unknown Plan'}
                         </h3>
                         <div className="text-2xl sm:text-3xl font-bold text-white" data-testid={`text-plan-price-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                          {formatPrice(plan.price)}
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-300 mb-2 sm:mb-3" data-testid={`text-plan-period-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                          {plan.interval}
+                          ${plan.price == 0 ? '0' : Math.floor(Number(plan.price)).toString()}
+                          <span className="text-sm sm:text-base font-normal text-muted-foreground">
+                            /{plan.interval === 'day' ? (plan.planName?.includes('7') ? '7 days' : 'day') : plan.interval === 'month' ? 'per month' : plan.interval}
+                          </span>
                         </div>
                         {plan.description && (
-                          <p className="text-xs sm:text-sm text-primary/80 font-medium px-2 sm:px-0" data-testid={`text-plan-description-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                            {plan.planName !== "7-Day Free Trial" && "Who it's for: "}{plan.description}
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-2" data-testid={`text-plan-description-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                            {plan.description}
                           </p>
                         )}
                       </div>
@@ -493,22 +500,22 @@ export default function BillingPage() {
                         <Button
                           onClick={() => changePlanMutation.mutate(plan.id)}
                           disabled={changePlanMutation.isPending}
-                          className={`w-full font-medium ${
-                            isFreeTrialPlan 
-                              ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/25' 
-                              : 'gradient-button'
+                          className={`w-full text-sm sm:text-base ${
+                            isPlanPopular 
+                              ? 'gradient-button' 
+                              : 'border border-border hover:bg-muted'
                           }`}
+                          variant={isPlanPopular ? "default" : "outline"}
                           data-testid={`button-change-plan-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}
                         >
                           {changePlanMutation.isPending ? "Processing..." : 
-                           isFreeTrialPlan ? "Start Free Trial" :
-                           isUpgrade ? "Upgrade" : isDowngrade ? "Downgrade" : "Choose Plan"}
+                           isFreeTrialPlan ? "Start Trial" :
+                           "Choose Plan"}
                         </Button>
                       ) : (
                         <Button
                           disabled
-                          className="w-full bg-slate-700 text-slate-300"
-                          variant="secondary"
+                          className="w-full text-sm sm:text-base bg-muted text-muted-foreground cursor-not-allowed"
                           data-testid={`button-current-plan-${plan.planName?.toLowerCase().replace(' ', '-') || 'unknown'}`}
                         >
                           Current Plan

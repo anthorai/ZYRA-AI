@@ -188,6 +188,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
       id: subscriptionPlans.id,
       planName: subscriptionPlans.planName,
       price: subscriptionPlans.price,
+      description: subscriptionPlans.description,
       features: subscriptionPlans.features,
       interval: subscriptionPlans.interval,
       limits: subscriptionPlans.limits,
@@ -237,6 +238,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "7-Day Free Trial",
         price: "0",
+        description: "Try ZYRA for 7 Days",
         features: [
           "Test all core features (SEO, product optimization, content tools)",
           "Limited credits",
@@ -253,6 +255,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Starter",
         price: "49.00",
+        description: "For New Shopify Stores",
         features: [
           "1,000 credits / month",
           "AI product optimization & SEO tools",
@@ -274,6 +277,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Growth",
         price: "299.00",
+        description: "For Growing Merchants",
         features: [
           "10,000 credits / month",
           "Everything in Starter, plus:",
@@ -296,6 +300,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Pro",
         price: "999.00",
+        description: "For High-Revenue Brands",
         features: [
           "Unlimited credits",
           "Everything in Growth, plus:",
@@ -337,6 +342,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         await db.insert(subscriptionPlans).values({
           planName: planData.planName,
           price: planData.price,
+          description: planData.description,
           features: planData.features,
           limits: planData.limits,
           interval: planData.interval || "month",
@@ -348,6 +354,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         await db.update(subscriptionPlans)
           .set({
             price: planData.price,
+            description: planData.description,
             features: planData.features,
             limits: planData.limits,
             interval: planData.interval || "month",
