@@ -4,6 +4,16 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 
 # Recent Changes (October 2025)
 
+## Phase 9: Payment Gateway Consolidation (October 8, 2025)
+- **Removed Stripe**: Completely removed Stripe payment gateway including all imports, routes, server files, and packages
+- **Removed Payoneer**: Completely removed Payoneer payment gateway including all imports, routes, server files, and enum references
+- **Schema Cleanup**: Removed all Stripe-specific fields from users, subscriptions, and subscription_plans tables
+- **Gateway-Agnostic Fields**: Renamed stripeInvoiceId → gatewayInvoiceId and stripePaymentMethodId → gatewayPaymentMethodId for multi-gateway support
+- **Database Migration**: Successfully dropped Stripe columns and renamed gateway-specific fields using SQL
+- **Package Cleanup**: Uninstalled stripe, @stripe/stripe-js, and @stripe/react-stripe-js packages
+- **Two Gateway Support**: System now supports only PayPal (international) and Razorpay (India) payment gateways
+- **Production Ready**: Application tested and verified to run successfully with only PayPal and Razorpay
+
 ## Phase 8: Billing System Testing & Webhook Security Fix (October 8, 2025)
 - **Critical Webhook Fix**: Fixed Razorpay webhook signature verification - now uses raw body instead of re-stringified JSON for HMAC validation
 - **Webhook Middleware**: Added dedicated middleware to capture raw request body before JSON parsing for accurate signature verification
