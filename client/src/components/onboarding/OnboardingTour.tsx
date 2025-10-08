@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,59 +78,9 @@ interface OnboardingTourProps {
 
 export default function OnboardingTour({ onComplete, onSkip }: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isVisible, setIsVisible] = useState(true);
 
   const step = tourSteps[currentStep];
-
-  useEffect(() => {
-    if (step.target) {
-      const targetElement = document.querySelector(step.target);
-      if (targetElement) {
-        const rect = targetElement.getBoundingClientRect();
-        
-        let top = 0;
-        let left = 0;
-
-        switch (step.placement) {
-          case 'bottom':
-            top = rect.bottom + 10;
-            left = rect.left + rect.width / 2;
-            break;
-          case 'top':
-            top = rect.top - 10;
-            left = rect.left + rect.width / 2;
-            break;
-          case 'left':
-            top = rect.top + rect.height / 2;
-            left = rect.left - 10;
-            break;
-          case 'right':
-            top = rect.top + rect.height / 2;
-            left = rect.right + 10;
-            break;
-          default:
-            top = rect.bottom + 10;
-            left = rect.left + rect.width / 2;
-        }
-
-        setTooltipPosition({ top, left });
-
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        targetElement.classList.add('tour-highlight');
-        
-        return () => {
-          targetElement.classList.remove('tour-highlight');
-        };
-      }
-    } else {
-      setTooltipPosition({ 
-        top: window.innerHeight / 2, 
-        left: window.innerWidth / 2 
-      });
-    }
-  }, [currentStep, step.target, step.placement]);
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -162,41 +112,14 @@ export default function OnboardingTour({ onComplete, onSkip }: OnboardingTourPro
 
   if (!isVisible) return null;
 
-  const isWelcomeOrComplete = !step.target;
-
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300" />
       
       <Card 
         className={cn(
-          "fixed z-50 w-96 shadow-2xl transition-all duration-300"
+          "fixed z-50 w-96 shadow-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
-        style={
-          isWelcomeOrComplete
-            ? { 
-                top: '50%', 
-                left: '50%',
-                transform: 'translate(-50%, -50%)'
-              }
-            : step.placement === 'left'
-            ? { 
-                top: `${tooltipPosition.top}px`, 
-                left: `${tooltipPosition.left}px`,
-                transform: 'translate(-100%, -50%)'
-              }
-            : step.placement === 'top'
-            ? {
-                top: `${tooltipPosition.top}px`,
-                left: `${tooltipPosition.left}px`,
-                transform: 'translate(-50%, -100%)'
-              }
-            : {
-                top: `${tooltipPosition.top}px`,
-                left: `${tooltipPosition.left}px`,
-                transform: 'translate(-50%, 0)'
-              }
-        }
         data-testid="onboarding-tour-card"
       >
         <CardHeader className="pb-3">
@@ -262,16 +185,6 @@ export default function OnboardingTour({ onComplete, onSkip }: OnboardingTourPro
           </div>
         </CardContent>
       </Card>
-
-      <style>{`
-        .tour-highlight {
-          position: relative;
-          z-index: 45;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
-          border-radius: 8px;
-          transition: box-shadow 0.3s ease;
-        }
-      `}</style>
     </>
   );
 }
