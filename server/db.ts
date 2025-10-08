@@ -114,14 +114,16 @@ export async function updateUserSubscription(userId: string, planId: string, use
       console.log(`[DB] User ${userId} not found in PostgreSQL, creating...`);
       // Create user in PostgreSQL if they don't exist
       // This handles users authenticated via Supabase
+      const fullName = userEmail?.split('@')[0] || 'User'; // Extract name from email or use default
       [existingUser] = await db.insert(users).values({
         id: userId,
         email: userEmail || 'user@example.com', // Use provided email or placeholder
+        fullName: fullName,
         password: null, // No password for Supabase users
         plan: plan.planName,
       }).returning();
       
-      console.log(`[DB] Created user ${userId} in PostgreSQL`);
+      console.log(`[DB] Created user ${userId} in PostgreSQL with fullName: ${fullName}`);
     }
 
     // Update user's plan
