@@ -188,7 +188,8 @@ export default function BillingPage() {
   // Upgrade/downgrade mutation
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      return apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'razorpay' });
+      const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'razorpay' });
+      return await response.json();
     },
     onSuccess: async (data: any) => {
       console.log('💳 Payment flow started:', data);
