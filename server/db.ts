@@ -248,16 +248,26 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "7-Day Free Trial",
         price: "0",
-        description: "Try ZYRA for 7 Days",
+        description: "New users exploring Zyra features",
         features: [
-          "Test all core features (SEO, product optimization, content tools)",
-          "Limited credits",
-          "No hidden charges",
-          "Cancel anytime before trial ends"
+          "✨ 100 credits / 7 days",
+          "Product Optimization & SEO:",
+          "• Optimized Products – 20 credits",
+          "• SEO Keyword Density Analysis – 10 credits",
+          "Conversion Boosting & Sales Automation:",
+          "• AI-Powered Growth Intelligence – 20 credits",
+          "• Basic A/B Testing – 10 credits",
+          "Content & Branding at Scale:",
+          "• Smart Product Descriptions – 20 credits",
+          "• Limited Dynamic Templates – 10 credits",
+          "Performance Tracking & ROI Insights:",
+          "• Email Performance Analytics – 10 credits",
+          "Workflow & Integration Tools:",
+          "• One-Click Shopify Publish – 10 credits",
+          "• Rollback Button – included"
         ],
         limits: {
-          credits: 50,
-          duration: 7
+          credits: 100
         },
         interval: "day",
         isActive: true
@@ -265,21 +275,33 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Starter",
         price: "49.00",
-        description: "For New Shopify Stores",
+        description: "Best for new Shopify stores just getting started",
         features: [
-          "1,000 credits / month",
-          "AI product optimization & SEO tools",
-          "Basic conversion boosting (emails, triggers)",
-          "Ready-to-use templates for product descriptions",
-          "Simple dashboards & bulk editing tools"
+          "✨ 1,000 credits / month",
+          "Product Optimization & SEO:",
+          "• Optimized Products – 200 credits",
+          "• SEO Keyword Density Analysis – 100 credits",
+          "• AI Image Alt-Text Generator – 100 credits",
+          "• Smart SEO Titles & Meta Tags – 100 credits",
+          "Conversion Boosting & Sales Automation:",
+          "• AI-Powered Growth Intelligence – 150 credits",
+          "• A/B Testing – 50 credits",
+          "• Upsell Email Receipts – 100 credits",
+          "• Abandoned Cart SMS – 50 credits",
+          "Content & Branding at Scale:",
+          "• Smart Product Descriptions – 100 credits",
+          "• Dynamic Templates – 50 credits",
+          "• Brand Voice Memory – included",
+          "Performance Tracking & ROI Insights:",
+          "• Email & SMS Conversion Analytics – included",
+          "Workflow & Integration Tools:",
+          "• CSV Import/Export – included",
+          "• One-Click Shopify Publish – included",
+          "• Rollback Button – included",
+          "• Smart Bulk Suggestions – included"
         ],
         limits: {
-          credits: 1000,
-          aiOptimization: true,
-          seoTools: true,
-          emailTriggers: true,
-          templates: true,
-          dashboards: true
+          credits: 1000
         },
         interval: "month",
         isActive: true
@@ -287,22 +309,33 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Growth",
         price: "299.00",
-        description: "For Growing Merchants",
+        description: "For scaling merchants ready to grow",
         features: [
-          "10,000 credits / month",
-          "Everything in Starter, plus:",
-          "A/B testing for products, copy & campaigns",
-          "Smart upsell suggestions, abandoned cart recovery",
-          "Advanced customer segmentation & targeting",
-          "Multi-channel content repurposing (email, SMS, ads)"
+          "✨ 5,000 credits / month",
+          "Product Optimization & SEO:",
+          "• All Starter features +",
+          "• SEO Ranking Tracker – 200 credits",
+          "• Bulk Optimization & Smart Bulk Suggestions – 500 credits",
+          "• Scheduled Refresh for Content & SEO Updates – 300 credits",
+          "Conversion Boosting & Sales Automation:",
+          "• AI Upsell Suggestions & Triggers – 300 credits",
+          "• Dynamic Segmentation of Customers – 200 credits",
+          "• Behavioral Targeting – 200 credits",
+          "• Full A/B Test Results Dashboard – included",
+          "Content & Branding at Scale:",
+          "• Custom Templates – included",
+          "• Multimodal AI (text + image + insights) – 300 credits",
+          "• Multi-Channel Content Repurposing – 300 credits",
+          "Performance Tracking & ROI Insights:",
+          "• Full Email & SMS Tracking – included",
+          "• Content ROI Tracking – included",
+          "• Revenue Impact Attribution – included",
+          "• Product Management Dashboard – included",
+          "Workflow & Integration Tools:",
+          "• Unlimited Starter workflow tools – included"
         ],
         limits: {
-          credits: 10000,
-          abTesting: true,
-          upsellSuggestions: true,
-          cartRecovery: true,
-          customerSegmentation: true,
-          multiChannelRepurposing: true
+          credits: 5000
         },
         interval: "month",
         isActive: true
@@ -310,24 +343,29 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Pro",
         price: "999.00",
-        description: "For High-Revenue Brands",
+        description: "For high-revenue brands & enterprises",
         features: [
-          "Unlimited credits",
-          "Everything in Growth, plus:",
-          "Advanced ROI tracking & revenue attribution",
-          "Multimodal AI (text + image + insights)",
-          "Full brand voice memory for consistent messaging",
-          "Enterprise-level dashboards & reporting",
-          "Priority support & integrations"
+          "✨ 20,000 credits / month",
+          "Product Optimization & SEO:",
+          "• All Growth features + priority processing",
+          "Conversion Boosting & Sales Automation:",
+          "• Full AI-driven automation for campaigns, upsells, and behavioral targeting",
+          "Content & Branding at Scale:",
+          "• Full template library",
+          "• Advanced brand voice memory",
+          "• Multimodal AI insights",
+          "• Multi-channel automation",
+          "Performance Tracking & ROI Insights:",
+          "• Enterprise-grade analytics",
+          "• Revenue attribution dashboard",
+          "Workflow & Integration Tools:",
+          "• Enterprise bulk management",
+          "• CSV import/export",
+          "• Rollback",
+          "• Smart bulk suggestions at scale"
         ],
         limits: {
-          credits: -1,
-          roiTracking: true,
-          revenueAttribution: true,
-          multimodalAI: true,
-          brandVoiceMemory: true,
-          enterpriseDashboards: true,
-          prioritySupport: true
+          credits: 20000
         },
         interval: "month",
         isActive: true
