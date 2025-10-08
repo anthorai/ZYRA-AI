@@ -4,6 +4,15 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 
 # Recent Changes (October 2025)
 
+## Phase 8: Billing System Testing & Webhook Security Fix (October 8, 2025)
+- **Critical Webhook Fix**: Fixed Razorpay webhook signature verification - now uses raw body instead of re-stringified JSON for HMAC validation
+- **Webhook Middleware**: Added dedicated middleware to capture raw request body before JSON parsing for accurate signature verification
+- **Subscription Testing**: Comprehensive test suite validates all billing flows (trial→Starter→Growth→downgrade, trial expiration)
+- **Transaction Logging**: Added warning logs when webhooks arrive for unknown transactions (helps detect race conditions)
+- **Production Ready**: All webhook handlers (Razorpay, PayPal) verified with proper signature validation, idempotency, and error handling
+- **Hybrid Auth Verified**: Confirmed requireAuth middleware auto-provisions users correctly, preventing billing race conditions
+- **Test Coverage**: test-billing-flow.js validates subscription upgrades, downgrades, and trial expiration logic
+
 ## Phase 7: Advanced Notification Preference System Complete
 - **Market-Leading Notification Control**: Completely new, industry-first advanced notification preference system with AI-powered intelligence
 - **Preset Modes**: One-click configuration with Work Mode (hourly digests, business hours), Focus Mode (daily digest, urgent only), and Full Alerts (instant, all priorities)
