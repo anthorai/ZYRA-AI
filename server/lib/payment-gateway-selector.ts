@@ -4,7 +4,7 @@
  */
 
 export interface GatewaySelection {
-  gateway: 'razorpay' | 'paypal' | 'stripe';
+  gateway: 'razorpay' | 'paypal';
   currency: string;
   displayName: string;
   icon: string;
@@ -23,16 +23,6 @@ export function selectPaymentGateway(currency?: string, countryCode?: string): G
       icon: 'razorpay'
     };
   }
-
-  // US/Canada/EU - Stripe (when configured, currently skipped)
-  // if (['USD', 'CAD', 'EUR', 'GBP'].includes(currency || '') || ['US', 'CA', 'GB'].includes(countryCode || '')) {
-  //   return {
-  //     gateway: 'stripe',
-  //     currency: currency || 'USD',
-  //     displayName: 'Stripe',
-  //     icon: 'stripe'
-  //   };
-  // }
 
   // Default - PayPal (international, supports most currencies)
   return {
@@ -80,9 +70,6 @@ export function gatewaySupportsСurrency(gateway: string, currency: string): boo
     case 'paypal':
       // PayPal supports many currencies
       return ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'INR', 'JPY', 'CNY'].includes(currency);
-    case 'stripe':
-      // Stripe supports many currencies (when configured)
-      return ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'INR', 'JPY'].includes(currency);
     default:
       return false;
   }
