@@ -1742,40 +1742,113 @@ Respond with JSON in this exact format:
   // Change subscription plan (alternative endpoint for billing page)
   app.post("/api/subscription/change-plan", requireAuth, async (req, res) => {
     try {
-      const { planId } = req.body;
-      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "type:", typeof planId);
+      const { planId, gateway = 'razorpay' } = req.body;
+      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "gateway:", gateway);
       
       if (!planId) {
         return res.status(400).json({ error: "Plan ID is required" });
       }
 
       const userId = (req as AuthenticatedRequest).user.id;
+      const userEmail = (req as AuthenticatedRequest).user.email;
       
       // Verify plan exists before attempting to update subscription
-      // Use the same data source as GET /api/subscription-plans
       const plans = await getSubscriptionPlans();
-      const planExists = plans.find(p => p.id === planId);
-      console.log("[SUBSCRIPTION] Plan exists check:", !!planExists, "Available plan IDs:", plans.map(p => p.id));
+      const selectedPlan = plans.find(p => p.id === planId);
+      console.log("[SUBSCRIPTION] Plan exists check:", !!selectedPlan, "Available plan IDs:", plans.map(p => p.id));
       
-      if (!planExists) {
+      if (!selectedPlan) {
         return res.status(400).json({ 
           error: "Invalid plan ID",
           message: "The selected plan does not exist. Please refresh and try again." 
         });
       }
       
-      // Use PostgreSQL updateUserSubscription instead of Supabase
-      // Pass user email for user creation if they don't exist in PostgreSQL
-      const userEmail = (req as AuthenticatedRequest).user.email;
-      const updatedUser = await updateUserSubscription(userId, planId, userEmail);
+      // Check if the plan is free (7-Day Free Trial)
+      if (Number(selectedPlan.price) === 0 || selectedPlan.planName === '7-Day Free Trial') {
+        console.log("[SUBSCRIPTION] Free plan selected, updating directly without payment");
+        
+        // Update subscription directly for free plans
+        const updatedUser = await updateUserSubscription(userId, planId, userEmail);
+        await initializeUserCredits(userId, planId);
+        await NotificationService.notifySubscriptionChanged(userId, planId);
+        
+        return res.json({ 
+          success: true,
+          requiresPayment: false,
+          user: updatedUser 
+        });
+      }
       
-      // Initialize credits for the new plan
-      await initializeUserCredits(userId, planId);
+      // For paid plans, create a payment order
+      console.log("[SUBSCRIPTION] Paid plan selected, creating payment order");
       
-      // Send notification for subscription change
-      await NotificationService.notifySubscriptionChanged(userId, planId || 'Unknown');
+      // Create payment transaction record
+      const transaction = await storage.createPaymentTransaction({
+        userId,
+        amount: selectedPlan.price.toString(),
+        currency: selectedPlan.currency || 'USD',
+        gateway,
+        purpose: 'subscription',
+        status: 'pending',
+        metadata: {
+          planId,
+          planName: selectedPlan.planName,
+          userEmail
+        }
+      });
       
-      res.json({ user: updatedUser });
+      // Create payment order based on gateway
+      let paymentOrder;
+      if (gateway === 'razorpay' && isRazorpayConfigured()) {
+        paymentOrder = await createRazorpayOrder({
+          amount: Number(selectedPlan.price),
+          currency: selectedPlan.currency || 'INR',
+          receipt: transaction.id,
+          notes: {
+            userId,
+            planId,
+            planName: selectedPlan.planName,
+            transactionId: transaction.id
+          }
+        });
+        
+        // Update transaction with gateway order ID
+        await storage.updatePaymentTransaction(transaction.id, {
+          gatewayOrderId: paymentOrder.id
+        });
+        
+        return res.json({
+          success: true,
+          requiresPayment: true,
+          gateway: 'razorpay',
+          transactionId: transaction.id,
+          order: {
+            id: paymentOrder.id,
+            amount: paymentOrder.amount,
+            currency: paymentOrder.currency,
+            keyId: getRazorpayKeyId()
+          },
+          plan: selectedPlan
+        });
+      } else if (gateway === 'paypal' && process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
+        // PayPal requires frontend integration, return transaction ID
+        return res.json({
+          success: true,
+          requiresPayment: true,
+          gateway: 'paypal',
+          transactionId: transaction.id,
+          amount: selectedPlan.price,
+          currency: selectedPlan.currency || 'USD',
+          plan: selectedPlan
+        });
+      } else {
+        // No payment gateway configured
+        return res.status(503).json({ 
+          error: "Payment gateway not configured",
+          message: `${gateway} is not configured. Please contact support.` 
+        });
+      }
     } catch (error: any) {
       console.error("Error changing subscription plan:", error);
       res.status(500).json({ 
@@ -1844,33 +1917,131 @@ Respond with JSON in this exact format:
     }
   });
 
-  // Verify Razorpay payment
+  // Verify Razorpay payment and activate subscription
   app.post("/api/payments/razorpay/verify", requireAuth, async (req, res) => {
     try {
-      const { orderId, paymentId, signature } = req.body;
+      const { orderId, paymentId, signature, transactionId } = req.body;
       const user = (req as AuthenticatedRequest).user;
 
       if (!orderId || !paymentId || !signature) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
+      if (!transactionId) {
+        return res.status(400).json({ error: "Transaction ID is required" });
+      }
+
+      // Get transaction first to validate amount
+      const transaction = await storage.getPaymentTransaction(transactionId);
+      
+      if (!transaction || transaction.userId !== user.id) {
+        return res.status(404).json({ error: "Transaction not found or unauthorized" });
+      }
+
+      // Ensure transaction is still pending
+      if (transaction.status !== 'pending') {
+        return res.status(400).json({ 
+          error: "Invalid transaction status",
+          message: `Transaction is ${transaction.status}, expected pending` 
+        });
+      }
+
+      // Verify signature
       const isValid = await verifyRazorpaySignature(orderId, paymentId, signature);
 
       if (!isValid) {
+        // Mark transaction as failed
+        await storage.updatePaymentTransaction(transactionId, {
+          status: 'failed',
+          errorMessage: 'Invalid payment signature'
+        });
         return res.status(400).json({ error: "Invalid payment signature" });
       }
 
-      // Fetch payment details
+      // Fetch payment details from Razorpay
       const payment = await fetchRazorpayPayment(paymentId);
 
-      // Store transaction in database
-      await storage.createPaymentTransaction({
-        userId: user.id,
-        gateway: 'razorpay',
+      // Validate payment amount matches transaction amount
+      const paidAmount = Number(payment.amount) / 100;
+      const expectedAmount = Number(transaction.amount);
+      
+      console.log("[PAYMENT] Validating amount - Paid:", paidAmount, "Expected:", expectedAmount);
+      
+      if (Math.abs(paidAmount - expectedAmount) > 0.01) {
+        // Amount mismatch - mark transaction as failed
+        await storage.updatePaymentTransaction(transactionId, {
+          status: 'failed',
+          errorMessage: `Amount mismatch: Expected ${expectedAmount}, received ${paidAmount}`,
+          gatewayTransactionId: paymentId
+        });
+        return res.status(400).json({ 
+          error: "Payment amount mismatch",
+          message: `Expected ${expectedAmount}, received ${paidAmount}` 
+        });
+      }
+
+      // Validate currency matches
+      if (payment.currency.toUpperCase() !== transaction.currency.toUpperCase()) {
+        await storage.updatePaymentTransaction(transactionId, {
+          status: 'failed',
+          errorMessage: `Currency mismatch: Expected ${transaction.currency}, received ${payment.currency}`,
+          gatewayTransactionId: paymentId
+        });
+        return res.status(400).json({ 
+          error: "Payment currency mismatch" 
+        });
+      }
+
+      // Validate payment status - must be captured
+      if (payment.status !== 'captured') {
+        // If payment is only authorized, capture it first
+        if (payment.status === 'authorized') {
+          try {
+            console.log("[PAYMENT] Payment is authorized, capturing now...");
+            const capturedPayment = await captureRazorpayPayment(paymentId, paidAmount, payment.currency);
+            console.log("[PAYMENT] Payment captured successfully:", capturedPayment.id);
+            
+            // Verify capture was successful
+            if (capturedPayment.status !== 'captured') {
+              await storage.updatePaymentTransaction(transactionId, {
+                status: 'failed',
+                errorMessage: `Capture failed: ${capturedPayment.status}`,
+                gatewayTransactionId: paymentId
+              });
+              return res.status(400).json({ 
+                error: "Payment capture failed",
+                message: `Capture status is ${capturedPayment.status}` 
+              });
+            }
+          } catch (captureError: any) {
+            console.error("[PAYMENT] Capture failed:", captureError);
+            await storage.updatePaymentTransaction(transactionId, {
+              status: 'failed',
+              errorMessage: `Capture error: ${captureError.message}`,
+              gatewayTransactionId: paymentId
+            });
+            return res.status(400).json({ 
+              error: "Payment capture failed",
+              message: captureError.message 
+            });
+          }
+        } else {
+          // Payment is neither captured nor authorized
+          await storage.updatePaymentTransaction(transactionId, {
+            status: 'failed',
+            errorMessage: `Payment not successful: ${payment.status}`,
+            gatewayTransactionId: paymentId
+          });
+          return res.status(400).json({ 
+            error: "Payment not successful",
+            message: `Payment status is ${payment.status}` 
+          });
+        }
+      }
+
+      // All validations passed - update transaction as completed
+      await storage.updatePaymentTransaction(transactionId, {
         gatewayTransactionId: paymentId,
-        gatewayOrderId: orderId,
-        amount: (Number(payment.amount) / 100).toString(),
-        currency: payment.currency,
         status: 'completed',
         paymentMethod: payment.method,
         paymentDetails: {
@@ -1879,13 +2050,24 @@ Respond with JSON in this exact format:
           contact: payment.contact
         },
         signature,
-        webhookReceived: false,
-        metadata: { payment }
+        webhookReceived: false
       });
 
+      // If this is a subscription payment, activate the subscription
+      if (transaction.purpose === 'subscription' && transaction.metadata?.planId) {
+        const planId = transaction.metadata.planId;
+        const userEmail = user.email;
+        
+        console.log("[PAYMENT] Payment verified and validated, activating subscription for planId:", planId);
+        
+        // Update user subscription
+        const updatedUser = await updateUserSubscription(user.id, planId, userEmail);
+        await initializeUserCredits(user.id, planId);
+        await NotificationService.notifySubscriptionChanged(user.id, planId);
+      }
+
       // Send payment success notification
-      const amount = Number(payment.amount) / 100;
-      await NotificationService.notifyPaymentSuccess(user.id, amount, user.plan || 'subscription');
+      await NotificationService.notifyPaymentSuccess(user.id, paidAmount, user.plan || 'subscription');
 
       res.json({ 
         success: true, 

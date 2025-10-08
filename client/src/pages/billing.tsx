@@ -188,15 +188,93 @@ export default function BillingPage() {
   // Upgrade/downgrade mutation
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      return apiRequest('POST', '/api/subscription/change-plan', { planId });
+      return apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'razorpay' });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
-      toast({
-        title: "Plan Updated",
-        description: "Your subscription plan has been successfully updated.",
-      });
+    onSuccess: async (data: any) => {
+      // Check if payment is required
+      if (data.requiresPayment && data.gateway === 'razorpay') {
+        // Load Razorpay script if not already loaded
+        if (!(window as any).Razorpay) {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.async = true;
+          document.body.appendChild(script);
+          await new Promise((resolve) => {
+            script.onload = resolve;
+          });
+        }
+
+        // Initialize Razorpay payment
+        const options = {
+          key: data.order.keyId,
+          amount: data.order.amount,
+          currency: data.order.currency,
+          name: 'Zyra',
+          description: `${data.plan.planName} Plan`,
+          order_id: data.order.id,
+          handler: async function (response: any) {
+            try {
+              // Verify payment with backend
+              const verifyResult: any = await apiRequest('POST', '/api/payments/razorpay/verify', {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                transactionId: data.transactionId
+              });
+
+              if (verifyResult?.success) {
+                queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
+                toast({
+                  title: "Payment Successful",
+                  description: "Your subscription has been activated!",
+                });
+              } else {
+                // Verification failed - show error with support option
+                toast({
+                  title: "Payment Verification Failed",
+                  description: "Payment was processed but verification failed. Please contact support with your payment ID.",
+                  variant: "destructive",
+                });
+              }
+            } catch (error: any) {
+              // Handle verification errors
+              const errorMessage = error.message || error.error || "Payment verification failed";
+              toast({
+                title: "Payment Verification Error",
+                description: `${errorMessage}. If payment was deducted, please contact support.`,
+                variant: "destructive",
+              });
+            }
+          },
+          prefill: {
+            email: user?.email || '',
+          },
+          theme: {
+            color: '#8b5cf6'
+          },
+          modal: {
+            ondismiss: function() {
+              toast({
+                title: "Payment Cancelled",
+                description: "You cancelled the payment process.",
+                variant: "destructive",
+              });
+            }
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } else if (data.requiresPayment === false) {
+        // Free plan, no payment required
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
+        toast({
+          title: "Plan Updated",
+          description: "Your subscription plan has been successfully updated.",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
