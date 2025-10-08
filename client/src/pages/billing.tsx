@@ -36,7 +36,9 @@ import {
   Settings,
   LogOut,
   Gift,
-  Award
+  Award,
+  Rocket,
+  BarChart
 } from "lucide-react";
 
 interface SubscriptionPlan {
@@ -98,9 +100,9 @@ interface UsageStats {
 }
 
 const planIcons = {
-  "7-Day Free Trial": <Gift className="w-6 h-6 text-primary" />,
-  "Starter": <Zap className="w-6 h-6 text-primary" />,
-  "Growth": <Award className="w-6 h-6 text-primary" />,
+  "7-Day Free Trial": <Rocket className="w-6 h-6 text-primary" />,
+  "Starter": <BarChart className="w-6 h-6 text-primary" />,
+  "Growth": <Zap className="w-6 h-6 text-primary" />,
   "Pro": <Crown className="w-6 h-6 text-primary" />,
   "Enterprise": <Building className="w-6 h-6 text-primary" />
 };
@@ -461,9 +463,9 @@ export default function BillingPage() {
                 
                 // Icon size must be w-8 h-8 to match landing page
                 const iconMap = {
-                  "7-Day Free Trial": <Gift className="w-8 h-8" />,
-                  "Starter": <Zap className="w-8 h-8" />,
-                  "Growth": <Award className="w-8 h-8" />,
+                  "7-Day Free Trial": <Rocket className="w-8 h-8" />,
+                  "Starter": <BarChart className="w-8 h-8" />,
+                  "Growth": <Zap className="w-8 h-8" />,
                   "Pro": <Crown className="w-8 h-8" />,
                 };
                 
@@ -517,7 +519,10 @@ export default function BillingPage() {
                           data-testid={`button-choose-plan-${index}`}
                         >
                           {changePlanMutation.isPending ? "Processing..." : 
-                           index === 0 ? "Start Trial" :
+                           plan.planName === "7-Day Free Trial" ? "Start Free Trial" :
+                           plan.planName === "Starter" ? "Upgrade to Starter" :
+                           plan.planName === "Growth" ? "Scale with Growth" :
+                           plan.planName === "Pro" ? "Power Up with Pro" :
                            "Choose Plan"}
                         </Button>
                       ) : (

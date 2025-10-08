@@ -179,6 +179,8 @@ export const sessions = pgTable("sessions", {
 export const usageStats = pgTable("usage_stats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  creditsUsed: integer("credits_used").default(0),
+  creditsRemaining: integer("credits_remaining").default(0),
   totalRevenue: integer("total_revenue").default(0),
   totalOrders: integer("total_orders").default(0),
   conversionRate: integer("conversion_rate").default(0), // stored as percentage * 100

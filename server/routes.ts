@@ -60,6 +60,7 @@ import {
 } from "./middleware/sanitization";
 import { NotificationService } from "./lib/notification-service";
 import { TwoFactorAuthService } from "./lib/2fa-service";
+import { initializeUserCredits } from "./lib/credits";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -1861,7 +1862,12 @@ Respond with JSON in this exact format:
         return res.status(400).json({ message: "Plan ID is required" });
       }
       
-      const user = await supabaseStorage.updateUserSubscription((req as AuthenticatedRequest).user.id, { planId });
+      const userId = (req as AuthenticatedRequest).user.id;
+      const user = await supabaseStorage.updateUserSubscription(userId, { planId });
+      
+      // Initialize credits for the new plan
+      await initializeUserCredits(userId, planId);
+      
       res.json({ message: "Subscription updated successfully", user });
     } catch (error: any) {
       console.error("Update subscription error:", error);
@@ -1879,6 +1885,9 @@ Respond with JSON in this exact format:
 
       const userId = (req as AuthenticatedRequest).user.id;
       const subscription = await supabaseStorage.updateUserSubscription(userId, { planId });
+      
+      // Initialize credits for the new plan
+      await initializeUserCredits(userId, planId);
       
       // Send notification for subscription change
       await NotificationService.notifySubscriptionChanged(userId, planId || 'Unknown');

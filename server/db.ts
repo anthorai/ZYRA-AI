@@ -201,6 +201,16 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   }, "getSubscriptionPlans");
 }
 
+export async function getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | undefined> {
+  return withErrorHandling(async () => {
+    const [plan] = await db.select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.id, planId));
+    
+    return plan || undefined;
+  }, "getSubscriptionPlanById");
+}
+
 export async function createSubscriptionPlan(planData: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
   return withErrorHandling(async () => {
     const [plan] = await db.insert(subscriptionPlans).values(planData).returning();
