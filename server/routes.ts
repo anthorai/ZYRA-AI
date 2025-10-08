@@ -27,7 +27,6 @@ import { testSupabaseConnection } from "./lib/supabase";
 import { db } from "./db";
 import { eq, desc, sql, and } from "drizzle-orm";
 import OpenAI from "openai";
-import Stripe from "stripe";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import multer from "multer";
@@ -42,11 +41,6 @@ import {
   isRazorpayConfigured,
   handleRazorpayWebhook
 } from "./razorpay";
-import {
-  createPayoneerInvoice,
-  getPayoneerInvoiceStatus,
-  isPayoneerConfigured
-} from "./payoneer";
 import { sendEmail, sendBulkEmails } from "./lib/sendgrid-client";
 import { sendSMS, sendBulkSMS } from "./lib/twilio-client";
 import { 
@@ -72,14 +66,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || ""
 });
 
-// Initialize Stripe if keys are provided
-let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-08-27.basil",
-  });
-}
-
 // Types for authenticated user from Supabase
 interface AuthenticatedUser {
   id: string;
@@ -87,8 +73,6 @@ interface AuthenticatedUser {
   fullName: string;
   role: string;
   plan: string;
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
 }
 
 // Extend Express Request type to include user
@@ -183,9 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: userProfile.email,
         fullName: userProfile.fullName,
         role: userProfile.role,
-        plan: userProfile.plan,
-        stripeCustomerId: userProfile.stripeCustomerId,
-        stripeSubscriptionId: userProfile.stripeSubscriptionId
+        plan: userProfile.plan
       };
       
       next();
@@ -470,9 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email, 
         fullName: user.fullName, 
         role: user.role,
-        plan: user.plan,
-        stripeCustomerId: user.stripeCustomerId,
-        stripeSubscriptionId: user.stripeSubscriptionId
+        plan: user.plan
       } 
     });
   });
@@ -1620,52 +1600,6 @@ Respond with JSON in this exact format:
     }
   });
 
-  // Stripe subscription routes
-  if (stripe) {
-    app.post("/api/create-subscription", requireAuth, async (req, res) => {
-      try {
-        let user = (req as AuthenticatedRequest).user;
-        
-        if (user.stripeSubscriptionId) {
-          const subscription = await stripe!.subscriptions.retrieve(user.stripeSubscriptionId);
-          return res.json({
-            subscriptionId: subscription.id,
-            clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
-          });
-        }
-
-        let customerId = user.stripeCustomerId;
-        if (!customerId) {
-          const customer = await stripe!.customers.create({
-            email: user.email,
-            name: user.fullName,
-          });
-          customerId = customer.id;
-          await supabaseStorage.updateUserStripeInfo(user.id, customerId, "");
-        }
-
-        const subscription = await stripe!.subscriptions.create({
-          customer: customerId,
-          items: [{
-            price: process.env.STRIPE_PRICE_ID || "price_1234", // User needs to set this
-          }],
-          payment_behavior: 'default_incomplete',
-          expand: ['latest_invoice.payment_intent'],
-        });
-
-        await supabaseStorage.updateUserStripeInfo(user.id, customerId, subscription.id);
-
-        res.json({
-          subscriptionId: subscription.id,
-          clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
-        });
-      } catch (error: any) {
-        console.error("Subscription error:", error);
-        res.status(400).json({ error: { message: error.message } });
-      }
-    });
-  }
-
   // NEW DATABASE HELPER ROUTES
 
   // User profile routes
@@ -1908,52 +1842,13 @@ Respond with JSON in this exact format:
   // Get payment methods
   app.get("/api/payment-methods", requireAuth, async (req, res) => {
     try {
-      // Mock payment methods - implement with Stripe integration
+      // Payment methods managed through PayPal and Razorpay
       const paymentMethods: any[] = [];
       res.json(paymentMethods || []);
     } catch (error: any) {
       console.error("Error fetching payment methods:", error);
       res.status(500).json({ 
         error: "Failed to fetch payment methods",
-        message: error.message 
-      });
-    }
-  });
-
-  // Add payment method
-  app.post("/api/payment-methods/add", requireAuth, async (req, res) => {
-    try {
-      if (!stripe) {
-        return res.status(500).json({ error: "Stripe not configured" });
-      }
-
-      const user = (req as AuthenticatedRequest).user;
-      let customerId = user.stripeCustomerId;
-
-      // Create Stripe customer if doesn't exist
-      if (!customerId) {
-        const customer = await stripe.customers.create({
-          email: user.email,
-          name: user.fullName,
-          metadata: { userId: user.id }
-        });
-        customerId = customer.id;
-        await supabaseStorage.updateUserStripeInfo(user.id, customerId, "");
-      }
-
-      // Create setup session
-      const session = await stripe.checkout.sessions.create({
-        mode: 'setup',
-        customer: customerId,
-        success_url: `${req.protocol}://${req.get('host')}/billing?setup=success`,
-        cancel_url: `${req.protocol}://${req.get('host')}/billing?setup=cancel`,
-      });
-
-      res.json({ setupUrl: session.url });
-    } catch (error: any) {
-      console.error("Error adding payment method:", error);
-      res.status(500).json({ 
-        error: "Failed to add payment method",
         message: error.message 
       });
     }
@@ -2004,10 +1899,6 @@ Respond with JSON in this exact format:
   app.get("/api/payments/config", requireAuth, async (req, res) => {
     try {
       res.json({
-        stripe: {
-          enabled: !!stripe,
-          publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null
-        },
         razorpay: {
           enabled: isRazorpayConfigured(),
           keyId: isRazorpayConfigured() ? getRazorpayKeyId() : null
@@ -2015,9 +1906,6 @@ Respond with JSON in this exact format:
         paypal: {
           enabled: !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
           clientId: process.env.PAYPAL_CLIENT_ID || null
-        },
-        payoneer: {
-          enabled: isPayoneerConfigured()
         }
       });
     } catch (error: any) {
@@ -2213,55 +2101,6 @@ Respond with JSON in this exact format:
     }
   });
 
-  // === PAYONEER ROUTES ===
-  
-  // Create Payoneer invoice (B2B)
-  app.post("/api/payments/payoneer/create-invoice", requireAuth, async (req, res) => {
-    try {
-      if (!isPayoneerConfigured()) {
-        return res.status(503).json({ error: "Payoneer is not configured" });
-      }
-
-      const { amount, currency, description } = req.body;
-      const user = (req as AuthenticatedRequest).user;
-
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: "Invalid amount" });
-      }
-
-      const invoice = await createPayoneerInvoice({
-        amount,
-        currency: currency || 'USD',
-        customerId: user.id,
-        description: description || 'Zyra subscription payment',
-        invoiceNumber: `INV-${Date.now()}`
-      });
-
-      res.json(invoice);
-    } catch (error: any) {
-      console.error("Error creating Payoneer invoice:", error);
-      res.status(500).json({ 
-        error: "Failed to create invoice",
-        message: error.message 
-      });
-    }
-  });
-
-  // Get Payoneer invoice status
-  app.get("/api/payments/payoneer/invoice/:invoiceId", requireAuth, async (req, res) => {
-    try {
-      const { invoiceId } = req.params;
-      const status = await getPayoneerInvoiceStatus(invoiceId);
-      res.json(status);
-    } catch (error: any) {
-      console.error("Error fetching Payoneer invoice:", error);
-      res.status(500).json({ 
-        error: "Failed to fetch invoice status",
-        message: error.message 
-      });
-    }
-  });
-
   // === PAYMENT TRANSACTIONS ===
   
   // Get all payment transactions for user
@@ -2328,16 +2167,6 @@ Respond with JSON in this exact format:
             transaction.gatewayTransactionId,
             amount ? Number(amount) : undefined
           );
-          break;
-        case 'stripe':
-          if (!stripe) {
-            return res.status(503).json({ error: "Stripe not configured" });
-          }
-          refundResult = await stripe.refunds.create({
-            payment_intent: transaction.gatewayTransactionId,
-            amount: amount ? Math.round(Number(amount) * 100) : undefined,
-            reason: 'requested_by_customer'
-          });
           break;
         default:
           return res.status(400).json({ error: `Refunds not supported for ${transaction.gateway}` });
