@@ -81,7 +81,6 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
-  updateUserStripeInfo(userId: string, customerId: string, subscriptionId: string): Promise<User>;
   updateUserProfile(userId: string, fullName: string, email: string): Promise<User>;
   updateUserImage(userId: string, imageUrl: string): Promise<User>;
   // changeUserPassword removed - handled by Supabase Auth
@@ -236,18 +235,6 @@ export class DatabaseStorage {
       ...userDataWithoutPassword,
       password: null, // Always null for Supabase users
     }).returning();
-    return result[0];
-  }
-
-  async updateUserStripeInfo(userId: string, customerId: string, subscriptionId: string): Promise<User> {
-    if (!db) throw new Error("Database not configured");
-    const result = await db.update(users)
-      .set({ 
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId 
-      })
-      .where(eq(users.id, userId))
-      .returning();
     return result[0];
   }
 
@@ -798,8 +785,6 @@ export class MemStorage {
         role: "user",
         plan: "trial",
         trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        stripeCustomerId: null,
-        stripeSubscriptionId: null,
         imageUrl: null,
         preferredLanguage: "en",
         createdAt: new Date(),
@@ -829,8 +814,6 @@ export class MemStorage {
       role: "user",
       plan: "trial",
       trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
       imageUrl: null,
       preferredLanguage: "en",
       createdAt: new Date(),
@@ -843,14 +826,6 @@ export class MemStorage {
     const user = this.users.get(userId);
     if (!user) throw new Error("User not found");
     const updatedUser = { ...user, ...updates };
-    this.users.set(userId, updatedUser);
-    return updatedUser;
-  }
-
-  async updateUserStripeInfo(userId: string, customerId: string, subscriptionId: string): Promise<User> {
-    const user = this.users.get(userId);
-    if (!user) throw new Error("User not found");
-    const updatedUser = { ...user, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId };
     this.users.set(userId, updatedUser);
     return updatedUser;
   }

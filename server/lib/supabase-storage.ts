@@ -55,7 +55,6 @@ export interface ISupabaseStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
-  updateUserStripeInfo(userId: string, customerId: string, subscriptionId: string): Promise<User>;
   updateUserProfile(userId: string, fullName: string, email: string): Promise<User>;
   updateUserImage(userId: string, imageUrl: string): Promise<User>;
   changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<User>;
@@ -188,14 +187,6 @@ export class SupabaseStorage implements ISupabaseStorage {
       mapped.full_name = user.fullName;
       delete mapped.fullName;
     }
-    if (user.stripeCustomerId !== undefined) {
-      mapped.stripe_customer_id = user.stripeCustomerId;
-      delete mapped.stripeCustomerId;
-    }
-    if (user.stripeSubscriptionId !== undefined) {
-      mapped.stripe_subscription_id = user.stripeSubscriptionId;
-      delete mapped.stripeSubscriptionId;
-    }
     if (user.imageUrl !== undefined) {
       mapped.image_url = user.imageUrl;
       delete mapped.imageUrl;
@@ -219,8 +210,6 @@ export class SupabaseStorage implements ISupabaseStorage {
     return {
       ...data,
       fullName: data.full_name,
-      stripeCustomerId: data.stripe_customer_id,
-      stripeSubscriptionId: data.stripe_subscription_id,
       imageUrl: data.image_url,
       preferredLanguage: data.preferred_language,
       trialEndDate: data.trial_end_date,
@@ -289,10 +278,6 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to update user: ${error.message}`);
     return this.snakeToCamelUser(data);
-  }
-
-  async updateUserStripeInfo(userId: string, customerId: string, subscriptionId: string): Promise<User> {
-    return this.updateUser(userId, { stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId });
   }
 
   async updateUserProfile(userId: string, fullName: string, email: string): Promise<User> {
@@ -1184,7 +1169,6 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (updates.planId) dbUpdates.plan_id = updates.planId;
     if (updates.status) dbUpdates.status = updates.status;
-    if (updates.stripeSubscriptionId) dbUpdates.stripe_subscription_id = updates.stripeSubscriptionId;
     if (updates.currentPeriodStart) dbUpdates.current_period_start = updates.currentPeriodStart;
     if (updates.currentPeriodEnd) dbUpdates.current_period_end = updates.currentPeriodEnd;
     if (updates.cancelAtPeriodEnd !== undefined) dbUpdates.cancel_at_period_end = updates.cancelAtPeriodEnd;

@@ -8,9 +8,9 @@ export const supportTicketCategoryEnum = pgEnum('support_ticket_category', ['bug
 export const supportTicketPriorityEnum = pgEnum('support_ticket_priority', ['low', 'medium', 'high', 'urgent']);
 export const supportTicketStatusEnum = pgEnum('support_ticket_status', ['open', 'in_progress', 'resolved', 'closed']);
 export const integrationTypeEnum = pgEnum('integration_type', ['email', 'sms', 'analytics', 'automation']);
-export const paymentGatewayEnum = pgEnum('payment_gateway', ['stripe', 'razorpay', 'paypal', 'payoneer']);
+export const paymentGatewayEnum = pgEnum('payment_gateway', ['razorpay', 'paypal']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded', 'cancelled']);
-export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['card', 'upi', 'netbanking', 'wallet', 'bank_transfer', 'paypal', 'payoneer']);
+export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['card', 'upi', 'netbanking', 'wallet', 'bank_transfer']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -20,8 +20,6 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"),
   plan: text("plan").notNull().default("trial"),
   trialEndDate: timestamp("trial_end_date").default(sql`NOW() + INTERVAL '7 days'`),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
   imageUrl: text("image_url"),
   preferredLanguage: text("preferred_language").default("en"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
