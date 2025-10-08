@@ -1154,7 +1154,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
@@ -1165,10 +1165,26 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateUserSubscription(userId: string, updates: Partial<Subscription>): Promise<Subscription> {
+    // Convert camelCase to snake_case for database columns
+    const dbUpdates: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    };
+    
+    if (updates.planId) dbUpdates.plan_id = updates.planId;
+    if (updates.status) dbUpdates.status = updates.status;
+    if (updates.stripeSubscriptionId) dbUpdates.stripe_subscription_id = updates.stripeSubscriptionId;
+    if (updates.currentPeriodStart) dbUpdates.current_period_start = updates.currentPeriodStart;
+    if (updates.currentPeriodEnd) dbUpdates.current_period_end = updates.currentPeriodEnd;
+    if (updates.cancelAtPeriodEnd !== undefined) dbUpdates.cancel_at_period_end = updates.cancelAtPeriodEnd;
+    if (updates.trialStart) dbUpdates.trial_start = updates.trialStart;
+    if (updates.trialEnd) dbUpdates.trial_end = updates.trialEnd;
+    if (updates.startDate) dbUpdates.start_date = updates.startDate;
+    if (updates.endDate) dbUpdates.end_date = updates.endDate;
+
     const { data, error } = await supabase
       .from('subscriptions')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
-      .eq('userId', userId)
+      .update(dbUpdates)
+      .eq('user_id', userId)
       .select()
       .single();
     

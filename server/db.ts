@@ -116,7 +116,7 @@ export async function updateUserSubscription(userId: string, planId: string): Pr
     // Create subscription record
     await db.insert(subscriptions).values({
       userId,
-      plan: plan.planName,
+      planId,
       status: "active",
     });
 

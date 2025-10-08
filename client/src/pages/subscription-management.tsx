@@ -63,7 +63,7 @@ export default function SubscriptionManagement() {
     },
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string): JSX.Element => {
     const variants: Record<string, { variant: any; icon: any }> = {
       active: { variant: "default", icon: <CheckCircle2 className="w-3 h-3" /> },
       trialing: { variant: "secondary", icon: <Clock className="w-3 h-3" /> },
@@ -119,7 +119,7 @@ export default function SubscriptionManagement() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Current Subscription</span>
-            {subscription && getStatusBadge((subscription as any).status)}
+            {subscription ? getStatusBadge((subscription as any).status) : null}
           </CardTitle>
         </CardHeader>
         <CardContent>
