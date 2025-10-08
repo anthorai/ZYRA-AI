@@ -191,20 +191,43 @@ export default function BillingPage() {
       return apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'razorpay' });
     },
     onSuccess: async (data: any) => {
+      console.log('💳 Payment flow started:', data);
+      
       // Check if payment is required
       if (data.requiresPayment && data.gateway === 'razorpay') {
+        console.log('💳 Razorpay payment required, loading script...');
+        
         // Load Razorpay script if not already loaded
         if (!(window as any).Razorpay) {
+          console.log('📥 Loading Razorpay script...');
           const script = document.createElement('script');
           script.src = 'https://checkout.razorpay.com/v1/checkout.js';
           script.async = true;
+          script.onerror = () => {
+            console.error('❌ Failed to load Razorpay script');
+            toast({
+              title: "Script Load Error",
+              description: "Failed to load payment gateway. Please refresh and try again.",
+              variant: "destructive",
+            });
+          };
           document.body.appendChild(script);
           await new Promise((resolve) => {
             script.onload = resolve;
           });
+          console.log('✅ Razorpay script loaded');
+        } else {
+          console.log('✅ Razorpay already loaded');
         }
 
         // Initialize Razorpay payment
+        console.log('🚀 Opening Razorpay modal with options:', {
+          key: data.order?.keyId,
+          amount: data.order?.amount,
+          currency: data.order?.currency,
+          orderId: data.order?.id
+        });
+        
         const options = {
           key: data.order.keyId,
           amount: data.order.amount,
@@ -264,8 +287,19 @@ export default function BillingPage() {
           }
         };
 
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
+        try {
+          const rzp = new (window as any).Razorpay(options);
+          console.log('✅ Razorpay instance created, opening modal...');
+          rzp.open();
+          console.log('✅ Razorpay modal opened');
+        } catch (error) {
+          console.error('❌ Error opening Razorpay modal:', error);
+          toast({
+            title: "Payment Modal Error",
+            description: "Failed to open payment modal. Please try again.",
+            variant: "destructive",
+          });
+        }
       } else if (data.requiresPayment === false) {
         // Free plan, no payment required
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
