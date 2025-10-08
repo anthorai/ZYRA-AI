@@ -131,24 +131,26 @@ export default function NotificationCenter({ className }: NotificationCenterProp
         )}
       </Button>
 
-      {/* Dropdown Panel */}
+      {/* Full-Screen Modal Panel */}
       {isOpen && (
         <>
-          {/* Subtle backdrop overlay for visual separation */}
+          {/* Dark backdrop overlay */}
           <div 
-            className="fixed inset-0 z-[100]" 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" 
             onClick={() => setIsOpen(false)}
           />
           
           <div
             ref={dropdownRef}
             className={cn(
-              "absolute right-0 top-full mt-4 z-[101]",
-              "w-80 sm:w-80 md:w-96",
-              "bg-slate-900/95 backdrop-blur-md",
-              "rounded-xl border border-slate-700/50 shadow-2xl",
-              "max-h-[500px] overflow-hidden",
-              "animate-in slide-in-from-top-2 duration-200"
+              "fixed z-[101]",
+              "inset-4 sm:inset-8 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
+              "w-auto md:w-full md:max-w-2xl",
+              "h-auto md:max-h-[85vh]",
+              "bg-slate-900/98 backdrop-blur-md",
+              "rounded-2xl border border-slate-700/50 shadow-2xl",
+              "overflow-hidden flex flex-col",
+              "animate-in fade-in-0 zoom-in-95 duration-200"
             )}
             data-testid="dropdown-notifications"
           >
@@ -170,7 +172,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center">
                   <Bell className="w-12 h-12 text-slate-400 mx-auto mb-4" />
