@@ -4,6 +4,17 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 
 # Recent Changes (October 2025)
 
+## Phase 10: Secure Subscription Payment Flow (October 8, 2025)
+- **Payment-Gated Subscriptions**: Implemented secure payment flow requiring Razorpay payment before subscription activation for paid plans
+- **Free Plan Support**: 7-Day Free Trial activates immediately without payment, paid plans (Starter, Growth, Pro) require payment
+- **Transaction Validation**: Comprehensive security checks including pending status verification, amount validation, currency matching, and payment capture enforcement
+- **Auto-Capture**: Authorized payments are automatically captured server-side before subscription activation
+- **Amount Security**: Payment amount must match transaction amount (with 0.01 tolerance) to prevent underpayment attacks
+- **Replay Protection**: Transaction status checks prevent replay attacks and duplicate processing
+- **Frontend Integration**: Razorpay SDK loads dynamically, shows payment modal, handles success/failure with clear user feedback
+- **Error Recovery**: Enhanced error handling with transaction failure tracking and user support guidance
+- **Security Verified**: Architect-approved implementation with proper validation, capture enforcement, and error handling
+
 ## Phase 9: Payment Gateway Consolidation (October 8, 2025)
 - **Removed Stripe**: Completely removed Stripe payment gateway including all imports, routes, server files, and packages
 - **Removed Payoneer**: Completely removed Payoneer payment gateway including all imports, routes, server files, and enum references
