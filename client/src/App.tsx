@@ -34,6 +34,7 @@ const SubscriptionManagement = lazy(() => import("@/pages/subscription-managemen
 // Settings subpages
 const AIPreferencesPage = lazy(() => import("@/pages/settings/ai-preferences"));
 const NotificationsPage = lazy(() => import("@/pages/settings/notifications"));
+const AdvancedNotificationSettings = lazy(() => import("@/pages/notifications/advanced-settings"));
 const IntegrationsPage = lazy(() => import("@/pages/settings/integrations"));
 const SecurityPage = lazy(() => import("@/pages/settings/security"));
 const SupportPage = lazy(() => import("@/pages/settings/support"));
@@ -193,6 +194,13 @@ function Router() {
               <NotificationsPage />
             </Suspense>
           </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/notifications/advanced" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <AdvancedNotificationSettings />
+          </Suspense>
         </ProtectedRoute>
       )} />
       <Route path="/settings/integrations" component={() => (
