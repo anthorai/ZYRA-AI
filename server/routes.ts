@@ -1634,6 +1634,7 @@ Respond with JSON in this exact format:
   app.get("/api/subscription-plans", async (req, res) => {
     try {
       const dbPlans = await getSubscriptionPlans();
+      console.log("[API] Fetched subscription plans:", dbPlans.map(p => ({ id: p.id, name: p.planName })));
       
       // Sort plans to ensure trial is first, then by price
       const sortedPlans = dbPlans.sort((a, b) => {
@@ -1742,11 +1743,26 @@ Respond with JSON in this exact format:
   app.post("/api/subscription/change-plan", requireAuth, async (req, res) => {
     try {
       const { planId } = req.body;
+      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "type:", typeof planId);
+      
       if (!planId) {
         return res.status(400).json({ error: "Plan ID is required" });
       }
 
       const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Verify plan exists before attempting to update subscription
+      const plans = await supabaseStorage.getSubscriptionPlans();
+      const planExists = plans.find(p => p.id === planId);
+      console.log("[SUBSCRIPTION] Plan exists check:", !!planExists, "Available plan IDs:", plans.map(p => p.id));
+      
+      if (!planExists) {
+        return res.status(400).json({ 
+          error: "Invalid plan ID",
+          message: "The selected plan does not exist. Please refresh and try again." 
+        });
+      }
+      
       const subscription = await supabaseStorage.updateUserSubscription(userId, { planId });
       
       // Initialize credits for the new plan
