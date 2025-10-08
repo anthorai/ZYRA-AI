@@ -48,14 +48,11 @@ interface SubscriptionPlan {
   description: string;
   features: string[];
   limits: {
-    products: number;
-    emails: number;
-    sms: number;
-    aiGenerations: number;
-    seoOptimizations: number;
+    credits: number;
   };
-  currency: string;
+  currency?: string;
   interval: string;
+  isActive?: boolean;
 }
 
 interface UserSubscription {
@@ -90,13 +87,15 @@ interface PaymentMethod {
 }
 
 interface UsageStats {
-  productsCount: number;
-  emailsSent: number;
-  emailsRemaining: number;
-  smsSent: number;
-  smsRemaining: number;
-  aiGenerationsUsed: number;
-  seoOptimizationsUsed: number;
+  productsCount?: number;
+  emailsSent?: number;
+  emailsRemaining?: number;
+  smsSent?: number;
+  smsRemaining?: number;
+  aiGenerationsUsed?: number;
+  seoOptimizationsUsed?: number;
+  creditsUsed?: number;
+  creditsRemaining?: number;
 }
 
 const planIcons = {
@@ -333,58 +332,21 @@ export default function BillingPage() {
             </CardHeader>
             <CardContent>
               {usageStats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-300">Products</span>
-                      <span className="text-white" data-testid="text-products-usage">
-                        {usageStats.productsCount}
-                        {currentPlan.limits.products !== -1 && `/${currentPlan.limits.products}`}
+                      <span className="text-slate-300">Credits Used</span>
+                      <span className="text-white font-medium" data-testid="text-credits-usage">
+                        {usageStats.creditsUsed || 0} / {currentPlan.limits.credits}
                       </span>
                     </div>
                     <Progress 
-                      value={getUsagePercentage(usageStats.productsCount, currentPlan.limits.products)} 
-                      className="h-2"
+                      value={getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits)} 
+                      className="h-3"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-300">Emails</span>
-                      <span className="text-white" data-testid="text-emails-usage">
-                        {usageStats.emailsSent}
-                        {currentPlan.limits.emails !== -1 && `/${currentPlan.limits.emails}`}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={getUsagePercentage(usageStats.emailsSent, currentPlan.limits.emails)} 
-                      className="h-2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-300">SMS</span>
-                      <span className="text-white" data-testid="text-sms-usage">
-                        {usageStats.smsSent}
-                        {currentPlan.limits.sms !== -1 && `/${currentPlan.limits.sms}`}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={getUsagePercentage(usageStats.smsSent, currentPlan.limits.sms)} 
-                      className="h-2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-300">AI Generations</span>
-                      <span className="text-white" data-testid="text-ai-usage">
-                        {usageStats.aiGenerationsUsed}
-                        {currentPlan.limits.aiGenerations !== -1 && `/${currentPlan.limits.aiGenerations}`}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={getUsagePercentage(usageStats.aiGenerationsUsed, currentPlan.limits.aiGenerations)} 
-                      className="h-2"
-                    />
+                    <p className="text-xs text-slate-400 mt-1">
+                      {usageStats.creditsRemaining || currentPlan.limits.credits} credits remaining this {currentPlan.interval}
+                    </p>
                   </div>
                 </div>
               )}

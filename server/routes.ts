@@ -24,7 +24,7 @@ import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase } from "./lib/supabase";
 import { storage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db } from "./db";
+import { db, getSubscriptionPlans } from "./db";
 import { eq, desc, sql, and } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -1633,7 +1633,7 @@ Respond with JSON in this exact format:
   // Subscription plans routes
   app.get("/api/subscription-plans", async (req, res) => {
     try {
-      const dbPlans = await supabaseStorage.getSubscriptionPlans();
+      const dbPlans = await getSubscriptionPlans();
       
       // Sort plans to ensure trial is first, then by price
       const sortedPlans = dbPlans.sort((a, b) => {
@@ -1645,147 +1645,10 @@ Respond with JSON in this exact format:
       res.json(sortedPlans);
     } catch (error: any) {
       console.error("Get subscription plans error:", error);
-      
-      // Fallback to hardcoded plans when database is unavailable
-      const fallbackPlans = [
-        {
-          id: "trial",
-          planName: "7-Day Free Trial",
-          price: 0,
-          description: "Try ZYRA for 7 Days",
-          features: [
-            "100 credits / 7 days",
-            "Optimized Products – 20 credits",
-            "SEO Keyword Density Analysis – 10 credits", 
-            "AI-Powered Growth Intelligence – 20 credits",
-            "Basic A/B Testing – 10 credits",
-            "Smart Product Descriptions – 20 credits",
-            "Limited Dynamic Templates – 10 credits",
-            "Email Performance Analytics – 10 credits",
-            "One-Click Shopify Publish – 10 credits",
-            "Rollback Button – included"
-          ],
-          limits: {
-            credits: 100,
-            duration: 7
-          },
-          currency: "USD",
-          interval: "day"
-        },
-        {
-          id: "starter",
-          planName: "Starter",
-          price: 49,
-          description: "For New Shopify Stores",
-          features: [
-            "✨ 1,000 credits / month",
-            "🔧 Product Optimization & SEO:",
-            "• Optimized Products – 200 credits",
-            "• SEO Keyword Density Analysis – 100 credits",
-            "• AI Image Alt-Text Generator – 100 credits",
-            "• Smart SEO Titles & Meta Tags – 100 credits",
-            "📈 Conversion Boosting & Sales Automation:",
-            "• AI-Powered Growth Intelligence – 150 credits",
-            "• A/B Testing – 50 credits",
-            "• Upsell Email Receipts – 100 credits",
-            "• Abandoned Cart SMS – 50 credits",
-            "🎨 Content & Branding at Scale:",
-            "• Smart Product Descriptions – 100 credits",
-            "• Dynamic Templates – 50 credits",
-            "• Brand Voice Memory – included",
-            "📊 Performance Tracking & ROI Insights:",
-            "• Email & SMS Conversion Analytics – included",
-            "⚡ Workflow & Integration Tools:",
-            "• CSV Import/Export – included",
-            "• One-Click Shopify Publish – included", 
-            "• Rollback Button – included",
-            "• Smart Bulk Suggestions – included"
-          ],
-          limits: {
-            credits: 1000,
-            aiOptimization: true,
-            seoTools: true,
-            emailTriggers: true,
-            templates: true,
-            dashboards: true
-          },
-          currency: "USD",
-          interval: "month"
-        },
-        {
-          id: "growth",
-          planName: "Growth",
-          price: 299,
-          description: "For Growing Merchants",
-          features: [
-            "✨ 5,000 credits / month",
-            "🔧 Product Optimization & SEO:",
-            "• All Starter features +",
-            "• SEO Ranking Tracker – 200 credits",
-            "• Bulk Optimization & Smart Bulk Suggestions – 500 credits",
-            "• Scheduled Refresh for Content & SEO Updates – 300 credits",
-            "📈 Conversion Boosting & Sales Automation:",
-            "• AI Upsell Suggestions & Triggers – 300 credits",
-            "• Dynamic Segmentation of Customers – 200 credits",
-            "• Behavioral Targeting – 200 credits",
-            "• Full A/B Test Results Dashboard – included",
-            "🎨 Content & Branding at Scale:",
-            "• Custom Templates – included",
-            "• Multimodal AI (text + image + insights) – 300 credits",
-            "• Multi-Channel Content Repurposing – 300 credits",
-            "📊 Performance Tracking & ROI Insights:",
-            "• Full Email & SMS tracking – included",
-            "• Content ROI Tracking – included",
-            "• Revenue Impact Attribution – included",
-            "• Product Management Dashboard – included",
-            "⚡ Workflow & Integration Tools:",
-            "• Unlimited Starter workflow tools"
-          ],
-          limits: {
-            credits: 10000,
-            abTesting: true,
-            upsellSuggestions: true,
-            cartRecovery: true,
-            customerSegmentation: true,
-            multiChannelRepurposing: true
-          },
-          currency: "USD",
-          interval: "month"
-        },
-        {
-          id: "pro",
-          planName: "Pro",
-          price: 999,
-          description: "For High-Revenue Brands",
-          features: [
-            "✨ 20,000 credits / month",
-            "🔧 Product Optimization & SEO:",
-            "• All Growth features + priority processing",
-            "📈 Conversion Boosting & Sales Automation:",
-            "• Full AI-driven automation for campaigns, upsells, and behavioral targeting",
-            "🎨 Content & Branding at Scale:",
-            "• Full template library, advanced brand voice memory, multimodal AI insights, multi-channel automation",
-            "📊 Performance Tracking & ROI Insights:",
-            "• Enterprise-grade analytics and revenue attribution dashboard",
-            "⚡ Workflow & Integration Tools:",
-            "• Enterprise bulk management, CSV import/export, rollback, smart bulk suggestions at scale"
-          ],
-          limits: {
-            credits: -1,
-            roiTracking: true,
-            revenueAttribution: true,
-            multimodalAI: true,
-            brandVoiceMemory: true,
-            enterpriseDashboards: true,
-            prioritySupport: true
-          },
-          currency: "USD",
-          interval: "month"
-        }
-      ];
-      
-      console.warn("Using fallback subscription plans due to database error");
-      res.json(fallbackPlans);
+      res.status(500).json({ 
+        error: "Failed to fetch subscription plans",
+        message: error.message 
+      });
     }
   });
 

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { eq, desc, and, gte, lt, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lt, sql, notInArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
 import {
@@ -417,7 +417,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
     const activePlanNames = ["7-Day Free Trial", "Starter", "Growth", "Pro"];
     await db.update(subscriptionPlans)
       .set({ isActive: false })
-      .where(sql`${subscriptionPlans.planName} NOT IN (${activePlanNames.map(name => `'${name}'`).join(', ')})`);
+      .where(notInArray(subscriptionPlans.planName, activePlanNames));
     
     console.log("[DB] Deactivated legacy plans not in current plan set");
     console.log("[DB] Subscription plans seeding completed!");
