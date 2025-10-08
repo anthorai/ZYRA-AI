@@ -14,6 +14,10 @@ import {
   insertCampaignSchema,
   insertCampaignTemplateSchema,
   insertAbandonedCartSchema,
+  insertNotificationPreferencesSchema,
+  insertNotificationRuleSchema,
+  insertNotificationChannelSchema,
+  insertNotificationAnalyticsSchema,
   errorLogs
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
@@ -1400,6 +1404,219 @@ Respond with JSON in this exact format:
     } catch (error: any) {
       console.error("Clear all notifications error:", error);
       res.status(500).json({ message: "Failed to clear all notifications" });
+    }
+  });
+
+  // Advanced Notification Preference Routes
+  
+  // Get user's notification preferences
+  app.get("/api/notification-preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const preferences = await storage.getNotificationPreferences(userId);
+      
+      if (!preferences) {
+        // Create default preferences if none exist
+        const defaultPreferences = await storage.createNotificationPreferences({
+          userId,
+          activePreset: 'full_alerts',
+          enableDigests: false,
+          defaultFrequency: 'instant',
+          digestTime: '09:00',
+          minPriority: 'low',
+          enableQuietHours: false,
+          quietHoursStart: '22:00',
+          quietHoursEnd: '08:00',
+          allowUrgentInQuietHours: true
+        });
+        return res.json(defaultPreferences);
+      }
+      
+      res.json(preferences);
+    } catch (error: any) {
+      console.error("Get notification preferences error:", error);
+      res.status(500).json({ message: "Failed to get notification preferences" });
+    }
+  });
+
+  // Update notification preferences
+  app.put("/api/notification-preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const validated = insertNotificationPreferencesSchema.parse({ userId, ...req.body });
+      
+      const existing = await storage.getNotificationPreferences(userId);
+      let preferences;
+      
+      if (!existing) {
+        preferences = await storage.createNotificationPreferences(validated);
+      } else {
+        preferences = await storage.updateNotificationPreferences(userId, validated);
+      }
+      
+      res.json(preferences);
+    } catch (error: any) {
+      console.error("Update notification preferences error:", error);
+      res.status(400).json({ message: error.message || "Failed to update notification preferences" });
+    }
+  });
+
+  // Apply preset mode
+  app.post("/api/notification-preferences/preset", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { preset } = req.body;
+      
+      if (!['work', 'focus', 'full_alerts'].includes(preset)) {
+        return res.status(400).json({ message: "Invalid preset mode" });
+      }
+      
+      // Ensure preferences exist first
+      let existing = await storage.getNotificationPreferences(userId);
+      if (!existing) {
+        await storage.createNotificationPreferences({
+          userId,
+          activePreset: 'full_alerts',
+          enableDigests: false,
+          defaultFrequency: 'instant',
+          minPriority: 'low'
+        });
+      }
+      
+      const preferences = await storage.applyPresetMode(userId, preset);
+      res.json(preferences);
+    } catch (error: any) {
+      console.error("Apply preset mode error:", error);
+      res.status(500).json({ message: "Failed to apply preset mode" });
+    }
+  });
+
+  // Get notification rules
+  app.get("/api/notification-rules", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const rules = await storage.getNotificationRules(userId);
+      res.json(rules);
+    } catch (error: any) {
+      console.error("Get notification rules error:", error);
+      res.status(500).json({ message: "Failed to get notification rules" });
+    }
+  });
+
+  // Get specific notification rule by category
+  app.get("/api/notification-rules/:category", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const rule = await storage.getNotificationRule(userId, req.params.category);
+      
+      if (!rule) {
+        return res.status(404).json({ message: "Rule not found" });
+      }
+      
+      res.json(rule);
+    } catch (error: any) {
+      console.error("Get notification rule error:", error);
+      res.status(500).json({ message: "Failed to get notification rule" });
+    }
+  });
+
+  // Create notification rule
+  app.post("/api/notification-rules", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const validated = insertNotificationRuleSchema.parse({ userId, ...req.body });
+      const rule = await storage.createNotificationRule(validated);
+      res.json(rule);
+    } catch (error: any) {
+      console.error("Create notification rule error:", error);
+      res.status(400).json({ message: error.message || "Failed to create notification rule" });
+    }
+  });
+
+  // Update notification rule
+  app.put("/api/notification-rules/:id", requireAuth, async (req, res) => {
+    try {
+      const validated = insertNotificationRuleSchema.partial().parse(req.body);
+      const rule = await storage.updateNotificationRule(req.params.id, validated);
+      res.json(rule);
+    } catch (error: any) {
+      console.error("Update notification rule error:", error);
+      res.status(400).json({ message: error.message || "Failed to update notification rule" });
+    }
+  });
+
+  // Delete notification rule
+  app.delete("/api/notification-rules/:id", requireAuth, async (req, res) => {
+    try {
+      await storage.deleteNotificationRule(req.params.id);
+      res.json({ message: "Rule deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete notification rule error:", error);
+      res.status(500).json({ message: "Failed to delete notification rule" });
+    }
+  });
+
+  // Get notification channels
+  app.get("/api/notification-channels", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const channels = await storage.getNotificationChannels(userId);
+      res.json(channels);
+    } catch (error: any) {
+      console.error("Get notification channels error:", error);
+      res.status(500).json({ message: "Failed to get notification channels" });
+    }
+  });
+
+  // Create notification channel
+  app.post("/api/notification-channels", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const validated = insertNotificationChannelSchema.parse({ userId, ...req.body });
+      const channel = await storage.createNotificationChannel(validated);
+      res.json(channel);
+    } catch (error: any) {
+      console.error("Create notification channel error:", error);
+      res.status(400).json({ message: error.message || "Failed to create notification channel" });
+    }
+  });
+
+  // Update notification channel
+  app.put("/api/notification-channels/:id", requireAuth, async (req, res) => {
+    try {
+      const validated = insertNotificationChannelSchema.partial().parse(req.body);
+      const channel = await storage.updateNotificationChannel(req.params.id, validated);
+      res.json(channel);
+    } catch (error: any) {
+      console.error("Update notification channel error:", error);
+      res.status(400).json({ message: error.message || "Failed to update notification channel" });
+    }
+  });
+
+  // Delete notification channel
+  app.delete("/api/notification-channels/:id", requireAuth, async (req, res) => {
+    try {
+      await storage.deleteNotificationChannel(req.params.id);
+      res.json({ message: "Channel deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete notification channel error:", error);
+      res.status(500).json({ message: "Failed to delete notification channel" });
+    }
+  });
+
+  // Get notification analytics
+  app.get("/api/notification-analytics", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const filters = {
+        category: req.query.category as string | undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 100
+      };
+      const analytics = await storage.getNotificationAnalytics(userId, filters);
+      res.json(analytics);
+    } catch (error: any) {
+      console.error("Get notification analytics error:", error);
+      res.status(500).json({ message: "Failed to get notification analytics" });
     }
   });
 
