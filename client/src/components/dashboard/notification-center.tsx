@@ -20,35 +20,14 @@ export default function NotificationCenter({ className }: NotificationCenterProp
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Mock notifications data for UI-only mode
-  const mockNotifications: Notification[] = [
-    {
-      id: "1",
-      title: "Welcome to Zyra!",
-      message: "Your account has been set up successfully. Start optimizing your products now!",
-      type: "info",
-      isRead: false,
-      createdAt: new Date(Date.now() - 300000),
-      userId: "mock-user",
-      actionUrl: "/dashboard",
-      actionLabel: "Get Started"
-    },
-    {
-      id: "2",
-      title: "AI Generation Complete",
-      message: "Product description for 'Premium Headphones' has been generated successfully.",
-      type: "success",
-      isRead: false,
-      createdAt: new Date(Date.now() - 600000),
-      userId: "mock-user"
-    }
-  ];
+  // Fetch real notifications from API
+  const { data: notifications = [], isLoading: notificationsLoading } = useQuery<Notification[]>({
+    queryKey: ['/api/notifications'],
+  });
 
-  // Use mock data instead of API calls
-  const notifications = mockNotifications;
-  const notificationsLoading = false;
-  const unreadData = { count: 2 };
-  const unreadLoading = false;
+  const { data: unreadData, isLoading: unreadLoading } = useQuery<{ count: number }>({
+    queryKey: ['/api/notifications/unread-count'],
+  });
 
   const unreadCount = unreadData?.count || 0;
 
@@ -71,29 +50,33 @@ export default function NotificationCenter({ className }: NotificationCenterProp
     }
   }, [isOpen]);
 
-  // Mock mutations for UI-only mode
+  // Real mutations for API calls
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      console.log('🎭 Mock marking notification as read:', notificationId);
-      return { success: true };
+      return apiRequest(`/api/notifications/${notificationId}/read`, {
+        method: 'PATCH'
+      });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
       toast({
         title: "Notification marked as read",
-        description: "Mock notification action completed",
       });
     },
   });
 
   const clearAllMutation = useMutation({
     mutationFn: async () => {
-      console.log('🎭 Mock clearing all notifications');
-      return { success: true };
+      return apiRequest('/api/notifications/clear-all', {
+        method: 'POST'
+      });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
       toast({
         title: "All notifications cleared",
-        description: "Mock notification action completed",
       });
     },
   });
@@ -131,6 +114,27 @@ export default function NotificationCenter({ className }: NotificationCenterProp
 
   return (
     <div className={cn("relative", className)}>
+      {/* Bell Button Trigger */}
+      <Button
+        ref={buttonRef}
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out"
+        data-testid="button-notifications"
+        data-tour="notifications"
+      >
+        <Bell className="w-5 h-5" />
+        {unreadCount > 0 && (
+          <Badge 
+            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs"
+            data-testid="badge-unread-count"
+          >
+            {unreadCount}
+          </Badge>
+        )}
+      </Button>
+
       {/* Dropdown Panel */}
       {isOpen && (
         <div

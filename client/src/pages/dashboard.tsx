@@ -14,10 +14,12 @@ import GrowthDashboard from "@/components/dashboard/growth-dashboard";
 import Settings from "@/components/dashboard/settings";
 import Profile from "@/components/dashboard/profile";
 import NotificationCenter from "@/components/dashboard/notification-center";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { useDashboard, useSkeletonLoader, useConnectionStatus } from "@/hooks/useDashboard";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +37,9 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Onboarding tour
+  const { showTour, completeOnboarding, skipOnboarding } = useOnboarding();
 
   // Get display name with robust fallback logic
   const getDisplayName = () => {
@@ -410,6 +415,14 @@ export default function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Onboarding Tour */}
+      {showTour && (
+        <OnboardingTour
+          onComplete={completeOnboarding}
+          onSkip={skipOnboarding}
+        />
+      )}
     </div>
   );
 }

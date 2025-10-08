@@ -103,11 +103,11 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   };
 
   const navItems = [
-    { id: "overview", label: t('navigation.dashboard'), icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" /> },
-    { id: "ai-tools", label: t('navigation.aiTools'), icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" /> },
-    { id: "automate", label: t('navigation.automate'), icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" /> },
-    { id: "campaigns", label: t('navigation.campaigns'), icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" /> },
-    { id: "products", label: t('navigation.products'), icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" /> },
+    { id: "overview", label: t('navigation.dashboard'), icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
+    { id: "ai-tools", label: t('navigation.aiTools'), icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "ai-tools" },
+    { id: "automate", label: t('navigation.automate'), icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "analytics" },
+    { id: "campaigns", label: t('navigation.campaigns'), icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "campaigns" },
+    { id: "products", label: t('navigation.products'), icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
     { id: "settings", label: t('navigation.settings'), icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
   ];
 
@@ -166,6 +166,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
                 data-testid={`nav-${item.id}`}
+                data-tour={item.tourAttr}
               >
                 {item.icon}
                 <span className="ml-3">{item.label}</span>

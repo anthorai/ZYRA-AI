@@ -60,6 +60,8 @@ import {
   validateUser,
   checkValidation 
 } from "./middleware/sanitization";
+import { NotificationService } from "./lib/notification-service";
+import { TwoFactorAuthService } from "./lib/2fa-service";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -305,28 +307,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // For trial: 10 AI generations, 5 SEO optimizations
           if (userPlan === 'trial') {
             if (aiGenerationsUsed >= 10) {
+              await NotificationService.notifyAILimitReached(userId, 'Trial', 10);
               return res.status(403).json({ 
                 message: "Trial AI generation limit (10) reached. Upgrade to continue.",
                 upgradeRequired: true 
               });
+            } else if (aiGenerationsUsed >= 8) {
+              await NotificationService.notifyAILimitWarning(userId, 10 - aiGenerationsUsed, 10);
             }
           }
           // For Starter: 50 AI generations, 50 SEO optimizations
           else if (currentPlan.planName === 'Starter') {
             if (aiGenerationsUsed >= 50) {
+              await NotificationService.notifyAILimitReached(userId, 'Starter', 50);
               return res.status(403).json({ 
                 message: "Monthly AI generation limit (50) reached. Upgrade to Growth plan for 1,000 generations.",
                 upgradeRequired: true 
               });
+            } else if (aiGenerationsUsed >= 45) {
+              await NotificationService.notifyAILimitWarning(userId, 50 - aiGenerationsUsed, 50);
             }
           }
           // For Growth: 1000 AI generations, 500 SEO optimizations
           else if (currentPlan.planName === 'Growth') {
             if (aiGenerationsUsed >= 1000) {
+              await NotificationService.notifyAILimitReached(userId, 'Growth', 1000);
               return res.status(403).json({ 
                 message: "Monthly AI generation limit (1,000) reached. Upgrade to Pro for unlimited access.",
                 upgradeRequired: true 
               });
+            } else if (aiGenerationsUsed >= 950) {
+              await NotificationService.notifyAILimitWarning(userId, 1000 - aiGenerationsUsed, 1000);
             }
           }
         }
@@ -462,6 +473,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // ===== 2FA (Two-Factor Authentication) Routes =====
+
+  // Setup 2FA - Generate secret and QR code
+  app.post("/api/2fa/setup", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const userEmail = (req as AuthenticatedRequest).user.email;
+
+      // Generate TOTP secret
+      const { secret, otpauth_url } = TwoFactorAuthService.generateSecret(userEmail);
+      
+      // Generate QR code
+      const qrCode = await TwoFactorAuthService.generateQRCode(otpauth_url);
+
+      // Generate backup codes
+      const backupCodes = TwoFactorAuthService.generateBackupCodes();
+      const hashedBackupCodes = await TwoFactorAuthService.hashBackupCodes(backupCodes);
+
+      // Store secret and backup codes in security settings (temporarily, until verified)
+      const existingSettings = await supabaseStorage.getSecuritySettings(userId);
+      
+      if (existingSettings) {
+        await supabaseStorage.updateSecuritySettings(userId, {
+          twoFactorSecret: secret,
+          backupCodes: hashedBackupCodes as any
+        });
+      } else {
+        await supabaseStorage.createSecuritySettings({
+          userId,
+          twoFactorEnabled: false,
+          twoFactorSecret: secret,
+          backupCodes: hashedBackupCodes as any
+        });
+      }
+
+      res.json({
+        secret,
+        qrCode,
+        backupCodes // Return plain codes for user to save (only shown once)
+      });
+    } catch (error: any) {
+      console.error('2FA setup error:', error);
+      res.status(500).json({ message: 'Failed to setup 2FA' });
+    }
+  });
+
+  // Enable 2FA - Verify token and enable
+  app.post("/api/2fa/enable", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+      }
+
+      // Get security settings
+      const settings = await supabaseStorage.getSecuritySettings(userId);
+      if (!settings || !settings.twoFactorSecret) {
+        return res.status(400).json({ message: '2FA setup required first' });
+      }
+
+      // Verify token
+      const isValid = TwoFactorAuthService.verifyToken(settings.twoFactorSecret, token);
+      if (!isValid) {
+        return res.status(400).json({ message: 'Invalid token' });
+      }
+
+      // Enable 2FA
+      await supabaseStorage.updateSecuritySettings(userId, {
+        twoFactorEnabled: true
+      });
+
+      res.json({ message: '2FA enabled successfully' });
+    } catch (error: any) {
+      console.error('2FA enable error:', error);
+      res.status(500).json({ message: 'Failed to enable 2FA' });
+    }
+  });
+
+  // Disable 2FA
+  app.post("/api/2fa/disable", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+      }
+
+      // Get security settings
+      const settings = await supabaseStorage.getSecuritySettings(userId);
+      if (!settings || !settings.twoFactorEnabled) {
+        return res.status(400).json({ message: '2FA is not enabled' });
+      }
+
+      // Verify token
+      const isValid = TwoFactorAuthService.verifyToken(settings.twoFactorSecret || '', token);
+      if (!isValid) {
+        return res.status(400).json({ message: 'Invalid token' });
+      }
+
+      // Disable 2FA
+      await supabaseStorage.updateSecuritySettings(userId, {
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+        backupCodes: null
+      });
+
+      res.json({ message: '2FA disabled successfully' });
+    } catch (error: any) {
+      console.error('2FA disable error:', error);
+      res.status(500).json({ message: 'Failed to disable 2FA' });
+    }
+  });
+
+  // Verify 2FA token (for login or sensitive operations)
+  app.post("/api/2fa/verify", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+      }
+
+      // Get security settings
+      const settings = await supabaseStorage.getSecuritySettings(userId);
+      if (!settings || !settings.twoFactorEnabled) {
+        return res.status(400).json({ message: '2FA is not enabled' });
+      }
+
+      // Verify token
+      const isValid = TwoFactorAuthService.verifyToken(settings.twoFactorSecret || '', token);
+      
+      // If token is invalid, try backup codes
+      if (!isValid && settings.backupCodes) {
+        const backupCodesArray = settings.backupCodes as string[];
+        const backupCodeValid = await TwoFactorAuthService.verifyBackupCode(token, backupCodesArray);
+        
+        if (backupCodeValid) {
+          // Remove used backup code
+          const updatedCodes = backupCodesArray.filter(async (code) => {
+            const crypto = await import('crypto');
+            const hashedInput = crypto.createHash('sha256').update(token).digest('hex');
+            return code !== hashedInput;
+          });
+          
+          await supabaseStorage.updateSecuritySettings(userId, {
+            backupCodes: updatedCodes as any
+          });
+          
+          return res.json({ verified: true, message: 'Backup code used successfully' });
+        }
+        
+        return res.status(400).json({ message: 'Invalid token or backup code' });
+      }
+
+      res.json({ verified: isValid });
+    } catch (error: any) {
+      console.error('2FA verify error:', error);
+      res.status(500).json({ message: 'Failed to verify 2FA token' });
+    }
+  });
+
+  // Get 2FA status
+  app.get("/api/2fa/status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      const settings = await supabaseStorage.getSecuritySettings(userId);
+      
+      res.json({
+        enabled: settings?.twoFactorEnabled || false,
+        backupCodesCount: settings?.backupCodes ? (settings.backupCodes as string[]).length : 0
+      });
+    } catch (error: any) {
+      console.error('2FA status error:', error);
+      res.status(500).json({ message: 'Failed to get 2FA status' });
+    }
+  });
+
   // AI Product Description Generator
   app.post("/api/generate-description", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
@@ -538,6 +731,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         model: 'gpt-5'
       });
       
+      // Send AI generation complete notification
+      await NotificationService.notifyAIGenerationComplete(userId, 'product description', productName);
+      
       res.json({ description: result.description, brandVoiceUsed: selectedBrandVoice });
     } catch (error: any) {
       console.error("AI generation error:", error);
@@ -581,7 +777,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = JSON.parse(response.choices[0].message.content || "{}");
       
       // Track SEO usage
-      await trackSEOUsage((req as AuthenticatedRequest).user.id);
+      const userId = (req as AuthenticatedRequest).user.id;
+      await trackSEOUsage(userId);
+      
+      // Send SEO optimization notification with performance improvement
+      const improvement = `SEO Score: ${result.seoScore || 'N/A'}/100`;
+      await NotificationService.notifyPerformanceOptimizationComplete(userId, currentTitle, improvement);
       
       res.json(result);
     } catch (error: any) {
@@ -1672,8 +1873,13 @@ Respond with JSON in this exact format:
         return res.status(400).json({ error: "Plan ID is required" });
       }
 
-      const user = await supabaseStorage.updateUserSubscription((req as AuthenticatedRequest).user.id, { planId });
-      res.json({ user });
+      const userId = (req as AuthenticatedRequest).user.id;
+      const subscription = await supabaseStorage.updateUserSubscription(userId, { planId });
+      
+      // Send notification for subscription change
+      await NotificationService.notifySubscriptionChanged(userId, planId || 'Unknown');
+      
+      res.json({ user: subscription });
     } catch (error: any) {
       console.error("Error changing subscription plan:", error);
       res.status(500).json({ 
@@ -1787,6 +1993,10 @@ Respond with JSON in this exact format:
         webhookReceived: false,
         metadata: { payment }
       });
+
+      // Send payment success notification
+      const amount = Number(payment.amount) / 100;
+      await NotificationService.notifyPaymentSuccess(user.id, amount, user.plan || 'subscription');
 
       res.json({ 
         success: true, 
@@ -3234,6 +3444,18 @@ Respond with JSON in this exact format:
         metadata: { campaignId: campaign.id, type: campaign.type, sentCount },
         toolUsed: 'campaigns'
       });
+
+      // Send notification
+      if (errors.length > 0) {
+        await NotificationService.notifyCampaignFailed(userId, campaign.name, errors.map(e => e.error).join(', '));
+      } else {
+        await NotificationService.notifyCampaignSent(userId, campaign.name, sentCount);
+        
+        // Check for milestones
+        if (sentCount >= 1000) {
+          await NotificationService.notifyCampaignMilestone(userId, campaign.name, `Reached ${sentCount} recipients!`);
+        }
+      }
 
       res.json({ 
         success: true, 
