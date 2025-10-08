@@ -321,7 +321,7 @@
         "items": [
           "Name, email address, and contact details you provide during registration",
           "Shopify store URL and basic store information",
-          "Subscription and billing information (processed securely through Stripe)",
+          "Subscription and billing information (processed securely through payment gateways)",
           "Profile preferences and settings"
         ]
       },
@@ -347,7 +347,7 @@
         "items": [
           "Shopify store data accessed through our Shopify integration",
           "Email campaign data from SendGrid integration",
-          "Payment information processed through Stripe (we never store full card details)",
+          "Payment information processed through payment gateways (we never store full card details)",
           "AI model interactions with OpenAI for content generation"
         ]
       }
@@ -370,7 +370,7 @@
       "intro": "Zyra does not sell your personal information. We do not sell or share your personal information for cross-context behavioral advertising. We only share data in the following circumstances:",
       "thirdParty": {
         "title": "Service Providers",
-        "description": "We work with trusted third-party providers (Shopify, Stripe, SendGrid, OpenAI, Supabase) to deliver our services. These providers are bound by strict data protection agreements and only access data necessary for their specific functions."
+        "description": "We work with trusted third-party providers (Shopify, PayPal, Razorpay, SendGrid, OpenAI, Supabase) to deliver our services. These providers are bound by strict data protection agreements and only access data necessary for their specific functions."
       },
       "legal": {
         "title": "Legal Requirements",
@@ -430,7 +430,8 @@
       "services": {
         "shopify": "Shopify: Store data synchronization and product management",
         "sendgrid": "SendGrid: Email campaign delivery and performance tracking",
-        "stripe": "Stripe: Secure payment processing and subscription management",
+        "paypal": "PayPal: Secure international payment processing",
+        "razorpay": "Razorpay: Secure payment processing for India",
         "openai": "OpenAI: AI-powered content generation and optimization",
         "supabase": "Supabase: Authentication and database storage - https://supabase.com/privacy",
         "analytics": "Analytics providers: Usage tracking and performance monitoring"

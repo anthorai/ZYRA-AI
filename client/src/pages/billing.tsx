@@ -212,7 +212,7 @@ export default function BillingPage() {
       return apiRequest('POST', '/api/payment-methods/add');
     },
     onSuccess: (data: any) => {
-      // Redirect to Stripe setup page
+      // Redirect to payment gateway setup page
       if (data.setupUrl) {
         window.location.href = data.setupUrl;
       } else {

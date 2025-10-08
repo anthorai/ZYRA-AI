@@ -85,7 +85,7 @@ Supabase Auth provides email/password login, password reset, and JWT-based sessi
 Client-side state uses TanStack Query for server state caching, React Hook Form with Zod for validation, and React Context for global state.
 
 ## Payment System
-A multi-gateway payment system supports Razorpay (India), PayPal (International), and planned Stripe integration.
+A multi-gateway payment system supports Razorpay (India) and PayPal (International).
 
 **Webhook Handlers:**
 - **Razorpay**: HMAC-SHA256 signature verification, handles payment.authorized, payment.captured, payment.failed, refund.created events
@@ -138,7 +138,6 @@ api_error, database_error, auth_error, payment_error, ai_error, validation_error
 ## Payment Processing
 - **Razorpay**: Indian payment gateway.
 - **PayPal**: International payment gateway.
-- **Stripe Integration**: Planned for subscriptions.
 
 ## Email & SMS Services
 - **SendGrid**: Transactional emails and marketing campaigns.

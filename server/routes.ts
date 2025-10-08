@@ -1827,7 +1827,7 @@ Respond with JSON in this exact format:
   // Get invoices
   app.get("/api/invoices", requireAuth, async (req, res) => {
     try {
-      // Mock invoices - implement with Stripe integration
+      // Mock invoices
       const invoices: any[] = [];
       res.json(invoices || []);
     } catch (error: any) {

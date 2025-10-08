@@ -321,7 +321,7 @@
         "items": [
           "Nombre, dirección de correo electrónico y detalles de contacto que proporcionas durante el registro",
           "URL de la tienda Shopify e información básica de la tienda",
-          "Información de suscripción y facturación (procesada de forma segura a través de Stripe)",
+          "Información de suscripción y facturación (procesada de forma segura a través de pasarelas de pago)",
           "Preferencias y configuraciones de perfil"
         ]
       },
@@ -347,7 +347,7 @@
         "items": [
           "Datos de la tienda Shopify accedidos a través de nuestra integración con Shopify",
           "Datos de campañas de correo electrónico de la integración con SendGrid",
-          "Información de pago procesada a través de Stripe (nunca almacenamos detalles completos de tarjetas)",
+          "Información de pago procesada a través de pasarelas de pago (nunca almacenamos detalles completos de tarjetas)",
           "Interacciones del modelo de IA con OpenAI para la generación de contenido"
         ]
       }
@@ -369,7 +369,7 @@
       "intro": "Zyra no vende tu información personal. Solo compartimos datos en las siguientes circunstancias:",
       "thirdParty": {
         "title": "Proveedores de Servicios",
-        "description": "Trabajamos con proveedores externos de confianza (Shopify, Stripe, SendGrid, OpenAI, Supabase) para ofrecer nuestros servicios. Estos proveedores están sujetos a estrictos acuerdos de protección de datos y solo acceden a los datos necesarios para sus funciones específicas."
+        "description": "Trabajamos con proveedores externos de confianza (Shopify, PayPal, Razorpay, SendGrid, OpenAI, Supabase) para ofrecer nuestros servicios. Estos proveedores están sujetos a estrictos acuerdos de protección de datos y solo acceden a los datos necesarios para sus funciones específicas."
       },
       "legal": {
         "title": "Requisitos Legales",
@@ -429,7 +429,8 @@
       "services": {
         "shopify": "Shopify: Sincronización de datos de la tienda y gestión de productos",
         "sendgrid": "SendGrid: Entrega de campañas de correo electrónico y seguimiento de rendimiento",
-        "stripe": "Stripe: Procesamiento seguro de pagos y gestión de suscripciones",
+        "paypal": "PayPal: Procesamiento seguro de pagos internacionales",
+        "razorpay": "Razorpay: Procesamiento seguro de pagos para India",
         "openai": "OpenAI: Generación y optimización de contenido impulsada por IA",
         "supabase": "Supabase: Autenticación y almacenamiento de base de datos - https://supabase.com/privacy",
         "analytics": "Proveedores de análisis: Seguimiento de uso y monitoreo de rendimiento"

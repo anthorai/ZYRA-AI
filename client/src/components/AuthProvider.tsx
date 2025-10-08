@@ -10,8 +10,6 @@ interface AppUser {
   fullName: string;
   role: string;
   plan: string;
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
 }
 
 interface AuthContextType {

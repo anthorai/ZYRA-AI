@@ -336,21 +336,6 @@ export default function CheckoutPage() {
                               </CardContent>
                             </Card>
 
-                            {/* Stripe (Coming Soon) */}
-                            <Card className="cursor-not-allowed opacity-50" data-testid="card-gateway-stripe">
-                              <CardContent className="flex items-center p-4">
-                                <RadioGroupItem value="stripe" id="stripe" className="mr-3" disabled />
-                                <CreditCard className="text-2xl text-purple-600 mr-3" />
-                                <div className="flex-1">
-                                  <label htmlFor="stripe" className="font-semibold">
-                                    Stripe <span className="text-sm text-muted-foreground">(Coming Soon)</span>
-                                  </label>
-                                  <p className="text-sm text-muted-foreground">
-                                    Cards and digital wallets
-                                  </p>
-                                </div>
-                              </CardContent>
-                            </Card>
                           </RadioGroup>
                         </FormControl>
                         <FormMessage />
@@ -376,20 +361,7 @@ export default function CheckoutPage() {
                       <PayPalButton
                         amount={amount}
                         currency={form.getValues("currency")}
-                        onSuccess={(details: any) => {
-                          toast({
-                            title: "Payment successful!",
-                            description: "Your PayPal payment has been processed.",
-                          });
-                          setTimeout(() => navigate("/payments"), 1500);
-                        }}
-                        onError={(error: any) => {
-                          toast({
-                            variant: "destructive",
-                            title: "Payment failed",
-                            description: error.message,
-                          });
-                        }}
+                        intent="capture"
                       />
                     </div>
                   )}
