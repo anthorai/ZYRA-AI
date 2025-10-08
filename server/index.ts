@@ -5,6 +5,23 @@ import { testSupabaseConnection } from "./lib/supabase";
 import { ErrorLogger } from "./lib/errorLogger";
 
 const app = express();
+
+// Capture raw body for webhook signature verification (before JSON parsing)
+app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, next) => {
+  if (req.body) {
+    // Store raw buffer for signature verification
+    (req as any).rawBody = req.body.toString('utf8');
+    // Parse JSON for route handler
+    try {
+      req.body = JSON.parse((req as any).rawBody);
+    } catch (e) {
+      console.error('Failed to parse webhook JSON:', e);
+      return res.status(400).json({ error: 'Invalid JSON' });
+    }
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

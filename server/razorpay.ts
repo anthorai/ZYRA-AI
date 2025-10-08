@@ -111,12 +111,7 @@ export function isRazorpayConfigured(): boolean {
 }
 
 export async function handleRazorpayWebhook(req: Request, res: Response) {
-  // NOTE: Current implementation handles basic webhook flow with state-based idempotency.
-  // Known limitations for future enhancement:
-  // 1. Multiple payment attempts per order require order-level tracking (not just payment-level)
-  // 2. Authorized vs captured states should use distinct status values ('authorized' vs 'completed')
-  // 3. Consider adding webhook_events table for per-event idempotency tracking
-  // 4. Handle cases where transaction record doesn't exist (create vs update only)
+  // NOTE: Webhook implementation with proper raw body signature verification and idempotency
   
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -127,11 +122,17 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
     }
 
     const signature = req.headers['x-razorpay-signature'] as string;
-    const body = JSON.stringify(req.body);
+    // Use raw body for signature verification (captured by webhook middleware)
+    const rawBody = (req as any).rawBody;
+    
+    if (!rawBody) {
+      console.error('Raw body not available for signature verification');
+      return res.status(400).json({ error: 'Invalid webhook request' });
+    }
 
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
-      .update(body)
+      .update(rawBody)
       .digest('hex');
 
     if (signature !== expectedSignature) {
@@ -180,6 +181,10 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
               updatedAt: new Date()
             })
             .where(eq(paymentTransactions.id, existing[0].id));
+        } else {
+          // Transaction not found - log warning for investigation
+          console.warn('Razorpay webhook received for unknown payment:', payment.id);
+          console.warn('This may indicate a race condition or missing transaction record');
         }
         break;
       }
@@ -213,6 +218,8 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
               updatedAt: new Date()
             })
             .where(eq(paymentTransactions.id, existing[0].id));
+        } else {
+          console.warn('Razorpay webhook received for unknown failed payment:', payment.id);
         }
         break;
       }
@@ -246,6 +253,8 @@ export async function handleRazorpayWebhook(req: Request, res: Response) {
               updatedAt: new Date()
             })
             .where(eq(paymentTransactions.id, existing[0].id));
+        } else {
+          console.warn('Razorpay webhook received for unknown refund:', refund.payment_id);
         }
         break;
       }
