@@ -35,6 +35,14 @@ import {
   type PaymentTransaction,
   type InsertPaymentTransaction,
   type InsertActivityLog,
+  type NotificationPreferences,
+  type InsertNotificationPreferences,
+  type NotificationRule,
+  type InsertNotificationRule,
+  type NotificationChannel,
+  type InsertNotificationChannel,
+  type NotificationAnalytics,
+  type InsertNotificationAnalytics,
   users, 
   products, 
   seoMeta, 
@@ -51,7 +59,11 @@ import {
   supportTickets,
   aiGenerationHistory,
   paymentTransactions,
-  activityLogs
+  activityLogs,
+  notificationPreferences,
+  notificationRules,
+  notificationChannels,
+  notificationAnalytics
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 // Using Supabase for authentication - no local password handling needed
@@ -180,6 +192,27 @@ export interface IStorage {
   getPaymentTransactions(userId: string, filters?: any): Promise<any[]>;
   getAllPaymentTransactions(filters?: any): Promise<any[]>;
   updatePaymentTransaction(transactionId: string, updates: any): Promise<any>;
+
+  // Advanced Notification Preference methods
+  getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined>;
+  createNotificationPreferences(preferences: InsertNotificationPreferences): Promise<NotificationPreferences>;
+  updateNotificationPreferences(userId: string, updates: Partial<NotificationPreferences>): Promise<NotificationPreferences>;
+  applyPresetMode(userId: string, preset: string): Promise<NotificationPreferences>;
+  
+  getNotificationRules(userId: string): Promise<NotificationRule[]>;
+  getNotificationRule(userId: string, category: string): Promise<NotificationRule | undefined>;
+  createNotificationRule(rule: InsertNotificationRule): Promise<NotificationRule>;
+  updateNotificationRule(id: string, updates: Partial<NotificationRule>): Promise<NotificationRule>;
+  deleteNotificationRule(id: string): Promise<void>;
+  
+  getNotificationChannels(userId: string): Promise<NotificationChannel[]>;
+  createNotificationChannel(channel: InsertNotificationChannel): Promise<NotificationChannel>;
+  updateNotificationChannel(id: string, updates: Partial<NotificationChannel>): Promise<NotificationChannel>;
+  deleteNotificationChannel(id: string): Promise<void>;
+  
+  getNotificationAnalytics(userId: string, filters?: any): Promise<NotificationAnalytics[]>;
+  createNotificationAnalytics(analytics: InsertNotificationAnalytics): Promise<NotificationAnalytics>;
+  updateNotificationAnalytics(id: string, updates: Partial<NotificationAnalytics>): Promise<NotificationAnalytics>;
 }
 
 export class DatabaseStorage {
@@ -573,6 +606,152 @@ export class DatabaseStorage {
       .returning();
     return result[0];
   }
+
+  // Advanced Notification Preference methods
+  async getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId));
+    return result[0];
+  }
+
+  async createNotificationPreferences(preferences: InsertNotificationPreferences): Promise<NotificationPreferences> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(notificationPreferences).values(preferences).returning();
+    return result[0];
+  }
+
+  async updateNotificationPreferences(userId: string, updates: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(notificationPreferences)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(notificationPreferences.userId, userId))
+      .returning();
+    return result[0];
+  }
+
+  async applyPresetMode(userId: string, preset: string): Promise<NotificationPreferences> {
+    if (!db) throw new Error("Database not configured");
+    
+    const presetConfigs = {
+      work: {
+        activePreset: 'work',
+        enableDigests: true,
+        defaultFrequency: 'hourly_digest',
+        minPriority: 'medium',
+        enableQuietHours: true,
+        quietHoursStart: '18:00',
+        quietHoursEnd: '09:00',
+        allowUrgentInQuietHours: true
+      },
+      focus: {
+        activePreset: 'focus',
+        enableDigests: true,
+        defaultFrequency: 'daily_digest',
+        minPriority: 'urgent',
+        enableQuietHours: true,
+        quietHoursStart: '00:00',
+        quietHoursEnd: '23:59',
+        allowUrgentInQuietHours: true
+      },
+      full_alerts: {
+        activePreset: 'full_alerts',
+        enableDigests: false,
+        defaultFrequency: 'instant',
+        minPriority: 'low',
+        enableQuietHours: false,
+        allowUrgentInQuietHours: true
+      }
+    };
+
+    const config = presetConfigs[preset as keyof typeof presetConfigs] || presetConfigs.full_alerts;
+    return this.updateNotificationPreferences(userId, config);
+  }
+
+  async getNotificationRules(userId: string): Promise<NotificationRule[]> {
+    if (!db) throw new Error("Database not configured");
+    return await db.select().from(notificationRules).where(eq(notificationRules.userId, userId));
+  }
+
+  async getNotificationRule(userId: string, category: string): Promise<NotificationRule | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(notificationRules)
+      .where(and(eq(notificationRules.userId, userId), eq(notificationRules.category, category)));
+    return result[0];
+  }
+
+  async createNotificationRule(rule: InsertNotificationRule): Promise<NotificationRule> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(notificationRules).values(rule).returning();
+    return result[0];
+  }
+
+  async updateNotificationRule(id: string, updates: Partial<NotificationRule>): Promise<NotificationRule> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(notificationRules)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(notificationRules.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteNotificationRule(id: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    await db.delete(notificationRules).where(eq(notificationRules.id, id));
+  }
+
+  async getNotificationChannels(userId: string): Promise<NotificationChannel[]> {
+    if (!db) throw new Error("Database not configured");
+    return await db.select().from(notificationChannels).where(eq(notificationChannels.userId, userId));
+  }
+
+  async createNotificationChannel(channel: InsertNotificationChannel): Promise<NotificationChannel> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(notificationChannels).values(channel).returning();
+    return result[0];
+  }
+
+  async updateNotificationChannel(id: string, updates: Partial<NotificationChannel>): Promise<NotificationChannel> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(notificationChannels)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(notificationChannels.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteNotificationChannel(id: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    await db.delete(notificationChannels).where(eq(notificationChannels.id, id));
+  }
+
+  async getNotificationAnalytics(userId: string, filters?: any): Promise<NotificationAnalytics[]> {
+    if (!db) throw new Error("Database not configured");
+    let conditions = [eq(notificationAnalytics.userId, userId)];
+    
+    if (filters?.category) {
+      conditions.push(eq(notificationAnalytics.category, filters.category));
+    }
+    
+    return await db.select().from(notificationAnalytics)
+      .where(and(...conditions))
+      .orderBy(desc(notificationAnalytics.createdAt))
+      .limit(filters?.limit || 100);
+  }
+
+  async createNotificationAnalytics(analytics: InsertNotificationAnalytics): Promise<NotificationAnalytics> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(notificationAnalytics).values(analytics).returning();
+    return result[0];
+  }
+
+  async updateNotificationAnalytics(id: string, updates: Partial<NotificationAnalytics>): Promise<NotificationAnalytics> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(notificationAnalytics)
+      .set(updates)
+      .where(eq(notificationAnalytics.id, id))
+      .returning();
+    return result[0];
+  }
 }
 
 export class MemStorage {
@@ -596,6 +775,12 @@ export class MemStorage {
   private loginLogsData: Map<string, LoginLog> = new Map();
   private supportTicketsData: Map<string, SupportTicket> = new Map();
   private aiGenerationHistoryData: Map<string, AiGenerationHistory> = new Map();
+
+  // Advanced notification preference data storage
+  private notificationPreferencesData: Map<string, NotificationPreferences> = new Map();
+  private notificationRulesData: Map<string, NotificationRule> = new Map();
+  private notificationChannelsData: Map<string, NotificationChannel> = new Map();
+  private notificationAnalyticsData: Map<string, NotificationAnalytics> = new Map();
 
   constructor() {
     // Create a test user for development
@@ -1404,6 +1589,189 @@ export class MemStorage {
       updatedAt: new Date()
     };
     this.paymentTransactionsData.set(transactionId, updated);
+    return updated;
+  }
+
+  // Advanced Notification Preference methods
+  async getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined> {
+    return Array.from(this.notificationPreferencesData.values()).find(pref => pref.userId === userId);
+  }
+
+  async createNotificationPreferences(preferences: InsertNotificationPreferences): Promise<NotificationPreferences> {
+    const id = randomUUID();
+    const newPreferences: NotificationPreferences = {
+      id,
+      ...preferences,
+      activePreset: preferences.activePreset || 'full_alerts',
+      enableDigests: preferences.enableDigests !== undefined ? preferences.enableDigests : false,
+      defaultFrequency: preferences.defaultFrequency || 'instant',
+      digestTime: preferences.digestTime || '09:00',
+      minPriority: preferences.minPriority || 'low',
+      enableQuietHours: preferences.enableQuietHours !== undefined ? preferences.enableQuietHours : false,
+      quietHoursStart: preferences.quietHoursStart || '22:00',
+      quietHoursEnd: preferences.quietHoursEnd || '08:00',
+      allowUrgentInQuietHours: preferences.allowUrgentInQuietHours !== undefined ? preferences.allowUrgentInQuietHours : true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.notificationPreferencesData.set(id, newPreferences);
+    return newPreferences;
+  }
+
+  async updateNotificationPreferences(userId: string, updates: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+    const existing = await this.getNotificationPreferences(userId);
+    if (!existing) throw new Error("Notification preferences not found");
+    const updated = { ...existing, ...updates, updatedAt: new Date() };
+    this.notificationPreferencesData.set(existing.id, updated);
+    return updated;
+  }
+
+  async applyPresetMode(userId: string, preset: string): Promise<NotificationPreferences> {
+    const presetConfigs = {
+      work: {
+        activePreset: 'work',
+        enableDigests: true,
+        defaultFrequency: 'hourly_digest',
+        minPriority: 'medium',
+        enableQuietHours: true,
+        quietHoursStart: '18:00',
+        quietHoursEnd: '09:00',
+        allowUrgentInQuietHours: true
+      },
+      focus: {
+        activePreset: 'focus',
+        enableDigests: true,
+        defaultFrequency: 'daily_digest',
+        minPriority: 'urgent',
+        enableQuietHours: true,
+        quietHoursStart: '00:00',
+        quietHoursEnd: '23:59',
+        allowUrgentInQuietHours: true
+      },
+      full_alerts: {
+        activePreset: 'full_alerts',
+        enableDigests: false,
+        defaultFrequency: 'instant',
+        minPriority: 'low',
+        enableQuietHours: false,
+        allowUrgentInQuietHours: true
+      }
+    };
+
+    const config = presetConfigs[preset as keyof typeof presetConfigs] || presetConfigs.full_alerts;
+    return this.updateNotificationPreferences(userId, config);
+  }
+
+  async getNotificationRules(userId: string): Promise<NotificationRule[]> {
+    return Array.from(this.notificationRulesData.values())
+      .filter(rule => rule.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getNotificationRule(userId: string, category: string): Promise<NotificationRule | undefined> {
+    return Array.from(this.notificationRulesData.values())
+      .find(rule => rule.userId === userId && rule.category === category);
+  }
+
+  async createNotificationRule(rule: InsertNotificationRule): Promise<NotificationRule> {
+    const id = randomUUID();
+    const newRule: NotificationRule = {
+      id,
+      ...rule,
+      enabled: rule.enabled !== undefined ? rule.enabled : true,
+      frequency: rule.frequency || 'instant',
+      minPriority: rule.minPriority || 'low',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.notificationRulesData.set(id, newRule);
+    return newRule;
+  }
+
+  async updateNotificationRule(id: string, updates: Partial<NotificationRule>): Promise<NotificationRule> {
+    const rule = this.notificationRulesData.get(id);
+    if (!rule) throw new Error("Notification rule not found");
+    const updated = { ...rule, ...updates, updatedAt: new Date() };
+    this.notificationRulesData.set(id, updated);
+    return updated;
+  }
+
+  async deleteNotificationRule(id: string): Promise<void> {
+    this.notificationRulesData.delete(id);
+  }
+
+  async getNotificationChannels(userId: string): Promise<NotificationChannel[]> {
+    return Array.from(this.notificationChannelsData.values())
+      .filter(channel => channel.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createNotificationChannel(channel: InsertNotificationChannel): Promise<NotificationChannel> {
+    const id = randomUUID();
+    const newChannel: NotificationChannel = {
+      id,
+      ...channel,
+      channelValue: channel.channelValue || null,
+      deviceInfo: channel.deviceInfo || null,
+      enabled: channel.enabled !== undefined ? channel.enabled : true,
+      isPrimary: channel.isPrimary !== undefined ? channel.isPrimary : false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.notificationChannelsData.set(id, newChannel);
+    return newChannel;
+  }
+
+  async updateNotificationChannel(id: string, updates: Partial<NotificationChannel>): Promise<NotificationChannel> {
+    const channel = this.notificationChannelsData.get(id);
+    if (!channel) throw new Error("Notification channel not found");
+    const updated = { ...channel, ...updates, updatedAt: new Date() };
+    this.notificationChannelsData.set(id, updated);
+    return updated;
+  }
+
+  async deleteNotificationChannel(id: string): Promise<void> {
+    this.notificationChannelsData.delete(id);
+  }
+
+  async getNotificationAnalytics(userId: string, filters?: any): Promise<NotificationAnalytics[]> {
+    let analytics = Array.from(this.notificationAnalyticsData.values())
+      .filter(item => item.userId === userId);
+    
+    if (filters?.category) {
+      analytics = analytics.filter(item => item.category === filters.category);
+    }
+    
+    return analytics
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
+      .slice(0, filters?.limit || 100);
+  }
+
+  async createNotificationAnalytics(analytics: InsertNotificationAnalytics): Promise<NotificationAnalytics> {
+    const id = randomUUID();
+    const newAnalytics: NotificationAnalytics = {
+      id,
+      ...analytics,
+      notificationId: analytics.notificationId || null,
+      delivered: analytics.delivered !== undefined ? analytics.delivered : false,
+      deliveredAt: analytics.deliveredAt || null,
+      viewed: analytics.viewed !== undefined ? analytics.viewed : false,
+      viewedAt: analytics.viewedAt || null,
+      clicked: analytics.clicked !== undefined ? analytics.clicked : false,
+      clickedAt: analytics.clickedAt || null,
+      dismissed: analytics.dismissed !== undefined ? analytics.dismissed : false,
+      dismissedAt: analytics.dismissedAt || null,
+      createdAt: new Date()
+    };
+    this.notificationAnalyticsData.set(id, newAnalytics);
+    return newAnalytics;
+  }
+
+  async updateNotificationAnalytics(id: string, updates: Partial<NotificationAnalytics>): Promise<NotificationAnalytics> {
+    const analytics = this.notificationAnalyticsData.get(id);
+    if (!analytics) throw new Error("Notification analytics not found");
+    const updated = { ...analytics, ...updates };
+    this.notificationAnalyticsData.set(id, updated);
     return updated;
   }
 }
