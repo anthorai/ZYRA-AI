@@ -1155,6 +1155,9 @@ export class SupabaseStorage implements ISupabaseStorage {
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
     
     if (error) {
@@ -1165,6 +1168,15 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateUserSubscription(userId: string, updates: Partial<Subscription>): Promise<Subscription> {
+    // Check if user has an active subscription
+    const { data: existingSubscriptions } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
     // Convert camelCase to snake_case for database columns
     const dbUpdates: Record<string, any> = {
       updated_at: new Date().toISOString()
@@ -1181,14 +1193,37 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (updates.startDate) dbUpdates.start_date = updates.startDate;
     if (updates.endDate) dbUpdates.end_date = updates.endDate;
 
+    // If subscription exists, update it
+    if (existingSubscriptions && existingSubscriptions.length > 0) {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .update(dbUpdates)
+        .eq('id', existingSubscriptions[0].id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to update user subscription: ${error.message}`);
+      return data;
+    } 
+    
+    // If no subscription exists, create a new one
+    const newSubscription = {
+      id: randomUUID(),
+      user_id: userId,
+      plan_id: updates.planId,
+      status: updates.status || 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...dbUpdates
+    };
+
     const { data, error } = await supabase
       .from('subscriptions')
-      .update(dbUpdates)
-      .eq('user_id', userId)
+      .insert(newSubscription)
       .select()
       .single();
     
-    if (error) throw new Error(`Failed to update user subscription: ${error.message}`);
+    if (error) throw new Error(`Failed to create user subscription: ${error.message}`);
     return data;
   }
 
