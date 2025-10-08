@@ -170,14 +170,13 @@ export default function OnboardingTour({ onComplete, onSkip }: OnboardingTourPro
       
       <Card 
         className={cn(
-          "fixed z-50 w-96 shadow-2xl transition-all duration-300",
-          isWelcomeOrComplete ? "-translate-x-1/2 -translate-y-1/2" : ""
+          "fixed z-50 w-96 shadow-2xl transition-all duration-300"
         )}
         style={
           isWelcomeOrComplete
             ? { 
-                top: `${tooltipPosition.top}px`, 
-                left: `${tooltipPosition.left}px`,
+                top: '50%', 
+                left: '50%',
                 transform: 'translate(-50%, -50%)'
               }
             : step.placement === 'left'
