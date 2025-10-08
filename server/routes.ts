@@ -1700,112 +1700,11 @@ Respond with JSON in this exact format:
     try {
       const dbPlans = await supabaseStorage.getSubscriptionPlans();
       
-      // Enhanced plan features with organized categories
-      const enhancedPlans = dbPlans.map(plan => {
-        if (plan.planName === '7-Day Free Trial') {
-          return {
-            ...plan,
-            description: "Try ZYRA for 7 Days",
-            features: [
-              "✨ 100 credits / 7 days",
-              "🔧 Product Optimization & SEO:",
-              "• Optimized Products – 20 credits",
-              "• SEO Keyword Density Analysis – 10 credits",
-              "📈 Conversion Boosting & Sales Automation:",
-              "• AI-Powered Growth Intelligence – 20 credits", 
-              "• Basic A/B Testing – 10 credits",
-              "🎨 Content & Branding at Scale:",
-              "• Smart Product Descriptions – 20 credits",
-              "• Limited Dynamic Templates – 10 credits",
-              "📊 Performance Tracking & ROI Insights:",
-              "• Email Performance Analytics – 10 credits",
-              "⚡ Workflow & Integration Tools:",
-              "• One-Click Shopify Publish – 10 credits",
-              "• Rollback Button – included"
-            ]
-          };
-        } else if (plan.planName === 'Starter') {
-          return {
-            ...plan,
-            features: [
-              "✨ 1,000 credits / month",
-              "🔧 Product Optimization & SEO:",
-              "• Optimized Products – 200 credits",
-              "• SEO Keyword Density Analysis – 100 credits",
-              "• AI Image Alt-Text Generator – 100 credits",
-              "• Smart SEO Titles & Meta Tags – 100 credits",
-              "📈 Conversion Boosting & Sales Automation:",
-              "• AI-Powered Growth Intelligence – 150 credits",
-              "• A/B Testing – 50 credits",
-              "• Upsell Email Receipts – 100 credits",
-              "• Abandoned Cart SMS – 50 credits",
-              "🎨 Content & Branding at Scale:",
-              "• Smart Product Descriptions – 100 credits",
-              "• Dynamic Templates – 50 credits",
-              "• Brand Voice Memory – included",
-              "📊 Performance Tracking & ROI Insights:",
-              "• Email & SMS Conversion Analytics – included",
-              "⚡ Workflow & Integration Tools:",
-              "• CSV Import/Export – included",
-              "• One-Click Shopify Publish – included", 
-              "• Rollback Button – included",
-              "• Smart Bulk Suggestions – included"
-            ]
-          };
-        } else if (plan.planName === 'Growth') {
-          return {
-            ...plan,
-            features: [
-              "✨ 5,000 credits / month",
-              "🔧 Product Optimization & SEO:",
-              "• All Starter features +",
-              "• SEO Ranking Tracker – 200 credits",
-              "• Bulk Optimization & Smart Bulk Suggestions – 500 credits",
-              "• Scheduled Refresh for Content & SEO Updates – 300 credits",
-              "📈 Conversion Boosting & Sales Automation:",
-              "• AI Upsell Suggestions & Triggers – 300 credits",
-              "• Dynamic Segmentation of Customers – 200 credits",
-              "• Behavioral Targeting – 200 credits",
-              "• Full A/B Test Results Dashboard – included",
-              "🎨 Content & Branding at Scale:",
-              "• Custom Templates – included",
-              "• Multimodal AI (text + image + insights) – 300 credits",
-              "• Multi-Channel Content Repurposing – 300 credits",
-              "📊 Performance Tracking & ROI Insights:",
-              "• Full Email & SMS tracking – included",
-              "• Content ROI Tracking – included",
-              "• Revenue Impact Attribution – included",
-              "• Product Management Dashboard – included",
-              "⚡ Workflow & Integration Tools:",
-              "• Unlimited Starter workflow tools"
-            ]
-          };
-        } else if (plan.planName === 'Pro') {
-          return {
-            ...plan,
-            features: [
-              "✨ 20,000 credits / month",
-              "🔧 Product Optimization & SEO:",
-              "• All Growth features + priority processing",
-              "📈 Conversion Boosting & Sales Automation:",
-              "• Full AI-driven automation for campaigns, upsells, and behavioral targeting",
-              "🎨 Content & Branding at Scale:",
-              "• Full template library, advanced brand voice memory, multimodal AI insights, multi-channel automation",
-              "📊 Performance Tracking & ROI Insights:",
-              "• Enterprise-grade analytics and revenue attribution dashboard",
-              "⚡ Workflow & Integration Tools:",
-              "• Enterprise bulk management, CSV import/export, rollback, smart bulk suggestions at scale"
-            ]
-          };
-        }
-        return plan;
-      });
-      
-      // Sort plans to ensure trial is first
-      const sortedPlans = enhancedPlans.sort((a, b) => {
+      // Sort plans to ensure trial is first, then by price
+      const sortedPlans = dbPlans.sort((a, b) => {
         if (a.planName === '7-Day Free Trial') return -1;
         if (b.planName === '7-Day Free Trial') return 1;
-        return 0;
+        return parseFloat(a.price) - parseFloat(b.price);
       });
       
       res.json(sortedPlans);
