@@ -108,7 +108,7 @@ export default function CreateCampaignPage() {
           ? "Your campaign is being sent now" 
           : "Your campaign has been scheduled successfully",
       });
-      setLocation("/dashboard");
+      setLocation("/campaigns");
     },
     onError: (error: Error) => {
       toast({
@@ -139,11 +139,11 @@ export default function CreateCampaignPage() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => setLocation("/dashboard")}
+            onClick={() => setLocation("/campaigns")}
             className="mb-4 text-slate-300 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
+            Back to Campaigns
           </Button>
           <h1 className="text-3xl font-bold text-white mb-2">Create New Campaign</h1>
           <p className="text-slate-400">
@@ -383,7 +383,7 @@ export default function CreateCampaignPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => setLocation("/campaigns")}
               className="border-slate-700 text-slate-300 hover:bg-slate-800"
             >
               Cancel
