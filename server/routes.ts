@@ -3298,6 +3298,21 @@ Respond with JSON in this exact format:
 
   // ===== SHOPIFY OAUTH INTEGRATION =====
   
+  // Helper endpoint to get the redirect URI that needs to be configured in Shopify
+  app.get('/api/shopify/redirect-uri', (req, res) => {
+    const replitDomains = process.env.REPLIT_DOMAINS;
+    const baseUrl = replitDomains 
+      ? `https://${replitDomains.split(',')[0].trim()}` 
+      : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+    
+    const redirectUri = `${baseUrl}/api/shopify/callback`;
+    
+    res.json({ 
+      redirectUri,
+      instructions: 'Add this URL to your Shopify App settings under "App setup" > "URLs" > "Allowed redirection URL(s)"'
+    });
+  });
+  
   // Temporary storage for OAuth states (in production, use Redis or database)
   const oauthStates = new Map<string, { userId: string, shopDomain: string, createdAt: number }>();
 
