@@ -139,11 +139,11 @@ export default function CreateCampaignPage() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => setLocation("/campaigns")}
+            onClick={() => window.history.back()}
             className="mb-4 text-slate-300 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Campaigns
+            Back
           </Button>
           <h1 className="text-3xl font-bold text-white mb-2">Create New Campaign</h1>
           <p className="text-slate-400">
