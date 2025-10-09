@@ -58,6 +58,9 @@ const AbandonedCartSMSPage = lazy(() => import("@/pages/abandoned-cart-sms"));
 const CustomTemplatesPage = lazy(() => import("@/pages/custom-templates"));
 const BehavioralTriggersPage = lazy(() => import("@/pages/behavioral-triggers"));
 
+// Campaign pages
+const CreateCampaignPage = lazy(() => import("@/pages/campaigns/create"));
+
 // AI Tools pages
 const SmartProductDescriptions = lazy(() => import("@/pages/ai-tools/smart-product-descriptions"));
 const BulkOptimization = lazy(() => import("@/pages/ai-tools/bulk-optimization"));
@@ -289,6 +292,15 @@ function Router() {
         </ProtectedRoute>
       )} />
       
+      {/* Campaign routes */}
+      <Route path="/campaigns/create" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <CreateCampaignPage />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+
       {/* Feature routes */}
       <Route path="/ai-upsell-suggestions" component={() => (
         <ProtectedRoute>

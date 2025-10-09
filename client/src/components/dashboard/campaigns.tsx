@@ -126,7 +126,7 @@ export default function Campaigns() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="space-y-3 mb-8">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white tracking-tight">
               AI Email & SMS Growth Engine
@@ -135,6 +135,13 @@ export default function Campaigns() {
               Automate your customer communications with intelligent campaigns and behavioral triggers
             </p>
           </div>
+          <Button
+            onClick={() => setLocation('/campaigns/create')}
+            className="bg-primary text-white hover:bg-primary/90"
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Create Campaign
+          </Button>
         </div>
       </div>
 
