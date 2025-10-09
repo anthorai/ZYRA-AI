@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,19 +35,50 @@ export default function GrowthDashboard() {
   const [, setLocation] = useLocation();
   const { dashboardData, isLoading, error, trackToolAccess } = useDashboard();
   
+  // Fetch real campaign stats
+  const { data: campaignStats, isLoading: campaignStatsLoading, error: campaignStatsError } = useQuery<{
+    totalCampaigns: number;
+    emailCampaigns: number;
+    smsCampaigns: number;
+    sentCampaigns: number;
+    totalSent: number;
+    avgOpenRate: number;
+    avgClickRate: number;
+    avgConversionRate: number;
+  }>({
+    queryKey: ['/api/campaigns/stats'],
+    enabled: !!dashboardData?.user,
+  });
+
+  // Log campaign stats errors
+  if (campaignStatsError) {
+    console.error('Failed to fetch campaign stats:', campaignStatsError);
+  }
+  
   // Debug logging for GrowthDashboard
-  console.log('🎯 GrowthDashboard state:', { isLoading, dashboardData: !!dashboardData, error });
+  console.log('🎯 GrowthDashboard state:', { isLoading, dashboardData: !!dashboardData, error, campaignStats });
 
   // Use real data from API or show loading skeletons
   const getAnalyticsCards = (): AnalyticsCard[] => {
-    // For UI-only mode, always show mock data
+    // Use real campaign and usage stats
     const usageStats = dashboardData?.usageStats || {
-      productsOptimized: 28,
-      conversionRate: 3.2,
-      cartRecoveryRate: 18.5,
-      seoOptimizationsUsed: 45,
-      totalRevenue: 125000,
-      totalOrders: 342
+      productsOptimized: 0,
+      conversionRate: 0,
+      cartRecoveryRate: 0,
+      seoOptimizationsUsed: 0,
+      totalRevenue: 0,
+      totalOrders: 0
+    };
+
+    const campaigns = campaignStats || {
+      totalCampaigns: 0,
+      emailCampaigns: 0,
+      smsCampaigns: 0,
+      sentCampaigns: 0,
+      totalSent: 0,
+      avgOpenRate: 0,
+      avgClickRate: 0,
+      avgConversionRate: 0
     };
 
     return [
@@ -56,8 +88,8 @@ export default function GrowthDashboard() {
         description: 'Products enhanced by Zyra AI with improved descriptions and SEO',
         icon: <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
         value: usageStats.productsOptimized?.toString() || '0',
-        change: '+23 this week',
-        trend: 'up',
+        change: usageStats.productsOptimized > 0 ? `+${usageStats.productsOptimized} optimized` : 'No products yet',
+        trend: usageStats.productsOptimized > 0 ? 'up' : 'neutral',
         actionText: 'View Products',
         category: 'metric'
       },
@@ -66,9 +98,9 @@ export default function GrowthDashboard() {
         title: 'Email Performance',
         description: 'Email open rates and click-through performance analytics',
         icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
-        value: `${(usageStats.conversionRate * 100).toFixed(1)}%`,
-        change: '+5.7% CTR',
-        trend: 'up',
+        value: campaigns.emailCampaigns > 0 ? `${campaigns.avgOpenRate.toFixed(1)}%` : '0%',
+        change: campaigns.emailCampaigns > 0 ? `${campaigns.emailCampaigns} campaigns sent` : 'No campaigns yet',
+        trend: campaigns.avgOpenRate > 0 ? 'up' : 'neutral',
         actionText: 'View Analytics',
         category: 'performance'
       },
@@ -77,9 +109,9 @@ export default function GrowthDashboard() {
         title: 'SMS Conversion',
         description: 'SMS recovery campaigns and sales conversion tracking',
         icon: <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
-        value: `${(usageStats.cartRecoveryRate * 100).toFixed(1)}%`,
-        change: '+12.3% conversion',
-        trend: 'up',
+        value: campaigns.smsCampaigns > 0 ? `${campaigns.avgConversionRate.toFixed(1)}%` : '0%',
+        change: campaigns.smsCampaigns > 0 ? `${campaigns.smsCampaigns} SMS sent` : 'No SMS campaigns yet',
+        trend: campaigns.avgConversionRate > 0 ? 'up' : 'neutral',
         actionText: 'View Campaigns',
         category: 'performance'
       },
@@ -89,8 +121,8 @@ export default function GrowthDashboard() {
         description: 'Keyword optimization and search ranking improvements',
         icon: <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
         value: `${usageStats.seoOptimizationsUsed || 0}`,
-        change: '+15% this month',
-        trend: 'up',
+        change: usageStats.seoOptimizationsUsed > 0 ? `+${usageStats.seoOptimizationsUsed} optimizations` : 'No SEO yet',
+        trend: usageStats.seoOptimizationsUsed > 0 ? 'up' : 'neutral',
         actionText: 'View Keywords',
         category: 'growth'
       },
@@ -100,20 +132,20 @@ export default function GrowthDashboard() {
         description: 'Total revenue boost from Zyra AI optimizations this month',
         icon: <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
         value: `$${usageStats.totalRevenue?.toLocaleString() || '0'}`,
-        change: '+$3,200 this month',
-        trend: 'up',
+        change: usageStats.totalRevenue > 0 ? 'AI-driven growth' : 'Start optimizing',
+        trend: usageStats.totalRevenue > 0 ? 'up' : 'neutral',
         actionText: 'View Breakdown',
         category: 'growth'
       },
       {
-        id: 'total-orders',
-        title: 'Total Orders',
-        description: 'Orders processed through Zyra-optimized products',
+        id: 'total-campaigns',
+        title: 'Total Campaigns',
+        description: 'All marketing campaigns across email and SMS channels',
         icon: <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
-        value: `${usageStats.totalOrders || 0}`,
-        change: '+15 this month',
-        trend: 'up',
-        actionText: 'View Orders',
+        value: `${campaigns.totalCampaigns || 0}`,
+        change: campaigns.sentCampaigns > 0 ? `${campaigns.sentCampaigns} sent, ${campaigns.totalSent} recipients` : 'Create first campaign',
+        trend: campaigns.totalCampaigns > 0 ? 'up' : 'neutral',
+        actionText: 'View Campaigns',
         category: 'growth'
       }
     ];

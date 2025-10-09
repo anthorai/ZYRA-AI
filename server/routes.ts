@@ -3512,38 +3512,7 @@ Respond with JSON in this exact format:
     }
   });
 
-  // Get campaign performance metrics
-  app.get('/api/campaigns/:id/metrics', requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const campaign = await supabaseStorage.getCampaign(req.params.id);
-      
-      if (!campaign || campaign.userId !== userId) {
-        return res.status(404).json({ error: 'Campaign not found' });
-      }
-
-      // Calculate metrics
-      const metrics = {
-        campaignId: campaign.id,
-        name: campaign.name,
-        type: campaign.type,
-        status: campaign.status,
-        sentCount: campaign.sentCount || 0,
-        openRate: campaign.openRate || 0,
-        clickRate: campaign.clickRate || 0,
-        conversionRate: campaign.conversionRate || 0,
-        sentAt: campaign.sentAt,
-        scheduledFor: campaign.scheduledFor
-      };
-
-      res.json(metrics);
-    } catch (error) {
-      console.error('Get campaign metrics error:', error);
-      res.status(500).json({ error: 'Failed to get campaign metrics' });
-    }
-  });
-
-  // Get aggregate campaign statistics for dashboard
+  // Get aggregate campaign statistics for dashboard (MUST be before :id routes)
   app.get('/api/campaigns/stats', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
@@ -3584,6 +3553,37 @@ Respond with JSON in this exact format:
     } catch (error) {
       console.error('Get campaign stats error:', error);
       res.status(500).json({ error: 'Failed to get campaign statistics' });
+    }
+  });
+
+  // Get campaign performance metrics (must be AFTER /stats route)
+  app.get('/api/campaigns/:id/metrics', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaign = await supabaseStorage.getCampaign(req.params.id);
+      
+      if (!campaign || campaign.userId !== userId) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+
+      // Calculate metrics
+      const metrics = {
+        campaignId: campaign.id,
+        name: campaign.name,
+        type: campaign.type,
+        status: campaign.status,
+        sentCount: campaign.sentCount || 0,
+        openRate: campaign.openRate || 0,
+        clickRate: campaign.clickRate || 0,
+        conversionRate: campaign.conversionRate || 0,
+        sentAt: campaign.sentAt,
+        scheduledFor: campaign.scheduledFor
+      };
+
+      res.json(metrics);
+    } catch (error) {
+      console.error('Get campaign metrics error:', error);
+      res.status(500).json({ error: 'Failed to get campaign metrics' });
     }
   });
 
