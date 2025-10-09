@@ -1,6 +1,6 @@
 # Overview
 
-Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, and an analytics dashboard to enhance store performance and drive significant ROI.
+Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
 
 # User Preferences
 
@@ -43,6 +43,21 @@ Includes multi-tier rate limiting, comprehensive input sanitization using `expre
 
 ## Notification System
 An advanced notification preference system allows granular control over multi-channel notifications (Email, SMS, In-App, Push) across various categories. Features include preset modes, frequency management, visual quiet hours builder, and four-tier priority filtering.
+
+## Shopify Integration
+A fully functional OAuth 2.0 integration system connects Zyra with Shopify stores. Features include:
+- **OAuth Flow**: Secure authorization using Shopify's OAuth 2.0 with state parameter validation
+- **Product Sync**: Bidirectional sync of products between Shopify and Zyra
+- **Store Management**: Connection status tracking, disconnect functionality, and store metadata storage
+- **Security**: Token refresh handling, postMessage origin validation, and Bearer token authentication
+- **API Endpoints**: 
+  - POST /api/shopify/auth - Initiate OAuth flow
+  - GET /api/shopify/callback - Handle OAuth callback
+  - GET /api/shopify/status - Check connection status
+  - POST /api/shopify/disconnect - Remove connection
+  - GET /api/shopify/products - Fetch Shopify products
+  - POST /api/shopify/sync - Sync products to Zyra database
+- **Frontend Integration**: Integration card on settings page with OAuth popup flow, connection status display, and visual indicators
 
 # External Dependencies
 
