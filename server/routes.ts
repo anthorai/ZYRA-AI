@@ -21,7 +21,9 @@ import {
   errorLogs,
   campaigns,
   campaignEvents,
-  trackingTokens
+  trackingTokens,
+  products,
+  storeConnections
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase } from "./lib/supabase";
@@ -3294,29 +3296,274 @@ Respond with JSON in this exact format:
     }
   });
 
-  // Shopify Integration - Future Feature (Not Implemented)
-  // NOTE: Infrastructure ready (store_connections table, frontend UI, storage methods)
-  // Future implementation will require Shopify API credentials and OAuth flow
-  app.get('/api/shopify/products', requireAuth, async (req, res) => {
-    res.status(501).json({ 
-      message: 'Shopify integration is not currently available',
-      status: 'not_implemented',
-      details: 'This feature is planned for a future release. The database schema and UI are ready for implementation.',
-      futureFeatures: [
-        'OAuth-based Shopify store connection',
-        'Automatic product sync',
-        'Inventory management',
-        'Order fulfillment integration'
-      ]
-    });
+  // ===== SHOPIFY OAUTH INTEGRATION =====
+  
+  // Initiate Shopify OAuth flow
+  app.post('/api/shopify/auth', requireAuth, async (req, res) => {
+    try {
+      const { shop } = req.body;
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      if (!shop) {
+        return res.status(400).json({ error: 'Shop domain is required' });
+      }
+
+      // Validate shop domain format
+      const shopDomain = shop.includes('.myshopify.com') ? shop : `${shop}.myshopify.com`;
+      
+      const apiKey = process.env.SHOPIFY_API_KEY;
+      const redirectUri = `https://${process.env.REPLIT_DOMAINS}/api/shopify/callback`;
+      const scopes = 'read_products,write_products,read_inventory';
+      const nonce = Math.random().toString(36).substring(7);
+      
+      // Store state in URL parameters (since session may not work for OAuth)
+      const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${redirectUri}&state=${nonce}-${userId}`;
+      
+      res.json({ authUrl });
+    } catch (error) {
+      console.error('Shopify OAuth initiation error:', error);
+      res.status(500).json({ error: 'Failed to initiate Shopify OAuth' });
+    }
   });
 
+  // Handle Shopify OAuth callback
+  app.get('/api/shopify/callback', async (req, res) => {
+    try {
+      const { code, state, shop } = req.query;
+      
+      if (!code || !state || !shop) {
+        return res.status(400).send('Missing required parameters');
+      }
+
+      // Extract userId from state (format: nonce-userId)
+      const stateParts = (state as string).split('-');
+      if (stateParts.length !== 2) {
+        return res.status(403).send('Invalid state parameter');
+      }
+      const userId = stateParts[1];
+
+      // Exchange code for access token
+      const apiKey = process.env.SHOPIFY_API_KEY;
+      const apiSecret = process.env.SHOPIFY_API_SECRET;
+      const accessTokenUrl = `https://${shop}/admin/oauth/access_token`;
+      
+      const tokenResponse = await fetch(accessTokenUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: apiKey,
+          client_secret: apiSecret,
+          code
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to exchange code for access token');
+      }
+
+      const tokenData = await tokenResponse.json();
+      const accessToken = tokenData.access_token;
+
+      // Get shop info
+      const shopInfoResponse = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
+        headers: {
+          'X-Shopify-Access-Token': accessToken
+        }
+      });
+
+      const shopInfo = await shopInfoResponse.json();
+      const shopName = shopInfo.shop?.name || shop;
+
+      // Store connection in database
+      await supabaseStorage.createStoreConnection({
+        userId,
+        platform: 'shopify',
+        storeName: shopName,
+        storeUrl: `https://${shop}`,
+        accessToken,
+        status: 'active'
+      });
+
+      // Redirect to success page
+      res.send(`
+        <html>
+          <body>
+            <script>
+              window.opener.postMessage({ type: 'shopify-connected', success: true }, '*');
+              window.close();
+            </script>
+            <p>Connection successful! You can close this window.</p>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error('Shopify OAuth callback error:', error);
+      res.send(`
+        <html>
+          <body>
+            <script>
+              window.opener.postMessage({ type: 'shopify-connected', success: false, error: 'Connection failed' }, '*');
+              window.close();
+            </script>
+            <p>Connection failed. Please try again.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+
+  // Check Shopify connection status
+  app.get('/api/shopify/status', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      res.json({ 
+        isConnected: !!shopifyConnection,
+        connection: shopifyConnection || null
+      });
+    } catch (error) {
+      console.error('Shopify status check error:', error);
+      res.status(500).json({ error: 'Failed to check Shopify status' });
+    }
+  });
+
+  // Disconnect Shopify
+  app.post('/api/shopify/disconnect', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No Shopify connection found' });
+      }
+
+      await supabaseStorage.deleteStoreConnection(shopifyConnection.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Shopify disconnect error:', error);
+      res.status(500).json({ error: 'Failed to disconnect Shopify' });
+    }
+  });
+
+  // Get Shopify products (from connected store)
+  app.get('/api/shopify/products', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Fetch products from Shopify API
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-01/products.json`, {
+        headers: {
+          'X-Shopify-Access-Token': shopifyConnection.accessToken
+        }
+      });
+
+      if (!productsResponse.ok) {
+        throw new Error('Failed to fetch Shopify products');
+      }
+
+      const productsData = await productsResponse.json();
+      res.json(productsData.products || []);
+    } catch (error) {
+      console.error('Shopify products fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch Shopify products' });
+    }
+  });
+
+  // Sync Shopify products to Zyra
   app.post('/api/shopify/sync', requireAuth, async (req, res) => {
-    res.status(501).json({ 
-      message: 'Shopify sync is not currently available',
-      status: 'not_implemented',
-      details: 'This feature is planned for a future release.'
-    });
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Fetch products from Shopify
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-01/products.json`, {
+        headers: {
+          'X-Shopify-Access-Token': shopifyConnection.accessToken
+        }
+      });
+
+      if (!productsResponse.ok) {
+        throw new Error('Failed to fetch Shopify products');
+      }
+
+      const productsData = await productsResponse.json();
+      const shopifyProducts = productsData.products || [];
+
+      const imported = [];
+      const errors = [];
+
+      for (const product of shopifyProducts) {
+        try {
+          const variant = product.variants?.[0];
+          const productPayload = {
+            userId,
+            shopifyId: product.id.toString(),
+            name: product.title,
+            description: product.body_html || '',
+            originalDescription: product.body_html || '',
+            price: variant?.price || '0',
+            category: product.product_type || 'Uncategorized',
+            stock: variant?.inventory_quantity || 0,
+            image: product.image?.src || product.images?.[0]?.src || '',
+            tags: product.tags || '',
+            isOptimized: false
+          };
+
+          const existingProduct = await db.query.products.findFirst({
+            where: and(
+              eq(products.userId, userId),
+              eq(products.shopifyId, product.id.toString())
+            )
+          });
+
+          if (existingProduct) {
+            // Update existing product
+            await db.update(products)
+              .set(productPayload)
+              .where(eq(products.id, existingProduct.id));
+            imported.push({ ...productPayload, id: existingProduct.id });
+          } else {
+            // Create new product
+            const newProduct = await supabaseStorage.createProduct(productPayload as any);
+            imported.push(newProduct);
+          }
+        } catch (error) {
+          errors.push({
+            product: product.title,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+
+      // Update last sync time
+      await db.update(storeConnections)
+        .set({ lastSyncAt: sql`NOW()` })
+        .where(eq(storeConnections.id, shopifyConnection.id));
+
+      res.json({
+        success: true,
+        imported: imported.length,
+        errors: errors.length,
+        details: { imported, errors }
+      });
+    } catch (error) {
+      console.error('Shopify sync error:', error);
+      res.status(500).json({ error: 'Failed to sync Shopify products' });
+    }
   });
 
   // ===== CAMPAIGN ROUTES =====

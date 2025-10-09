@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +109,34 @@ export default function IntegrationsPage() {
   const [showApiKeyInput, setShowApiKeyInput] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
 
+  // Fetch Shopify connection status on mount
+  useEffect(() => {
+    const fetchShopifyStatus = async () => {
+      try {
+        const response = await fetch('/api/shopify/status', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.isConnected) {
+            setIntegrations(prev =>
+              prev.map(integration =>
+                integration.id === 'shopify'
+                  ? { ...integration, isConnected: true }
+                  : integration
+              )
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch Shopify status:', error);
+      }
+    };
+
+    fetchShopifyStatus();
+  }, []);
+
   // Helper function to get label color based on type and connection status
   const getLabelStyles = (labelType: "recommended" | "optional" | "advanced", isConnected: boolean) => {
     const baseStyles = "px-3 py-1 rounded-full text-xs font-medium transition-all duration-300";
@@ -129,7 +157,76 @@ export default function IntegrationsPage() {
     }
   };
 
-  const handleConnect = (id: string) => {
+  const handleConnect = async (id: string) => {
+    // Special handling for Shopify OAuth
+    if (id === 'shopify') {
+      const shop = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com or just mystore):');
+      if (!shop) return;
+
+      try {
+        const response = await fetch('/api/shopify/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop: shop.trim() }),
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to initiate Shopify OAuth');
+        }
+
+        const data = await response.json();
+        
+        // Open OAuth popup
+        const popup = window.open(
+          data.authUrl,
+          'Shopify OAuth',
+          'width=600,height=700'
+        );
+
+        // Listen for OAuth completion
+        const messageHandler = (event: MessageEvent) => {
+          if (event.data.type === 'shopify-connected') {
+            if (event.data.success) {
+              setIntegrations(prev =>
+                prev.map(integration =>
+                  integration.id === 'shopify'
+                    ? { ...integration, isConnected: true }
+                    : integration
+                )
+              );
+              
+              toast({
+                title: "Shopify Connected",
+                description: "Your Shopify store has been successfully connected",
+                duration: 3000,
+              });
+            } else {
+              toast({
+                title: "Connection Failed",
+                description: event.data.error || "Failed to connect to Shopify",
+                variant: "destructive",
+                duration: 3000,
+              });
+            }
+            window.removeEventListener('message', messageHandler);
+          }
+        };
+
+        window.addEventListener('message', messageHandler);
+      } catch (error) {
+        console.error('Shopify OAuth error:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to connect to Shopify. Please try again.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+      return;
+    }
+
+    // Original API key flow for other integrations
     if (!showApiKeyInput) {
       setShowApiKeyInput(id);
       return;
@@ -163,7 +260,45 @@ export default function IntegrationsPage() {
     setApiKey("");
   };
 
-  const handleDisconnect = (id: string, name: string) => {
+  const handleDisconnect = async (id: string, name: string) => {
+    // Special handling for Shopify disconnect
+    if (id === 'shopify') {
+      try {
+        const response = await fetch('/api/shopify/disconnect', {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to disconnect Shopify');
+        }
+
+        setIntegrations(prev =>
+          prev.map(integration =>
+            integration.id === 'shopify'
+              ? { ...integration, isConnected: false }
+              : integration
+          )
+        );
+        
+        toast({
+          title: "Shopify Disconnected",
+          description: "Your Shopify store has been disconnected",
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error('Shopify disconnect error:', error);
+        toast({
+          title: "Disconnection Failed",
+          description: "Failed to disconnect Shopify. Please try again.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+      return;
+    }
+
+    // Original disconnect flow for other integrations
     setIntegrations(prev =>
       prev.map(integration =>
         integration.id === id
