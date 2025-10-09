@@ -108,6 +108,7 @@ export default function IntegrationsPage() {
 
   const [showApiKeyInput, setShowApiKeyInput] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
+  const [shopDomain, setShopDomain] = useState("");
 
   // Fetch Shopify connection status on mount
   useEffect(() => {
@@ -176,17 +177,30 @@ export default function IntegrationsPage() {
   };
 
   const handleConnect = async (id: string) => {
-    // Special handling for Shopify OAuth
+    // Special handling for Shopify
     if (id === 'shopify') {
-      const shop = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com or just mystore):');
-      if (!shop) return;
+      // If form is not showing yet, show it
+      if (!showApiKeyInput) {
+        setShowApiKeyInput(id);
+        return;
+      }
+
+      // Form is showing, validate and connect
+      if (!shopDomain.trim() || !apiKey.trim()) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter both store domain and access token",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
 
       try {
         const { supabase } = await import('@/lib/supabaseClient');
         const { data: sessionData } = await supabase.auth.getSession();
         let token = sessionData.session?.access_token || '';
 
-        // If no token, try refreshing the session
         if (!token) {
           const { data: refreshData } = await supabase.auth.refreshSession();
           token = refreshData.session?.access_token || '';
@@ -208,71 +222,40 @@ export default function IntegrationsPage() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ shop: shop.trim() }),
+          body: JSON.stringify({ 
+            shop: shopDomain.trim(),
+            accessToken: apiKey.trim()
+          }),
           credentials: 'include'
         });
 
         if (!response.ok) {
-          throw new Error('Failed to initiate Shopify OAuth');
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to connect to Shopify');
         }
 
-        const data = await response.json();
-        
-        // Open OAuth popup
-        const popup = window.open(
-          data.authUrl,
-          'Shopify OAuth',
-          'width=600,height=700'
+        setIntegrations(prev =>
+          prev.map(integration =>
+            integration.id === 'shopify'
+              ? { ...integration, isConnected: true }
+              : integration
+          )
         );
-
-        // Listen for OAuth completion
-        const messageHandler = (event: MessageEvent) => {
-          // Validate message origin and source
-          if (event.origin !== window.location.origin || event.source !== popup) {
-            return; // Ignore messages from other origins or windows
-          }
-
-          if (event.data.type === 'shopify-connected') {
-            if (event.data.success) {
-              setIntegrations(prev =>
-                prev.map(integration =>
-                  integration.id === 'shopify'
-                    ? { ...integration, isConnected: true }
-                    : integration
-                )
-              );
-              
-              toast({
-                title: "Shopify Connected",
-                description: "Your Shopify store has been successfully connected",
-                duration: 3000,
-              });
-            } else {
-              toast({
-                title: "Connection Failed",
-                description: event.data.error || "Failed to connect to Shopify",
-                variant: "destructive",
-                duration: 3000,
-              });
-            }
-            window.removeEventListener('message', messageHandler);
-          }
-        };
-
-        window.addEventListener('message', messageHandler);
-
-        // Cleanup listener if popup is closed without completing OAuth
-        const checkPopupClosed = setInterval(() => {
-          if (popup && popup.closed) {
-            clearInterval(checkPopupClosed);
-            window.removeEventListener('message', messageHandler);
-          }
-        }, 1000);
+        
+        toast({
+          title: "Shopify Connected",
+          description: "Your Shopify store has been successfully connected",
+          duration: 3000,
+        });
+        
+        setShowApiKeyInput(null);
+        setApiKey("");
+        setShopDomain("");
       } catch (error) {
-        console.error('Shopify OAuth error:', error);
+        console.error('Shopify connection error:', error);
         toast({
           title: "Connection Failed",
-          description: "Failed to connect to Shopify. Please try again.",
+          description: error instanceof Error ? error.message : "Failed to connect to Shopify. Please check your credentials.",
           variant: "destructive",
           duration: 3000,
         });
@@ -521,38 +504,91 @@ export default function IntegrationsPage() {
               
               {showApiKeyInput === integration.id && !integration.isConnected && (
                 <div className="mt-4 space-y-3 p-4 bg-slate-800/50 rounded-lg">
-                  <Label htmlFor={`api-key-${integration.id}`} className="text-white">
-                    API Key for {integration.name}
-                  </Label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      id={`api-key-${integration.id}`}
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="Enter your API key"
-                      className="bg-slate-900/50 border-slate-600 text-white"
-                      data-testid={`input-api-key-${integration.id}`}
-                    />
-                    <Button
-                      onClick={() => handleConnect(integration.id)}
-                      className="gradient-button"
-                      data-testid={`button-submit-api-key-${integration.id}`}
-                    >
-                      Connect
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowApiKeyInput(null);
-                        setApiKey("");
-                      }}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                      data-testid={`button-cancel-api-key-${integration.id}`}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                  {integration.id === 'shopify' ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="shop-domain" className="text-white">
+                          Shopify Store Domain
+                        </Label>
+                        <Input
+                          id="shop-domain"
+                          type="text"
+                          value={shopDomain}
+                          onChange={(e) => setShopDomain(e.target.value)}
+                          placeholder="mystore.myshopify.com or mystore"
+                          className="bg-slate-900/50 border-slate-600 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="access-token" className="text-white">
+                          Admin API Access Token
+                        </Label>
+                        <Input
+                          id="access-token"
+                          type="password"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder="shpat_xxxxxxxxxxxxx"
+                          className="bg-slate-900/50 border-slate-600 text-white"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={() => handleConnect(integration.id)}
+                          className="gradient-button"
+                          disabled={!shopDomain || !apiKey}
+                        >
+                          Connect Store
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowApiKeyInput(null);
+                            setApiKey("");
+                            setShopDomain("");
+                          }}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Label htmlFor={`api-key-${integration.id}`} className="text-white">
+                        API Key for {integration.name}
+                      </Label>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          id={`api-key-${integration.id}`}
+                          type="password"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder="Enter your API key"
+                          className="bg-slate-900/50 border-slate-600 text-white"
+                          data-testid={`input-api-key-${integration.id}`}
+                        />
+                        <Button
+                          onClick={() => handleConnect(integration.id)}
+                          className="gradient-button"
+                          data-testid={`button-submit-api-key-${integration.id}`}
+                        >
+                          Connect
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowApiKeyInput(null);
+                            setApiKey("");
+                          }}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                          data-testid={`button-cancel-api-key-${integration.id}`}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
