@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Zap, ArrowLeft, Mail, MessageSquare, BarChart3, Link2, Plus, X } from "lucide-react";
+import { Zap, ArrowLeft, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag } from "lucide-react";
 
 interface Integration {
   id: string;
@@ -27,6 +27,17 @@ export default function IntegrationsPage() {
   const [, setLocation] = useLocation();
   
   const [integrations, setIntegrations] = useState<Integration[]>([
+    {
+      id: "shopify",
+      name: "Shopify",
+      type: "E-Commerce Platform",
+      icon: <ShoppingBag className="w-5 h-5" />,
+      isConnected: false,
+      description: "Sync your Shopify products, collections, and analytics with Zyra to enable real-time optimization, auto publishing, and sales automation.",
+      label: "For Shopify Sellers 🛒",
+      tooltip: "Required to sync products, analytics, and automation between Zyra & your Shopify store.",
+      labelType: "recommended"
+    },
     {
       id: "gmail",
       name: "Gmail",

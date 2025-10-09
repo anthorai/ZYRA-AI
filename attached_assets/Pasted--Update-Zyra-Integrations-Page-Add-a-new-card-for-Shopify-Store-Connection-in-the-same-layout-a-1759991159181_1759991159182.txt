@@ -1,0 +1,65 @@
+🔹 Update Zyra Integrations Page
+Add a new card for “Shopify Store Connection” in the same layout as Gmail, Twilio, etc.
+
+🧱 Card Details:
+--------------------------------------------
+Integration Name: Shopify
+Category: E-Commerce Platform
+Connection Type: OAuth (Secure App Authentication)
+--------------------------------------------
+
+💠 UI Details:
+- Icon: Shopify logo (neon cyan outline)
+- Label: “For E-commerce Sellers 🛍️”
+- Status badge: “Connected” / “Not Connected”
+- Button: [Connect Store] / [Disconnect]
+- Hover Tooltip: “Connect your Shopify store to enable product optimization, SEO, and AI automation.”
+
+⚙️ Card Description:
+“Sync your Shopify products, collections, and analytics with Zyra to enable real-time optimization, auto publishing, and sales automation.”
+
+💾 Connection Behavior:
+- When user clicks [Connect Store]:
+  → Trigger Shopify OAuth flow (redirect to /auth/shopify)
+  → After success: fetch store info (name, domain, plan)
+  → Save credentials in Supabase (integration_id: ‘shopify_store’)
+  → Update status = Connected
+
+- When user clicks [Disconnect]:
+  → Revoke token and remove credentials from Supabase
+  → Update status = Not Connected
+
+🔍 Integration Label Mapping:
+Label: “For Shopify Sellers 🛒”
+Tooltip: “Required to sync products, analytics, and automation between Zyra & your Shopify store.”
+
+🧠 Functional Dependencies:
+- Supabase table: integrations
+  Columns:
+    - id
+    - user_id
+    - integration_type (e.g., 'shopify')
+    - access_token
+    - connected_at
+    - status (connected/disconnected)
+- Backend API route: /api/integrations/shopify
+- Frontend status check: GET /api/integrations/status
+
+🎨 Design:
+- Follow Cyberwave theme (#0D0D1F base, #00F0FF primary glow)
+- Add neon hover border when connected
+- Smooth fade-in animation for “Connected” badge
+
+📈 Position:
+Place Shopify card as the first integration card on the list.
+Order example:
+1️⃣ Shopify
+2️⃣ Gmail
+3️⃣ Twilio
+4️⃣ Google Analytics
+5️⃣ Meta Pixel
+6️⃣ Zapier
+7️⃣ Outlook
+
+🔥 Objective:
+Ensure users can connect their Shopify store directly from Integrations Page and instantly unlock Zyra’s product optimization, SEO, and automation features.
