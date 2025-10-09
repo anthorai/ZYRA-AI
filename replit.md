@@ -46,18 +46,26 @@ An advanced notification preference system allows granular control over multi-ch
 
 ## Shopify Integration
 A fully functional OAuth 2.0 integration system connects Zyra with Shopify stores. Features include:
-- **OAuth Flow**: Secure authorization using Shopify's OAuth 2.0 with state parameter validation
+- **OAuth Flow**: Secure authorization using Shopify's OAuth 2.0 with comprehensive security hardening
 - **Product Sync**: Bidirectional sync of products between Shopify and Zyra
 - **Store Management**: Connection status tracking, disconnect functionality, and store metadata storage
-- **Security**: Token refresh handling, postMessage origin validation, and Bearer token authentication
+- **Security Features**:
+  - **State Validation**: 256-bit secure random state tokens using crypto.randomBytes
+  - **Shop Domain Protection**: Stored shopDomain validation prevents SSRF and secret disclosure attacks
+  - **HMAC Verification**: Cryptographic verification of callback authenticity from Shopify
+  - **Input Sanitization**: Shop domain sanitized and validated on both initiation and callback
+  - **Single-use States**: States deleted after use with 10-minute expiry and automatic cleanup
+  - **Origin Validation**: postMessage uses specific origin instead of wildcard
+  - **Rate Limiting**: OAuth endpoints protected against abuse
 - **API Endpoints**: 
-  - POST /api/shopify/auth - Initiate OAuth flow
-  - GET /api/shopify/callback - Handle OAuth callback
+  - POST /api/shopify/auth - Initiate OAuth flow with secure state generation
+  - GET /api/shopify/callback - Handle OAuth callback with HMAC verification
   - GET /api/shopify/status - Check connection status
   - POST /api/shopify/disconnect - Remove connection
   - GET /api/shopify/products - Fetch Shopify products
   - POST /api/shopify/sync - Sync products to Zyra database
 - **Frontend Integration**: Integration card on settings page with OAuth popup flow, connection status display, and visual indicators
+- **Known Limitation**: OAuth state storage uses in-memory Map (single-process). For production multi-instance deployments, migrate to Redis or Supabase table for shared state persistence.
 
 # External Dependencies
 
