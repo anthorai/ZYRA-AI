@@ -318,7 +318,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('store_connections')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get store connections: ${error.message}`);
     return data || [];
@@ -368,7 +368,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get products: ${error.message}`);
     return data || [];
@@ -614,7 +614,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('abandoned_carts')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get abandoned carts: ${error.message}`);
     return data || [];
@@ -687,7 +687,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('analytics')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get analytics: ${error.message}`);
     return data || [];
@@ -766,7 +766,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { error } = await supabase
       .from('notifications')
       .update({ isRead: true, updatedAt: new Date().toISOString() })
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to mark all notifications as read: ${error.message}`);
   }
@@ -778,7 +778,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('user_preferences')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
@@ -810,7 +810,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('user_preferences')
       .update({ ...updates, updatedAt: new Date().toISOString() })
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .select()
       .single();
     
@@ -824,7 +824,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('integration_settings')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get integration settings: ${error.message}`);
     return data || [];
@@ -864,7 +864,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('security_settings')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
@@ -896,7 +896,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('security_settings')
       .update({ ...updates, updatedAt: new Date().toISOString() })
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .select()
       .single();
     
@@ -925,7 +925,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     let query = supabase
       .from('login_logs')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .order('createdAt', { ascending: false });
     
     if (limit) {
@@ -942,7 +942,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('support_tickets')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get support tickets: ${error.message}`);
     return data || [];
@@ -982,7 +982,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     let query = supabase
       .from('ai_generation_history')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .order('createdAt', { ascending: false });
     
     if (limit) {
@@ -1016,7 +1016,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
@@ -1048,7 +1048,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('profiles')
       .update({ ...updates, updatedAt: new Date().toISOString() })
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .select()
       .single();
     
@@ -1287,7 +1287,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('activity_logs')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .order('createdAt', { ascending: false })
       .limit(limit);
     
@@ -1317,7 +1317,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('tools_access')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .order('createdAt', { ascending: false });
     
     if (error) throw new Error(`Failed to get user tools access: ${error.message}`);
@@ -1332,7 +1332,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       const { data, error } = await supabase
         .from('realtime_metrics')
         .update({ ...metric, updatedAt: new Date().toISOString() })
-        .eq('userId', userId)
+        .eq('user_id', userId)
         .select()
         .single();
       
@@ -1362,7 +1362,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('realtime_metrics')
       .select('*')
-      .eq('userId', userId)
+      .eq('user_id', userId)
       .single();
     
     if (error) {
