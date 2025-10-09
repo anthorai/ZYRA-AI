@@ -3298,72 +3298,31 @@ Respond with JSON in this exact format:
 
   // ===== SHOPIFY OAUTH INTEGRATION =====
   
-  // Connect Shopify store with Admin API access token
+  // Initiate Shopify OAuth flow
   app.post('/api/shopify/auth', requireAuth, async (req, res) => {
     try {
-      const { shop, accessToken } = req.body;
+      const { shop } = req.body;
       const userId = (req as AuthenticatedRequest).user.id;
       
-      if (!shop || !accessToken) {
-        return res.status(400).json({ error: 'Shop domain and access token are required' });
+      if (!shop) {
+        return res.status(400).json({ error: 'Shop domain is required' });
       }
 
       // Validate shop domain format
       const shopDomain = shop.includes('.myshopify.com') ? shop : `${shop}.myshopify.com`;
       
-      // Test the access token by making a request to Shopify API
-      const shopifyApiUrl = `https://${shopDomain}/admin/api/2024-01/shop.json`;
-      const testResponse = await fetch(shopifyApiUrl, {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!testResponse.ok) {
-        const errorData = await testResponse.json().catch(() => ({}));
-        console.error('Shopify token validation failed:', testResponse.status, errorData);
-        return res.status(400).json({ 
-          error: 'Invalid access token or store domain. Please check your credentials.' 
-        });
-      }
-
-      const shopData = await testResponse.json();
-      const storeName = shopData.shop?.name || shopDomain;
-
-      // Check if connection already exists
-      const existingConnections = await supabaseStorage.getStoreConnections(userId);
-      const shopifyConnection = existingConnections.find(conn => conn.platform === 'shopify');
-
-      if (shopifyConnection) {
-        // Update existing connection
-        await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
-          storeName,
-          storeUrl: `https://${shopDomain}`,
-          accessToken,
-          status: 'active',
-          lastSyncAt: new Date()
-        });
-      } else {
-        // Create new connection
-        await supabaseStorage.createStoreConnection({
-          userId,
-          platform: 'shopify',
-          storeName,
-          storeUrl: `https://${shopDomain}`,
-          accessToken,
-          status: 'active'
-        });
-      }
-
-      res.json({ 
-        success: true, 
-        message: 'Shopify store connected successfully',
-        storeName 
-      });
+      const apiKey = process.env.SHOPIFY_API_KEY;
+      const redirectUri = `https://${process.env.REPLIT_DOMAINS}/api/shopify/callback`;
+      const scopes = 'read_products,write_products,read_inventory';
+      const nonce = Math.random().toString(36).substring(7);
+      
+      // Store state in URL parameters (since session may not work for OAuth)
+      const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${redirectUri}&state=${nonce}-${userId}`;
+      
+      res.json({ authUrl });
     } catch (error) {
-      console.error('Shopify connection error:', error);
-      res.status(500).json({ error: 'Failed to connect to Shopify' });
+      console.error('Shopify OAuth initiation error:', error);
+      res.status(500).json({ error: 'Failed to initiate Shopify OAuth' });
     }
   });
 

@@ -177,30 +177,17 @@ export default function IntegrationsPage() {
   };
 
   const handleConnect = async (id: string) => {
-    // Special handling for Shopify
+    // Special handling for Shopify OAuth
     if (id === 'shopify') {
-      // If form is not showing yet, show it
-      if (!showApiKeyInput) {
-        setShowApiKeyInput(id);
-        return;
-      }
-
-      // Form is showing, validate and connect
-      if (!shopDomain.trim() || !apiKey.trim()) {
-        toast({
-          title: "Missing Information",
-          description: "Please enter both store domain and access token",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
+      const shop = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com or just mystore):');
+      if (!shop) return;
 
       try {
         const { supabase } = await import('@/lib/supabaseClient');
         const { data: sessionData } = await supabase.auth.getSession();
         let token = sessionData.session?.access_token || '';
 
+        // If no token, try refreshing the session
         if (!token) {
           const { data: refreshData } = await supabase.auth.refreshSession();
           token = refreshData.session?.access_token || '';
@@ -222,40 +209,71 @@ export default function IntegrationsPage() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ 
-            shop: shopDomain.trim(),
-            accessToken: apiKey.trim()
-          }),
+          body: JSON.stringify({ shop: shop.trim() }),
           credentials: 'include'
         });
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to connect to Shopify');
+          throw new Error('Failed to initiate Shopify OAuth');
         }
 
-        setIntegrations(prev =>
-          prev.map(integration =>
-            integration.id === 'shopify'
-              ? { ...integration, isConnected: true }
-              : integration
-          )
+        const data = await response.json();
+        
+        // Open OAuth popup
+        const popup = window.open(
+          data.authUrl,
+          'Shopify OAuth',
+          'width=600,height=700'
         );
-        
-        toast({
-          title: "Shopify Connected",
-          description: "Your Shopify store has been successfully connected",
-          duration: 3000,
-        });
-        
-        setShowApiKeyInput(null);
-        setApiKey("");
-        setShopDomain("");
+
+        // Listen for OAuth completion
+        const messageHandler = (event: MessageEvent) => {
+          // Validate message origin and source
+          if (event.origin !== window.location.origin || event.source !== popup) {
+            return; // Ignore messages from other origins or windows
+          }
+
+          if (event.data.type === 'shopify-connected') {
+            if (event.data.success) {
+              setIntegrations(prev =>
+                prev.map(integration =>
+                  integration.id === 'shopify'
+                    ? { ...integration, isConnected: true }
+                    : integration
+                )
+              );
+              
+              toast({
+                title: "Shopify Connected",
+                description: "Your Shopify store has been successfully connected",
+                duration: 3000,
+              });
+            } else {
+              toast({
+                title: "Connection Failed",
+                description: event.data.error || "Failed to connect to Shopify",
+                variant: "destructive",
+                duration: 3000,
+              });
+            }
+            window.removeEventListener('message', messageHandler);
+          }
+        };
+
+        window.addEventListener('message', messageHandler);
+
+        // Cleanup listener if popup is closed without completing OAuth
+        const checkPopupClosed = setInterval(() => {
+          if (popup && popup.closed) {
+            clearInterval(checkPopupClosed);
+            window.removeEventListener('message', messageHandler);
+          }
+        }, 1000);
       } catch (error) {
-        console.error('Shopify connection error:', error);
+        console.error('Shopify OAuth error:', error);
         toast({
           title: "Connection Failed",
-          description: error instanceof Error ? error.message : "Failed to connect to Shopify. Please check your credentials.",
+          description: "Failed to connect to Shopify. Please try again.",
           variant: "destructive",
           duration: 3000,
         });
