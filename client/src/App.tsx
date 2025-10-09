@@ -61,6 +61,7 @@ const BehavioralTriggersPage = lazy(() => import("@/pages/behavioral-triggers"))
 // Campaign pages
 const CreateCampaignPage = lazy(() => import("@/pages/campaigns/create"));
 const CampaignListPage = lazy(() => import("@/pages/campaigns/list"));
+const TemplatesPage = lazy(() => import("@/pages/templates"));
 
 // AI Tools pages
 const SmartProductDescriptions = lazy(() => import("@/pages/ai-tools/smart-product-descriptions"));
@@ -305,6 +306,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <CreateCampaignPage />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/templates" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <TemplatesPage />
           </Suspense>
         </ProtectedRoute>
       )} />

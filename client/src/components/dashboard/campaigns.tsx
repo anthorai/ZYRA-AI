@@ -110,7 +110,7 @@ export default function Campaigns() {
       'multi-channel-repurposing': '/multi-channel-repurposing',
       'upsell-receipts': '/upsell-email-receipts',
       'abandoned-cart-sms': '/abandoned-cart-sms',
-      'custom-templates': '/custom-templates',
+      'custom-templates': '/templates',
       'behavioral-triggers': '/behavioral-triggers'
     };
     
