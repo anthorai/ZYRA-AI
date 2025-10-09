@@ -1,0 +1,55 @@
+Update the Integrations section in Zyra Dashboard UI.
+
+✅ Add a small glowing label or tooltip below each integration name showing:
+1. Which type of user/business should connect it.
+2. Why or when it’s useful.
+3. Keep labels short, color-coded, and futuristic (Cyberwave theme).
+
+💠 Design Notes:
+- Label style: Rounded pill with neon border, small text (12px)
+- Colors:
+  - Primary (#00F0FF) → Recommended
+  - Accent (#FF00F5) → Optional
+  - Secondary (#00FFE5) → Advanced
+- Add hover tooltip: “Why this integration matters” (one sentence).
+
+💼 Label Format:
+→ Example: “Best for Ecom Sellers 🛍️”
+→ Example: “For Agencies & Advanced Users ⚙️”
+
+----------------------------------------------------
+Integration Label Mapping:
+
+1️⃣ Gmail  
+   Label: “For All Businesses 💼”  
+   Tooltip: “Send AI-powered marketing & upsell emails directly from Zyra.”
+
+2️⃣ Outlook  
+   Label: “For B2B & Corporate Teams 🧾”  
+   Tooltip: “Sync Outlook accounts for enterprise-level communication.”
+
+3️⃣ Twilio  
+   Label: “For Ecom Sellers & Marketers 📲”  
+   Tooltip: “Send SMS campaigns, abandoned cart alerts, and promotions.”
+
+4️⃣ Google Analytics  
+   Label: “Recommended for All Users 📈”  
+   Tooltip: “Track website traffic, product performance, and conversions.”
+
+5️⃣ Meta Pixel  
+   Label: “For Social Ad Sellers 🎯”  
+   Tooltip: “Connect to Facebook & Instagram for retargeting and ad tracking.”
+
+6️⃣ Zapier  
+   Label: “For Agencies & Power Users ⚙️”  
+   Tooltip: “Automate workflows across 5000+ apps and marketing tools.”
+
+----------------------------------------------------
+🧩 Functional Behavior:
+- When user hovers over label → Show tooltip with integration purpose.
+- When integration is connected → Label glows neon blue.
+- When disconnected → Label shows dimmed gray outline.
+
+----------------------------------------------------
+🖥️ Objective:
+Help users quickly understand which integrations are essential or optional for their business category without reading documentation.
