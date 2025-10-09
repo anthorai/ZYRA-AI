@@ -2,87 +2,6 @@
 
 Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, and an analytics dashboard to enhance store performance and drive significant ROI.
 
-# Recent Changes (October 2025)
-
-## Phase 11: Campaign Management UI Complete (October 9, 2025)
-- **Campaign Creation Form**: Comprehensive form for creating email/SMS campaigns with type selection, conditional validation, and scheduling
-- **Conditional Validation**: Zod schema with superRefine enforces email subject for emails, datetime for scheduled sends, and SMS length limits
-- **SMS Character Counter**: Real-time counter with overflow warning at 160+ chars (splits into multiple messages), max 320 chars
-- **Schedule Options**: Send now (immediate) or schedule later with datetime picker
-- **Audience Targeting**: Select from all customers, abandoned cart, recent customers, or inactive customers
-- **Campaign List Page**: View all campaigns with status badges, performance metrics, and action buttons
-- **Performance Metrics Display**: Shows recipients, open rate, click rate, conversion rate per campaign
-- **Empty States**: User-friendly empty state with CTA when no campaigns exist
-- **Global Query Function**: All campaign pages use global queryFn from queryClient with automatic auth header injection
-- **Route Structure**: /campaigns (list), /campaigns/create (form), protected routes with lazy loading
-
-## Phase 10: Secure Subscription Payment Flow (October 8, 2025)
-- **Payment-Gated Subscriptions**: Implemented secure payment flow requiring Razorpay payment before subscription activation for paid plans
-- **Free Plan Support**: 7-Day Free Trial activates immediately without payment, paid plans (Starter, Growth, Pro) require payment
-- **Transaction Validation**: Comprehensive security checks including pending status verification, amount validation, currency matching, and payment capture enforcement
-- **Auto-Capture**: Authorized payments are automatically captured server-side before subscription activation
-- **Amount Security**: Payment amount must match transaction amount (with 0.01 tolerance) to prevent underpayment attacks
-- **Replay Protection**: Transaction status checks prevent replay attacks and duplicate processing
-- **Frontend Integration**: Razorpay SDK loads dynamically, shows payment modal, handles success/failure with clear user feedback
-- **Error Recovery**: Enhanced error handling with transaction failure tracking and user support guidance
-- **Security Verified**: Architect-approved implementation with proper validation, capture enforcement, and error handling
-
-## Phase 9: Payment Gateway Consolidation (October 8, 2025)
-- **Removed Stripe**: Completely removed Stripe payment gateway including all imports, routes, server files, and packages
-- **Removed Payoneer**: Completely removed Payoneer payment gateway including all imports, routes, server files, and enum references
-- **Schema Cleanup**: Removed all Stripe-specific fields from users, subscriptions, and subscription_plans tables
-- **Gateway-Agnostic Fields**: Renamed stripeInvoiceId → gatewayInvoiceId and stripePaymentMethodId → gatewayPaymentMethodId for multi-gateway support
-- **Database Migration**: Successfully dropped Stripe columns and renamed gateway-specific fields using SQL
-- **Package Cleanup**: Uninstalled stripe, @stripe/stripe-js, and @stripe/react-stripe-js packages
-- **Two Gateway Support**: System now supports only PayPal (international) and Razorpay (India) payment gateways
-- **Production Ready**: Application tested and verified to run successfully with only PayPal and Razorpay
-
-## Phase 8: Billing System Testing & Webhook Security Fix (October 8, 2025)
-- **Critical Webhook Fix**: Fixed Razorpay webhook signature verification - now uses raw body instead of re-stringified JSON for HMAC validation
-- **Webhook Middleware**: Added dedicated middleware to capture raw request body before JSON parsing for accurate signature verification
-- **Subscription Testing**: Comprehensive test suite validates all billing flows (trial→Starter→Growth→downgrade, trial expiration)
-- **Transaction Logging**: Added warning logs when webhooks arrive for unknown transactions (helps detect race conditions)
-- **Production Ready**: All webhook handlers (Razorpay, PayPal) verified with proper signature validation, idempotency, and error handling
-- **Hybrid Auth Verified**: Confirmed requireAuth middleware auto-provisions users correctly, preventing billing race conditions
-- **Test Coverage**: test-billing-flow.js validates subscription upgrades, downgrades, and trial expiration logic
-
-## Phase 7: Advanced Notification Preference System Complete
-- **Market-Leading Notification Control**: Completely new, industry-first advanced notification preference system with AI-powered intelligence
-- **Preset Modes**: One-click configuration with Work Mode (hourly digests, business hours), Focus Mode (daily digest, urgent only), and Full Alerts (instant, all priorities)
-- **Multi-Channel Matrix**: Granular control over Email, SMS, In-App, and Push notifications per category (campaigns, products, billing, security, AI insights, system)
-- **Frequency Management**: Per-category frequency controls supporting instant delivery, hourly digest, daily digest (9AM), and weekly summary (Monday mornings)
-- **Visual Quiet Hours Builder**: Drag-and-drop timeline interface for Do Not Disturb scheduling with visual 24-hour indicator and urgent alert overrides
-- **Priority Filtering**: Four-tier priority system (Low, Medium, High, Urgent) with intelligent filtering and visual indicators
-- **Database Schema**: Three new tables (notification_preferences, notification_rules, notification_channels) with comprehensive support for all advanced features
-- **Complete API Suite**: REST endpoints for preferences CRUD, preset mode application, rule management, and channel registration
-- **Modern React Components**: PresetModeSelector, ChannelMatrix, FrequencyManager, QuietHoursBuilder, PriorityFilter with shadcn/ui and proper accessibility
-- **Route Integration**: New `/notifications/advanced` route with lazy loading and protected access
-
-## Phase 6: Production Readiness Complete
-- **Error Tracking System**: Comprehensive error logging to database with ErrorLogger utility, global error middleware, and admin endpoints for monitoring
-- **Database Performance**: 46 indexes across 21 tables for optimized queries (userId, status, timestamps, composite indexes)
-- **Health Monitoring**: /api/health endpoint with uptime, database status, and response time metrics
-- **Session Security**: 30-minute inactivity timeout with automatic logout and warning notifications
-- **Empty State UX**: User-friendly empty states with CTAs across 5 major pages (campaigns, templates, carts, etc.)
-- **Payment Webhooks**: Razorpay and PayPal webhook handlers with signature verification, state-based idempotency, database updates, and error logging
-- **Welcome Email Automation**: Professional branded welcome emails sent automatically to new users via SendGrid with non-blocking delivery
-- **N+1 Query Optimization**: Analytics dashboard and GDPR endpoints optimized with parallel queries using Promise.all/allSettled, GDPR-compliant error handling
-- **Database Backup Documentation**: Comprehensive backup and restore procedures with manual/automated backup strategies, disaster recovery plans, and compliance considerations
-
-## Phase 5: Security, Compliance & Error Handling Complete
-- **Rate Limiting**: Multi-tier rate limiting (auth: 15/15min, AI: 10/min, campaigns: 20/min, payments: 10/min, uploads: 5/min)
-- **Input Sanitization**: Comprehensive input validation middleware using express-validator
-- **GDPR Compliance**: Data export and deletion endpoints with proper anonymization
-- **Privacy & Terms Pages**: Full Privacy Policy and Terms of Service with proper routing
-- **Error Handling**: Retry logic in API calls, proper loading states, and validation error messages
-
-## Phase 4: Real Marketing Automation & Analytics Complete
-- **Campaign Scheduler**: Runs every 5 minutes, processes scheduled campaigns and sends emails/SMS
-- **Real Analytics Tracking**: Dashboard with real revenue metrics, conversion rates, and campaign performance
-- **PDF/CSV Export**: Generate downloadable analytics reports in PDF and CSV formats
-- **Revenue Tracking**: Track campaign conversions and calculate ROI from abandoned cart recovery
-- **Abandoned Cart Recovery**: Automated email/SMS recovery with real SendGrid/Twilio delivery
-
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -90,7 +9,7 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend
-The client-side uses React 18, TypeScript, and Vite, featuring shadcn/ui components with Radix UI, Wouter for routing, and TanStack Query for server state. Styling is managed by Tailwind CSS with a dark theme. It follows a component-based architecture.
+The client-side uses React 18, TypeScript, and Vite, featuring shadcn/ui components with Radix UI, Wouter for routing, and TanStack Query for server state. Styling is managed by Tailwind CSS with a dark theme, following a component-based architecture.
 
 ## Backend
 The server uses Express.js with TypeScript, providing RESTful API endpoints. Authentication is session-based via express-session and Passport.js (local strategy with bcrypt).
@@ -108,55 +27,33 @@ Supabase Auth provides email/password login, password reset, and JWT-based sessi
 Client-side state uses TanStack Query for server state caching, React Hook Form with Zod for validation, and React Context for global state.
 
 ## Payment System
-A multi-gateway payment system supports Razorpay (India) and PayPal (International).
-
-**Webhook Handlers:**
-- **Razorpay**: HMAC-SHA256 signature verification, handles payment.authorized, payment.captured, payment.failed, refund.created events
-- **PayPal**: OAuth-based signature verification via PayPal API, handles PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED, PAYMENT.CAPTURE.DECLINED, PAYMENT.CAPTURE.REFUNDED events
-- **Idempotency**: State-based checks prevent duplicate processing while allowing legitimate transitions (e.g., completed → refunded)
-- **Database Updates**: All webhook events update paymentTransactions table with status, webhookData, and metadata
-- **Error Logging**: Integrated with ErrorLogger for webhook processing failures
-- **Known Limitations**: Documented edge cases for future enhancement (multiple payment attempts, granular auth/capture states, per-event tracking)
+A multi-gateway payment system supports Razorpay (India) and PayPal (International). Webhook handlers for both gateways include signature verification, idempotency checks, database updates, and error logging.
 
 ## Marketing Automation System
-Real email/SMS delivery using SendGrid and Twilio via Replit connectors. Campaign scheduler runs every 5 minutes to process scheduled sends. Features include campaign templates, abandoned cart recovery, and performance tracking with open/click/conversion rates.
+Real email/SMS delivery using SendGrid and Twilio. A campaign scheduler runs every 5 minutes to process scheduled sends. Features include campaign templates, abandoned cart recovery, secure email open tracking, and performance tracking with open/click/conversion rates.
 
 ## Analytics & Reporting
-Real-time analytics dashboard tracking campaigns, revenue, conversions, and ROI. Export capabilities include PDF reports (jsPDF) and CSV data exports. Tracks abandoned cart recovery rates and potential revenue.
+Real-time analytics dashboard tracks campaigns, revenue, conversions, and ROI. Export capabilities include PDF reports and CSV data exports. Tracks abandoned cart recovery rates and potential revenue.
 
 ## Error Tracking & Monitoring
-Production-ready error logging system with comprehensive tracking and non-blocking operations:
+A production-ready error logging system uses an `ErrorLogger` utility for centralized logging to a `error_logs` table, non-blocking asynchronous database writes, and a global error middleware. Admin endpoints allow for monitoring and managing error logs.
 
-**Architecture:**
-- **ErrorLogger Utility** (`server/lib/errorLogger.ts`): Centralized logging with context (user, endpoint, request data)
-- **Database Storage**: `error_logs` table with jsonb columns for metadata, stack traces, and resolution status
-- **Global Error Middleware**: Module-scope handler registered after routes using promise chain
-- **Non-Blocking Design**: Uses setImmediate for async DB writes, no request blocking
-- **Type Safety**: Proper Error type casting with instanceof checks and fallbacks
+## Security & Compliance
+Includes multi-tier rate limiting, comprehensive input sanitization using `express-validator`, GDPR compliance with data export/deletion endpoints, and dedicated privacy and terms pages.
 
-**Admin Endpoints:**
-- GET `/api/admin/error-logs` - Paginated error logs with filters (status, errorType, userId, resolved)
-- PATCH `/api/admin/error-logs/:id/resolve` - Mark errors as resolved with optional notes
-- **Pagination**: Accurate counts using shared filter queries, validated limit/offset (1-1000)
-
-**Error Categories:**
-api_error, database_error, auth_error, payment_error, ai_error, validation_error, external_api_error
-
-**Implementation Details:**
-- Module-level import efficiency (static imports, no per-request dynamic loading)
-- Robust query validation with NaN handling and safe defaults
-- Context-rich logging with request body, metadata, and stack traces as native JSON
+## Notification System
+An advanced notification preference system allows granular control over multi-channel notifications (Email, SMS, In-App, Push) across various categories. Features include preset modes, frequency management, visual quiet hours builder, and four-tier priority filtering.
 
 # External Dependencies
 
 ## Database & Hosting
-- **PostgreSQL**: Production database hosted via Replit.
-- **Supabase**: PostgreSQL with built-in authentication.
+- **PostgreSQL**: Production database.
+- **Supabase**: Provides PostgreSQL with built-in authentication.
 - **Drizzle ORM**: Type-safe database queries.
-- **Replit Deployment**: Full-stack hosting with autoscale.
+- **Replit Deployment**: Full-stack hosting.
 
 ## AI & Machine Learning
-- **OpenAI API**: GPT-5 for text generation, Vision API for image analysis.
+- **OpenAI API**: GPT-5 for text generation and Vision API for image analysis.
 
 ## Payment Processing
 - **Razorpay**: Indian payment gateway.
@@ -165,7 +62,3 @@ api_error, database_error, auth_error, payment_error, ai_error, validation_error
 ## Email & SMS Services
 - **SendGrid**: Transactional emails and marketing campaigns.
 - **Twilio**: SMS notifications and cart recovery.
-
-## Third-party Integrations
-- **Shopify API**: Infrastructure ready (database schema, UI, storage methods) but not yet implemented. Endpoints return HTTP 501 Not Implemented. Future implementation will require OAuth and Shopify API credentials.
-- **CSV Import/Export**: Fully functional product data import/export.

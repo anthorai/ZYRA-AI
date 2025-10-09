@@ -86,6 +86,39 @@ export const campaigns = pgTable("campaigns", {
   index('campaigns_created_at_idx').on(table.createdAt),
 ]);
 
+// Tracking tokens for secure email open/click tracking
+export const trackingTokens = pgTable("tracking_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: text("token").notNull().unique(), // Secure random token
+  campaignId: varchar("campaign_id").references(() => campaigns.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  recipientEmail: text("recipient_email").notNull(),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('tracking_tokens_token_idx').on(table.token),
+  index('tracking_tokens_campaign_id_idx').on(table.campaignId),
+]);
+
+export const campaignEvents = pgTable("campaign_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").references(() => campaigns.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  recipientEmail: text("recipient_email").notNull(),
+  eventType: text("event_type").notNull(), // 'open' | 'click'
+  eventUrl: text("event_url"), // For click events, store the clicked URL
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('campaign_events_campaign_id_idx').on(table.campaignId),
+  index('campaign_events_recipient_email_idx').on(table.recipientEmail),
+  index('campaign_events_event_type_idx').on(table.eventType),
+  index('campaign_events_created_at_idx').on(table.createdAt),
+  // Unique index to prevent duplicate events (race condition protection)
+  uniqueIndex('campaign_events_unique_idx').on(table.campaignId, table.recipientEmail, table.eventType),
+]);
+
 export const campaignTemplates = pgTable("campaign_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -312,6 +345,16 @@ export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   updatedAt: true,
 });
 
+export const insertCampaignEventSchema = createInsertSchema(campaignEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTrackingTokenSchema = createInsertSchema(trackingTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertCampaignTemplateSchema = createInsertSchema(campaignTemplates).omit({
   id: true,
   createdAt: true,
@@ -502,6 +545,8 @@ export type SeoMeta = typeof seoMeta.$inferSelect;
 export type InsertSeoMeta = z.infer<typeof insertSeoMetaSchema>;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type CampaignEvent = typeof campaignEvents.$inferSelect;
+export type InsertCampaignEvent = z.infer<typeof insertCampaignEventSchema>;
 export type CampaignTemplate = typeof campaignTemplates.$inferSelect;
 export type InsertCampaignTemplate = z.infer<typeof insertCampaignTemplateSchema>;
 export type AbandonedCart = typeof abandonedCarts.$inferSelect;

@@ -18,7 +18,10 @@ import {
   insertNotificationRuleSchema,
   insertNotificationChannelSchema,
   insertNotificationAnalyticsSchema,
-  errorLogs
+  errorLogs,
+  campaigns,
+  campaignEvents,
+  trackingTokens
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase } from "./lib/supabase";
@@ -3647,6 +3650,86 @@ Respond with JSON in this exact format:
     } catch (error) {
       console.error('Delete template error:', error);
       res.status(500).json({ error: 'Failed to delete template' });
+    }
+  });
+
+  // ===== TRACKING PIXEL ROUTES =====
+  
+  // Tracking pixel endpoint (email open tracking)
+  app.get('/track/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      // Look up tracking token from database
+      const trackingTokenResult = await db.select().from(trackingTokens)
+        .where(eq(trackingTokens.token, token))
+        .limit(1);
+      
+      if (trackingTokenResult.length === 0) {
+        // Token not found - return pixel silently
+        return res.status(200).type('image/gif').send(Buffer.from(
+          'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'
+        ));
+      }
+      
+      const trackingToken = trackingTokenResult[0];
+      const { campaignId, userId, recipientEmail } = trackingToken;
+      
+      // Get campaign for open rate calculation
+      const campaign = await supabaseStorage.getCampaign(campaignId);
+      if (!campaign) {
+        return res.status(200).type('image/gif').send(Buffer.from(
+          'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'
+        ));
+      }
+      
+      // Try to insert open event (will fail silently if duplicate due to unique index)
+      try {
+        await db.insert(campaignEvents).values({
+          campaignId,
+          userId,
+          recipientEmail,
+          eventType: 'open',
+          ipAddress: req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown',
+          metadata: { timestamp: new Date().toISOString() }
+        });
+        
+        // Update campaign open rate only if new event was inserted
+        const totalOpens = await db.select({ count: sql<number>`count(*)` })
+          .from(campaignEvents)
+          .where(and(
+            eq(campaignEvents.campaignId, campaignId),
+            eq(campaignEvents.eventType, 'open')
+          ));
+        
+        const openCount = totalOpens[0]?.count || 0;
+        const sentCount = campaign.sentCount || 0;
+        const openRate = sentCount > 0 
+          ? Math.round((Number(openCount) / sentCount) * 100) 
+          : 0;
+        
+        await db.update(campaigns)
+          .set({ openRate })
+          .where(eq(campaigns.id, campaignId));
+      } catch (insertError: any) {
+        // Duplicate event (unique constraint violation) - silently ignore
+        if (!insertError.message?.includes('unique')) {
+          console.error('Campaign event insert error:', insertError);
+        }
+      }
+      
+      // Always return 1x1 transparent GIF
+      const pixel = Buffer.from(
+        'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'
+      );
+      res.status(200).type('image/gif').send(pixel);
+    } catch (error) {
+      console.error('Tracking pixel error:', error);
+      // Always return pixel even on error
+      res.status(200).type('image/gif').send(Buffer.from(
+        'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'
+      ));
     }
   });
 

@@ -1,6 +1,9 @@
 import { supabaseStorage } from "./supabase-storage";
 import { sendEmail, sendBulkEmails } from "./sendgrid-client";
 import { sendSMS, sendBulkSMS } from "./twilio-client";
+import { generateSecureToken } from "./tracking-token";
+import { db } from "../db";
+import { trackingTokens } from "@shared/schema";
 
 export async function processScheduledCampaigns() {
   console.log('[Campaign Scheduler] Checking for scheduled campaigns...');
@@ -43,10 +46,34 @@ export async function processScheduledCampaigns() {
 
         // Send based on campaign type
         if (campaign.type === 'email') {
-          const messages = recipientList.map(email => ({
-            to: email,
-            subject: campaign.subject || 'No Subject',
-            html: campaign.content
+          // Generate and store tracking tokens for each recipient
+          const messages = await Promise.all(recipientList.map(async (email) => {
+            // Generate secure random token
+            const token = generateSecureToken();
+            
+            // Store tracking token in database
+            try {
+              await db.insert(trackingTokens).values({
+                token,
+                campaignId: campaign.id,
+                userId: campaign.userId,
+                recipientEmail: email,
+              });
+            } catch (error: any) {
+              console.error(`[Campaign Scheduler] Error storing tracking token:`, error);
+            }
+            
+            // Build tracking pixel URL with https:// protocol
+            const baseUrl = process.env.REPLIT_DOMAINS 
+              ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` 
+              : 'http://localhost:5000';
+            const trackingPixel = `<img src="${baseUrl}/track/${token}" width="1" height="1" style="display:none" alt="" />`;
+            
+            return {
+              to: email,
+              subject: campaign.subject || 'No Subject',
+              html: campaign.content + trackingPixel
+            };
           }));
 
           try {
