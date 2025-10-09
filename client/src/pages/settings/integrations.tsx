@@ -113,7 +113,25 @@ export default function IntegrationsPage() {
   useEffect(() => {
     const fetchShopifyStatus = async () => {
       try {
+        const { supabase } = await import('@/lib/supabaseClient');
+        const { data: sessionData } = await supabase.auth.getSession();
+        let token = sessionData.session?.access_token || '';
+
+        // If no token, try refreshing the session
+        if (!token) {
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          token = refreshData.session?.access_token || '';
+        }
+
+        // If still no token, user is not authenticated - skip status check
+        if (!token) {
+          return;
+        }
+
         const response = await fetch('/api/shopify/status', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           credentials: 'include'
         });
         
@@ -164,9 +182,32 @@ export default function IntegrationsPage() {
       if (!shop) return;
 
       try {
+        const { supabase } = await import('@/lib/supabaseClient');
+        const { data: sessionData } = await supabase.auth.getSession();
+        let token = sessionData.session?.access_token || '';
+
+        // If no token, try refreshing the session
+        if (!token) {
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          token = refreshData.session?.access_token || '';
+        }
+
+        if (!token) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in again to connect Shopify",
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+
         const response = await fetch('/api/shopify/auth', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ shop: shop.trim() }),
           credentials: 'include'
         });
@@ -186,6 +227,11 @@ export default function IntegrationsPage() {
 
         // Listen for OAuth completion
         const messageHandler = (event: MessageEvent) => {
+          // Validate message origin and source
+          if (event.origin !== window.location.origin || event.source !== popup) {
+            return; // Ignore messages from other origins or windows
+          }
+
           if (event.data.type === 'shopify-connected') {
             if (event.data.success) {
               setIntegrations(prev =>
@@ -214,6 +260,14 @@ export default function IntegrationsPage() {
         };
 
         window.addEventListener('message', messageHandler);
+
+        // Cleanup listener if popup is closed without completing OAuth
+        const checkPopupClosed = setInterval(() => {
+          if (popup && popup.closed) {
+            clearInterval(checkPopupClosed);
+            window.removeEventListener('message', messageHandler);
+          }
+        }, 1000);
       } catch (error) {
         console.error('Shopify OAuth error:', error);
         toast({
@@ -264,8 +318,31 @@ export default function IntegrationsPage() {
     // Special handling for Shopify disconnect
     if (id === 'shopify') {
       try {
+        const { supabase } = await import('@/lib/supabaseClient');
+        const { data: sessionData } = await supabase.auth.getSession();
+        let token = sessionData.session?.access_token || '';
+
+        // If no token, try refreshing the session
+        if (!token) {
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          token = refreshData.session?.access_token || '';
+        }
+
+        if (!token) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in again to disconnect Shopify",
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+
         const response = await fetch('/api/shopify/disconnect', {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           credentials: 'include'
         });
 
