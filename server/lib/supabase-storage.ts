@@ -477,7 +477,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('campaigns')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get campaigns: ${error.message}`);
     return data || [];
@@ -550,7 +550,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('campaign_templates')
       .select('*')
-      .eq('userId', userId);
+      .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get campaign templates: ${error.message}`);
     return data || [];
