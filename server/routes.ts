@@ -3298,6 +3298,20 @@ Respond with JSON in this exact format:
 
   // ===== SHOPIFY OAUTH INTEGRATION =====
   
+  // Temporary storage for OAuth states (in production, use Redis or database)
+  const oauthStates = new Map<string, { userId: string, shopDomain: string, createdAt: number }>();
+
+  // Cleanup expired states every 10 minutes
+  setInterval(() => {
+    const now = Date.now();
+    const entries = Array.from(oauthStates.entries());
+    for (const [state, data] of entries) {
+      if (now - data.createdAt > 10 * 60 * 1000) { // 10 minutes
+        oauthStates.delete(state);
+      }
+    }
+  }, 10 * 60 * 1000);
+
   // Initiate Shopify OAuth flow
   app.post('/api/shopify/auth', requireAuth, async (req, res) => {
     try {
@@ -3308,16 +3322,45 @@ Respond with JSON in this exact format:
         return res.status(400).json({ error: 'Shop domain is required' });
       }
 
-      // Validate shop domain format
-      const shopDomain = shop.includes('.myshopify.com') ? shop : `${shop}.myshopify.com`;
+      // Sanitize and validate shop domain
+      let shopDomain = shop.trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '') // Remove protocol
+        .replace(/\/$/, ''); // Remove trailing slash
+      
+      // Ensure .myshopify.com format
+      if (!shopDomain.includes('.myshopify.com')) {
+        shopDomain = `${shopDomain}.myshopify.com`;
+      }
+
+      // Validate domain format
+      if (!/^[a-z0-9-]+\.myshopify\.com$/.test(shopDomain)) {
+        return res.status(400).json({ error: 'Invalid Shopify store domain' });
+      }
       
       const apiKey = process.env.SHOPIFY_API_KEY;
-      const redirectUri = `https://${process.env.REPLIT_DOMAINS}/api/shopify/callback`;
-      const scopes = 'read_products,write_products,read_inventory';
-      const nonce = Math.random().toString(36).substring(7);
       
-      // Store state in URL parameters (since session may not work for OAuth)
-      const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${redirectUri}&state=${nonce}-${userId}`;
+      // Get base URL from environment (first domain in REPLIT_DOMAINS or fallback)
+      const replitDomains = process.env.REPLIT_DOMAINS;
+      const baseUrl = replitDomains 
+        ? `https://${replitDomains.split(',')[0].trim()}` 
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+      
+      const redirectUri = `${baseUrl}/api/shopify/callback`;
+      const scopes = 'read_products,write_products,read_inventory';
+      
+      // Generate secure nonce using crypto (32 bytes = 256 bits)
+      const crypto = await import('crypto');
+      const state = crypto.randomBytes(32).toString('hex');
+      
+      // Store state with userId, shopDomain, and timestamp
+      oauthStates.set(state, {
+        userId,
+        shopDomain,
+        createdAt: Date.now()
+      });
+      
+      const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
       
       res.json({ authUrl });
     } catch (error) {
@@ -3329,18 +3372,78 @@ Respond with JSON in this exact format:
   // Handle Shopify OAuth callback
   app.get('/api/shopify/callback', async (req, res) => {
     try {
-      const { code, state, shop } = req.query;
+      const { code, state, shop, hmac, timestamp } = req.query;
       
       if (!code || !state || !shop) {
         return res.status(400).send('Missing required parameters');
       }
 
-      // Extract userId from state (format: nonce-userId)
-      const stateParts = (state as string).split('-');
-      if (stateParts.length !== 2) {
-        return res.status(403).send('Invalid state parameter');
+      // Sanitize and validate shop parameter
+      let shopDomain = (shop as string).trim().toLowerCase();
+      
+      // Remove protocol if present
+      shopDomain = shopDomain.replace(/^https?:\/\//, '');
+      
+      // Validate .myshopify.com format
+      if (!shopDomain.endsWith('.myshopify.com')) {
+        console.error('Invalid shop domain format:', shopDomain);
+        return res.status(403).send('Invalid shop domain');
       }
-      const userId = stateParts[1];
+
+      // Validate state parameter
+      const stateData = oauthStates.get(state as string);
+      if (!stateData) {
+        console.error('Invalid or expired state parameter:', state);
+        return res.status(403).send('Invalid or expired state parameter');
+      }
+
+      // Check if state is expired (10 minutes)
+      if (Date.now() - stateData.createdAt > 10 * 60 * 1000) {
+        oauthStates.delete(state as string);
+        return res.status(403).send('State parameter expired');
+      }
+
+      // Validate shop domain matches the one from initiation
+      if (shopDomain !== stateData.shopDomain) {
+        console.error('Shop domain mismatch. Expected:', stateData.shopDomain, 'Got:', shopDomain);
+        oauthStates.delete(state as string);
+        return res.status(403).send('Shop domain mismatch');
+      }
+
+      // Verify HMAC if present (Shopify includes this for security)
+      if (hmac) {
+        const crypto = await import('crypto');
+        const apiSecret = process.env.SHOPIFY_API_SECRET;
+        
+        // Build query string without HMAC
+        const queryParams = { ...req.query };
+        delete queryParams.hmac;
+        
+        // Sort and build message
+        const message = Object.keys(queryParams)
+          .sort()
+          .map(key => `${key}=${queryParams[key]}`)
+          .join('&');
+        
+        // Calculate HMAC
+        const computedHmac = crypto
+          .createHmac('sha256', apiSecret!)
+          .update(message)
+          .digest('hex');
+        
+        // Verify HMAC
+        if (computedHmac !== hmac) {
+          console.error('HMAC verification failed');
+          oauthStates.delete(state as string);
+          return res.status(403).send('HMAC verification failed');
+        }
+      }
+
+      // Get userId from validated state
+      const userId = stateData.userId;
+      
+      // Delete state after single use
+      oauthStates.delete(state as string);
 
       // Exchange code for access token
       const apiKey = process.env.SHOPIFY_API_KEY;
@@ -3374,23 +3477,40 @@ Respond with JSON in this exact format:
       const shopInfo = await shopInfoResponse.json();
       const shopName = shopInfo.shop?.name || shop;
 
-      // Store connection in database
-      await supabaseStorage.createStoreConnection({
-        userId,
-        platform: 'shopify',
-        storeName: shopName,
-        storeUrl: `https://${shop}`,
-        accessToken,
-        status: 'active'
-      });
+      // Check if connection already exists
+      const existingConnections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = existingConnections.find(conn => conn.platform === 'shopify');
 
-      // Redirect to success page
+      if (shopifyConnection) {
+        // Update existing connection
+        await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
+          storeName: shopName,
+          storeUrl: `https://${shop}`,
+          accessToken,
+          status: 'active',
+          lastSyncAt: new Date()
+        });
+      } else {
+        // Create new connection
+        await supabaseStorage.createStoreConnection({
+          userId,
+          platform: 'shopify',
+          storeName: shopName,
+          storeUrl: `https://${shop}`,
+          accessToken,
+          status: 'active'
+        });
+      }
+
+      // Send success message to parent window
       res.send(`
         <html>
           <body>
             <script>
-              window.opener.postMessage({ type: 'shopify-connected', success: true }, '*');
-              window.close();
+              if (window.opener) {
+                window.opener.postMessage({ type: 'shopify-connected', success: true }, window.opener.location.origin);
+                window.close();
+              }
             </script>
             <p>Connection successful! You can close this window.</p>
           </body>
@@ -3402,8 +3522,14 @@ Respond with JSON in this exact format:
         <html>
           <body>
             <script>
-              window.opener.postMessage({ type: 'shopify-connected', success: false, error: 'Connection failed' }, '*');
-              window.close();
+              if (window.opener) {
+                window.opener.postMessage({ 
+                  type: 'shopify-connected', 
+                  success: false, 
+                  error: 'Connection failed' 
+                }, window.opener.location.origin);
+                window.close();
+              }
             </script>
             <p>Connection failed. Please try again.</p>
           </body>
