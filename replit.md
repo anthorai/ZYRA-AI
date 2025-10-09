@@ -4,6 +4,18 @@ Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merch
 
 # Recent Changes (October 2025)
 
+## Phase 11: Campaign Management UI Complete (October 9, 2025)
+- **Campaign Creation Form**: Comprehensive form for creating email/SMS campaigns with type selection, conditional validation, and scheduling
+- **Conditional Validation**: Zod schema with superRefine enforces email subject for emails, datetime for scheduled sends, and SMS length limits
+- **SMS Character Counter**: Real-time counter with overflow warning at 160+ chars (splits into multiple messages), max 320 chars
+- **Schedule Options**: Send now (immediate) or schedule later with datetime picker
+- **Audience Targeting**: Select from all customers, abandoned cart, recent customers, or inactive customers
+- **Campaign List Page**: View all campaigns with status badges, performance metrics, and action buttons
+- **Performance Metrics Display**: Shows recipients, open rate, click rate, conversion rate per campaign
+- **Empty States**: User-friendly empty state with CTA when no campaigns exist
+- **Global Query Function**: All campaign pages use global queryFn from queryClient with automatic auth header injection
+- **Route Structure**: /campaigns (list), /campaigns/create (form), protected routes with lazy loading
+
 ## Phase 10: Secure Subscription Payment Flow (October 8, 2025)
 - **Payment-Gated Subscriptions**: Implemented secure payment flow requiring Razorpay payment before subscription activation for paid plans
 - **Free Plan Support**: 7-Day Free Trial activates immediately without payment, paid plans (Starter, Growth, Pro) require payment
