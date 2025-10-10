@@ -259,7 +259,7 @@ Respond with JSON:
 };
 
 /**
- * Generate copy using multi-agent pipeline with industry templates and psychological triggers
+ * Generate copy using multi-agent pipeline with Zyra Pro Mode and industry templates
  */
 export async function generateMultiAgentCopy(
   productName: string,
@@ -273,19 +273,33 @@ export async function generateMultiAgentCopy(
   psychologicalTriggers?: string[]
 ): Promise<{ emotional: any; logical: any; hybrid: any; analysis: any }> {
   
-  // Import industry templates and triggers
+  // Import industry templates, triggers, and pro mode prompts
   const { getIndustryTemplate, getPsychologicalTrigger } = await import('./copywriting-frameworks');
+  const { getMultiAgentPrompts } = await import('./ai-system-prompts');
+  
+  // Get pro mode multi-agent prompts
+  const proModePrompts = getMultiAgentPrompts();
   
   // Get industry-specific guidelines
   const industryTemplate = industry ? getIndustryTemplate(industry) : null;
   const triggerDetails = psychologicalTriggers?.map(t => getPsychologicalTrigger(t)).filter(Boolean) || [];
   
-  // Step 1: Analyzer Agent - Understand product and audience
-  let analyzerPrompt = MULTI_AGENT_PROMPTS.analyzer
-    .replace('{product_name}', productName)
-    .replace('{category}', category)
-    .replace('{features}', features)
-    .replace('{audience}', audience);
+  // Step 1: Analyzer Agent - Understand product and audience (with Pro Mode)
+  let analyzerPrompt = `${proModePrompts.analyzer}
+
+---
+
+**PRODUCT ANALYSIS REQUEST:**
+- Product Name: ${productName}
+- Category: ${category}
+- Features: ${features}
+- Target Audience: ${audience}
+
+${MULTI_AGENT_PROMPTS.analyzer
+  .replace('{product_name}', productName)
+  .replace('{category}', category)
+  .replace('{features}', features)
+  .replace('{audience}', audience)}`;
   
   // Enhance with industry context
   if (industryTemplate) {
@@ -298,7 +312,10 @@ export async function generateMultiAgentCopy(
 
   const analysisResponse = await openaiClient.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: analyzerPrompt }],
+    messages: [
+      { role: "system", content: proModePrompts.analyzer },
+      { role: "user", content: analyzerPrompt }
+    ],
     response_format: { type: "json_object" },
     temperature: 0.5,
   });
@@ -313,12 +330,17 @@ export async function generateMultiAgentCopy(
     throw new Error('AI analyzer returned invalid data. Please try again.');
   }
 
-  // Step 2: Copywriter Agent - Generate 3 variants
-  let copywriterPrompt = MULTI_AGENT_PROMPTS.copywriter
-    .replace('{product_name}', productName)
-    .replace('{analysis}', JSON.stringify(analysis))
-    .replace('{framework}', framework)
-    .replace('{max_words}', maxWords.toString());
+  // Step 2: Copywriter Agent - Generate 3 variants (with Pro Mode)
+  let copywriterPrompt = `${proModePrompts.copywriter}
+
+---
+
+**COPYWRITING REQUEST:**
+${MULTI_AGENT_PROMPTS.copywriter
+  .replace('{product_name}', productName)
+  .replace('{analysis}', JSON.stringify(analysis))
+  .replace('{framework}', framework)
+  .replace('{max_words}', maxWords.toString())}`;
   
   // Add psychological triggers to the prompt
   if (triggerDetails.length > 0) {
@@ -338,7 +360,10 @@ export async function generateMultiAgentCopy(
 
   const copyResponse = await openaiClient.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: copywriterPrompt }],
+    messages: [
+      { role: "system", content: proModePrompts.copywriter },
+      { role: "user", content: copywriterPrompt }
+    ],
     response_format: { type: "json_object" },
     temperature: 0.8, // Higher creativity for copywriting
   });
@@ -367,7 +392,7 @@ export async function generateMultiAgentCopy(
 }
 
 /**
- * Refine copy using critic agent
+ * Refine copy using critic agent with Zyra Pro Mode
  */
 export async function refineCopyWithCritic(
   copy: string,
@@ -375,14 +400,26 @@ export async function refineCopyWithCritic(
   openaiClient: any
 ): Promise<{ refinedCopy: string; explanation: string; impact: string }> {
   
-  const criticPrompt = MULTI_AGENT_PROMPTS.critic
-    .replace('{copy}', copy)
-    .replace('{score}', score.overall.toString())
-    .replace('{improvements}', score.breakdown.improvements.join(', '));
+  // Import pro mode prompts
+  const { getMultiAgentPrompts } = await import('./ai-system-prompts');
+  const proModePrompts = getMultiAgentPrompts();
+  
+  const criticPrompt = `${proModePrompts.critic}
+
+---
+
+**COPY REFINEMENT REQUEST:**
+${MULTI_AGENT_PROMPTS.critic
+  .replace('{copy}', copy)
+  .replace('{score}', score.overall.toString())
+  .replace('{improvements}', score.breakdown.improvements.join(', '))}`;
 
   const criticResponse = await openaiClient.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: criticPrompt }],
+    messages: [
+      { role: "system", content: proModePrompts.critic },
+      { role: "user", content: criticPrompt }
+    ],
     response_format: { type: "json_object" },
     temperature: 0.4,
   });
