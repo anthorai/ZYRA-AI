@@ -25,7 +25,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Zap, TrendingUp, ShoppingCart, Eye, RotateCcw, Plus, Menu, User, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { Zap, TrendingUp, ShoppingCart, Eye, RotateCcw, Plus, Menu, User, LogOut, Settings as SettingsIcon, Sparkles } from "lucide-react";
 
 export default function Dashboard() {
   const { user, appUser } = useAuth();
@@ -169,6 +169,15 @@ export default function Dashboard() {
   };
 
   const quickActions = [
+    {
+      icon: <Sparkles className="w-5 h-5" />,
+      title: "Strategy AI",
+      description: "Deep insights & campaign strategies powered by GPT-4o",
+      action: () => setLocation("/strategy-insights"),
+      primary: true,
+      toolName: "strategy-ai",
+      premium: true,
+    },
     {
       icon: <Zap className="w-5 h-5" />,
       title: "AI Product Generator",

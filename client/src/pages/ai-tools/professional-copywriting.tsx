@@ -185,7 +185,6 @@ export default function ProfessionalCopywriting() {
                 <Trophy className="w-8 h-8 text-yellow-500" />
                 Professional Copywriting AI
               </h1>
-              <p className="text-gray-400 mt-1">Multi-agent pipeline · A/B variants · Quality scoring · Conversion optimization</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

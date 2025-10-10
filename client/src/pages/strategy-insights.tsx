@@ -11,6 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function StrategyInsights() {
   const { toast } = useToast();
@@ -71,22 +72,13 @@ export default function StrategyInsights() {
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/strategy-insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brandOverview,
-          analyticsData,
-          targetAudience,
-          goal,
-          includeCompetitorAnalysis,
-        }),
-        credentials: 'include',
+      const response = await apiRequest('POST', '/api/strategy-insights', {
+        brandOverview,
+        analyticsData,
+        targetAudience,
+        goal,
+        includeCompetitorAnalysis,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate strategy');
-      }
 
       const result = await response.json();
       setStrategyResult(result);
@@ -110,35 +102,36 @@ export default function StrategyInsights() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
-            <Sparkles className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Strategy AI</h1>
+              <p className="text-gray-400">
+                Deep insights, campaign strategies, and high-converting copy powered by GPT-4o
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-white">Strategy AI</h1>
-            <p className="text-slate-300">
-              Deep insights, campaign strategies, and high-converting copy powered by GPT-4o
-            </p>
+          
+          <div className="flex items-center space-x-2">
+            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+              <Zap className="w-3 h-3 mr-1" />
+              Premium AI Model
+            </Badge>
+            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+              Advanced Reasoning
+            </Badge>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-            <Zap className="w-3 h-3 mr-1" />
-            Premium AI Model
-          </Badge>
-          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-            Advanced Reasoning
-          </Badge>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Form */}
-        <Card className="gradient-card rounded-2xl border-slate-700/50">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Input Form */}
+          <Card className="bg-gray-800/50 border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Target className="w-5 h-5 text-primary" />
@@ -151,7 +144,7 @@ export default function StrategyInsights() {
           <CardContent className="space-y-4">
             {/* Brand Overview */}
             <div className="space-y-2">
-              <Label htmlFor="brandOverview" className="text-sm font-medium text-slate-200">
+              <Label htmlFor="brandOverview" className="text-sm font-medium">
                 Brand Overview *
               </Label>
               <Textarea
@@ -159,13 +152,13 @@ export default function StrategyInsights() {
                 placeholder="Describe your brand, products, unique value proposition..."
                 value={brandOverview}
                 onChange={(e) => setBrandOverview(e.target.value)}
-                className="min-h-[100px] bg-slate-800/50 border-slate-700 text-white"
+                className="min-h-[100px] bg-gray-900 border-gray-600 text-white"
               />
             </div>
 
             {/* Goal */}
             <div className="space-y-2">
-              <Label htmlFor="goal" className="text-sm font-medium text-slate-200">
+              <Label htmlFor="goal" className="text-sm font-medium">
                 Goal *
               </Label>
               <Input
@@ -173,14 +166,14 @@ export default function StrategyInsights() {
                 placeholder="Increase conversion rate by 25% in Q2"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-white"
+                className="bg-gray-900 border-gray-600 text-white"
               />
             </div>
 
             {/* Analytics Data */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="analyticsData" className="text-sm font-medium text-slate-200">
+                <Label htmlFor="analyticsData" className="text-sm font-medium">
                   Recent Performance Data
                 </Label>
                 <Button
@@ -199,13 +192,13 @@ export default function StrategyInsights() {
                 placeholder="Campaign metrics, revenue, conversion rates..."
                 value={analyticsData}
                 onChange={(e) => setAnalyticsData(e.target.value)}
-                className="min-h-[100px] bg-slate-800/50 border-slate-700 text-white"
+                className="min-h-[100px] bg-gray-900 border-gray-600 text-white"
               />
             </div>
 
             {/* Target Audience */}
             <div className="space-y-2">
-              <Label htmlFor="targetAudience" className="text-sm font-medium text-slate-200">
+              <Label htmlFor="targetAudience" className="text-sm font-medium">
                 Target Audience
               </Label>
               <Input
@@ -213,17 +206,17 @@ export default function StrategyInsights() {
                 placeholder="Millennials, tech enthusiasts, eco-conscious shoppers..."
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-white"
+                className="bg-gray-900 border-gray-600 text-white"
               />
             </div>
 
             {/* Competitor Analysis Toggle */}
-            <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg">
               <div className="space-y-0.5">
-                <Label className="text-sm font-medium text-slate-200">
+                <Label className="text-sm font-medium">
                   Include Competitive Analysis
                 </Label>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-gray-400">
                   Add differentiation strategies vs competitors
                 </p>
               </div>
@@ -255,7 +248,7 @@ export default function StrategyInsights() {
         </Card>
 
         {/* Strategy Output */}
-        <Card className="gradient-card rounded-2xl border-slate-700/50">
+        <Card className="bg-gray-800/50 border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Lightbulb className="w-5 h-5 text-primary" />
@@ -268,62 +261,62 @@ export default function StrategyInsights() {
           <CardContent>
             {!strategyResult ? (
               <div className="space-y-4 text-center py-12">
-                <div className="mx-auto w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-8 h-8 text-slate-600" />
+                <div className="mx-auto w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-8 h-8 text-gray-600" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-slate-300 font-medium">No Strategy Generated Yet</p>
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-gray-300 font-medium">No Strategy Generated Yet</p>
+                  <p className="text-gray-400 text-sm">
                     Fill in your business context and generate strategic insights
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 mt-6 max-w-sm mx-auto">
-                  <div className="p-3 bg-slate-800/30 rounded-lg">
+                  <div className="p-3 bg-gray-800/30 rounded-lg">
                     <Mail className="w-5 h-5 text-blue-400 mx-auto mb-1" />
-                    <p className="text-xs text-slate-400">Email Strategy</p>
+                    <p className="text-xs text-gray-400">Email Strategy</p>
                   </div>
-                  <div className="p-3 bg-slate-800/30 rounded-lg">
+                  <div className="p-3 bg-gray-800/30 rounded-lg">
                     <MessageSquare className="w-5 h-5 text-green-400 mx-auto mb-1" />
-                    <p className="text-xs text-slate-400">SMS Campaigns</p>
+                    <p className="text-xs text-gray-400">SMS Campaigns</p>
                   </div>
-                  <div className="p-3 bg-slate-800/30 rounded-lg">
+                  <div className="p-3 bg-gray-800/30 rounded-lg">
                     <Search className="w-5 h-5 text-purple-400 mx-auto mb-1" />
-                    <p className="text-xs text-slate-400">SEO Tactics</p>
+                    <p className="text-xs text-gray-400">SEO Tactics</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Strategy Metadata */}
-                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                       {strategyResult.model}
                     </Badge>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-gray-400">
                       {strategyResult.tokensUsed} tokens
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-gray-400">
                     {new Date(strategyResult.timestamp).toLocaleString()}
                   </span>
                 </div>
 
                 {/* Strategy Content */}
                 <div className="prose prose-invert prose-sm max-w-none">
-                  <div className="bg-slate-800/30 rounded-lg p-4 max-h-[600px] overflow-y-auto custom-scrollbar">
+                  <div className="bg-gray-900/50 rounded-lg p-4 max-h-[600px] overflow-y-auto custom-scrollbar">
                     <ReactMarkdown
                       components={{
                         h1: (props) => <h1 className="text-2xl font-bold text-white mb-4 mt-6 first:mt-0" {...props} />,
-                        h2: (props) => <h2 className="text-xl font-semibold text-slate-200 mb-3 mt-5" {...props} />,
-                        h3: (props) => <h3 className="text-lg font-medium text-slate-300 mb-2 mt-4" {...props} />,
-                        p: (props) => <p className="text-slate-300 mb-3 leading-relaxed" {...props} />,
-                        ul: (props) => <ul className="list-disc list-inside space-y-1 mb-3 text-slate-300" {...props} />,
-                        ol: (props) => <ol className="list-decimal list-inside space-y-1 mb-3 text-slate-300" {...props} />,
+                        h2: (props) => <h2 className="text-xl font-semibold text-gray-200 mb-3 mt-5" {...props} />,
+                        h3: (props) => <h3 className="text-lg font-medium text-gray-300 mb-2 mt-4" {...props} />,
+                        p: (props) => <p className="text-gray-300 mb-3 leading-relaxed" {...props} />,
+                        ul: (props) => <ul className="list-disc list-inside space-y-1 mb-3 text-gray-300" {...props} />,
+                        ol: (props) => <ol className="list-decimal list-inside space-y-1 mb-3 text-gray-300" {...props} />,
                         li: (props) => <li className="ml-2" {...props} />,
                         strong: (props) => <strong className="text-white font-semibold" {...props} />,
                         em: (props) => <em className="text-primary" {...props} />,
-                        code: (props) => <code className="bg-slate-700 px-1.5 py-0.5 rounded text-sm text-primary" {...props} />,
+                        code: (props) => <code className="bg-gray-700 px-1.5 py-0.5 rounded text-sm text-primary" {...props} />,
                       }}
                     >
                       {strategyResult.strategy}
@@ -361,20 +354,21 @@ export default function StrategyInsights() {
         </Card>
       </div>
 
-      {/* Info Card */}
-      <Card className="gradient-card rounded-2xl border-slate-700/50 border-l-4 border-l-purple-500">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-purple-400 mt-0.5" />
-            <div className="space-y-1">
-              <h4 className="text-sm font-semibold text-white">Premium AI Model</h4>
-              <p className="text-sm text-slate-300">
-                Strategy AI uses GPT-4o for advanced reasoning and deep analysis. This provides superior insights compared to basic AI tools, with strategic recommendations tailored to your specific business context.
-              </p>
+        {/* Info Card */}
+        <Card className="bg-gray-800/50 border-gray-700 border-l-4 border-l-purple-500">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold text-white">Premium AI Model</h4>
+                <p className="text-sm text-gray-300">
+                  Strategy AI uses GPT-4o for advanced reasoning and deep analysis. This provides superior insights compared to basic AI tools, with strategic recommendations tailored to your specific business context.
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

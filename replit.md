@@ -37,7 +37,7 @@ PostgreSQL with Drizzle ORM is used for type-safe operations. The schema include
 - Banned phrases filtering (corporate jargon, clichés)
 - Power words library for high-impact copy
 
-**Tool-Specific Prompts (11 variations):**
+**Tool-Specific Prompts (12 variations):**
 1. **Professional Copywriting** - Multi-agent pipeline with frameworks
 2. **Product Descriptions** - Persuasive, benefit-driven, conversion-optimized
 3. **SEO Titles & Meta** - Search-optimized, click-worthy, keyword-rich
@@ -49,9 +49,20 @@ PostgreSQL with Drizzle ORM is used for type-safe operations. The schema include
 9. **Video Scripts** - Cinematic, engaging, emotional storytelling
 10. **Analyzer Agent** - Market & audience analysis for multi-agent pipeline
 11. **Copywriter/Critic Agents** - Content generation and quality refinement
+12. **Strategy AI** - Deep insights, campaign strategies (GPT-4o premium)
+
+### Dual-Model AI System
+**Architecture:** Intelligent model selection system routes tasks to appropriate OpenAI models based on complexity:
+- **GPT-4o mini**: Fast, cost-effective for basic tasks (SEO, products, email, social, ads)
+- **GPT-4o**: Advanced reasoning for strategic tasks (strategy insights, campaign planning, deep analytics)
+
+**Model Selector (`server/lib/ai-model-selector.ts`):**
+- 13 task types with optimized temperature and max_tokens per task
+- Automatic cost estimation and token tracking
+- Task complexity determines model selection
 
 ### Core AI Features
-OpenAI GPT-4o mini powers all content generation with Zyra Pro Mode:
+OpenAI powers all content generation:
 
 - **Professional Copywriting System**: Multi-agent pipeline (Analyzer → Copywriter → Critic) with 5 industry frameworks (AIDA, PAS, BAB, 4Ps, FAB), 6 psychological triggers (scarcity, social proof, authority, urgency, reciprocity, loss aversion), and 6 industry-specific templates (Fashion, Tech, Health, Home, Luxury, Beauty). Generates 3 A/B variants (emotional, logical, hybrid) with comprehensive quality scoring across conversion potential, SEO, readability, emotional impact, and clarity. **Uses Pro Mode multi-agent prompts.**
 
@@ -64,6 +75,8 @@ OpenAI GPT-4o mini powers all content generation with Zyra Pro Mode:
 - **Bulk Product Optimization**: Process 20-100+ products efficiently with Pro Mode quality
 
 - **Brand Voice Memory**: Maintains consistent tone across all content, enhanced by Pro Mode standards
+
+- **Strategy AI (GPT-4o)**: Premium strategic analysis using GPT-4o full model for deep insights, campaign strategies, and high-converting long-form copy. Four-part analysis framework: Performance Deep Dive, Strategic Recommendations (email/SMS/ads/SEO), Campaign Execution (3 copy variants A/B/C ready), and Action Plan (0-7 days, 1-3 months, 3-6 months). Auto-fills with real analytics data and provides data-driven, actionable insights in professional markdown format. **Uses premium GPT-4o with Strategy AI prompt.**
 
 - **Token Accounting & Rate Limiting**: Cost control and usage tracking
 
