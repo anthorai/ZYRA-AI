@@ -18,7 +18,14 @@ The server uses Express.js with TypeScript, providing RESTful API endpoints. Aut
 PostgreSQL with Drizzle ORM is used for type-safe operations. The schema includes tables for users, products, SEO metadata, marketing campaigns, and analytics. Drizzle Kit manages migrations.
 
 ## AI Integration
-OpenAI GPT-4o mini powers core AI functionalities, including product description generation, automated SEO optimization, image alt-text generation (Vision API), bulk product optimization, and a brand voice memory system. It includes token accounting and rate limiting.
+OpenAI GPT-4o mini powers core AI functionalities, including:
+- **Professional Copywriting System**: Multi-agent pipeline (Analyzer → Copywriter → Critic) with 5 industry frameworks (AIDA, PAS, BAB, 4Ps, FAB), 6 psychological triggers (scarcity, social proof, authority, urgency, reciprocity, loss aversion), and 6 industry-specific templates (Fashion, Tech, Health, Home, Luxury, Beauty). Generates 3 A/B variants (emotional, logical, hybrid) with comprehensive quality scoring across conversion potential, SEO, readability, emotional impact, and clarity.
+- **Product Description Generation**: AI-powered descriptions with brand voice consistency
+- **Automated SEO Optimization**: Keyword-rich titles and meta descriptions
+- **Image Alt-Text Generation**: Vision API for accessibility and SEO
+- **Bulk Product Optimization**: Process 20-100+ products efficiently
+- **Brand Voice Memory**: Maintains consistent tone across all content
+- Token accounting and rate limiting for cost control
 
 ## Authentication & Authorization
 Supabase Auth provides email/password login, password reset, and JWT-based session management. It includes frontend route protection and backend middleware for API endpoint security.
