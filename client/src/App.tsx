@@ -43,6 +43,7 @@ const SupportPage = lazy(() => import("@/pages/settings/support"));
 const OptimizedProducts = lazy(() => import("@/pages/optimized-products"));
 const EmailPerformance = lazy(() => import("@/pages/email-performance"));
 const SmsConversion = lazy(() => import("@/pages/sms-conversion"));
+const CartRecovery = lazy(() => import("@/pages/cart-recovery"));
 const SeoKeywordDensity = lazy(() => import("@/pages/seo-keyword-density"));
 const ContentROI = lazy(() => import("@/pages/content-roi"));
 const RevenueImpact = lazy(() => import("@/pages/revenue-impact"));
@@ -256,6 +257,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <SmsConversion />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/analytics/cart-recovery" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <CartRecovery />
           </Suspense>
         </ProtectedRoute>
       )} />
