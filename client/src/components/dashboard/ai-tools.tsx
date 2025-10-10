@@ -110,7 +110,7 @@ export default function AITools() {
   const aiTools = [
     {
       id: 'professional-copywriting',
-      title: '🏆 Professional Copywriting AI',
+      title: 'Copywriting AI',
       description: 'Multi-agent pipeline · AIDA/PAS/BAB frameworks · A/B variants · Quality scoring · Beat competitors',
       icon: <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
       category: 'new',
