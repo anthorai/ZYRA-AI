@@ -3930,6 +3930,307 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Publish AI content to Shopify (single product)
+  app.post('/api/shopify/publish/:productId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      const { content } = req.body;
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Get product from database
+      const product = await db.query.products.findFirst({
+        where: and(
+          eq(products.id, productId),
+          eq(products.userId, userId)
+        )
+      });
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      if (!product.shopifyId) {
+        return res.status(400).json({ error: 'Product is not linked to Shopify. Please sync products first.' });
+      }
+
+      // Initialize Shopify client
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      const shopifyClient = await getShopifyClient(
+        shopifyConnection.storeName,
+        shopifyConnection.accessToken
+      );
+
+      // Fetch current Shopify product data for backup (before overwriting) - only if not already backed up
+      if (!product.originalCopy) {
+        const currentShopifyProduct = await shopifyClient.getProduct(product.shopifyId);
+        const metafields = await shopifyClient.getProductMetafields(product.shopifyId);
+        
+        // Extract SEO metafields from Shopify
+        const seoTitleMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'title_tag');
+        const metaDescMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'description_tag');
+        
+        // Save complete original content from Shopify (not local DB) for rollback
+        const originalContent = {
+          description: currentShopifyProduct.body_html,
+          seoTitle: seoTitleMetafield?.value || currentShopifyProduct.title, // Real Shopify SEO title or product title
+          metaDescription: metaDescMetafield?.value || '', // Real Shopify meta description
+          images: currentShopifyProduct.images?.map(img => ({
+            id: img.id.toString(),
+            alt: img.alt || ''
+          }))
+        };
+
+        await db.update(products)
+          .set({
+            originalCopy: originalContent,
+            originalDescription: currentShopifyProduct.body_html
+          })
+          .where(eq(products.id, productId));
+      }
+
+      // Publish content to Shopify
+      const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
+
+      // Update product in Zyra database
+      await db.update(products)
+        .set({
+          isOptimized: true,
+          optimizedCopy: content,
+          description: content.description || product.description,
+          updatedAt: sql`NOW()`
+        })
+        .where(eq(products.id, productId));
+
+      res.json({
+        success: true,
+        message: 'Content published to Shopify successfully',
+        shopifyProduct: updatedProduct
+      });
+
+    } catch (error: any) {
+      console.error('Shopify publish error:', error);
+      res.status(500).json({ 
+        error: 'Failed to publish to Shopify',
+        details: error.message 
+      });
+    }
+  });
+
+  // Bulk publish AI content to Shopify
+  app.post('/api/shopify/publish/bulk', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { products: productUpdates } = req.body;
+
+      if (!Array.isArray(productUpdates) || productUpdates.length === 0) {
+        return res.status(400).json({ error: 'Invalid products array' });
+      }
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Initialize Shopify client
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      const shopifyClient = await getShopifyClient(
+        shopifyConnection.storeName,
+        shopifyConnection.accessToken
+      );
+
+      const results = [];
+      const errors = [];
+
+      for (const update of productUpdates) {
+        try {
+          const product = await db.query.products.findFirst({
+            where: and(
+              eq(products.id, update.productId),
+              eq(products.userId, userId)
+            )
+          });
+
+          if (!product) {
+            errors.push({ productId: update.productId, error: 'Product not found' });
+            continue;
+          }
+
+          if (!product.shopifyId) {
+            errors.push({ productId: update.productId, error: 'Not linked to Shopify' });
+            continue;
+          }
+
+          // Fetch current Shopify product data for backup (before overwriting) - only if not already backed up
+          if (!product.originalCopy) {
+            const currentShopifyProduct = await shopifyClient.getProduct(product.shopifyId);
+            const metafields = await shopifyClient.getProductMetafields(product.shopifyId);
+            
+            // Extract SEO metafields from Shopify
+            const seoTitleMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'title_tag');
+            const metaDescMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'description_tag');
+            
+            // Save complete original content from Shopify (not local DB) for rollback
+            const originalContent = {
+              description: currentShopifyProduct.body_html,
+              seoTitle: seoTitleMetafield?.value || currentShopifyProduct.title,
+              metaDescription: metaDescMetafield?.value || '',
+              images: currentShopifyProduct.images?.map(img => ({
+                id: img.id.toString(),
+                alt: img.alt || ''
+              }))
+            };
+
+            await db.update(products)
+              .set({
+                originalCopy: originalContent,
+                originalDescription: currentShopifyProduct.body_html
+              })
+              .where(eq(products.id, update.productId));
+          }
+
+          // Publish to Shopify
+          const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, update.content);
+
+          // Update in database
+          await db.update(products)
+            .set({
+              isOptimized: true,
+              optimizedCopy: update.content,
+              description: update.content.description || product.description,
+              updatedAt: sql`NOW()`
+            })
+            .where(eq(products.id, update.productId));
+
+          results.push({
+            productId: update.productId,
+            productName: product.name,
+            success: true
+          });
+
+        } catch (error: any) {
+          errors.push({
+            productId: update.productId,
+            error: error.message
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        published: results.length,
+        failed: errors.length,
+        results,
+        errors
+      });
+
+    } catch (error: any) {
+      console.error('Bulk publish error:', error);
+      res.status(500).json({ 
+        error: 'Failed to bulk publish to Shopify',
+        details: error.message 
+      });
+    }
+  });
+
+  // Rollback Shopify product to original content
+  app.post('/api/shopify/rollback/:productId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Get product from database
+      const product = await db.query.products.findFirst({
+        where: and(
+          eq(products.id, productId),
+          eq(products.userId, userId)
+        )
+      });
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      if (!product.shopifyId || !product.originalCopy) {
+        return res.status(400).json({ error: 'Cannot rollback: missing original content' });
+      }
+
+      // Initialize Shopify client
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      const shopifyClient = await getShopifyClient(
+        shopifyConnection.storeName,
+        shopifyConnection.accessToken
+      );
+
+      // Extract original content
+      const originalContent: any = product.originalCopy;
+
+      // Restore original description to Shopify
+      const updatedProduct = await shopifyClient.updateProduct(product.shopifyId, {
+        body_html: originalContent.description
+      });
+
+      // Restore SEO metadata if available
+      if (originalContent.seoTitle && originalContent.metaDescription) {
+        await shopifyClient.updateProductSEO(
+          product.shopifyId,
+          originalContent.seoTitle,
+          originalContent.metaDescription
+        );
+      }
+
+      // Restore image alt texts if available
+      if (originalContent.images && originalContent.images.length > 0) {
+        for (const img of originalContent.images) {
+          if (img.id && img.alt) {
+            await shopifyClient.updateProductImage(product.shopifyId, img.id, img.alt);
+          }
+        }
+      }
+
+      // Update product in Zyra database - clear optimizations
+      await db.update(products)
+        .set({
+          description: originalContent.description,
+          isOptimized: false,
+          optimizedCopy: null,
+          updatedAt: sql`NOW()`
+        })
+        .where(eq(products.id, productId));
+
+      res.json({
+        success: true,
+        message: 'Product rolled back to original content successfully (description, SEO, and images restored)',
+        shopifyProduct: updatedProduct
+      });
+
+    } catch (error: any) {
+      console.error('Shopify rollback error:', error);
+      res.status(500).json({ 
+        error: 'Failed to rollback product',
+        details: error.message 
+      });
+    }
+  });
+
   // ===== CAMPAIGN ROUTES =====
   
   // Get all campaigns

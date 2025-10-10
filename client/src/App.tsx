@@ -24,7 +24,7 @@ const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
-const Products = lazy(() => import("@/pages/products"));
+const ManageProducts = lazy(() => import("@/pages/products/manage"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Billing = lazy(() => import("@/pages/billing"));
 const Settings = lazy(() => import("@/pages/settings"));
@@ -139,7 +139,7 @@ function Router() {
       <Route path="/products" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
-            <Products />
+            <ManageProducts />
           </Suspense>
         </ProtectedRoute>
       )} />

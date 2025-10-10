@@ -32,6 +32,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   originalDescription: text("original_description"),
+  originalCopy: jsonb("original_copy"),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   category: text("category").notNull(),
   stock: integer("stock").notNull().default(0),
