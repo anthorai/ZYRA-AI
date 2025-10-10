@@ -16,15 +16,19 @@ export async function apiRequest(
   // Get the current session token from Supabase
   const { data: { session } } = await supabase.auth.getSession();
   
+  // Check if data is FormData (for file uploads)
+  const isFormData = data instanceof FormData;
+  
   const headers: Record<string, string> = {
-    ...(data ? { "Content-Type": "application/json" } : {}),
+    // Don't set Content-Type for FormData - browser will set it with boundary
+    ...(data && !isFormData ? { "Content-Type": "application/json" } : {}),
     ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {})
   };
 
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: data ? (isFormData ? data as FormData : JSON.stringify(data)) : undefined,
   });
 
   await throwIfResNotOk(res);
