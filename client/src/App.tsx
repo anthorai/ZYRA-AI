@@ -75,6 +75,7 @@ const BrandVoiceMemory = lazy(() => import("@/pages/ai-tools/brand-voice-memory"
 const MultimodalAI = lazy(() => import("@/pages/ai-tools/multimodal-ai"));
 const ABTestingCopy = lazy(() => import("@/pages/ai-tools/ab-testing-copy"));
 const ScheduledRefresh = lazy(() => import("@/pages/ai-tools/scheduled-refresh"));
+const StrategyInsights = lazy(() => import("@/pages/strategy-insights"));
 
 // Automation pages
 const CSVImportExport = lazy(() => import("@/pages/automation/csv-import-export"));
@@ -445,6 +446,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <ScheduledRefresh />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/strategy-insights" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <StrategyInsights />
           </Suspense>
         </ProtectedRoute>
       )} />
