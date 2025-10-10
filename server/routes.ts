@@ -1080,6 +1080,89 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Strategy AI - Deep Insights & Campaign Strategy (GPT-4o)
+  app.post("/api/strategy-insights", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { 
+        brandOverview, 
+        analyticsData, 
+        targetAudience, 
+        goal,
+        includeCompetitorAnalysis = false 
+      } = req.body;
+
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!brandOverview?.trim() || !goal?.trim()) {
+        return res.status(400).json({ message: "Brand overview and goal are required" });
+      }
+
+      // Import AI model selector and strategy prompt
+      const { getModelForTask } = await import('./lib/ai-model-selector');
+      const { AI_TOOL_PROMPTS } = await import('../shared/ai-system-prompts');
+      
+      const modelConfig = getModelForTask('strategy_insights');
+      const strategyPrompt = AI_TOOL_PROMPTS.strategyAI;
+
+      // Build user prompt with all context
+      const userPrompt = `Generate deep insights and strategies for this Shopify store.
+
+Brand Overview: ${brandOverview}
+
+Recent Performance Data: ${analyticsData || 'No specific analytics provided - use general best practices'}
+
+Target Audience: ${targetAudience || 'General e-commerce customers'}
+
+Goal: ${goal}
+
+${includeCompetitorAnalysis ? '\nInclude competitive analysis and differentiation strategies.' : ''}
+
+Deliver:
+1. Detailed performance insights and missed opportunities.
+2. Advanced campaign strategy (email, SMS, ads, SEO).
+3. 3 high-converting long-form brand copies for the next campaign (emotional, logical, hybrid variants).
+4. Clear next steps to execute (0-7 days, 1-3 months, 3-6 months).
+
+Output format: Markdown with clear section headings.`;
+
+      // Using GPT-4o with Strategy AI prompt
+      const response = await openai.chat.completions.create({
+        model: modelConfig.model,
+        messages: [
+          { role: "system", content: strategyPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: modelConfig.temperature,
+        max_tokens: modelConfig.maxTokens,
+      });
+
+      const strategyContent = response.choices[0].message.content || "";
+      
+      // Track token usage (GPT-4o is more expensive)
+      const tokensUsed = response.usage?.total_tokens || 0;
+      await trackAIUsage(userId, tokensUsed);
+      
+      // Store strategy generation in history
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'strategy_insights_gpt4o',
+        inputData: { brandOverview, analyticsData, targetAudience, goal },
+        outputData: { strategyContent, model: modelConfig.model, tokensUsed },
+        tokensUsed
+      });
+      
+      res.json({
+        strategy: strategyContent,
+        model: modelConfig.model,
+        tokensUsed,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error("Strategy AI error:", error);
+      res.status(500).json({ message: "Failed to generate strategy insights" });
+    }
+  });
+
   // Brand Voice Preferences
   app.get("/api/brand-voice/preferences", requireAuth, async (req, res) => {
     try {
