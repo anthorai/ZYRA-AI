@@ -183,7 +183,7 @@ export default function ProfessionalCopywriting() {
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <Trophy className="w-8 h-8 text-yellow-500" />
-                Professional Copywriting AI
+                Copywriting AI
               </h1>
             </div>
           </div>
