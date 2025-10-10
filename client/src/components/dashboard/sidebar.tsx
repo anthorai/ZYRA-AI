@@ -113,10 +113,10 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
 
   return (
     <>
-      {/* Overlay for mobile */}
+      {/* Overlay - closes sidebar when clicking outside */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:bg-transparent lg:backdrop-blur-none"
           onClick={onClose}
           aria-hidden="true"
         />
