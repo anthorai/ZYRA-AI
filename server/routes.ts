@@ -883,7 +883,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use provided brand voice, or fall back to saved preference, or default to 'sales'
       const selectedBrandVoice = brandVoice || savedBrandVoice || "sales";
 
-      // Generate the dynamic prompt using the template system
+      // Import Zyra Pro Mode prompts
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      
+      // Generate the dynamic prompt using pro mode + template system
       let selectedPrompt = processPromptTemplate("Product Description", selectedBrandVoice, templateVariables);
       
       // Enhance prompt with custom instructions if available
@@ -896,10 +899,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         selectedPrompt += `\n\nTone preferences: ${JSON.stringify(tonePreferences)}`;
       }
 
-      // Using GPT-4o mini model as requested by the user
+      // Get Zyra Pro Mode system prompt for product descriptions
+      const proModePrompt = getSystemPromptForTool('productDescriptions');
+
+      // Using GPT-4o mini model with Zyra Pro Mode
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: selectedPrompt }],
+        messages: [
+          { role: "system", content: proModePrompt },
+          { role: "user", content: selectedPrompt }
+        ],
         response_format: { type: "json_object" },
       });
 
