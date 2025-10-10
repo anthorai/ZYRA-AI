@@ -4832,6 +4832,69 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Get growth summary metrics
+  app.get('/api/analytics/growth-summary', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Fetch usage stats and campaigns
+      const [stats, campaigns, products] = await Promise.all([
+        supabaseStorage.getUserUsageStats(userId),
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getProducts(userId)
+      ]);
+
+      // Calculate date ranges
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+      // Current period (last 30 days)
+      const currentPeriodCampaigns = campaigns.filter(c => {
+        const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+        return sentDate && sentDate >= thirtyDaysAgo;
+      });
+
+      // Previous period (30-60 days ago)
+      const previousPeriodCampaigns = campaigns.filter(c => {
+        const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+        return sentDate && sentDate >= sixtyDaysAgo && sentDate < thirtyDaysAgo;
+      });
+
+      // Calculate growth percentage based on campaign activity
+      const currentCount = currentPeriodCampaigns.length;
+      const previousCount = previousPeriodCampaigns.length;
+      
+      let growthPercentage = 0;
+      if (previousCount > 0) {
+        growthPercentage = Math.round(((currentCount - previousCount) / previousCount) * 100);
+      } else if (currentCount > 0) {
+        growthPercentage = 100; // 100% growth if starting from zero
+      }
+
+      // Get total AI impact from usage stats (revenue)
+      const totalAIImpact = stats?.totalRevenue || 0;
+
+      // Get products optimized count
+      const productsOptimized = stats?.productsOptimized || 0;
+
+      const summary = {
+        overallGrowth: growthPercentage,
+        totalAIImpact,
+        productsOptimized,
+        currentPeriodCampaigns: currentCount,
+        previousPeriodCampaigns: previousCount,
+        totalProducts: products.length,
+        totalOrders: stats?.totalOrders || 0
+      };
+
+      res.json(summary);
+    } catch (error) {
+      console.error('Get growth summary error:', error);
+      res.status(500).json({ error: 'Failed to get growth summary' });
+    }
+  });
+
   // Track conversion (when a campaign leads to a sale)
   app.post('/api/analytics/track-conversion', requireAuth, async (req, res) => {
     try {

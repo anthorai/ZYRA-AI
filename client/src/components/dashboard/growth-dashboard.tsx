@@ -50,6 +50,20 @@ export default function GrowthDashboard() {
     enabled: !!dashboardData?.user,
   });
 
+  // Fetch real growth summary stats
+  const { data: growthSummary, isLoading: growthSummaryLoading } = useQuery<{
+    overallGrowth: number;
+    totalAIImpact: number;
+    productsOptimized: number;
+    currentPeriodCampaigns: number;
+    previousPeriodCampaigns: number;
+    totalProducts: number;
+    totalOrders: number;
+  }>({
+    queryKey: ['/api/analytics/growth-summary'],
+    enabled: !!dashboardData?.user,
+  });
+
   // Log campaign stats errors
   if (campaignStatsError) {
     console.error('Failed to fetch campaign stats:', campaignStatsError);
@@ -259,7 +273,15 @@ export default function GrowthDashboard() {
               <TrendingUp className="w-6 h-6 stroke-2 text-primary" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-xl">+89%</h3>
+              {growthSummaryLoading ? (
+                <Skeleton className="h-7 w-20 bg-slate-700" />
+              ) : (
+                <h3 className="text-white font-bold text-xl">
+                  {growthSummary?.overallGrowth !== undefined && growthSummary.overallGrowth !== 0 
+                    ? `${growthSummary.overallGrowth > 0 ? '+' : ''}${growthSummary.overallGrowth}%`
+                    : '0%'}
+                </h3>
+              )}
               <p className="text-slate-300 text-sm">Overall Growth</p>
             </div>
           </div>
@@ -271,7 +293,13 @@ export default function GrowthDashboard() {
               <DollarSign className="w-6 h-6 stroke-2 text-primary" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-xl">$45,623</h3>
+              {growthSummaryLoading ? (
+                <Skeleton className="h-7 w-28 bg-slate-700" />
+              ) : (
+                <h3 className="text-white font-bold text-xl">
+                  ${(growthSummary?.totalAIImpact || 0).toLocaleString()}
+                </h3>
+              )}
               <p className="text-slate-300 text-sm">Total AI Impact</p>
             </div>
           </div>
@@ -283,7 +311,13 @@ export default function GrowthDashboard() {
               <Zap className="w-6 h-6 stroke-2 text-primary" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-xl">247</h3>
+              {growthSummaryLoading ? (
+                <Skeleton className="h-7 w-16 bg-slate-700" />
+              ) : (
+                <h3 className="text-white font-bold text-xl">
+                  {growthSummary?.productsOptimized || 0}
+                </h3>
+              )}
               <p className="text-slate-300 text-sm">Products Optimized</p>
             </div>
           </div>
