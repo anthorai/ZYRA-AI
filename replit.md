@@ -18,7 +18,7 @@ The server uses Express.js with TypeScript, providing RESTful API endpoints. Aut
 PostgreSQL with Drizzle ORM is used for type-safe operations. The schema includes tables for users, products, SEO metadata, marketing campaigns, and analytics. Drizzle Kit manages migrations.
 
 ## AI Integration
-OpenAI GPT-5 powers core AI functionalities, including product description generation, automated SEO optimization, image alt-text generation (Vision API), bulk product optimization, and a brand voice memory system. It includes token accounting and rate limiting.
+OpenAI GPT-4o mini powers core AI functionalities, including product description generation, automated SEO optimization, image alt-text generation (Vision API), bulk product optimization, and a brand voice memory system. It includes token accounting and rate limiting.
 
 ## Authentication & Authorization
 Supabase Auth provides email/password login, password reset, and JWT-based session management. It includes frontend route protection and backend middleware for API endpoint security.
@@ -76,7 +76,7 @@ A fully functional OAuth 2.0 integration system connects Zyra with Shopify store
 - **Replit Deployment**: Full-stack hosting.
 
 ## AI & Machine Learning
-- **OpenAI API**: GPT-5 for text generation and Vision API for image analysis.
+- **OpenAI API**: GPT-4o mini for text generation and Vision API for image analysis.
 
 ## Payment Processing
 - **Razorpay**: Indian payment gateway.
