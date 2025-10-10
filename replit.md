@@ -51,15 +51,26 @@ PostgreSQL with Drizzle ORM is used for type-safe operations. The schema include
 11. **Copywriter/Critic Agents** - Content generation and quality refinement
 12. **Strategy AI** - Deep insights, campaign strategies (GPT-4o premium)
 
-### Dual-Model AI System
-**Architecture:** Intelligent model selection system routes tasks to appropriate OpenAI models based on complexity:
-- **GPT-4o mini**: Fast, cost-effective for basic tasks (SEO, products, email, social, ads)
-- **GPT-4o**: Advanced reasoning for strategic tasks (strategy insights, campaign planning, deep analytics)
+### Zyra Engine - Plan-Based AI Routing
+**Architecture:** Advanced multi-model AI system with plan-based intelligent routing and dynamic prompt generation:
+
+**Plan-Based Model Selection:**
+- **PRO Plan** → GPT-4o for deep reasoning, tone optimization, A/B testing, strategic analysis
+- **Growth Plan** → GPT-4o for advanced features with some limitations
+- **Starter/Free Plans** → GPT-4o-mini for lightweight tasks (titles, alt text, bulk updates)
+
+**Zyra Engine Master Prompt (`shared/ai-system-prompts.ts`):**
+- Dynamic variable replacement system for context-aware generation
+- Multi-category output support (Product SEO, Conversion, Branding, Performance, Workflow)
+- Structured JSON output for seamless integration
+- Quality validation: keyword density, brand uniqueness, performance focus
+- Goal: Increase CTR, SEO ranking, and conversions
 
 **Model Selector (`server/lib/ai-model-selector.ts`):**
 - 13 task types with optimized temperature and max_tokens per task
 - Automatic cost estimation and token tracking
-- Task complexity determines model selection
+- Plan-aware routing: `getModelForPlan(taskType, userPlan)`
+- Premium access validation for GPT-4o features
 
 ### Core AI Features
 OpenAI powers all content generation:

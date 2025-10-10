@@ -164,3 +164,78 @@ export function estimateTaskCost(
   
   return inputCost + outputCost;
 }
+
+/**
+ * User subscription plan types for Zyra Engine
+ */
+export type SubscriptionPlan = 'free' | 'starter' | 'growth' | 'pro' | 'trial';
+
+/**
+ * Determine model based on user's subscription plan and task complexity
+ * 
+ * PRO Plan Rules (Zyra Engine Guidelines):
+ * - Use GPT-4o for deep reasoning, tone optimization, A/B testing
+ * - Use GPT-4o for strategy insights, campaign strategy, professional copywriting
+ * 
+ * Standard/Free Plan Rules:
+ * - Use GPT-4o-mini for all lightweight tasks (titles, alt text, bulk updates)
+ * - Restricted from advanced strategic features
+ */
+export function getModelForPlan(
+  taskType: AITaskType, 
+  userPlan: SubscriptionPlan = 'free'
+): {
+  model: AIModel;
+  temperature: number;
+  maxTokens: number;
+  description: string;
+} {
+  const baseConfig = MODEL_CONFIG[taskType];
+  
+  // PRO plan gets access to GPT-4o for advanced tasks
+  if (userPlan === 'pro' || userPlan === 'growth') {
+    // Upgrade specific tasks to GPT-4o for PRO users
+    if (taskType === 'professional_copywriting') {
+      return {
+        model: 'gpt-4o',
+        temperature: 0.7,
+        maxTokens: 1500,
+        description: 'Premium multi-agent copywriting with GPT-4o'
+      };
+    }
+    
+    // Strategy tasks always use GPT-4o
+    if (['strategy_insights', 'campaign_strategy', 'deep_analytics'].includes(taskType)) {
+      return baseConfig;
+    }
+  }
+  
+  // Free/Starter plans use GPT-4o-mini for all tasks
+  if ((userPlan === 'free' || userPlan === 'starter' || userPlan === 'trial') && 
+      baseConfig.model === 'gpt-4o') {
+    // Downgrade to mini for non-PRO users
+    return {
+      model: 'gpt-4o-mini',
+      temperature: baseConfig.temperature,
+      maxTokens: Math.min(baseConfig.maxTokens, 1000),
+      description: `${baseConfig.description} (Limited - Upgrade to PRO for GPT-4o)`
+    };
+  }
+  
+  return baseConfig;
+}
+
+/**
+ * Check if user has access to premium GPT-4o features
+ */
+export function hasPremiumAccess(userPlan: SubscriptionPlan): boolean {
+  return userPlan === 'pro' || userPlan === 'growth';
+}
+
+/**
+ * Get model type name for display (Zyra Engine context)
+ */
+export function getModelDisplayName(taskType: AITaskType, userPlan: SubscriptionPlan = 'free'): string {
+  const config = getModelForPlan(taskType, userPlan);
+  return config.model === 'gpt-4o' ? 'GPT-4o (PRO)' : 'GPT-4o-mini (FAST MODE)';
+}
