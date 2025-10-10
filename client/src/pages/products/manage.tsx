@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { ShopifyPublishDialog } from '@/components/shopify/publish-dialog';
 import { PublishContent, useShopifyBulkPublish } from '@/hooks/use-shopify-publish';
+import { ProductSyncStatus } from '@/components/products/product-sync-status';
+import { useProductRealtime } from '@/hooks/use-product-realtime';
 import {
   Package,
   Search,
@@ -42,6 +44,9 @@ export default function ManageProducts() {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const bulkPublishMutation = useShopifyBulkPublish();
 
+  // Enable real-time product updates
+  useProductRealtime();
+
   const { data: products, isLoading } = useQuery({
     queryKey: ['/api/products'],
     queryFn: async () => {
@@ -53,16 +58,22 @@ export default function ManageProducts() {
 
   const syncProductsMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/shopify/sync');
+      const response = await apiRequest('POST', '/api/shopify/sync', { syncType: 'manual' });
       const data = await response.json();
       return data;
     },
     onSuccess: (data) => {
+      const totalSynced = (data.added || 0) + (data.updated || 0);
+      const details = [];
+      if (data.added > 0) details.push(`${data.added} added`);
+      if (data.updated > 0) details.push(`${data.updated} updated`);
+      
       toast({
         title: '✅ Products Synced!',
-        description: `Successfully imported ${data.imported} products from Shopify.`,
+        description: `Successfully synced ${totalSynced} products from Shopify${details.length > 0 ? ` (${details.join(', ')})` : ''}.`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shopify/sync-status'] });
     },
     onError: (error: any) => {
       toast({
@@ -204,6 +215,13 @@ export default function ManageProducts() {
           </Button>
         </div>
       </div>
+
+      {/* Sync Status Widget */}
+      <ProductSyncStatus 
+        variant="full" 
+        onSyncClick={() => syncProductsMutation.mutate()} 
+        isSyncing={syncProductsMutation.isPending}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -46,7 +46,9 @@ import {
   type ToolsAccess,
   type InsertToolsAccess,
   type RealtimeMetrics,
-  type InsertRealtimeMetrics
+  type InsertRealtimeMetrics,
+  type SyncHistory,
+  type InsertSyncHistory
 } from "@shared/schema";
 
 export interface ISupabaseStorage {
@@ -65,6 +67,12 @@ export interface ISupabaseStorage {
   createStoreConnection(storeConnection: InsertStoreConnection): Promise<StoreConnection>;
   updateStoreConnection(id: string, updates: Partial<StoreConnection>): Promise<StoreConnection>;
   deleteStoreConnection(id: string): Promise<void>;
+
+  // Sync history methods
+  getSyncHistory(userId: string, limit?: number): Promise<SyncHistory[]>;
+  getLatestSync(userId: string): Promise<SyncHistory | undefined>;
+  createSyncHistory(sync: InsertSyncHistory): Promise<SyncHistory>;
+  updateSyncHistory(id: string, updates: Partial<SyncHistory>): Promise<SyncHistory>;
 
   // Product methods
   getProducts(userId: string): Promise<Product[]>;
@@ -361,6 +369,83 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('id', id);
     
     if (error) throw new Error(`Failed to delete store connection: ${error.message}`);
+  }
+
+  // Sync history methods
+  async getSyncHistory(userId: string, limit: number = 10): Promise<SyncHistory[]> {
+    const { data, error } = await supabase
+      .from('sync_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) throw new Error(`Failed to get sync history: ${error.message}`);
+    return data || [];
+  }
+
+  async getLatestSync(userId: string): Promise<SyncHistory | undefined> {
+    const { data, error } = await supabase
+      .from('sync_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return undefined;
+      throw new Error(`Failed to get latest sync: ${error.message}`);
+    }
+    return data;
+  }
+
+  async createSyncHistory(sync: InsertSyncHistory): Promise<SyncHistory> {
+    const syncData = {
+      id: randomUUID(),
+      user_id: sync.userId,
+      store_connection_id: sync.storeConnectionId,
+      sync_type: sync.syncType,
+      status: sync.status,
+      products_added: sync.productsAdded || 0,
+      products_updated: sync.productsUpdated || 0,
+      products_deleted: sync.productsDeleted || 0,
+      error_message: sync.errorMessage,
+      started_at: new Date().toISOString(),
+      completed_at: sync.completedAt,
+      metadata: sync.metadata
+    };
+
+    const { data, error } = await supabase
+      .from('sync_history')
+      .insert(syncData)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to create sync history: ${error.message}`);
+    return data;
+  }
+
+  async updateSyncHistory(id: string, updates: Partial<SyncHistory>): Promise<SyncHistory> {
+    const updateData: any = {};
+    
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.productsAdded !== undefined) updateData.products_added = updates.productsAdded;
+    if (updates.productsUpdated !== undefined) updateData.products_updated = updates.productsUpdated;
+    if (updates.productsDeleted !== undefined) updateData.products_deleted = updates.productsDeleted;
+    if (updates.errorMessage !== undefined) updateData.error_message = updates.errorMessage;
+    if (updates.completedAt !== undefined) updateData.completed_at = updates.completedAt;
+    if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
+
+    const { data, error } = await supabase
+      .from('sync_history')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to update sync history: ${error.message}`);
+    return data;
   }
 
   // Product methods

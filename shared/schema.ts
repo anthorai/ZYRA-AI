@@ -315,6 +315,26 @@ export const storeConnections = pgTable("store_connections", {
   index('store_connections_status_idx').on(table.status),
 ]);
 
+export const syncHistory = pgTable("sync_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  storeConnectionId: varchar("store_connection_id").references(() => storeConnections.id),
+  syncType: text("sync_type").notNull(), // 'manual' | 'auto' | 'webhook'
+  status: text("status").notNull(), // 'started' | 'completed' | 'failed'
+  productsAdded: integer("products_added").default(0),
+  productsUpdated: integer("products_updated").default(0),
+  productsDeleted: integer("products_deleted").default(0),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").default(sql`NOW()`),
+  completedAt: timestamp("completed_at"),
+  metadata: jsonb("metadata"), // Additional sync details
+}, (table) => [
+  index('sync_history_user_id_idx').on(table.userId),
+  index('sync_history_status_idx').on(table.status),
+  index('sync_history_started_at_idx').on(table.startedAt),
+  index('sync_history_store_connection_id_idx').on(table.storeConnectionId),
+]);
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -417,6 +437,11 @@ export const insertStoreConnectionSchema = createInsertSchema(storeConnections).
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertSyncHistorySchema = createInsertSchema(syncHistory).omit({
+  id: true,
+  startedAt: true,
 });
 
 // New Settings Tables
@@ -573,6 +598,8 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type StoreConnection = typeof storeConnections.$inferSelect;
 export type InsertStoreConnection = z.infer<typeof insertStoreConnectionSchema>;
+export type SyncHistory = typeof syncHistory.$inferSelect;
+export type InsertSyncHistory = z.infer<typeof insertSyncHistorySchema>;
 
 // Billing and invoice tables
 export const invoices = pgTable("invoices", {

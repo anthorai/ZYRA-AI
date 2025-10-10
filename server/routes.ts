@@ -143,6 +143,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = authHeader.split(' ')[1];
+      
+      // Check for internal service token (for background jobs)
+      // SECURITY: Only accept internal service token from actual localhost connection
+      // Use socket.remoteAddress which can't be spoofed via X-Forwarded-For
+      const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
+      const socketAddress = req.socket.remoteAddress;
+      const isLocalhost = socketAddress === '127.0.0.1' || 
+                         socketAddress === '::1' || 
+                         socketAddress === '::ffff:127.0.0.1' ||
+                         socketAddress === 'localhost';
+      
+      if (token === INTERNAL_SERVICE_TOKEN && INTERNAL_SERVICE_TOKEN && isLocalhost) {
+        const internalUserId = req.headers['x-internal-user-id'];
+        if (!internalUserId) {
+          return res.status(401).json({ message: "Internal user ID required" });
+        }
+        
+        // Get user profile for internal service requests
+        const userProfile = await supabaseStorage.getUser(internalUserId as string);
+        if (!userProfile) {
+          return res.status(401).json({ message: "User not found" });
+        }
+        
+        (req as AuthenticatedRequest).user = {
+          id: userProfile.id,
+          email: userProfile.email,
+          fullName: userProfile.fullName,
+          role: userProfile.role,
+          plan: userProfile.plan
+        };
+        
+        return next();
+      }
+      
+      // Normal Supabase auth
       const { data: { user }, error } = await supabase.auth.getUser(token);
       
       if (error || !user) {
@@ -3924,6 +3959,56 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get Shopify sync status (for real-time status component)
+  app.get('/api/shopify/sync-status', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.json({
+          connected: false,
+          syncing: false,
+          lastSync: null,
+          productCount: 0,
+          error: null
+        });
+      }
+
+      // Get latest sync
+      const latestSync = await supabaseStorage.getLatestSync(userId);
+      const isSyncing = latestSync?.status === 'started';
+      
+      // Get product count
+      const products = await supabaseStorage.getProducts(userId);
+      
+      res.json({
+        connected: true,
+        syncing: isSyncing,
+        lastSync: shopifyConnection.lastSyncAt,
+        productCount: products.length,
+        error: latestSync?.status === 'failed' ? latestSync.errorMessage : null
+      });
+    } catch (error) {
+      console.error('Sync status error:', error);
+      res.status(500).json({ error: 'Failed to get sync status' });
+    }
+  });
+
+  // Get sync history
+  app.get('/api/products/sync-history', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const history = await supabaseStorage.getSyncHistory(userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error('Sync history error:', error);
+      res.status(500).json({ error: 'Failed to get sync history' });
+    }
+  });
+
   // Get Shopify products (from connected store)
   app.get('/api/shopify/products', requireAuth, async (req, res) => {
     try {
@@ -3954,16 +4039,26 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Sync Shopify products to Zyra
+  // Sync Shopify products to Zyra (with history tracking and delta sync)
   app.post('/api/shopify/sync', requireAuth, async (req, res) => {
+    let syncRecord;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
+      const { syncType = 'manual' } = req.body; // manual | auto | webhook
       const connections = await supabaseStorage.getStoreConnections(userId);
       const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
       
       if (!shopifyConnection) {
         return res.status(404).json({ error: 'No active Shopify connection found' });
       }
+
+      // Create sync history record
+      syncRecord = await supabaseStorage.createSyncHistory({
+        userId,
+        storeConnectionId: shopifyConnection.id,
+        syncType,
+        status: 'started'
+      });
 
       // Fetch products from Shopify
       const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-01/products.json`, {
@@ -3979,11 +4074,23 @@ Output format: Markdown with clear section headings.`;
       const productsData = await productsResponse.json();
       const shopifyProducts = productsData.products || [];
 
+      let productsAdded = 0;
+      let productsUpdated = 0;
       const imported = [];
       const errors = [];
 
+      // Get last sync timestamp for delta sync
+      const lastSyncTime = shopifyConnection.lastSyncAt ? new Date(shopifyConnection.lastSyncAt) : null;
+
       for (const product of shopifyProducts) {
         try {
+          const productUpdatedAt = new Date(product.updated_at);
+          
+          // Smart delta sync: Skip if not updated since last sync
+          if (lastSyncTime && productUpdatedAt <= lastSyncTime) {
+            continue; // Skip unchanged products
+          }
+
           const variant = product.variants?.[0];
           const productPayload = {
             userId,
@@ -4009,12 +4116,14 @@ Output format: Markdown with clear section headings.`;
           if (existingProduct) {
             // Update existing product
             await db.update(products)
-              .set(productPayload)
+              .set({ ...productPayload, updatedAt: sql`NOW()` })
               .where(eq(products.id, existingProduct.id));
+            productsUpdated++;
             imported.push({ ...productPayload, id: existingProduct.id });
           } else {
             // Create new product
             const newProduct = await supabaseStorage.createProduct(productPayload as any);
+            productsAdded++;
             imported.push(newProduct);
           }
         } catch (error) {
@@ -4030,14 +4139,39 @@ Output format: Markdown with clear section headings.`;
         .set({ lastSyncAt: sql`NOW()` })
         .where(eq(storeConnections.id, shopifyConnection.id));
 
+      // Update sync history with results
+      await supabaseStorage.updateSyncHistory(syncRecord.id, {
+        status: 'completed',
+        productsAdded,
+        productsUpdated,
+        completedAt: new Date() as any,
+        metadata: { 
+          totalProcessed: shopifyProducts.length,
+          skipped: shopifyProducts.length - (productsAdded + productsUpdated),
+          errors: errors.length
+        } as any
+      });
+
       res.json({
         success: true,
         imported: imported.length,
+        added: productsAdded,
+        updated: productsUpdated,
         errors: errors.length,
         details: { imported, errors }
       });
     } catch (error) {
       console.error('Shopify sync error:', error);
+      
+      // Update sync history with error
+      if (syncRecord) {
+        await supabaseStorage.updateSyncHistory(syncRecord.id, {
+          status: 'failed',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          completedAt: new Date() as any
+        });
+      }
+      
       res.status(500).json({ error: 'Failed to sync Shopify products' });
     }
   });

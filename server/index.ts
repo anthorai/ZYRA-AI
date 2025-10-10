@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { testSupabaseConnection } from "./lib/supabase";
+import { testSupabaseConnection, supabase } from "./lib/supabase";
 import { ErrorLogger } from "./lib/errorLogger";
 
 const app = express();
@@ -207,6 +207,114 @@ serverPromise.then((server) => {
 
   // Start campaign scheduler
   initializeCampaignScheduler();
+
+  // Initialize background product sync scheduler
+  let productSyncSchedulerInitialized = false;
+  
+  // Generate or use internal service token
+  const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 
+    (process.env.NODE_ENV === 'production' 
+      ? (() => { throw new Error('INTERNAL_SERVICE_TOKEN must be set in production'); })()
+      : `dev-internal-${Math.random().toString(36).substring(7)}`
+    );
+  
+  if (!process.env.INTERNAL_SERVICE_TOKEN) {
+    if (process.env.NODE_ENV === 'production') {
+      log("[Product Sync] ERROR: INTERNAL_SERVICE_TOKEN not set in production - scheduler disabled for security");
+    } else {
+      log(`[Product Sync] Using development token (not for production)`);
+      process.env.INTERNAL_SERVICE_TOKEN = INTERNAL_SERVICE_TOKEN;
+    }
+  }
+  
+  async function initializeProductSyncScheduler() {
+    if (productSyncSchedulerInitialized) {
+      log("[Product Sync] Already initialized, skipping");
+      return;
+    }
+    
+    // Skip if no token in production
+    if (!process.env.INTERNAL_SERVICE_TOKEN) {
+      log("[Product Sync] Skipping initialization - no service token configured");
+      return;
+    }
+    
+    try {
+      const { SupabaseStorage } = await import('./lib/supabase-storage');
+      const storage = new SupabaseStorage();
+      
+      // Run product sync every 10 minutes (600000 ms)
+      const SYNC_INTERVAL = 10 * 60 * 1000;
+      
+      const safeProductSyncExecution = async () => {
+        try {
+          log("[Product Sync] Running auto-sync for all connected stores...");
+          
+          // Get all active Shopify connections directly from database
+          const { data: connections } = await supabase
+            .from('store_connections')
+            .select('*')
+            .eq('platform', 'shopify')
+            .eq('status', 'active');
+          
+          if (!connections || connections.length === 0) {
+            log("[Product Sync] No active Shopify connections found");
+            return;
+          }
+          
+          log(`[Product Sync] Found ${connections.length} active connections`);
+          
+          // Sync each store using internal service token (localhost only)
+          for (const connection of connections) {
+            try {
+              const userId = connection.user_id;
+              log(`[Product Sync] Syncing store ${connection.store_name} for user ${userId}`);
+              
+              // Trigger sync via internal API call (localhost only for security)
+              const response = await fetch(`http://127.0.0.1:5000/api/shopify/sync`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+                  'x-internal-user-id': userId
+                },
+                body: JSON.stringify({ syncType: 'auto' })
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                log(`[Product Sync] Completed: ${result.added} added, ${result.updated} updated`);
+              } else {
+                const errorText = await response.text();
+                log(`[Product Sync] Failed for ${connection.store_name}: ${response.status} ${errorText}`);
+              }
+            } catch (error) {
+              const errorMsg = error instanceof Error ? error.message : String(error);
+              log(`[Product Sync] ERROR syncing ${connection.store_name}: ${errorMsg}`);
+            }
+          }
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          log(`[Product Sync] ERROR: ${errorMsg}`);
+        }
+      };
+      
+      // Run once on startup (after a delay)
+      setTimeout(safeProductSyncExecution, 60000); // 60 seconds after startup
+      
+      // Set up recurring execution
+      setInterval(safeProductSyncExecution, SYNC_INTERVAL);
+      
+      productSyncSchedulerInitialized = true;
+      log("[Product Sync] Initialized (runs every 10 minutes)");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log(`[Product Sync] CRITICAL: Failed to initialize: ${errorMsg}`);
+    }
+  }
+
+  // Start product sync scheduler
+  initializeProductSyncScheduler();
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
