@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NotificationCenter from "@/components/dashboard/notification-center";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
@@ -23,6 +24,18 @@ import {
   Eye,
   BarChart
 } from "lucide-react";
+import { 
+  LineChart, 
+  Line, 
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 
 export default function EmailPerformance() {
   const { user, appUser} = useAuth();
@@ -221,6 +234,181 @@ export default function EmailPerformance() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Engagement Charts */}
+        <Tabs defaultValue="trends" className="w-full">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">Performance Analytics</h2>
+            <TabsList className="bg-slate-800/50">
+              <TabsTrigger value="trends" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                Engagement Trends
+              </TabsTrigger>
+              <TabsTrigger value="comparison" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                Campaign Comparison
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="trends">
+            <Card className="gradient-card rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-white">Email Engagement Over Time</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Track open rates and click rates across all campaigns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Skeleton className="h-full w-full bg-slate-700" />
+                  </div>
+                ) : campaigns.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <LineChart data={campaigns.slice(0, 10).reverse()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis 
+                          dataKey="name" 
+                          stroke="#94a3b8" 
+                          tick={{ fill: '#94a3b8' }}
+                          angle={-30}
+                          textAnchor="end"
+                          height={100}
+                        />
+                        <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #334155',
+                            borderRadius: '8px',
+                            color: '#f1f5f9'
+                          }}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="openRate" 
+                          stroke="#00F0FF" 
+                          strokeWidth={2}
+                          name="Open Rate (%)"
+                          dot={{ fill: '#00F0FF' }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="clickRate" 
+                          stroke="#A78BFA" 
+                          strokeWidth={2}
+                          name="Click Rate (%)"
+                          dot={{ fill: '#A78BFA' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Best Open Rate</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          {Math.max(...campaigns.map(c => c.openRate)).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Best Click Rate</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          {Math.max(...campaigns.map(c => c.clickRate)).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Total Campaigns</p>
+                        <p className="text-white font-bold text-lg mt-1">{campaigns.length}</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-slate-400">
+                    No campaign data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="comparison">
+            <Card className="gradient-card rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-white">Campaign Performance Comparison</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Compare engagement metrics across your top performing campaigns
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Skeleton className="h-full w-full bg-slate-700" />
+                  </div>
+                ) : campaigns.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <RechartsBarChart data={campaigns.slice(0, 8)}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis 
+                          dataKey="name" 
+                          stroke="#94a3b8" 
+                          tick={{ fill: '#94a3b8' }}
+                          angle={-30}
+                          textAnchor="end"
+                          height={100}
+                        />
+                        <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #334155',
+                            borderRadius: '8px',
+                            color: '#f1f5f9'
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="openRate" fill="#00F0FF" name="Open Rate (%)" />
+                        <Bar dataKey="clickRate" fill="#A78BFA" name="Click Rate (%)" />
+                      </RechartsBarChart>
+                    </ResponsiveContainer>
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Avg Open Rate</p>
+                        <p className="text-white font-bold text-lg mt-1">{avgOpenRate}%</p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Avg Click Rate</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          {campaigns.length > 0 
+                            ? (campaigns.reduce((sum, c) => sum + c.clickRate, 0) / campaigns.length).toFixed(1)
+                            : "0.0"}%
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Top Performer</p>
+                        <p className="text-white font-bold text-sm mt-1">
+                          {campaigns.reduce((top, c) => c.openRate > top.openRate ? c : top, campaigns[0]).name.slice(0, 15)}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Engagement Score</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          {campaigns.length > 0 
+                            ? ((campaigns.reduce((sum, c) => sum + c.openRate + c.clickRate, 0) / campaigns.length) / 2).toFixed(0)
+                            : "0"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-slate-400">
+                    No campaign data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Campaign Performance */}
         <Card className="gradient-card">
