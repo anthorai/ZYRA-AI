@@ -997,9 +997,15 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async createAiGenerationHistory(history: InsertAiGenerationHistory): Promise<AiGenerationHistory> {
     const historyData = {
-      ...history,
       id: randomUUID(),
-      createdAt: new Date().toISOString()
+      user_id: history.userId,
+      generation_type: history.generationType,
+      input_data: history.inputData,
+      output_data: history.outputData,
+      brand_voice: history.brandVoice,
+      tokens_used: history.tokensUsed,
+      model: history.model,
+      created_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -1229,10 +1235,27 @@ export class SupabaseStorage implements ISupabaseStorage {
   async createOrUpdateUsageStats(userId: string, stats: Partial<UsageStats>): Promise<UsageStats> {
     const existingStats = await this.getUserUsageStats(userId);
     
+    // Convert camelCase to snake_case for database
+    const dbStats: any = {};
+    if (stats.totalRevenue !== undefined) dbStats.total_revenue = stats.totalRevenue;
+    if (stats.totalOrders !== undefined) dbStats.total_orders = stats.totalOrders;
+    if (stats.conversionRate !== undefined) dbStats.conversion_rate = stats.conversionRate;
+    if (stats.cartRecoveryRate !== undefined) dbStats.cart_recovery_rate = stats.cartRecoveryRate;
+    if (stats.productsCount !== undefined) dbStats.products_count = stats.productsCount;
+    if (stats.productsOptimized !== undefined) dbStats.products_optimized = stats.productsOptimized;
+    if (stats.emailsSent !== undefined) dbStats.emails_sent = stats.emailsSent;
+    if (stats.emailsRemaining !== undefined) dbStats.emails_remaining = stats.emailsRemaining;
+    if (stats.smsSent !== undefined) dbStats.sms_sent = stats.smsSent;
+    if (stats.smsRemaining !== undefined) dbStats.sms_remaining = stats.smsRemaining;
+    if (stats.aiGenerationsUsed !== undefined) dbStats.ai_generations_used = stats.aiGenerationsUsed;
+    if (stats.seoOptimizationsUsed !== undefined) dbStats.seo_optimizations_used = stats.seoOptimizationsUsed;
+    if (stats.creditsUsed !== undefined) dbStats.credits_used = stats.creditsUsed;
+    if (stats.creditsRemaining !== undefined) dbStats.credits_remaining = stats.creditsRemaining;
+    
     if (existingStats) {
       const { data, error } = await supabase
         .from('usage_stats')
-        .update({ ...stats, updated_at: new Date().toISOString() })
+        .update({ ...dbStats, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
         .select()
         .single();
@@ -1241,7 +1264,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       return data;
     } else {
       const statsData = {
-        ...stats,
+        ...dbStats,
         id: randomUUID(),
         user_id: userId,
         created_at: new Date().toISOString(),

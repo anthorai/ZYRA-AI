@@ -6,6 +6,9 @@ import { ErrorLogger } from "./lib/errorLogger";
 
 const app = express();
 
+// Trust proxy for rate limiting to work correctly behind Replit's proxy
+app.set('trust proxy', 1);
+
 // Capture raw body for webhook signature verification (before JSON parsing)
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, next) => {
   if (req.body) {
