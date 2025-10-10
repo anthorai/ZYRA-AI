@@ -4895,6 +4895,241 @@ Respond with JSON in this exact format:
     }
   });
 
+  // Get revenue trends for charts (last 7 days, 30 days, 90 days)
+  app.get('/api/analytics/revenue-trends', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { period = '30' } = req.query;
+      
+      // Validate period parameter
+      const validPeriods = ['7', '30', '90'];
+      const periodStr = period as string;
+      if (!validPeriods.includes(periodStr)) {
+        return res.status(400).json({ error: 'Invalid period. Must be 7, 30, or 90 days.' });
+      }
+      
+      const days = parseInt(periodStr);
+      
+      // Fetch all data in parallel
+      const [stats, campaigns, abandonedCarts] = await Promise.all([
+        supabaseStorage.getUserUsageStats(userId),
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getAbandonedCarts(userId)
+      ]);
+      
+      const now = new Date();
+      const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      // Group data by date for trend visualization
+      const trendData: { date: string; revenue: number; orders: number; campaigns: number }[] = [];
+      
+      // Generate data points for each day
+      for (let i = 0; i < days; i++) {
+        const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Filter campaigns sent on this day
+        const dayCampaigns = campaigns.filter(c => {
+          if (!c.sentAt) return false;
+          const sentDate = new Date(c.sentAt).toISOString().split('T')[0];
+          return sentDate === dateStr;
+        });
+        
+        // Filter carts recovered on this day
+        const dayRecoveredCarts = abandonedCarts.filter(c => {
+          if (!c.recoveredAt || !c.isRecovered) return false;
+          const recoveredDate = new Date(c.recoveredAt).toISOString().split('T')[0];
+          return recoveredDate === dateStr;
+        });
+        
+        // Calculate real revenue from recovered carts
+        const dayRevenue = dayRecoveredCarts.reduce((sum, cart) => 
+          sum + parseFloat(cart.cartValue as any || '0'), 0
+        );
+        
+        // Calculate orders from campaign sent count
+        const dayOrders = dayCampaigns.reduce((sum, c) => sum + (c.sentCount || 0), 0);
+        
+        trendData.push({
+          date: dateStr,
+          revenue: Math.round(dayRevenue),
+          orders: dayOrders,
+          campaigns: dayCampaigns.length
+        });
+      }
+      
+      // Safe calculations with fallbacks for empty data
+      const totalTrendRevenue = trendData.reduce((sum, d) => sum + d.revenue, 0);
+      const totalTrendOrders = trendData.reduce((sum, d) => sum + d.orders, 0);
+      const avgDailyRevenue = days > 0 ? totalTrendRevenue / days : 0;
+      const avgDailyOrders = days > 0 ? totalTrendOrders / days : 0;
+      const peakDay = trendData.length > 0 
+        ? trendData.reduce((max, d) => d.revenue > max.revenue ? d : max, trendData[0])
+        : { date: '', revenue: 0, orders: 0, campaigns: 0 };
+      
+      res.json({
+        period: days,
+        totalRevenue: stats?.totalRevenue || 0,
+        totalOrders: stats?.totalOrders || 0,
+        trends: trendData,
+        summary: {
+          avgDailyRevenue: Math.round(avgDailyRevenue),
+          avgDailyOrders: Math.round(avgDailyOrders),
+          peakDay: {
+            date: peakDay.date,
+            revenue: peakDay.revenue,
+            orders: peakDay.orders
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get revenue trends error:', error);
+      res.status(500).json({ error: 'Failed to get revenue trends' });
+    }
+  });
+
+  // Get cart recovery analytics
+  app.get('/api/analytics/cart-recovery', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      const [abandonedCarts, stats] = await Promise.all([
+        supabaseStorage.getAbandonedCarts(userId),
+        supabaseStorage.getUserUsageStats(userId)
+      ]);
+      
+      // Calculate recovery metrics
+      const totalCarts = abandonedCarts.length;
+      const recoveredCarts = abandonedCarts.filter(c => c.isRecovered).length;
+      const campaignsSent = abandonedCarts.filter(c => c.recoveryCampaignSent).length;
+      
+      const totalValue = abandonedCarts.reduce((sum, cart) => 
+        sum + parseFloat(cart.cartValue as any || '0'), 0
+      );
+      
+      const recoveredValue = abandonedCarts
+        .filter(c => c.isRecovered)
+        .reduce((sum, cart) => sum + parseFloat(cart.cartValue as any || '0'), 0);
+      
+      const recoveryRate = totalCarts > 0 ? (recoveredCarts / totalCarts * 100).toFixed(1) : '0';
+      const conversionRate = campaignsSent > 0 ? (recoveredCarts / campaignsSent * 100).toFixed(1) : '0';
+      
+      // Group by date for trends
+      const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentCarts = abandonedCarts.filter(c => 
+        new Date(c.createdAt!) >= last30Days
+      );
+      
+      res.json({
+        overview: {
+          totalCarts,
+          recoveredCarts,
+          recoveryRate: parseFloat(recoveryRate),
+          totalValue: Math.round(totalValue * 100) / 100,
+          recoveredValue: Math.round(recoveredValue * 100) / 100,
+          potentialRevenue: Math.round((totalValue - recoveredValue) * 100) / 100,
+          campaignsSent,
+          conversionRate: parseFloat(conversionRate)
+        },
+        recentActivity: {
+          last30Days: recentCarts.length,
+          last30DaysRecovered: recentCarts.filter(c => c.isRecovered).length,
+          last30DaysValue: Math.round(recentCarts.reduce((sum, cart) => 
+            sum + parseFloat(cart.cartValue as any || '0'), 0
+          ) * 100) / 100
+        },
+        topCarts: abandonedCarts
+          .sort((a, b) => parseFloat(b.cartValue as any) - parseFloat(a.cartValue as any))
+          .slice(0, 10)
+          .map(cart => ({
+            id: cart.id,
+            email: cart.customerEmail,
+            value: Math.round(parseFloat(cart.cartValue as any) * 100) / 100,
+            isRecovered: cart.isRecovered,
+            campaignSent: cart.recoveryCampaignSent,
+            createdAt: cart.createdAt
+          }))
+      });
+    } catch (error) {
+      console.error('Get cart recovery error:', error);
+      res.status(500).json({ error: 'Failed to get cart recovery analytics' });
+    }
+  });
+
+  // Get growth comparison metrics (WoW, MoM, YoY)
+  app.get('/api/analytics/growth-comparison', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      const [campaigns, stats] = await Promise.all([
+        supabaseStorage.getCampaigns(userId),
+        supabaseStorage.getUserUsageStats(userId)
+      ]);
+      
+      const now = new Date();
+      
+      // Week over Week (WoW)
+      const thisWeekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const lastWeekStart = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      
+      const thisWeekCampaigns = campaigns.filter(c => {
+        const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+        return sentDate && sentDate >= thisWeekStart;
+      });
+      
+      const lastWeekCampaigns = campaigns.filter(c => {
+        const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+        return sentDate && sentDate >= lastWeekStart && sentDate < thisWeekStart;
+      });
+      
+      const wowGrowth = lastWeekCampaigns.length > 0
+        ? ((thisWeekCampaigns.length - lastWeekCampaigns.length) / lastWeekCampaigns.length * 100).toFixed(1)
+        : thisWeekCampaigns.length > 0 ? '100' : '0';
+      
+      // Month over Month (MoM)
+      const thisMonthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const lastMonthStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+      
+      const thisMonthCampaigns = campaigns.filter(c => {
+        const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+        return sentDate && sentDate >= thisMonthStart;
+      });
+      
+      const lastMonthCampaigns = campaigns.filter(c => {
+        const sentDate = c.sentAt ? new Date(c.sentAt) : null;
+        return sentDate && sentDate >= lastMonthStart && sentDate < thisMonthStart;
+      });
+      
+      const momGrowth = lastMonthCampaigns.length > 0
+        ? ((thisMonthCampaigns.length - lastMonthCampaigns.length) / lastMonthCampaigns.length * 100).toFixed(1)
+        : thisMonthCampaigns.length > 0 ? '100' : '0';
+      
+      res.json({
+        weekOverWeek: {
+          growth: parseFloat(wowGrowth),
+          thisWeek: thisWeekCampaigns.length,
+          lastWeek: lastWeekCampaigns.length,
+          change: thisWeekCampaigns.length - lastWeekCampaigns.length
+        },
+        monthOverMonth: {
+          growth: parseFloat(momGrowth),
+          thisMonth: thisMonthCampaigns.length,
+          lastMonth: lastMonthCampaigns.length,
+          change: thisMonthCampaigns.length - lastMonthCampaigns.length
+        },
+        metrics: {
+          totalRevenue: stats?.totalRevenue || 0,
+          totalOrders: stats?.totalOrders || 0,
+          productsOptimized: stats?.productsOptimized || 0,
+          aiGenerations: stats?.aiGenerationsUsed || 0
+        }
+      });
+    } catch (error) {
+      console.error('Get growth comparison error:', error);
+      res.status(500).json({ error: 'Failed to get growth comparison' });
+    }
+  });
+
   // Track conversion (when a campaign leads to a sale)
   app.post('/api/analytics/track-conversion', requireAuth, async (req, res) => {
     try {
