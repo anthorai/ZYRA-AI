@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 // Removed Express session and Passport.js imports
 import { 
@@ -95,6 +96,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
+
+  // Serve uploaded files statically
+  app.use('/uploads', express.static('./uploads'));
 
   // Health check endpoint (no auth required) for monitoring
   app.get("/api/health", async (req, res) => {
@@ -3022,14 +3026,39 @@ Respond with JSON in this exact format:
   });
 
   // POST /api/profile/upload-image - Upload profile image
-  app.post('/api/profile/upload-image', requireAuth, async (req, res) => {
+  app.post('/api/profile/upload-image', requireAuth, upload.single('image'), async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
-      // For now, return a placeholder URL since we need to implement proper file upload
-      // This would be where you handle the actual file upload to object storage
-      const imageUrl = `/profile-${userId}-${Date.now()}.png`;
+      if (!req.file) {
+        return res.status(400).json({ message: 'No image file provided' });
+      }
+
+      // Save the file to uploads directory
+      const uploadsDir = './uploads/profiles';
+      const fs = await import('fs/promises');
+      
+      // Create directory if it doesn't exist
+      try {
+        await fs.mkdir(uploadsDir, { recursive: true });
+      } catch (err) {
+        // Directory might already exist
+      }
+      
+      // Generate unique filename
+      const ext = req.file.originalname.split('.').pop();
+      const filename = `${userId}-${Date.now()}.${ext}`;
+      const filepath = `${uploadsDir}/${filename}`;
+      
+      // Write file to disk
+      await fs.writeFile(filepath, req.file.buffer);
+      
+      // Create public URL
+      const imageUrl = `/uploads/profiles/${filename}`;
+      
+      // Update user in database
       const updatedUser = await supabaseStorage.updateUserImage(userId, imageUrl);
+      
       res.json({ imageUrl, user: updatedUser });
     } catch (error) {
       console.error('Upload image error:', error);
