@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
 import { 
@@ -17,6 +18,20 @@ import {
   BarChart3,
   Zap
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 interface AnalyticsCard {
   id: string;
@@ -61,6 +76,36 @@ export default function GrowthDashboard() {
     totalOrders: number;
   }>({
     queryKey: ['/api/analytics/growth-summary'],
+    enabled: !!dashboardData?.user,
+  });
+
+  // Fetch revenue trends for charts
+  const [chartPeriod, setChartPeriod] = useState<'7' | '30' | '90'>('30');
+  const { data: revenueTrends, isLoading: trendsLoading } = useQuery<{
+    period: number;
+    totalRevenue: number;
+    totalOrders: number;
+    trends: { date: string; revenue: number; orders: number; campaigns: number }[];
+    summary: { avgDailyRevenue: number; avgDailyOrders: number; peakDay: any };
+  }>({
+    queryKey: ['/api/analytics/revenue-trends', { period: chartPeriod }],
+    enabled: !!dashboardData?.user,
+  });
+
+  // Fetch cart recovery data for conversion funnel
+  const { data: cartRecoveryData, isLoading: cartRecoveryLoading } = useQuery<{
+    overview: {
+      totalCarts: number;
+      recoveredCarts: number;
+      recoveryRate: number;
+      totalValue: number;
+      recoveredValue: number;
+      potentialRevenue: number;
+      campaignsSent: number;
+      conversionRate: number;
+    };
+  }>({
+    queryKey: ['/api/analytics/cart-recovery'],
     enabled: !!dashboardData?.user,
   });
 
@@ -323,6 +368,323 @@ export default function GrowthDashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Visual Analytics Charts */}
+      <div className="mt-12">
+        <Tabs defaultValue="revenue" className="w-full">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">Performance Analytics</h2>
+            <TabsList className="bg-slate-800/50">
+              <TabsTrigger value="revenue" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                Revenue Trends
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                Campaign Performance
+              </TabsTrigger>
+              <TabsTrigger value="funnel" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                Conversion Funnel
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="revenue">
+            <Card className="gradient-card rounded-2xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-white">Revenue Trends</CardTitle>
+                    <CardDescription className="text-slate-300">
+                      Daily revenue and order trends from cart recovery
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={chartPeriod === '7' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartPeriod('7')}
+                      className={chartPeriod === '7' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}
+                    >
+                      7D
+                    </Button>
+                    <Button
+                      variant={chartPeriod === '30' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartPeriod('30')}
+                      className={chartPeriod === '30' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}
+                    >
+                      30D
+                    </Button>
+                    <Button
+                      variant={chartPeriod === '90' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartPeriod('90')}
+                      className={chartPeriod === '90' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}
+                    >
+                      90D
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {trendsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Skeleton className="h-full w-full bg-slate-700" />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <LineChart data={revenueTrends?.trends || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#94a3b8"
+                        tick={{ fill: '#94a3b8' }}
+                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1e293b',
+                          border: '1px solid #334155',
+                          borderRadius: '8px',
+                          color: '#f1f5f9'
+                        }}
+                        labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { 
+                          month: 'long', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      />
+                      <Legend wrapperStyle={{ color: '#94a3b8' }} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="#00F0FF" 
+                        strokeWidth={2}
+                        dot={{ fill: '#00F0FF', r: 4 }}
+                        activeDot={{ r: 6 }}
+                        name="Revenue ($)"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="orders" 
+                        stroke="#8b5cf6" 
+                        strokeWidth={2}
+                        dot={{ fill: '#8b5cf6', r: 4 }}
+                        name="Orders"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+                {revenueTrends && (
+                  <div className="mt-6 grid grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">Avg Daily Revenue</p>
+                      <p className="text-white font-bold text-lg mt-1">
+                        ${revenueTrends.summary.avgDailyRevenue.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">Avg Daily Orders</p>
+                      <p className="text-white font-bold text-lg mt-1">
+                        {revenueTrends.summary.avgDailyOrders}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">Peak Revenue Day</p>
+                      {revenueTrends.summary.peakDay?.date ? (
+                        <>
+                          <p className="text-white font-bold text-sm mt-1">
+                            {new Date(revenueTrends.summary.peakDay.date).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                          <p className="text-primary text-xs mt-0.5">
+                            ${revenueTrends.summary.peakDay.revenue}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-slate-500 text-sm mt-1">N/A</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="campaigns">
+            <Card className="gradient-card rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-white">Campaign Performance</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Email and SMS campaign metrics overview
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {campaignStatsLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Skeleton className="h-full w-full bg-slate-700" />
+                  </div>
+                ) : campaignStats ? (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={[
+                      { metric: 'Open Rate', value: campaignStats.avgOpenRate, color: '#00F0FF' },
+                      { metric: 'Click Rate', value: campaignStats.avgClickRate, color: '#8b5cf6' },
+                      { metric: 'Conversion', value: campaignStats.avgConversionRate, color: '#10b981' }
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="metric" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                      <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1e293b',
+                          border: '1px solid #334155',
+                          borderRadius: '8px',
+                          color: '#f1f5f9'
+                        }}
+                        formatter={(value: any) => `${value.toFixed(1)}%`}
+                      />
+                      <Bar dataKey="value" fill="#00F0FF" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-slate-400">
+                    No campaign data available
+                  </div>
+                )}
+                {campaignStats && (
+                  <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">Total Campaigns</p>
+                      <p className="text-white font-bold text-lg mt-1">{campaignStats.totalCampaigns}</p>
+                    </div>
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">Sent Campaigns</p>
+                      <p className="text-white font-bold text-lg mt-1">{campaignStats.sentCampaigns}</p>
+                    </div>
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">Email Campaigns</p>
+                      <p className="text-white font-bold text-lg mt-1">{campaignStats.emailCampaigns}</p>
+                    </div>
+                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-sm">SMS Campaigns</p>
+                      <p className="text-white font-bold text-lg mt-1">{campaignStats.smsCampaigns}</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="funnel">
+            <Card className="gradient-card rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-white">Cart Recovery Conversion Funnel</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Track abandoned cart recovery performance from cart to conversion
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cartRecoveryLoading ? (
+                  <div className="h-80 flex items-center justify-center">
+                    <Skeleton className="h-full w-full bg-slate-700" />
+                  </div>
+                ) : cartRecoveryData ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <AreaChart data={[
+                        { 
+                          stage: 'Abandoned Carts', 
+                          value: cartRecoveryData.overview.totalCarts,
+                          percentage: 100 
+                        },
+                        { 
+                          stage: 'Recovery Campaign Sent', 
+                          value: cartRecoveryData.overview.campaignsSent,
+                          percentage: cartRecoveryData.overview.totalCarts > 0 
+                            ? (cartRecoveryData.overview.campaignsSent / cartRecoveryData.overview.totalCarts * 100).toFixed(1)
+                            : 0
+                        },
+                        { 
+                          stage: 'Successfully Recovered', 
+                          value: cartRecoveryData.overview.recoveredCarts,
+                          percentage: cartRecoveryData.overview.totalCarts > 0
+                            ? (cartRecoveryData.overview.recoveredCarts / cartRecoveryData.overview.totalCarts * 100).toFixed(1)
+                            : 0
+                        }
+                      ]}>
+                        <defs>
+                          <linearGradient id="funnelGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#00F0FF" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#00F0FF" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="stage" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                        <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #334155',
+                            borderRadius: '8px',
+                            color: '#f1f5f9'
+                          }}
+                          formatter={(value: any, name: string, props: any) => {
+                            if (name === 'value') {
+                              return [`${value} (${props.payload.percentage}%)`, 'Count'];
+                            }
+                            return value;
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="#00F0FF" 
+                          strokeWidth={2}
+                          fill="url(#funnelGradient)" 
+                          name="value"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Recovery Rate</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          {cartRecoveryData.overview.recoveryRate.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Conversion Rate</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          {cartRecoveryData.overview.conversionRate.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Recovered Value</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          ${cartRecoveryData.overview.recoveredValue}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-sm">Potential Revenue</p>
+                        <p className="text-white font-bold text-lg mt-1">
+                          ${cartRecoveryData.overview.potentialRevenue}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-slate-400">
+                    No cart recovery data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
       {/* AI Performance Notice */}
       <div className="mt-8 p-6 gradient-card rounded-2xl bg-[#16162c]">
         <div className="flex items-start space-x-4">
