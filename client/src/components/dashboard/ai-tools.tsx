@@ -121,7 +121,7 @@ export default function AITools() {
     },
     {
       id: 'product-descriptions',
-      title: 'Smart Product AI Descriptions',
+      title: 'AI Descriptions',
       description: 'AI generates compelling descriptions in 3 styles: Sales, SEO, and Casual',
       icon: <FileText className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
       category: 'existing',
