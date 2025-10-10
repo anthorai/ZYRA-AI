@@ -64,6 +64,7 @@ const CampaignListPage = lazy(() => import("@/pages/campaigns/list"));
 const TemplatesPage = lazy(() => import("@/pages/templates"));
 
 // AI Tools pages
+const ProfessionalCopywriting = lazy(() => import("@/pages/ai-tools/professional-copywriting"));
 const SmartProductDescriptions = lazy(() => import("@/pages/ai-tools/smart-product-descriptions"));
 const BulkOptimization = lazy(() => import("@/pages/ai-tools/bulk-optimization"));
 const SeoTitlesMeta = lazy(() => import("@/pages/ai-tools/seo-titles-meta"));
@@ -369,6 +370,13 @@ function Router() {
       )} />
       
       {/* AI Tools routes */}
+      <Route path="/ai-tools/professional-copywriting" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <ProfessionalCopywriting />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
       <Route path="/ai-tools/smart-product-descriptions" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>

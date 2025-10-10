@@ -645,7 +645,206 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Product Description Generator
+  // Professional AI Copywriting with Multi-Agent Pipeline & A/B Testing
+  app.post("/api/generate-professional-copy", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { 
+        productName, 
+        category, 
+        features, 
+        audience, 
+        framework = 'AIDA',
+        industry,
+        psychologicalTriggers = [],
+        maxWords = 150
+      } = req.body;
+      
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!productName?.trim()) {
+        return res.status(400).json({ message: "Product name is required" });
+      }
+
+      // Import advanced copywriting modules
+      const { generateMultiAgentCopy, scoreACopy } = await import('../shared/ai-quality-scoring');
+      const { getCopywritingFramework, getIndustryTemplate, getPsychologicalTrigger } = await import('../shared/copywriting-frameworks');
+
+      // Get framework template
+      const frameworkTemplate = getCopywritingFramework(framework);
+      if (!frameworkTemplate) {
+        return res.status(400).json({ message: `Invalid framework: ${framework}` });
+      }
+
+      // Generate 3 variants using multi-agent pipeline with industry context
+      const variants = await generateMultiAgentCopy(
+        productName,
+        category || 'General',
+        features || 'High-quality product',
+        audience || 'General consumers',
+        framework,
+        maxWords,
+        openai,
+        industry, // Pass industry for specific templates
+        psychologicalTriggers // Pass triggers for enhanced persuasion
+      );
+
+      // Score each variant
+      const [emotionalScore, logicalScore, hybridScore] = await Promise.all([
+        scoreACopy(variants.emotional.copy || '', audience || 'General', industry || category || 'General', openai),
+        scoreACopy(variants.logical.copy || '', audience || 'General', industry || category || 'General', openai),
+        scoreACopy(variants.hybrid.copy || '', audience || 'General', industry || category || 'General', openai)
+      ]);
+
+      // Track total tokens used (estimate 3x for 3 variants + scoring)
+      const estimatedTokens = 1500;
+      await trackAIUsage(userId, estimatedTokens);
+
+      // Store generation in history
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'professional_copy_multiagent',
+        inputData: { productName, category, features, audience, framework, industry },
+        outputData: { 
+          variants: {
+            emotional: variants.emotional,
+            logical: variants.logical,
+            hybrid: variants.hybrid
+          },
+          scores: {
+            emotional: emotionalScore,
+            logical: logicalScore,
+            hybrid: hybridScore
+          },
+          analysis: variants.analysis
+        },
+        brandVoice: framework,
+        tokensUsed: estimatedTokens,
+        model: 'gpt-4o-mini-multiagent'
+      });
+
+      await NotificationService.notifyAIGenerationComplete(userId, 'professional copy', productName);
+
+      res.json({
+        success: true,
+        variants: [
+          {
+            id: 'emotional',
+            type: 'emotional',
+            headline: variants.emotional.headline,
+            copy: variants.emotional.copy,
+            cta: variants.emotional.cta,
+            qualityScore: emotionalScore,
+            framework,
+            psychologicalTriggers: psychologicalTriggers.filter((t: string) => ['Scarcity', 'Urgency', 'Loss Aversion'].includes(t))
+          },
+          {
+            id: 'logical',
+            type: 'logical',
+            headline: variants.logical.headline,
+            copy: variants.logical.copy,
+            cta: variants.logical.cta,
+            qualityScore: logicalScore,
+            framework,
+            psychologicalTriggers: psychologicalTriggers.filter((t: string) => ['Authority', 'Social Proof'].includes(t))
+          },
+          {
+            id: 'hybrid',
+            type: 'hybrid',
+            headline: variants.hybrid.headline,
+            copy: variants.hybrid.copy,
+            cta: variants.hybrid.cta,
+            qualityScore: hybridScore,
+            framework,
+            psychologicalTriggers
+          }
+        ],
+        analysis: variants.analysis,
+        recommendedVariant: hybridScore.overall >= Math.max(emotionalScore.overall, logicalScore.overall) ? 'hybrid' : 
+                            emotionalScore.overall > logicalScore.overall ? 'emotional' : 'logical'
+      });
+    } catch (error: any) {
+      console.error("Professional copy generation error:", error);
+      res.status(500).json({ message: "Failed to generate professional copy" });
+    }
+  });
+
+  // Get available copywriting frameworks
+  app.get("/api/copywriting/frameworks", requireAuth, async (req, res) => {
+    try {
+      const { COPYWRITING_FRAMEWORKS, PSYCHOLOGICAL_TRIGGERS, INDUSTRY_TEMPLATES } = await import('../shared/copywriting-frameworks');
+      
+      res.json({
+        frameworks: COPYWRITING_FRAMEWORKS.map(f => ({
+          name: f.name,
+          acronym: f.acronym,
+          description: f.description,
+          steps: f.steps,
+          bestFor: f.bestFor
+        })),
+        psychologicalTriggers: PSYCHOLOGICAL_TRIGGERS.map(t => ({
+          name: t.name,
+          description: t.description,
+          examples: t.examples.slice(0, 2), // Just show first 2 examples
+          whenToUse: t.whenToUse
+        })),
+        industries: INDUSTRY_TEMPLATES.map(i => ({
+          industry: i.industry,
+          toneGuidelines: i.toneGuidelines,
+          keywordFocus: i.keywordFocus.slice(0, 5) // Top 5 keywords
+        }))
+      });
+    } catch (error: any) {
+      console.error("Get frameworks error:", error);
+      res.status(500).json({ message: "Failed to get frameworks" });
+    }
+  });
+
+  // Refine copy using Critic Agent
+  app.post("/api/copywriting/refine", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { copy, audience, industry } = req.body;
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!copy?.trim()) {
+        return res.status(400).json({ message: "Copy text is required" });
+      }
+
+      const { scoreACopy, refineCopyWithCritic } = await import('../shared/ai-quality-scoring');
+
+      // First score the copy
+      const initialScore = await scoreACopy(copy, audience || 'General', industry || 'General', openai);
+
+      // Then refine it using critic agent
+      const refinement = await refineCopyWithCritic(copy, initialScore, openai);
+
+      // Score the refined version
+      const finalScore = await scoreACopy(refinement.refinedCopy, audience || 'General', industry || 'General', openai);
+
+      // Track usage
+      const estimatedTokens = 800;
+      await trackAIUsage(userId, estimatedTokens);
+
+      res.json({
+        success: true,
+        original: {
+          copy,
+          score: initialScore
+        },
+        refined: {
+          copy: refinement.refinedCopy,
+          score: finalScore,
+          explanation: refinement.explanation,
+          expectedImpact: refinement.impact
+        },
+        improvement: finalScore.overall - initialScore.overall
+      });
+    } catch (error: any) {
+      console.error("Copy refinement error:", error);
+      res.status(500).json({ message: "Failed to refine copy" });
+    }
+  });
+
+  // Legacy endpoint - still works for backward compatibility
   app.post("/api/generate-description", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
       const { productName, category, features, audience, brandVoice, keywords, specs } = req.body;

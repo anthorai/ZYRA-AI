@@ -109,6 +109,17 @@ export default function AITools() {
 
   const aiTools = [
     {
+      id: 'professional-copywriting',
+      title: '🏆 Professional Copywriting AI',
+      description: 'Multi-agent pipeline · AIDA/PAS/BAB frameworks · A/B variants · Quality scoring · Beat competitors',
+      icon: <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
+      category: 'new',
+      gradient: 'from-yellow-500 via-purple-500 to-blue-500',
+      actionText: 'Generate Pro Copy',
+      comingSoon: false,
+      featured: true
+    },
+    {
       id: 'product-descriptions',
       title: 'Smart Product Descriptions',
       description: 'AI generates compelling descriptions in 3 styles: Sales, SEO, and Casual',
@@ -217,6 +228,9 @@ export default function AITools() {
 
     // Navigate to dedicated AI tool pages
     switch (toolId) {
+      case 'professional-copywriting':
+        setLocation('/ai-tools/professional-copywriting');
+        break;
       case 'product-descriptions':
         setLocation('/ai-tools/smart-product-descriptions');
         break;
