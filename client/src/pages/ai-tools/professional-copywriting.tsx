@@ -536,7 +536,6 @@ export default function ProfessionalCopywriting() {
           </Card>
         )}
         </div>
-        </div>
       </div>
     </div>
   );
