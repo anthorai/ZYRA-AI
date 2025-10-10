@@ -97,29 +97,23 @@ export default function ProfilePage() {
     handleLogout("/auth"); // Redirect to /auth as expected by this component
   };
 
-  // Mock user data for UI-only mode
-  const mockUserData = {
-    id: user?.id,
-    email: user?.email,
-    fullName: "Demo User",
-    plan: "trial",
-    avatar: null
-  };
+  // Fetch user data from API
+  const { data: userData, isLoading: isLoadingUser } = useQuery({
+    queryKey: ["/api/me"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/me");
+      return await response.json();
+    },
+  });
 
-  const mockStoreConnections = [
-    {
-      id: "1",
-      platform: "shopify",
-      storeName: "Demo Store",
-      storeUrl: "https://demo-store.myshopify.com",
-      isConnected: true,
-      lastSync: new Date(Date.now() - 3600000).toISOString()
-    }
-  ];
-
-  // Use mock data instead of API calls
-  const userData = mockUserData;
-  const storeConnections = mockStoreConnections;
+  // Fetch store connections from API
+  const { data: storeConnections = [], isLoading: isLoadingStores } = useQuery({
+    queryKey: ["/api/store-connections"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/store-connections");
+      return await response.json();
+    },
+  });
 
   // Profile update form
   const profileForm = useForm({
@@ -233,7 +227,7 @@ export default function ProfilePage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("image", file);
-      return await apiRequest("POST", "/api/upload-profile-image", formData);
+      return await apiRequest("POST", "/api/profile/upload-image", formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/me"] });
@@ -319,8 +313,12 @@ export default function ProfilePage() {
           </div>
         </div>
         <div className="max-w-4xl mx-auto space-y-6">
-
-          <Tabs defaultValue="profile" className="space-y-6">
+          {isLoadingUser ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-4 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
               <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
                 <User className="w-4 h-4" />
@@ -811,7 +809,8 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          )}
         </div>
       </div>
 
