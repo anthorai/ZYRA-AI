@@ -27,7 +27,7 @@ export interface SEOOptimizationResponse {
 }
 
 /**
- * Generate AI-powered product descriptions using OpenAI GPT-5
+ * Generate AI-powered product descriptions using OpenAI GPT-4o mini
  */
 export async function generateProductDescription(
   request: ProductDescriptionRequest
