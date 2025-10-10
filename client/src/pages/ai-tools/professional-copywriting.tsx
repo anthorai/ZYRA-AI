@@ -172,31 +172,43 @@ export default function ProfessionalCopywriting() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button onClick={handleGoBack} variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="gradient-surface border-b border-border px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center">
+          {/* Left Section - Back Button + Title */}
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            <Button 
+              onClick={handleGoBack} 
+              variant="ghost" 
+              size="icon"
+              className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Trophy className="w-8 h-8 text-yellow-500" />
+            <div className="min-w-0 flex-1">
+              <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl flex items-center gap-2">
+                <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
                 Copywriting AI
               </h1>
+              <p className="text-slate-300 text-xs sm:text-sm lg:text-base">Multi-agent pipeline with A/B variants and quality scoring</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Right Section - Notifications + Profile */}
+          <div className="flex items-center justify-end space-x-2 sm:space-x-4 flex-shrink-0">
             <NotificationCenter />
             <AvatarMenu />
           </div>
         </div>
+      </header>
 
-        {/* Main Content */}
+      {/* Main Content */}
+      <div className="flex-1 p-4 sm:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Input Form */}
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="gradient-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="w-5 h-5 text-purple-500" />
@@ -325,7 +337,7 @@ export default function ProfessionalCopywriting() {
           </Card>
 
           {/* Generated Results */}
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="gradient-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-yellow-500" />
@@ -492,7 +504,7 @@ export default function ProfessionalCopywriting() {
 
         {/* Analysis Insights */}
         {generatedCopy?.analysis && (
-          <Card className="bg-gray-800/50 border-gray-700">
+          <Card className="gradient-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-blue-500" />
@@ -523,6 +535,8 @@ export default function ProfessionalCopywriting() {
             </CardContent>
           </Card>
         )}
+        </div>
+        </div>
       </div>
     </div>
   );
