@@ -18,14 +18,54 @@ The server uses Express.js with TypeScript, providing RESTful API endpoints. Aut
 PostgreSQL with Drizzle ORM is used for type-safe operations. The schema includes tables for users, products, SEO metadata, marketing campaigns, and analytics. Drizzle Kit manages migrations.
 
 ## AI Integration
-OpenAI GPT-4o mini powers core AI functionalities, including:
-- **Professional Copywriting System**: Multi-agent pipeline (Analyzer → Copywriter → Critic) with 5 industry frameworks (AIDA, PAS, BAB, 4Ps, FAB), 6 psychological triggers (scarcity, social proof, authority, urgency, reciprocity, loss aversion), and 6 industry-specific templates (Fashion, Tech, Health, Home, Luxury, Beauty). Generates 3 A/B variants (emotional, logical, hybrid) with comprehensive quality scoring across conversion potential, SEO, readability, emotional impact, and clarity.
-- **Product Description Generation**: AI-powered descriptions with brand voice consistency
-- **Automated SEO Optimization**: Keyword-rich titles and meta descriptions
-- **Image Alt-Text Generation**: Vision API for accessibility and SEO
-- **Bulk Product Optimization**: Process 20-100+ products efficiently
-- **Brand Voice Memory**: Maintains consistent tone across all content
-- Token accounting and rate limiting for cost control
+
+### Zyra Pro Mode System
+**Architecture:** Centralized AI prompt library (`shared/ai-system-prompts.ts`) that transforms all AI outputs from basic text generation to expert-level, conversion-optimized content. Every AI tool uses the ZYRA_PRO_MODE_PROMPT system instruction.
+
+**Core Principles:**
+- Professional, expert, confident tone in all outputs
+- Conversion-focused (drives action, not just information)
+- SEO-optimized with natural keyword flow
+- Human-quality (never robotic or generic)
+- Production-ready (instantly usable for business)
+- Tool-specific adaptations (Blog ≠ Caption ≠ Product)
+
+**Quality Standards Enforced:**
+- Unique, insight-rich content (no fluff or repetition)
+- Clear formatting (headings, bullets, short paragraphs)
+- Strategic emotional triggers and persuasion techniques
+- Banned phrases filtering (corporate jargon, clichés)
+- Power words library for high-impact copy
+
+**Tool-Specific Prompts (11 variations):**
+1. **Professional Copywriting** - Multi-agent pipeline with frameworks
+2. **Product Descriptions** - Persuasive, benefit-driven, conversion-optimized
+3. **SEO Titles & Meta** - Search-optimized, click-worthy, keyword-rich
+4. **Image Alt-Text** - Accessible, SEO-friendly, descriptive
+5. **Email Marketing** - Personalized, engaging, high-converting
+6. **Blog Content** - Long-form SEO-rich, informative, structured
+7. **Social Captions** - Scroll-stopping, emotional, CTA-focused
+8. **Ad Copy** - Creative, bold, emotionally triggering, concise
+9. **Video Scripts** - Cinematic, engaging, emotional storytelling
+10. **Analyzer Agent** - Market & audience analysis for multi-agent pipeline
+11. **Copywriter/Critic Agents** - Content generation and quality refinement
+
+### Core AI Features
+OpenAI GPT-4o mini powers all content generation with Zyra Pro Mode:
+
+- **Professional Copywriting System**: Multi-agent pipeline (Analyzer → Copywriter → Critic) with 5 industry frameworks (AIDA, PAS, BAB, 4Ps, FAB), 6 psychological triggers (scarcity, social proof, authority, urgency, reciprocity, loss aversion), and 6 industry-specific templates (Fashion, Tech, Health, Home, Luxury, Beauty). Generates 3 A/B variants (emotional, logical, hybrid) with comprehensive quality scoring across conversion potential, SEO, readability, emotional impact, and clarity. **Uses Pro Mode multi-agent prompts.**
+
+- **Product Description Generation**: AI-powered descriptions with brand voice consistency. **Uses Pro Mode persuasive, benefit-driven prompt.**
+
+- **Automated SEO Optimization**: Keyword-rich titles and meta descriptions. **Uses Pro Mode search-optimized, click-worthy prompt.**
+
+- **Image Alt-Text Generation**: Vision API for accessibility and SEO. **Uses Pro Mode accessible, SEO-friendly prompt.**
+
+- **Bulk Product Optimization**: Process 20-100+ products efficiently with Pro Mode quality
+
+- **Brand Voice Memory**: Maintains consistent tone across all content, enhanced by Pro Mode standards
+
+- **Token Accounting & Rate Limiting**: Cost control and usage tracking
 
 ## Authentication & Authorization
 Supabase Auth provides email/password login, password reset, and JWT-based session management. It includes frontend route protection and backend middleware for API endpoint security.
