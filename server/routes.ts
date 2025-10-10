@@ -948,6 +948,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title and keywords are required" });
       }
 
+      // Import Zyra Pro Mode prompts
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const proModePrompt = getSystemPromptForTool('seoTitles');
+
       const prompt = `Optimize the following product for SEO:
                       Current Title: "${currentTitle}"
                       Keywords: "${keywords}"
@@ -965,10 +969,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         "seoScore": 85
                       }`;
 
-      // Using GPT-4o mini model as requested by the user
+      // Using GPT-4o mini model with Zyra Pro Mode for SEO
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: proModePrompt },
+          { role: "user", content: prompt }
+        ],
         response_format: { type: "json_object" },
       });
 
@@ -998,14 +1005,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { additionalTags } = req.body;
       
+      // Import Zyra Pro Mode prompts
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const proModePrompt = getSystemPromptForTool('imageAltText');
+      
       // Convert image buffer to base64
       const base64Image = req.file.buffer.toString('base64');
       const imageUrl = `data:${req.file.mimetype};base64,${base64Image}`;
 
-      // Use OpenAI Vision API to analyze the image
+      // Use OpenAI Vision API with Zyra Pro Mode to analyze the image
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
+          {
+            role: "system",
+            content: proModePrompt
+          },
           {
             role: "user",
             content: [
