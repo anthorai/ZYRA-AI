@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,8 @@ import {
   TrendingUp,
   DollarSign,
   BarChart3,
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react";
 import {
   LineChart,
@@ -49,8 +50,10 @@ export default function GrowthDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { dashboardData, isLoading, error, trackToolAccess } = useDashboard();
+  const queryClient = useQueryClient();
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   
-  // Fetch real campaign stats
+  // Fetch real campaign stats with auto-refresh every 30 seconds
   const { data: campaignStats, isLoading: campaignStatsLoading, error: campaignStatsError } = useQuery<{
     totalCampaigns: number;
     emailCampaigns: number;
@@ -63,9 +66,10 @@ export default function GrowthDashboard() {
   }>({
     queryKey: ['/api/campaigns/stats'],
     enabled: !!dashboardData?.user,
+    refetchInterval: 30000,
   });
 
-  // Fetch real growth summary stats
+  // Fetch real growth summary stats with auto-refresh every 30 seconds
   const { data: growthSummary, isLoading: growthSummaryLoading } = useQuery<{
     overallGrowth: number;
     totalAIImpact: number;
@@ -77,9 +81,10 @@ export default function GrowthDashboard() {
   }>({
     queryKey: ['/api/analytics/growth-summary'],
     enabled: !!dashboardData?.user,
+    refetchInterval: 30000,
   });
 
-  // Fetch revenue trends for charts
+  // Fetch revenue trends for charts with auto-refresh every 30 seconds
   const [chartPeriod, setChartPeriod] = useState<'7' | '30' | '90'>('30');
   const { data: revenueTrends, isLoading: trendsLoading } = useQuery<{
     period: number;
@@ -90,9 +95,10 @@ export default function GrowthDashboard() {
   }>({
     queryKey: ['/api/analytics/revenue-trends', { period: chartPeriod }],
     enabled: !!dashboardData?.user,
+    refetchInterval: 30000,
   });
 
-  // Fetch cart recovery data for conversion funnel
+  // Fetch cart recovery data for conversion funnel with auto-refresh every 30 seconds
   const { data: cartRecoveryData, isLoading: cartRecoveryLoading } = useQuery<{
     overview: {
       totalCarts: number;
@@ -107,6 +113,7 @@ export default function GrowthDashboard() {
   }>({
     queryKey: ['/api/analytics/cart-recovery'],
     enabled: !!dashboardData?.user,
+    refetchInterval: 30000,
   });
 
   // Log campaign stats errors
@@ -238,18 +245,62 @@ export default function GrowthDashboard() {
     }
   };
 
+  // Update last updated timestamp when data refreshes
+  useEffect(() => {
+    if (campaignStats || growthSummary || revenueTrends || cartRecoveryData) {
+      setLastUpdated(new Date());
+    }
+  }, [campaignStats, growthSummary, revenueTrends, cartRecoveryData]);
+
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/campaigns/stats'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/analytics/growth-summary'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/analytics/revenue-trends'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/analytics/cart-recovery'] });
+    setLastUpdated(new Date());
+    toast({
+      title: "Dashboard Refreshed",
+      description: "All analytics data has been updated",
+      duration: 2000,
+    });
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-        <div className="flex items-center space-x-3">
-          <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
-              Growth Analytics Dashboard
-            </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
+                Growth Analytics Dashboard
+              </h1>
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30 animate-pulse">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
+                Live
+              </Badge>
+            </div>
             <p className="text-slate-300 text-sm sm:text-base lg:text-lg">
               Track your store's performance, optimization impact, and revenue growth powered by Zyra AI
             </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-slate-400 text-xs">Last updated</p>
+              <p className="text-slate-300 text-sm">
+                {lastUpdated.toLocaleTimeString()}
+              </p>
+            </div>
+            <Button
+              onClick={handleManualRefresh}
+              variant="outline"
+              size="sm"
+              className="border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>
