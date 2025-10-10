@@ -697,9 +697,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         selectedPrompt += `\n\nTone preferences: ${JSON.stringify(tonePreferences)}`;
       }
 
-      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      // Using GPT-4o mini model as requested by the user
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: selectedPrompt }],
         response_format: { type: "json_object" },
       });
@@ -718,7 +718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         outputData: { description: result.description },
         brandVoice: selectedBrandVoice,
         tokensUsed,
-        model: 'gpt-5'
+        model: 'gpt-4o-mini'
       });
       
       // Send AI generation complete notification
@@ -757,9 +757,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         "seoScore": 85
                       }`;
 
-      // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      // Using GPT-4o mini model as requested by the user
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -796,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use OpenAI Vision API to analyze the image
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "user",
@@ -1020,7 +1020,7 @@ Respond with JSON in this exact format:
           const selectedPrompt = processPromptTemplate("Product Description", "seo", templateVariables);
 
           const descResponse = await openai.chat.completions.create({
-            model: "gpt-5",
+            model: "gpt-4o-mini",
             messages: [{ role: "user", content: selectedPrompt }],
             response_format: { type: "json_object" },
           });
@@ -1037,7 +1037,7 @@ Respond with JSON in this exact format:
             Respond with JSON: { "seoTitle": "...", "metaDescription": "..." }`;
 
           const seoResponse = await openai.chat.completions.create({
-            model: "gpt-5",
+            model: "gpt-4o-mini",
             messages: [{ role: "user", content: seoPrompt }],
             response_format: { type: "json_object" },
           });
