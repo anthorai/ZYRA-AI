@@ -16,6 +16,7 @@ import Profile from "@/components/dashboard/profile";
 import NotificationCenter from "@/components/dashboard/notification-center";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
+import ManageProducts from "@/pages/products/manage";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -268,17 +269,7 @@ export default function Dashboard() {
       case "campaigns":
         return <Campaigns />;
       case "products":
-        return (
-          <div className="text-center py-16">
-            <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2" data-testid="text-products-title">Product Management</h3>
-            <p className="text-muted-foreground mb-6">Manage and optimize your product catalog</p>
-            <Button className="gradient-button" data-testid="button-sync-shopify">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Sync from Shopify
-            </Button>
-          </div>
-        );
+        return <ManageProducts />;
       case "profile":
         return <Profile />;
       case "settings":
