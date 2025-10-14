@@ -48,12 +48,20 @@ export default function Auth() {
 
   const onLoginSubmit = async (data: LoginForm) => {
     try {
-      await login(data);
+      const result = await login(data);
+      
+      // Check if login was successful
+      if (result.error) {
+        throw result.error;
+      }
+      
       toast({ 
         title: "Welcome back!", 
         description: "Successfully logged in." 
       });
-      setLocation("/dashboard");
+      
+      // Don't manually redirect - let the useEffect handle it when user state updates
+      // This ensures the auth state is fully updated before navigation
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
@@ -67,12 +75,20 @@ export default function Auth() {
   const onRegisterSubmit = async (data: RegisterForm) => {
     try {
       const { terms, ...registerData } = data;
-      await register(registerData);
+      const result = await register(registerData);
+      
+      // Check if registration was successful
+      if (result.error) {
+        throw result.error;
+      }
+      
       toast({ 
         title: "Welcome to Zyra!", 
         description: "Account created successfully!" 
       });
-      setLocation("/dashboard");
+      
+      // Don't manually redirect - let the useEffect handle it when user state updates
+      // This ensures the auth state is fully updated before navigation
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
