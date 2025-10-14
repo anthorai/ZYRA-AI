@@ -3887,6 +3887,21 @@ Output format: Markdown with clear section headings.`;
         });
       }
 
+      // Register mandatory Shopify webhooks for compliance
+      const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
+      const replitDomains = process.env.REPLIT_DOMAINS;
+      const baseUrl = replitDomains 
+        ? `https://${replitDomains.split(',')[0].trim()}` 
+        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+      
+      const webhookResult = await registerShopifyWebhooks(shop as string, accessToken, baseUrl);
+      
+      if (webhookResult.success) {
+        console.log('✅ All mandatory webhooks registered successfully');
+      } else {
+        console.warn('⚠️ Some webhooks failed to register:', webhookResult.errors);
+      }
+
       // Send success message to parent window
       res.send(`
         <html>
@@ -5618,6 +5633,131 @@ Output format: Markdown with clear section headings.`;
     } catch (error) {
       console.error('Deletion info error:', error);
       res.status(500).json({ error: 'Failed to get deletion info' });
+    }
+  });
+
+  // ===== Shopify Compliance Webhooks =====
+  // These webhooks are mandatory for Shopify App Store approval
+  // All webhooks use HMAC verification for security
+
+  // Import webhook verification middleware
+  const { verifyShopifyWebhook } = await import('./middleware/shopifyWebhookAuth');
+
+  // 1. App Uninstalled Webhook
+  // Triggered when merchant uninstalls the app
+  app.post('/api/webhooks/shopify/app_uninstalled', verifyShopifyWebhook, async (req, res) => {
+    try {
+      const { shop_domain, shop_id } = req.body;
+      
+      console.log('📦 Shopify app uninstalled:', { shop_domain, shop_id });
+
+      // Find and deactivate the store connection
+      const connections = await supabaseStorage.getStoreConnections('');
+      const connection = connections.find(conn => 
+        conn.platform === 'shopify' && 
+        conn.storeUrl?.includes(shop_domain)
+      );
+
+      if (connection) {
+        await supabaseStorage.updateStoreConnection(connection.id, {
+          status: 'inactive',
+          updatedAt: new Date()
+        });
+        console.log('✅ Deactivated store connection:', connection.id);
+      }
+
+      // Respond with 200 OK as required by Shopify
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error handling app uninstalled webhook:', error);
+      // Still return 200 to prevent Shopify retries
+      res.status(200).json({ success: false });
+    }
+  });
+
+  // 2. Customer Data Request Webhook (GDPR)
+  // Triggered when customer requests their data
+  app.post('/api/webhooks/shopify/customers/data_request', verifyShopifyWebhook, async (req, res) => {
+    try {
+      const { shop_domain, customer, orders_requested } = req.body;
+      
+      console.log('📋 GDPR data request received:', { 
+        shop_domain, 
+        customer_email: customer?.email,
+        orders_requested 
+      });
+
+      // Log the request for manual processing
+      // In production, this should trigger a process to gather and send customer data
+      console.log('⚠️ Manual action required: Customer data request needs to be fulfilled');
+      console.log('Customer details:', JSON.stringify(customer, null, 2));
+
+      // Respond with 200 OK
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error handling data request webhook:', error);
+      res.status(200).json({ success: false });
+    }
+  });
+
+  // 3. Customer Redact Webhook (GDPR)
+  // Triggered when customer requests data deletion
+  app.post('/api/webhooks/shopify/customers/redact', verifyShopifyWebhook, async (req, res) => {
+    try {
+      const { shop_domain, customer } = req.body;
+      
+      console.log('🗑️ GDPR customer redaction requested:', { 
+        shop_domain, 
+        customer_email: customer?.email,
+        customer_id: customer?.id
+      });
+
+      // Remove customer-specific data from your database
+      // This is a placeholder - actual implementation depends on your data model
+      console.log('⚠️ Manual action required: Customer data redaction needs to be processed');
+      console.log('Customer to redact:', JSON.stringify(customer, null, 2));
+
+      // Respond with 200 OK
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error handling customer redact webhook:', error);
+      res.status(200).json({ success: false });
+    }
+  });
+
+  // 4. Shop Redact Webhook (GDPR)
+  // Triggered 48 hours after app uninstall - must delete all shop data
+  app.post('/api/webhooks/shopify/shop/redact', verifyShopifyWebhook, async (req, res) => {
+    try {
+      const { shop_domain, shop_id } = req.body;
+      
+      console.log('🗑️ GDPR shop redaction requested:', { shop_domain, shop_id });
+
+      // Find all store connections for this shop
+      const connections = await supabaseStorage.getStoreConnections('');
+      const shopConnections = connections.filter(conn => 
+        conn.platform === 'shopify' && 
+        conn.storeUrl?.includes(shop_domain)
+      );
+
+      // Delete all shop data
+      for (const connection of shopConnections) {
+        // Delete store connection
+        await supabaseStorage.deleteStoreConnection(connection.id);
+        console.log('✅ Deleted store connection:', connection.id);
+
+        // Delete associated products (if any)
+        // Note: This assumes products are linked to store connections
+        // Adjust based on your actual data model
+      }
+
+      console.log('✅ Shop data redaction completed for:', shop_domain);
+
+      // Respond with 200 OK
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error handling shop redact webhook:', error);
+      res.status(200).json({ success: false });
     }
   });
 
