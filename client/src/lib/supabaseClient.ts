@@ -29,7 +29,7 @@ function createMockClient() {
 
 // Supabase configuration with enhanced error handling
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Log only in development
 if (import.meta.env.DEV) {
@@ -54,7 +54,7 @@ const hasValidConfig = Boolean(
 if (!hasValidConfig && import.meta.env.DEV) {
   console.error('❌ Supabase configuration missing or invalid:');
   console.error('  VITE_SUPABASE_URL:', supabaseUrl || 'MISSING');
-  console.error('  VITE_SUPABASE_KEY:', supabaseAnonKey ? 'SET' : 'MISSING');
+  console.error('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'SET' : 'MISSING');
 }
 
 // Create and export the Supabase client with error handling
