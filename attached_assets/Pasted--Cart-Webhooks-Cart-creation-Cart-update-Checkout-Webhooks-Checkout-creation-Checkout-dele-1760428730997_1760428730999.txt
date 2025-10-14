@@ -1,0 +1,153 @@
+🛒 Cart Webhooks
+
+Cart creation
+
+Cart update
+
+💳 Checkout Webhooks
+
+Checkout creation
+
+Checkout deletion
+
+Checkout update
+
+🗂️ Collection Webhooks
+
+Collection creation
+
+Collection deletion
+
+Collection update
+
+👤 Customer Webhooks
+
+Customer SMS marketing consent update
+
+Customer account settings update
+
+Customer creation
+
+Customer deletion
+
+Customer disable
+
+Customer email marketing consent update
+
+Customer enable
+
+Customer group creation
+
+Customer group deletion
+
+Customer group update
+
+Customer purchasing summary
+
+Customer tags added
+
+Customer tags removed
+
+Customer update
+
+💸 Discount Webhooks
+
+Discount creation
+
+Discount deletion
+
+Discount update Discount Events
+
+Discount deleted
+
+Discount updated
+
+Draft Order Events
+
+Draft order created
+
+Draft order deleted
+
+Draft order updated
+
+Fulfillment Events
+
+Fulfillment created
+
+Fulfillment updated
+
+Fulfillment Order Events
+
+Fulfillment hold added to an order
+
+Fulfillment hold released from an order
+
+Fulfillment order cannot be completed by fulfillment service
+
+Fulfillment order line items prepared for pickup
+
+Fulfillment order moved
+
+Fulfillment order rescheduled
+
+Fulfillment order that was scheduled becomes due
+
+Fulfillment order transitioned to “On hold” status
+
+Fulfillment order released and no longer on hold
+
+Fulfillment order’s routing complete
+
+Fulfillment orders canceled
+
+Fulfillment order cancellation request accepted
+
+Fulfillment order cancellation request rejected
+
+Fulfillment order cancellation request submitted
+
+Fulfillment order fulfillment request accepted
+
+Fulfillment order fulfillment request rejected
+
+Fulfillment order fulfillment request submitted
+
+Fulfillment order line items prepared for local delivery
+
+Fulfillment orders merged
+
+Fulfillment orders split Fulfillment Events
+
+Fulfillment updated
+
+Inventory Item Events
+
+Inventory item created
+
+Inventory item deleted
+
+Inventory item updated
+
+Inventory Level Events
+
+Inventory level connected
+
+Inventory level disconnected
+
+Inventory level updated
+
+Inventory Shipment Events
+
+Inventory shipment created
+
+Inventory shipment deleted
+
+Inventory shipment item added
+
+Inventory shipment item quantity updated
+
+Inventory shipment item received
+
+Inventory shipment item removed
+
+Inventory shipment marked as in transit

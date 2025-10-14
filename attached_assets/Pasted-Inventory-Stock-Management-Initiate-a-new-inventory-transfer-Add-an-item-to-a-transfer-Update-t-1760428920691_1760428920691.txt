@@ -1,0 +1,147 @@
+Inventory & Stock Management
+
+Initiate a new inventory transfer
+
+Add an item to a transfer
+
+Update the quantity of a transfer item
+
+Remove an item from a transfer
+
+Mark a transfer as ready to ship
+
+Update the status of a shipment in transit
+
+Complete an inventory transfer
+
+Cancel an inventory transfer
+
+Location & Market Management
+
+Create a new location
+
+Update location details
+
+Activate a location
+
+Deactivate a location
+
+Delete a location
+
+Create a new market
+
+Delete a market
+
+Option 2: Action-Oriented and Concise
+This version uses strong verbs and a consistent format for quick scanning.
+
+Track inventory shipments
+
+Cancel an inventory transfer
+
+Finalize an inventory transfer
+
+Add items to a transfer
+
+Adjust transfer item quantities
+
+Remove items from a transfer
+
+Confirm transfer is ready to ship
+
+Activate a location
+
+Create a location
+
+Deactivate a location
+
+Delete a location
+
+Modify location details
+
+Add a new market
+
+Remove a market
+
+Option 3: Process-Flow Narrative
+This version tells the story of the inventory and location lifecycle, which is useful for documentation or training.
+
+The Inventory Transfer Process:
+The process begins when you Create a new inventory transfer. You then Add items to it and can Update item quantities as needed. If an item is no longer required, you can Remove it from the transfer. Once all items are prepared, you Mark the transfer as ready to ship. You can then Track the shipment's progress until you finally Complete the transfer. At any point before completion, you have the option to Cancel the transfer.
+
+The Location & Market Lifecycle:
+You can Create a new location and later Update its details. To control its visibility or use, you can Activate or Deactivate it. If a location is no longer needed, you can Delete it entirely. Similarly, you can Create or Delete entire markets.
+
+Location Management
+
+Create a new location
+
+Update location details
+
+Activate a location
+
+Deactivate a location
+
+Delete a location
+
+Market Management
+
+Create a new market
+
+Update market configuration
+
+Delete a market
+
+Order Lifecycle Management
+
+Create a new order
+
+Edit order details
+
+Process order payment
+
+Fulfill an order
+
+Cancel an order
+
+Delete an order
+
+Option 2: Action-Oriented and Concise
+This version uses strong, imperative verbs for a quick-reference list.
+
+Create a location
+
+Update a location
+
+Activate a location
+
+Deactivate a location
+
+Delete a location
+
+Create a market
+
+Update a market
+
+Delete a market
+
+Create an order
+
+Edit an order
+
+Process an order payment
+
+Fulfill an order
+
+Cancel an order
+
+Delete an order
+
+Option 3: Process-Flow Narrative
+This version tells the story of the operational lifecycle, which is useful for understanding workflows.
+
+Managing Locations & Markets:
+You can Create a new Location or Market, and later Update their configurations. To control their availability, you can Activate or Deactivate a location. If they are no longer needed, you can Delete them.
+
+The Order Lifecycle:
+The process begins when you Create a new Order. You can then Edit its details before the payment is processed. Once the Order payment is processed, you can move to Fulfill the order. At various stages, you may need to Cancel the order. In specific cases, you may also have the option to Delete an order entirely.
