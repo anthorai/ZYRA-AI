@@ -83,6 +83,9 @@ const ShopifyPublish = lazy(() => import("@/pages/automation/shopify-publish"));
 const SmartBulkSuggestions = lazy(() => import("@/pages/automation/smart-bulk-suggestions"));
 const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes"));
 
+// Admin pages
+const WebhookSetup = lazy(() => import("@/pages/admin/webhook-setup"));
+
 // Loading fallback component - optimized for fast appearance
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center dark-theme-bg">
@@ -236,6 +239,15 @@ function Router() {
               <SupportPage />
             </Suspense>
           </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+
+      {/* Admin routes */}
+      <Route path="/admin/webhook-setup" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <WebhookSetup />
+          </Suspense>
         </ProtectedRoute>
       )} />
       
