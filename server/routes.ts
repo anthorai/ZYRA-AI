@@ -3853,7 +3853,7 @@ Output format: Markdown with clear section headings.`;
       const accessToken = tokenData.access_token;
 
       // Get shop info
-      const shopInfoResponse = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
+      const shopInfoResponse = await fetch(`https://${shop}/admin/api/2025-10/shop.json`, {
         headers: {
           'X-Shopify-Access-Token': accessToken
         }
@@ -3889,11 +3889,13 @@ Output format: Markdown with clear section headings.`;
 
       // Register mandatory Shopify webhooks for compliance
       const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
-      const replitDomains = process.env.REPLIT_DOMAINS;
-      const baseUrl = replitDomains 
-        ? `https://${replitDomains.split(',')[0].trim()}` 
-        : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
       
+      // Build baseUrl from request (works with custom domains and all environments)
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const baseUrl = `${protocol}://${host}`;
+      
+      console.log('📡 Registering webhooks with baseUrl:', baseUrl);
       const webhookResult = await registerShopifyWebhooks(shop as string, accessToken, baseUrl);
       
       if (webhookResult.success) {
@@ -3974,6 +3976,79 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Manual webhook registration endpoint (for admin re-registration)
+  app.post('/api/shopify/webhooks/register', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection || !shopifyConnection.storeUrl) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Get shop domain from storeUrl
+      const shopDomain = shopifyConnection.storeUrl.replace('https://', '');
+      
+      // Register webhooks
+      const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
+      
+      // Build baseUrl from request (works with custom domains and all environments)
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const baseUrl = `${protocol}://${host}`;
+      
+      console.log('📡 Manually registering webhooks with baseUrl:', baseUrl);
+      const result = await registerShopifyWebhooks(shopDomain, shopifyConnection.accessToken, baseUrl);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: 'All webhooks registered successfully',
+          registered: result.registered 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: 'Some webhooks failed to register',
+          registered: result.registered,
+          errors: result.errors 
+        });
+      }
+    } catch (error) {
+      console.error('Webhook registration error:', error);
+      res.status(500).json({ error: 'Failed to register webhooks' });
+    }
+  });
+
+  // Verify webhook registration status
+  app.get('/api/shopify/webhooks/verify', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection || !shopifyConnection.storeUrl) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Get shop domain from storeUrl
+      const shopDomain = shopifyConnection.storeUrl.replace('https://', '');
+      
+      // Verify webhooks
+      const { verifyWebhooksRegistered } = await import('./lib/shopify-webhooks');
+      const result = await verifyWebhooksRegistered(shopDomain, shopifyConnection.accessToken);
+      
+      res.json({ 
+        allRegistered: result.allRegistered,
+        missing: result.missing 
+      });
+    } catch (error) {
+      console.error('Webhook verification error:', error);
+      res.status(500).json({ error: 'Failed to verify webhooks' });
+    }
+  });
+
   // Get Shopify sync status (for real-time status component)
   app.get('/api/shopify/sync-status', requireAuth, async (req, res) => {
     try {
@@ -4036,7 +4111,7 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Fetch products from Shopify API
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-01/products.json`, {
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`, {
         headers: {
           'X-Shopify-Access-Token': shopifyConnection.accessToken
         }
@@ -4076,7 +4151,7 @@ Output format: Markdown with clear section headings.`;
       });
 
       // Fetch products from Shopify
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-01/products.json`, {
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`, {
         headers: {
           'X-Shopify-Access-Token': shopifyConnection.accessToken
         }

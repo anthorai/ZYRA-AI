@@ -37,7 +37,7 @@ export interface ShopifyMetafieldUpdate {
 export class ShopifyClient {
   private shop: string;
   private accessToken: string;
-  private apiVersion = '2024-01';
+  private apiVersion = '2025-10';
 
   constructor(shop: string, accessToken: string) {
     this.shop = shop;

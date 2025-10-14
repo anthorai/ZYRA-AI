@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Copy, CheckCircle2, ExternalLink, AlertCircle } from "lucide-react";
+import { Copy, CheckCircle2, ExternalLink, AlertCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function WebhookSetup() {
   const { toast } = useToast();
@@ -11,6 +13,45 @@ export default function WebhookSetup() {
 
   // Get the base URL from the current window location
   const baseUrl = window.location.origin;
+
+  // Verify webhook registration status
+  const { data: verificationStatus, refetch: refetchVerification, isLoading: isVerifying } = useQuery<{
+    allRegistered: boolean;
+    missing: string[];
+  }>({
+    queryKey: ['/api/shopify/webhooks/verify'],
+    enabled: false, // Only fetch when manually triggered
+  });
+
+  // Manual webhook registration
+  const registerWebhooksMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/shopify/webhooks/register');
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "✅ Webhooks Registered Successfully!",
+          description: `All ${data.registered?.length || 4} mandatory webhooks are now configured.`,
+        });
+        refetchVerification();
+      } else {
+        toast({
+          title: "⚠️ Partial Registration",
+          description: data.message || "Some webhooks failed to register. Check console for details.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "❌ Registration Failed",
+        description: error.message || "Failed to register webhooks. Make sure you're connected to Shopify.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const webhooks = [
     {
@@ -242,12 +283,95 @@ export default function WebhookSetup() {
           </CardContent>
         </Card>
 
+        {/* Webhook Management */}
+        <Card className="bg-slate-900 border-slate-800">
+          <CardHeader>
+            <CardTitle className="text-white">🔧 Webhook Management</CardTitle>
+            <CardDescription className="text-slate-400">
+              Programmatically register webhooks with your connected Shopify store
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert className="border-blue-500/50 bg-blue-500/10">
+              <AlertCircle className="h-4 w-4 text-blue-500" />
+              <AlertDescription className="text-blue-200">
+                <strong>For Custom Apps:</strong> Webhooks are automatically registered during the OAuth connection flow.
+                Use the buttons below to re-register or verify webhook status.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => registerWebhooksMutation.mutate()}
+                disabled={registerWebhooksMutation.isPending}
+                className="flex-1"
+                data-testid="button-register-webhooks"
+              >
+                {registerWebhooksMutation.isPending ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Registering...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Re-register Webhooks
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => refetchVerification()}
+                disabled={isVerifying}
+                className="flex-1"
+                data-testid="button-verify-webhooks"
+              >
+                {isVerifying ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Verify Registration
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {verificationStatus && (
+              <div className="mt-4 p-4 bg-slate-950 rounded-lg border border-slate-800">
+                {verificationStatus.allRegistered ? (
+                  <div className="flex items-center gap-2 text-green-400">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span className="font-medium">All webhooks are registered!</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-amber-400">
+                      <AlertCircle className="w-5 h-5" />
+                      <span className="font-medium">Missing webhooks detected</span>
+                    </div>
+                    <ul className="text-sm text-slate-400 ml-7 space-y-1">
+                      {verificationStatus.missing?.map((topic: string) => (
+                        <li key={topic}>• {topic}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Next Steps */}
         <Alert className="border-green-500/50 bg-green-500/10">
           <CheckCircle2 className="h-4 w-4 text-green-500" />
           <AlertDescription className="text-green-200">
-            <strong>After Configuration:</strong> Once you've added all webhook URLs to the Partner Dashboard,
-            go to the Distribution tab and click "Run" under automated checks. All webhook verification checks should pass! ✨
+            <strong>Ready for Review:</strong> Once webhooks are registered (check with "Verify Registration"),
+            go to Partner Dashboard → Distribution → Run automated checks. All compliance checks should pass! ✨
           </AlertDescription>
         </Alert>
       </div>

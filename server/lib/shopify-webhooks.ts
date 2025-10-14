@@ -52,7 +52,7 @@ export async function registerShopifyWebhooks(
   for (const webhook of mandatoryWebhooks) {
     try {
       // Check if webhook already exists
-      const existingWebhooksUrl = `https://${shop}/admin/api/2024-01/webhooks.json?topic=${webhook.topic}`;
+      const existingWebhooksUrl = `https://${shop}/admin/api/2025-10/webhooks.json?topic=${webhook.topic}`;
       const existingResponse = await fetch(existingWebhooksUrl, {
         headers: {
           'X-Shopify-Access-Token': accessToken,
@@ -66,7 +66,7 @@ export async function registerShopifyWebhooks(
 
         // Delete existing webhooks with the same topic to avoid duplicates
         for (const existing of existingWebhooks) {
-          const deleteUrl = `https://${shop}/admin/api/2024-01/webhooks/${existing.id}.json`;
+          const deleteUrl = `https://${shop}/admin/api/2025-10/webhooks/${existing.id}.json`;
           await fetch(deleteUrl, {
             method: 'DELETE',
             headers: {
@@ -78,7 +78,7 @@ export async function registerShopifyWebhooks(
       }
 
       // Register new webhook
-      const registerUrl = `https://${shop}/admin/api/2024-01/webhooks.json`;
+      const registerUrl = `https://${shop}/admin/api/2025-10/webhooks.json`;
       const response = await fetch(registerUrl, {
         method: 'POST',
         headers: {
@@ -132,7 +132,7 @@ export async function verifyWebhooksRegistered(
   ];
 
   try {
-    const response = await fetch(`https://${shop}/admin/api/2024-01/webhooks.json`, {
+    const response = await fetch(`https://${shop}/admin/api/2025-10/webhooks.json`, {
       headers: {
         'X-Shopify-Access-Token': accessToken
       }
