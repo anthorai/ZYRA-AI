@@ -1,0 +1,29 @@
+# Shopify App Configuration
+# Learn more at https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
+
+name = "ZYRA AI"
+client_id = "9cb3481e978a06a1cd25e59d96ed6914"
+
+# App access scopes
+scopes = "read_products,write_products,read_inventory"
+
+[build]
+automatically_update_urls_on_dev = false
+
+[webhooks]
+api_version = "2025-10"
+
+# Mandatory GDPR compliance webhooks
+[[webhooks.subscriptions]]
+compliance_topics = [
+  "customers/data_request",
+  "customers/redact",
+  "shop/redact"
+]
+# CLI will use this unified endpoint for all compliance webhooks
+uri = "/api/webhooks/compliance"
+
+[auth]
+redirect_urls = [
+  "https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev/api/shopify/callback"
+]
