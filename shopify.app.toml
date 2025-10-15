@@ -20,8 +20,8 @@ compliance_topics = [
   "customers/redact",
   "shop/redact"
 ]
-# CLI will use this unified endpoint for all compliance webhooks
-uri = "/api/webhooks/compliance"
+# CLI requires fully-qualified URL for webhook endpoint
+uri = "https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev/api/webhooks/compliance"
 
 [auth]
 redirect_urls = [

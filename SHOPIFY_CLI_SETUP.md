@@ -46,7 +46,21 @@ shopify auth login
 
 This will open a browser window. Login with your Shopify Partner credentials.
 
-### Step 4: Deploy Webhook Configuration
+### Step 4: Verify Your Webhook URL (Important!)
+
+Before deploying, ensure the webhook URL in `shopify.app.toml` matches your current domain:
+
+**Current URL in config:**
+```
+https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev/api/webhooks/compliance
+```
+
+**If you have a custom domain or different Replit URL:**
+1. Open `shopify.app.toml`
+2. Update the `uri` field under `[[webhooks.subscriptions]]` to your actual domain
+3. Save the file
+
+### Step 5: Deploy Webhook Configuration
 
 Now deploy the webhook configuration to Shopify:
 
@@ -58,9 +72,9 @@ shopify app deploy
 - Reads your `shopify.app.toml` file
 - Registers all 3 compliance webhooks with Shopify
 - Sets API version to 2025-10
-- Configures the unified endpoint: `/api/webhooks/compliance`
+- Configures the unified endpoint at your domain + `/api/webhooks/compliance`
 
-### Step 5: Verify Deployment
+### Step 6: Verify Deployment
 
 After deployment completes, verify the configuration:
 
