@@ -2,7 +2,7 @@
 # Learn more at https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
 
 name = "ZYRA AI"
-client_id = "9cb3481e978a06a1cd25e59d96ed6914"
+client_id = "c09a80c1af36e5ae2643ad5088b1025f"
 
 # App access scopes
 scopes = "read_products,write_products,read_inventory"
