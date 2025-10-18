@@ -2,6 +2,32 @@
 
 Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
 
+# Recent Changes (October 18, 2025)
+
+## Security Enhancements
+1. **AES-256-GCM Encryption**: Upgraded from base64 encoding to military-grade AES-256-GCM encryption for all sensitive data (API keys, OAuth tokens, 2FA secrets) in `server/lib/encryption.ts` and `server/lib/supabase-storage.ts`
+2. **2FA Backup Code Security**: Upgraded from SHA256 to bcrypt (10 salt rounds) for backup code hashing in `server/lib/2fa-service.ts` with constant-time verification
+
+## Infrastructure Improvements
+3. **Shopify API Rate Limiting**: Implemented token bucket rate limiter in `server/lib/shopify-client.ts` to prevent throttling:
+   - 2 requests/second with 40-request burst capacity
+   - In-place 429 retry handling with exponential backoff
+   - Queue management with try-finally error recovery
+   - Rate limit header monitoring and warnings
+
+4. **Trial Expiration Notification System**: Enhanced `server/lib/trial-expiration-service.ts` with proactive notification service:
+   - Notification schedule: 7 days (welcome), 3 days, 1 day before expiration
+   - In-app notifications with analytics tracking
+   - Duplicate prevention and graceful error handling
+   - Admin-only API endpoints for manual triggering and status monitoring
+   - Ready for future SendGrid/Twilio email/SMS integration
+
+## Deployment Configuration
+5. **Production Deployment Setup**: Configured VM deployment for production publishing:
+   - Build: `npm run build` (Vite frontend + esbuild backend bundling)
+   - Run: `npm start` (Production server on 0.0.0.0:5000)
+   - VM target for persistent schedulers and background jobs
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -110,10 +136,10 @@ Real-time analytics dashboard tracks campaigns, revenue, conversions, and ROI. E
 A production-ready error logging system uses an `ErrorLogger` utility for centralized logging to a `error_logs` table, non-blocking asynchronous database writes, and a global error middleware. Admin endpoints allow for monitoring and managing error logs.
 
 ## Security & Compliance
-Includes multi-tier rate limiting, comprehensive input sanitization using `express-validator`, GDPR compliance with data export/deletion endpoints, and dedicated privacy and terms pages.
+Includes multi-tier rate limiting, comprehensive input sanitization using `express-validator`, GDPR compliance with data export/deletion endpoints, and dedicated privacy and terms pages. **Enhanced with AES-256-GCM encryption** for sensitive credentials and **bcrypt-hashed 2FA backup codes** for production-grade security.
 
 ## Notification System
-An advanced notification preference system allows granular control over multi-channel notifications (Email, SMS, In-App, Push) across various categories. Features include preset modes, frequency management, visual quiet hours builder, and four-tier priority filtering.
+An advanced notification preference system allows granular control over multi-channel notifications (Email, SMS, In-App, Push) across various categories. Features include preset modes, frequency management, visual quiet hours builder, and four-tier priority filtering. **Trial expiration notification service** sends proactive in-app notifications at 7, 3, and 1 days before trial expiration, with infrastructure ready for email/SMS integration.
 
 ## Shopify Integration
 A fully functional OAuth 2.0 integration system connects Zyra with Shopify stores. Features include:
@@ -127,7 +153,7 @@ A fully functional OAuth 2.0 integration system connects Zyra with Shopify store
   - **Input Sanitization**: Shop domain sanitized and validated on both initiation and callback
   - **Single-use States**: States deleted after use with 10-minute expiry and automatic cleanup
   - **Origin Validation**: postMessage uses specific origin instead of wildcard
-  - **Rate Limiting**: OAuth endpoints protected against abuse
+  - **Rate Limiting**: OAuth endpoints protected against abuse, plus comprehensive Shopify API rate limiting (2 req/sec with 40-request burst capacity, automatic 429 retry handling)
 - **API Endpoints**: 
   - POST /api/shopify/auth - Initiate OAuth flow with secure state generation
   - GET /api/shopify/callback - Handle OAuth callback with HMAC verification
@@ -137,6 +163,13 @@ A fully functional OAuth 2.0 integration system connects Zyra with Shopify store
   - POST /api/shopify/sync - Sync products to Zyra database
 - **Frontend Integration**: Integration card on settings page with OAuth popup flow, connection status display, and visual indicators
 - **Known Limitation**: OAuth state storage uses in-memory Map (single-process). For production multi-instance deployments, migrate to Redis or Supabase table for shared state persistence.
+
+## Deployment
+Configured for VM deployment on Replit with:
+- Build process: Vite frontend bundling + esbuild backend compilation
+- Production server: Node.js on 0.0.0.0:5000
+- Persistent schedulers: Billing tasks (6h), campaign scheduler (5min), product sync (10min)
+- Always-running architecture for SaaS features and background jobs
 
 # External Dependencies
 
