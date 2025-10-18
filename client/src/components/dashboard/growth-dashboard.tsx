@@ -230,7 +230,8 @@ export default function GrowthDashboard() {
       'content-roi': '/analytics/content-roi',
       'revenue-impact': '/analytics/revenue-impact',
       'seo-ranking-tracker': '/analytics/seo-ranking-tracker',
-      'ab-test-results': '/analytics/ab-test-results'
+      'ab-test-results': '/analytics/ab-test-results',
+      'total-campaigns': '/campaigns'
     };
 
     const route = routeMapping[cardId as keyof typeof routeMapping];
