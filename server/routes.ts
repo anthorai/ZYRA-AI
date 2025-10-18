@@ -68,10 +68,9 @@ import { NotificationService } from "./lib/notification-service";
 import { TwoFactorAuthService } from "./lib/2fa-service";
 import { initializeUserCredits } from "./lib/credits";
 
-// Initialize OpenAI with Replit AI Integration
+// Initialize OpenAI
 const openai = new OpenAI({ 
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || ""
+  apiKey: process.env.OPENAI_API_KEY || ""
 });
 
 // Types for authenticated user from Supabase
