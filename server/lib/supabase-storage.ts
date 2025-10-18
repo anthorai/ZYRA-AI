@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
+import { encrypt, decrypt, encryptJSON, decryptJSON, isEncrypted } from './encryption';
 import { 
   type User, 
   type InsertUser, 
@@ -912,15 +913,50 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get integration settings: ${error.message}`);
-    return data || [];
+    
+    // Decrypt credentials for each integration
+    const decryptedData = (data || []).map(setting => {
+      if (setting.credentials && isEncrypted(setting.credentials)) {
+        try {
+          const decrypted = decrypt(setting.credentials.encrypted);
+          // Try to parse as JSON, otherwise return as string
+          try {
+            setting.credentials = JSON.parse(decrypted);
+          } catch {
+            setting.credentials = decrypted;
+          }
+        } catch (err) {
+          console.error(`Failed to decrypt credentials for integration ${setting.id}:`, err);
+        }
+      }
+      return setting;
+    });
+    
+    return decryptedData;
   }
 
   async createIntegrationSettings(settings: InsertIntegrationSettings): Promise<IntegrationSettings> {
+    // Encrypt credentials - handle both string and object types
+    let encryptedCredentials = null;
+    if (settings.credentials) {
+      if (typeof settings.credentials === 'object' && !Array.isArray(settings.credentials)) {
+        // Object credentials - use encryptJSON
+        encryptedCredentials = encryptJSON(settings.credentials);
+      } else {
+        // String/primitive credentials - convert to string and encrypt
+        const credentialString = typeof settings.credentials === 'string' 
+          ? settings.credentials 
+          : JSON.stringify(settings.credentials);
+        encryptedCredentials = { encrypted: encrypt(credentialString) };
+      }
+    }
+    
     const settingsData = {
       ...settings,
       id: randomUUID(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      credentials: encryptedCredentials
     };
 
     const { data, error } = await supabase
@@ -930,18 +966,73 @@ export class SupabaseStorage implements ISupabaseStorage {
       .single();
     
     if (error) throw new Error(`Failed to create integration settings: ${error.message}`);
+    
+    // Decrypt credentials before returning
+    if (data.credentials && isEncrypted(data.credentials)) {
+      try {
+        const decrypted = decrypt(data.credentials.encrypted);
+        // Try to parse as JSON, otherwise return as string
+        try {
+          data.credentials = JSON.parse(decrypted);
+        } catch {
+          data.credentials = decrypted;
+        }
+      } catch (err) {
+        console.error('Failed to decrypt credentials:', err);
+      }
+    }
+    
     return data;
   }
 
   async updateIntegrationSettings(id: string, updates: Partial<IntegrationSettings>): Promise<IntegrationSettings> {
+    // Encrypt credentials if being updated - handle both string and object types
+    let encryptedCredentials: any = undefined;
+    if (updates.credentials !== undefined) {
+      if (updates.credentials === null) {
+        encryptedCredentials = null;
+      } else if (typeof updates.credentials === 'object' && !Array.isArray(updates.credentials)) {
+        // Object credentials - use encryptJSON
+        encryptedCredentials = encryptJSON(updates.credentials);
+      } else {
+        // String/primitive credentials - convert to string and encrypt
+        const credentialString = typeof updates.credentials === 'string' 
+          ? updates.credentials 
+          : JSON.stringify(updates.credentials);
+        encryptedCredentials = { encrypted: encrypt(credentialString) };
+      }
+    }
+    
+    const updateData = {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+      ...(encryptedCredentials !== undefined ? { credentials: encryptedCredentials } : {})
+    };
+    
     const { data, error } = await supabase
       .from('integration_settings')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
     
     if (error) throw new Error(`Failed to update integration settings: ${error.message}`);
+    
+    // Decrypt credentials before returning
+    if (data.credentials && isEncrypted(data.credentials)) {
+      try {
+        const decrypted = decrypt(data.credentials.encrypted);
+        // Try to parse as JSON, otherwise return as string
+        try {
+          data.credentials = JSON.parse(decrypted);
+        } catch {
+          data.credentials = decrypted;
+        }
+      } catch (err) {
+        console.error('Failed to decrypt credentials:', err);
+      }
+    }
+    
     return data;
   }
 
@@ -956,6 +1047,16 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (error.code === 'PGRST116') return undefined;
       throw new Error(`Failed to get security settings: ${error.message}`);
     }
+    
+    // Decrypt 2FA secret if encrypted
+    if (data && data.twoFactorSecret && isEncrypted(data.twoFactorSecret)) {
+      try {
+        data.twoFactorSecret = decrypt(data.twoFactorSecret);
+      } catch (err) {
+        console.error(`Failed to decrypt 2FA secret for user ${userId}:`, err);
+      }
+    }
+    
     return data;
   }
 
@@ -964,7 +1065,9 @@ export class SupabaseStorage implements ISupabaseStorage {
       ...settings,
       id: randomUUID(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      // Encrypt 2FA secret if provided
+      twoFactorSecret: settings.twoFactorSecret ? encrypt(settings.twoFactorSecret) : null
     };
 
     const { data, error } = await supabase
@@ -974,18 +1077,37 @@ export class SupabaseStorage implements ISupabaseStorage {
       .single();
     
     if (error) throw new Error(`Failed to create security settings: ${error.message}`);
+    
+    // Decrypt 2FA secret before returning
+    if (data.twoFactorSecret && isEncrypted(data.twoFactorSecret)) {
+      data.twoFactorSecret = decrypt(data.twoFactorSecret);
+    }
+    
     return data;
   }
 
   async updateSecuritySettings(userId: string, updates: Partial<SecuritySettings>): Promise<SecuritySettings> {
+    const updateData = {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+      // Encrypt 2FA secret if being updated
+      ...(updates.twoFactorSecret ? { twoFactorSecret: encrypt(updates.twoFactorSecret) } : {})
+    };
+    
     const { data, error } = await supabase
       .from('security_settings')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('user_id', userId)
       .select()
       .single();
     
     if (error) throw new Error(`Failed to update security settings: ${error.message}`);
+    
+    // Decrypt 2FA secret before returning
+    if (data.twoFactorSecret && isEncrypted(data.twoFactorSecret)) {
+      data.twoFactorSecret = decrypt(data.twoFactorSecret);
+    }
+    
     return data;
   }
 
