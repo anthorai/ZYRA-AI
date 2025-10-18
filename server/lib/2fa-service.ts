@@ -1,5 +1,6 @@
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
+import bcrypt from 'bcrypt';
 
 export class TwoFactorAuthService {
   /**
@@ -62,23 +63,27 @@ export class TwoFactorAuthService {
   }
 
   /**
-   * Hash backup codes for secure storage
+   * Hash backup codes for secure storage using bcrypt
    */
   static async hashBackupCodes(codes: string[]): Promise<string[]> {
-    // In production, use bcrypt or similar
-    // For now, we'll use a simple hash (replace with proper hashing)
-    const crypto = await import('crypto');
-    return codes.map(code => 
-      crypto.createHash('sha256').update(code).digest('hex')
+    const saltRounds = 10;
+    const hashedCodes = await Promise.all(
+      codes.map(code => bcrypt.hash(code, saltRounds))
     );
+    return hashedCodes;
   }
 
   /**
-   * Verify a backup code against hashed codes
+   * Verify a backup code against bcrypt hashed codes
    */
   static async verifyBackupCode(code: string, hashedCodes: string[]): Promise<boolean> {
-    const crypto = await import('crypto');
-    const hashedInput = crypto.createHash('sha256').update(code).digest('hex');
-    return hashedCodes.includes(hashedInput);
+    // Check each hashed code using bcrypt.compare (constant-time comparison)
+    for (const hashedCode of hashedCodes) {
+      const isMatch = await bcrypt.compare(code, hashedCode);
+      if (isMatch) {
+        return true;
+      }
+    }
+    return false;
   }
 }
