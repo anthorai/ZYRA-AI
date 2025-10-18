@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { users, subscriptions, subscriptionPlans } from "../../shared/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { users, subscriptions, subscriptionPlans, notifications, notificationAnalytics } from "../../shared/schema";
+import { eq, and, lt, gte, lte, sql } from "drizzle-orm";
 
 /**
  * Checks for users with expired trials and handles subscription updates
@@ -113,8 +113,20 @@ export async function handleExpiredTrials(): Promise<{
         console.log(`[Trial Service] Processed expired trial for user ${user.id}`);
         processedCount++;
 
-        // TODO: Send trial expiration email/notification
-        // This would integrate with SendGrid or notification system
+        // Send trial expiration notification
+        try {
+          await db.insert(notifications).values({
+            userId: user.id,
+            title: '🔒 Trial Expired - Upgrade Required',
+            message: 'Your Zyra AI trial has expired. Upgrade to a paid plan to restore access to your products, campaigns, and AI tools. Your data is safe and will be available once you upgrade.',
+            type: 'error',
+            link: '/settings/billing',
+            isRead: false
+          });
+          console.log(`[Trial Service] Sent expiration notification to user ${user.id}`);
+        } catch (notifError) {
+          console.error(`[Trial Service] Failed to send notification:`, notifError);
+        }
 
       } catch (error: any) {
         const errorMsg = `Failed to process user ${user.id}: ${error.message}`;
@@ -215,14 +227,172 @@ export async function handleSubscriptionRenewals(): Promise<{
 }
 
 /**
+ * Send proactive trial expiration notifications BEFORE trials expire
+ * Notification schedule: 7 days, 3 days, 1 day before expiration
+ */
+export async function sendTrialExpirationNotifications(): Promise<{
+  processedCount: number;
+  errors: string[];
+}> {
+  const errors: string[] = [];
+  let processedCount = 0;
+
+  const notificationSchedules = [
+    { days: 7, title: 'Welcome to Zyra AI Trial! 🎉', message: 'Your 7-day trial has started! Explore all features including AI-powered product descriptions, SEO optimization, and smart marketing automation. Upgrade anytime to keep your data and unlock unlimited access.', type: 'info' as const },
+    { days: 3, title: 'Trial Ending Soon - 3 Days Left', message: 'Your Zyra AI trial expires in 3 days. Upgrade now to continue optimizing your products and automating your marketing campaigns. Choose from Starter, Growth, or Pro plans.', type: 'warning' as const },
+    { days: 1, title: '⚠️ Trial Expires Tomorrow', message: 'Your Zyra AI trial ends tomorrow! Upgrade now to avoid losing access to your AI-generated content, SEO optimizations, and marketing campaigns. All your data will be preserved.', type: 'warning' as const }
+  ];
+
+  try {
+    for (const schedule of notificationSchedules) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + schedule.days);
+      targetDate.setHours(0, 0, 0, 0);
+      
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      // Find users with trial ending on target date who are still on trial plan
+      const usersToNotify = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          fullName: users.fullName,
+          plan: users.plan,
+          trialEndDate: users.trialEndDate
+        })
+        .from(users)
+        .where(
+          and(
+            eq(users.plan, 'trial'),
+            gte(users.trialEndDate, targetDate),
+            lte(users.trialEndDate, nextDay)
+          )
+        );
+
+      console.log(`[Trial Notifications] Found ${usersToNotify.length} users for ${schedule.days}-day notification`);
+      
+      for (const user of usersToNotify) {
+        try {
+          // Check if notification already sent
+          const existingNotification = await db
+            .select()
+            .from(notifications)
+            .where(
+              and(
+                eq(notifications.userId, user.id),
+                eq(notifications.title, schedule.title)
+              )
+            )
+            .limit(1);
+
+          if (existingNotification.length > 0) {
+            continue; // Skip duplicate
+          }
+
+          // Create in-app notification
+          const [notification] = await db
+            .insert(notifications)
+            .values({
+              userId: user.id,
+              title: schedule.title,
+              message: schedule.message,
+              type: schedule.type,
+              link: '/settings/billing',
+              isRead: false
+            })
+            .returning();
+
+          // Track analytics
+          await db.insert(notificationAnalytics).values({
+            userId: user.id,
+            notificationId: notification.id,
+            category: 'billing',
+            channelType: 'in_app',
+            delivered: true,
+            deliveredAt: new Date()
+          });
+
+          // Log for future email integration
+          console.log(`[Trial Notifications] ✅ Sent to ${user.email}: ${schedule.title}`, {
+            notificationId: notification.id,
+            // Future integration points:
+            emailStatus: 'NOT_CONFIGURED', // Will be 'SENT' once SendGrid is integrated
+            smsStatus: 'NOT_CONFIGURED'    // Will be 'SENT' once Twilio is integrated
+          });
+
+          processedCount++;
+        } catch (error: any) {
+          const errorMsg = `Failed to notify user ${user.id}: ${error.message}`;
+          console.error(`[Trial Notifications] ${errorMsg}`);
+          errors.push(errorMsg);
+        }
+      }
+    }
+
+    return { processedCount, errors };
+  } catch (error: any) {
+    const errorMsg = `Trial notification service failed: ${error.message}`;
+    console.error(`[Trial Notifications] ${errorMsg}`);
+    return { processedCount, errors: [errorMsg] };
+  }
+}
+
+/**
+ * Get trial status summary for admin dashboard
+ */
+export async function getTrialStatusSummary() {
+  const now = new Date();
+  const threeDays = new Date(now);
+  threeDays.setDate(threeDays.getDate() + 3);
+  
+  const sevenDays = new Date(now);
+  sevenDays.setDate(sevenDays.getDate() + 7);
+
+  const trialUsers = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+      trialEndDate: users.trialEndDate
+    })
+    .from(users)
+    .where(eq(users.plan, 'trial'));
+
+  const summary = {
+    total: trialUsers.length,
+    expired: trialUsers.filter((u: any) => u.trialEndDate && new Date(u.trialEndDate) < now).length,
+    expiringToday: trialUsers.filter((u: any) => {
+      if (!u.trialEndDate) return false;
+      const endDate = new Date(u.trialEndDate);
+      endDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return endDate.getTime() === today.getTime();
+    }).length,
+    expiringIn3Days: trialUsers.filter((u: any) => u.trialEndDate && new Date(u.trialEndDate) <= threeDays && new Date(u.trialEndDate) > now).length,
+    expiringIn7Days: trialUsers.filter((u: any) => u.trialEndDate && new Date(u.trialEndDate) <= sevenDays && new Date(u.trialEndDate) > now).length,
+    active: trialUsers.filter((u: any) => u.trialEndDate && new Date(u.trialEndDate) > now).length
+  };
+
+  return summary;
+}
+
+/**
  * Main scheduled task that runs both trial expiration and renewal checks
  */
 export async function runBillingTasks(): Promise<void> {
   console.log("[Billing Tasks] Starting scheduled billing tasks...");
   
+  // Send proactive trial expiration notifications
+  const notificationResults = await sendTrialExpirationNotifications();
+  console.log(`[Billing Tasks] Notifications: ${notificationResults.processedCount} sent, ${notificationResults.errors.length} errors`);
+  
+  // Handle expired trials
   const trialResults = await handleExpiredTrials();
   console.log(`[Billing Tasks] Trial processing: ${trialResults.processedCount} processed, ${trialResults.errors.length} errors`);
   
+  // Handle subscription renewals
   const renewalResults = await handleSubscriptionRenewals();
   console.log(`[Billing Tasks] Renewals: ${renewalResults.processedCount} processed, ${renewalResults.errors.length} errors`);
   

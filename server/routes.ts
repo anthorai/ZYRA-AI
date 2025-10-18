@@ -2525,6 +2525,65 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get trial status summary (admin only)
+  app.get("/api/admin/trial-status", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // SECURITY: Only allow admins to view trial status
+      if (user.role !== 'admin') {
+        return res.status(403).json({ 
+          error: "Forbidden",
+          message: "Only administrators can view trial status" 
+        });
+      }
+      
+      const { getTrialStatusSummary } = await import('./lib/trial-expiration-service');
+      
+      const summary = await getTrialStatusSummary();
+      
+      res.json(summary);
+    } catch (error: any) {
+      console.error("Trial status error:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch trial status",
+        message: error.message 
+      });
+    }
+  });
+
+  // Send trial notification to specific user (admin only, for testing)
+  app.post("/api/admin/send-trial-notification", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // SECURITY: Only allow admins to send manual notifications
+      if (user.role !== 'admin') {
+        return res.status(403).json({ 
+          error: "Forbidden",
+          message: "Only administrators can send manual notifications" 
+        });
+      }
+      
+      const { sendTrialExpirationNotifications } = await import('./lib/trial-expiration-service');
+      
+      // Send notifications for all schedules
+      const result = await sendTrialExpirationNotifications();
+      
+      res.json({ 
+        success: true, 
+        notificationsSent: result.processedCount,
+        errors: result.errors
+      });
+    } catch (error: any) {
+      console.error("Trial notification error:", error);
+      res.status(500).json({ 
+        error: "Failed to send trial notifications",
+        message: error.message 
+      });
+    }
+  });
+
   // === PAYMENT TRANSACTIONS ===
   
   // Get all payment transactions for user
