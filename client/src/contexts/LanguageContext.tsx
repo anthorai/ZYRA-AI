@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
+import { apiRequest } from '@/lib/queryClient';
 
 export type SupportedLanguage = 'en' | 'hi' | 'es';
 
@@ -47,81 +47,41 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loadLanguageFromSupabase = async (userId: string): Promise<SupportedLanguage | null> => {
+  const loadLanguageFromAPI = async (): Promise<SupportedLanguage | null> => {
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('ui_preferences')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST301' || error.message?.includes('RLS')) {
-          console.error('🔒 RLS Policy Error (SELECT): User lacks permission to read preferences. RLS policies may be missing.', error);
-        } else if (error.code === 'PGRST116') {
-          console.log('No user preferences found, using default');
-        } else {
-          console.error('Error loading language from Supabase:', error);
-        }
-        return null;
-      }
-
-      const uiPrefs = data?.ui_preferences as { language?: string } | null;
+      const response = await apiRequest('GET', '/api/settings/preferences');
+      const data = await response.json();
+      
+      const uiPrefs = data?.uiPreferences as { language?: string } | null;
       const savedLang = uiPrefs?.language;
 
       if (savedLang && ['en', 'hi', 'es'].includes(savedLang)) {
         return savedLang as SupportedLanguage;
       }
       return null;
-    } catch (error) {
-      console.error('Unexpected error loading language from Supabase:', error);
+    } catch (error: any) {
+      if (error.message?.includes('404')) {
+        console.log('No user preferences found, using default');
+      } else if (!error.message?.includes('401')) {
+        console.error('Error loading language from API:', error.message);
+      }
       return null;
     }
   };
 
-  const saveLanguageToSupabase = async (userId: string, lang: SupportedLanguage): Promise<void> => {
+  const saveLanguageToAPI = async (lang: SupportedLanguage): Promise<void> => {
     try {
-      const { data: existing, error: selectError } = await supabase
-        .from('user_preferences')
-        .select('ui_preferences')
-        .eq('user_id', userId)
-        .single();
-
-      if (selectError && selectError.code !== 'PGRST116') {
-        if (selectError.code === 'PGRST301' || selectError.message?.includes('RLS')) {
-          console.error('🔒 RLS Policy Error (SELECT): Cannot read user preferences. RLS policies may be missing.', selectError);
-        } else {
-          console.error('Error fetching existing preferences:', selectError);
+      await apiRequest('PUT', '/api/settings/preferences', {
+        uiPreferences: {
+          language: lang
         }
+      });
+      console.log('✅ Language preference saved successfully');
+    } catch (error: any) {
+      if (!error.message?.includes('401')) {
+        console.error('Error saving language to API:', error.message);
       }
-
-      const existingPrefs = (existing?.ui_preferences as Record<string, any>) || {};
-
-      const { error: upsertError } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          ui_preferences: {
-            ...existingPrefs,
-            language: lang,
-          },
-        }, {
-          onConflict: 'user_id',
-        });
-
-      if (upsertError) {
-        if (upsertError.code === 'PGRST301' || upsertError.message?.includes('RLS') || upsertError.message?.includes('policy')) {
-          console.error('🔒 RLS Policy Error (INSERT/UPDATE): Cannot save user preferences. RLS policies may be missing. Falling back to localStorage only.', upsertError);
-        } else {
-          console.error('Error saving language to Supabase:', upsertError);
-        }
-        console.warn('⚠️ Language preference saved to localStorage only due to Supabase error');
-      } else {
-        console.log('✅ Language preference saved to Supabase successfully');
-      }
-    } catch (error) {
-      console.error('Unexpected error in saveLanguageToSupabase:', error);
-      console.warn('⚠️ Language preference saved to localStorage only due to unexpected error');
+      console.warn('⚠️ Language preference saved to localStorage only');
     }
   };
 
@@ -167,8 +127,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem(STORAGE_KEY, lang);
 
-      if (isAuthenticated && user?.id) {
-        await saveLanguageToSupabase(user.id, lang);
+      if (isAuthenticated) {
+        await saveLanguageToAPI(lang);
       }
 
       setIsLoading(false);
@@ -181,15 +141,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       let langToLoad: SupportedLanguage = 'en';
 
-      if (isAuthenticated && user?.id) {
-        const supabaseLang = await loadLanguageFromSupabase(user.id);
-        if (supabaseLang) {
-          langToLoad = supabaseLang;
+      if (isAuthenticated) {
+        const apiLang = await loadLanguageFromAPI();
+        if (apiLang) {
+          langToLoad = apiLang;
         } else {
           const localLang = localStorage.getItem(STORAGE_KEY) as SupportedLanguage | null;
           if (localLang && ['en', 'hi', 'es'].includes(localLang)) {
             langToLoad = localLang;
-            await saveLanguageToSupabase(user.id, localLang);
+            await saveLanguageToAPI(localLang);
           }
         }
       } else {
