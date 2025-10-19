@@ -3,11 +3,87 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { testSupabaseConnection, supabase } from "./lib/supabase";
 import { ErrorLogger } from "./lib/errorLogger";
+import helmet from "helmet";
+import cors from "cors";
 
 const app = express();
 
 // Trust proxy for rate limiting to work correctly behind Replit's proxy
 app.set('trust proxy', 1);
+
+// Security headers with helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'",
+        "https://checkout.razorpay.com",
+        "https://www.paypal.com",
+        "https://www.sandbox.paypal.com"
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: [
+        "'self'", 
+        "https://api.openai.com",
+        "https://api.razorpay.com",
+        "https://www.paypal.com",
+        "https://www.sandbox.paypal.com"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://api.razorpay.com",
+        "https://www.paypal.com",
+        "https://www.sandbox.paypal.com"
+      ],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: {
+    action: 'deny'
+  },
+  noSniff: true,
+  xssFilter: true
+}));
+
+// CORS configuration - strict for production security
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? function (origin: any, callback: any) {
+        // Only allow exact production domains with credentials
+        // NEVER use regex patterns for Replit domains - security risk!
+        const allowedOrigins = [
+          process.env.PRODUCTION_DOMAIN,
+          process.env.REPLIT_DOMAIN // Must be exact URL, not pattern
+        ].filter(Boolean);
+        
+        if (!origin) {
+          // Allow requests with no origin (mobile apps, curl, etc.)
+          callback(null, true);
+        } else if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    : true, // Development: allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Total-Count'],
+  maxAge: 86400
+};
+
+app.use(cors(corsOptions));
 
 // Capture raw body for webhook signature verification (before JSON parsing)
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, next) => {
