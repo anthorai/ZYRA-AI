@@ -127,6 +127,12 @@ app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, n
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve uploaded files (profile images, etc.)
+app.use('/uploads', express.static('uploads', {
+  maxAge: '1y', // Cache uploaded files for 1 year
+  immutable: true
+}));
+
 // Define global error handler (registered after routes)
 const globalErrorHandler = (err: any, req: Request, res: Response, _next: NextFunction) => {
   // Ensure error is Error-like

@@ -2079,11 +2079,12 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Get invoices
+  // Get invoices (returns payment transaction history)
   app.get("/api/invoices", requireAuth, async (req, res) => {
     try {
-      // Mock invoices
-      const invoices: any[] = [];
+      const userId = (req as AuthenticatedRequest).user.id;
+      // Get real payment transactions from database
+      const invoices = await supabaseStorage.getPaymentTransactions(userId);
       res.json(invoices || []);
     } catch (error: any) {
       console.error("Error fetching invoices:", error);
@@ -2987,7 +2988,6 @@ Output format: Markdown with clear section headings.`;
   app.post("/api/dashboard/initialize", requireAuth, async (req, res) => {
     try {
       await storage.initializeUserRealtimeData((req as AuthenticatedRequest).user.id);
-      await storage.generateSampleMetrics((req as AuthenticatedRequest).user.id);
       res.json({ message: "Real-time data initialized successfully" });
     } catch (error: any) {
       console.error("[API] Dashboard initialization error:", error);
@@ -3058,10 +3058,9 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Generate new sample metrics (for demo purposes)
+  // Refresh metrics (re-fetch latest dashboard data)
   app.post("/api/dashboard/refresh-metrics", requireAuth, async (req, res) => {
     try {
-      await storage.generateSampleMetrics((req as AuthenticatedRequest).user.id);
       const dashboardData = await storage.getDashboardData((req as AuthenticatedRequest).user.id);
       res.json({ success: true, dashboardData });
     } catch (error: any) {
@@ -3145,16 +3144,38 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post('/api/upload-profile-image', requireAuth, async (req, res) => {
+  app.post('/api/upload-profile-image', requireAuth, upload.single('image'), async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       if (!userId) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      // For now, return a placeholder URL since we need to implement proper file upload
-      // This would be where you handle the actual file upload to object storage
-      const imageUrl = '/placeholder-avatar.png';
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      // Generate unique filename with timestamp
+      const timestamp = Date.now();
+      const ext = req.file.originalname.split('.').pop() || 'jpg';
+      const filename = `profile-${userId}-${timestamp}.${ext}`;
+      const imageUrl = `/uploads/profiles/${filename}`;
+
+      // Save file using multer's buffer (already in memory)
+      const fs = await import('fs');
+      const path = await import('path');
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'profiles');
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Write file to disk
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      // Update user profile with image URL
       const updatedUser = await supabaseStorage.updateUserImage(userId, imageUrl);
       res.json(updatedUser);
     } catch (error) {
