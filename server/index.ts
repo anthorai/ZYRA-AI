@@ -5,11 +5,25 @@ import { testSupabaseConnection, supabase } from "./lib/supabase";
 import { ErrorLogger } from "./lib/errorLogger";
 import helmet from "helmet";
 import cors from "cors";
+import compression from "compression";
 
 const app = express();
 
 // Trust proxy for rate limiting to work correctly behind Replit's proxy
 app.set('trust proxy', 1);
+
+// Enable Gzip/Brotli compression for all responses (70% size reduction)
+app.use(compression({
+  level: 6, // Balance between speed and compression ratio
+  threshold: 1024, // Only compress responses larger than 1KB
+  filter: (req, res) => {
+    // Don't compress streaming responses or already compressed content
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
 
 // Security headers with helmet
 app.use(helmet({

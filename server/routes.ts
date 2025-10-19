@@ -67,6 +67,7 @@ import {
 import { NotificationService } from "./lib/notification-service";
 import { TwoFactorAuthService } from "./lib/2fa-service";
 import { initializeUserCredits } from "./lib/credits";
+import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -4644,38 +4645,46 @@ Output format: Markdown with clear section headings.`;
   app.get('/api/campaigns/stats', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const campaigns = await supabaseStorage.getCampaigns(userId);
+      
+      // Use caching for campaign stats (5 min TTL)
+      const stats = await cacheOrFetch(
+        userId,
+        async () => {
+          const campaigns = await supabaseStorage.getCampaigns(userId);
 
-      const stats = {
-        totalCampaigns: campaigns.length,
-        emailCampaigns: campaigns.filter(c => c.type === 'email').length,
-        smsCampaigns: campaigns.filter(c => c.type === 'sms').length,
-        sentCampaigns: campaigns.filter(c => c.status === 'sent').length,
-        scheduledCampaigns: campaigns.filter(c => c.status === 'scheduled').length,
-        draftCampaigns: campaigns.filter(c => c.status === 'draft').length,
-        totalSent: campaigns.reduce((sum, c) => sum + (c.sentCount || 0), 0),
-        avgOpenRate: campaigns.length > 0 
-          ? campaigns.reduce((sum, c) => sum + (c.openRate || 0), 0) / campaigns.length 
-          : 0,
-        avgClickRate: campaigns.length > 0 
-          ? campaigns.reduce((sum, c) => sum + (c.clickRate || 0), 0) / campaigns.length 
-          : 0,
-        avgConversionRate: campaigns.length > 0 
-          ? campaigns.reduce((sum, c) => sum + (c.conversionRate || 0), 0) / campaigns.length 
-          : 0,
-        recentCampaigns: campaigns
-          .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-          .slice(0, 5)
-          .map(c => ({
-            id: c.id,
-            name: c.name,
-            type: c.type,
-            status: c.status,
-            sentCount: c.sentCount || 0,
-            openRate: c.openRate || 0,
-            createdAt: c.createdAt
-          }))
-      };
+          return {
+            totalCampaigns: campaigns.length,
+            emailCampaigns: campaigns.filter(c => c.type === 'email').length,
+            smsCampaigns: campaigns.filter(c => c.type === 'sms').length,
+            sentCampaigns: campaigns.filter(c => c.status === 'sent').length,
+            scheduledCampaigns: campaigns.filter(c => c.status === 'scheduled').length,
+            draftCampaigns: campaigns.filter(c => c.status === 'draft').length,
+            totalSent: campaigns.reduce((sum, c) => sum + (c.sentCount || 0), 0),
+            avgOpenRate: campaigns.length > 0 
+              ? campaigns.reduce((sum, c) => sum + (c.openRate || 0), 0) / campaigns.length 
+              : 0,
+            avgClickRate: campaigns.length > 0 
+              ? campaigns.reduce((sum, c) => sum + (c.clickRate || 0), 0) / campaigns.length 
+              : 0,
+            avgConversionRate: campaigns.length > 0 
+              ? campaigns.reduce((sum, c) => sum + (c.conversionRate || 0), 0) / campaigns.length 
+              : 0,
+            recentCampaigns: campaigns
+              .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+              .slice(0, 5)
+              .map(c => ({
+                id: c.id,
+                name: c.name,
+                type: c.type,
+                status: c.status,
+                sentCount: c.sentCount || 0,
+                openRate: c.openRate || 0,
+                createdAt: c.createdAt
+              }))
+          };
+        },
+        CacheConfig.CAMPAIGN_STATS
+      );
 
       res.json(stats);
     } catch (error) {
@@ -4707,6 +4716,10 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const validated = insertCampaignSchema.parse({ ...req.body, userId });
       const campaign = await supabaseStorage.createCampaign(validated);
+      
+      // Invalidate campaign stats cache
+      await deleteCached(userId, CacheConfig.CAMPAIGN_STATS);
+      
       res.status(201).json(campaign);
     } catch (error) {
       console.error('Create campaign error:', error);
@@ -4725,6 +4738,10 @@ Output format: Markdown with clear section headings.`;
       }
       
       const updated = await supabaseStorage.updateCampaign(req.params.id, req.body);
+      
+      // Invalidate campaign stats cache
+      await deleteCached(userId, CacheConfig.CAMPAIGN_STATS);
+      
       res.json(updated);
     } catch (error) {
       console.error('Update campaign error:', error);
@@ -4743,6 +4760,10 @@ Output format: Markdown with clear section headings.`;
       }
       
       await supabaseStorage.deleteCampaign(req.params.id);
+      
+      // Invalidate campaign stats cache
+      await deleteCached(userId, CacheConfig.CAMPAIGN_STATS);
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Delete campaign error:', error);
