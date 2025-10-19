@@ -4640,6 +4640,50 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get aggregate campaign statistics for dashboard (MUST be before :id routes)
+  app.get('/api/campaigns/stats', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const campaigns = await supabaseStorage.getCampaigns(userId);
+
+      const stats = {
+        totalCampaigns: campaigns.length,
+        emailCampaigns: campaigns.filter(c => c.type === 'email').length,
+        smsCampaigns: campaigns.filter(c => c.type === 'sms').length,
+        sentCampaigns: campaigns.filter(c => c.status === 'sent').length,
+        scheduledCampaigns: campaigns.filter(c => c.status === 'scheduled').length,
+        draftCampaigns: campaigns.filter(c => c.status === 'draft').length,
+        totalSent: campaigns.reduce((sum, c) => sum + (c.sentCount || 0), 0),
+        avgOpenRate: campaigns.length > 0 
+          ? campaigns.reduce((sum, c) => sum + (c.openRate || 0), 0) / campaigns.length 
+          : 0,
+        avgClickRate: campaigns.length > 0 
+          ? campaigns.reduce((sum, c) => sum + (c.clickRate || 0), 0) / campaigns.length 
+          : 0,
+        avgConversionRate: campaigns.length > 0 
+          ? campaigns.reduce((sum, c) => sum + (c.conversionRate || 0), 0) / campaigns.length 
+          : 0,
+        recentCampaigns: campaigns
+          .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+          .slice(0, 5)
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            type: c.type,
+            status: c.status,
+            sentCount: c.sentCount || 0,
+            openRate: c.openRate || 0,
+            createdAt: c.createdAt
+          }))
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Get campaign stats error:', error);
+      res.status(500).json({ error: 'Failed to get campaign statistics' });
+    }
+  });
+
   // Get single campaign
   app.get('/api/campaigns/:id', requireAuth, async (req, res) => {
     try {
@@ -4822,51 +4866,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Get aggregate campaign statistics for dashboard (MUST be before :id routes)
-  app.get('/api/campaigns/stats', requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const campaigns = await supabaseStorage.getCampaigns(userId);
-
-      const stats = {
-        totalCampaigns: campaigns.length,
-        emailCampaigns: campaigns.filter(c => c.type === 'email').length,
-        smsCampaigns: campaigns.filter(c => c.type === 'sms').length,
-        sentCampaigns: campaigns.filter(c => c.status === 'sent').length,
-        scheduledCampaigns: campaigns.filter(c => c.status === 'scheduled').length,
-        draftCampaigns: campaigns.filter(c => c.status === 'draft').length,
-        totalSent: campaigns.reduce((sum, c) => sum + (c.sentCount || 0), 0),
-        avgOpenRate: campaigns.length > 0 
-          ? campaigns.reduce((sum, c) => sum + (c.openRate || 0), 0) / campaigns.length 
-          : 0,
-        avgClickRate: campaigns.length > 0 
-          ? campaigns.reduce((sum, c) => sum + (c.clickRate || 0), 0) / campaigns.length 
-          : 0,
-        avgConversionRate: campaigns.length > 0 
-          ? campaigns.reduce((sum, c) => sum + (c.conversionRate || 0), 0) / campaigns.length 
-          : 0,
-        recentCampaigns: campaigns
-          .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-          .slice(0, 5)
-          .map(c => ({
-            id: c.id,
-            name: c.name,
-            type: c.type,
-            status: c.status,
-            sentCount: c.sentCount || 0,
-            openRate: c.openRate || 0,
-            createdAt: c.createdAt
-          }))
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error('Get campaign stats error:', error);
-      res.status(500).json({ error: 'Failed to get campaign statistics' });
-    }
-  });
-
-  // Get campaign performance metrics (must be AFTER /stats route)
+  // Get campaign performance metrics
   app.get('/api/campaigns/:id/metrics', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
