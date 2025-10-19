@@ -68,6 +68,7 @@ import { NotificationService } from "./lib/notification-service";
 import { TwoFactorAuthService } from "./lib/2fa-service";
 import { initializeUserCredits } from "./lib/credits";
 import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
+import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./lib/ai-cache";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -942,32 +943,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get Zyra Pro Mode system prompt for product descriptions
       const proModePrompt = getSystemPromptForTool('productDescriptions');
 
-      // Using GPT-4o mini model with Zyra Pro Mode
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: proModePrompt },
-          { role: "user", content: selectedPrompt }
-        ],
-        response_format: { type: "json_object" },
-      });
+      // Using GPT-4o mini model with Zyra Pro Mode + AI Response Caching
+      const cacheKey = `${proModePrompt}\n\n${selectedPrompt}`;
+      let tokensUsed = 0;
+      
+      const result = await cachedTextGeneration(
+        { 
+          prompt: cacheKey,
+          model: "gpt-4o-mini",
+          maxTokens: 1000
+        },
+        async () => {
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: proModePrompt },
+              { role: "user", content: selectedPrompt }
+            ],
+            response_format: { type: "json_object" },
+          });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+          tokensUsed = response.usage?.total_tokens || 0;
+          await trackAIUsage(userId, tokensUsed);
+          
+          return JSON.parse(response.choices[0].message.content || "{}");
+        }
+      );
       
-      // Track usage and tokens
-      const tokensUsed = response.usage?.total_tokens || 0;
-      await trackAIUsage(userId, tokensUsed);
-      
-      // Store generation in AI history for learning
-      await supabaseStorage.createAiGenerationHistory({
-        userId,
-        generationType: 'product_description',
-        inputData: { productName, category, features, audience, keywords, specs },
-        outputData: { description: result.description },
-        brandVoice: selectedBrandVoice,
-        tokensUsed,
-        model: 'gpt-4o-mini'
-      });
+      // Store generation in AI history for learning (only if not from cache)
+      if (tokensUsed > 0) {
+        await supabaseStorage.createAiGenerationHistory({
+          userId,
+          generationType: 'product_description',
+          inputData: { productName, category, features, audience, keywords, specs },
+          outputData: { description: result.description },
+          brandVoice: selectedBrandVoice,
+          tokensUsed,
+          model: 'gpt-4o-mini'
+        });
+      }
       
       // Send AI generation complete notification
       await NotificationService.notifyAIGenerationComplete(userId, 'product description', productName);
@@ -1009,21 +1023,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         "seoScore": 85
                       }`;
 
-      // Using GPT-4o mini model with Zyra Pro Mode for SEO
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: proModePrompt },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-      });
-
-      const result = JSON.parse(response.choices[0].message.content || "{}");
-      
-      // Track SEO usage
+      // Using GPT-4o mini model with Zyra Pro Mode for SEO + AI Response Caching
       const userId = (req as AuthenticatedRequest).user.id;
-      await trackSEOUsage(userId);
+      const cacheKey = `${proModePrompt}\n\n${prompt}`;
+      
+      const result = await cachedTextGeneration(
+        {
+          prompt: cacheKey,
+          model: "gpt-4o-mini",
+          maxTokens: 500
+        },
+        async () => {
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: proModePrompt },
+              { role: "user", content: prompt }
+            ],
+            response_format: { type: "json_object" },
+          });
+
+          // Track SEO usage (only on cache miss)
+          await trackSEOUsage(userId);
+          
+          return JSON.parse(response.choices[0].message.content || "{}");
+        }
+      );
       
       // Send SEO optimization notification with performance improvement
       const improvement = `SEO Score: ${result.seoScore || 'N/A'}/100`;
@@ -1052,21 +1077,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert image buffer to base64
       const base64Image = req.file.buffer.toString('base64');
       const imageUrl = `data:${req.file.mimetype};base64,${base64Image}`;
-
-      // Use OpenAI Vision API with Zyra Pro Mode to analyze the image
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: proModePrompt
-          },
-          {
-            role: "user",
-            content: [
-              { 
-                type: "text", 
-                text: `Analyze this product image and generate:
+      
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Use OpenAI Vision API with Zyra Pro Mode + AI Response Caching
+      const promptText = `Analyze this product image and generate:
 1. SEO-optimized alt-text (concise, descriptive, keyword-rich)
 2. Detailed accessibility description for screen readers
 3. 5-7 relevant SEO keywords
@@ -1080,27 +1095,51 @@ Respond with JSON in this exact format:
   "accessibility": "detailed screen reader friendly description",
   "seoKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
   "imageAnalysis": "brief analysis of what the image shows"
-}` 
+}`;
+
+      const result = await cachedVisionAnalysis(
+        {
+          prompt: promptText,
+          imageUrl: imageUrl,
+          model: "gpt-4o-mini",
+          maxTokens: 1000
+        },
+        async () => {
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              {
+                role: "system",
+                content: proModePrompt
               },
               {
-                type: "image_url",
-                image_url: { url: imageUrl }
+                role: "user",
+                content: [
+                  { 
+                    type: "text", 
+                    text: promptText 
+                  },
+                  {
+                    type: "image_url",
+                    image_url: { url: imageUrl }
+                  }
+                ]
               }
-            ]
-          }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 1000
-      });
+            ],
+            response_format: { type: "json_object" },
+            max_tokens: 1000
+          });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+          // Track usage and tokens (only on cache miss)
+          const tokensUsed = response.usage?.total_tokens || 0;
+          await trackAIUsage(userId, tokensUsed);
+          
+          return JSON.parse(response.choices[0].message.content || "{}");
+        }
+      );
       
       // Get image dimensions
       const dimensions = `${req.file.size > 0 ? Math.round(req.file.size / 1024) : 0} KB`;
-      
-      // Track usage and tokens
-      const tokensUsed = response.usage?.total_tokens || 0;
-      await trackAIUsage((req as AuthenticatedRequest).user.id, tokensUsed);
       
       res.json({
         fileName: req.file.originalname,
@@ -5551,6 +5590,17 @@ Output format: Markdown with clear section headings.`;
     } catch (error) {
       console.error('Track conversion error:', error);
       res.status(500).json({ error: 'Failed to track conversion' });
+    }
+  });
+
+  // Get AI Cache Statistics
+  app.get('/api/analytics/ai-cache-stats', requireAuth, async (req, res) => {
+    try {
+      const stats = getAICacheStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('AI cache stats error:', error);
+      res.status(500).json({ error: 'Failed to get AI cache statistics' });
     }
   });
 
