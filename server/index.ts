@@ -21,9 +21,14 @@ app.use(helmet({
         "'unsafe-inline'",
         "https://checkout.razorpay.com",
         "https://www.paypal.com",
-        "https://www.sandbox.paypal.com"
+        "https://www.sandbox.paypal.com",
+        "https://replit.com"
       ],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: [
+        "'self'", 
+        "'unsafe-inline'",
+        "https://fonts.googleapis.com"
+      ],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: [
         "'self'", 
@@ -38,7 +43,11 @@ app.use(helmet({
         "https://www.paypal.com",
         "https://www.sandbox.paypal.com"
       ],
-      fontSrc: ["'self'", "data:"],
+      fontSrc: [
+        "'self'", 
+        "data:",
+        "https://fonts.gstatic.com"
+      ],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
     }

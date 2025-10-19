@@ -822,11 +822,18 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
+    // Transform camelCase to snake_case for database columns
     const notificationData = {
-      ...notification,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user_id: notification.userId,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type || 'info',
+      is_read: notification.isRead || false,
+      action_url: notification.actionUrl || null,
+      action_label: notification.actionLabel || null,
+      created_at: new Date().toISOString(),
+      read_at: null
     };
 
     const { data, error } = await supabase
@@ -842,7 +849,7 @@ export class SupabaseStorage implements ISupabaseStorage {
   async markNotificationAsRead(id: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
-      .update({ isRead: true, updatedAt: new Date().toISOString() })
+      .update({ is_read: true, read_at: new Date().toISOString() })
       .eq('id', id);
     
     if (error) throw new Error(`Failed to mark notification as read: ${error.message}`);
@@ -851,7 +858,7 @@ export class SupabaseStorage implements ISupabaseStorage {
   async markAllNotificationsAsRead(userId: string): Promise<void> {
     const { error } = await supabase
       .from('notifications')
-      .update({ isRead: true, updatedAt: new Date().toISOString() })
+      .update({ is_read: true, read_at: new Date().toISOString() })
       .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to mark all notifications as read: ${error.message}`);
