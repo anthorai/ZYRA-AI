@@ -38,50 +38,9 @@ export function useDashboard() {
   const pollingIntervalRef = useRef<NodeJS.Timeout>();
 
   // Check if user is truly authenticated with valid session and access token
-  // For UI-only mode, just check if not loading to enable mock data
   const isFullyAuthenticated = Boolean(isAuthenticated && user && session?.access_token && !loading);
-  const canUseMockData = !loading; // Enable mock data as soon as auth loading is done
 
-  // Mock dashboard data for UI-only mode
-  const mockDashboardData: DashboardData = {
-    user: user,
-    profile: { 
-      id: user?.id, 
-      email: user?.email, 
-      fullName: "Demo User", 
-      plan: "trial" 
-    },
-    usageStats: {
-      totalRevenue: 125000,
-      totalOrders: 342,
-      conversionRate: 320,
-      cartRecoveryRate: 1850,
-      productsOptimized: 28,
-      emailsSent: 1456,
-      smsSent: 234,
-      aiGenerationsUsed: 67,
-      seoOptimizationsUsed: 45,
-      lastUpdated: new Date().toISOString()
-    },
-    activityLogs: [
-      {
-        id: "1",
-        action: "tool_accessed",
-        description: "Used AI Product Generator",
-        createdAt: new Date(Date.now() - 300000).toISOString()
-      },
-      {
-        id: "2", 
-        action: "generated_product",
-        description: "Generated product description for 'Premium Headphones'",
-        createdAt: new Date(Date.now() - 600000).toISOString()
-      }
-    ],
-    toolsAccess: [],
-    realtimeMetrics: []
-  };
-
-  // Keep original query structure but use mock data
+  // PRODUCTION: Fetch real dashboard data from API
   const {
     data: dashboardData,
     isLoading,
@@ -89,83 +48,89 @@ export function useDashboard() {
     refetch
   } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard-complete"],
-    queryFn: () => {
-      console.log('🎭 Returning mock dashboard data...');
-      return Promise.resolve(mockDashboardData);
-    }, // Return mock data instead of API call
-    enabled: canUseMockData, // Enable as soon as auth is not loading
-    staleTime: Infinity, // Never consider the mock data stale
-    gcTime: Infinity, // Keep in cache indefinitely
-    refetchInterval: false, // Disable auto-refetch for mock data
-    refetchIntervalInBackground: false,
-    refetchOnMount: false, // Don't refetch when component mounts
-    refetchOnReconnect: false, // Don't refetch on network reconnect
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    retry: false, // Don't retry for mock data
+    enabled: isFullyAuthenticated, // Only fetch when fully authenticated
+    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: false,
+    retry: 3,
   });
 
-  // Keep mutation hook structure but disable API calls
+  // Initialize dashboard on first load
   const initializeMutation = useMutation({
     mutationFn: async () => {
-      console.log('🎭 Mock dashboard initialization...');
-      return { message: "Mock initialization" };
+      return await apiRequest("POST", "/api/dashboard/initialize");
     },
     onSuccess: () => {
       setIsInitialized(true);
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard-complete"] });
       toast({
         title: "Dashboard Ready",
-        description: "UI-only mode activated with mock data",
+        description: "Your dashboard has been initialized successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Initialization Error",
+        description: error.message || "Failed to initialize dashboard",
+        variant: "destructive",
       });
     },
   });
 
-  // Keep mutation hook structure but disable API calls
+  // Track tool access
   const trackToolAccessMutation = useMutation({
     mutationFn: async (toolName: string) => {
-      console.log('🎭 Mock tracking tool access:', toolName);
-      return { message: "Mock tracking" };
+      return await apiRequest("POST", "/api/dashboard/track-tool", { toolName });
     },
     onSuccess: () => {
-      // Mock success
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard-complete"] });
     },
   });
 
-  // Keep mutation hook structures but disable API calls
+  // Log activity
   const logActivityMutation = useMutation({
     mutationFn: async (activityData: any) => {
-      console.log('🎭 Mock activity logged:', activityData);
-      return { message: "Mock activity logged" };
-    },
-  });
-
-  const updateUsageMutation = useMutation({
-    mutationFn: async (data: any) => {
-      console.log('🎭 Mock usage stats update:', data);
-      setLastUpdate(Date.now());
-      return { message: "Mock usage updated" };
-    },
-  });
-
-  const refreshMetricsMutation = useMutation({
-    mutationFn: async () => {
-      console.log('🎭 Mock metrics refresh...');
-      return { message: "Mock metrics refreshed" };
+      return await apiRequest("POST", "/api/dashboard/log-activity", activityData);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard-complete"] });
+    },
+  });
+
+  // Update usage statistics
+  const updateUsageMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const result = await apiRequest("POST", "/api/dashboard/update-usage", data);
+      setLastUpdate(Date.now());
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard-complete"] });
+    },
+  });
+
+  // Refresh metrics
+  const refreshMetricsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/dashboard/refresh-metrics");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard-complete"] });
       toast({
         title: "Metrics Refreshed",
-        description: "Mock metrics have been updated",
+        description: "Your dashboard metrics have been updated successfully.",
       });
     },
   });
 
-  // Auto-initialize for UI-only mode
+  // Auto-initialize on first load if authenticated
   useEffect(() => {
-    if (canUseMockData && !isInitialized) {
-      console.log('🎭 Auto-initializing mock dashboard...');
-      setIsInitialized(true);
+    if (isFullyAuthenticated && !isInitialized && !isLoading) {
+      initializeMutation.mutate();
     }
-  }, [canUseMockData, isInitialized]);
+  }, [isFullyAuthenticated, isInitialized, isLoading]);
 
   // Debug logging for troubleshooting
   useEffect(() => {
@@ -174,41 +139,45 @@ export function useDashboard() {
       user: !!user,
       session: !!session,
       loading,
-      canUseMockData,
+      isFullyAuthenticated,
       isLoading,
       isInitialized,
       dashboardData: !!dashboardData
     });
-  }, [isAuthenticated, user, session, loading, canUseMockData, isLoading, isInitialized, dashboardData]);
+  }, [isAuthenticated, user, session, loading, isFullyAuthenticated, isLoading, isInitialized, dashboardData]);
 
-  // Keep mutation hook structure but disable API calls
+  // Manual refresh with UI feedback
   const refreshMutation = useMutation({
     mutationFn: async () => {
-      console.log('🎭 Mock dashboard refresh...');
       setIsRefreshing(true);
-      return new Promise(resolve => {
-        setTimeout(() => {
-          setLastUpdate(Date.now());
-          setIsRefreshing(false);
-          resolve({ message: "Mock refresh complete" });
-        }, 1000);
-      });
+      const result = await refetch();
+      setIsRefreshing(false);
+      setLastUpdate(Date.now());
+      return result;
     },
     onSuccess: () => {
       toast({
         title: "✅ Data refreshed successfully!",
-        description: "Mock dashboard data has been updated.",
+        description: "Your dashboard data has been updated.",
         duration: 3000,
+      });
+    },
+    onError: (error: any) => {
+      setIsRefreshing(false);
+      toast({
+        title: "Refresh Failed",
+        description: error.message || "Failed to refresh dashboard data",
+        variant: "destructive",
       });
     },
   });
 
-  // Manual refresh function with comprehensive functionality
+  // Manual refresh function
   const refreshDashboard = useCallback(() => {
     refreshMutation.mutate();
   }, [refreshMutation]);
 
-  // Track tool access with optimistic UI
+  // Track tool access
   const trackToolAccess = useCallback(
     (toolName: string) => {
       trackToolAccessMutation.mutate(toolName);
@@ -353,7 +322,7 @@ export function useOptimisticAction<T extends any[], R>(
 }
 
 // Hook for real-time data synchronization
-export function useRealtimeSync(intervalMs = 5000) {
+export function useRealtimeSync(intervalMs = 30000) { // 30 seconds for production
   const queryClient = useQueryClient();
   const [lastSync, setLastSync] = useState<Date>(new Date());
 
