@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Zap, ArrowLeft, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag } from "lucide-react";
+import { Zap, ArrowLeft, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send } from "lucide-react";
+import { SiPaypal, SiSendgrid, SiTwilio } from "react-icons/si";
 
 interface Integration {
   id: string;
@@ -39,6 +40,28 @@ export default function IntegrationsPage() {
       labelType: "recommended"
     },
     {
+      id: "paypal",
+      name: "PayPal",
+      type: "Payment Gateway",
+      icon: <SiPaypal className="w-5 h-5" />,
+      isConnected: false,
+      description: "Accept international payments with PayPal. Enable checkout for global customers with credit cards, debit cards, and PayPal accounts.",
+      label: "For Global Sellers 🌍",
+      tooltip: "Required to process international payments and enable PayPal checkout for your customers.",
+      labelType: "recommended"
+    },
+    {
+      id: "sendgrid",
+      name: "SendGrid",
+      type: "Email Marketing",
+      icon: <SiSendgrid className="w-5 h-5" />,
+      isConnected: false,
+      description: "Send marketing emails, abandoned cart recovery, and transactional emails with SendGrid. Includes email analytics and delivery tracking.",
+      label: "For Email Marketers 📧",
+      tooltip: "Send AI-powered email campaigns, cart recovery emails, and track performance with detailed analytics.",
+      labelType: "recommended"
+    },
+    {
       id: "gmail",
       name: "Gmail",
       type: "Email Provider",
@@ -47,7 +70,7 @@ export default function IntegrationsPage() {
       description: "Send marketing emails via Gmail",
       label: "For All Businesses 💼",
       tooltip: "Send AI-powered marketing & upsell emails directly from Zyra.",
-      labelType: "recommended"
+      labelType: "optional"
     },
     {
       id: "outlook",
@@ -64,11 +87,11 @@ export default function IntegrationsPage() {
       id: "twilio",
       name: "Twilio",
       type: "SMS Service",
-      icon: <MessageSquare className="w-5 h-5" />,
+      icon: <SiTwilio className="w-5 h-5" />,
       isConnected: false,
-      description: "Send SMS campaigns and alerts",
+      description: "Send SMS campaigns, abandoned cart recovery, and order notifications via Twilio. Track delivery and engagement rates.",
       label: "For Ecom Sellers & Marketers 📲",
-      tooltip: "Send SMS campaigns, abandoned cart alerts, and promotions.",
+      tooltip: "Send SMS campaigns, abandoned cart alerts, and promotions to boost sales.",
       labelType: "recommended"
     },
     {
@@ -109,10 +132,12 @@ export default function IntegrationsPage() {
   const [showApiKeyInput, setShowApiKeyInput] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [shopDomain, setShopDomain] = useState("");
+  const [paypalClientId, setPaypalClientId] = useState("");
+  const [paypalClientSecret, setPaypalClientSecret] = useState("");
 
-  // Fetch Shopify connection status on mount
+  // Fetch integration connection statuses on mount
   useEffect(() => {
-    const fetchShopifyStatus = async () => {
+    const fetchIntegrationStatuses = async () => {
       try {
         const { supabase } = await import('@/lib/supabaseClient');
         const { data: sessionData } = await supabase.auth.getSession();
@@ -129,16 +154,17 @@ export default function IntegrationsPage() {
           return;
         }
 
-        const response = await fetch('/api/shopify/status', {
+        // Fetch Shopify connection status
+        const shopifyResponse = await fetch('/api/shopify/status', {
           headers: {
             'Authorization': `Bearer ${token}`
           },
           credentials: 'include'
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          if (data.isConnected) {
+        if (shopifyResponse.ok) {
+          const shopifyData = await shopifyResponse.json();
+          if (shopifyData.isConnected) {
             setIntegrations(prev =>
               prev.map(integration =>
                 integration.id === 'shopify'
@@ -148,12 +174,37 @@ export default function IntegrationsPage() {
             );
           }
         }
+
+        // Fetch all integration settings (PayPal, SendGrid, etc.)
+        const integrationsResponse = await fetch('/api/settings/integrations', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (integrationsResponse.ok) {
+          const integrationSettings = await integrationsResponse.json();
+          
+          // Update integration status based on saved settings
+          setIntegrations(prev =>
+            prev.map(integration => {
+              const setting = integrationSettings.find(
+                (s: any) => s.provider === integration.id
+              );
+              if (setting && setting.isActive) {
+                return { ...integration, isConnected: true };
+              }
+              return integration;
+            })
+          );
+        }
       } catch (error) {
-        console.error('Failed to fetch Shopify status:', error);
+        console.error('Failed to fetch integration statuses:', error);
       }
     };
 
-    fetchShopifyStatus();
+    fetchIntegrationStatuses();
   }, []);
 
   // Helper function to get label color based on type and connection status
@@ -281,12 +332,177 @@ export default function IntegrationsPage() {
       return;
     }
 
-    // Original API key flow for other integrations
+    // Show input form if not already shown
     if (!showApiKeyInput) {
       setShowApiKeyInput(id);
       return;
     }
 
+    // Validate and save credentials for PayPal
+    if (id === 'paypal') {
+      if (!paypalClientId.trim() || !paypalClientSecret.trim()) {
+        toast({
+          title: "Credentials Required",
+          description: "Please enter both PayPal Client ID and Client Secret",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      try {
+        const { supabase } = await import('@/lib/supabaseClient');
+        const { data: sessionData } = await supabase.auth.getSession();
+        let token = sessionData.session?.access_token || '';
+
+        if (!token) {
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          token = refreshData.session?.access_token || '';
+        }
+
+        if (!token) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in again to connect PayPal",
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+
+        const response = await fetch('/api/settings/integrations', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            integrationType: 'payment',
+            provider: 'paypal',
+            credentials: {
+              clientId: paypalClientId.trim(),
+              clientSecret: paypalClientSecret.trim()
+            },
+            isActive: true
+          }),
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save PayPal credentials');
+        }
+
+        setIntegrations(prev =>
+          prev.map(integration =>
+            integration.id === 'paypal'
+              ? { ...integration, isConnected: true }
+              : integration
+          )
+        );
+        
+        toast({
+          title: "PayPal Connected",
+          description: "Your PayPal credentials have been securely saved",
+          duration: 3000,
+        });
+        
+        setShowApiKeyInput(null);
+        setPaypalClientId("");
+        setPaypalClientSecret("");
+      } catch (error) {
+        console.error('PayPal connection error:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to connect PayPal. Please check your credentials.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+      return;
+    }
+
+    // Validate and save credentials for SendGrid
+    if (id === 'sendgrid') {
+      if (!apiKey.trim()) {
+        toast({
+          title: "API Key Required",
+          description: "Please enter your SendGrid API key",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      try {
+        const { supabase } = await import('@/lib/supabaseClient');
+        const { data: sessionData } = await supabase.auth.getSession();
+        let token = sessionData.session?.access_token || '';
+
+        if (!token) {
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          token = refreshData.session?.access_token || '';
+        }
+
+        if (!token) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in again to connect SendGrid",
+            variant: "destructive",
+            duration: 3000,
+          });
+          return;
+        }
+
+        const response = await fetch('/api/settings/integrations', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            integrationType: 'email',
+            provider: 'sendgrid',
+            credentials: {
+              apiKey: apiKey.trim()
+            },
+            isActive: true
+          }),
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save SendGrid credentials');
+        }
+
+        setIntegrations(prev =>
+          prev.map(integration =>
+            integration.id === 'sendgrid'
+              ? { ...integration, isConnected: true }
+              : integration
+          )
+        );
+        
+        toast({
+          title: "SendGrid Connected",
+          description: "Your SendGrid API key has been securely saved",
+          duration: 3000,
+        });
+        
+        setShowApiKeyInput(null);
+        setApiKey("");
+      } catch (error) {
+        console.error('SendGrid connection error:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to connect SendGrid. Please check your API key.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+      return;
+    }
+
+    // Generic API key flow for other integrations
     if (!apiKey.trim()) {
       toast({
         title: "API Key Required",
@@ -376,20 +592,98 @@ export default function IntegrationsPage() {
       return;
     }
 
-    // Original disconnect flow for other integrations
-    setIntegrations(prev =>
-      prev.map(integration =>
-        integration.id === id
-          ? { ...integration, isConnected: false }
-          : integration
-      )
-    );
-    
-    toast({
-      title: "Integration Disconnected",
-      description: `${name} has been disconnected`,
-      duration: 3000,
-    });
+    // Disconnect PayPal, SendGrid, and other integrations by deleting from backend
+    try {
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: sessionData } = await supabase.auth.getSession();
+      let token = sessionData.session?.access_token || '';
+
+      if (!token) {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        token = refreshData.session?.access_token || '';
+      }
+
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in again to disconnect",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Fetch all integrations to find the ID of the one to delete
+      const integrationsResponse = await fetch('/api/settings/integrations', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!integrationsResponse.ok) {
+        throw new Error('Failed to fetch integrations');
+      }
+
+      const integrationSettings = await integrationsResponse.json();
+      const integrationToDelete = integrationSettings.find(
+        (s: any) => s.provider === id
+      );
+
+      if (!integrationToDelete) {
+        // Integration not found in backend, just update frontend
+        setIntegrations(prev =>
+          prev.map(integration =>
+            integration.id === id
+              ? { ...integration, isConnected: false }
+              : integration
+          )
+        );
+        
+        toast({
+          title: "Integration Disconnected",
+          description: `${name} has been disconnected`,
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Delete the integration from backend
+      const deleteResponse = await fetch(`/api/settings/integrations/${integrationToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!deleteResponse.ok) {
+        throw new Error('Failed to delete integration');
+      }
+
+      // Update frontend state
+      setIntegrations(prev =>
+        prev.map(integration =>
+          integration.id === id
+            ? { ...integration, isConnected: false }
+            : integration
+        )
+      );
+      
+      toast({
+        title: "Integration Disconnected",
+        description: `${name} has been disconnected and credentials removed`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error(`${name} disconnect error:`, error);
+      toast({
+        title: "Disconnection Failed",
+        description: `Failed to disconnect ${name}. Please try again.`,
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   return (
@@ -564,6 +858,103 @@ export default function IntegrationsPage() {
                             setShowApiKeyInput(null);
                             setApiKey("");
                             setShopDomain("");
+                          }}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : integration.id === 'paypal' ? (
+                    <>
+                      <p className="text-slate-300 text-sm mb-3">
+                        Get your PayPal API credentials from the <a href="https://developer.paypal.com/dashboard/applications" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">PayPal Developer Dashboard</a>
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="paypal-client-id" className="text-white">
+                          PayPal Client ID
+                        </Label>
+                        <Input
+                          id="paypal-client-id"
+                          type="text"
+                          value={paypalClientId}
+                          onChange={(e) => setPaypalClientId(e.target.value)}
+                          placeholder="AXXXXXXXXXXXxxxxxxx"
+                          className="bg-slate-900/50 border-slate-600 text-white"
+                          data-testid="input-paypal-client-id"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="paypal-client-secret" className="text-white">
+                          PayPal Client Secret
+                        </Label>
+                        <Input
+                          id="paypal-client-secret"
+                          type="password"
+                          value={paypalClientSecret}
+                          onChange={(e) => setPaypalClientSecret(e.target.value)}
+                          placeholder="EXXXXXXXXXXXxxxxxxx"
+                          className="bg-slate-900/50 border-slate-600 text-white"
+                          data-testid="input-paypal-client-secret"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={() => handleConnect(integration.id)}
+                          className="gradient-button"
+                          disabled={!paypalClientId || !paypalClientSecret}
+                          data-testid="button-connect-paypal"
+                        >
+                          <SiPaypal className="w-4 h-4 mr-2" />
+                          Connect PayPal
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowApiKeyInput(null);
+                            setPaypalClientId("");
+                            setPaypalClientSecret("");
+                          }}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </>
+                  ) : integration.id === 'sendgrid' ? (
+                    <>
+                      <p className="text-slate-300 text-sm mb-3">
+                        Get your SendGrid API key from <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SendGrid Settings</a>
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="sendgrid-api-key" className="text-white">
+                          SendGrid API Key
+                        </Label>
+                        <Input
+                          id="sendgrid-api-key"
+                          type="password"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder="SG.xxxxxxxxxxxxx"
+                          className="bg-slate-900/50 border-slate-600 text-white"
+                          data-testid="input-sendgrid-api-key"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={() => handleConnect(integration.id)}
+                          className="gradient-button"
+                          disabled={!apiKey}
+                          data-testid="button-connect-sendgrid"
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          Connect SendGrid
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowApiKeyInput(null);
+                            setApiKey("");
                           }}
                           className="border-slate-600 text-slate-300 hover:bg-slate-800"
                         >
