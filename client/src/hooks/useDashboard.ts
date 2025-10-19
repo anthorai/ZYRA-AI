@@ -201,36 +201,28 @@ export function useDashboard() {
     [updateUsageMutation]
   );
 
-  // Generate formatted stats for display
+  // Generate formatted stats for display (real data only - no mock deltas)
   const formattedStats = dashboardData?.usageStats
     ? [
         {
           icon: "TrendingUp",
           title: "Total Revenue",
           value: `$${Math.floor(((dashboardData as any).usageStats?.totalRevenue || 0) / 100).toLocaleString()}`,
-          change: "+12.5%",
-          positive: true,
         },
         {
           icon: "ShoppingCart",
           title: "Orders",
           value: ((dashboardData as any).usageStats?.totalOrders || 0).toLocaleString(),
-          change: "+8.2%",
-          positive: true,
         },
         {
           icon: "Eye",
           title: "Conversion Rate",
           value: `${(((dashboardData as any).usageStats?.conversionRate || 0) / 100).toFixed(1)}%`,
-          change: "+2.1%",
-          positive: true,
         },
         {
           icon: "RotateCcw",
           title: "Cart Recovery",
           value: `${Math.floor(((dashboardData as any).usageStats?.cartRecoveryRate || 0) / 100)}%`,
-          change: "+15.3%",
-          positive: true,
         },
       ]
     : [];
