@@ -6,13 +6,13 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 process.env.VERCEL_SERVERLESS = 'true';
 
 // Re-export the Express app
-// The dist/index.js file exports {app} after async initialization
+// The dist/server/index.js file exports {app} after async initialization
 module.exports = async (req, res) => {
   try {
     // Lazy load the app on first request
     if (!global._cachedApp) {
       console.log('[Vercel] Loading Express app...');
-      const { app } = await import('../dist/index.js');
+      const { app } = await import('../dist/server/index.js');
       
       // Wait for app to be ready (initialization happens in server/index.ts)
       if (!app) {
