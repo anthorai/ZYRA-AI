@@ -147,20 +147,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = authHeader.split(' ')[1];
       
-      // Check for internal service token (for background jobs)
-      // SECURITY: Only accept internal service token from actual localhost connection
-      // Use socket.remoteAddress which can't be spoofed via X-Forwarded-For
+      // Check for internal service token (for background jobs and cron)
+      // SECURITY: INTERNAL_SERVICE_TOKEN is a secret only known to internal services
+      // Accepts from any source when paired with x-internal-user-id header
       const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
-      const socketAddress = req.socket.remoteAddress;
-      const isLocalhost = socketAddress === '127.0.0.1' || 
-                         socketAddress === '::1' || 
-                         socketAddress === '::ffff:127.0.0.1' ||
-                         socketAddress === 'localhost';
       
-      if (token === INTERNAL_SERVICE_TOKEN && INTERNAL_SERVICE_TOKEN && isLocalhost) {
+      if (token === INTERNAL_SERVICE_TOKEN && INTERNAL_SERVICE_TOKEN) {
         const internalUserId = req.headers['x-internal-user-id'];
         if (!internalUserId) {
-          return res.status(401).json({ message: "Internal user ID required" });
+          return res.status(401).json({ message: "Internal user ID required for service token" });
         }
         
         // Get user profile for internal service requests
@@ -6168,6 +6163,169 @@ Output format: Markdown with clear section headings.`;
       console.error('❌ Error handling shop redact webhook:', error);
       // Error is logged but doesn't affect response (already sent)
     }
+  });
+
+  // Unified Cron Endpoint - Called by GitHub Actions every 6 hours
+  // Runs all scheduled tasks: billing, campaigns, and product sync
+  app.post('/api/cron', async (req, res) => {
+    const startTime = Date.now();
+    const timestamp = new Date().toISOString();
+    
+    console.log(`[Cron] 🕐 Starting scheduled tasks at ${timestamp}`);
+    
+    // Verify internal service token
+    const authHeader = req.headers.authorization;
+    const expectedToken = process.env.INTERNAL_SERVICE_TOKEN;
+    
+    if (!expectedToken) {
+      console.error('[Cron] ❌ INTERNAL_SERVICE_TOKEN not configured');
+      return res.status(500).json({ 
+        error: 'Server misconfiguration',
+        message: 'INTERNAL_SERVICE_TOKEN not set' 
+      });
+    }
+    
+    if (authHeader !== `Bearer ${expectedToken}`) {
+      console.error('[Cron] ❌ Unauthorized access attempt');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const results: Record<string, any> = {
+      timestamp,
+      tasks: {}
+    };
+    
+    // Task 1: Billing & Subscription Renewals
+    try {
+      console.log('[Cron] 💳 Running billing tasks...');
+      const { runBillingTasks } = await import('./lib/trial-expiration-service');
+      await runBillingTasks();
+      results.tasks.billing = { success: true, message: 'Billing tasks completed' };
+      console.log('[Cron] ✅ Billing tasks completed');
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      results.tasks.billing = { success: false, error: errorMsg };
+      console.error('[Cron] ❌ Billing tasks failed:', errorMsg);
+    }
+    
+    // Task 2: Scheduled Campaign Processing
+    try {
+      console.log('[Cron] 📧 Processing scheduled campaigns...');
+      const { processScheduledCampaigns } = await import('./lib/campaign-scheduler');
+      await processScheduledCampaigns();
+      results.tasks.campaigns = { success: true, message: 'Campaigns processed' };
+      console.log('[Cron] ✅ Campaign processing completed');
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      results.tasks.campaigns = { success: false, error: errorMsg };
+      console.error('[Cron] ❌ Campaign processing failed:', errorMsg);
+    }
+    
+    // Task 3: Shopify Product Sync
+    try {
+      console.log('[Cron] 🛍️ Syncing Shopify products...');
+      
+      // Get all active Shopify connections directly from Supabase (across all users)
+      const { data: shopifyConnections, error } = await supabase
+        .from('store_connections')
+        .select('*')
+        .eq('platform', 'shopify')
+        .eq('status', 'active');
+      
+      if (error) {
+        throw new Error(`Failed to fetch Shopify connections: ${error.message}`);
+      }
+      
+      if (shopifyConnections.length === 0) {
+        results.tasks.productSync = { 
+          success: true, 
+          message: 'No active Shopify stores to sync',
+          storesSynced: 0
+        };
+        console.log('[Cron] ℹ️ No active Shopify connections found');
+      } else {
+        console.log(`[Cron] Found ${shopifyConnections.length} active Shopify connection(s)`);
+        
+        const syncResults: Array<{ store: string; userId: string; success: boolean; error?: string }> = [];
+        
+        for (const connection of shopifyConnections) {
+          try {
+            // Supabase returns snake_case column names
+            const userId = (connection as any).user_id;
+            const storeName = (connection as any).store_name || (connection as any).store_url || 'Unknown';
+            console.log(`[Cron] Syncing store: ${storeName} for user ${userId}`);
+            
+            // Call sync API with service token
+            // Use production URL on Vercel, localhost in development
+            const baseUrl = process.env.VERCEL_URL 
+              ? `https://${process.env.VERCEL_URL}` 
+              : 'http://127.0.0.1:5000';
+            
+            const response = await fetch(`${baseUrl}/api/shopify/sync`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${expectedToken}`,
+                'x-internal-user-id': userId
+              },
+              body: JSON.stringify({ userId })
+            });
+            
+            if (response.ok) {
+              syncResults.push({ 
+                store: storeName,
+                userId,
+                success: true 
+              });
+              console.log(`[Cron] ✅ Successfully synced ${storeName}`);
+            } else {
+              const errorText = await response.text();
+              syncResults.push({ 
+                store: storeName,
+                userId,
+                success: false,
+                error: errorText
+              });
+              console.error(`[Cron] ❌ Failed to sync ${storeName}: ${errorText}`);
+            }
+          } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            syncResults.push({ 
+              store: (connection as any).store_name || (connection as any).store_url || 'Unknown',
+              userId: (connection as any).user_id,
+              success: false,
+              error: errorMsg
+            });
+            console.error(`[Cron] ❌ Error syncing store:`, errorMsg);
+          }
+        }
+        
+        const successCount = syncResults.filter(r => r.success).length;
+        const failCount = syncResults.filter(r => !r.success).length;
+        
+        results.tasks.productSync = { 
+          success: failCount === 0,
+          message: `Synced ${successCount}/${shopifyConnections.length} store(s)`,
+          storesSynced: successCount,
+          failed: failCount,
+          details: syncResults
+        };
+        console.log(`[Cron] ✅ Product sync completed: ${successCount} succeeded, ${failCount} failed`);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      results.tasks.productSync = { success: false, error: errorMsg };
+      console.error('[Cron] ❌ Product sync failed:', errorMsg);
+    }
+    
+    const duration = Date.now() - startTime;
+    results.duration = `${duration}ms`;
+    results.success = Object.values(results.tasks).every((task: any) => task.success);
+    
+    console.log(`[Cron] 🏁 All tasks completed in ${duration}ms`);
+    console.log(`[Cron] Summary:`, JSON.stringify(results, null, 2));
+    
+    res.status(200).json(results);
   });
 
   const httpServer = createServer(app);
