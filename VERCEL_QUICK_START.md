@@ -85,6 +85,8 @@ PRODUCTION_DOMAIN=https://your-domain.com
 
 Click **"Deploy"** and wait 3-5 minutes.
 
+> **✅ Fixed:** The 404 NOT_FOUND error is now resolved! The app is configured for Vercel's serverless environment.
+
 ---
 
 ## 4. Post-Deployment (5 minutes)
@@ -167,6 +169,7 @@ Your ZYRA app is now deployed on Vercel with:
 | Issue | Fix |
 |-------|-----|
 | **Cron jobs not running** | Check GitHub Actions tab - add `INTERNAL_SERVICE_TOKEN` secret (see `GITHUB_ACTIONS_CRON_SETUP.md`) |
+| **404 NOT_FOUND error** | This is now fixed! The app uses serverless routing. Just redeploy. |
 | **Function timeout** | Optimize AI requests or use async processing |
 | **CORS errors** | Add `PRODUCTION_DOMAIN` env variable |
 | **File uploads 404** | Migrate to Vercel Blob (see step 4D) |
