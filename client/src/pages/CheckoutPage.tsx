@@ -18,8 +18,8 @@ import PayPalButton from "@/components/PayPalButton";
 
 const checkoutSchema = z.object({
   amount: z.string().min(1, "Amount is required"),
-  gateway: z.enum(["razorpay", "paypal"]),
-  currency: z.string().default("INR"),
+  gateway: z.enum(["paypal"]).default("paypal"),
+  currency: z.string().default("USD"),
   description: z.string().optional(),
 });
 
@@ -35,8 +35,8 @@ export default function CheckoutPage() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       amount: "",
-      gateway: "razorpay",
-      currency: "INR",
+      gateway: "paypal",
+      currency: "USD",
       description: "",
     },
   });
@@ -157,27 +157,11 @@ export default function CheckoutPage() {
   };
 
   const onSubmit = async (data: CheckoutFormData) => {
-    setIsProcessing(true);
-
-    try {
-      if (data.gateway === "razorpay") {
-        createRazorpayOrder.mutate(data);
-      } else if (data.gateway === "paypal") {
-        // PayPal handled by PayPalButton component below
-        toast({
-          title: "Click PayPal button",
-          description: "Please use the PayPal button below to complete payment.",
-        });
-        setIsProcessing(false);
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Payment failed",
-        description: error.message,
-      });
-      setIsProcessing(false);
-    }
+    // PayPal handled by PayPalButton component below
+    toast({
+      title: "Complete payment with PayPal",
+      description: "Please use the PayPal button below to complete your payment.",
+    });
   };
 
   return (
@@ -221,33 +205,19 @@ export default function CheckoutPage() {
                     )}
                   />
 
-                  {/* Currency Selection */}
-                  <FormField
-                    control={form.control}
-                    name="currency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Currency</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="flex gap-4"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="INR" id="inr" data-testid="radio-currency-inr" />
-                              <label htmlFor="inr" className="cursor-pointer">INR (₹)</label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="USD" id="usd" data-testid="radio-currency-usd" />
-                              <label htmlFor="usd" className="cursor-pointer">USD ($)</label>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Currency Display - USD Only */}
+                  <div className="space-y-2">
+                    <FormLabel>Currency</FormLabel>
+                    <div className="p-3 bg-muted rounded-md">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-primary" />
+                        <span className="font-semibold">USD ($) - Global Pricing</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        All payments are processed in US Dollars
+                      </p>
+                    </div>
+                  </div>
 
                   {/* Description */}
                   <FormField
@@ -270,97 +240,32 @@ export default function CheckoutPage() {
 
                   <Separator />
 
-                  {/* Payment Gateway Selection */}
-                  <FormField
-                    control={form.control}
-                    name="gateway"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="space-y-3"
-                          >
-                            {/* Razorpay */}
-                            <Card
-                              className={`cursor-pointer transition-all ${
-                                field.value === "razorpay" ? "border-primary ring-2 ring-primary" : ""
-                              }`}
-                              onClick={() => field.onChange("razorpay")}
-                              data-testid="card-gateway-razorpay"
-                            >
-                              <CardContent className="flex items-center p-4">
-                                <RadioGroupItem value="razorpay" id="razorpay" className="mr-3" />
-                                <SiRazorpay className="text-2xl text-blue-600 mr-3" />
-                                <div className="flex-1">
-                                  <label htmlFor="razorpay" className="font-semibold cursor-pointer">
-                                    Razorpay
-                                  </label>
-                                  <p className="text-sm text-muted-foreground">
-                                    UPI, Cards, NetBanking, Wallets
-                                  </p>
-                                  <div className="flex gap-2 mt-1">
-                                    <Smartphone className="h-4 w-4 text-muted-foreground" />
-                                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
+                  {/* Payment Method Display - PayPal Only */}
+                  <div className="space-y-2">
+                    <FormLabel>Payment Method</FormLabel>
+                    <Card className="border-primary ring-2 ring-primary">
+                      <CardContent className="flex items-center p-4">
+                        <SiPaypal className="text-3xl text-blue-500 mr-4" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-lg">PayPal</div>
+                          <p className="text-sm text-muted-foreground">
+                            Secure international payments in USD
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Accepted worldwide</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                            {/* PayPal */}
-                            <Card
-                              className={`cursor-pointer transition-all ${
-                                field.value === "paypal" ? "border-primary ring-2 ring-primary" : ""
-                              }`}
-                              onClick={() => field.onChange("paypal")}
-                              data-testid="card-gateway-paypal"
-                            >
-                              <CardContent className="flex items-center p-4">
-                                <RadioGroupItem value="paypal" id="paypal" className="mr-3" />
-                                <SiPaypal className="text-2xl text-blue-500 mr-3" />
-                                <div className="flex-1">
-                                  <label htmlFor="paypal" className="font-semibold cursor-pointer">
-                                    PayPal
-                                  </label>
-                                  <p className="text-sm text-muted-foreground">
-                                    International payments
-                                  </p>
-                                  <div className="flex gap-2 mt-1">
-                                    <Globe className="h-4 w-4 text-muted-foreground" />
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Submit Button for Razorpay */}
-                  {gateway === "razorpay" && (
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isProcessing}
-                      data-testid="button-pay-razorpay"
-                    >
-                      {isProcessing ? "Processing..." : `Pay ₹${amount || "0"} with Razorpay`}
-                    </Button>
-                  )}
-
-                  {/* PayPal Button */}
-                  {gateway === "paypal" && amount && (
+                  {/* PayPal Payment Button */}
+                  {amount && (
                     <div className="w-full">
                       <PayPalButton
                         amount={amount}
-                        currency={form.getValues("currency")}
+                        currency="USD"
                         intent="capture"
                       />
                     </div>
@@ -381,8 +286,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span data-testid="text-subtotal">
-                  {form.getValues("currency") === "INR" ? "₹" : "$"}
-                  {amount || "0.00"}
+                  ${amount || "0.00"} USD
                 </span>
               </div>
               <div className="flex justify-between">

@@ -2246,7 +2246,7 @@ Output format: Markdown with clear section headings.`;
       const transaction = await storage.createPaymentTransaction({
         userId,
         amount: selectedPlan.price.toString(),
-        currency: selectedPlan.currency || 'USD',
+        currency: 'USD',  // All payments are in USD
         gateway,
         purpose: 'subscription',
         status: 'pending',
@@ -2262,7 +2262,7 @@ Output format: Markdown with clear section headings.`;
       if (gateway === 'razorpay' && isRazorpayConfigured()) {
         paymentOrder = await createRazorpayOrder({
           amount: Number(selectedPlan.price),
-          currency: selectedPlan.currency || 'INR',
+          currency: 'USD',  // USD-only pricing
           receipt: transaction.id,
           notes: {
             userId,
@@ -2298,7 +2298,7 @@ Output format: Markdown with clear section headings.`;
           gateway: 'paypal',
           transactionId: transaction.id,
           amount: selectedPlan.price,
-          currency: selectedPlan.currency || 'USD',
+          currency: 'USD',  // All payments are in USD
           plan: selectedPlan
         });
       } else {
@@ -2347,7 +2347,7 @@ Output format: Markdown with clear section headings.`;
         return res.status(503).json({ error: "Razorpay is not configured" });
       }
 
-      const { amount, currency = 'INR', notes } = req.body;
+      const { amount, currency = 'USD', notes } = req.body;
       const user = (req as AuthenticatedRequest).user;
 
       if (!amount || amount <= 0) {

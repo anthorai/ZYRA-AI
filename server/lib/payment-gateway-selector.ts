@@ -1,6 +1,6 @@
 /**
  * Payment Gateway Selection Logic
- * Routes users to appropriate payment gateway based on their region/currency
+ * ALL PAYMENTS ARE IN USD ONLY - GLOBAL PRICING
  */
 
 export interface GatewaySelection {
@@ -11,23 +11,14 @@ export interface GatewaySelection {
 }
 
 /**
- * Determine the appropriate payment gateway based on currency or region
+ * Determine the appropriate payment gateway
+ * NOTE: All payments are now in USD regardless of country
  */
 export function selectPaymentGateway(currency?: string, countryCode?: string): GatewaySelection {
-  // India - Razorpay (supports INR, UPI, cards, net banking)
-  if (currency === 'INR' || countryCode === 'IN') {
-    return {
-      gateway: 'razorpay',
-      currency: 'INR',
-      displayName: 'Razorpay',
-      icon: 'razorpay'
-    };
-  }
-
-  // Default - PayPal (international, supports most currencies)
+  // All users get PayPal with USD - simplified global pricing
   return {
     gateway: 'paypal',
-    currency: currency || 'USD',
+    currency: 'USD',
     displayName: 'PayPal',
     icon: 'paypal'
   };
@@ -35,83 +26,41 @@ export function selectPaymentGateway(currency?: string, countryCode?: string): G
 
 /**
  * Get all available payment gateways for a user
+ * NOTE: USD-only pricing for all countries
  */
 export function getAvailableGateways(currency?: string): GatewaySelection[] {
-  const gateways: GatewaySelection[] = [];
-
-  // Always show PayPal (international)
-  gateways.push({
-    gateway: 'paypal',
-    currency: currency || 'USD',
-    displayName: 'PayPal',
-    icon: 'paypal'
-  });
-
-  // Show Razorpay for INR
-  if (currency === 'INR') {
-    gateways.push({
-      gateway: 'razorpay',
-      currency: 'INR',
-      displayName: 'Razorpay',
-      icon: 'razorpay'
-    });
-  }
-
-  return gateways;
+  // Only PayPal with USD for all countries
+  return [
+    {
+      gateway: 'paypal',
+      currency: 'USD',
+      displayName: 'PayPal',
+      icon: 'paypal'
+    }
+  ];
 }
 
 /**
  * Validate if a gateway supports a given currency
+ * NOTE: Only USD is supported now
  */
 export function gatewaySupportsСurrency(gateway: string, currency: string): boolean {
-  switch (gateway) {
-    case 'razorpay':
-      return currency === 'INR';
-    case 'paypal':
-      // PayPal supports many currencies
-      return ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'INR', 'JPY', 'CNY'].includes(currency);
-    default:
-      return false;
-  }
+  // Only USD is supported
+  return currency === 'USD';
 }
 
 /**
- * Get currency symbol for display
+ * Get currency symbol for display - always USD
  */
 export function getCurrencySymbol(currency: string): string {
-  const symbols: Record<string, string> = {
-    'USD': '$',
-    'EUR': '€',
-    'GBP': '£',
-    'INR': '₹',
-    'CAD': 'C$',
-    'AUD': 'A$',
-    'SGD': 'S$',
-    'JPY': '¥',
-    'CNY': '¥'
-  };
-  return symbols[currency] || currency;
+  // Always return USD symbol
+  return '$';
 }
 
 /**
- * Convert amount between currencies (basic conversion - in production use real-time rates)
+ * No currency conversion needed - all prices are in USD
  */
 export function convertCurrency(amount: number, fromCurrency: string, toCurrency: string): number {
-  // Basic conversion rates (in production, use real-time API)
-  const rates: Record<string, number> = {
-    'USD': 1,
-    'INR': 83,
-    'EUR': 0.92,
-    'GBP': 0.79,
-    'CAD': 1.35,
-    'AUD': 1.52,
-    'SGD': 1.34,
-    'JPY': 149,
-    'CNY': 7.24
-  };
-
-  const fromRate = rates[fromCurrency] || 1;
-  const toRate = rates[toCurrency] || 1;
-
-  return (amount / fromRate) * toRate;
+  // No conversion - everything is USD
+  return amount;
 }
