@@ -2,10 +2,24 @@
 
 Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
 
-**Production Status:** ✅ Ready for deployment (as of October 24, 2025)  
-**Deployment Options:**
+**Production Status:** ⚠️ **Almost Ready** - Pending 5 environment secrets (as of October 24, 2025)  
+**Configuration Files:**
+- Production setup: See `PRODUCTION_CONFIG.md`
+- Pre-deployment testing: See `PRE_DEPLOYMENT_TESTING.md`
 - Replit VM deployment: See `PRODUCTION_DEPLOYMENT_GUIDE.md`
 - Vercel deployment: See `VERCEL_DEPLOYMENT_GUIDE.md` and `VERCEL_QUICK_START.md`
+
+**Latest Changes (October 24, 2025):**
+- ✅ PayPal checkout displays "Zyra AI" branding with plan details
+- ✅ Core API credentials configured (SendGrid, Twilio, PayPal Client ID/Secret, OpenAI)
+- ✅ Production build completed successfully (dist/public/ generated)
+- ✅ CORS security configured for production domain
+- ⚠️ **Pending User Action:** Add these 5 secrets to Replit Secrets before deployment:
+  - `PRODUCTION_DOMAIN=https://zzyraai.com`
+  - `REPLIT_DOMAIN=https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev`
+  - `VITE_SUPABASE_URL=https://uqahonxcssfxrlmynrjo.supabase.co`
+  - `VITE_SUPABASE_ANON_KEY=<copy exact value from SUPABASE_ANON_KEY secret>`
+  - `PAYPAL_WEBHOOK_ID` (see PRODUCTION_CONFIG.md for PayPal dashboard setup steps)
 
 # User Preferences
 
@@ -37,7 +51,7 @@ Zyra AI employs a centralized AI prompt library (`shared/ai-system-prompts.ts`) 
 Supabase Auth provides email/password login, password reset, and JWT-based session management with robust security measures including bcrypt for 2FA backup codes.
 
 ### Payment System
-A multi-gateway payment system supports Razorpay and PayPal, with secure webhook handlers.
+**PayPal-only payment processing** (USD globally) with secure webhook handlers. PayPal checkout displays "Zyra AI" branding and plan details for optimal user experience. All subscription payments processed through PayPal with intent validation and proper application context configuration.
 
 ### Marketing Automation System
 Provides real email/SMS delivery via SendGrid and Twilio, featuring campaign scheduling, abandoned cart recovery, and performance tracking.

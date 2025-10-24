@@ -1,7 +1,7 @@
 # Zyra AI - Production Configuration Guide
 
 **Last Updated:** October 24, 2025  
-**Status:** Ready for Production Deployment
+**Status:** Almost Ready - 5 secrets need to be added before deployment (see Pending section below)
 
 ---
 
@@ -63,6 +63,28 @@ VITE_SUPABASE_ANON_KEY=<same value as SUPABASE_ANON_KEY>
 
 **Note:** Copy the exact value from `SUPABASE_ANON_KEY` secret into `VITE_SUPABASE_ANON_KEY`
 
+### PayPal Webhook Configuration
+To enable payment webhook verification, you need to get the **PAYPAL_WEBHOOK_ID**:
+
+**Step-by-step setup:**
+1. Go to PayPal Developer Dashboard: https://developer.paypal.com/dashboard
+2. Click "Apps & Credentials" in the left sidebar
+3. Select your app (or create one if you haven't)
+4. Click the "Webhooks" tab
+5. Click "Add Webhook"
+6. Enter your webhook URL:
+   - **Development:** `https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev/api/webhooks/paypal`
+   - **Production:** `https://zzyraai.com/api/webhooks/paypal`
+7. Select event types to subscribe to:
+   - `PAYMENT.CAPTURE.COMPLETED` (required)
+   - `PAYMENT.CAPTURE.DENIED` (required)
+   - `PAYMENT.CAPTURE.REFUNDED` (optional)
+8. Click "Save"
+9. Copy the "Webhook ID" shown (format: `WH-XXXXX...`)
+10. Add to Replit Secrets as `PAYPAL_WEBHOOK_ID=WH-XXXXX...`
+
+**Important:** Without this webhook ID, payment verification will fail and subscriptions won't be activated automatically.
+
 ---
 
 ## 📊 Production Environment Checklist
@@ -79,11 +101,12 @@ VITE_SUPABASE_ANON_KEY=<same value as SUPABASE_ANON_KEY>
 - [x] CORS security headers configured
 - [x] Webhook HMAC verification enabled
 
-### 🔄 Pending (Add to Secrets)
-- [ ] `PRODUCTION_DOMAIN` - Your production website URL
-- [ ] `REPLIT_DOMAIN` - Your Replit deployment URL
-- [ ] `VITE_SUPABASE_URL` - Frontend Supabase URL
-- [ ] `VITE_SUPABASE_ANON_KEY` - Frontend Supabase key
+### 🔄 Pending (Add to Secrets Before Deployment)
+- [ ] `PRODUCTION_DOMAIN=https://zzyraai.com` - Your production website URL
+- [ ] `REPLIT_DOMAIN=https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev` - Your Replit deployment URL
+- [ ] `VITE_SUPABASE_URL=https://uqahonxcssfxrlmynrjo.supabase.co` - Frontend Supabase URL
+- [ ] `VITE_SUPABASE_ANON_KEY=<copy exact value from SUPABASE_ANON_KEY>` - Frontend Supabase key
+- [ ] `PAYPAL_WEBHOOK_ID=WH-XXXXX...` - PayPal webhook verification ID (see PayPal Webhook Configuration section above for setup steps)
 
 ### 🎯 Pre-Deployment Testing
 After adding the above secrets:
