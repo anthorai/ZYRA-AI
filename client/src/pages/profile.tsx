@@ -102,7 +102,8 @@ export default function ProfilePage() {
     queryKey: ["/api/me"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/me");
-      return await response.json();
+      const data = await response.json();
+      return data.user; // Unwrap the user object
     },
   });
 
