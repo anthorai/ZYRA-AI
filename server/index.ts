@@ -219,17 +219,28 @@ async function startServer() {
   return await registerRoutes(app);
 }
 
-// Start server initialization and register error handler immediately after routes
-const serverPromise = startServer();
-serverPromise.then((server) => {
-  // Register global error handler - must be after routes but at module scope
+// Check if running on Vercel serverless
+const isVercelServerless = process.env.VERCEL_SERVERLESS === 'true' || process.env.VERCEL === '1';
+
+// Initialize app and export for serverless OR start server for traditional hosting
+async function initializeApp() {
+  const server = await startServer();
+  
+  // Register global error handler - must be after routes
   app.use(globalErrorHandler);
-
+  
   return server;
-}).then(async (server) => {
+}
 
-  // Initialize billing tasks scheduler with singleton pattern
-  let billingSchedulerInitialized = false;
+// Start server initialization and register error handler immediately after routes
+const serverPromise = initializeApp();
+
+// Only run schedulers and listen() when NOT on Vercel (local dev or Replit VM)
+if (!isVercelServerless) {
+  serverPromise.then(async (server) => {
+
+    // Initialize billing tasks scheduler with singleton pattern
+    let billingSchedulerInitialized = false;
   
   async function initializeBillingScheduler() {
     // Prevent duplicate initialization (e.g., during hot reload)
@@ -437,14 +448,28 @@ serverPromise.then((server) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${port}`);
+    });
+  }).catch((error) => {
+    console.error("Fatal startup error:", error);
+    process.exit(1);
   });
-}).catch((error) => {
-  console.error("Fatal startup error:", error);
-  process.exit(1);
-});
+} else {
+  // Vercel serverless: just initialize the app, don't start schedulers or listen()
+  serverPromise.then(async (server) => {
+    // Setup static serving for Vercel
+    serveStatic(app);
+    log("✅ App initialized for Vercel serverless");
+  }).catch((error) => {
+    console.error("Fatal app initialization error:", error);
+    // Don't exit on Vercel - let the serverless function handle the error
+  });
+}
+
+// Export the app for Vercel serverless
+export { app };
