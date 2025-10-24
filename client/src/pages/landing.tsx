@@ -594,7 +594,7 @@ export default function Landing() {
       <section className="py-12 sm:py-16 px-4 sm:px-6 bg-gradient-to-r from-primary/10 to-accent/10">
         <div className="container mx-auto text-center">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4" data-testid="text-cta-title">Ready to Transform Your Shopify Store?</h2>
-          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8 px-4 sm:px-0">Join thousands of merchants already using Zyra to boost their sales</p>
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8 px-4 sm:px-0">Join thousands of merchants already using Zyra AI to boost their sales</p>
           <Button asChild className="gradient-button w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold" data-testid="button-cta-start">
             <Link href="/auth">
               Start Your Free Trial Today
@@ -609,11 +609,11 @@ export default function Landing() {
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-3 sm:mb-4">
             <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
-              <img src={zyraLogoUrl} alt="Zyra" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+              <img src={zyraLogoUrl} alt="Zyra AI" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
             </div>
-            <span className="text-lg sm:text-xl font-bold">Zyra</span>
+            <span className="text-lg sm:text-xl font-bold">Zyra AI</span>
           </div>
-          <p className="text-muted-foreground text-xs sm:text-sm">© 2024 Zyra. All rights reserved.</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">© 2024 Zyra AI. All rights reserved.</p>
         </div>
       </footer>
     </div>

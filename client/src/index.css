@@ -244,7 +244,7 @@
     transition: color 0.3s ease;
   }
 
-  /* Custom animations for Zyra background effects */
+  /* Custom animations for Zyra AI background effects */
   .animate-spin-slow {
     animation: spin 8s linear infinite;
   }

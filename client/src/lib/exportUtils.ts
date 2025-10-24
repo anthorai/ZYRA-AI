@@ -48,7 +48,7 @@ export interface ExportData {
 export function generateCSV(data: ExportData): string {
   const currentDate = new Date().toISOString().split('T')[0];
   
-  let csv = `Zyra Analytics Report - ${currentDate}\n\n`;
+  let csv = `Zyra AI Analytics Report - ${currentDate}\n\n`;
   
   // Key Metrics Section
   csv += "KEY METRICS\n";
@@ -97,7 +97,7 @@ export function generatePDF(data: ExportData): jsPDF {
   // Header
   doc.setFontSize(20);
   doc.setTextColor(40, 44, 52);
-  doc.text('Zyra Analytics Report', 20, 25);
+  doc.text('Zyra AI Analytics Report', 20, 25);
   
   doc.setFontSize(12);
   doc.setTextColor(100, 100, 100);
@@ -252,7 +252,7 @@ export function generatePDF(data: ExportData): jsPDF {
     doc.setPage(i);
     doc.setFontSize(10);
     doc.setTextColor(150, 150, 150);
-    doc.text(`Page ${i} of ${pageCount} | Zyra Analytics Report`, 20, doc.internal.pageSize.height - 10);
+    doc.text(`Page ${i} of ${pageCount} | Zyra AI Analytics Report`, 20, doc.internal.pageSize.height - 10);
   }
   
   return doc;

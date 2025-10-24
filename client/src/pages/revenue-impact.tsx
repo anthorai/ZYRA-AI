@@ -106,7 +106,7 @@ export default function RevenueImpact() {
                 Revenue Impact
               </h1>
               <p className="text-slate-300 text-xs sm:text-sm lg:text-base truncate">
-                Total revenue boost from Zyra AI optimizations this month
+                Total revenue boost from Zyra AI AI optimizations this month
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function RevenueImpact() {
           <CardHeader>
             <CardTitle className="text-white">Revenue Breakdown by Source</CardTitle>
             <CardDescription className="text-slate-300">
-              See how different Zyra AI features contribute to your revenue growth
+              See how different Zyra AI AI features contribute to your revenue growth
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -240,7 +240,7 @@ export default function RevenueImpact() {
           <CardHeader>
             <CardTitle className="text-white">Monthly Revenue Trend</CardTitle>
             <CardDescription className="text-slate-300">
-              Track your revenue growth powered by Zyra AI over time
+              Track your revenue growth powered by Zyra AI AI over time
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -203,7 +203,7 @@ export default function SmartProductDescriptions() {
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
               <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">How Zyra AI Works</h2>
+              <h2 className="text-xl font-semibold text-white">How Zyra AI AI Works</h2>
             </div>
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center space-x-3">
@@ -328,7 +328,7 @@ export default function SmartProductDescriptions() {
                 {generateMutation.isPending ? (
                   <>
                     <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Zyra AI is working her magic...
+                    Zyra AI AI is working her magic...
                   </>
                 ) : (
                   <>

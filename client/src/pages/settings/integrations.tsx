@@ -34,9 +34,9 @@ export default function IntegrationsPage() {
       type: "E-Commerce Platform",
       icon: <ShoppingBag className="w-5 h-5" />,
       isConnected: false,
-      description: "Sync your Shopify products, collections, and analytics with Zyra to enable real-time optimization, auto publishing, and sales automation.",
+      description: "Sync your Shopify products, collections, and analytics with Zyra AI to enable real-time optimization, auto publishing, and sales automation.",
       label: "For Shopify Sellers 🛒",
-      tooltip: "Required to sync products, analytics, and automation between Zyra & your Shopify store.",
+      tooltip: "Required to sync products, analytics, and automation between Zyra AI & your Shopify store.",
       labelType: "recommended"
     },
     {
@@ -69,7 +69,7 @@ export default function IntegrationsPage() {
       isConnected: true,
       description: "Send marketing emails via Gmail",
       label: "For All Businesses 💼",
-      tooltip: "Send AI-powered marketing & upsell emails directly from Zyra.",
+      tooltip: "Send AI-powered marketing & upsell emails directly from Zyra AI.",
       labelType: "optional"
     },
     {

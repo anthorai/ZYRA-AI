@@ -37,7 +37,7 @@ export default function Footer({ className = "" }: FooterProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#0e0e1e] rounded-2xl">
         {/* Desktop Layout */}
         <div className="hidden md:flex items-center justify-between py-6">
-          {/* Logo & Zyra Text - Left Side */}
+          {/* Logo & Zyra AI Text - Left Side */}
           <div className="flex-shrink-0">
             <div
               onClick={handleLogoClick}
@@ -46,11 +46,11 @@ export default function Footer({ className = "" }: FooterProps) {
             >
               <img 
                 src={zyraLogo} 
-                alt="Zyra Logo" 
+                alt="Zyra AI Logo" 
                 className="w-8 h-8 rounded-lg"
               />
               <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300">
-                Zyra
+                Zyra AI
               </span>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function Footer({ className = "" }: FooterProps) {
 
         {/* Mobile Layout - Stacked */}
         <div className="md:hidden py-6 space-y-4">
-          {/* Logo & Zyra Text - Top */}
+          {/* Logo & Zyra AI Text - Top */}
           <div className="text-center">
             <div
               onClick={handleLogoClick}
@@ -108,11 +108,11 @@ export default function Footer({ className = "" }: FooterProps) {
             >
               <img 
                 src={zyraLogo} 
-                alt="Zyra Logo" 
+                alt="Zyra AI Logo" 
                 className="w-8 h-8 rounded-lg"
               />
               <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300">
-                Zyra
+                Zyra AI
               </span>
             </div>
           </div>
@@ -160,7 +160,7 @@ export default function Footer({ className = "" }: FooterProps) {
         {/* Copyright - Bottom Center */}
         <div className="border-t border-[#00F0FF]/20 py-4">
           <p className="text-center text-[#EAEAEA]/60 text-sm font-sans" data-testid="text-copyright">
-            © 2024 Zyra. All rights reserved.
+            © 2024 Zyra AI. All rights reserved.
           </p>
         </div>
       </div>

@@ -74,7 +74,7 @@ export default function SettingsPage() {
               </Button>
               <div className="min-w-0 flex-1">
                 <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl" data-testid="text-page-title">Settings & Configuration</h1>
-                <p className="text-slate-300 text-xs sm:text-sm lg:text-base" data-testid="text-page-subtitle">Customize your Zyra experience, manage integrations, and configure AI preferences</p>
+                <p className="text-slate-300 text-xs sm:text-sm lg:text-base" data-testid="text-page-subtitle">Customize your Zyra AI experience, manage integrations, and configure AI preferences</p>
               </div>
             </div>
 

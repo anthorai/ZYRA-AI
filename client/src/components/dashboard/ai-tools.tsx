@@ -172,7 +172,7 @@ export default function AITools() {
     {
       id: 'brand-voice',
       title: 'Brand Voice Memory',
-      description: 'Set your brand tone once, Zyra applies it everywhere automatically',
+      description: 'Set your brand tone once, Zyra AI applies it everywhere automatically',
       icon: <Brain className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
       category: 'new',
       gradient: 'from-indigo-500 to-blue-400',

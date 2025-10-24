@@ -53,7 +53,7 @@ export default function AIPreferencesPage() {
             AI Preferences
           </h1>
           <p className="text-slate-300 text-lg mt-1">
-            Customize how Zyra AI adapts to your brand and creates content
+            Customize how Zyra AI AI adapts to your brand and creates content
           </p>
         </div>
       </div>

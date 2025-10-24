@@ -672,7 +672,7 @@ export default function ProfilePage() {
                   <CardHeader>
                     <CardTitle className="text-white">Connect New Store</CardTitle>
                     <CardDescription className="text-slate-300">
-                      Add a new Shopify or WooCommerce store to sync with Zyra
+                      Add a new Shopify or WooCommerce store to sync with Zyra AI
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

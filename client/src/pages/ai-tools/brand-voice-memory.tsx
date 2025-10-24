@@ -134,7 +134,7 @@ export default function BrandVoiceMemory() {
       setBrandAnalysis(result);
       toast({
         title: "🧠 Brand Voice Learned!",
-        description: `Zyra AI has analyzed your brand with ${result.confidence}% confidence.`,
+        description: `Zyra AI AI has analyzed your brand with ${result.confidence}% confidence.`,
       });
     },
     onError: (error: any) => {
@@ -256,7 +256,7 @@ export default function BrandVoiceMemory() {
                 </h1>
               </div>
               <p className="text-slate-300 text-xs sm:text-sm lg:text-base truncate">
-                Set your brand tone once, Zyra applies it everywhere automatically
+                Set your brand tone once, Zyra AI applies it everywhere automatically
               </p>
             </div>
           </div>
@@ -275,7 +275,7 @@ export default function BrandVoiceMemory() {
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
               <Brain className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">How Zyra Learns Your Voice</h2>
+              <h2 className="text-xl font-semibold text-white">How Zyra AI Learns Your Voice</h2>
             </div>
             <div className="grid md:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center space-x-3">
@@ -301,7 +301,7 @@ export default function BrandVoiceMemory() {
         {/* Brand Information Form */}
         <Card className="border-0 gradient-card rounded-xl">
           <CardHeader>
-            <CardTitle className="text-2xl text-white">Teach Zyra Your Brand Voice</CardTitle>
+            <CardTitle className="text-2xl text-white">Teach Zyra AI Your Brand Voice</CardTitle>
             <CardDescription className="text-slate-300">
               Provide your brand information and sample content for AI analysis
             </CardDescription>

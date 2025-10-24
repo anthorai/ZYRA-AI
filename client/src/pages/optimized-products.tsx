@@ -92,7 +92,7 @@ export default function OptimizedProducts() {
                 Optimized Products
               </h1>
               <p className="text-slate-300 text-xs sm:text-sm lg:text-base truncate">
-                Track products enhanced by Zyra AI with improved descriptions and SEO
+                Track products enhanced by Zyra AI AI with improved descriptions and SEO
               </p>
             </div>
           </div>

@@ -237,7 +237,7 @@ export default function DynamicTemplates() {
             </div>
             <p className="text-slate-300 text-sm">
               Choose from pre-built tone templates to instantly transform your product descriptions. 
-              Zyra AI learns your preferred style and can apply it consistently across all your content.
+              Zyra AI AI learns your preferred style and can apply it consistently across all your content.
             </p>
           </CardContent>
         </Card>
@@ -290,7 +290,7 @@ export default function DynamicTemplates() {
           <CardHeader>
             <CardTitle className="text-2xl text-white">Content to Transform</CardTitle>
             <CardDescription className="text-slate-300">
-              Provide your original content and watch Zyra AI transform it to match your selected tone
+              Provide your original content and watch Zyra AI AI transform it to match your selected tone
             </CardDescription>
           </CardHeader>
           <CardContent>

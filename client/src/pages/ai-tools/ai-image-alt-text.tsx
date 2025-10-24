@@ -230,7 +230,7 @@ export default function AIImageAltText() {
           <CardHeader>
             <CardTitle className="text-2xl text-white">Upload Product Image</CardTitle>
             <CardDescription className="text-slate-300">
-              Upload your product image and Zyra AI will generate descriptive, SEO-optimized alt-text
+              Upload your product image and Zyra AI AI will generate descriptive, SEO-optimized alt-text
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

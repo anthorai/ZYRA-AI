@@ -62,7 +62,7 @@ export default function ForgotPassword() {
           <CardContent className="p-6 sm:p-8">
             <div className="text-center mb-6 sm:mb-8">
               <div className="mx-auto mb-3 sm:mb-4">
-                <img src={zyraLogoUrl} alt="Zyra" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
+                <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white" data-testid="text-forgot-password-title">
                 Reset Password

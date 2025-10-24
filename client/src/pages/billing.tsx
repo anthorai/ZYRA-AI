@@ -233,7 +233,7 @@ export default function BillingPage() {
           key: data.order.keyId,
           amount: data.order.amount,
           currency: data.order.currency,
-          name: 'Zyra',
+          name: 'Zyra AI',
           description: `${data.plan.planName} Plan`,
           order_id: data.order.id,
           handler: async function (response: any) {

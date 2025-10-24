@@ -237,14 +237,14 @@
     "hero": {
       "badge": "Motor de Crecimiento IA",
       "title": "Tu Socio IA para un Crecimiento Más Inteligente",
-      "subtitle": "Zyra AI es la plataforma impulsada por IA creada para ayudar a los comerciantes de Shopify a aumentar las ventas, maximizar el ROI y ahorrar tiempo cada semana.",
+      "subtitle": "Zyra es la plataforma impulsada por IA creada para ayudar a los comerciantes de Shopify a aumentar las ventas, maximizar el ROI y ahorrar tiempo cada semana.",
       "description": "Transforma tu negocio de eCommerce con automatización inteligente que trabaja mientras te enfocas en lo que más importa: hacer crecer tu marca."
     },
     "vision": {
-      "title": "Por Qué Existe Zyra AI",
+      "title": "Por Qué Existe Zyra",
       "paragraph1": "Administrar una tienda Shopify exitosa no debería significar pasar horas en tareas repetitivas. Los comerciantes enfrentan presión constante para optimizar listados de productos, crear contenido atractivo, recuperar carritos abandonados y rastrear el rendimiento, todo mientras intentan hacer crecer su negocio.",
-      "paragraph2": "Zyra AI resuelve esto combinando IA de vanguardia con estrategias de eCommerce comprobadas. Automatizamos el trabajo pesado para que puedas enfocarte en estrategia, creatividad y relaciones con clientes. Nuestra plataforma aprende de los patrones únicos de tu tienda y mejora continuamente tus resultados.",
-      "paragraph3": "Construimos Zyra AI para ser el socio de crecimiento que todo comerciante merece: inteligente, incansable y siempre trabajando para generar resultados medibles."
+      "paragraph2": "Zyra resuelve esto combinando IA de vanguardia con estrategias de eCommerce comprobadas. Automatizamos el trabajo pesado para que puedas enfocarte en estrategia, creatividad y relaciones con clientes. Nuestra plataforma aprende de los patrones únicos de tu tienda y mejora continuamente tus resultados.",
+      "paragraph3": "Construimos Zyra para ser el socio de crecimiento que todo comerciante merece: inteligente, incansable y siempre trabajando para generar resultados medibles."
     },
     "features": {
       "title": "Funciones Potentes, Resultados Reales",
@@ -285,17 +285,17 @@
       "roiMaximization": {
         "value": "500%",
         "label": "ROI Promedio",
-        "description": "Cada dólar invertido en Zyra AI retorna 5x en ingresos aumentados."
+        "description": "Cada dólar invertido en Zyra retorna 5x en ingresos aumentados."
       }
     },
     "future": {
       "title": "Tu Socio de Crecimiento Que Nunca Deja de Aprender",
-      "description": "Zyra AI no es solo software: es un socio IA que evoluciona con tu negocio. Cada campaña, cada optimización, cada interacción hace que nuestros algoritmos sean más inteligentes. A medida que tu tienda crece, Zyra AI crece contigo, encontrando continuamente nuevas formas de impulsar tu rendimiento.",
+      "description": "Zyra no es solo software: es un socio IA que evoluciona con tu negocio. Cada campaña, cada optimización, cada interacción hace que nuestros algoritmos sean más inteligentes. A medida que tu tienda crece, Zyra crece contigo, encontrando continuamente nuevas formas de impulsar tu rendimiento.",
       "tagline": "El futuro del eCommerce no es solo automatizado, es inteligente."
     },
     "cta": {
       "title": "¿Listo para Impulsar Tu Crecimiento?",
-      "description": "Únete a miles de comerciantes de Shopify que confían en Zyra AI para impulsar su éxito.",
+      "description": "Únete a miles de comerciantes de Shopify que confían en Zyra para impulsar su éxito.",
       "button": "Comienza a Crecer Hoy"
     }
   },
@@ -305,13 +305,13 @@
       "title": "Política de Privacidad",
       "lastUpdated": "Última Actualización",
       "date": "30 de Septiembre de 2025",
-      "description": "En Zyra AI, tomamos tu privacidad en serio. Esta política explica cómo recopilamos, usamos y protegemos tu información."
+      "description": "En Zyra, tomamos tu privacidad en serio. Esta política explica cómo recopilamos, usamos y protegemos tu información."
     },
     "introduction": {
       "title": "Introducción",
-      "paragraph1": "Bienvenido a Zyra AI, una plataforma impulsada por IA diseñada para ayudar a los comerciantes de Shopify a optimizar sus tiendas, aumentar las conversiones y hacer crecer sus negocios. Estamos comprometidos a proteger tu privacidad y manejar tus datos con transparencia y cuidado.",
-      "paragraph2": "Esta Política de Privacidad explica cómo Zyra AI recopila, usa, almacena y comparte tu información personal cuando utilizas nuestra plataforma. También describe tus derechos con respecto a tus datos y cómo puedes ejercerlos.",
-      "paragraph3": "Al usar Zyra AI, aceptas la recopilación y el uso de información de acuerdo con esta política. Si no estás de acuerdo con alguna parte de esta política, por favor, deja de usar nuestros servicios."
+      "paragraph1": "Bienvenido a Zyra, una plataforma impulsada por IA diseñada para ayudar a los comerciantes de Shopify a optimizar sus tiendas, aumentar las conversiones y hacer crecer sus negocios. Estamos comprometidos a proteger tu privacidad y manejar tus datos con transparencia y cuidado.",
+      "paragraph2": "Esta Política de Privacidad explica cómo Zyra recopila, usa, almacena y comparte tu información personal cuando utilizas nuestra plataforma. También describe tus derechos con respecto a tus datos y cómo puedes ejercerlos.",
+      "paragraph3": "Al usar Zyra, aceptas la recopilación y el uso de información de acuerdo con esta política. Si no estás de acuerdo con alguna parte de esta política, por favor, deja de usar nuestros servicios."
     },
     "informationCollection": {
       "title": "Información que Recopilamos",
@@ -366,7 +366,7 @@
     },
     "dataSharing": {
       "title": "Compartir y Divulgación de Datos",
-      "intro": "Zyra AI no vende tu información personal. Solo compartimos datos en las siguientes circunstancias:",
+      "intro": "Zyra no vende tu información personal. Solo compartimos datos en las siguientes circunstancias:",
       "thirdParty": {
         "title": "Proveedores de Servicios",
         "description": "Trabajamos con proveedores externos de confianza (Shopify, PayPal, Razorpay, SendGrid, OpenAI, Supabase) para ofrecer nuestros servicios. Estos proveedores están sujetos a estrictos acuerdos de protección de datos y solo acceden a los datos necesarios para sus funciones específicas."
@@ -406,7 +406,7 @@
     },
     "cookiesTracking": {
       "title": "Cookies y Seguimiento",
-      "paragraph1": "Zyra AI utiliza cookies y tecnologías de seguimiento similares para mejorar tu experiencia y comprender cómo usas nuestra plataforma.",
+      "paragraph1": "Zyra utiliza cookies y tecnologías de seguimiento similares para mejorar tu experiencia y comprender cómo usas nuestra plataforma.",
       "paragraph2": "Puedes controlar las preferencias de cookies a través de la configuración de tu navegador. Ten en cuenta que deshabilitar ciertas cookies puede limitar algunas funcionalidades de nuestra plataforma.",
       "types": {
         "essential": {
@@ -425,7 +425,7 @@
     },
     "thirdPartyIntegrations": {
       "title": "Integraciones de Terceros",
-      "intro": "Zyra AI se integra con los siguientes servicios de terceros para proporcionar nuestra funcionalidad:",
+      "intro": "Zyra se integra con los siguientes servicios de terceros para proporcionar nuestra funcionalidad:",
       "services": {
         "shopify": "Shopify: Sincronización de datos de la tienda y gestión de productos",
         "sendgrid": "SendGrid: Entrega de campañas de correo electrónico y seguimiento de rendimiento",
@@ -444,13 +444,13 @@
     },
     "internationalTransfers": {
       "title": "Transferencias Internacionales de Datos",
-      "paragraph1": "Zyra AI opera globalmente y puede transferir tus datos a servidores ubicados en diferentes países, incluidos Estados Unidos y la Unión Europea. Nos aseguramos de que las transferencias internacionales de datos cumplan con las leyes de protección de datos aplicables, incluidos GDPR, CCPA y otras regulaciones regionales.",
+      "paragraph1": "Zyra opera globalmente y puede transferir tus datos a servidores ubicados en diferentes países, incluidos Estados Unidos y la Unión Europea. Nos aseguramos de que las transferencias internacionales de datos cumplan con las leyes de protección de datos aplicables, incluidos GDPR, CCPA y otras regulaciones regionales.",
       "paragraph2": "Al transferir datos internacionalmente, implementamos salvaguardias apropiadas como Cláusulas Contractuales Estándar (SCC) y nos aseguramos de que nuestros proveedores de servicios se adhieran a estándares equivalentes de protección de datos."
     },
     "policyUpdates": {
       "title": "Actualizaciones de Esta Política",
       "paragraph1": "Podemos actualizar esta Política de Privacidad de vez en cuando para reflejar cambios en nuestras prácticas, requisitos legales u ofertas de servicios. Cuando hagamos cambios significativos, te notificaremos por correo electrónico o mediante un aviso destacado en nuestra plataforma.",
-      "paragraph2": "Tu uso continuado de Zyra AI después de cualquier cambio en esta política constituye tu aceptación de los términos actualizados. Te recomendamos que revises esta política periódicamente para mantenerte informado sobre cómo protegemos tu información."
+      "paragraph2": "Tu uso continuado de Zyra después de cualquier cambio en esta política constituye tu aceptación de los términos actualizados. Te recomendamos que revises esta política periódicamente para mantenerte informado sobre cómo protegemos tu información."
     },
     "contact": {
       "title": "Contáctanos",

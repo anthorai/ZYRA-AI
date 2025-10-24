@@ -16,7 +16,7 @@ const tourSteps: TourStep[] = [
   {
     id: 'welcome',
     target: '',
-    title: 'Welcome to Zyra! 🎉',
+    title: 'Welcome to Zyra AI! 🎉',
     description: 'Let\'s take a quick tour to help you get started with AI-powered product optimization.',
     placement: 'bottom'
   },

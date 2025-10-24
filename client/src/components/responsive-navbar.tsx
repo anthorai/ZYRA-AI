@@ -30,8 +30,8 @@ interface ResponsiveNavbarProps {
 
 export default function ResponsiveNavbar({
   logo = {
-    icon: <img src={zyraLogoUrl} alt="Zyra" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />,
-    text: "Zyra",
+    icon: <img src={zyraLogoUrl} alt="Zyra AI AI" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />,
+    text: "Zyra AI AI",
     href: "/"
   },
   navItems,

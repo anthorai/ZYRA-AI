@@ -41,7 +41,7 @@ export default function SupportPage() {
     {
       id: "getting-started",
       title: "Getting Started Guide",
-      description: "Learn the basics of using Zyra",
+      description: "Learn the basics of using Zyra AI",
       icon: <Book className="w-5 h-5" />,
       action: "View Guide"
     },
@@ -55,7 +55,7 @@ export default function SupportPage() {
     {
       id: "api-docs",
       title: "API Documentation",
-      description: "Integrate Zyra with your systems",
+      description: "Integrate Zyra AI with your systems",
       icon: <FileText className="w-5 h-5" />,
       action: "Read Docs"
     },

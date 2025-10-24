@@ -147,10 +147,10 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
           <div className="flex items-center space-x-3 mb-8" data-testid="sidebar-logo">
             <img 
               src={zyraLogo} 
-              alt="Zyra Logo" 
+              alt="Zyra AI Logo" 
               className="w-10 h-10 rounded-lg"
             />
-            <span className="text-xl sm:text-2xl font-bold text-foreground">Zyra</span>
+            <span className="text-xl sm:text-2xl font-bold text-foreground">Zyra AI</span>
           </div>
 
           {/* Navigation */}

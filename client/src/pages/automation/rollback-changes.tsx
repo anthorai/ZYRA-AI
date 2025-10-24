@@ -49,7 +49,7 @@ export default function RollbackChanges() {
       productName: "Wireless Bluetooth Headphones",
       changeDate: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       changeType: 'ai-optimization',
-      changedBy: 'Zyra AI',
+      changedBy: 'Zyra AI AI',
       canRollback: true,
       changes: [
         {
@@ -74,7 +74,7 @@ export default function RollbackChanges() {
       productName: "Smart Fitness Watch",
       changeDate: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
       changeType: 'ai-optimization',
-      changedBy: 'Zyra AI',
+      changedBy: 'Zyra AI AI',
       canRollback: true,
       changes: [
         {

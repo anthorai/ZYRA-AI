@@ -1,6 +1,6 @@
 # Overview
 
-Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
+Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
 
 **Production Status:** ✅ Ready for deployment (as of October 24, 2025)  
 **Deployment Options:**
@@ -21,8 +21,8 @@ The server uses Express.js with TypeScript, providing RESTful API endpoints. Aut
 
 ## Feature Specifications
 
-### AI Integration (Zyra Pro Mode System & Zyra Engine)
-Zyra employs a centralized AI prompt library (`shared/ai-system-prompts.ts`) for all AI outputs, ensuring expert-level, conversion-optimized content with a professional tone, SEO optimization, and human-quality. It utilizes a multi-model AI system with plan-based intelligent routing, dynamically selecting models (GPT-4o, GPT-4o-mini) based on user plans and task types for core features like:
+### AI Integration (Zyra AI Pro Mode System & Zyra AI Engine)
+Zyra AI employs a centralized AI prompt library (`shared/ai-system-prompts.ts`) for all AI outputs, ensuring expert-level, conversion-optimized content with a professional tone, SEO optimization, and human-quality. It utilizes a multi-model AI system with plan-based intelligent routing, dynamically selecting models (GPT-4o, GPT-4o-mini) based on user plans and task types for core features like:
 - **Professional Copywriting System**: Multi-agent pipeline (Analyzer → Copywriter → Critic) using industry frameworks and psychological triggers to generate A/B variants.
 - **Product Description Generation**: AI-powered descriptions with brand voice consistency.
 - **Automated SEO Optimization**: Keyword-rich titles and meta descriptions.

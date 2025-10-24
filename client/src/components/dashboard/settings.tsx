@@ -209,7 +209,7 @@ export default function Settings() {
               Settings & Configuration
             </h1>
             <p className="text-slate-300 text-lg">
-              Customize your Zyra experience, manage integrations, and configure AI preferences
+              Customize your Zyra AI experience, manage integrations, and configure AI preferences
             </p>
           </div>
         </div>
@@ -413,7 +413,7 @@ export default function Settings() {
           <div>
             <h3 className="text-white font-bold text-lg mb-2">Account Configuration</h3>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Your Zyra account is fully configured with AI preferences optimized for your brand voice. 
+              Your Zyra AI account is fully configured with AI preferences optimized for your brand voice. 
               All integrations are active and security features are enabled. Your settings sync across 
               all connected stores and devices for a seamless experience.
             </p>

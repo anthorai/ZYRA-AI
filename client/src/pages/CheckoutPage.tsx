@@ -51,7 +51,7 @@ export default function CheckoutPage() {
         amount: parseFloat(data.amount),
         currency: data.currency,
         receipt: `receipt_${Date.now()}`,
-        notes: { description: data.description || "Zyra subscription" },
+        notes: { description: data.description || "Zyra AI subscription" },
       });
       return response;
     },
@@ -105,8 +105,8 @@ export default function CheckoutPage() {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_dummy",
           amount: orderData.amount,
           currency: orderData.currency,
-          name: "Zyra",
-          description: form.getValues("description") || "Zyra subscription",
+          name: "Zyra AI",
+          description: form.getValues("description") || "Zyra AI subscription",
           order_id: orderData.orderId,
           handler: function (response: any) {
             verifyRazorpayPayment.mutate({
