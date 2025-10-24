@@ -2,8 +2,10 @@
 
 Zyra is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
 
-**Production Status:** ✅ Ready for deployment (as of October 19, 2025)  
-**Documentation:** See `PRODUCTION_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
+**Production Status:** ✅ Ready for deployment (as of October 24, 2025)  
+**Deployment Options:**
+- Replit VM deployment: See `PRODUCTION_DEPLOYMENT_GUIDE.md`
+- Vercel deployment: See `VERCEL_DEPLOYMENT_GUIDE.md` and `VERCEL_QUICK_START.md`
 
 # User Preferences
 
@@ -73,7 +75,9 @@ Comprehensive performance improvements implemented for production readiness:
 - **PostgreSQL**: Production database.
 - **Supabase**: Provides PostgreSQL and authentication services.
 - **Drizzle ORM**: Type-safe database queries.
-- **Replit Deployment**: Full-stack hosting environment.
+- **Deployment Options**:
+  - **Replit VM**: Always-running environment with persistent filesystem (recommended for background schedulers)
+  - **Vercel**: Serverless deployment with global CDN, auto-scaling, and Vercel Cron for scheduled tasks
 
 ## AI & Machine Learning
 - **OpenAI API**: GPT-4o mini for text generation and Vision API for image analysis.
