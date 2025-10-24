@@ -563,7 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email, 
         fullName: user.fullName, 
         role: user.role,
-        plan: user.plan
+        plan: user.plan,
+        imageUrl: user.imageUrl
       } 
     });
   });
