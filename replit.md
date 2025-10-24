@@ -10,12 +10,16 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
 - Vercel deployment: See `VERCEL_DEPLOYMENT_GUIDE.md` and `VERCEL_QUICK_START.md`
 
 **Latest Changes (October 24, 2025):**
-- ✅ **Vercel Serverless Deployment** (fixes 404 NOT_FOUND error):
+- ✅ **Vercel Serverless Deployment** (fixes 500 FUNCTION_INVOCATION_FAILED error):
   - Refactored Express app to support both traditional (Replit VM) and serverless (Vercel) deployment
-  - Created api/index.js serverless entry point for Vercel
-  - Updated vercel.json with proper routing configuration
+  - Fixed race condition where routes weren't registered before app was used on Vercel
+  - `server/index.ts` now exports both `app` and `serverPromise` for proper initialization
+  - `api/index.js` awaits `serverPromise` to ensure routes, database, and error handlers are ready
+  - Deleted conflicting `api/index.ts` file (kept `api/index.js` as single source of truth)
+  - Updated vercel.json to use modern `rewrites` syntax (compatible with `headers` array)
   - Schedulers only run on traditional hosting (GitHub Actions handles Vercel scheduled tasks)
   - Static file serving works correctly on both platforms
+  - Expected cold start: ~2-3 seconds (subsequent requests instant via app caching)
 - ✅ PayPal checkout displays "Zyra AI" branding with plan details
 - ✅ Core API credentials configured (SendGrid, Twilio, PayPal Client ID/Secret, OpenAI)
 - ✅ Production build completed successfully (dist/public/ generated)
