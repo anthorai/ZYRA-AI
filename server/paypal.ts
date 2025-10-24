@@ -100,15 +100,17 @@ export async function createPaypalOrder(req: Request, res: Response) {
         .json({ error: "Invalid currency. Currency is required." });
     }
 
-    if (!intent) {
+    // Validate and normalize intent - PayPal only accepts CAPTURE or AUTHORIZE
+    const normalizedIntent = intent?.toUpperCase();
+    if (!normalizedIntent || !['CAPTURE', 'AUTHORIZE'].includes(normalizedIntent)) {
       return res
         .status(400)
-        .json({ error: "Invalid intent. Intent is required." });
+        .json({ error: "Invalid intent. Intent must be 'capture' or 'authorize'." });
     }
 
     const collect = {
       body: {
-        intent: intent,
+        intent: normalizedIntent,
         purchaseUnits: [
           {
             amount: {
