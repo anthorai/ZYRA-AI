@@ -174,7 +174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: userProfile.email,
           fullName: userProfile.fullName,
           role: userProfile.role,
-          plan: userProfile.plan
+          plan: userProfile.plan,
+          imageUrl: userProfile.imageUrl
         };
         
         return next();
@@ -215,7 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: userProfile.email,
         fullName: userProfile.fullName,
         role: userProfile.role,
-        plan: userProfile.plan
+        plan: userProfile.plan,
+        imageUrl: userProfile.imageUrl
       };
       
       next();
