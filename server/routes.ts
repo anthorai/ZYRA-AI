@@ -467,28 +467,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 60 * 1000); // Clean up every minute
 
-  // Registration is handled by Supabase Auth on frontend
-  // User profiles are auto-provisioned by the auth middleware
-  app.post("/api/register", async (req, res) => {
-    res.status(400).json({ 
-      message: "Registration should be handled through Supabase Auth on the frontend. User profiles are automatically created on first API access." 
-    });
+  // Server-side auth proxy endpoints (fixes CORS/CSP issues with Supabase)
+  
+  // Registration endpoint - proxies to Supabase from server
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { email, password, fullName } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      
+      // Call Supabase from server (no CORS issues)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      });
+      
+      if (error) {
+        return res.status(400).json({ message: error.message, error });
+      }
+      
+      res.json({ data });
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Registration failed', error: error.message });
+    }
   });
 
-  // Login is handled by Supabase Auth on frontend
-  app.post("/api/login", async (req, res) => {
-    // This endpoint is no longer needed as Supabase Auth handles login
-    // Frontend should use supabase.auth.signInWithPassword()
-    res.status(400).json({ 
-      message: "Login should be handled through Supabase Auth on the frontend" 
-    });
+  // Login endpoint - proxies to Supabase from server
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      
+      // Call Supabase from server (no CORS issues)
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        return res.status(400).json({ message: error.message, error });
+      }
+      
+      res.json({ data });
+    } catch (error: any) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Login failed', error: error.message });
+    }
   });
 
-  // Logout is handled by Supabase Auth on frontend
-  app.post("/api/logout", (req, res) => {
-    // This endpoint is no longer needed as Supabase Auth handles logout
-    // Frontend should use supabase.auth.signOut()
-    res.json({ message: "Logout should be handled through Supabase Auth on the frontend" });
+  // Logout endpoint - proxies to Supabase from server
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "No authorization token provided" });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      
+      // Set the session for this supabase client instance
+      await supabase.auth.setSession({
+        access_token: token,
+        refresh_token: '' // Not needed for logout
+      });
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        return res.status(400).json({ message: error.message, error });
+      }
+      
+      res.json({ message: "Logged out successfully" });
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: 'Logout failed', error: error.message });
+    }
   });
 
   app.get("/api/me", requireAuth, (req, res) => {

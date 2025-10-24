@@ -318,12 +318,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Compatibility methods for old auth system
+  // Server-side auth proxy methods (fixes CORS/CSP issues)
   const login = async (credentials: { email: string; password: string }) => {
     setIsLoggingIn(true);
     try {
-      const result = await supabase.auth.signInWithPassword({ email: credentials.email, password: credentials.password });
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        return { data: null, error: result };
+      }
+      
+      // Store session in Supabase client for compatibility
+      if (result.data?.session) {
+        await supabase.auth.setSession(result.data.session);
+      }
+      
       return result;
+    } catch (error: any) {
+      return { data: null, error: { message: error.message } };
     } finally {
       setIsLoggingIn(false);
     }
@@ -332,8 +350,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const register = async (userData: { email: string; password: string; fullName: string }) => {
     setIsRegistering(true);
     try {
-      const result = await supabase.auth.signUp({ email: userData.email, password: userData.password, options: { data: { full_name: userData.fullName } } });
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        return { data: null, error: result };
+      }
+      
+      // Store session in Supabase client for compatibility
+      if (result.data?.session) {
+        await supabase.auth.setSession(result.data.session);
+      }
+      
       return result;
+    } catch (error: any) {
+      return { data: null, error: { message: error.message } };
     } finally {
       setIsRegistering(false);
     }
@@ -342,8 +378,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     setIsLoggingOut(true);
     try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+      
+      // Clear local Supabase session
       const result = await supabase.auth.signOut();
       return result;
+    } catch (error: any) {
+      return { error: { message: error.message } };
     } finally {
       setIsLoggingOut(false);
     }

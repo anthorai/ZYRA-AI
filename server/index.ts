@@ -49,7 +49,9 @@ app.use(helmet({
         "https://api.openai.com",
         "https://api.razorpay.com",
         "https://www.paypal.com",
-        "https://www.sandbox.paypal.com"
+        "https://www.sandbox.paypal.com",
+        "https://*.supabase.co",
+        "wss://*.supabase.co"
       ],
       frameSrc: [
         "'self'",
