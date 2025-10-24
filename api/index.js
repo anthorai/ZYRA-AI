@@ -1,49 +1,39 @@
 // Vercel serverless function entry point
-// This file exports the Express app for Vercel's serverless environment
+// Imports the compiled Express app and exports it for Vercel
 
-// Import the compiled server (Vercel will run the build step first)
-const path = require('path');
-
-// Set environment to production for serverless
+// IMPORTANT: Set these env vars before importing to skip schedulers
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
-
-// Vercel serverless indicator
 process.env.VERCEL_SERVERLESS = 'true';
 
-// Import the Express app from the compiled dist/server directory
-let app;
-
-try {
-  // Load the compiled server app
-  const serverPath = path.join(__dirname, '../dist/server/index.js');
-  const serverModule = require(serverPath);
-  
-  // The server exports either 'app' or 'default'
-  app = serverModule.app || serverModule.default || serverModule;
-  
-  if (typeof app === 'function' && app.name === 'app') {
-    // It's already an Express app
-    module.exports = app;
-  } else if (typeof app === 'object' && app.handle) {
-    // It's an Express app object
-    module.exports = app;
-  } else {
-    throw new Error('Invalid Express app export');
-  }
-} catch (error) {
-  console.error('Failed to load Express app:', error);
-  
-  // Fallback: create a minimal Express app that shows the error
-  const express = require('express');
-  app = express();
-  
-  app.use((req, res) => {
+// Re-export the Express app
+// The dist/index.js file exports {app} after async initialization
+module.exports = async (req, res) => {
+  try {
+    // Lazy load the app on first request
+    if (!global._cachedApp) {
+      console.log('[Vercel] Loading Express app...');
+      const { app } = await import('../dist/index.js');
+      
+      // Wait for app to be ready (initialization happens in server/index.ts)
+      if (!app) {
+        throw new Error('App export is undefined');
+      }
+      
+      // Cache the app for subsequent requests
+      global._cachedApp = app;
+      console.log('[Vercel] ✅ App loaded and cached');
+    }
+    
+    // Handle the request with the Express app
+    return global._cachedApp(req, res);
+  } catch (error) {
+    console.error('[Vercel] ❌ Failed to load app:', error);
+    
+    // Return error response
     res.status(500).json({
       error: 'Server initialization failed',
       message: error.message,
-      hint: 'Make sure the build completed successfully. Run: npm run build'
+      hint: 'Check Vercel function logs for details'
     });
-  });
-  
-  module.exports = app;
-}
+  }
+};
