@@ -83,7 +83,7 @@ export default function Auth() {
       }
       
       toast({ 
-        title: "Welcome to Zyra AI AI!", 
+        title: "Welcome to Zyra AI!", 
         description: "Account created successfully!" 
       });
       
@@ -115,13 +115,13 @@ export default function Auth() {
           <CardContent className="p-6 sm:p-8">
             <div className="text-center mb-6 sm:mb-8">
               <div className="mx-auto mb-3 sm:mb-4">
-                <img src={zyraLogoUrl} alt="Zyra AI AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
+                <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold" data-testid="text-auth-title">
                 {mode === 'login' ? 'Welcome Back' : 'Get Started'}
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground" data-testid="text-auth-subtitle">
-                {mode === 'login' ? 'Sign in to your Zyra AI AI account' : 'Create your free Zyra AI AI account'}
+                {mode === 'login' ? 'Sign in to your Zyra AI account' : 'Create your free Zyra AI account'}
               </p>
             </div>
 

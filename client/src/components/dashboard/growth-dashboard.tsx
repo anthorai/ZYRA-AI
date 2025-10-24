@@ -151,7 +151,7 @@ export default function GrowthDashboard() {
       {
         id: 'optimized-products',
         title: 'Optimized Products',
-        description: 'Products enhanced by Zyra AI AI with improved descriptions and SEO',
+        description: 'Products enhanced by Zyra AI with improved descriptions and SEO',
         icon: <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
         value: usageStats.productsOptimized?.toString() || '0',
         change: usageStats.productsOptimized > 0 ? `+${usageStats.productsOptimized} optimized` : 'No products yet',
@@ -195,7 +195,7 @@ export default function GrowthDashboard() {
       {
         id: 'revenue-impact',
         title: 'Revenue Impact',
-        description: 'Total revenue boost from Zyra AI AI optimizations this month',
+        description: 'Total revenue boost from Zyra AI optimizations this month',
         icon: <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 stroke-2 text-primary" />,
         value: `$${usageStats.totalRevenue?.toLocaleString() || '0'}`,
         change: usageStats.totalRevenue > 0 ? 'AI-driven growth' : 'Start optimizing',
@@ -283,7 +283,7 @@ export default function GrowthDashboard() {
               </Badge>
             </div>
             <p className="text-slate-300 text-sm sm:text-base lg:text-lg">
-              Track your store's performance, optimization impact, and revenue growth powered by Zyra AI AI
+              Track your store's performance, optimization impact, and revenue growth powered by Zyra AI
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -746,7 +746,7 @@ export default function GrowthDashboard() {
           <div>
             <h3 className="text-white font-bold text-lg mb-2">AI-Powered Growth Intelligence</h3>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Your Zyra AI AI is continuously analyzing customer behavior, optimizing product descriptions, and improving 
+              Your Zyra AI is continuously analyzing customer behavior, optimizing product descriptions, and improving 
               conversion rates. The dashboard shows real-time performance metrics across all optimization channels 
               including email campaigns, SMS recovery, SEO improvements, and content ROI tracking.
             </p>

@@ -134,7 +134,7 @@ export default function BrandVoiceMemory() {
       setBrandAnalysis(result);
       toast({
         title: "🧠 Brand Voice Learned!",
-        description: `Zyra AI AI has analyzed your brand with ${result.confidence}% confidence.`,
+        description: `Zyra AI has analyzed your brand with ${result.confidence}% confidence.`,
       });
     },
     onError: (error: any) => {

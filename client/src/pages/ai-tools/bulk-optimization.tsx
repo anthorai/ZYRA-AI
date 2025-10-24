@@ -234,7 +234,7 @@ export default function BulkOptimization() {
             <CardHeader>
               <CardTitle className="text-2xl text-white">Upload Your Products</CardTitle>
               <CardDescription className="text-slate-300">
-                Upload a CSV file with your product data. Zyra AI AI will optimize descriptions, generate SEO titles, and create tags for each product.
+                Upload a CSV file with your product data. Zyra AI will optimize descriptions, generate SEO titles, and create tags for each product.
               </CardDescription>
             </CardHeader>
             <CardContent>
