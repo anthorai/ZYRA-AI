@@ -49,7 +49,9 @@ import {
   type RealtimeMetrics,
   type InsertRealtimeMetrics,
   type SyncHistory,
-  type InsertSyncHistory
+  type InsertSyncHistory,
+  type PaymentTransaction,
+  type InsertPaymentTransaction
 } from "@shared/schema";
 
 export interface ISupabaseStorage {
@@ -166,6 +168,10 @@ export interface ISupabaseStorage {
   createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
   getUserSubscription(userId: string): Promise<Subscription | undefined>;
   updateUserSubscription(userId: string, updates: Partial<Subscription>): Promise<Subscription>;
+
+  // Payment transaction methods
+  getPaymentTransactions(userId: string): Promise<PaymentTransaction[]>;
+  createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction>;
 
   // Usage stats methods
   getUserUsageStats(userId: string): Promise<UsageStats | undefined>;
@@ -1428,6 +1434,36 @@ export class SupabaseStorage implements ISupabaseStorage {
       .single();
     
     if (error) throw new Error(`Failed to create user subscription: ${error.message}`);
+    return data;
+  }
+
+  // Payment transaction methods
+  async getPaymentTransactions(userId: string): Promise<PaymentTransaction[]> {
+    const { data, error } = await supabase
+      .from('payment_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw new Error(`Failed to get payment transactions: ${error.message}`);
+    return data || [];
+  }
+
+  async createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction> {
+    const transactionData = {
+      ...transaction,
+      id: randomUUID(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('payment_transactions')
+      .insert(transactionData)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to create payment transaction: ${error.message}`);
     return data;
   }
 

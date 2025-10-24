@@ -8,6 +8,7 @@ interface AuthenticatedUser {
   fullName: string;
   role: string;
   plan: string;
+  imageUrl?: string;
 }
 
 interface AuthenticatedRequest extends Request {
