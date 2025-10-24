@@ -216,6 +216,7 @@ export default function CheckoutPage() {
                       currency="USD"
                       transactionId={pendingSubscription.transactionId}
                       planId={pendingSubscription.planId}
+                      planName={pendingSubscription.planName}
                       onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
                     />

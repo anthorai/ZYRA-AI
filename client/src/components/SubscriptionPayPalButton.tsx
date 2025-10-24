@@ -17,6 +17,7 @@ interface SubscriptionPayPalButtonProps {
   currency: string;
   transactionId: string;
   planId: string;
+  planName: string;
   onSuccess: (orderId: string) => void;
   onError: (error: any) => void;
 }
@@ -26,6 +27,7 @@ export default function SubscriptionPayPalButton({
   currency,
   transactionId,
   planId,
+  planName,
   onSuccess,
   onError,
 }: SubscriptionPayPalButtonProps) {
@@ -37,6 +39,8 @@ export default function SubscriptionPayPalButton({
         amount: amount,
         currency: currency,
         intent: "capture",
+        description: `${planName} Plan - Monthly Subscription`,
+        planName: planName,
       };
       const response = await fetch("/api/paypal/order", {
         method: "POST",

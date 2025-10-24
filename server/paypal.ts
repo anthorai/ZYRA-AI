@@ -84,7 +84,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
       return res.status(503).json({ error: "PayPal not configured" });
     }
 
-    const { amount, currency, intent } = req.body;
+    const { amount, currency, intent, description, planName } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res
@@ -117,8 +117,15 @@ export async function createPaypalOrder(req: Request, res: Response) {
               currencyCode: currency,
               value: amount,
             },
+            description: description || `Zyra AI ${planName || 'Subscription'}`,
           },
         ],
+        applicationContext: {
+          brandName: "Zyra AI",
+          locale: "en-US",
+          shippingPreference: "NO_SHIPPING" as any,
+          userAction: "PAY_NOW" as any,
+        },
       },
       prefer: "return=minimal",
     };
