@@ -206,7 +206,7 @@ export default function Landing() {
           { label: "Pricing", href: "#pricing", external: true },
           // Dynamic nav items based on authentication state
           ...(loading ? [
-            { label: "...", href: "#" } // Show loading state
+            { label: "Log in", href: "/auth" } // Show login during loading state
           ] : isAuthenticated ? [
             { 
               label: isLoggingOut ? "Logging out..." : "Logout", 
@@ -214,7 +214,7 @@ export default function Landing() {
               disabled: isLoggingOut
             }
           ] : [
-            { label: "Login", href: "/auth" }
+            { label: "Log in", href: "/auth" }
           ])
         ]}
         actionButton={{
