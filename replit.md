@@ -17,12 +17,22 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
 - ✅ Shopify OAuth scopes expanded to 11 permissions (products, customers, orders, analytics, marketing)
 - ✅ GDPR webhook handlers optimized for instant response (<100ms, prevents 503 timeouts)
 - ✅ Comprehensive Shopify setup documentation created (SHOPIFY_SETUP_GUIDE.md)
-- ⚠️ **Pending User Action:** Add these 5 secrets to Replit Secrets before deployment:
-  - `PRODUCTION_DOMAIN=https://zzyraai.com`
-  - `REPLIT_DOMAIN=https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev`
-  - `VITE_SUPABASE_URL=https://uqahonxcssfxrlmynrjo.supabase.co`
-  - `VITE_SUPABASE_ANON_KEY=<copy exact value from SUPABASE_ANON_KEY secret>`
-  - `PAYPAL_WEBHOOK_ID` (see PRODUCTION_CONFIG.md for PayPal dashboard setup steps)
+- ✅ **GitHub Actions Cron Implementation** (bypasses Vercel Pro plan requirement):
+  - Created unified `/api/cron` endpoint that runs billing renewals, campaign processing, and Shopify product sync
+  - GitHub Actions workflow triggers cron every 6 hours with INTERNAL_SERVICE_TOKEN authentication
+  - Relaxed service token auth to work from Vercel serverless environment (was localhost-only)
+  - Product sync fetches ALL active Shopify stores across all users and syncs each one
+  - Comprehensive error handling and detailed JSON response with per-task status
+  - Documentation: GITHUB_ACTIONS_CRON_SETUP.md
+- ⚠️ **Pending User Action:** Add these secrets before deployment:
+  - **Replit Secrets** (5 items):
+    - `PRODUCTION_DOMAIN=https://zzyraai.com`
+    - `REPLIT_DOMAIN=https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev`
+    - `VITE_SUPABASE_URL=https://uqahonxcssfxrlmynrjo.supabase.co`
+    - `VITE_SUPABASE_ANON_KEY=<copy exact value from SUPABASE_ANON_KEY secret>`
+    - `PAYPAL_WEBHOOK_ID` (see PRODUCTION_CONFIG.md for PayPal dashboard setup steps)
+  - **GitHub Secret** (1 item):
+    - `INTERNAL_SERVICE_TOKEN=<copy from Replit Secrets>` (see GITHUB_ACTIONS_CRON_SETUP.md)
 
 # User Preferences
 
