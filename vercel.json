@@ -8,20 +8,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "crons": [
-    {
-      "path": "/api/cron/billing",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/cron/campaigns",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/product-sync",
-      "schedule": "*/10 * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
