@@ -7,8 +7,10 @@
 ## Prerequisites
 
 - ✅ GitHub account with ZYRA repository pushed
-- ✅ Vercel Pro account ($20/month - **required** for cron jobs)
-- ✅ All API keys ready (OpenAI, Supabase, SendGrid, Twilio, Razorpay/PayPal)
+- ✅ Vercel account (FREE Hobby plan works! 🎉 No Pro needed)
+- ✅ All API keys ready (OpenAI, Supabase, SendGrid, Twilio, PayPal)
+
+> **💡 Note:** Scheduled tasks run via GitHub Actions for FREE - no Vercel Pro required!
 
 ---
 
@@ -98,12 +100,17 @@ https://your-app.vercel.app
 2. Create test account
 3. Verify login works
 
-### C. Check Cron Jobs
-1. Go to Vercel dashboard → **"Cron Jobs"** tab
-2. Verify 3 cron jobs are scheduled:
-   - Billing (every 6 hours)
-   - Campaigns (every 5 minutes)
-   - Product Sync (every 10 minutes)
+### C. Set Up GitHub Actions Cron (FREE Alternative)
+GitHub Actions handles all scheduled tasks for FREE - no Vercel Pro needed!
+
+1. Add GitHub secret: `INTERNAL_SERVICE_TOKEN` (see `GITHUB_ACTIONS_CRON_SETUP.md`)
+2. The workflow at `.github/workflows/cron.yml` will automatically:
+   - Run billing renewals every 6 hours
+   - Process email/SMS campaigns every 6 hours
+   - Sync Shopify products every 6 hours
+3. Monitor execution in your GitHub repository's **Actions** tab
+
+> **📖 Full Setup:** See `GITHUB_ACTIONS_CRON_SETUP.md` for detailed instructions
 
 ### D. Migrate File Storage (CRITICAL!)
 
@@ -159,11 +166,12 @@ Your ZYRA app is now deployed on Vercel with:
 
 | Issue | Fix |
 |-------|-----|
-| **Cron jobs not running** | Upgrade to Vercel Pro ($20/mo) |
-| **Function timeout** | Upgrade to Pro (60s timeout) or optimize AI requests |
+| **Cron jobs not running** | Check GitHub Actions tab - add `INTERNAL_SERVICE_TOKEN` secret (see `GITHUB_ACTIONS_CRON_SETUP.md`) |
+| **Function timeout** | Optimize AI requests or use async processing |
 | **CORS errors** | Add `PRODUCTION_DOMAIN` env variable |
 | **File uploads 404** | Migrate to Vercel Blob (see step 4D) |
 | **Database errors** | Check `DATABASE_URL` is correct |
+| **"Cron expression would run more than once per day" error** | This is fixed! `vercel.json` no longer has cron config - GitHub Actions handles it |
 
 ---
 
@@ -180,13 +188,14 @@ See `VERCEL_DEPLOYMENT_GUIDE.md` for:
 
 ## 💰 Monthly Cost Estimate
 
-| Service | Cost |
-|---------|------|
-| Vercel Pro | $20 |
-| Vercel Blob (50GB) | $5 |
-| Supabase Pro | $25 |
-| Upstash Redis | $10 |
-| **Total** | **~$60/month** |
+| Service | Cost | Notes |
+|---------|------|-------|
+| Vercel Hobby | **$0** | FREE plan works! |
+| GitHub Actions Cron | **$0** | Handles all scheduled tasks |
+| Vercel Blob (50GB) | $5 | For file uploads |
+| Supabase Pro | $25 | Database + auth |
+| Upstash Redis (Optional) | $10 | For caching |
+| **Total** | **~$40/month** | 💰 $20 saved vs Vercel Pro! |
 
 Plus variable costs for bandwidth/AI usage.
 
