@@ -30,7 +30,7 @@ This guide covers deploying ZYRA to Vercel using GitHub integration. The applica
 ### 1. Serverless API Structure
 ```
 /api
-├── index.ts              # Main serverless API handler (handles /api/*)
+├── index.js              # Main serverless API handler (handles /api/*)
 └── /cron
     ├── billing.ts        # Billing tasks cron job (handles /api/cron/billing)
     ├── campaigns.ts      # Campaign scheduler (handles /api/cron/campaigns)
@@ -39,7 +39,7 @@ This guide covers deploying ZYRA to Vercel using GitHub integration. The applica
 
 **Note:** Vercel automatically routes requests to files in the `/api` directory:
 - `/api/cron/billing` → `api/cron/billing.ts` (Vercel Cron calls this)
-- `/api/users` → `api/index.ts` (Express app handles this)
+- `/api/users` → `api/index.js` (Express app handles this)
 - No manual rewrites needed!
 
 ### 2. Background Schedulers → Vercel Cron
