@@ -460,16 +460,17 @@ if (!isVercelServerless) {
     process.exit(1);
   });
 } else {
-  // Vercel serverless: just initialize the app, don't start schedulers or listen()
+  // Vercel serverless: initialize the app (including routes), don't start schedulers or listen()
   serverPromise.then(async (server) => {
     // Setup static serving for Vercel
     serveStatic(app);
-    log("✅ App initialized for Vercel serverless");
+    log("✅ App initialized for Vercel serverless (routes registered)");
   }).catch((error) => {
     console.error("Fatal app initialization error:", error);
     // Don't exit on Vercel - let the serverless function handle the error
   });
 }
 
-// Export the app for Vercel serverless
-export { app };
+// Export both the app and the initialization promise for Vercel serverless
+// api/index.js needs to await serverPromise to ensure routes are registered
+export { app, serverPromise };
