@@ -5555,10 +5555,21 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
-      const [abandonedCarts, stats] = await Promise.all([
-        supabaseStorage.getAbandonedCarts(userId),
-        supabaseStorage.getUserUsageStats(userId)
-      ]);
+      // Gracefully handle Supabase schema cache issues
+      let abandonedCarts: any[] = [];
+      try {
+        abandonedCarts = await supabaseStorage.getAbandonedCarts(userId);
+      } catch (cartError: any) {
+        // Supabase schema cache issue - return empty data gracefully
+        if (cartError.message?.includes('schema cache')) {
+          console.warn('[Cart Recovery] Supabase schema cache not refreshed yet for abandoned_carts table');
+          abandonedCarts = [];
+        } else {
+          throw cartError;
+        }
+      }
+      
+      const stats = await supabaseStorage.getUserUsageStats(userId);
       
       // Calculate recovery metrics
       const totalCarts = abandonedCarts.length;
