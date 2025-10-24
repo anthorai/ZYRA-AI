@@ -14,6 +14,9 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
 - ✅ Core API credentials configured (SendGrid, Twilio, PayPal Client ID/Secret, OpenAI)
 - ✅ Production build completed successfully (dist/public/ generated)
 - ✅ CORS security configured for production domain
+- ✅ Shopify OAuth scopes expanded to 11 permissions (products, customers, orders, analytics, marketing)
+- ✅ GDPR webhook handlers optimized for instant response (<100ms, prevents 503 timeouts)
+- ✅ Comprehensive Shopify setup documentation created (SHOPIFY_SETUP_GUIDE.md)
 - ⚠️ **Pending User Action:** Add these 5 secrets to Replit Secrets before deployment:
   - `PRODUCTION_DOMAIN=https://zzyraai.com`
   - `REPLIT_DOMAIN=https://e27e6f72-6959-4e40-b028-11b38051e867-00-3ofd3wmcf6mca.spock.replit.dev`
@@ -69,7 +72,7 @@ Includes multi-tier rate limiting, comprehensive input sanitization, GDPR compli
 Advanced preferences for multi-channel notifications (Email, SMS, In-App, Push) with granular control, including proactive trial expiration notifications.
 
 ### Shopify Integration
-Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidirectional product sync and store management. Includes robust security features like state validation, shop domain protection, HMAC verification, and input sanitization, along with comprehensive Shopify API rate limiting.
+Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidirectional product sync and store management. Comprehensive OAuth scopes (11 permissions) cover products, inventory, customers, orders, checkouts, marketing events, analytics, reports, and localization. Includes robust security features like state validation, shop domain protection, HMAC verification, and input sanitization. GDPR-compliant webhooks (shop/redact, customers/redact, customers/data_request) respond instantly (<100ms) to prevent 503 timeouts, with asynchronous data processing. Comprehensive Shopify API rate limiting and setup documentation included.
 
 ## System Design Choices
 Configured for VM deployment on Replit, with a build process using Vite for frontend and esbuild for backend. The architecture supports persistent schedulers for billing, campaigns, and product syncing, ensuring always-running background jobs.

@@ -3971,7 +3971,8 @@ Output format: Markdown with clear section headings.`;
         : `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
       
       const redirectUri = `${baseUrl}/api/shopify/callback`;
-      const scopes = 'read_products,write_products,read_inventory';
+      // Comprehensive scopes for AI-powered features
+      const scopes = 'read_products,write_products,read_inventory,read_customers,read_orders,read_checkouts,read_marketing_events,write_marketing_events,read_analytics,read_reports,read_locales';
       
       // Generate secure nonce using crypto (32 bytes = 256 bits)
       const crypto = await import('crypto');
@@ -6077,60 +6078,70 @@ Output format: Markdown with clear section headings.`;
   // 2. Customer Data Request Webhook (GDPR)
   // Triggered when customer requests their data
   app.post('/api/webhooks/shopify/customers/data_request', verifyShopifyWebhook, async (req, res) => {
+    const { shop_domain, customer, orders_requested } = req.body;
+    
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    res.status(200).json({ success: true });
+    
+    // Process request asynchronously after responding
     try {
-      const { shop_domain, customer, orders_requested } = req.body;
-      
       console.log('📋 GDPR data request received:', { 
         shop_domain, 
         customer_email: customer?.email,
-        orders_requested 
+        customer_id: customer?.id,
+        orders_requested,
+        timestamp: new Date().toISOString()
       });
 
       // Log the request for manual processing
       // In production, this should trigger a process to gather and send customer data
       console.log('⚠️ Manual action required: Customer data request needs to be fulfilled');
       console.log('Customer details:', JSON.stringify(customer, null, 2));
-
-      // Respond with 200 OK
-      res.status(200).json({ success: true });
     } catch (error) {
-      console.error('Error handling data request webhook:', error);
-      res.status(200).json({ success: false });
+      console.error('❌ Error handling data request webhook:', error);
+      // Error is logged but doesn't affect response (already sent)
     }
   });
 
   // 3. Customer Redact Webhook (GDPR)
   // Triggered when customer requests data deletion
   app.post('/api/webhooks/shopify/customers/redact', verifyShopifyWebhook, async (req, res) => {
+    const { shop_domain, customer } = req.body;
+    
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    res.status(200).json({ success: true });
+    
+    // Process redaction asynchronously after responding
     try {
-      const { shop_domain, customer } = req.body;
-      
       console.log('🗑️ GDPR customer redaction requested:', { 
         shop_domain, 
         customer_email: customer?.email,
-        customer_id: customer?.id
+        customer_id: customer?.id,
+        timestamp: new Date().toISOString()
       });
 
       // Remove customer-specific data from your database
       // This is a placeholder - actual implementation depends on your data model
       console.log('⚠️ Manual action required: Customer data redaction needs to be processed');
       console.log('Customer to redact:', JSON.stringify(customer, null, 2));
-
-      // Respond with 200 OK
-      res.status(200).json({ success: true });
     } catch (error) {
-      console.error('Error handling customer redact webhook:', error);
-      res.status(200).json({ success: false });
+      console.error('❌ Error handling customer redact webhook:', error);
+      // Error is logged but doesn't affect response (already sent)
     }
   });
 
   // 4. Shop Redact Webhook (GDPR)
   // Triggered 48 hours after app uninstall - must delete all shop data
   app.post('/api/webhooks/shopify/shop/redact', verifyShopifyWebhook, async (req, res) => {
+    const { shop_domain, shop_id } = req.body;
+    
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    // Shopify requires response within 5 seconds
+    res.status(200).json({ success: true });
+    
+    // Process deletion asynchronously after responding
     try {
-      const { shop_domain, shop_id } = req.body;
-      
-      console.log('🗑️ GDPR shop redaction requested:', { shop_domain, shop_id });
+      console.log('🗑️ GDPR shop redaction requested:', { shop_domain, shop_id, timestamp: new Date().toISOString() });
 
       // Find all store connections for this shop
       const connections = await supabaseStorage.getStoreConnections('');
@@ -6138,6 +6149,8 @@ Output format: Markdown with clear section headings.`;
         conn.platform === 'shopify' && 
         conn.storeUrl?.includes(shop_domain)
       );
+
+      console.log(`Found ${shopConnections.length} connection(s) for shop:`, shop_domain);
 
       // Delete all shop data
       for (const connection of shopConnections) {
@@ -6150,13 +6163,10 @@ Output format: Markdown with clear section headings.`;
         // Adjust based on your actual data model
       }
 
-      console.log('✅ Shop data redaction completed for:', shop_domain);
-
-      // Respond with 200 OK
-      res.status(200).json({ success: true });
+      console.log('✅ Shop data redaction completed for:', shop_domain, 'at', new Date().toISOString());
     } catch (error) {
-      console.error('Error handling shop redact webhook:', error);
-      res.status(200).json({ success: false });
+      console.error('❌ Error handling shop redact webhook:', error);
+      // Error is logged but doesn't affect response (already sent)
     }
   });
 
