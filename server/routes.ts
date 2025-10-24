@@ -2583,6 +2583,57 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Verify PayPal payment and activate subscription
+  app.post("/api/payments/paypal/verify-subscription", requireAuth, async (req, res) => {
+    try {
+      const { transactionId, planId, paypalOrderId } = req.body;
+      const user = (req as AuthenticatedRequest).user;
+
+      if (!transactionId || !planId || !paypalOrderId) {
+        return res.status(400).json({ 
+          error: "Missing required fields",
+          message: "Transaction ID, Plan ID, and PayPal Order ID are required" 
+        });
+      }
+
+      console.log(`[PayPal Verify] Processing payment for user ${user.id}, transaction ${transactionId}`);
+
+      // Import required functions
+      const { updateUserSubscription, initializeUserCredits } = await import('./db');
+      const { NotificationService } = await import('./lib/notifications');
+
+      // Update the transaction status to completed
+      await storage.updatePaymentTransaction(transactionId, {
+        status: 'completed',
+        gatewayOrderId: paypalOrderId,
+        paidAt: new Date()
+      });
+
+      // Update user subscription and activate the plan
+      const updatedUser = await updateUserSubscription(user.id, planId, user.email);
+      
+      // Initialize credits for the new plan
+      await initializeUserCredits(user.id, planId);
+      
+      // Send notification about subscription activation
+      await NotificationService.notifySubscriptionChanged(user.id, planId);
+
+      console.log(`[PayPal Verify] Subscription activated successfully for user ${user.id}`);
+
+      res.json({ 
+        success: true,
+        message: "Subscription activated successfully",
+        user: updatedUser
+      });
+    } catch (error: any) {
+      console.error("PayPal subscription verification error:", error);
+      res.status(500).json({ 
+        error: "Failed to verify payment and activate subscription",
+        message: error.message 
+      });
+    }
+  });
+
   // Payment Gateway Selection
   app.get("/api/payments/gateway-selection", requireAuth, async (req, res) => {
     try {
