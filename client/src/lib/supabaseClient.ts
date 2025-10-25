@@ -52,10 +52,17 @@ const hasValidConfig = Boolean(
   supabaseAnonKey.length > 0
 );
 
-if (!hasValidConfig && import.meta.env.DEV) {
-  console.error('❌ Supabase configuration missing or invalid:');
+if (!hasValidConfig) {
+  const errorMsg = '❌ Supabase configuration missing or invalid';
+  console.error(errorMsg);
   console.error('  VITE_SUPABASE_URL:', supabaseUrl || 'MISSING');
   console.error('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'SET' : 'MISSING');
+  
+  // In production, fail loudly to prevent silent failures
+  if (import.meta.env.PROD) {
+    console.error('⚠️ PRODUCTION BUILD ERROR: Supabase environment variables were not set at build time!');
+    console.error('   Fix: Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to Vercel and redeploy');
+  }
 }
 
 // Create and export the Supabase client with error handling
