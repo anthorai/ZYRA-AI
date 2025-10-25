@@ -24,7 +24,8 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
     - Modified `server/index.ts` to use dynamic imports for Vite only in development mode
     - Production/Vercel uses Express's built-in static file serving from `dist/public`
     - Updated esbuild to exclude Vite from bundle (`--external:./vite --external:vite`)
-    - Build script copies necessary files (vite.ts, logger.ts) to dist/ for runtime imports
+    - Build script copies necessary files (vite.ts, logger.ts, vite.config.ts) to dist/ for runtime imports
+    - Fixed TypeScript build error by copying vite.config.ts to dist/ directory
     - Added fail-fast check to verify dist/public exists before serving
   - Renamed `build` → `build:client` for clarity in build pipeline
   - Fixed vercel.json configuration: removed conflicting `builds` property, using modern `functions`-only approach
