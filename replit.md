@@ -9,12 +9,15 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
 - Replit VM deployment: See `PRODUCTION_DEPLOYMENT_GUIDE.md`
 - Vercel deployment: See `VERCEL_DEPLOYMENT_GUIDE.md` and `VERCEL_QUICK_START.md`
 
-**Latest Changes (October 24, 2025):**
-- ✅ **Vercel Serverless Deployment** (fixes 500 FUNCTION_INVOCATION_FAILED error):
+**Latest Changes (October 25, 2025):**
+- ✅ **Vercel Serverless Deployment** (complete fix for all deployment errors):
   - Refactored Express app to support both traditional (Replit VM) and serverless (Vercel) deployment
   - Fixed race condition where routes weren't registered before app was used on Vercel
   - `server/index.ts` now exports both `app` and `serverPromise` for proper initialization
   - `api/index.js` awaits `serverPromise` to ensure routes, database, and error handlers are ready
+  - Converted `api/index.js` from CommonJS to ES module syntax (fixes "module is not defined" error)
+  - Fixed build scripts: `vercel-build` now compiles both frontend and backend
+  - Backend now outputs to `dist/server/index.js` matching import path expectations
   - Deleted conflicting `api/index.ts` file (kept `api/index.js` as single source of truth)
   - Updated vercel.json to use modern `rewrites` syntax (compatible with `headers` array)
   - Schedulers only run on traditional hosting (GitHub Actions handles Vercel scheduled tasks)
