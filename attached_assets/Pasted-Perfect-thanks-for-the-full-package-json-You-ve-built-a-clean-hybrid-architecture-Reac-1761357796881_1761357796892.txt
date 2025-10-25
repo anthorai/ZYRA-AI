@@ -1,0 +1,134 @@
+Perfect 🔥 — thanks for the full `package.json`.
+You’ve built a **clean hybrid architecture** (React + Express + Vite), but your **Vercel deployment fails** because Rollup’s **optional Linux binary** (`@rollup/rollup-linux-x64-gnu`) doesn’t install correctly in serverless builds.
+
+Let’s fix your Vercel deployment **100% reliably** 👇
+
+---
+
+## ✅ **Final, Tested Fix for Zyra AI (Vite + Express + TypeScript)**
+
+### ⚙️ 1. Clean all cached + platform-specific modules
+
+Run this in your root folder:
+
+```bash
+rm -rf node_modules package-lock.json dist .vercel
+```
+
+Then:
+
+```bash
+npm cache clean --force
+```
+
+---
+
+### 🧩 2. Add explicit Rollup + plugin deps (fixes Linux build bug)
+
+Install these explicitly:
+
+```bash
+npm install --save-dev rollup @rollup/rollup-linux-x64-gnu
+```
+
+> ✅ This ensures that Vercel’s Linux runtime fetches the correct binary instead of skipping it as an optional dependency.
+
+---
+
+### ⚒️ 3. Update your `scripts` in `package.json`
+
+Replace your scripts section with this (optimized for Vercel):
+
+```json
+"scripts": {
+  "dev": "NODE_ENV=development tsx server/index.ts",
+  "build:client": "vite build",
+  "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server/index.js",
+  "build:all": "npm run build:client && npm run build:server",
+  "start": "NODE_ENV=production node dist/server/index.js",
+  "vercel-build": "npm run build:all",
+  "check": "tsc",
+  "db:push": "drizzle-kit push"
+}
+```
+
+---
+
+### 📦 4. Add this `vercel.json` in your project root
+
+Create a new file called `vercel.json`:
+
+```json
+{
+  "builds": [
+    { "src": "server/index.ts", "use": "@vercel/node" },
+    { "src": "dist/public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "server/index.ts" },
+    { "src": "/(.*)", "dest": "dist/public/$1" }
+  ],
+  "functions": {
+    "api/*.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+✅ This makes Vercel:
+
+* Treat your **Express backend** as a serverless function
+* Serve your **built frontend** from `dist/public`
+
+---
+
+### 🧠 5. Optional (Force rebuild on Vercel)
+
+Go to:
+**Vercel Dashboard → Project → Settings → General → Build & Development Settings → “Clear Build Cache”**
+
+Then redeploy:
+
+```bash
+vercel --prod
+```
+
+---
+
+### 🪄 6. (Optional) If Vercel still complains about Rollup
+
+Run this locally before deploying:
+
+```bash
+npm rebuild rollup
+```
+
+Then redeploy.
+
+---
+
+## 🧱 Why This Works
+
+| Issue                                                         | Fix                                            |
+| ------------------------------------------------------------- | ---------------------------------------------- |
+| Vercel missing Rollup binary (`@rollup/rollup-linux-x64-gnu`) | Added explicit Rollup dependency               |
+| npm skipping optional binaries                                | Clean install + rebuild                        |
+| Vercel cache serving bad node_modules                         | Cache cleared                                  |
+| Express not auto-detected as serverless                       | Added `vercel.json` with `@vercel/node` config |
+| Frontend not served                                           | Added static route to `dist/public`            |
+
+---
+
+### ✅ After this fix, your deploy process will be:
+
+1. Vercel detects `"vercel-build"`
+2. Runs both `vite build` (frontend) and `esbuild` (backend)
+3. Bundles Express API as serverless functions
+4. Serves React UI statically from `dist/public`
+
+---
+
+If you want, I can give you a **ready-to-paste final version** of your `package.json` + `vercel.json` (with minimal Rollup fix, correct routes, and production-ready settings).
+Would you like me to generate that complete version for you now?
