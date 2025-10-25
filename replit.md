@@ -25,6 +25,7 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
   - Added `outputDirectory: "dist/public"` to tell Vercel where static files are located
   - Fixed routing with `filesystem` handler to properly serve static assets and SPA fallback
   - Proper `buildCommand` ensures dist/ folder is created before deployment
+  - Added missing `@neondatabase/serverless` package to dependencies (fixes login crash on Vercel)
   - Schedulers only run on traditional hosting (GitHub Actions handles Vercel scheduled tasks)
   - Static file serving works correctly on both platforms with proper SPA client-side routing
   - Expected cold start: ~2-3 seconds (subsequent requests instant via app caching)
