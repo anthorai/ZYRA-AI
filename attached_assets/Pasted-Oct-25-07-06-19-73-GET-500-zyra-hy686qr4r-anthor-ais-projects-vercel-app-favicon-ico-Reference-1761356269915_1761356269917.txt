@@ -1,0 +1,60 @@
+Oct 25 07:06:19.73
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.ico
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:18.75
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:11.07
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.png
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:08.75
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.png
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:07.45
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.png
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:07.10
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.ico
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:04.86
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.ico
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:03.44
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/favicon.ico
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:03.05
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Oct 25 07:06:00.95
+GET
+500
+zyra-hy686qr4r-anthor-ais-projects.vercel.app
+/
+ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue. ReferenceError: module is not defined in ES module scope This file is being treated as an ES module because it has a '.js' file extension and '/var/task/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension. at file:///var/task/api/index.js:10:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async d (/opt/rust/nodejs.js:16:21178) Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
