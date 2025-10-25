@@ -19,7 +19,7 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
   - Fixed build scripts: `vercel-build` now compiles both frontend and backend
   - Backend now outputs to `dist/server/index.js` matching import path expectations
   - Deleted conflicting `api/index.ts` file (kept `api/index.js` as single source of truth)
-  - **Added explicit Rollup dependencies** (`rollup` + `@rollup/rollup-linux-x64-gnu`) to fix Linux build on Vercel
+  - Rollup package automatically handles platform-specific binaries (removed explicit `@rollup/rollup-linux-x64-gnu` to fix npm optional dependency bug)
   - Renamed `build` → `build:client` for clarity in build pipeline
   - Fixed vercel.json configuration: removed conflicting `builds` property, using modern `functions`-only approach
   - Added `outputDirectory: "dist/public"` to tell Vercel where static files are located
