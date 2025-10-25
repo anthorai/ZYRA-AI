@@ -12,6 +12,7 @@ function createMockClient() {
       signOut: () => Promise.resolve({ error: null }),
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
       getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      setSession: () => Promise.resolve({ data: { user: null, session: null }, error: mockError }),
       onAuthStateChange: (callback: Function) => {
         // Call callback immediately with signed out state
         setTimeout(() => callback('SIGNED_OUT', null), 0);
