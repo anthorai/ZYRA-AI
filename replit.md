@@ -19,8 +19,13 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
   - Fixed build scripts: `vercel-build` now compiles both frontend and backend
   - Backend now outputs to `dist/server/index.js` matching import path expectations
   - Deleted conflicting `api/index.ts` file (kept `api/index.js` as single source of truth)
-  - Fixed npm optional dependency bug: added `@rollup/rollup-linux-x64-gnu` to package.json optionalDependencies (workaround for npm issue #4828)
-  - Regenerated package-lock.json after cleaning node_modules and npm cache
+  - **Fixed Rollup/Vite Import Error**: Eliminated runtime Vite imports on Vercel serverless
+    - Created standalone logger utility (`server/lib/logger.ts`) to avoid importing vite.ts
+    - Modified `server/index.ts` to use dynamic imports for Vite only in development mode
+    - Production/Vercel uses Express's built-in static file serving from `dist/public`
+    - Updated esbuild to exclude Vite from bundle (`--external:./vite --external:vite`)
+    - Build script copies necessary files (vite.ts, logger.ts) to dist/ for runtime imports
+    - Added fail-fast check to verify dist/public exists before serving
   - Renamed `build` → `build:client` for clarity in build pipeline
   - Fixed vercel.json configuration: removed conflicting `builds` property, using modern `functions`-only approach
   - Added `outputDirectory: "dist/public"` to tell Vercel where static files are located

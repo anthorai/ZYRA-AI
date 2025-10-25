@@ -1,11 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { log } from "./lib/logger";
 import { testSupabaseConnection, supabase } from "./lib/supabase";
 import { ErrorLogger } from "./lib/errorLogger";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
 const app = express();
 
@@ -438,9 +441,25 @@ if (!isVercelServerless) {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    // Dynamically import Vite only in development to avoid loading it in production
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Production: serve pre-built static files without importing Vite
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const distPath = path.resolve(__dirname, "..", "public");
+    
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      immutable: true,
+      etag: true,
+      lastModified: true
+    }));
+    
+    // SPA fallback - serve index.html for all non-API routes
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -462,8 +481,29 @@ if (!isVercelServerless) {
 } else {
   // Vercel serverless: initialize the app (including routes), don't start schedulers or listen()
   serverPromise.then(async (server) => {
-    // Setup static serving for Vercel
-    serveStatic(app);
+    // Vercel: serve pre-built static files without importing Vite
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const distPath = path.resolve(__dirname, "..", "public");
+    
+    // Verify dist/public exists (fail fast if misconfigured)
+    if (!fs.existsSync(distPath)) {
+      const error = `Cannot find build directory: ${distPath}. Run 'npm run build:all' first.`;
+      console.error(error);
+      throw new Error(error);
+    }
+    
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      immutable: true,
+      etag: true,
+      lastModified: true
+    }));
+    
+    // SPA fallback - serve index.html for all non-API routes
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+    
     log("✅ App initialized for Vercel serverless (routes registered)");
   }).catch((error) => {
     console.error("Fatal app initialization error:", error);
