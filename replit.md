@@ -22,6 +22,8 @@ Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce me
   - **Added explicit Rollup dependencies** (`rollup` + `@rollup/rollup-linux-x64-gnu`) to fix Linux build on Vercel
   - Renamed `build` → `build:client` for clarity in build pipeline
   - Fixed vercel.json configuration: removed conflicting `builds` property, using modern `functions`-only approach
+  - Added `outputDirectory: "dist/public"` to tell Vercel where static files are located
+  - Fixed routing with `filesystem` handler to properly serve static assets and SPA fallback
   - Proper `buildCommand` ensures dist/ folder is created before deployment
   - Schedulers only run on traditional hosting (GitHub Actions handles Vercel scheduled tasks)
   - Static file serving works correctly on both platforms with proper SPA client-side routing
