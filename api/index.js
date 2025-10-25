@@ -7,7 +7,7 @@ process.env.VERCEL_SERVERLESS = 'true';
 
 // Re-export the Express app
 // The dist/server/index.js file exports {app, serverPromise} after async initialization
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
     // Lazy load the app on first request
     if (!global._cachedApp) {
@@ -39,4 +39,4 @@ module.exports = async (req, res) => {
       hint: 'Check Vercel function logs for details'
     });
   }
-};
+}
