@@ -5,7 +5,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Bell, ArrowLeft, Mail, Smartphone, Monitor, MessageSquare, TrendingUp, CreditCard, Sparkles } from "lucide-react";
@@ -46,13 +45,6 @@ export default function NotificationsPage() {
           Back to Settings
         </Button>
       </div>
-
-      {/* Page Header */}
-      <PageHeader
-        icon={Bell}
-        title="Notifications & Alerts"
-        subtitle="Control how and when you receive updates about your campaigns and account"
-      />
 
       {/* Notification Channels */}
       <Card className="gradient-card border-0">

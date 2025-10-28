@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Brain,
@@ -46,7 +46,6 @@ export default function BehavioralTriggersPage() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Behavioral Triggers Setup" />
       <PageContainer>
           {/* Create New Trigger */}
           <Card className="gradient-card">

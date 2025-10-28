@@ -2,7 +2,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Info,
   Sparkles, 
@@ -77,11 +77,6 @@ export default function AboutPage() {
           Back to Dashboard
         </Button>
       </div>
-      <PageHeader 
-        icon={Info} 
-        title="About Zyra AI" 
-        subtitle="AI-Powered E-Commerce Optimization Platform" 
-      />
       <div className="min-h-screen bg-gradient-to-br from-[#0D0D1F] via-[#14142B] to-[#0D0D1F]">
       {/* Hero Section */}
       <section className="relative overflow-hidden">

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
-import { CardGrid, PageHeader } from "@/components/ui/standardized-layout";
+import { CardGrid } from "@/components/ui/standardized-layout";
 import { 
   ShoppingBag,
   Mail,
@@ -271,13 +271,6 @@ export default function GrowthDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <PageHeader 
-        icon={BarChart3}
-        title="Growth Analytics"
-        subtitle="Track your store's performance, optimization impact, and revenue growth powered by Zyra AI"
-      />
-      
       {/* Analytics Cards Grid */}
       <CardGrid>
         {isLoading ? (

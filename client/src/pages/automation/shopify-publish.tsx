@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Share, 
   CheckCircle,
@@ -112,7 +112,6 @@ export default function ShopifyPublish() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="One-Click Shopify Publish" />
       <PageContainer>
         {/* Summary Card */}
         <Card className="gradient-card border-0 rounded-xl">

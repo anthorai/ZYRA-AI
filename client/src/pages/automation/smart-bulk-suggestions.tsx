@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { queryClient } from "@/lib/queryClient";
 import { 
   Brain, 
@@ -246,7 +246,6 @@ export default function SmartBulkSuggestions() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Smart Bulk Suggestions" />
       <PageContainer>
         {isLoadingProducts ? (
           <Card className="gradient-card">

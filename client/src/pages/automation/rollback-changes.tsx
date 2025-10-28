@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   RotateCcw, 
@@ -148,7 +148,6 @@ export default function RollbackChanges() {
   if (isError) {
     return (
       <div className="min-h-screen dark-theme-bg">
-        <CardPageHeader title="Rollback Changes" />
         <PageContainer>
           <Card className="border-0 gradient-card rounded-xl" data-testid="error-state">
             <CardContent className="p-8 text-center">
@@ -172,7 +171,6 @@ export default function RollbackChanges() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Rollback Changes" />
       <PageContainer>
         {/* Summary & Bulk Actions */}
         <Card className="border-0 gradient-card rounded-xl">

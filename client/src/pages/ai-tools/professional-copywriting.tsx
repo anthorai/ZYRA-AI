@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Zap, 
   Copy, 
@@ -204,7 +204,6 @@ export default function ProfessionalCopywriting() {
 
   return (
     <div>
-      <CardPageHeader title="Professional Copywriting" />
       <PageContainer>
         <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
         {/* Frameworks Overview */}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { 
   FileText,
@@ -42,11 +42,6 @@ export default function CustomTemplatesPage() {
   return (
     <div className="min-h-screen dark-theme-bg">
       <PageContainer>
-        <PageHeader 
-          icon={FileText}
-          title="Custom Template Editor"
-          subtitle="Create and edit email & SMS workflow templates"
-        />
           {/* Template Editor */}
           <Card className="gradient-card">
             <CardHeader>

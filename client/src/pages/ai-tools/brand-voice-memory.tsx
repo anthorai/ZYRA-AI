@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Brain,
   Upload,
@@ -229,7 +229,6 @@ export default function BrandVoiceMemory() {
 
   return (
     <div>
-      <CardPageHeader title="Brand Voice Memory" />
       <PageContainer>
         {/* Learning Process */}
         <Card className="border-0 gradient-card rounded-xl">

@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import Footer from "@/components/ui/footer";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -291,11 +291,6 @@ export default function ProfilePage() {
       {/* Main Content */}
       <div className="flex-1 p-4 sm:p-6">
         <PageContainer>
-          <PageHeader 
-            icon={User} 
-            title="Profile & Account" 
-            subtitle="Manage your personal information, connected stores, and language preferences" 
-          />
         <div className="max-w-4xl mx-auto space-y-6">
           {isLoadingUser ? (
             <div className="flex items-center justify-center py-12">

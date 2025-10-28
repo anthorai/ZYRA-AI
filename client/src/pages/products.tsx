@@ -20,7 +20,7 @@ import { z } from "zod";
 import Sidebar from "@/components/dashboard/sidebar";
 import Footer from "@/components/ui/footer";
 import { useAuth } from "@/hooks/useAuth";
-import { CardPageHeader, PageContainer } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 
 // Product categories - you can expand this list
 const PRODUCT_CATEGORIES = [
@@ -600,7 +600,6 @@ export default function ProductsPage() {
         <div className="flex-1 p-4 sm:p-6">
           <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             <div>
-              <CardPageHeader title="Products Hub" />
               <PageContainer>
                 {/* Products Grid */}
                 <ProductGrid 

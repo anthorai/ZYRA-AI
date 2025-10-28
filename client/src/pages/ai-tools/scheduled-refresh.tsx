@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   RefreshCw,
   CheckCircle,
@@ -191,7 +191,6 @@ export default function ScheduledRefresh() {
 
   return (
     <div>
-      <CardPageHeader title="Scheduled Refresh" />
       <PageContainer>
         {/* Benefits Overview */}
         <Card className="gradient-card">

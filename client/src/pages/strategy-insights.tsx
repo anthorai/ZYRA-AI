@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { Sparkles, TrendingUp, Target, Zap, AlertCircle, Lightbulb, BarChart3, Mail, MessageSquare, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
@@ -104,7 +104,6 @@ export default function StrategyInsights() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Strategy AI" />
       <PageContainer>
         
         <div className="flex items-center space-x-2">

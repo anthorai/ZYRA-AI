@@ -1,65 +1,8 @@
 import { ReactNode } from "react";
 import { LucideIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Wand2, ArrowLeft, User, Settings, LogOut } from "lucide-react";
-import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
-import { useLogout } from "@/hooks/useLogout";
-
-// Standardized Page Header matching AI Tools design
-interface PageHeaderProps {
-  icon: LucideIcon;
-  title: string;
-  subtitle: string;
-  iconClassName?: string;
-}
-
-export function PageHeader({ icon: Icon, title, subtitle, iconClassName = "text-primary" }: PageHeaderProps) {
-  return (
-    <div className="text-center space-y-4">
-      <h1 className="font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent text-[25px]">
-        {title}
-      </h1>
-      <p className="text-muted-foreground max-w-2xl mx-auto text-[16px]">
-        {subtitle}
-      </p>
-    </div>
-  );
-}
-
-// Card Page Header with Back Button, Title, and Profile Icon
-interface CardPageHeaderProps {
-  title: string;
-  onBack?: () => void;
-  backLabel?: string;
-}
-
-export function CardPageHeader({ title, onBack, backLabel = "Back" }: CardPageHeaderProps) {
-  const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const { handleLogout } = useLogout();
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      setLocation("/dashboard");
-    }
-  };
-
-  const displayName = user?.email?.split('@')[0] || 'User';
-  const initials = displayName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-  return null;
-}
+import { Wand2 } from "lucide-react";
 
 // Responsive Card Grid: 1 column mobile, 2 tablet, 3 desktop
 interface CardGridProps {

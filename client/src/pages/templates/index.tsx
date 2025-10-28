@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import {
   Dialog,
   DialogContent,
@@ -222,12 +222,7 @@ export default function TemplatesPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between mb-6">
-        <PageHeader 
-          icon={FileText} 
-          title="Campaign Templates" 
-          subtitle="Create and manage reusable email and SMS templates" 
-        />
+      <div className="flex items-center justify-end mb-6">
         <Button
           onClick={openCreateDialog}
           className="bg-primary text-white hover:bg-primary/90"

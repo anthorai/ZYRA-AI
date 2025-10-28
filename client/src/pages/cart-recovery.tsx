@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NotificationCenter from "@/components/dashboard/notification-center";
-import { CardPageHeader, PageContainer } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
 import { 
@@ -74,7 +74,6 @@ export default function CartRecovery() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Cart Recovery Analytics" />
       <PageContainer>
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">

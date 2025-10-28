@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Upload, 
   Download, 
@@ -157,7 +157,6 @@ export default function CSVImportExport() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="CSV Import/Export" />
       <PageContainer>
         {/* Upload Section */}
         <Card className="gradient-card border-0 rounded-xl">

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
@@ -63,7 +63,6 @@ export default function SmsConversion() {
   if (isError) {
     return (
       <div className="min-h-screen dark-theme-bg">
-        <CardPageHeader title="SMS Conversion" />
         <PageContainer>
           <Card className="dark-theme-bg" data-testid="error-state">
             <CardContent className="p-8 text-center">
@@ -87,7 +86,6 @@ export default function SmsConversion() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="SMS Conversion" />
       <PageContainer>
         {/* Summary Cards */}
         {isLoading ? (

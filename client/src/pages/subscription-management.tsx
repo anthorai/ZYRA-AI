@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   CreditCard, 
   Receipt, 
@@ -160,12 +160,6 @@ export default function SubscriptionManagement() {
   if (subIsError || plansIsError) {
     return (
       <div className="container mx-auto py-8 px-4 max-w-7xl">
-        <PageHeader 
-          icon={<CreditCard className="w-8 h-8" />}
-          title="Subscription & Billing"
-          subtitle="Manage your subscription plans and billing information"
-        />
-
         <Card data-testid="error-state">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
@@ -201,12 +195,6 @@ export default function SubscriptionManagement() {
 
   return (
     <PageContainer>
-      <PageHeader 
-        icon={CreditCard}
-        title="Subscription & Billing"
-        subtitle="Manage your subscription plans and billing information"
-      />
-
       {/* Current Subscription */}
       <Card className="mb-6" data-testid="card-current-subscription">
         <CardHeader>

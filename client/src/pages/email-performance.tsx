@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader, CardGrid } from "@/components/ui/standardized-layout";
+import { PageContainer, CardGrid } from "@/components/ui/standardized-layout";
 import { 
   Mail, 
   TrendingUp, 
@@ -66,7 +66,6 @@ export default function EmailPerformance() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Email Performance" />
       <PageContainer>
 
         {/* Summary Cards */}

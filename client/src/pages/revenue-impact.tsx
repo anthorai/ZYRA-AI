@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -72,7 +72,6 @@ export default function RevenueImpact() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Revenue Impact" />
       <div className="container mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6">
         <PageContainer>
         {/* Total Impact Card */}

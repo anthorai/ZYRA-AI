@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { Shield, Lock, Smartphone, Key, Download, Trash2, Eye, Chrome, Monitor } from "lucide-react";
 
 export default function SecurityPage() {
@@ -107,12 +107,6 @@ export default function SecurityPage() {
 
   return (
     <PageContainer>
-      <PageHeader 
-        icon={Shield} 
-        title="Security Settings" 
-        subtitle="Manage your account security, authentication, and privacy settings" 
-      />
-
       {/* Two-Factor Authentication */}
       <Card className="gradient-card border-0">
         <CardHeader>

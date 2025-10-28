@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 
 export default function TermsOfService() {
   const [, setLocation] = useLocation();
@@ -21,11 +21,6 @@ export default function TermsOfService() {
           Back to Dashboard
         </Button>
       </div>
-      <PageHeader 
-        icon={FileText} 
-        title="Terms of Service" 
-        subtitle={`Last updated: ${new Date().toLocaleDateString()}`} 
-      />
       <Card>
         <CardContent className="space-y-6">
           <section>

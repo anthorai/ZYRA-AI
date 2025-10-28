@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Settings as SettingsIcon,
   User,
@@ -202,11 +202,6 @@ export default function Settings() {
 
   return (
     <PageContainer>
-      <PageHeader 
-        icon={SettingsIcon}
-        title="Settings & Configuration"
-        subtitle="Customize your Zyra AI experience, manage integrations, and configure AI preferences"
-      />
       {/* Settings Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {settingsCards.map((card) => {

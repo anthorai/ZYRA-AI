@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageContainer, PageHeader, CardGrid } from "@/components/ui/standardized-layout";
+import { PageContainer, CardGrid } from "@/components/ui/standardized-layout";
 import { 
   Mail, 
   MessageSquare, 
@@ -125,12 +125,6 @@ export default function Campaigns() {
 
   return (
     <PageContainer>
-      <PageHeader 
-        icon={Mail}
-        title="AI Email & SMS Growth Engine"
-        subtitle="Automate your customer communications with intelligent campaigns and behavioral triggers"
-      />
-      
       <div className="flex justify-center">
         <Button
           onClick={() => setLocation('/campaigns/create')}

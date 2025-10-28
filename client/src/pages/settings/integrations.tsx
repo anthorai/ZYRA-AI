@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PageHeader } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Zap, ArrowLeft, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info } from "lucide-react";
@@ -760,13 +759,6 @@ export default function IntegrationsPage() {
           Back to Settings
         </Button>
       </div>
-
-      {/* Page Header */}
-      <PageHeader
-        icon={Zap}
-        title="Integrations"
-        subtitle="Connect email providers, SMS services, analytics tools, and automation platforms"
-      />
 
       {/* Connected Summary */}
       <Card className="gradient-card border-0 bg-primary/10">

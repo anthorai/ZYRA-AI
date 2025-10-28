@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 
 export default function ShopifyOnboarding() {
@@ -148,11 +148,6 @@ export default function ShopifyOnboarding() {
   // Manual setup
   return (
     <PageContainer>
-      <PageHeader 
-        icon={Sparkles} 
-        title="Shopify Setup" 
-        subtitle="Connect your Shopify store to get started" 
-      />
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
       <Card className="w-full max-w-md gradient-card border-0">
         <CardContent className="p-8 text-center">

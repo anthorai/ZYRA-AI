@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Zap, 
   Copy, 
@@ -155,7 +155,6 @@ export default function SmartProductDescriptions() {
 
   return (
     <div>
-      <CardPageHeader title="Smart Product Descriptions" />
       <PageContainer>
         {/* Process Overview */}
         <Card className="gradient-card border-0 rounded-xl">

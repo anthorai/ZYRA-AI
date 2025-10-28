@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { CardPageHeader, PageContainer } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Mail, 
   MessageSquare, 
@@ -134,7 +134,6 @@ export default function CreateCampaignPage() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Create New Campaign" />
       <PageContainer>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Campaign Type */}

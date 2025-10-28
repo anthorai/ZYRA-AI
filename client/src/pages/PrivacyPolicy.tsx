@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Shield, Download, Trash2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { PageContainer, PageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 
 export default function PrivacyPolicy() {
   const [, setLocation] = useLocation();
@@ -21,11 +21,6 @@ export default function PrivacyPolicy() {
           Back to Dashboard
         </Button>
       </div>
-      <PageHeader 
-        icon={Shield} 
-        title="Privacy Policy" 
-        subtitle={`Last updated: ${new Date().toLocaleDateString()}`} 
-      />
       <Card>
         <CardContent className="space-y-6">
           <section>

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { 
   TrendingUp, 
@@ -78,7 +78,6 @@ export default function ContentROI() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Content ROI Tracking" />
       <PageContainer>
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">

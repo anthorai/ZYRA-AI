@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { PageHeader } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Brain, ArrowLeft, Sparkles, Zap, Clock } from "lucide-react";
@@ -44,13 +43,6 @@ export default function AIPreferencesPage() {
           Back to Settings
         </Button>
       </div>
-
-      {/* Page Header */}
-      <PageHeader
-        icon={Brain}
-        title="AI Preferences"
-        subtitle="Customize how Zyra AI adapts to your brand and creates content"
-      />
 
       {/* Brand Voice Selection */}
       <Card className="gradient-card border-0">

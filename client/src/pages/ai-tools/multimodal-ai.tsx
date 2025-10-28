@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Camera,
   Upload,
@@ -223,7 +223,6 @@ export default function MultimodalAI() {
 
   return (
     <div>
-      <CardPageHeader title="Multimodal AI" />
       <PageContainer>
         {/* Multimodal AI Overview */}
         <Card className="border-0 gradient-card rounded-xl">

@@ -10,7 +10,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { ShopifyPublishDialog } from '@/components/shopify/publish-dialog';
 import { PublishContent, useShopifyBulkPublish } from '@/hooks/use-shopify-publish';
 import { useProductRealtime } from '@/hooks/use-product-realtime';
-import { CardPageHeader, PageContainer, CardGrid } from '@/components/ui/standardized-layout';
+import { PageContainer, CardGrid } from '@/components/ui/standardized-layout';
 import {
   Package,
   Search,
@@ -305,7 +305,6 @@ export default function ManageProducts() {
 
   return (
     <div>
-      <CardPageHeader title="Products Hub" />
       <PageContainer>
 
       {/* Search and Action Buttons */}

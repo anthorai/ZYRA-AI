@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Package,
   Upload,
@@ -160,7 +160,6 @@ export default function BulkOptimization() {
 
   return (
     <div>
-      <CardPageHeader title="Bulk Product Optimization" />
       <PageContainer>
         {/* Process Overview */}
         <Card className="border-0 gradient-card rounded-xl">

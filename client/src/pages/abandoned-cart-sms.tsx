@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { 
   MessageSquare
@@ -33,7 +33,6 @@ export default function AbandonedCartSMSPage() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Abandoned Cart SMS Recovery" />
       <PageContainer>
           {/* Abandoned Carts Grid */}
           <div className="space-y-4">

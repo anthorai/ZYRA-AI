@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Users
@@ -35,7 +35,6 @@ export default function DynamicSegmentationPage() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Dynamic Customer Segmentation" />
       <PageContainer>
           {mockCustomerSegments.map((segment) => (
             <Card key={segment.id} className="dark-theme-bg  hover:shadow-cyan-500/20 transition-all duration-300">

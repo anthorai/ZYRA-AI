@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer, CardPageHeader } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   FlaskConical,
   Copy,
@@ -261,7 +261,6 @@ export default function ABTestingCopy() {
 
   return (
     <div>
-      <CardPageHeader title="A/B Testing Copy" />
       <PageContainer>
         {/* A/B Testing Overview */}
         <Card className="gradient-card">

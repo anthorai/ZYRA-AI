@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CardPageHeader, PageContainer } from "@/components/ui/standardized-layout";
+import { PageContainer } from "@/components/ui/standardized-layout";
 import { 
   Mail, 
   MessageSquare, 
@@ -91,7 +91,6 @@ export default function CampaignListPage() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <CardPageHeader title="Marketing Campaigns" />
       <PageContainer>
         {/* Create Campaign Button */}
         <div className="flex justify-end mb-4 sm:mb-6">
