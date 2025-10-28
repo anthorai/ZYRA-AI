@@ -280,7 +280,7 @@ export default function EmailPerformance() {
                         <Bar dataKey="clickRate" fill="#A78BFA" name="Click Rate (%)" />
                       </RechartsBarChart>
                     </ResponsiveContainer>
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       <div className="text-center p-4 bg-slate-800/30 rounded-lg">
                         <p className="text-slate-400 text-sm">Avg Open Rate</p>
                         <p className="text-white font-bold text-lg mt-1">{avgOpenRate}%</p>
@@ -391,7 +391,7 @@ export default function EmailPerformance() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div className="text-center min-w-0">
                     <p className="text-base sm:text-lg md:text-xl font-bold text-white truncate">{campaign.sent.toLocaleString()}</p>
                     <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm truncate">Sent</p>

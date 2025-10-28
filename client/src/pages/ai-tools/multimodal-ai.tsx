@@ -232,7 +232,7 @@ export default function MultimodalAI() {
               <Eye className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold text-white">Visual + Text AI Generation</h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
                 <span className="text-slate-300 truncate">Upload product images (up to 3)</span>
@@ -285,7 +285,7 @@ export default function MultimodalAI() {
 
                 {/* Image Previews */}
                 {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
                         <img 
@@ -402,7 +402,7 @@ export default function MultimodalAI() {
                   <Eye className="w-5 h-5 text-cyan-400 mr-2" />
                   Visual Analysis
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                   <div className="min-w-0">
                     <h4 className="text-white font-medium mb-2 text-base sm:text-lg md:text-xl truncate">Colors Detected</h4>
                     <div className="flex flex-wrap gap-2">

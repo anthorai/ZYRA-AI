@@ -309,7 +309,7 @@ export default function SeoKeywordDensity() {
       {/* Main Content */}
       <div className="p-4 sm:p-6 space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0">
@@ -419,7 +419,7 @@ export default function SeoKeywordDensity() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="bg-slate-800/30 rounded-lg p-4 space-y-4">
                     <Skeleton className="h-6 w-64" />
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                       {[1, 2, 3, 4].map((j) => (
                         <Skeleton key={j} className="h-32 w-full" />
                       ))}
@@ -502,7 +502,7 @@ export default function SeoKeywordDensity() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                   {product.primaryKeywords.map((kw, index) => (
                     <div 
                       key={index} 

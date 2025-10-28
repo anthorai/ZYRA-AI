@@ -123,7 +123,7 @@ export default function ShopifyPublish() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6">
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-primary mb-2">{optimizedProducts.length}</div>
                 <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm">Products Ready</div>
@@ -244,7 +244,7 @@ export default function ShopifyPublish() {
                 </div>
 
                 {/* Improvement Indicators */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 pt-4 border-t border-slate-700/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 pt-4 border-t border-slate-700/50">
                   <div className="text-center">
                     <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-400 mx-auto mb-1 flex-shrink-0" />
                     <div className="text-[10px] sm:text-xs md:text-sm text-slate-300">SEO Score</div>

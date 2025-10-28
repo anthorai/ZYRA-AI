@@ -164,7 +164,7 @@ export default function SmartProductDescriptions() {
               <Sparkles className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold text-white">How Zyra AI Works</h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
                 <span className="text-slate-300 truncate">Enter product details & target keywords</span>

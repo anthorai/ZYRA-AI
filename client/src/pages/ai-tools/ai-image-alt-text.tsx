@@ -164,7 +164,7 @@ export default function AIImageAltText() {
               <Eye className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold text-white">Why Alt-Text Matters</h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-green-400/20 text-green-400 flex items-center justify-center flex-shrink-0">
                   <Eye className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -280,7 +280,7 @@ export default function AIImageAltText() {
             <Card className="border-2 border-slate-600/30 bg-gradient-to-br from-slate-900/20 to-slate-800/20">
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold text-white mb-4">Image Information</h3>
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
                   <div className="min-w-0">
                     <span className="text-slate-400 truncate">File Name:</span>
                     <div className="text-white font-medium text-base sm:text-lg md:text-xl truncate">{analysis.fileName}</div>

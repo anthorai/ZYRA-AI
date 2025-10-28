@@ -117,7 +117,7 @@ export default function StrategyInsights() {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Input Form */}
           <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-gray-800/50">
           <CardHeader>
@@ -258,7 +258,7 @@ export default function StrategyInsights() {
                     Fill in your business context and generate strategic insights
                   </p>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-6 max-w-sm mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mt-6 max-w-sm mx-auto">
                   <div className="p-3 sm:p-4 md:p-6 bg-gray-800/30 rounded-lg overflow-hidden">
                     <Mail className="w-5 h-5 text-blue-400 mx-auto mb-1" />
                     <p className="text-xs text-gray-400">Email Strategy</p>

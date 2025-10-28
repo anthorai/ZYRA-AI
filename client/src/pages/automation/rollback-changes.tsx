@@ -197,7 +197,7 @@ export default function RollbackChanges() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="text-center">
                     <Skeleton className="h-10 w-16 mx-auto mb-2" />
@@ -206,7 +206,7 @@ export default function RollbackChanges() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 <div className="text-center" data-testid="stat-recent-changes">
                   <div className="text-2xl sm:text-3xl font-bold text-primary mb-2">{versionHistory.length}</div>
                   <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm">Recent Changes</div>

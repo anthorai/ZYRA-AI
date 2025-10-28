@@ -160,7 +160,7 @@ export default function SEOTitlesMeta() {
               <Target className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold text-white">SEO Best Practices</h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
               <div className="space-y-2 min-w-0">
                 <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Title Optimization:</h4>
                 <ul className="text-slate-300 space-y-1">
@@ -293,7 +293,7 @@ export default function SEOTitlesMeta() {
                     {seoResult.seoScore}/100
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
                   <div className="text-center min-w-0">
                     <div className="text-white font-medium text-base sm:text-lg md:text-xl truncate">{seoResult.titleLength}/70</div>
                     <div className="text-slate-300 truncate">Title Length</div>

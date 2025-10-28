@@ -57,7 +57,7 @@ export default function AbandonedCartSMSPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {mockAbandonedCarts.map((cart) => (
                   <Card key={cart.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl dark-theme-bg">
                     <CardContent className="p-3 sm:p-4 md:p-6">
@@ -120,7 +120,7 @@ export default function AbandonedCartSMSPage() {
               <CardTitle className="text-white text-base sm:text-lg md:text-xl">Recovery Analytics</CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 <div className="text-center min-w-0">
                   <div className="text-lg sm:text-2xl md:text-3xl font-bold text-primary truncate">23%</div>
                   <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm truncate">Recovery Rate</div>

@@ -147,7 +147,7 @@ function ProductGrid({ products, isLoading, onEdit, onDelete }: {
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
           <Card key={i} className="gradient-card shadow-lg border border-slate-700/50 rounded-xl sm:rounded-2xl">
             <CardContent className="p-3 sm:p-4 md:p-6">
@@ -178,7 +178,7 @@ function ProductGrid({ products, isLoading, onEdit, onDelete }: {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
       {products.map((product) => (
         <ProductCard 
           key={product.id} 

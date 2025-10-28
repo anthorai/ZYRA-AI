@@ -344,7 +344,7 @@ export default function GrowthDashboard() {
       </CardGrid>
       
       {/* Growth Summary */}
-      <div className="mt-8 sm:mt-12 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+      <div className="mt-8 sm:mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         <Card className="gradient-card rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300">
           <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
             <div className="p-2 sm:p-2.5 md:p-3 rounded-full bg-slate-800/50 transition-all duration-300 flex-shrink-0">

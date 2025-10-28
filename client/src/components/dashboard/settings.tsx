@@ -208,7 +208,7 @@ export default function Settings() {
         subtitle="Customize your Zyra AI experience, manage integrations, and configure AI preferences"
       />
       {/* Settings Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {settingsCards.map((card) => {
           // Determine if this card should show loading state
           const isLoading = (

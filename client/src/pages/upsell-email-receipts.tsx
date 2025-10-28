@@ -28,7 +28,7 @@ export default function UpsellEmailReceiptsPage() {
     <div className="min-h-screen dark-theme-bg">
       <CardPageHeader title="Upsell Email Receipts" />
       <PageContainer>
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
               <CardHeader className="p-3 sm:p-4 md:p-6">
                 <CardTitle className="text-white text-base sm:text-lg md:text-xl truncate">Default Shopify Receipt</CardTitle>
@@ -136,7 +136,7 @@ export default function UpsellEmailReceiptsPage() {
               </div>
 
               {isEnabled && (
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary">+18%</div>
                     <div className="text-slate-300">Revenue Increase</div>
