@@ -271,26 +271,22 @@ export default function GrowthDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      {/* Analytics Cards Grid */}
+      {/* Analytics Cards Grid - Mobile-First Redesign */}
       <CardGrid>
         {isLoading ? (
           // Show skeleton loaders while data is loading
           (Array.from({ length: 6 }, (_, index) => (
-            <Card key={`skeleton-${index}`} className="group relative overflow-hidden gradient-card rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30">
-              <div className="h-full p-5 sm:p-4 md:p-6 flex flex-col">
-                <CardHeader className="p-0 flex-1 space-y-2 sm:space-y-3">
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1 overflow-hidden">
-                      <Skeleton className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded bg-slate-700 flex-shrink-0" />
-                      <Skeleton className="h-4 sm:h-5 w-24 sm:w-32 bg-slate-700" />
-                    </div>
+            <Card key={`skeleton-${index}`} className="gradient-card rounded-2xl shadow-md border border-slate-700/30 sm:hover:shadow-lg transition-shadow duration-300">
+              <div className="p-6 sm:p-5 md:p-6 flex flex-col space-y-5">
+                <CardHeader className="p-0 space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <Skeleton className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-slate-700 flex-shrink-0" />
+                    <Skeleton className="h-6 w-32 bg-slate-700 rounded" />
                   </div>
-                  <Skeleton className="h-3 sm:h-4 w-full bg-slate-700 mb-1" />
-                  <Skeleton className="h-3 sm:h-4 w-3/4 bg-slate-700" />
+                  <Skeleton className="h-4 w-full bg-slate-700 rounded" />
+                  <Skeleton className="h-4 w-4/5 bg-slate-700 rounded" />
                 </CardHeader>
-                <div className="mt-4 sm:mt-4">
-                  <Skeleton className="h-8 sm:h-9 w-full bg-slate-700 rounded-lg" />
-                </div>
+                <Skeleton className="h-12 w-full bg-slate-700 rounded-lg mt-auto" />
               </div>
             </Card>
           )))
@@ -298,38 +294,38 @@ export default function GrowthDashboard() {
           analyticsCards.map((card) => (
           <Card 
             key={card.id} 
-            className="group relative overflow-hidden gradient-card rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30"
+            className="gradient-card rounded-2xl shadow-md border border-slate-700/30 sm:hover:shadow-lg sm:hover:border-primary/40 transition-all duration-300"
             data-testid={`card-analytics-${card.id}`}
           >
-            <div className="h-full p-5 sm:p-4 md:p-6 flex flex-col">
-              <CardHeader className="p-0 flex-1 space-y-2 sm:space-y-3">
-                <div className="flex items-start justify-between mb-2 sm:mb-3">
-                  <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1 overflow-hidden">
-                    <div className="text-primary flex-shrink-0">
-                      {card.icon}
-                    </div>
-                    <CardTitle className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate" data-testid={`text-title-${card.id}`}>
-                      {card.title}
-                    </CardTitle>
+            <div className="p-6 sm:p-5 md:p-6 flex flex-col space-y-5">
+              <CardHeader className="p-0 space-y-4">
+                {/* Icon & Title */}
+                <div className="flex items-center space-x-3">
+                  <div className="text-primary flex-shrink-0">
+                    {card.icon}
                   </div>
+                  <CardTitle className="text-lg sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight" data-testid={`text-title-${card.id}`}>
+                    {card.title}
+                  </CardTitle>
                 </div>
-                <CardDescription className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-2 overflow-hidden" data-testid={`text-description-${card.id}`}>
+                
+                {/* Description */}
+                <CardDescription className="text-slate-300 text-sm leading-relaxed line-clamp-2" data-testid={`text-description-${card.id}`}>
                   {card.description}
                 </CardDescription>
               </CardHeader>
               
-              <div className="mt-4 sm:mt-4">
-                <Button
-                  onClick={() => handleAnalyticsAction(card.id)}
-                  className="w-full px-2.5 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 sm:hover:scale-105 active:scale-95 flex items-center justify-center"
-                  data-testid={`button-action-${card.id}`}
-                >
-                  <Wand2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
-                  <span className="flex-1 min-w-0 truncate text-center">
-                    {card.actionText}
-                  </span>
-                </Button>
-              </div>
+              {/* Action Button - Mobile Optimized */}
+              <Button
+                onClick={() => handleAnalyticsAction(card.id)}
+                className="w-full h-12 sm:h-11 px-6 text-base sm:text-sm font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all duration-200 mt-auto"
+                data-testid={`button-action-${card.id}`}
+              >
+                <span className="hidden sm:inline-block mr-2">
+                  <Wand2 className="w-4 h-4" />
+                </span>
+                {card.actionText}
+              </Button>
             </div>
           </Card>
           ))
