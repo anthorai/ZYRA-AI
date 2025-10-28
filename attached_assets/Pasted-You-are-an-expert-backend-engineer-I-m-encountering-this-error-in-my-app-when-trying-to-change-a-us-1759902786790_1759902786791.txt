@@ -1,0 +1,55 @@
+You are an expert backend engineer.
+I’m encountering this error in my app when trying to change a user’s subscription plan:
+
+500: {"error":"Failed to change subscription plan","message":"Failed to update user subscription: Could not find the 'planId' column of 'subscriptions' in the schema cache"}
+
+
+Your job is to diagnose and permanently fix this issue — without breaking existing data or logic.
+
+Follow these steps carefully:
+
+Inspect the database schema (or ORM schema like Prisma/Supabase) and confirm whether the subscriptions table contains a column for storing the plan reference.
+
+Check for similar column names such as plan_id, plan, or tier.
+
+If such a column already exists, align the backend code with the actual column name — update all references that use planId to match the real column name.
+
+If the column does not exist, safely add one:
+
+Create a new string/text column named planId (nullable at first).
+
+Migrate the schema and rebuild the schema cache so the backend recognizes it.
+
+Make sure indexes and foreign key relationships (if any) remain intact.
+
+Verify schema synchronization:
+
+Run schema introspection, migrations, or caching refresh (depending on ORM) so the backend has an updated model.
+
+Confirm that subscriptions and users tables remain linked correctly.
+
+Check the API layer (/api/subscription/change-plan):
+
+Ensure it uses a valid HTTP method (POST or PUT).
+
+Validate that the payload sends the correct plan identifier field (planId).
+
+Confirm error handling returns clear messages (400 for missing input, 500 for server issues).
+
+After schema and handler adjustments, test the following flow end-to-end:
+
+Change plan for an existing user.
+
+Validate that the new plan ID is stored correctly in the database.
+
+Confirm that no 500 or schema cache errors appear.
+
+Finally, run integrity tests to ensure existing users’ subscriptions remain unaffected and billing logic still works as expected.
+
+Provide a clear summary of:
+
+The root cause you found.
+
+What schema or configuration you changed.
+
+How you verified that the issue was resolved.

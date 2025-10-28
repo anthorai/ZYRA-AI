@@ -1,0 +1,467 @@
+Select a primary category
+
+If you need help deciding, check the full list of categories.
+Search by category
+122 results
+Sales channels › Selling in person
+Apps that help merchants make more in-person sales
+
+
+Retail
+Apps that let in-person sellers accept payment or sync inventory
+
+SKU and barcodes
+Apps that help merchants create SKUs and barcodes for products
+
+Store locator
+Apps that help customers find retail locations for a store
+
+Selling in person - Other
+Apps related to other ways to sell in person
+Sales channels › Selling online
+Apps that let merchants sell across online platforms
+
+
+Marketplaces
+Apps for publishing products on online marketplaces
+
+Product feeds
+Apps that let merchants use structured data files to manage product information
+
+Store data importer
+Apps that migrate product and store data between Shopify and other platforms
+
+Selling online - Other
+Apps related to other ways to sell online
+Finding products › Sourcing options
+Apps that connect merchants with vendors to purchase products
+
+
+Dropshipping
+Apps that manage third-party inventory and fulfillment services
+
+Print on demand (POD)
+Apps that manage third-party custom product design, printing, and shipping
+
+Wholesale
+Apps that let merchants buy or sell products wholesale
+
+Sourcing options - Other
+Apps related to other sourcing methods
+Selling products › Custom products
+Apps that display product options or variants to customers
+
+
+Custom file upload
+Apps that let customers add images and custom info to their order
+
+Product variants
+Apps that let customers pick multiple product variations
+
+Custom products - Other
+Apps related to other custom products
+Selling products › Digital goods and services
+Apps that let customers pay for access to events or digital products
+
+
+Digital products
+Apps that let merchants sell and deliver digital products
+
+Event booking
+Apps that let merchants sell access to classes, shows, and other events
+
+NFTs and tokengating
+Apps that let merchants sell NFTs and tokengated perks
+
+Digital goods and services - Other
+Apps related to other digital goods and services
+Selling products › Payment options
+Apps that offer customers different ways to pay for products
+
+
+Cash on delivery (COD)
+Apps that help merchants collect and verify payment during delivery
+
+Payments
+Apps that let merchants offer customers financing options
+
+Subscriptions
+Apps that let customers pay for ongoing subscriptions for products
+
+Payment options - Other
+Apps related to other payment options
+Selling products › Pricing
+Apps that let merchants sell products using different pricing strategies
+
+
+Pricing optimization
+Apps that help merchants optimize their pricing strategy
+
+Pricing quotes
+Apps that help create custom prices or offer ways to request quotes
+
+Pricing - Other
+Apps related to other pricing options
+Orders and shipping › Inventory
+Apps that help merchants keep track of available stock and inventory
+
+
+ERP
+Apps that integrate and automate operations like finance, project management, etc.
+
+Inventory optimization
+Apps that help optimize stock and inventory levels
+
+Inventory sync
+Apps that sync inventory details between Shopify and other platforms
+
+Inventory - Other
+Apps related to other inventory management methods
+Orders and shipping › Orders
+Apps that help merchants keep track of customer orders
+
+
+Invoices and receipts
+Apps that manage order documents like invoices, receipts, or packing slips
+
+Order editing
+Apps that let merchants make updates to orders
+
+Order tracking
+Apps that let merchants give order info to customers via the store or notifications
+
+Orders - Other
+Apps related to other order management methods
+Orders and shipping › Returns and warranty
+Apps for offering customer warranties, insurance, and easy returns
+
+
+Returns and exchanges
+Apps that manage product returns or exchanges
+
+Warranties and insurance
+Apps that let customers add warranties or insurance to purchases
+
+Returns and warranty - Other
+Apps related to other warranty and return options
+Orders and shipping › Shipping solutions
+Apps that help merchants fulfill orders and ship to customers
+
+
+Delivery and pickup
+Apps that let merchants offer local delivery or pickup for orders
+
+Shipping
+Apps for shipping out products, including packaging, labeling, and reporting
+
+Shipping rates
+Apps that calculate and display shipping rates to customers during checkout
+
+Third-party logistics (3PL)
+Apps that let merchants hire third-party logistic providers (3PLs) to store and ship products
+
+Shipping solutions - Other
+Apps related to other shipping solutions
+Store design › Content
+Apps that let merchants customize content about their products or business
+
+
+Blogs
+Apps that help display and manage posted content like blogs
+
+Metafields
+Apps that add custom info and functionality to pages
+
+Product content
+Apps for creating product descriptions or product listings
+
+Content - Other
+Apps related to other content options
+Store design › Design elements
+Apps that let merchants add animation, SFX, or other graphics to their store
+
+
+Animation and effects
+Apps that let merchants add animation or music to their store
+
+Badges and icons
+Apps that add customizable icons or buttons to a store
+
+Design elements - Other
+Apps related to other design elements
+Store design › Images and media
+Apps that help merchants create and manage digital assets for their store
+
+
+3D/AR/VR
+Apps that help customers visualize and try on products in real life
+
+Image editor
+Apps that help merchants edit and optimize images
+
+Image gallery
+Apps that group and display a collection of images on a store
+
+Video and livestream
+Apps that let create video content including shoppable reels and live selling
+
+Images and media - Other
+Apps related to other image and media options
+Store design › Internationalization
+Apps that let customers shop in their language or currency on a store
+
+
+Cookie consent
+Apps that protect or control access to customer data like cookies
+
+Currency and translation
+Apps that can manage multiple currencies or languages
+
+Geolocation
+Apps that let merchants show different experiences based on customer location
+
+Internationalization - Other
+Apps related to other internationalization options
+Store design › Notifications
+Apps that help display announcements and draw attention to customers
+
+
+Banners
+Apps that create and display banners or announcement bars on a store
+
+Forms
+Let merchants add forms to their store for capturing customer info
+
+Pop-ups
+Apps that create and display pop-up windows on a store
+
+Notifications - Other
+Apps related to other notification options
+Store design › Product display
+Apps that manage how products are presented on a storefront
+
+
+Collections
+Apps that help merchants import, export, and bulk update collections
+
+Product comparison
+Apps that let customers compare products and decide what to buy
+
+Product display - Other
+Apps related to other product display methods
+Store design › Search and navigation
+Apps that help merchants enhance navigation and search on their store
+
+
+Navigation and menus
+Apps that let merchants add wayfinding elements to their store
+
+Search and filters
+Apps that let customers browse and find products using search and filters
+
+Search and navigation - Other
+Apps related to other search and navigation options
+Store design › Site optimization
+Apps that help merchants optimize site traffic and performance
+
+
+Accessibility
+Apps that support accessibility when shopping on a store using assistive technology
+
+SEO
+Apps that help boost and manage search engine optimization (SEO)
+
+Site optimization - Other
+Apps related to other site optimization methods
+Store design › Storefronts
+Apps that let merchants customize their online store or create a custom app
+
+
+Mobile app builder
+Apps that help build mobile apps for customers to shop on iOS or Android
+
+Page builder
+Apps that let merchants build and customize pages within their theme
+
+Storefronts - Other
+Apps related to other storefront options
+Marketing and conversion › Advertising
+Apps that help merchants promote products and reach new customers
+
+
+Ads
+Apps that run paid search ads, social media ads, native ads, etc.
+
+Affiliate programs
+Apps that help sell products through a network of people and companies
+
+Advertising - Other
+Apps related to other advertising methods
+Marketing and conversion › Checkout
+Apps that improve checkout and adding products to cart
+
+
+Cart customization
+Apps that let merchants customize and add features to the cart page
+
+Order limits
+Apps that limit the number or weight of items that customers can buy
+
+Checkout - Other
+Apps related to other checkout options
+Marketing and conversion › Customer loyalty
+Apps for encouraging customers to buy again (rewards, registries, donations)
+
+
+Donations
+Apps that let customers give donations to charity or environmental causes
+
+Loyalty and rewards
+Apps that manage customer rewards and loyalty programs
+
+Wishlists
+Apps that let customers create and save lists of products for later
+
+Customer loyalty - Other
+Apps related to other customer loyalty options
+Marketing and conversion › Gifts
+Apps that let customers buy products as gifts for other people
+
+
+Gift cards
+Apps that let customers send gift cards to other people
+
+Gift wrap and messages
+Apps that let customers request gift wrapping or add a message
+
+Gifts - Other
+Apps related to other gift options
+Marketing and conversion › Marketing
+Apps that let merchants reach out directly to customers
+
+
+Abandoned cart
+Apps that encourage customers to finish a purchase after leaving their cart
+
+Email marketing
+Apps that automate, manage, or send email marketing to customers
+
+SMS marketing
+Apps that automate, manage, or send SMS marketing to customers
+
+Web push
+Apps that send and manage push alerts for customers
+
+Marketing - Other
+Apps related to other marketing methods
+Marketing and conversion › Promotions
+Apps that let merchants offer discounts or special sales for products
+
+
+Discounts
+Apps that help create and manage discount codes and sales
+
+Giveaways and contests
+Apps that let customers win prizes from giveaways or contests
+
+Promotions - Other
+Apps related to other promotion options
+Marketing and conversion › Social trust
+Apps that encourage shopping based on customer trends
+
+
+Product reviews
+Apps that collect or display product ratings and testimonials from customers
+
+Social proof
+Apps that signal customer shopping trends like recent orders, trending products, etc.
+
+Social trust - Other
+Apps related to other social trust methods
+Marketing and conversion › Upsell and bundles
+Apps that encourage customers to shop for related products before checkout
+
+
+Countdown timer
+Apps that display how much time is left for customers to buy a product
+
+Pre-orders
+Apps that let merchants accept orders in advance for upcoming products
+
+Product bundles
+Apps that let merchants sell multiple products in a single bundle
+
+Stock alerts
+Apps for sharing inventory updates, like running low or back in stock
+
+Upsell and cross-sell
+Apps that encourage customers to purchase additional upgrades, add-ons, etc.
+
+Upsell and bundles - Other
+Apps related to other upsell and bundle options
+Store management › Finances
+Apps that help merchants manage their money and financial records
+
+
+Accounting
+Apps that run accounting operations like managing cash flow, expenses, etc.
+
+Taxes
+Apps that help merchants collect, calculate, or submit tax info
+
+Finances - Other
+Apps related to other finance options
+Store management › Operations
+Apps that help merchants manage tasks and automate their work
+
+
+Analytics
+Apps that analyze and generate insights or recommendations for a store
+
+Bulk editor
+Apps that update multiple products at once for pricing, images, etc.
+
+Staff notifications
+Apps for keeping staff, vendors, or suppliers updated via email, Slack, etc.
+
+Workflow automation
+Apps that automate multiple tasks like customer management, bulk fulfillment, etc.
+
+Operations - Other
+Apps related to other operations
+Store management › Security
+Apps that help with legal, fraud, and security measures
+
+
+Accounts and login
+Apps that manage customer account creation, log in, passwords, etc.
+
+Anti theft
+Apps that protect digital assets like images from being copied or stolen
+
+Fraud
+Apps that detect, flag, or prevent fraudulent transactions
+
+Legal
+Apps that help with legal compliance, terms and conditions, etc.
+
+Security - Other
+Apps related to other security measures
+Store management › Support
+Apps that let merchants provide help and resolve issues for customers
+
+
+Chat
+Apps that allow customers to connect with merchants via chat
+
+FAQ
+Apps that create and display pages for frequently asked questions (FAQs)
+
+Helpdesk
+Apps that manage helpdesks or workflows for customer support tickets
+
+Surveys
+Apps that collect customer sentiment about a business through surveys, polls, etc.
+
+Support - Other
+Apps related to other support options

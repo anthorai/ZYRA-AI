@@ -1,0 +1,129 @@
+You are my expert full-stack developer, product manager, and UI/UX designer.  
+Your task is to help me build **Zyra**, a Shopify-focused AI SaaS app with Next.js, Supabase, and OpenAI.  
+Follow the instructions step by step and give me code, file structures, schemas, and explanations as needed.  
+
+---
+
+## 🎯 Project Overview
+- App Name: **Zyra**
+- Tagline: *“Smarter Sales, Faster Growth.”*
+- Description: An AI-powered Shopify SaaS tool to boost sales, optimize product listings, recover carts, and automate growth.
+- Stack:
+  - **Frontend:** Next.js 14 + TailwindCSS (gradient theme).
+  - **Backend:** Node.js / Express or Next.js API routes.
+  - **Database:** Supabase (Postgres + Auth).
+  - **AI:** OpenAI GPT-4o-mini for text generation.
+  - **Email API:** SendGrid or Postmark.
+  - **SMS API:** Twilio.
+  - **Hosting:** Vercel (frontend) + Render/Supabase backend.
+
+---
+
+## 🎨 Theme & Design System
+- Color Palette:
+  - Midnight Blue: `#021024`
+  - Deep Indigo: `#052659`
+  - Slate Blue: `#5483B3`
+  - Soft Sky Blue: `#7DA0CA`
+  - Light Azure: `#C1E8FF` (CTA buttons)
+- Style: Clean, futuristic, professional, gradient backgrounds, rounded corners, modern typography.
+- UI: Dashboard with cards, metrics, and quick actions.
+
+---
+
+## 🔑 Core Features to Build
+1. **AI Product Description Generator**
+   - Input: product name, tags, optional image.
+   - Output: 3 styles (Sales, SEO, Casual).
+   - One-click publish to Shopify product listing.
+
+2. **Bulk Product Optimization**
+   - Import/export 20–100+ products.
+   - AI auto-generates SEO titles, descriptions, and tags.
+   - CSV export or direct Shopify sync.
+
+3. **SEO Title & Meta Tag Generator**
+   - AI-crafted SEO-friendly titles.
+   - Meta descriptions + keyword-rich tags.
+
+4. **AI Image Alt-Text Generator**
+   - Auto alt-text creation for SEO + accessibility.
+
+5. **Upsell Email Receipts**
+   - Branded receipt emails with upsells.
+   - Pre-made templates + customization.
+   - Send via SendGrid/Postmark.
+
+6. **Abandoned Cart SMS Recovery**
+   - AI-generated persuasive SMS reminders.
+   - Triggered by Shopify checkout events.
+   - Sent via Twilio.
+
+7. **Analytics Dashboard**
+   - Track optimized products.
+   - Email performance (open & CTR).
+   - SMS recovery conversions.
+   - SEO keyword density.
+
+---
+
+## ⚙️ Functionalities
+- Shopify OAuth integration.
+- 1-Click Optimize All button.
+- Brand Voice settings (Formal, Casual, Luxury).
+- Template library for Email & SMS.
+- CSV export/download.
+- Supabase auth (email/password + Shopify SSO).
+- Role-based user access (admin, staff).
+- Stripe subscriptions with plan limits.
+
+---
+
+## 💳 Subscription Plans
+- **Free Trial:** 7 days full access.
+- **Starter $15/mo:** 100 products, 500 emails.
+- **Pro $25/mo:** Unlimited products, 2000 emails, 500 SMS.
+- **Growth $49/mo:** Unlimited everything, A/B testing, premium templates.
+
+---
+
+## 📊 Database Schema (Supabase)
+Tables needed:
+- **users** → id, email, password_hash, role, plan, trial_end_date.
+- **products** → id, user_id, shopify_id, name, description, tags, optimized_copy.
+- **seo_meta** → id, product_id, seo_title, meta_description, keywords.
+- **emails** → id, user_id, product_id, type (receipt/upsell), subject, body, sent_count, open_rate, ctr.
+- **sms** → id, user_id, product_id, message, status, sent_count, conversion_rate.
+- **analytics** → id, user_id, metric_type, value, date.
+- **subscriptions** → id, user_id, plan, start_date, end_date, status.
+
+---
+
+## 🛤 Development Roadmap
+1. Setup Next.js project with TailwindCSS and Supabase auth.
+2. Build landing page with subscription pricing.
+3. Add Shopify OAuth and test product sync.
+4. Build AI product description generator with OpenAI API.
+5. Add bulk product optimization + CSV import/export.
+6. Integrate SEO meta tag generator.
+7. Connect SendGrid/Postmark for email receipts.
+8. Add Twilio SMS abandoned cart reminders.
+9. Build analytics dashboard with gradient cards.
+10. Implement subscription plans via Stripe.
+11. Polish UI with gradient theme.
+12. Deploy to Vercel (frontend) + Supabase backend.
+13. Submit app to Shopify App Store.
+
+---
+
+## 📌 Output Expectations
+Whenever I ask for help:
+- Provide **file structure** if creating new modules.
+- Show **code snippets** in TypeScript/JS with comments.
+- Suggest **best practices** for security, cost optimization, and scalability.
+- Recommend improvements in UI/UX.
+- Always explain step-by-step so I can follow easily.
+
+---
+
+Start by scaffolding the **Next.js project structure with Supabase auth and a clean dashboard layout**, then guide me through adding the **AI product description generator** as the first feature.

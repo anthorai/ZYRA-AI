@@ -1,0 +1,134 @@
+🔹 Campaign Cards & Functionalities
+1. AI Upsell Suggestions (Enable)
+
+What it does: Analyze purchase history and suggest upsell bundles or add-ons.
+
+Functional Flow:
+
+When merchant clicks Enable → connect to Shopify Products API.
+
+Generate AI-based upsell combos (e.g., “Customers who bought X also buy Y”).
+
+Show editable recommendations → merchant approves → automatically attach as upsell offers on product/cart pages.
+
+2. Dynamic Segmentation (Setup)
+
+What it does: Auto-create smart customer groups.
+
+Functional Flow:
+
+On Setup → pull Shopify customer data (purchase frequency, spend, location).
+
+AI clusters customers (e.g., “High Spenders”, “One-time Buyers”, “Dormant Users”).
+
+Merchant can adjust rules (e.g., “Send discount to Dormant Users”).
+
+Syncs with email/SMS campaigns.
+
+3. Multi-Channel Repurposing (Generate)
+
+What it does: Reuse a single product description across channels.
+
+Functional Flow:
+
+Click Generate → enter product URL or description.
+
+AI generates variations:
+
+Email subject + body.
+
+SMS copy.
+
+Social post caption.
+
+SEO blog snippet.
+
+Merchant selects which to publish → auto-pushes to Shopify Email / SMS / Social integrations.
+
+4. Upsell Email Receipts (Enable)
+
+What it does: Turn receipts into marketing opportunities.
+
+Functional Flow:
+
+Click Enable → replaces boring Shopify receipt email with AI-optimized template.
+
+Adds upsell suggestions like “Get 10% off accessories for your order.”
+
+Analytics: track CTR and upsell conversion directly in dashboard.
+
+5. Abandoned Cart SMS (View / Setup)
+
+What it does: Recover lost carts with AI-crafted SMS nudges.
+
+Functional Flow:
+
+On Setup → pull abandoned carts from Shopify.
+
+AI writes recovery SMS (with urgency, discount, or reminder).
+
+Merchant can edit → schedule auto-send.
+
+Dashboard shows recovery rate, $ revenue regained.
+
+6. Custom Templates (Edit)
+
+What it does: Let merchants create and save AI-generated templates.
+
+Functional Flow:
+
+Click Edit → open template editor (email, SMS, popups).
+
+Save as reusable template (stored in Zyra DB).
+
+Merchants can apply template to any campaign card.
+
+7. Behavioral Triggers (Setup)
+
+What it does: Fire campaigns based on user behavior.
+
+Functional Flow:
+
+On Setup → define triggers like:
+
+“If user views product 3 times → send discount SMS.”
+
+“If cart value > $200 → offer free shipping upsell.”
+
+AI suggests best triggers based on analytics.
+
+System auto-executes when conditions match.
+
+🔹 Technical Implementation Plan
+
+Frontend (React/Next.js)
+
+Each card’s button routes to a dedicated page or modal (/campaigns/upsell, /campaigns/sms, etc.).
+
+State management (Redux / Zustand) to track enable/disable status.
+
+Backend (Node.js / Express / NestJS)
+
+Campaign APIs:
+
+/api/campaigns/upsell
+
+/api/campaigns/sms
+
+/api/campaigns/templates
+
+AI calls → OpenAI / fine-tuned model.
+
+Shopify API integration (products, carts, orders, customers).
+
+Database (Postgres / MongoDB)
+
+Store campaign configs, templates, AI outputs, analytics results.
+
+Execution Engine
+
+Cron jobs / event listeners (Shopify webhooks: cart abandoned, order placed).
+
+Fire triggers automatically.
+
+✅ In short: Every card’s button should lead to a real workflow → setup, edit, generate, or view analytics → connect with Shopify API + AI outputs → and store results in your Zyra backend.

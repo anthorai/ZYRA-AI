@@ -1,0 +1,69 @@
+1️⃣ Smart Product Optimization
+
+Icon: 🔍 / AI gear icon
+
+Description: Automatically improves your product titles, descriptions, and SEO for maximum visibility.
+
+Highlights: AI-driven product improvements, keyword density analysis, one-click Shopify updates.
+
+Target Users: Beginners → Enterprise stores wanting optimized product listings.
+
+2️⃣ SEO & Content Automation
+
+Icon: 📝 / Neon document
+
+Description: Generate smart SEO titles, meta tags, and image alt-text in seconds.
+
+Highlights: Bulk optimization, smart bulk suggestions, scheduled refresh, dynamic & custom templates.
+
+Target Users: Store owners scaling content & SEO efforts.
+
+3️⃣ AI-Powered Growth Intelligence
+
+Icon: 📈 / Rising chart
+
+Description: Discover which products, campaigns, and customer segments drive the most revenue.
+
+Highlights: Revenue impact attribution, AI upsell suggestions, dynamic segmentation, behavioral targeting.
+
+Target Users: Brands focusing on conversions and ROI.
+
+4️⃣ Multi-Channel Automation
+
+Icon: 🔗 / Network nodes
+
+Description: Repurpose content & campaigns across email, SMS, blogs, ads, and Shopify instantly.
+
+Highlights: Abandoned cart SMS, upsell emails, multi-channel content repurposing.
+
+Target Users: Growing brands with multi-channel sales strategies.
+
+5️⃣ Advanced Analytics & Insights
+
+Icon: 📊 / Neon dashboard
+
+Description: Track every metric that matters: sales, content ROI, email & SMS performance.
+
+Highlights: Product dashboard, performance analytics, dynamic reports, advanced analytics integrations.
+
+Target Users: Data-driven decision makers & high-revenue brands.
+
+6️⃣ Workflow & Safety Tools
+
+Icon: ⚡ / Neon lightning
+
+Description: Streamline your workflow while keeping your data safe and reversible.
+
+Highlights: CSV import/export, rollback button, scheduled refresh, smart bulk suggestions.
+
+Target Users: Teams managing large catalogs or complex stores.
+
+7️⃣ Brand & Creative AI
+
+Icon: 🎨 / Neon paintbrush
+
+Description: Keep your messaging and visuals consistent with AI-assisted creativity.
+
+Highlights: Brand voice memory, multimodal AI (text + image), custom templates, dynamic templates.
+
+Target Users: Brands needing consistent, on-brand content at scale.

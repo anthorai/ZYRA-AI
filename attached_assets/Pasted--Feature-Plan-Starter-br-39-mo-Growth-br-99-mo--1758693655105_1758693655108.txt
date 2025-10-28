@@ -1,0 +1,32 @@
+| **Feature / Plan**                 | 🟢 **Starter** <br>\$39/mo | 🟡 **Growth** <br>\$99/mo | 🔴 **Pro** <br>\$299/mo  | 🟣 **Enterprise** <br>Custom \$999+ |
+| ---------------------------------- | -------------------------- | ------------------------- | ------------------------ | ----------------------------------- |
+| **Credits / Month**                | 1,000 (\~\$50 value)       | 10,000 (\~\$500 value)    | 50,000 (\~\$2,500 value) | Unlimited                           |
+| **Smart Product Descriptions**     | ✅ 200 req                  | ✅ 200 req                 | ✅ 200 req                | ✅ Unlimited                         |
+| **SEO Titles & Meta Tags**         | ✅ 200 req                  | ✅ 200 req                 | ✅ 200 req                | ✅ Unlimited                         |
+| **AI Image Alt-Text**              | ✅ 200 req                  | ✅ 200 req                 | ✅ 200 req                | ✅ Unlimited                         |
+| **SEO Keyword Density**            | ✅ 100 req                  | ✅ 100 req                 | ✅ 100 req                | ✅ Unlimited                         |
+| **Scheduled Refresh**              | ✅ 50 req                   | ✅ 50 req                  | ✅ Unlimited              | ✅ Unlimited                         |
+| **CSV Import/Export**              | ✅ 100 req                  | ✅ 100 req                 | ✅ Unlimited              | ✅ Unlimited                         |
+| **One-Click Shopify Publish**      | ✅ Unlimited (low cost)     | ✅ Unlimited (low cost)    | ✅ Unlimited (low cost)   | ✅ Unlimited                         |
+| **Rollback Button**                | 🔒 Not included            | ✅ Unlimited (low cost)    | ✅ Unlimited              | ✅ Unlimited                         |
+| **Bulk Optimization**              | 🔒 Not included            | ✅ 1,000 req               | ✅ 1,000 req              | ✅ Unlimited                         |
+| **Brand Voice Memory**             | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **Dynamic Templates**              | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **Custom Templates**               | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **A/B Testing & Results**          | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **Email Performance Analytics**    | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **SMS Conversion Tracking**        | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **AI Upsell Suggestions**          | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **Abandoned Cart SMS**             | 🔒 Not included            | ✅ 500 req                 | ✅ 500 req                | ✅ Unlimited                         |
+| **AI-Powered Growth Intelligence** | 🔒 Not included            | 🔒 Not included           | ✅ 5,000 req              | ✅ Unlimited                         |
+| **Revenue Impact Attribution**     | 🔒 Not included            | 🔒 Not included           | ✅ 2,000 req              | ✅ Unlimited                         |
+| **Dynamic Segmentation**           | 🔒 Not included            | 🔒 Not included           | ✅ 2,000 req              | ✅ Unlimited                         |
+| **Multi-Channel Repurposing**      | 🔒 Not included            | 🔒 Not included           | ✅ 2,000 req              | ✅ Unlimited                         |
+| **Multimodal AI (Text + Image)**   | 🔒 Not included            | 🔒 Not included           | ✅ 1,000 req              | ✅ Unlimited                         |
+| **Product Management Dashboard**   | 🔒 Not included            | 🔒 Not included           | ✅ Unlimited              | ✅ Unlimited                         |
+| **White-label Options**            | 🔒 Not included            | 🔒 Not included           | 🔒 Not included          | ✅ Available                         |
+| **Team Seats / SSO**               | 🔒 Not included            | 🔒 Not included           | 🔒 Not included          | ✅ Available                         |
+| **API Access**                     | 🔒 Not included            | 🔒 Not included           | 🔒 Not included          | ✅ Available                         |
+| **Advanced Analytics**             | 🔒 Not included            | 🔒 Not included           | 🔒 Not included          | ✅ Available                         |
+| **Dedicated Account Manager**      | 🔒 Not included            | 🔒 Not included           | 🔒 Not included          | ✅ Available                         |
+| **Custom Feature Requests**        | 🔒 Not included            | 🔒 Not included           | 🔒 Not included          | ✅ Available                         |

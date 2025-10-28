@@ -1,0 +1,747 @@
+Oct 28 10:03:35.96
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:34.69
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:34.69
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:34.40
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:33.10
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:31.82
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:31.76
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:30.53
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:30.48
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:30.20
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:28.93
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:27.62
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:27.62
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:26.28
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:26.27
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:25.94
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:24.43
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:23.14
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:23.11
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:21.88
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:21.84
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:21.54
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:20.25
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:18.96
+GET
+500
+zzyraai.com
+/api/notifications/unread-count
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:18.96
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:18.96
+GET
+500
+zzyraai.com
+/api/notifications
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:17.68
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:17.68
+GET
+500
+zzyraai.com
+/api/notifications/unread-count
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:17.68
+GET
+500
+zzyraai.com
+/api/notifications
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:14.76
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:14.48
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:13.49
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:13.21
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:12.69
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:12.44
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:12.35
+GET
+500
+zzyraai.com
+/api/settings/preferences
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:08.50
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:08.24
+GET
+500
+zzyraai.com
+/api/shopify/status
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:08.21
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:08.16
+GET
+500
+zzyraai.com
+/api/settings/preferences
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:07.74
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:06.46
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:06.08
+GET
+500
+zzyraai.com
+/api/settings/integrations
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:05.83
+GET
+500
+zzyraai.com
+/api/shopify/status
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:05.59
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:03:05.48
+GET
+500
+zzyraai.com
+/api/settings/preferences
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:36.99
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:36.99
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:35.69
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:34.42
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:34.39
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:33.14
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:33.10
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:32.77
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:31.49
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:30.21
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:30.21
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:28.93
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:28.92
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:28.64
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:27.36
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:26.08
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:26.04
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:24.81
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:24.77
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:24.49
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:23.20
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:21.93
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:21.89
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:20.63
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:20.60
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:20.30
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:19.00
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:17.73
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:17.67
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:16.43
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:16.39
+POST
+500
+zzyraai.com
+/api/dashboard/initialize
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:16.12
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:15.43
+GET
+500
+zzyraai.com
+/api/notifications/unread-count
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:14.82
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:13.56
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:13.53
+GET
+500
+zzyraai.com
+/api/notifications
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:12.25
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:12.25
+GET
+500
+zzyraai.com
+/api/notifications/unread-count
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:12.25
+GET
+500
+zzyraai.com
+/api/notifications
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:01.17
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:02:01.13
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:01:59.89
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:01:59.84
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:01:59.06
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:01:58.98
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:01:58.88
+GET
+500
+zzyraai.com
+/api/settings/preferences
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:00:05.57
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:00:04.24
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 10:00:03.17
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:31.54
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:31.48
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:30.26
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:30.20
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:29.50
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:29.42
+GET
+500
+zzyraai.com
+/api/me
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:29.32
+GET
+500
+zzyraai.com
+/api/settings/preferences
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:17.47
+GET
+500
+zzyraai.com
+/api/notifications/unread-count
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:17.47
+GET
+500
+zzyraai.com
+/api/dashboard-complete
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:17.45
+GET
+500
+zzyraai.com
+/api/notifications
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:16.29
+GET
+500
+zzyraai.com
+/api/settings/preferences
+2
+[Vercel] ❌ Failed to load app: Error: SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations at server/lib/supabase.ts (file:///var/task/dist/server/index.js:1008:13) at __init (file:///var/task/dist/server/index.js:10:56) at server/lib/supabase-storage.ts (file:///var/task/dist/server/index.js:1117:5) at __init (file:///var/task/dist/server/index.js:10:56) at file:///var/task/dist/server/index.js:5693:1 at ModuleJob.run (node:internal/modules/esm/module_job:343:25) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26) at async Object.handler (file:///var/task/api/index.js:15:38) at async r (/opt/rust/nodejs.js:2:15569)
+Oct 28 09:59:16.29
+GET
+500
+zzyraai.com
+/api/me

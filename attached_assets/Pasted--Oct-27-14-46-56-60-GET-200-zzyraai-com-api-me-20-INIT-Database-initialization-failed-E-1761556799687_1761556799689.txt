@@ -1,0 +1,106 @@
+
+Oct 27 14:46:56.60
+GET
+200
+zzyraai.com
+/api/me
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:46:55.62
+GET
+200
+zzyraai.com
+/api/me
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:29:03.61
+GET
+200
+zzyraai.com
+/api/settings/preferences
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:29:01.49
+GET
+200
+zzyraai.com
+/api/shopify/callback
+2
+Shopify OAuth callback error: Error: Failed to create store connection: Could not find the 'accessToken' column of 'store_connections' in the schema cache at SupabaseStorage.createStoreConnection (file:///var/task/dist/server/index.js:1208:26) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async file:///var/task/dist/server/index.js:10564:9
+Oct 27 14:28:38.40
+GET
+200
+zzyraai.com
+/api/shopify/callback
+2
+Shopify OAuth callback error: Error: Failed to create store connection: Could not find the 'accessToken' column of 'store_connections' in the schema cache at SupabaseStorage.createStoreConnection (file:///var/task/dist/server/index.js:1208:26) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async file:///var/task/dist/server/index.js:10564:9
+Oct 27 14:28:31.95
+GET
+200
+zzyraai.com
+/api/me
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:28:21.88
+GET
+304
+zzyraai.com
+/api/analytics/revenue-trends/[object%20Object]
+17
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:28:21.88
+GET
+200
+zzyraai.com
+/api/analytics/cart-recovery
+21
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:28:21.88
+GET
+200
+zzyraai.com
+/api/analytics/growth-summary
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:28:21.88
+GET
+200
+zzyraai.com
+/api/campaigns/stats
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:28:20.82
+GET
+200
+zzyraai.com
+/api/notifications
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:27:58.90
+GET
+200
+zzyraai.com
+/api/settings/preferences
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:27:58.90
+GET
+200
+zzyraai.com
+/api/me
+20
+❌ [INIT] Database initialization failed: Error: Database connection failed at initializeDatabase (file:///var/task/dist/server/index.js:5560:13) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async startServer (file:///var/task/dist/server/index.js:12475:5) at async initializeApp (file:///var/task/dist/server/index.js:12484:18)
+Oct 27 14:20:58.10
+GET
+200
+zzyraai.com
+/api/shopify/callback
+2
+Shopify OAuth callback error: Error: Failed to create store connection: Could not find the 'accessToken' column of 'store_connections' in the schema cache at SupabaseStorage.createStoreConnection (file:///var/task/dist/server/index.js:1208:26) at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async file:///var/task/dist/server/index.js:10564:9
+Oct 27 14:20:40.66
+GET
+200
+zzyraai.com
+/api/settings/preferences
+20
+❌ [INIT] Database initialization failed: Error: Databas

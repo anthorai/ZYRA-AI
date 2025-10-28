@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout Functionality Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .log-output {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .test-status {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            min-width: 120px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .passed { color: #2ecc71; }
+        .failed { color: #e74c3c; }
+        .progress { color: #f39c12; }
+        .iframe-container {
+            margin-top: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            background: white;
+        }
+        .test-step {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="header">
+            <h1>🧪 Logout Functionality Test Suite</h1>
+            <p>Comprehensive testing of authentication logout workflow</p>
+        </div>
+        
+        <div class="test-controls">
+            <button class="btn" onclick="runTests()" id="runTestsBtn">🚀 Run Logout Tests</button>
+            <button class="btn" onclick="openApp()" id="openAppBtn">📱 Open App</button>
+            <button class="btn" onclick="clearLogs()" id="clearLogsBtn">🧹 Clear Logs</button>
+            <button class="btn" onclick="takeScreenshot()" id="screenshotBtn">📸 Screenshot</button>
+        </div>
+
+        <div class="results-section">
+            <h3>📊 Test Status</h3>
+            <div class="test-status">
+                <div class="status-card">
+                    <div class="status-number passed" id="passedCount">0</div>
+                    <div>Passed</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-number failed" id="failedCount">0</div>
+                    <div>Failed</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-number progress" id="progressCount">0</div>
+                    <div>In Progress</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h3>📝 Test Log Output</h3>
+            <div class="log-output" id="logOutput">Ready to run tests...\n</div>
+        </div>
+
+        <div class="iframe-container">
+            <iframe id="appFrame" src="http://localhost:5000"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let testResults = { passed: 0, failed: 0, inProgress: 0 };
+        
+        function updateStatus() {
+            document.getElementById('passedCount').textContent = testResults.passed;
+            document.getElementById('failedCount').textContent = testResults.failed;
+            document.getElementById('progressCount').textContent = testResults.inProgress;
+        }
+        
+        function logMessage(message) {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logOutput').textContent = 'Logs cleared...\n';
+            testResults = { passed: 0, failed: 0, inProgress: 0 };
+            updateStatus();
+        }
+        
+        function openApp() {
+            document.getElementById('appFrame').src = 'http://localhost:5000';
+            logMessage('🔄 Refreshing application frame');
+        }
+        
+        function takeScreenshot() {
+            logMessage('📸 Screenshot request - check browser dev tools');
+        }
+        
+        async function runTests() {
+            const runTestsBtn = document.getElementById('runTestsBtn');
+            runTestsBtn.disabled = true;
+            runTestsBtn.textContent = '🧪 Running Tests...';
+            
+            testResults = { passed: 0, failed: 0, inProgress: 1 };
+            updateStatus();
+            
+            logMessage('🔬 Starting Logout Functionality Tests...');
+            logMessage('========================================');
+            
+            try {
+                // Get iframe and run tests in its context
+                const iframe = document.getElementById('appFrame');
+                const iframeWindow = iframe.contentWindow;
+                const iframeDoc = iframe.contentDocument;
+                
+                if (!iframeWindow || !iframeDoc) {
+                    throw new Error('Cannot access iframe - app may not be loaded');
+                }
+                
+                logMessage('📋 Test Requirements:');
+                logMessage('1. Sign In First: Authenticate to access logout functionality');
+                logMessage('2. Verify Navbar Shows Logout: Confirm Dashboard and Logout buttons');
+                logMessage('3. Test Logout Button: Click logout and verify functionality');
+                logMessage('4. Verify Logout Flow: Confirm redirect and state changes');
+                logMessage('5. Check State Changes: Ensure navbar updates correctly');
+                logMessage('');
+                
+                // Step 1: Check initial state
+                logMessage('📍 STEP 1: Checking initial application state...');
+                testResults.inProgress++;
+                updateStatus();
+                
+                const currentUrl = iframeWindow.location.href;
+                logMessage(`Current URL: ${currentUrl}`);
+                
+                if (!currentUrl.includes('localhost:5000')) {
+                    logMessage('⚠️ Navigating to application...');
+                    iframeWindow.location.href = 'http://localhost:5000';
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+                
+                // Check if already logged in
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                const existingLogoutBtn = iframeDoc.querySelector('[data-testid="button-logout"]') ||
+                                         iframeDoc.querySelector('button[onclick*="logout"]') ||
+                                         Array.from(iframeDoc.querySelectorAll('button, a')).find(el => 
+                                             el.textContent.toLowerCase().includes('logout'));
+                
+                if (existingLogoutBtn) {
+                    logMessage('✅ Already logged in - logout button found');
+                    logMessage('🎯 Proceeding directly to logout testing...');
+                    testResults.passed++;
+                    testResults.inProgress--;
+                } else {
+                    logMessage('📝 Not logged in - need to authenticate first');
+                    
+                    // Step 2: Navigate to auth page
+                    logMessage('📍 STEP 2: Navigating to authentication page...');
+                    
+                    const loginBtn = iframeDoc.querySelector('[data-testid="link-login"]') ||
+                                    iframeDoc.querySelector('a[href="/auth"]') ||
+                                    Array.from(iframeDoc.querySelectorAll('a, button')).find(el => 
+                                        el.textContent.toLowerCase().includes('login'));
+                    
+                    if (loginBtn) {
+                        logMessage('🔍 Found login button, clicking...');
+                        loginBtn.click();
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    } else {
+                        logMessage('🔍 No login button found, navigating directly to /auth');
+                        iframeWindow.location.href = iframeWindow.location.origin + '/auth';
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    }
+                    
+                    // Step 3: Authenticate
+                    logMessage('📍 STEP 3: Authenticating with test credentials...');
+                    
+                    try {
+                        const emailInput = iframeDoc.querySelector('[data-testid="input-email"]') ||
+                                          iframeDoc.querySelector('input[type="email"]');
+                        const passwordInput = iframeDoc.querySelector('[data-testid="input-password"]') ||
+                                             iframeDoc.querySelector('input[type="password"]');
+                        const submitBtn = iframeDoc.querySelector('[data-testid="button-login"]') ||
+                                         iframeDoc.querySelector('button[type="submit"]') ||
+                                         iframeDoc.querySelector('form button');
+                        
+                        if (emailInput && passwordInput && submitBtn) {
+                            logMessage('📝 Filling login form...');
+                            
+                            emailInput.value = 'test@zyra.com';
+                            emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            
+                            passwordInput.value = 'testpassword123';
+                            passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            
+                            logMessage('🚀 Submitting login form...');
+                            submitBtn.click();
+                            
+                            await new Promise(resolve => setTimeout(resolve, 4000));
+                            
+                            testResults.passed++;
+                            logMessage('✅ Login form submitted successfully');
+                        } else {
+                            throw new Error('Login form elements not found');
+                        }
+                    } catch (error) {
+                        testResults.failed++;
+                        logMessage(`❌ Login failed: ${error.message}`);
+                        logMessage('⚠️ Continuing test assuming user may already be logged in...');
+                    }
+                    testResults.inProgress--;
+                }
+                updateStatus();
+                
+                // Step 4: Verify authenticated state
+                logMessage('📍 STEP 4: Verifying authenticated state and navbar...');
+                testResults.inProgress++;
+                updateStatus();
+                
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const postAuthUrl = iframeWindow.location.href;
+                logMessage(`Post-auth URL: ${postAuthUrl}`);
+                
+                const dashboardBtn = iframeDoc.querySelector('[data-testid="link-dashboard"]') ||
+                                    iframeDoc.querySelector('a[href="/dashboard"]') ||
+                                    Array.from(iframeDoc.querySelectorAll('a, button')).find(el => 
+                                        el.textContent.toLowerCase().includes('dashboard'));
+                
+                const logoutBtn = iframeDoc.querySelector('[data-testid="button-logout"]') ||
+                                 iframeDoc.querySelector('button[onclick*="logout"]') ||
+                                 Array.from(iframeDoc.querySelectorAll('button, a')).find(el => 
+                                     el.textContent.toLowerCase().includes('logout'));
+                
+                if (dashboardBtn) {
+                    testResults.passed++;
+                    logMessage('✅ Dashboard button visible when authenticated');
+                } else {
+                    testResults.failed++;
+                    logMessage('❌ Dashboard button not found in navbar');
+                }
+                
+                if (logoutBtn) {
+                    testResults.passed++;
+                    logMessage('✅ Logout button visible when authenticated');
+                } else {
+                    testResults.failed++;
+                    logMessage('❌ Logout button not found in navbar');
+                    logMessage('Available nav elements:');
+                    iframeDoc.querySelectorAll('nav *').forEach((el, i) => {
+                        logMessage(`  ${i}: ${el.tagName} - "${el.textContent?.trim()}" (${el.className})`);
+                    });
+                    testResults.inProgress--;
+                    updateStatus();
+                    throw new Error('Cannot proceed - logout button not found');
+                }
+                
+                testResults.inProgress--;
+                updateStatus();
+                
+                // Step 5: Test logout functionality
+                logMessage('📍 STEP 5: Testing logout button functionality...');
+                testResults.inProgress++;
+                updateStatus();
+                
+                const initialLogoutText = logoutBtn.textContent.trim();
+                logMessage(`Initial logout button text: "${initialLogoutText}"`);
+                
+                const isEnabled = !logoutBtn.disabled && !logoutBtn.hasAttribute('disabled');
+                if (isEnabled) {
+                    testResults.passed++;
+                    logMessage('✅ Logout button is enabled and clickable');
+                } else {
+                    testResults.failed++;
+                    logMessage('❌ Logout button is disabled');
+                }
+                
+                if (isEnabled) {
+                    logMessage('🖱️ Clicking logout button...');
+                    logoutBtn.click();
+                    
+                    // Check for loading state
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const currentLogoutText = logoutBtn.textContent.trim();
+                    const showsLoggingOut = currentLogoutText.toLowerCase().includes('logging out') ||
+                                           currentLogoutText.toLowerCase().includes('signing out') ||
+                                           logoutBtn.disabled;
+                    
+                    if (showsLoggingOut) {
+                        testResults.passed++;
+                        logMessage(`✅ Logout button shows loading state: "${currentLogoutText}"`);
+                    } else {
+                        testResults.failed++;
+                        logMessage(`❌ Logout button doesn't show loading state: "${currentLogoutText}"`);
+                    }
+                    
+                    // Wait for logout to complete
+                    await new Promise(resolve => setTimeout(resolve, 4000));
+                    
+                    // Step 6: Verify post-logout state
+                    logMessage('📍 STEP 6: Verifying post-logout state...');
+                    
+                    const finalUrl = iframeWindow.location.href;
+                    logMessage(`Final URL: ${finalUrl}`);
+                    
+                    const isOnLanding = finalUrl.includes('localhost:5000') && 
+                                       !finalUrl.includes('/auth') && 
+                                       !finalUrl.includes('/dashboard');
+                    
+                    if (isOnLanding) {
+                        testResults.passed++;
+                        logMessage('✅ Redirected to landing page after logout');
+                    } else {
+                        testResults.failed++;
+                        logMessage(`❌ Not redirected to landing page. Current: ${finalUrl}`);
+                    }
+                    
+                    // Check navbar state after logout
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    const postLogoutLoginBtn = iframeDoc.querySelector('[data-testid="link-login"]') ||
+                                              iframeDoc.querySelector('a[href="/auth"]') ||
+                                              Array.from(iframeDoc.querySelectorAll('a, button')).find(el => 
+                                                  el.textContent.toLowerCase().includes('login'));
+                    
+                    const postLogoutDashboardBtn = iframeDoc.querySelector('[data-testid="link-dashboard"]') ||
+                                                  iframeDoc.querySelector('a[href="/dashboard"]');
+                    
+                    const postLogoutLogoutBtn = iframeDoc.querySelector('[data-testid="button-logout"]') ||
+                                               Array.from(iframeDoc.querySelectorAll('button, a')).find(el => 
+                                                   el.textContent.toLowerCase().includes('logout'));
+                    
+                    if (postLogoutLoginBtn) {
+                        testResults.passed++;
+                        logMessage('✅ Login button visible after logout');
+                    } else {
+                        testResults.failed++;
+                        logMessage('❌ Login button not visible after logout');
+                    }
+                    
+                    if (!postLogoutDashboardBtn) {
+                        testResults.passed++;
+                        logMessage('✅ Dashboard button hidden after logout');
+                    } else {
+                        testResults.failed++;
+                        logMessage('❌ Dashboard button still visible after logout');
+                    }
+                    
+                    if (!postLogoutLogoutBtn) {
+                        testResults.passed++;
+                        logMessage('✅ Logout button hidden after logout');
+                    } else {
+                        testResults.failed++;
+                        logMessage('❌ Logout button still visible after logout');
+                    }
+                    
+                    // Step 7: Test session clearing
+                    logMessage('📍 STEP 7: Testing session clearing...');
+                    
+                    const originalUrl = iframeWindow.location.href;
+                    iframeWindow.location.href = iframeWindow.location.origin + '/dashboard';
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    const dashboardAccessUrl = iframeWindow.location.href;
+                    const canAccessDashboard = dashboardAccessUrl.includes('/dashboard');
+                    
+                    if (!canAccessDashboard) {
+                        testResults.passed++;
+                        logMessage('✅ Session properly cleared (cannot access dashboard)');
+                        logMessage(`Dashboard access redirected to: ${dashboardAccessUrl}`);
+                    } else {
+                        testResults.failed++;
+                        logMessage('❌ Session not properly cleared (can still access dashboard)');
+                    }
+                } else {
+                    testResults.failed++;
+                    logMessage('❌ Cannot test logout - button was disabled');
+                }
+                
+                testResults.inProgress--;
+                updateStatus();
+                
+            } catch (error) {
+                testResults.failed++;
+                testResults.inProgress = 0;
+                logMessage(`❌ Test execution error: ${error.message}`);
+                updateStatus();
+            }
+            
+            // Final results
+            logMessage('');
+            logMessage('📊 LOGOUT FUNCTIONALITY TEST RESULTS');
+            logMessage('=====================================');
+            logMessage(`✅ Passed: ${testResults.passed}`);
+            logMessage(`❌ Failed: ${testResults.failed}`);
+            const total = testResults.passed + testResults.failed;
+            const successRate = total > 0 ? Math.round((testResults.passed / total) * 100) : 0;
+            logMessage(`📈 Success Rate: ${successRate}%`);
+            
+            if (successRate >= 80) {
+                logMessage('🎉 OVERALL RESULT: LOGOUT FUNCTIONALITY WORKING CORRECTLY');
+            } else if (successRate >= 60) {
+                logMessage('⚠️ OVERALL RESULT: LOGOUT FUNCTIONALITY PARTIALLY WORKING');
+            } else {
+                logMessage('❌ OVERALL RESULT: LOGOUT FUNCTIONALITY NEEDS ATTENTION');
+            }
+            
+            runTestsBtn.disabled = false;
+            runTestsBtn.textContent = '🚀 Run Logout Tests';
+            
+            updateStatus();
+        }
+        
+        // Initialize
+        updateStatus();
+        logMessage('🔬 Logout Functionality Test Suite Ready');
+        logMessage('Click "Run Logout Tests" to begin comprehensive testing');
+        logMessage('');
+    </script>
+</body>
+</html>

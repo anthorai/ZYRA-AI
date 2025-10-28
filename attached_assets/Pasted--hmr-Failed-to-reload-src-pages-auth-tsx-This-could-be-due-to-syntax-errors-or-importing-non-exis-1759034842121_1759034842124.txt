@@ -1,0 +1,51 @@
+[hmr] Failed to reload /src/pages/auth.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+The requested module '/src/components/AuthProvider.tsx?t=1759033935849' does not provide an export named 'AuthContext'
+[hmr] Failed to reload /src/pages/dashboard.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+The requested module '/src/components/AuthProvider.tsx?t=1759033935849' does not provide an export named 'AuthContext'
+[hmr] Failed to reload /src/pages/dashboard.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+The requested module '/src/components/AuthProvider.tsx?t=1759033935849' does not provide an export named 'AuthContext'
+[hmr] Failed to reload /src/components/dashboard/growth-dashboard.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+The requested module '/src/components/AuthProvider.tsx?t=1759033935849' does not provide an export named 'AuthContext'
+[hmr] Failed to reload /src/components/dashboard/growth-dashboard.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+useAuth must be used within an AuthProvider
+useAuth must be used within an AuthProvider
+The above error occurred in the <ProtectedRoute> component:
+
+    at ProtectedRoute (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/src/components/ProtectedRoute.tsx?t=1759033776778:21:42)
+    at component
+    at Route (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c298a8d3:323:16)
+    at Switch (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c298a8d3:379:17)
+    at Router
+    at Provider (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7CHUOEIG.js?v=c298a8d3:38:15)
+    at TooltipProvider (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c298a8d3:62:5)
+    at AuthProvider (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/src/components/AuthProvider.tsx?t=1759033934296:21:32)
+    at QueryClientProvider (https://8b7f5118-5442-416a-80c3-870e6ac748ac-00-3p2hltw4m609e.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c298a8d3:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+useAuth must be used within an AuthProvider
+
+Zyra Logo
+Zyra
+
+Dashboard
+
+AI Tools
+
+Automate
+
+Campaigns
+
+Products
+
+Settings
+U
+Test User
+trial Plan
+
+Dashboard
+Welcome back! Here's your store overview.
+
+
+a

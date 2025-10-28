@@ -1,0 +1,85 @@
+You are my coding assistant.  
+I am migrating my Zyra project from Replit DB to Supabase.  
+Here’s what I need you to do step by step:  
+
+1. **Remove Replit DB references**  
+   - Delete all imports and functions related to Replit DB.  
+   - Clean up old `db.set`, `db.get`, `db.delete` usages.  
+
+2. **Install Supabase client**  
+   - Run `npm install @supabase/supabase-js`.  
+
+3. **Create a Supabase client file**  
+   - Inside `/lib/supabaseClient.js` (or `/utils/supabase.js`), add:  
+     ```js
+     import { createClient } from '@supabase/supabase-js'
+
+     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+     export const supabase = createClient(supabaseUrl, supabaseKey)
+     ```
+
+4. **Update .env.local file**  
+   - Add:  
+     ```
+     NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+     ```
+
+5. **Replace database logic**  
+   - Every place where Replit DB stored or fetched data, rewrite using Supabase queries. Examples:  
+
+     - Insert data:  
+       ```js
+       const { data, error } = await supabase
+         .from('users')
+         .insert([{ username, email }])
+       ```
+
+     - Fetch data:  
+       ```js
+       const { data, error } = await supabase
+         .from('users')
+         .select('*')
+       ```
+
+     - Update data:  
+       ```js
+       const { data, error } = await supabase
+         .from('users')
+         .update({ email: newEmail })
+         .eq('id', userId)
+       ```
+
+     - Delete data:  
+       ```js
+       const { error } = await supabase
+         .from('users')
+         .delete()
+         .eq('id', userId)
+       ```
+
+6. **Schema setup**  
+   - Create tables in Supabase (`users`, `posts`, `ai_prompts`, etc. as needed).  
+   - Use SQL migrations or Supabase Dashboard.  
+
+7. **Testing**  
+   - Add a `testConnection.js` file to quickly check Supabase is connected:  
+     ```js
+     import { supabase } from './lib/supabaseClient'
+
+     async function test() {
+       const { data, error } = await supabase.from('users').select('*')
+       console.log(data, error)
+     }
+
+     test()
+     ```
+
+8. **Final clean-up**  
+   - Remove Replit DB package from dependencies.  
+   - Ensure no file references Replit DB.  
+   - Test locally with Supabase keys before deployment.  
+
+⚡ Goal: After applying these steps, Zyra should be fully connected to Supabase instead of Replit DB, with clean queries, strong error handling, and `.env`-based keys for security.

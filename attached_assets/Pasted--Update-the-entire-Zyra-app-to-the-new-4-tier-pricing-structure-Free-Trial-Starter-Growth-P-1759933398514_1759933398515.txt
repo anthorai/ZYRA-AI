@@ -1,0 +1,245 @@
+
+Update the entire Zyra app to the **new 4-tier pricing structure** (Free Trial, Starter, Growth, Pro).
+Apply updates across:
+
+* Database (Supabase / Firestore)
+* API constants & endpoints
+* UI (pricing page, settings, subscription modal, plan cards)
+* Credit consumption logic
+* Plan upgrade/downgrade flow
+* Feature gating system
+
+---
+
+### 🧩 STEP 1 — Replace Existing Pricing Data
+
+**Collection/Table:** `plans`
+**Action:** Replace old records with new data below (use same schema or extend fields).
+
+```json
+[
+  {
+    "id": "plan_free_7day_001",
+    "name": "7-Day Free Trial",
+    "price": 0,
+    "duration": "7 days",
+    "credits": 100,
+    "target_user": "New users exploring Zyra features",
+    "features": {
+      "Product Optimization & SEO": [
+        "Optimized Products – 20 credits",
+        "SEO Keyword Density Analysis – 10 credits"
+      ],
+      "Conversion Boosting & Sales Automation": [
+        "AI-Powered Growth Intelligence – 20 credits",
+        "Basic A/B Testing – 10 credits"
+      ],
+      "Content & Branding at Scale": [
+        "Smart Product Descriptions – 20 credits",
+        "Limited Dynamic Templates – 10 credits"
+      ],
+      "Performance Tracking & ROI Insights": [
+        "Email Performance Analytics – 10 credits"
+      ],
+      "Workflow & Integration Tools": [
+        "One-Click Shopify Publish – 10 credits",
+        "Rollback Button – included"
+      ]
+    }
+  },
+  {
+    "id": "plan_starter_002",
+    "name": "Starter",
+    "price": 49,
+    "duration": "1 month",
+    "credits": 1000,
+    "target_user": "Best for new Shopify stores just getting started",
+    "features": {
+      "Product Optimization & SEO": [
+        "Optimized Products – 200 credits",
+        "SEO Keyword Density Analysis – 100 credits",
+        "AI Image Alt-Text Generator – 100 credits",
+        "Smart SEO Titles & Meta Tags – 100 credits"
+      ],
+      "Conversion Boosting & Sales Automation": [
+        "AI-Powered Growth Intelligence – 150 credits",
+        "A/B Testing – 50 credits",
+        "Upsell Email Receipts – 100 credits",
+        "Abandoned Cart SMS – 50 credits"
+      ],
+      "Content & Branding at Scale": [
+        "Smart Product Descriptions – 100 credits",
+        "Dynamic Templates – 50 credits",
+        "Brand Voice Memory – included"
+      ],
+      "Performance Tracking & ROI Insights": [
+        "Email & SMS Conversion Analytics – included"
+      ],
+      "Workflow & Integration Tools": [
+        "CSV Import/Export – included",
+        "One-Click Shopify Publish – included",
+        "Rollback Button – included",
+        "Smart Bulk Suggestions – included"
+      ]
+    }
+  },
+  {
+    "id": "plan_growth_003",
+    "name": "Growth",
+    "price": 299,
+    "duration": "1 month",
+    "credits": 5000,
+    "target_user": "For scaling merchants ready to grow",
+    "features": {
+      "Product Optimization & SEO": [
+        "All Starter features +",
+        "SEO Ranking Tracker – 200 credits",
+        "Bulk Optimization & Smart Bulk Suggestions – 500 credits",
+        "Scheduled Refresh for Content & SEO Updates – 300 credits"
+      ],
+      "Conversion Boosting & Sales Automation": [
+        "AI Upsell Suggestions & Triggers – 300 credits",
+        "Dynamic Segmentation of Customers – 200 credits",
+        "Behavioral Targeting – 200 credits",
+        "Full A/B Test Results Dashboard – included"
+      ],
+      "Content & Branding at Scale": [
+        "Custom Templates – included",
+        "Multimodal AI (text + image + insights) – 300 credits",
+        "Multi-Channel Content Repurposing – 300 credits"
+      ],
+      "Performance Tracking & ROI Insights": [
+        "Full Email & SMS Tracking – included",
+        "Content ROI Tracking – included",
+        "Revenue Impact Attribution – included",
+        "Product Management Dashboard – included"
+      ],
+      "Workflow & Integration Tools": [
+        "Unlimited Starter workflow tools – included"
+      ]
+    }
+  },
+  {
+    "id": "plan_pro_004",
+    "name": "Pro",
+    "price": 999,
+    "duration": "1 month",
+    "credits": 20000,
+    "target_user": "For high-revenue brands & enterprises",
+    "features": {
+      "Product Optimization & SEO": [
+        "All Growth features + priority processing"
+      ],
+      "Conversion Boosting & Sales Automation": [
+        "Full AI-driven automation for campaigns, upsells, and behavioral targeting"
+      ],
+      "Content & Branding at Scale": [
+        "Full template library",
+        "Advanced brand voice memory",
+        "Multimodal AI insights",
+        "Multi-channel automation"
+      ],
+      "Performance Tracking & ROI Insights": [
+        "Enterprise-grade analytics",
+        "Revenue attribution dashboard"
+      ],
+      "Workflow & Integration Tools": [
+        "Enterprise bulk management",
+        "CSV import/export",
+        "Rollback",
+        "Smart bulk suggestions at scale"
+      ]
+    }
+  }
+]
+```
+
+---
+
+### 🧠 STEP 2 — Update Global Constants
+
+**File:** `/lib/constants/plans.ts`
+**Action:** Replace existing constants with:
+
+```ts
+export const ZYRA_PLANS = {
+  FREE: "plan_free_7day_001",
+  STARTER: "plan_starter_002",
+  GROWTH: "plan_growth_003",
+  PRO: "plan_pro_004",
+};
+
+export const CREDIT_LIMITS = {
+  [ZYRA_PLANS.FREE]: 100,
+  [ZYRA_PLANS.STARTER]: 1000,
+  [ZYRA_PLANS.GROWTH]: 5000,
+  [ZYRA_PLANS.PRO]: 20000,
+};
+```
+
+---
+
+### 🎨 STEP 3 — Update UI Pricing Page
+
+**Components to update:**
+
+* `/components/pricing/PlanCard.tsx`
+* `/components/pricing/PricingGrid.tsx`
+* `/app/settings/subscription/page.tsx`
+
+**Prompt for Cursor AI:**
+
+> Refactor pricing UI to display new plan data dynamically from Supabase `plans` table using plan ID constants. Add credit badges, target description, and feature list with icons. Highlight active plan with gradient border (Neon Azure → Cyber Cyan). CTA button text: “Activate Plan” or “Upgrade”.
+
+---
+
+### ⚙️ STEP 4 — Credit Logic Update
+
+**File:** `/lib/credits/useCredits.ts`
+**Action:**
+
+> Update credit consumption to deduct based on feature type and plan. Use feature-credit mapping from database. Add fail-safe check for available credits before executing AI feature.
+
+---
+
+### 🔒 STEP 5 — Feature Gating Update
+
+**File:** `/lib/permissions/planFeatures.ts`
+**Prompt for AI Dev:**
+
+> Map features to plan IDs. Restrict advanced automation (AI Upsell, Multimodal AI, Behavioral Targeting) to Growth & Pro plans. Unlock Brand Voice Memory and Analytics tools for Starter and above.
+
+---
+
+### 📦 STEP 6 — API & Supabase Sync
+
+* **Supabase Table:** `user_subscriptions`
+
+  * `plan_id` → FK referencing `plans.id`
+  * `credits_used` → track monthly usage
+  * `renewal_date` → auto-update monthly
+
+* **API Endpoint:** `/api/upgrade-plan`
+
+  * Validate Stripe/Shopify subscription
+  * Update `user_subscriptions.plan_id`
+  * Reset monthly credits
+
+---
+
+
+
+> “Update Zyra’s entire pricing system (UI + backend + constants + credits logic + Supabase schema) using the new plans JSON above. Replace all old plan references with new plan IDs. Verify dynamic rendering on pricing, billing, and dashboard pages. Ensure credit deduction aligns with the new feature-credit mapping.”
+
+---
+
+### 💡 Notes
+
+* Use color palette: `#00F0FF` (Neon Azure) + `#00FFE5` (Cyber Cyan)
+* CTA buttons: “Start Free Trial”, “Upgrade to Starter”, “Scale with Growth”, “Power Up with Pro”
+* Plan icons: use `lucide-react` icons (`Rocket`, `BarChart`, `Zap`, `Crown`)
+
+---
+
+**Result:**
+After applying this prompt, Zyra’s pricing, credit, and feature management system will be fully updated, synchronized, and production-ready.

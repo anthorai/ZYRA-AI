@@ -1,0 +1,60 @@
+System Instruction:
+Implement mandatory Shopify compliance webhooks and HMAC verification logic inside the Zyra app backend.
+
+Tasks to Perform:
+1. Register all mandatory webhooks on app install:
+   • app/uninstalled
+   • customers/data_request
+   • customers/redact
+   • shop/redact
+
+2. Create secure webhook endpoints:
+   • /api/webhooks/app_uninstalled
+   • /api/webhooks/customers/data_request
+   • /api/webhooks/customers/redact
+   • /api/webhooks/shop/redact
+
+3. Add middleware for HMAC signature verification:
+   - Read "X-Shopify-Hmac-Sha256" header.
+   - Recalculate hash using SHOPIFY_API_SECRET.
+   - Match calculated hash with header to confirm authenticity.
+   - Reject requests failing verification.
+
+4. Respond with 200 OK for valid webhook calls.
+
+5. Confirm:
+   - Immediately authenticates after install.
+   - Redirects to app UI after auth.
+   - Provides mandatory compliance webhooks.
+   - Verifies webhooks with HMAC signatures.
+   - Uses a valid TLS certificate.
+
+Output Requirement:
+Deliver updated backend code (Node.js / Next.js API routes) that passes all Shopify “Automated checks for common errors”.
+
+Example Node.js snippet:
+---------------------------------
+import crypto from 'crypto';
+import express from 'express';
+const app = express();
+app.use(express.json());
+
+function verifyWebhook(req, res, next) {
+  const hmac = req.get('X-Shopify-Hmac-Sha256');
+  const body = JSON.stringify(req.body);
+  const digest = crypto
+    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+    .update(body, 'utf8')
+    .digest('base64');
+  if (digest === hmac) return next();
+  return res.status(401).send('HMAC verification failed');
+}
+
+app.post('/webhooks/app_uninstalled', verifyWebhook, (req, res) => res.sendStatus(200));
+app.post('/webhooks/customers/data_request', verifyWebhook, (req, res) => res.sendStatus(200));
+app.post('/webhooks/customers/redact', verifyWebhook, (req, res) => res.sendStatus(200));
+app.post('/webhooks/shop/redact', verifyWebhook, (req, res) => res.sendStatus(200));
+---------------------------------
+
+Goal:
+Ensure Zyra passes all Shopify automated compliance checks by enabling mandatory webhooks and HMAC verification.

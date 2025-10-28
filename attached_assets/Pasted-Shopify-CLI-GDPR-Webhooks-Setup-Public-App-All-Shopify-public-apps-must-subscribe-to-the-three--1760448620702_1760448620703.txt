@@ -1,0 +1,224 @@
+Shopify CLI – GDPR Webhooks Setup (Public App)
+All Shopify public apps must subscribe to the three GDPR compliance topics (customers/data_request, customers/redact, shop/redact) before you submit for review
+shopify.dev
+. Instead of using the Partner UI, you can configure these via the CLI by editing your shopify.app.toml file and deploying. The steps below walk you through installing the CLI, linking to your existing app, editing the TOML, deploying, and testing the webhooks. We also cover common pitfalls (like outdated “config push” commands or stale endpoints) and how to fix them.
+1. Install Shopify CLI (latest)
+Requirements: Ensure you have Node.js 20.10+ and Git v2.28+ installed
+shopify.dev
+.
+Install CLI: Run one of the following commands in your terminal:
+# With npm (cross-platform)
+npm install -g @shopify/cli@latest
+
+# Or with Yarn:
+yarn global add @shopify/cli@latest
+
+# Or with pnpm:
+pnpm install -g @shopify/cli@latest
+
+# Or on macOS using Homebrew:
+brew tap shopify/shopify
+brew install shopify-cli
+This installs the newest Shopify CLI globally
+shopify.dev
+. After installation, you can run shopify version to confirm you’re on the latest version (and upgrade via npm install -g @shopify/cli@latest if not)
+shopify.dev
+.
+Verify Setup: After installing, run shopify or shopify version to check that the CLI is working. If it shows a version number (v3.x or higher), you’re ready.
+2. Link the CLI to Your Existing App
+You need to connect the CLI to the app you already created in the Partner Dashboard.
+Login (if needed): Run shopify login or (for themes) shopify login --store <your-dev-store>. The CLI may prompt you in the browser to sign into your Partner account or development store
+shopify.dev
+. (You only need this once per terminal session or until the login expires.)
+Initialize or Create Project (if you haven’t already): If you don’t have a local project, you can run shopify app init <project-name> and choose your tech stack. This will scaffold a new project. If you already have an app codebase, simply cd into its folder.
+Link to the Partner App: In your project directory, run:
+shopify app config link
+This command will prompt you to “connect it to an existing app.” Choose that option and select your app from the Partner account list
+shopify.dev
+shopify.dev
+. The CLI will then pull your app’s config from Shopify and create (or overwrite) a shopify.app.toml file in your project root
+shopify.dev
+shopify.dev
+. This file contains your app’s settings (name, client ID, URLs, scopes, etc.) and is where you’ll add the GDPR webhook subscriptions.
+3. Locate or Create shopify.app.toml
+After linking, you should see a file named shopify.app.toml in your project root. If you ran shopify app init or config link, it will be auto-created. Open this file in your editor – it will contain your app’s basic settings. For example, you might see:
+name = "My Public App"
+client_id = "<your-client-id>"
+application_url = "https://www.myapp.com/"
+embedded = true
+handle = "my-public-app"
+
+[auth]
+redirect_urls = [ "https://www.myapp.com/auth/callback" ]
+
+# … plus any existing [access_scopes], [app_proxy], etc.
+If for some reason the file isn’t present, create it at the project root and include at least the basic fields (name, client_id, application_url, scopes, etc.) – you can copy these from your Partner Dashboard app settings
+shopify.dev
+shopify.dev
+. But in most cases, shopify app config link will handle this.
+4. Add the GDPR Webhooks to shopify.app.toml
+Within shopify.app.toml, add a [webhooks] section (or locate it if it already exists). Under that, add a [[webhooks.subscriptions]] block with compliance_topics. For example:
+[webhooks]
+api_version = "2025-07"      # use the API version you are targeting
+
+[[webhooks.subscriptions]]
+topics = [ "app/uninstalled" ]          # (Optional: keep other topics you use, e.g. app uninstall)
+uri = "/webhooks"                       # the endpoint path for your webhook route
+compliance_topics = [ 
+  "customers/data_request", 
+  "customers/redact", 
+  "shop/redact"
+]
+This tells Shopify to subscribe your app to the GDPR mandatory topics. The uri should match the route in your app that will handle incoming POSTs for these webhooks (for example, /webhooks in your app code)
+shopify.dev
+shopify.dev
+. In the example above, an uninstall topic is also shown, but it’s optional. The key requirement is the compliance_topics array with exactly those three topic strings
+shopify.dev
+shopify.dev
+. Shopify’s docs show this exact syntax for app-specific webhooks
+shopify.dev
+shopify.dev
+. If you prefer not to use any other topics, you can omit the topics line entirely – only compliance_topics is required for GDPR.
+Note: Your webhook URLs must be HTTPS with a valid SSL certificate (Shopify enforces secure HTTPS for webhooks)
+shopify.dev
+.
+Save the file. Your shopify.app.toml should now include the GDPR section under [webhooks].
+5. Deploy (Sync) the Webhook Configuration
+Now push the updated configuration to Shopify:
+Run:
+shopify app deploy
+This command reads your shopify.app.toml, creates a new app version, and updates all subscriptions and extensions for your app in Shopify
+shopify.dev
+shopify.dev
+. You should see output confirming a new version was created and released. (If your CLI or guides still mention app config push, ignore it – that command is deprecated. Always use deploy
+shopify.dev
+.)
+Wait for Success: The CLI will report if the deployment succeeded or if there were errors registering topics. If there are errors (e.g. “Invalid topic”), the CLI output may indicate what went wrong (see Common Errors below).
+At this point, Shopify knows about your GDPR webhook endpoints. The Partner Dashboard (App Setup) should now list these GDPR webhooks as active subscriptions. If you go to the app in your Partner Dashboard and look under App setup (or the new Dev Dashboard interface), you should see the three GDPR topics and the uri you specified. (In older UIs, there was a “GDPR mandatory webhooks” section; in newer UIs it may just list all configured webhooks.)
+6. Verify Your Webhook Setup
+Once deployed, test that everything is working:
+Trigger via Shopify CLI: Use the built-in test trigger:
+shopify app webhook trigger --topic customers/data_request
+This will make Shopify send a sample payload for that topic to your /webhooks endpoint. You should see your app log or handle a request for customers/data_request. Similarly test customers/redact and shop/redact. (These sample triggers help confirm your endpoint code is set up and responding.)
+Admin-UI Test: In a development store where the app is installed, you can manually generate GDPR requests. For example, in Shopify Admin go to Customers, view any customer, and click “Request customer data” or “Erase customer data”. Shopify will send customers/data_request or customers/redact webhooks to your app. Use these to confirm your handlers work and return HTTP 200 when done (or 401 if the HMAC signature is invalid)
+community.shopify.dev
+.
+Automated Compliance Check (App Review): Shopify’s App Review tooling will automatically check these endpoints. In the Partner dashboard, look for the Automated checks section under your app’s store listing. It should show a green check for “Provides mandatory compliance webhooks”. For example, the screenshot below shows the check failing (red X) when missing. Once configured and your app responds 200/401, the check will pass.
+
+https://community.shopify.dev/t/problems-trying-to-fix-the-mandatory-compliance-webhooks/23463
+Screenshot: Shopify App Review’s automated “common errors” check – note the red ❌ on “Provides mandatory compliance webhooks” when not set up.
+GraphQL Query (advanced): You can also verify by using Shopify’s Admin API. The webhookSubscriptions query will list your app’s subscriptions (though this is more advanced and generally not needed for basic checking).
+If the tests above succeed (you get valid responses, or see the sample trigger payload), your GDPR webhook setup is complete. Your app should now satisfy the GDPR compliance requirement for review.
+7. Common Errors & Fixes
+Even with these steps, a few pitfalls can occur. Here are some common issues and remedies:
+“Command ‘app config push’ not found”: Older tutorials may reference shopify app config push. This command was removed. Always use shopify app deploy to apply changes
+shopify.dev
+.
+Invalid Topic Errors: If shopify app deploy reports an “Invalid topic” error for the GDPR topics, first confirm you used the compliance_topics key exactly as shown (typos will break deployment). If the syntax is correct, the error often means Shopify’s system has stale webhook metadata. One workaround is to temporarily define each GDPR topic separately under [webhooks.privacy_compliance] or handle the old endpoints explicitly (see below) – then run deploy again. Usually, syncing with deploy as shown will eventually resolve it.
+Stale/Conflicting Endpoints: A tricky issue arises if your app used to handle GDPR webhooks at specific paths (like /customers/redact) but you changed to a generic path (e.g. /webhooks). Shopify’s compliance checker may still hit the old paths, causing 404 or redirect errors
+community.shopify.dev
+. For example, one developer saw:
+“The compliance checker was hitting an old URL (/shop/redact) instead of the new /webhooks, causing a 404”
+community.shopify.dev
+. Even after adding a redirect to /webhooks, the checker gave a 307 error (it does not accept redirects, only direct 200/401 responses)
+community.shopify.dev
+.
+Fix: In your app server code, temporarily listen on the old endpoint URLs as well so that Shopify’s checker gets an immediate 200 or HMAC-based 401. For example, if your new handler is at /webhooks, also route /customers/data_request, /customers/redact, and /shop/redact to the same logic. That way the checker’s request on the old path still triggers your webhook handler (returning 200 or 401)
+community.shopify.dev
+. Once Shopify’s system clears its cache (usually after some time), you can remove these extra routes.
+No HTTPS or Invalid SSL: Webhook endpoints must be HTTPS with a valid certificate. If your URL is http:// or the cert is invalid, subscriptions will fail silently. Ensure your application_url and uri use https:// and that the domain’s SSL is up-to-date
+shopify.dev
+.
+Slow or Incorrect Responses: Shopify requires webhook endpoints to respond quickly. If your handler takes too long or returns a non-2xx/401 status, Shopify will retry or mark it failed. In particular, do not send a 307/302 redirect (the compliance tester will treat that as a failure)
+community.shopify.dev
+. Instead, respond immediately with 200 (on success) or 401 (on HMAC failure). Logging or processing can be done asynchronously in the background.
+CLI Not Up-to-Date: If you see strange behavior, ensure you’re on the latest Shopify CLI. Run shopify version, and if it’s out of date, re-run the install command (npm install -g @shopify/cli@latest)
+shopify.dev
+. Some older CLI versions may not support the compliance_topics field or newer API versions.
+By following the above steps and checking for these errors, you’ll have a fully compliant setup. Once your webhook endpoints are live and returning the correct responses, your app should pass Shopify’s GDPR/webhook compliance checks and be ready for review in 2025. Sources: Official Shopify docs and community examples as cited above
+shopify.dev
+medium.com
+community.shopify.dev
+【41†】.
+Citations
+
+Webhooks
+
+https://shopify.dev/docs/api/webhooks
+
+Shopify CLI
+
+https://shopify.dev/docs/api/shopify-cli
+
+Shopify CLI
+
+https://shopify.dev/docs/api/shopify-cli
+
+Shopify CLI
+
+https://shopify.dev/docs/api/shopify-cli
+
+Migrate to Shopify CLI 3.x
+
+https://shopify.dev/docs/storefronts/themes/tools/cli/migrate
+
+app config link
+
+https://shopify.dev/docs/api/shopify-cli/app/app-config-link
+
+Migrate from a Partner Dashboard-managed app to Shopify CLI
+
+https://shopify.dev/docs/apps/build/cli-for-apps/migrate-from-dashboard
+
+App configuration
+
+https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
+
+App configuration
+
+https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
+
+Subscribing to webhooks
+
+https://shopify.dev/docs/api/shopify-app-remix/latest/guide-webhooks
+
+Subscribing to webhooks
+
+https://shopify.dev/docs/api/shopify-app-remix/latest/guide-webhooks
+
+Privacy law compliance
+
+https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance
+
+Migrate from a Partner Dashboard-managed app to Shopify CLI
+
+https://shopify.dev/docs/apps/build/cli-for-apps/migrate-from-dashboard
+
+Subscribing to webhooks
+
+https://shopify.dev/docs/api/shopify-app-remix/latest/guide-webhooks
+
+App configuration
+
+https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
+
+Problems trying to fix the mandatory compliance webhooks - Shopify App Store - Shopify Developer Community Forums
+
+https://community.shopify.dev/t/problems-trying-to-fix-the-mandatory-compliance-webhooks/23463
+
+Problems trying to fix the mandatory compliance webhooks - Shopify App Store - Shopify Developer Community Forums
+
+https://community.shopify.dev/t/problems-trying-to-fix-the-mandatory-compliance-webhooks/23463
+
+Problems trying to fix the mandatory compliance webhooks - Shopify App Store - Shopify Developer Community Forums
+
+https://community.shopify.dev/t/problems-trying-to-fix-the-mandatory-compliance-webhooks/23463
+
+How to configure GDPR Compliance webhooks in Shopify Public Apps. | by Muhammad Ehsanullah | Medium
+
+https://medium.com/@muhammadehsanullah123/how-to-configure-gdpr-compliance-webhooks-in-shopify-public-apps-b2107721a58f
+
+Problems trying to fix the mandatory compliance webhooks - Shopify App Store - Shopify Developer Community Forums
+
+https://community.shopify.dev/t/problems-trying-to-fix-the-mandatory-compliance-webhooks/23463
+All Sources

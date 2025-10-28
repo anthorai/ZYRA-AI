@@ -1,0 +1,46 @@
+name: Scheduled Cron Trigger
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger Vercel Cron Endpoint
+        env:
+          CRON_SECRET: ${{ secrets.INTERNAL_SERVICE_TOKEN }}
+        run: |
+          echo "🕐 Triggering cron endpoint at $(date)"
+          
+          response=$(curl -f -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            https://zyra.vercel.app/api/cron)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Response Details:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "HTTP Status: $http_code"
+          echo ""
+          echo "Response Body:"
+          echo "$body" | jq '.' 2>/dev/null || echo "$body"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "✅ Cron endpoint triggered successfully"
+            exit 0
+          else
+            echo "❌ Cron endpoint failed with status $http_code"
+            exit 1
+          fi

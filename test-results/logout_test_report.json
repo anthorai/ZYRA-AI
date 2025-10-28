@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-09-28T08:07:58.477Z",
+  "successRate": 0,
+  "totalTests": 1,
+  "passed": 0,
+  "failed": 1,
+  "details": [
+    {
+      "test": "Test execution",
+      "passed": false,
+      "details": "Failed to launch the browser process:  Code: 127\n\nstderr:\n/home/runner/.cache/puppeteer/chrome/linux-140.0.7339.207/chrome-linux64/chrome: error while loading shared libraries: libglib-2.0.so.0: cannot open shared object file: No such file or directory\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+    }
+  ]
+}

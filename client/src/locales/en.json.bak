@@ -1,0 +1,474 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "undo": "Undo",
+    "redo": "Redo"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "settings": "Settings",
+    "profile": "Profile",
+    "aiTools": "AI Tools",
+    "automate": "Automate",
+    "campaigns": "Campaigns",
+    "analytics": "Analytics",
+    "billing": "Billing",
+    "logout": "Logout",
+    "home": "Home",
+    "seoTools": "SEO Tools"
+  },
+  "footer": {
+    "about": "About",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "poweredBy": "Powered by → ANTHOR AI",
+    "languageSwitcher": "Language",
+    "allRightsReserved": "All rights reserved",
+    "contactUs": "Contact Us",
+    "support": "Support"
+  },
+  "buttons": {
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard Changes",
+    "addNew": "Add New",
+    "viewAll": "View All",
+    "viewDetails": "View Details",
+    "upgrade": "Upgrade",
+    "managePlan": "Manage Plan",
+    "applyNow": "Apply Now",
+    "tryNow": "Try Now",
+    "optimize": "Optimize",
+    "generate": "Generate",
+    "publish": "Publish"
+  },
+  "alerts": {
+    "successTitle": "Success",
+    "errorTitle": "Error",
+    "warningTitle": "Warning",
+    "infoTitle": "Information",
+    "saveSuccess": "Changes saved successfully",
+    "saveError": "Failed to save changes",
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Failed to delete",
+    "updateSuccess": "Updated successfully",
+    "updateError": "Failed to update",
+    "loginSuccess": "Logged in successfully",
+    "loginError": "Login failed",
+    "logoutSuccess": "Logged out successfully",
+    "registrationSuccess": "Registration successful",
+    "registrationError": "Registration failed",
+    "networkError": "Network error. Please try again.",
+    "sessionExpired": "Your session has expired. Please log in again."
+  },
+  "forms": {
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "Enter your full name",
+    "name": "Name",
+    "namePlaceholder": "Enter name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter description",
+    "price": "Price",
+    "pricePlaceholder": "Enter price",
+    "category": "Category",
+    "categoryPlaceholder": "Select category",
+    "tags": "Tags",
+    "tagsPlaceholder": "Add tags",
+    "stock": "Stock",
+    "stockPlaceholder": "Enter stock quantity",
+    "message": "Message",
+    "messagePlaceholder": "Type your message",
+    "subject": "Subject",
+    "subjectPlaceholder": "Enter subject",
+    "required": "Required",
+    "optional": "Optional",
+    "invalidEmail": "Invalid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordsDoNotMatch": "Passwords do not match"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions",
+    "stats": "Statistics",
+    "growthSummary": "Growth Summary",
+    "totalRevenue": "Total Revenue",
+    "totalOrders": "Total Orders",
+    "conversionRate": "Conversion Rate",
+    "productsOptimized": "Products Optimized",
+    "subtitleOverview": "Welcome back! Here's your store overview.",
+    "subtitleAiTools": "AI-powered content generation and optimization hub",
+    "subtitleAutomate": "Streamline your workflow with powerful automation features",
+    "subtitleCampaigns": "Automate customer communications with intelligent campaigns",
+    "subtitleProducts": "Manage your product catalog",
+    "subtitleProfile": "Manage your account and subscription",
+    "subtitleSettings": "Configure your account and integrations"
+  },
+  "products": {
+    "title": "Products",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "deleteProduct": "Delete Product",
+    "productName": "Product Name",
+    "productDescription": "Product Description",
+    "productPrice": "Product Price",
+    "productCategory": "Product Category",
+    "productStock": "Product Stock",
+    "optimizeProduct": "Optimize Product",
+    "noProducts": "No products found",
+    "searchProducts": "Search products..."
+  },
+  "settings": {
+    "title": "Settings",
+    "generalSettings": "General Settings",
+    "accountSettings": "Account Settings",
+    "notificationSettings": "Notification Settings",
+    "privacySettings": "Privacy Settings",
+    "securitySettings": "Security Settings",
+    "languageSettings": "Language Settings",
+    "themeSettings": "Theme Settings",
+    "saveSettings": "Save Settings"
+  },
+  "billing": {
+    "title": "Billing",
+    "currentPlan": "Current Plan",
+    "upgradePlan": "Upgrade Plan",
+    "billingHistory": "Billing History",
+    "paymentMethod": "Payment Method",
+    "nextBillingDate": "Next Billing Date",
+    "cancelSubscription": "Cancel Subscription",
+    "freeTrial": "Free Trial",
+    "trialDaysLeft": "{{days}} days left in trial"
+  },
+  "campaigns": {
+    "title": "Campaigns",
+    "createCampaign": "Create Campaign",
+    "emailCampaign": "Email Campaign",
+    "smsCampaign": "SMS Campaign",
+    "campaignName": "Campaign Name",
+    "campaignStatus": "Campaign Status",
+    "sentCount": "Sent",
+    "openRate": "Open Rate",
+    "clickRate": "Click Rate",
+    "conversionRate": "Conversion Rate"
+  },
+  "aiTools": {
+    "title": "AI Tools",
+    "smartDescriptions": "Smart Product Descriptions",
+    "bulkOptimization": "Bulk Optimization",
+    "seoTitles": "SEO Titles & Meta",
+    "imageAltText": "Image Alt Text",
+    "dynamicTemplates": "Dynamic Templates",
+    "brandVoice": "Brand Voice Memory",
+    "multimodal": "Multimodal AI",
+    "abTesting": "A/B Testing Copy",
+    "scheduledRefresh": "Scheduled Refresh"
+  },
+  "automation": {
+    "title": "Automation",
+    "csvImportExport": "CSV Import/Export",
+    "shopifyPublish": "Shopify Publish",
+    "bulkSuggestions": "Smart Bulk Suggestions",
+    "rollbackChanges": "Rollback Changes"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "optimizedProducts": "Optimized Products",
+    "emailPerformance": "Email Performance",
+    "smsConversion": "SMS Conversion",
+    "seoKeywordDensity": "SEO Keyword Density",
+    "contentROI": "Content ROI",
+    "revenueImpact": "Revenue Impact",
+    "rankingTracker": "Ranking Tracker",
+    "abTestResults": "A/B Test Results"
+  },
+  "auth": {
+    "loginTitle": "Sign in to your account",
+    "registerTitle": "Create a new account",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signInWithGoogle": "Sign in with Google",
+    "orContinueWith": "Or continue with",
+    "agreeToTerms": "I agree to the Terms of Service and Privacy Policy",
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "es": "Español (Spanish)"
+  },
+  "aboutPage": {
+    "hero": {
+      "badge": "AI Growth Engine",
+      "title": "Your AI Partner for Smarter Growth",
+      "subtitle": "Zyra is the AI-powered platform built to help Shopify merchants boost sales, maximize ROI, and save time every week.",
+      "description": "Transform your eCommerce business with intelligent automation that works while you focus on what matters most—growing your brand."
+    },
+    "vision": {
+      "title": "Why Zyra Exists",
+      "paragraph1": "Running a successful Shopify store shouldn't mean spending hours on repetitive tasks. Merchants face constant pressure to optimize product listings, create engaging content, recover abandoned carts, and track performance—all while trying to grow their business.",
+      "paragraph2": "Zyra solves this by combining cutting-edge AI with proven eCommerce strategies. We automate the heavy lifting so you can focus on strategy, creativity, and customer relationships. Our platform learns from your store's unique patterns and continuously improves your results.",
+      "paragraph3": "We built Zyra to be the growth partner every merchant deserves—intelligent, tireless, and always working to drive measurable results."
+    },
+    "features": {
+      "title": "Powerful Features, Real Results",
+      "subtitle": "Five integrated pillars designed to transform your Shopify store into a growth engine.",
+      "productOptimization": {
+        "title": "Product Optimization & SEO",
+        "description": "AI-generated product descriptions, SEO titles, and meta tags that convert visitors into customers. Automatically optimize your entire catalog for search engines and shoppers."
+      },
+      "conversionBoost": {
+        "title": "Conversion Boosting",
+        "description": "Intelligent cart recovery, upsell suggestions, and behavioral triggers that turn browsers into buyers. Increase your average order value with AI-powered recommendations."
+      },
+      "contentBranding": {
+        "title": "Content & Branding",
+        "description": "Maintain a consistent brand voice across all channels. Generate compelling marketing copy, email campaigns, and product content that resonates with your audience."
+      },
+      "roiTracking": {
+        "title": "Performance & ROI Tracking",
+        "description": "Real-time analytics dashboards show exactly what's working. Track revenue impact, conversion rates, and campaign performance to make data-driven decisions."
+      },
+      "workflowTools": {
+        "title": "Workflow Automation",
+        "description": "Streamline bulk operations, schedule content updates, and automate publishing to Shopify. Save hours every week with intelligent workflow tools."
+      }
+    },
+    "impact": {
+      "title": "Measurable Impact for Your Business",
+      "timeSaved": {
+        "value": "20+ hrs",
+        "label": "Saved Weekly",
+        "description": "Automate content creation and optimization tasks that used to take hours."
+      },
+      "salesBoost": {
+        "value": "3x",
+        "label": "Sales Growth",
+        "description": "Merchants see average 3x increase in conversions within 90 days."
+      },
+      "roiMaximization": {
+        "value": "500%",
+        "label": "Average ROI",
+        "description": "Every dollar invested in Zyra returns 5x in increased revenue."
+      }
+    },
+    "future": {
+      "title": "Your Growth Partner That Never Stops Learning",
+      "description": "Zyra isn't just software—it's an AI partner that evolves with your business. Every campaign, every optimization, every interaction makes our algorithms smarter. As your store grows, Zyra grows with you, continuously finding new ways to boost your performance.",
+      "tagline": "The future of eCommerce isn't just automated—it's intelligent."
+    },
+    "cta": {
+      "title": "Ready to Power Your Growth?",
+      "description": "Join thousands of Shopify merchants who trust Zyra to drive their success.",
+      "button": "Start Growing Today"
+    }
+  },
+  "privacyPolicy": {
+    "hero": {
+      "badge": "Your Privacy Matters",
+      "title": "Privacy Policy",
+      "lastUpdated": "Last Updated",
+      "date": "September 30, 2025",
+      "description": "At Zyra, we take your privacy seriously. This policy explains how we collect, use, and protect your information."
+    },
+    "introduction": {
+      "title": "Introduction",
+      "paragraph1": "Welcome to Zyra, an AI-powered platform designed to help Shopify merchants optimize their stores, boost conversions, and grow their businesses. We are committed to protecting your privacy and handling your data with transparency and care.",
+      "paragraph2": "This Privacy Policy explains how Zyra collects, uses, stores, and shares your personal information when you use our platform. It also outlines your rights regarding your data and how you can exercise them.",
+      "paragraph3": "By using Zyra, you agree to the collection and use of information in accordance with this policy. If you do not agree with any part of this policy, please discontinue use of our services."
+    },
+    "informationCollection": {
+      "title": "Information We Collect",
+      "intro": "We collect several types of information to provide and improve our services:",
+      "accountInfo": {
+        "title": "Account Information",
+        "items": [
+          "Name, email address, and contact details you provide during registration",
+          "Shopify store URL and basic store information",
+          "Subscription and billing information (processed securely through payment gateways)",
+          "Profile preferences and settings"
+        ]
+      },
+      "usageData": {
+        "title": "Usage Data",
+        "items": [
+          "Product data you upload or sync from your Shopify store",
+          "AI-generated content, optimization history, and campaign performance",
+          "User interactions within the platform (clicks, page views, feature usage)",
+          "Device information, IP address, browser type, and operating system"
+        ]
+      },
+      "cookies": {
+        "title": "Cookies and Tracking Technologies",
+        "items": [
+          "Essential cookies for authentication and session management",
+          "Analytics cookies to understand usage patterns and improve our service",
+          "Preference cookies to remember your settings and language choices"
+        ]
+      },
+      "integrations": {
+        "title": "Third-Party Integration Data",
+        "items": [
+          "Shopify store data accessed through our Shopify integration",
+          "Email campaign data from SendGrid integration",
+          "Payment information processed through payment gateways (we never store full card details)",
+          "AI model interactions with OpenAI for content generation"
+        ]
+      }
+    },
+    "informationUse": {
+      "title": "How We Use Your Information",
+      "intro": "We use the collected information for the following purposes:",
+      "legalBasis": "Legal Basis (GDPR): We process your data based on (1) Contract Performance: to provide services you've subscribed to, (2) Legitimate Interests: to improve our platform and ensure security, and (3) Consent: for marketing communications, which you can withdraw at any time.",
+      "items": {
+        "provideServices": "To provide and maintain our AI-powered optimization services",
+        "optimizePerformance": "To analyze and optimize your store's performance with personalized insights",
+        "improveFeatures": "To develop new features and improve existing functionality",
+        "communicate": "To send you service updates, promotional content, and respond to your inquiries",
+        "security": "To detect, prevent, and address security issues or fraudulent activity",
+        "compliance": "To comply with legal obligations and enforce our Terms of Service"
+      }
+    },
+    "dataSharing": {
+      "title": "Data Sharing & Disclosure",
+      "intro": "Zyra does not sell your personal information. We do not sell or share your personal information for cross-context behavioral advertising. We only share data in the following circumstances:",
+      "thirdParty": {
+        "title": "Service Providers",
+        "description": "We work with trusted third-party providers (Shopify, PayPal, Razorpay, SendGrid, OpenAI, Supabase) to deliver our services. These providers are bound by strict data protection agreements and only access data necessary for their specific functions."
+      },
+      "legal": {
+        "title": "Legal Requirements",
+        "description": "We may disclose your information if required by law, court order, or governmental regulation, or if we believe disclosure is necessary to protect our rights, your safety, or the safety of others."
+      },
+      "businessTransfers": {
+        "title": "Business Transfers",
+        "description": "In the event of a merger, acquisition, or sale of assets, your information may be transferred to the new owner. We will notify you before your data is transferred and becomes subject to a different privacy policy."
+      }
+    },
+    "dataSecurity": {
+      "title": "Data Security",
+      "paragraph1": "We implement industry-standard security measures to protect your data from unauthorized access, alteration, disclosure, or destruction. Our security practices include:",
+      "paragraph2": "While we strive to protect your information, no method of transmission over the internet or electronic storage is 100% secure. We cannot guarantee absolute security but are committed to continuously improving our security practices.",
+      "measures": {
+        "encryption": "End-to-end encryption for data transmission using HTTPS/TLS",
+        "accessControls": "Strict access controls and authentication mechanisms",
+        "monitoring": "Regular security monitoring and threat detection",
+        "regularAudits": "Periodic security audits and vulnerability assessments"
+      }
+    },
+    "userRights": {
+      "title": "Your Privacy Rights",
+      "intro": "You have the following rights regarding your personal data:",
+      "ccpaNote": "CCPA Rights (California Residents): You have the right to know what personal information we collect, the right to delete your personal information (subject to certain exceptions), and the right to opt-out of sale/sharing of personal information (we do not sell or share your data). California residents can exercise their CCPA rights by contacting us at privacy@zyra.ai.",
+      "rights": {
+        "access": "Access: Request a copy of the personal data we hold about you",
+        "correction": "Correction: Request correction of inaccurate or incomplete data",
+        "deletion": "Deletion: Request deletion of your personal data (subject to legal obligations)",
+        "portability": "Data Portability: Receive your data in a structured, machine-readable format",
+        "optOut": "Opt-Out: Unsubscribe from marketing emails at any time",
+        "complaint": "Complaint: Lodge a complaint with your local data protection authority"
+      }
+    },
+    "cookiesTracking": {
+      "title": "Cookies & Tracking",
+      "paragraph1": "Zyra uses cookies and similar tracking technologies to enhance your experience and understand how you use our platform.",
+      "paragraph2": "You can control cookie preferences through your browser settings. Note that disabling certain cookies may limit some functionality of our platform.",
+      "types": {
+        "essential": {
+          "title": "Essential Cookies",
+          "description": "Required for authentication, security, and basic platform functionality"
+        },
+        "analytics": {
+          "title": "Analytics Cookies",
+          "description": "Help us understand usage patterns to improve our service"
+        },
+        "preferences": {
+          "title": "Preference Cookies",
+          "description": "Remember your settings, language, and customization choices"
+        }
+      }
+    },
+    "thirdPartyIntegrations": {
+      "title": "Third-Party Integrations",
+      "intro": "Zyra integrates with the following third-party services to provide our functionality:",
+      "services": {
+        "shopify": "Shopify: Store data synchronization and product management",
+        "sendgrid": "SendGrid: Email campaign delivery and performance tracking",
+        "paypal": "PayPal: Secure international payment processing",
+        "razorpay": "Razorpay: Secure payment processing for India",
+        "openai": "OpenAI: AI-powered content generation and optimization",
+        "supabase": "Supabase: Authentication and database storage - https://supabase.com/privacy",
+        "analytics": "Analytics providers: Usage tracking and performance monitoring"
+      }
+    },
+    "dataRetention": {
+      "title": "Data Retention",
+      "paragraph1": "We retain your personal data for as long as your account is active or as needed to provide you with our services. If you close your account, we will delete or anonymize your data within 90 days, except where we are required to retain it for legal, regulatory, or security purposes.",
+      "paragraph2": "Aggregated and anonymized data that cannot identify you may be retained indefinitely for analytics and product improvement.",
+      "paragraph3": "You can request early deletion of your data at any time by contacting our support team."
+    },
+    "internationalTransfers": {
+      "title": "International Data Transfers",
+      "paragraph1": "Zyra operates globally and may transfer your data to servers located in different countries, including the United States and European Union. We ensure that international data transfers comply with applicable data protection laws, including GDPR, CCPA, and other regional regulations.",
+      "paragraph2": "When transferring data internationally, we implement appropriate safeguards such as Standard Contractual Clauses (SCCs) and ensure our service providers adhere to equivalent data protection standards."
+    },
+    "policyUpdates": {
+      "title": "Updates to This Policy",
+      "paragraph1": "We may update this Privacy Policy from time to time to reflect changes in our practices, legal requirements, or service offerings. When we make significant changes, we will notify you via email or through a prominent notice on our platform.",
+      "paragraph2": "Your continued use of Zyra after any changes to this policy constitutes your acceptance of the updated terms. We encourage you to review this policy periodically to stay informed about how we protect your information."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "paragraph1": "If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please don't hesitate to contact us:",
+      "email": "privacy@zyra.ai",
+      "support": "For general support inquiries, visit our Support Center in the dashboard"
+    },
+    "childrensPrivacy": {
+      "title": "Children's Privacy",
+      "paragraph1": "Zyra is not intended for users under the age of 16. We do not knowingly collect personal information from children under 16.",
+      "paragraph2": "If we become aware that we have collected personal data from a child under 16, we will take steps to delete such information as quickly as possible.",
+      "paragraph3": "If you believe we have collected information from a child under 16, please contact us immediately at privacy@zyra.ai."
+    },
+    "cta": {
+      "title": "Questions About Your Privacy?",
+      "description": "Our team is here to help you understand how we protect your data.",
+      "button": "Go to Dashboard"
+    }
+  }
+}
