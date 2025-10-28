@@ -215,7 +215,7 @@ export default function Analytics() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {keyMetrics.map((metric, index) => (
           <Card key={index} className="stat-card border-0" data-testid={`card-metric-${index}`}>
             <CardContent className="p-6">
@@ -291,7 +291,7 @@ export default function Analytics() {
       </div>
 
       {/* Detailed Analytics */}
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Email Performance */}
         <Card className="gradient-card border-0">
           <CardContent className="p-6">

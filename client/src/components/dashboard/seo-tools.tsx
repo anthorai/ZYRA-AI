@@ -108,7 +108,7 @@ export default function SEOTools() {
         <p className="text-muted-foreground">Optimize your product titles, meta descriptions, and keywords for better search rankings</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* SEO Input Form */}
         <div className="lg:col-span-2">
           <Card className="gradient-card border-0 mb-6">

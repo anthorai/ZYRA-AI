@@ -168,7 +168,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <Card
                 key={index}
@@ -214,7 +214,7 @@ export default function AboutPage() {
               {t('aboutPage.impact.title')}
             </h2>
             
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="text-center" data-testid="card-impact-time">
                 <div className="text-5xl font-bold text-[#00F0FF] mb-3">
                   {t('aboutPage.impact.timeSaved.value')}

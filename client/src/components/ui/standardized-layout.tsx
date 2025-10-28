@@ -136,7 +136,7 @@ export function CardPageHeader({ title, onBack, backLabel = "Back" }: CardPageHe
   );
 }
 
-// Tablet-style Card Grid with horizontal scroll on mobile
+// Responsive Card Grid: 1 column mobile, 2 tablet, 3 desktop
 interface CardGridProps {
   children: ReactNode;
   className?: string;
@@ -144,10 +144,8 @@ interface CardGridProps {
 
 export function CardGrid({ children, className = "" }: CardGridProps) {
   return (
-    <div className="w-full overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-      <div className={`grid grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 min-w-[900px] ${className}`}>
-        {children}
-      </div>
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 ${className}`}>
+      {children}
     </div>
   );
 }

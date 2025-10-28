@@ -203,7 +203,7 @@ export default function Campaigns() {
       </CardGrid>
 
       {/* Stats Overview */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="gradient-card rounded-2xl p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 rounded-full bg-slate-800/50 transition-all duration-300">
