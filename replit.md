@@ -13,12 +13,15 @@ Preferred communication style: Simple, everyday language.
   - **Credit allocations**: Prominently displays credits per period (100/7 days, 1,000/month, 5,000/month, 20,000/month) with ✨ emoji
   - **Individual feature breakdowns**: Shows credit costs for each feature (e.g., "Optimized Products – 200 credits")
   - **Marketing taglines**: "Who it's for" descriptions for each tier
-  - **Enhanced layout**: Header section with plan name/icon/pricing, auto-expanding features section showing all content, and footer CTA button
+  - **Enhanced centered layout**: All content center-aligned for professional appearance
+    - **Header section**: Centered icon (larger at 10-12px), plan name (larger text-3xl), pricing (text-4xl), credits, and tagline with increased spacing (pb-6, space-y-4)
+    - **Features section**: Centered category names and feature lists with clean typography and increased spacing (py-6, space-y-4)
+    - **Footer CTA button**: Full-width button with gradient effects and hover animations
   - **Responsive design**: Changed from 3-column to 2-column grid on large screens for better readability of dense content
   - **Removed scroll system**: Eliminated overflow-y-auto scroll to show all features at once in naturally expanding cards
-  - **Optimized spacing**: Tightened spacing between features (space-y-3, space-y-1.5, space-y-0.5, leading-snug) for a clean, professional presentation
+  - **Optimized spacing**: Balanced spacing throughout for a clean, professional presentation
   - **Badge positioning fix**: "Popular" badge on Growth plan now fully visible above the card using relative wrapper with conditional padding
-- **Result**: Professional, landing-page-quality plan cards where merchants can see all features at a glance without scrolling
+- **Result**: Beautiful, landing-page-quality plan cards with centered content that merchants can see all features at a glance without scrolling
 
 ### Smart Product Descriptions Enhancement
 - **Expanded dropdown options from 7 to 15** for better merchant targeting:
