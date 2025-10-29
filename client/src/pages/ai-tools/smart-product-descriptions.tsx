@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -198,60 +198,72 @@ export default function SmartProductDescriptions() {
 
                 <div>
                   <Label htmlFor="category" className="text-white">Product Category</Label>
-                  <Select 
-                    value={form.watch("category")} 
-                    onValueChange={(value) => form.setValue("category", value)}
-                  >
-                    <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent className="gradient-surface">
-                      <SelectItem value="Fashion & Apparel">Fashion & Apparel</SelectItem>
-                      <SelectItem value="Electronics & Gadgets">Electronics & Gadgets</SelectItem>
-                      <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
-                      <SelectItem value="Beauty & Personal Care">Beauty & Personal Care</SelectItem>
-                      <SelectItem value="Health & Fitness">Health & Fitness</SelectItem>
-                      <SelectItem value="Groceries & Food">Groceries & Food</SelectItem>
-                      <SelectItem value="Books & Stationery">Books & Stationery</SelectItem>
-                      <SelectItem value="Toys & Baby Products">Toys & Baby Products</SelectItem>
-                      <SelectItem value="Automotive">Automotive</SelectItem>
-                      <SelectItem value="Sports & Outdoor">Sports & Outdoor</SelectItem>
-                      <SelectItem value="Pet Supplies">Pet Supplies</SelectItem>
-                      <SelectItem value="Jewelry & Watches">Jewelry & Watches</SelectItem>
-                      <SelectItem value="Furniture & Home Improvement">Furniture & Home Improvement</SelectItem>
-                      <SelectItem value="Digital Products">Digital Products</SelectItem>
-                      <SelectItem value="Arts & Crafts">Arts & Crafts</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="category"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select 
+                        value={field.value} 
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent className="gradient-surface">
+                          <SelectItem value="Fashion & Apparel">Fashion & Apparel</SelectItem>
+                          <SelectItem value="Electronics & Gadgets">Electronics & Gadgets</SelectItem>
+                          <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
+                          <SelectItem value="Beauty & Personal Care">Beauty & Personal Care</SelectItem>
+                          <SelectItem value="Health & Fitness">Health & Fitness</SelectItem>
+                          <SelectItem value="Groceries & Food">Groceries & Food</SelectItem>
+                          <SelectItem value="Books & Stationery">Books & Stationery</SelectItem>
+                          <SelectItem value="Toys & Baby Products">Toys & Baby Products</SelectItem>
+                          <SelectItem value="Automotive">Automotive</SelectItem>
+                          <SelectItem value="Sports & Outdoor">Sports & Outdoor</SelectItem>
+                          <SelectItem value="Pet Supplies">Pet Supplies</SelectItem>
+                          <SelectItem value="Jewelry & Watches">Jewelry & Watches</SelectItem>
+                          <SelectItem value="Furniture & Home Improvement">Furniture & Home Improvement</SelectItem>
+                          <SelectItem value="Digital Products">Digital Products</SelectItem>
+                          <SelectItem value="Arts & Crafts">Arts & Crafts</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div>
                   <Label htmlFor="audience" className="text-white">Target Audience</Label>
-                  <Select 
-                    value={form.watch("audience")} 
-                    onValueChange={(value) => form.setValue("audience", value)}
-                  >
-                    <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
-                      <SelectValue placeholder="Select audience" />
-                    </SelectTrigger>
-                    <SelectContent className="gradient-surface">
-                      <SelectItem value="General Consumers">General Consumers</SelectItem>
-                      <SelectItem value="Tech Enthusiasts">Tech Enthusiasts</SelectItem>
-                      <SelectItem value="Business Professionals">Business Professionals</SelectItem>
-                      <SelectItem value="Athletes & Fitness Enthusiasts">Athletes & Fitness Enthusiasts</SelectItem>
-                      <SelectItem value="Students">Students</SelectItem>
-                      <SelectItem value="Parents & Families">Parents & Families</SelectItem>
-                      <SelectItem value="Creative Professionals">Creative Professionals</SelectItem>
-                      <SelectItem value="Eco-conscious Shoppers">Eco-conscious Shoppers</SelectItem>
-                      <SelectItem value="Luxury Buyers">Luxury Buyers</SelectItem>
-                      <SelectItem value="Travelers & Adventurers">Travelers & Adventurers</SelectItem>
-                      <SelectItem value="Home Improvers">Home Improvers</SelectItem>
-                      <SelectItem value="Pet Owners">Pet Owners</SelectItem>
-                      <SelectItem value="Gamers">Gamers</SelectItem>
-                      <SelectItem value="Beauty & Self-care Lovers">Beauty & Self-care Lovers</SelectItem>
-                      <SelectItem value="Lifelong Learners">Lifelong Learners</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="audience"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select 
+                        value={field.value} 
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
+                          <SelectValue placeholder="Select audience" />
+                        </SelectTrigger>
+                        <SelectContent className="gradient-surface">
+                          <SelectItem value="General Consumers">General Consumers</SelectItem>
+                          <SelectItem value="Tech Enthusiasts">Tech Enthusiasts</SelectItem>
+                          <SelectItem value="Business Professionals">Business Professionals</SelectItem>
+                          <SelectItem value="Athletes & Fitness Enthusiasts">Athletes & Fitness Enthusiasts</SelectItem>
+                          <SelectItem value="Students">Students</SelectItem>
+                          <SelectItem value="Parents & Families">Parents & Families</SelectItem>
+                          <SelectItem value="Creative Professionals">Creative Professionals</SelectItem>
+                          <SelectItem value="Eco-conscious Shoppers">Eco-conscious Shoppers</SelectItem>
+                          <SelectItem value="Luxury Buyers">Luxury Buyers</SelectItem>
+                          <SelectItem value="Travelers & Adventurers">Travelers & Adventurers</SelectItem>
+                          <SelectItem value="Home Improvers">Home Improvers</SelectItem>
+                          <SelectItem value="Pet Owners">Pet Owners</SelectItem>
+                          <SelectItem value="Gamers">Gamers</SelectItem>
+                          <SelectItem value="Beauty & Self-care Lovers">Beauty & Self-care Lovers</SelectItem>
+                          <SelectItem value="Lifelong Learners">Lifelong Learners</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
               </div>
 
