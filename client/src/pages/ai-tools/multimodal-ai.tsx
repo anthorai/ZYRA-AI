@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Camera,
   Upload,
@@ -222,15 +223,16 @@ export default function MultimodalAI() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        {/* Multimodal AI Overview */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Eye className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Visual + Text AI Generation</h2>
-            </div>
+    <PageShell
+      title="Multimodal AI"
+      subtitle="Combine product images with text to generate rich, contextual content"
+      backTo="/dashboard"
+    >
+      {/* Multimodal AI Overview */}
+      <DashboardCard
+        title="Visual + Text AI Generation"
+        description="Upload product images and provide text attributes for comprehensive AI-generated content"
+      >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
@@ -245,18 +247,14 @@ export default function MultimodalAI() {
                 <span className="text-slate-300 truncate">Generate rich, contextual copy</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Upload and Form */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Upload Images & Product Details</CardTitle>
-            <CardDescription className="text-slate-300">
-              Combine visual and text inputs for the most accurate AI-generated content
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+      {/* Upload and Form */}
+      <DashboardCard
+        title="Upload Images & Product Details"
+        description="Combine visual and text inputs for the most accurate AI-generated content"
+      >
+        <div className="space-y-6">
             {/* Image Upload Section */}
             <div>
               <Label className="text-white">Product Images (Up to 3)</Label>
@@ -383,11 +381,11 @@ export default function MultimodalAI() {
                 )}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+        </div>
+      </DashboardCard>
 
-        {/* Generated Results */}
-        {generatedContent && (
+      {/* Generated Results */}
+      {generatedContent && (
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-400" />
@@ -395,8 +393,7 @@ export default function MultimodalAI() {
             </div>
 
             {/* Image Analysis */}
-            <Card className="border-2 border-cyan-400/30 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
-              <CardContent className="p-6">
+            <DashboardCard className="border-2 border-cyan-400/30 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
                 <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
                   <Eye className="w-5 h-5 text-cyan-400 mr-2" />
                   Visual Analysis
@@ -439,12 +436,10 @@ export default function MultimodalAI() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </DashboardCard>
 
             {/* Rich Description */}
-            <Card className="border-2 border-green-400/30 bg-gradient-to-br from-green-900/20 to-emerald-900/20">
-              <CardContent className="p-6">
+            <DashboardCard className="border-2 border-green-400/30 bg-gradient-to-br from-green-900/20 to-emerald-900/20">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <FileText className="w-5 h-5 text-green-400" />
@@ -465,12 +460,10 @@ export default function MultimodalAI() {
                     {generatedContent.richDescription}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+            </DashboardCard>
 
             {/* Visual Description */}
-            <Card className="border-2 border-blue-400/30 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
-              <CardContent className="p-6">
+            <DashboardCard className="border-2 border-blue-400/30 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <ImageIcon className="w-5 h-5 text-blue-400" />
@@ -491,13 +484,11 @@ export default function MultimodalAI() {
                     {generatedContent.visualDescription}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+            </DashboardCard>
 
             {/* SEO Content & Marketing Copy */}
             <div className="grid md:grid-cols-2 gap-6">
-              <Card className="border-2 border-purple-400/30 bg-gradient-to-br from-purple-900/20 to-violet-900/20">
-                <CardContent className="p-6">
+              <DashboardCard className="border-2 border-purple-400/30 bg-gradient-to-br from-purple-900/20 to-violet-900/20">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <Zap className="w-5 h-5 text-purple-400" />
@@ -517,11 +508,9 @@ export default function MultimodalAI() {
                       {generatedContent.seoContent}
                     </p>
                   </div>
-                </CardContent>
-              </Card>
+              </DashboardCard>
 
-              <Card className="border-2 border-pink-400/30 bg-gradient-to-br from-pink-900/20 to-rose-900/20">
-                <CardContent className="p-6">
+              <DashboardCard className="border-2 border-pink-400/30 bg-gradient-to-br from-pink-900/20 to-rose-900/20">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <Camera className="w-5 h-5 text-pink-400" />
@@ -541,12 +530,10 @@ export default function MultimodalAI() {
                       {generatedContent.marketingCopy}
                     </pre>
                   </div>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </div>
           </div>
         )}
-      </PageContainer>
-    </div>
+    </PageShell>
   );
 }

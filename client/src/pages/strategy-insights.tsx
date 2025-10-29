@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Sparkles, TrendingUp, Target, Zap, AlertCircle, Lightbulb, BarChart3, Mail, MessageSquare, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
@@ -103,32 +104,29 @@ export default function StrategyInsights() {
   };
 
   return (
-    <div className="min-h-screen dark-theme-bg">
-      <PageContainer>
-        
-        <div className="flex items-center space-x-2">
-          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-            <Zap className="w-3 h-3 mr-1" />
-            Premium AI Model
-          </Badge>
-          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-            Advanced Reasoning
-          </Badge>
-        </div>
+    <PageShell
+      title="Strategy & Insights"
+      subtitle="Get AI-powered strategic recommendations and campaign ideas for your eCommerce business"
+      backTo="/dashboard"
+    >
+      <div className="flex items-center space-x-2 mb-6">
+        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+          <Zap className="w-3 h-3 mr-1" />
+          Premium AI Model
+        </Badge>
+        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+          Advanced Reasoning
+        </Badge>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {/* Input Form */}
-          <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-gray-800/50">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Target className="w-5 h-5 text-primary" />
-              <span>Business Context</span>
-            </CardTitle>
-            <CardDescription>
-              Provide details about your store for strategic analysis
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        {/* Input Form */}
+        <DashboardCard
+          title="Business Context"
+          description="Provide details about your store for strategic analysis"
+          className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-gray-800/50"
+        >
+          <div className="space-y-4">
             {/* Brand Overview */}
             <div className="space-y-2">
               <Label htmlFor="brandOverview" className="text-sm font-medium">
@@ -231,21 +229,15 @@ export default function StrategyInsights() {
                 </>
               )}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardCard>
 
         {/* Strategy Output */}
-        <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-gray-800/50">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Lightbulb className="w-5 h-5 text-primary" />
-              <span>Strategic Insights</span>
-            </CardTitle>
-            <CardDescription>
-              Data-driven recommendations and actionable campaigns
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <DashboardCard
+          title="Strategic Insights"
+          description="Data-driven recommendations and actionable campaigns"
+          className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-gray-800/50"
+        >
             {!strategyResult ? (
               <div className="space-y-4 text-center py-12">
                 <div className="mx-auto w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center">
@@ -337,13 +329,11 @@ export default function StrategyInsights() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
 
-        {/* Info Card */}
-        <Card className="bg-gray-800/50 border-gray-700 border-l-4 border-l-purple-500">
-          <CardContent className="p-4">
+      {/* Info Card */}
+      <DashboardCard className="bg-gray-800/50 border-gray-700 border-l-4 border-l-purple-500">
             <div className="flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-purple-400 mt-0.5" />
               <div className="space-y-1">
@@ -353,9 +343,7 @@ export default function StrategyInsights() {
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </PageContainer>
-    </div>
+      </DashboardCard>
+    </PageShell>
   );
 }

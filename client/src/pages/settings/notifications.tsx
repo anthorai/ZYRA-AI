@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -47,14 +47,12 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notification Channels */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <CardTitle className="text-white">Notification Channels</CardTitle>
-          <CardDescription className="text-slate-400">
-            Choose how you want to receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <DashboardCard
+        title="Notification Channels"
+        description="Choose how you want to receive notifications"
+        testId="card-notification-channels"
+      >
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-slate-800/50">
@@ -138,18 +136,16 @@ export default function NotificationsPage() {
               data-testid="switch-sms-notifications"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Alert Categories */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <CardTitle className="text-white">Alert Categories</CardTitle>
-          <CardDescription className="text-slate-400">
-            Choose which types of alerts you want to receive
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <DashboardCard
+        title="Alert Categories"
+        description="Choose which types of alerts you want to receive"
+        testId="card-alert-categories"
+      >
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-slate-800/50">
@@ -227,8 +223,8 @@ export default function NotificationsPage() {
               data-testid="switch-ai-recommendations"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Save Button */}
       <div className="flex justify-end space-x-3 pt-4">

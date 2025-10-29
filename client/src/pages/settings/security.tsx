@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -108,28 +108,25 @@ export default function SecurityPage() {
   return (
     <PageContainer>
       {/* Two-Factor Authentication */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Smartphone className="w-5 h-5 text-primary" />
-              <CardTitle className="text-white">Two-Factor Authentication</CardTitle>
-            </div>
-            <Badge
-              variant={twoFactorEnabled ? "default" : "secondary"}
-              className={twoFactorEnabled
-                ? "bg-green-500/20 text-green-400"
-                : "bg-slate-500/20 text-slate-400"
-              }
-            >
-              {twoFactorEnabled ? "Enabled" : "Disabled"}
-            </Badge>
-          </div>
-          <CardDescription className="text-slate-400">
-            Add an extra layer of security to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Two-Factor Authentication"
+        description="Add an extra layer of security to your account"
+        headerAction={
+          <Badge
+            variant={twoFactorEnabled ? "default" : "secondary"}
+            className={twoFactorEnabled
+              ? "bg-green-500/20 text-green-400"
+              : "bg-slate-500/20 text-slate-400"
+            }
+          >
+            {twoFactorEnabled ? "Enabled" : "Disabled"}
+          </Badge>
+        }
+        testId="card-2fa"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2 mb-2">
+            <Smartphone className="w-5 h-5 text-primary" />
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-white font-medium">Enable 2FA</Label>
@@ -152,21 +149,18 @@ export default function SecurityPage() {
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </DashboardCard>
 
       {/* Password Management */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Lock className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Password</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Update your password regularly to keep your account secure
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Password"
+        description="Update your password regularly to keep your account secure"
+        headerAction={<Lock className="w-5 h-5 text-primary" />}
+        testId="card-password"
+      >
+        <div className="space-y-4">
           {!showPasswordForm ? (
             <div className="flex items-center justify-between">
               <div>
@@ -246,21 +240,17 @@ export default function SecurityPage() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Active Sessions */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Monitor className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Active Sessions</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Manage devices currently signed into your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Active Sessions"
+        description="Manage devices currently signed into your account"
+        headerAction={<Monitor className="w-5 h-5 text-primary" />}
+        testId="card-active-sessions"
+      >
+        <div className="space-y-4">
           {activeSessions.map((session, index) => (
             <div key={session.id}>
               <div className="flex items-center justify-between">
@@ -289,21 +279,17 @@ export default function SecurityPage() {
               {index < activeSessions.length - 1 && <Separator className="bg-slate-700 mt-4" />}
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Data Management */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Key className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Data Management</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Export or delete your account data (GDPR compliant)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Data Management"
+        description="Export or delete your account data (GDPR compliant)"
+        headerAction={<Key className="w-5 h-5 text-primary" />}
+        testId="card-data-management"
+      >
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-white font-medium">Export Your Data</Label>
@@ -340,8 +326,8 @@ export default function SecurityPage() {
               Delete
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
     </PageContainer>
   );
 }

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Share, 
   CheckCircle,
@@ -111,17 +111,16 @@ export default function ShopifyPublish() {
   };
 
   return (
-    <div className="min-h-screen dark-theme-bg">
-      <PageContainer>
-        {/* Summary Card */}
-        <Card className="gradient-card border-0 rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Ready to Publish</CardTitle>
-            <CardDescription className="text-slate-300">
-              Your optimized products are ready to be published to your Shopify store
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <PageShell
+      title="Shopify Publish"
+      subtitle="Publish your AI-optimized products directly to your Shopify store"
+      backTo="/dashboard"
+    >
+      {/* Summary Card */}
+      <DashboardCard
+        title="Ready to Publish"
+        description="Your optimized products are ready to be published to your Shopify store"
+      >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6">
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-primary mb-2">{optimizedProducts.length}</div>
@@ -155,38 +154,38 @@ export default function ShopifyPublish() {
                 </>
               )}
             </Button>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Products List */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-white">Optimized Product Content</h2>
-          
-          {optimizedProducts.map((product) => (
-            <Card key={product.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2 min-w-0 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <Package className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
-                      <CardTitle className="text-base sm:text-lg md:text-xl text-white truncate min-w-0">{product.title}</CardTitle>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className="bg-green-500/20 text-green-400">Optimized</Badge>
-                      <Badge className="bg-blue-500/20 text-blue-400">SEO Enhanced</Badge>
-                    </div>
+      {/* Products List */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-white">Optimized Product Content</h2>
+        
+        {optimizedProducts.map((product) => (
+          <DashboardCard
+            key={product.id}
+            testId={`card-product-${product.id}`}
+          >
+            <div className="space-y-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center space-x-2">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
+                    <h3 className="text-base sm:text-lg md:text-xl text-white truncate min-w-0">{product.title}</h3>
                   </div>
-                  <Button
-                    onClick={() => handlePublishSingle(product.id)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                    data-testid={`button-publish-${product.id}`}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Publish
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-green-500/20 text-green-400">Optimized</Badge>
+                    <Badge className="bg-blue-500/20 text-blue-400">SEO Enhanced</Badge>
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4 p-3 sm:p-4 md:p-6">
+                <Button
+                  onClick={() => handlePublishSingle(product.id)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  data-testid={`button-publish-${product.id}`}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Publish
+                </Button>
+              </div>
                 {/* Before/After Comparison */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -260,11 +259,10 @@ export default function ShopifyPublish() {
                     <div className="text-xs sm:text-sm font-bold text-purple-400">Perfect</div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </PageContainer>
-    </div>
+            </div>
+          </DashboardCard>
+        ))}
+      </div>
+    </PageShell>
   );
 }

@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Palette,
   Copy,
@@ -187,31 +188,27 @@ export default function DynamicTemplates() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        {/* Process Overview */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Transform Your Brand Voice</h2>
-            </div>
-            <p className="text-slate-300 text-sm">
-              Choose from pre-built tone templates to instantly transform your product descriptions. 
-              Zyra AI learns your preferred style and can apply it consistently across all your content.
-            </p>
-          </CardContent>
-        </Card>
+    <PageShell
+      title="Dynamic Tone Templates"
+      subtitle="Transform your product descriptions to match different brand voices and tones using AI"
+      backTo="/dashboard"
+    >
+      {/* Process Overview */}
+      <DashboardCard
+        title="Transform Your Brand Voice"
+        description="Choose from pre-built tone templates to instantly transform your product descriptions. Zyra AI learns your preferred style and can apply it consistently across all your content."
+      >
+        <div className="flex items-center space-x-2 text-slate-300 text-sm">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <p>AI-powered tone transformation available instantly</p>
+        </div>
+      </DashboardCard>
 
-        {/* Tone Templates */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Choose Your Tone Style</CardTitle>
-            <CardDescription className="text-slate-300">
-              Select a tone template that matches your brand personality
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Tone Templates */}
+      <DashboardCard
+        title="Choose Your Tone Style"
+        description="Select a tone template that matches your brand personality"
+      >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {toneTemplates.map((template) => (
                 <Card 
@@ -243,18 +240,13 @@ export default function DynamicTemplates() {
                 </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Input Form */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Content to Transform</CardTitle>
-            <CardDescription className="text-slate-300">
-              Provide your original content and watch Zyra AI transform it to match your selected tone
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Input Form */}
+      <DashboardCard
+        title="Content to Transform"
+        description="Provide your original content and watch Zyra AI transform it to match your selected tone"
+      >
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -308,13 +300,13 @@ export default function DynamicTemplates() {
                 )}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Transformed Result */}
-        {transformedText && (
-          <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-foreground/20">
-            <CardContent className="p-6">
+      {/* Transformed Result */}
+      {transformedText && (
+        <DashboardCard
+          className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-foreground/20"
+        >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5 text-green-400" />
@@ -345,10 +337,8 @@ export default function DynamicTemplates() {
                   {transformedText}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </PageContainer>
-    </div>
+        </DashboardCard>
+      )}
+    </PageShell>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -153,24 +153,21 @@ export default function CheckoutPage() {
           {/* Plan Details - Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Selected Plan Card */}
-            <Card className="border-primary">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Badge className="mb-2">Selected Plan</Badge>
-                    <CardTitle className="text-2xl" data-testid="text-plan-name">
-                      {pendingSubscription.planName}
-                    </CardTitle>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-primary" data-testid="text-plan-price">
-                      ${amount}
-                    </div>
-                    <div className="text-sm text-muted-foreground">USD/month</div>
-                  </div>
+            <DashboardCard className="border-primary" testId="card-selected-plan">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <Badge className="mb-2">Selected Plan</Badge>
+                  <h2 className="text-2xl font-semibold text-white" data-testid="text-plan-name">
+                    {pendingSubscription.planName}
+                  </h2>
                 </div>
-              </CardHeader>
-              <CardContent>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-primary" data-testid="text-plan-price">
+                    ${amount}
+                  </div>
+                  <div className="text-sm text-muted-foreground">USD/month</div>
+                </div>
+              </div>
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground mb-4">
                     {getPlanDescription(pendingSubscription.planName)}
@@ -185,18 +182,14 @@ export default function CheckoutPage() {
                     ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </DashboardCard>
 
             {/* Payment Method */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  Payment Method
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <DashboardCard 
+              title="Payment Method"
+              headerAction={<CreditCard className="w-5 h-5" />}
+              testId="card-payment-method"
+            >
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 border border-primary bg-primary/5 rounded-lg">
                     <SiPaypal className="text-4xl text-blue-500" />
@@ -226,17 +219,17 @@ export default function CheckoutPage() {
                     By completing this purchase, you agree to our Terms of Service and Privacy Policy
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+            </DashboardCard>
           </div>
 
           {/* Order Summary - Right Column */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <DashboardCard 
+              title="Order Summary" 
+              className="sticky top-4"
+              testId="card-order-summary"
+            >
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Plan</span>
@@ -300,8 +293,8 @@ export default function CheckoutPage() {
                     No card details stored
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </DashboardCard>
           </div>
         </div>
       </div>

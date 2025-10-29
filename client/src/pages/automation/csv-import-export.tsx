@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Upload, 
   Download, 
@@ -156,17 +156,17 @@ export default function CSVImportExport() {
   };
 
   return (
-    <div className="min-h-screen dark-theme-bg">
-      <PageContainer>
-        {/* Upload Section */}
-        <Card className="gradient-card border-0 rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Upload Your Product Data</CardTitle>
-            <CardDescription className="text-slate-300">
-              Upload a CSV file with your product information for AI optimization
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+    <PageShell
+      title="CSV Import & Export"
+      subtitle="Upload and optimize your product data with AI-powered batch processing"
+      backTo="/dashboard"
+    >
+      {/* Upload Section */}
+      <DashboardCard
+        title="Upload Your Product Data"
+        description="Upload a CSV file with your product information for AI optimization"
+      >
+        <div className="space-y-6">
             <div className="space-y-4">
               <Label htmlFor="csv-upload" className="text-white">Select CSV File</Label>
               <Input
@@ -215,22 +215,19 @@ export default function CSVImportExport() {
                 <Progress value={optimizationProgress} className="bg-slate-700" />
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
+      </DashboardCard>
 
-        {/* Results Section */}
-        {showResults && (
-          <Card className="gradient-card">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <CardTitle className="text-2xl text-white">Optimization Results</CardTitle>
-              </div>
-              <CardDescription className="text-slate-300">
-                AI has enhanced your product data with better titles, descriptions, and SEO tags
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+      {/* Results Section */}
+      {showResults && (
+        <DashboardCard
+          title="Optimization Results"
+          description="AI has enhanced your product data with better titles, descriptions, and SEO tags"
+          headerAction={
+            <CheckCircle className="w-5 h-5 text-green-400" />
+          }
+        >
+          <div className="space-y-6">
               {/* Sample Results Preview */}
               <div className="space-y-4">
                 {optimizedData.slice(0, 2).map((product) => (
@@ -276,10 +273,9 @@ export default function CSVImportExport() {
                   Auto-Sync to Shopify
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </PageContainer>
-    </div>
+          </div>
+        </DashboardCard>
+      )}
+    </PageShell>
   );
 }

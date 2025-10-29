@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { queryClient } from "@/lib/queryClient";
 import { 
   Brain, 
@@ -245,28 +245,25 @@ export default function SmartBulkSuggestions() {
   );
 
   return (
-    <div className="min-h-screen dark-theme-bg">
-      <PageContainer>
-        {isLoadingProducts ? (
-          <Card className="gradient-card">
-            <CardHeader>
-              <Skeleton className="h-8 w-64 mb-2" data-testid="skeleton-title" />
-              <Skeleton className="h-4 w-96" data-testid="skeleton-description" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-32 w-full" data-testid="skeleton-content" />
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <Card className="gradient-card">
-              <CardHeader>
-                <CardTitle className="text-2xl text-white">Store Analysis</CardTitle>
-                <CardDescription className="text-slate-300">
-                  Let AI scan your entire product catalog for optimization opportunities
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+    <PageShell
+      title="Smart Bulk Suggestions"
+      subtitle="AI-powered store analysis to identify and fix optimization opportunities"
+      backTo="/dashboard"
+    >
+      {isLoadingProducts ? (
+        <DashboardCard>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-64 mb-2" data-testid="skeleton-title" />
+            <Skeleton className="h-4 w-96" data-testid="skeleton-description" />
+            <Skeleton className="h-32 w-full" data-testid="skeleton-content" />
+          </div>
+        </DashboardCard>
+      ) : (
+        <>
+          <DashboardCard
+            title="Store Analysis"
+            description="Let AI scan your entire product catalog for optimization opportunities"
+          >
                 {!analysisComplete ? (
                   <div className="text-center py-8">
                     {products.length === 0 ? (
@@ -342,26 +339,28 @@ export default function SmartBulkSuggestions() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+          </DashboardCard>
 
-            {analysisComplete && productIssues.length > 0 && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-white">⚠️ Fix Me Recommendations</h2>
-                  <Badge className="bg-red-500/20 text-red-300" data-testid="badge-needs-attention">
-                    Needs Immediate Attention
-                  </Badge>
-                </div>
-                
-                {productIssues.map((product) => (
-                  <Card key={product.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card" data-testid={`card-product-${product.id}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2 min-w-0 flex-1">
-                          <CardTitle className="text-base sm:text-lg md:text-xl text-white truncate" data-testid={`title-product-${product.id}`}>
-                            {product.productName}
-                          </CardTitle>
+          {analysisComplete && productIssues.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-white">⚠️ Fix Me Recommendations</h2>
+                <Badge className="bg-red-500/20 text-red-300" data-testid="badge-needs-attention">
+                  Needs Immediate Attention
+                </Badge>
+              </div>
+              
+              {productIssues.map((product) => (
+                <DashboardCard
+                  key={product.id}
+                  testId={`card-product-${product.id}`}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2 min-w-0 flex-1">
+                        <h3 className="text-base sm:text-lg md:text-xl text-white truncate" data-testid={`title-product-${product.id}`}>
+                          {product.productName}
+                        </h3>
                           <div className="flex items-center space-x-4 text-[10px] sm:text-xs md:text-sm">
                             {product.currentCTR && (
                               <div className="flex items-center space-x-1">
@@ -409,10 +408,8 @@ export default function SmartBulkSuggestions() {
                               </>
                             )}
                           </Button>
-                        </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 p-3 sm:p-4 md:p-6">
+                    </div>
                       {product.issues.map((issue, idx) => (
                         <div key={idx} className="bg-slate-800/30 p-4 rounded-lg" data-testid={`issue-${product.id}-${idx}`}>
                           <div className="flex items-start space-x-3">
@@ -446,28 +443,27 @@ export default function SmartBulkSuggestions() {
                           </div>
                         </div>
                       ))}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                  </div>
+                </DashboardCard>
+              ))}
+            </div>
+          )}
 
-            {analysisComplete && productIssues.length === 0 && products.length > 0 && (
-              <Card className="gradient-card">
-                <CardContent className="text-center py-12" data-testid="empty-state-all-optimized">
-                  <CheckCircle className="w-16 h-16 mx-auto text-green-400 mb-4" />
-                  <h3 className="text-2xl font-semibold text-white mb-2">
-                    All Products Are Optimized! 🎉
-                  </h3>
-                  <p className="text-slate-300">
-                    Your {products.length} products meet all SEO and performance best practices.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
-      </PageContainer>
-    </div>
+          {analysisComplete && productIssues.length === 0 && products.length > 0 && (
+            <DashboardCard testId="empty-state-all-optimized">
+              <div className="text-center py-12">
+                <CheckCircle className="w-16 h-16 mx-auto text-green-400 mb-4" />
+                <h3 className="text-2xl font-semibold text-white mb-2">
+                  All Products Are Optimized! 🎉
+                </h3>
+                <p className="text-slate-300">
+                  Your {products.length} products meet all SEO and performance best practices.
+                </p>
+              </div>
+            </DashboardCard>
+          )}
+        </>
+      )}
+    </PageShell>
   );
 }

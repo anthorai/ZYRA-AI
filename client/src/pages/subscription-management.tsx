@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -160,8 +160,8 @@ export default function SubscriptionManagement() {
   if (subIsError || plansIsError) {
     return (
       <div className="container mx-auto py-8 px-4 max-w-7xl">
-        <Card data-testid="error-state">
-          <CardContent className="p-8 text-center">
+        <DashboardCard testId="error-state">
+          <div className="p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Failed to Load Subscription Data</h3>
             <p className="text-red-400 mb-4">Please try again.</p>
@@ -187,8 +187,8 @@ export default function SubscriptionManagement() {
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardCard>
       </div>
     );
   }
@@ -196,18 +196,18 @@ export default function SubscriptionManagement() {
   return (
     <PageContainer>
       {/* Current Subscription */}
-      <Card className="mb-6" data-testid="card-current-subscription">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Current Subscription</span>
-            {subLoading ? (
-              <Skeleton className="h-6 w-20" />
-            ) : subscription ? (
-              getStatusBadge((subscription as any).status)
-            ) : null}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <DashboardCard 
+        title="Current Subscription"
+        className="mb-6" 
+        testId="card-current-subscription"
+        headerAction={
+          subLoading ? (
+            <Skeleton className="h-6 w-20" />
+          ) : subscription ? (
+            getStatusBadge((subscription as any).status)
+          ) : null
+        }
+      >
           {subLoading || plansLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               <div>
@@ -247,61 +247,61 @@ export default function SubscriptionManagement() {
           ) : (
             <p className="text-muted-foreground" data-testid="text-no-subscription">No active subscription</p>
           )}
-        </CardContent>
-      </Card>
+      </DashboardCard>
 
       {/* Available Plans */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Available Plans</CardTitle>
-          <CardDescription>Upgrade or downgrade your subscription plan</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <DashboardCard 
+        title="Available Plans"
+        description="Upgrade or downgrade your subscription plan"
+        className="mb-6"
+        testId="card-available-plans"
+      >
           {plansLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {[1, 2, 3, 4].map((i) => (
-                <Card key={i} className="gradient-card rounded-xl sm:rounded-2xl shadow-lg border border-slate-700/50">
-                  <div className="h-full p-3 sm:p-4 md:p-6 flex flex-col">
-                    <CardHeader className="pb-3 p-0 mb-3 flex-1">
+                <DashboardCard key={i} size="sm" className="rounded-xl sm:rounded-2xl shadow-lg border border-slate-700/50">
+                  <div className="h-full flex flex-col">
+                    <div className="pb-3 mb-3 flex-1">
                       <Skeleton className="h-8 w-8 mb-2" />
                       <Skeleton className="h-6 w-24 mb-2" />
                       <Skeleton className="h-4 w-32" />
-                    </CardHeader>
+                    </div>
                     <div className="flex justify-center mt-3">
                       <Skeleton className="h-10 w-full" />
                     </div>
                   </div>
-                </Card>
+                </DashboardCard>
               ))}
             </div>
           ) : Array.isArray(plans) && plans.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {plans.map((plan: any) => (
-                <Card 
+                <DashboardCard 
                   key={plan.id} 
-                  className={`group relative overflow-hidden gradient-card rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30 ${currentPlan?.id === plan.id ? 'border-primary' : ''}`}
-                  data-testid={`card-plan-${plan.id}`}
+                  size="sm"
+                  className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30 ${currentPlan?.id === plan.id ? 'border-primary' : ''}`}
+                  testId={`card-plan-${plan.id}`}
                 >
                   {currentPlan?.id === plan.id && (
                     <div className="absolute -top-2 right-4 z-10">
                       <Badge>Current</Badge>
                     </div>
                   )}
-                  <div className="h-full p-3 sm:p-4 md:p-6 flex flex-col">
-                    <CardHeader className="p-0 flex-1 space-y-2 sm:space-y-3">
+                  <div className="h-full flex flex-col">
+                    <div className="flex-1 space-y-2 sm:space-y-3">
                       <div className="flex items-center space-x-2 sm:space-x-3">
                         <div className="text-primary flex-shrink-0">
                           {planIcons[plan.planName] || <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />}
                         </div>
-                        <CardTitle className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate min-w-0">
+                        <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate min-w-0">
                           {plan.planName}
-                        </CardTitle>
+                        </h3>
                       </div>
-                      <CardDescription className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                      <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
                         ${plan.price}
                         <span className="text-[10px] sm:text-xs">/{plan.interval}</span>
-                      </CardDescription>
-                    </CardHeader>
+                      </p>
+                    </div>
                     
                     <div className="flex justify-center mt-3 sm:mt-4">
                       <Button
@@ -328,24 +328,21 @@ export default function SubscriptionManagement() {
                       </Button>
                     </div>
                   </div>
-                </Card>
+                </DashboardCard>
               ))}
             </div>
           ) : (
             <p className="text-center text-muted-foreground py-4" data-testid="text-no-plans">No subscription plans available</p>
           )}
-        </CardContent>
-      </Card>
+      </DashboardCard>
 
       {/* Payment History */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="w-5 h-5" />
-            Payment History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <DashboardCard 
+        title="Payment History"
+        headerAction={<Receipt className="w-5 h-5" />}
+        className="mb-6"
+        testId="card-payment-history"
+      >
           {transLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -393,18 +390,14 @@ export default function SubscriptionManagement() {
           ) : (
             <p className="text-center text-muted-foreground py-8" data-testid="text-no-transactions">No payment transactions found</p>
           )}
-        </CardContent>
-      </Card>
+      </DashboardCard>
 
       {/* Invoices */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Invoices
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <DashboardCard
+        title="Invoices"
+        headerAction={<Calendar className="w-5 h-5" />}
+        testId="card-invoices"
+      >
           {invoicesLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -437,8 +430,7 @@ export default function SubscriptionManagement() {
           ) : (
             <p className="text-center text-muted-foreground py-8" data-testid="text-no-invoices">No invoices available</p>
           )}
-        </CardContent>
-      </Card>
+      </DashboardCard>
     </PageContainer>
   );
 }

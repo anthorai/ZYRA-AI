@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Search,
   Copy,
@@ -54,31 +55,25 @@ export default function SEOTitlesMeta() {
   });
 
 
-  // Mock SEO generation mutation
   const generateSEOMutation = useMutation({
     mutationFn: async (data: SEOForm) => {
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 2500));
       
       const { productName, targetKeywords, category, primaryBenefit, priceRange } = data;
       
-      // Generate SEO title (max 70 characters)
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
       const primaryKeyword = keywords[0] || productName;
       
       const title = `${productName} ${primaryKeyword ? `- ${primaryKeyword}` : ''} | ${priceRange === 'budget' ? 'Best Price' : priceRange === 'premium' ? 'Premium' : 'Quality'} ${category}`.substring(0, 70);
       
-      // Generate meta description (155-160 characters)
       const metaDescription = `Shop ${productName} ${keywords.length > 0 ? `for ${keywords.slice(0, 2).join(', ')}` : ''}. ${primaryBenefit || 'High-quality product'} with free shipping. ${priceRange === 'budget' ? 'Best prices guaranteed' : priceRange === 'premium' ? 'Premium quality' : 'Great value'}. Order now!`.substring(0, 160);
       
-      // Calculate metrics
       const titleLength = title.length;
       const metaLength = metaDescription.length;
       const keywordDensity = keywords.length > 0 ? 
         (title.toLowerCase().includes(keywords[0].toLowerCase()) ? 1 : 0) +
         (metaDescription.toLowerCase().includes(keywords[0].toLowerCase()) ? 1 : 0) : 0;
       
-      // Calculate SEO score (mock)
       let seoScore = 50;
       if (titleLength >= 50 && titleLength <= 60) seoScore += 20;
       if (metaLength >= 150 && metaLength <= 160) seoScore += 20;
@@ -150,129 +145,131 @@ export default function SEOTitlesMeta() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        {/* SEO Guidelines */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Target className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">SEO Best Practices</h2>
+    <PageShell
+      title="SEO Titles & Meta Descriptions"
+      subtitle="Generate search-optimized titles and meta descriptions for better rankings"
+      backTo="/dashboard"
+    >
+      <div className="space-y-6 sm:space-y-8">
+        <DashboardCard
+          title="SEO Best Practices"
+          description="Guidelines for creating effective SEO titles and meta descriptions"
+          icon={<Target className="w-5 h-5" />}
+          testId="card-best-practices"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+            <div className="space-y-2 min-w-0">
+              <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Title Optimization:</h4>
+              <ul className="text-slate-300 space-y-1">
+                <li>• Keep between 50-60 characters for best results</li>
+                <li>• Include primary keyword near the beginning</li>
+                <li>• Use compelling, clickable language</li>
+                <li>• Include brand name when relevant</li>
+              </ul>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
-              <div className="space-y-2 min-w-0">
-                <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Title Optimization:</h4>
-                <ul className="text-slate-300 space-y-1">
-                  <li>• Keep between 50-60 characters for best results</li>
-                  <li>• Include primary keyword near the beginning</li>
-                  <li>• Use compelling, clickable language</li>
-                  <li>• Include brand name when relevant</li>
-                </ul>
-              </div>
-              <div className="space-y-2 min-w-0">
-                <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Meta Description:</h4>
-                <ul className="text-slate-300 space-y-1">
-                  <li>• Aim for 150-160 characters</li>
-                  <li>• Include call-to-action</li>
-                  <li>• Use 2-3 relevant keywords naturally</li>
-                  <li>• Describe the value proposition clearly</li>
-                </ul>
-              </div>
+            <div className="space-y-2 min-w-0">
+              <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Meta Description:</h4>
+              <ul className="text-slate-300 space-y-1">
+                <li>• Aim for 150-160 characters</li>
+                <li>• Include call-to-action</li>
+                <li>• Use 2-3 relevant keywords naturally</li>
+                <li>• Describe the value proposition clearly</li>
+              </ul>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardCard>
 
-        {/* Generation Form */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Product SEO Information</CardTitle>
-            <CardDescription className="text-slate-300">
-              Provide product details and target keywords for optimized SEO content
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="productName" className="text-white">Product Name *</Label>
-                    <Input
-                      id="productName"
-                      className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                      placeholder="e.g., Wireless Bluetooth Headphones"
-                      {...form.register("productName", { required: true })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="targetKeywords" className="text-white">Target Keywords *</Label>
-                    <Input
-                      id="targetKeywords"
-                      className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                      placeholder="e.g., best wireless headphones, noise canceling"
-                      {...form.register("targetKeywords", { required: true })}
-                    />
-                    <p className="text-xs text-slate-400 mt-1">Separate multiple keywords with commas</p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="category" className="text-white">Category</Label>
-                    <Input
-                      id="category"
-                      className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                      placeholder="e.g., Electronics, Audio"
-                      {...form.register("category")}
-                    />
-                  </div>
+        <DashboardCard
+          title="Product SEO Information"
+          description="Provide product details and target keywords for optimized SEO content"
+          testId="card-seo-form"
+        >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="productName" className="text-white">Product Name *</Label>
+                  <Input
+                    id="productName"
+                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                    placeholder="e.g., Wireless Bluetooth Headphones"
+                    {...form.register("productName", { required: true })}
+                    data-testid="input-product-name"
+                  />
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="primaryBenefit" className="text-white">Primary Benefit</Label>
-                    <Textarea
-                      id="primaryBenefit"
-                      className="mt-2 h-24 resize-none bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                      placeholder="e.g., Crystal clear sound quality with 30-hour battery life"
-                      {...form.register("primaryBenefit")}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="targetKeywords" className="text-white">Target Keywords *</Label>
+                  <Input
+                    id="targetKeywords"
+                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                    placeholder="e.g., best wireless headphones, noise canceling"
+                    {...form.register("targetKeywords", { required: true })}
+                    data-testid="input-keywords"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Separate multiple keywords with commas</p>
+                </div>
 
-                  <div>
-                    <Label htmlFor="priceRange" className="text-white">Price Range</Label>
-                    <select 
-                      {...form.register("priceRange")}
-                      className="mt-2 w-full bg-slate-800/50 border border-slate-600 text-white rounded-md px-3 py-2"
-                    >
-                      <option value="budget">Budget-friendly</option>
-                      <option value="mid-range">Mid-range</option>
-                      <option value="premium">Premium</option>
-                    </select>
-                  </div>
+                <div>
+                  <Label htmlFor="category" className="text-white">Category</Label>
+                  <Input
+                    id="category"
+                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                    placeholder="e.g., Electronics, Audio"
+                    {...form.register("category")}
+                    data-testid="input-category"
+                  />
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full gradient-button transition-all duration-200 font-medium"
-                disabled={generateSEOMutation.isPending}
-              >
-                {generateSEOMutation.isPending ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Optimizing SEO content...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Generate SEO Content
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="primaryBenefit" className="text-white">Primary Benefit</Label>
+                  <Textarea
+                    id="primaryBenefit"
+                    className="mt-2 h-24 resize-none bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                    placeholder="e.g., Crystal clear sound quality with 30-hour battery life"
+                    {...form.register("primaryBenefit")}
+                    data-testid="input-benefit"
+                  />
+                </div>
 
-        {/* Generated Results */}
+                <div>
+                  <Label htmlFor="priceRange" className="text-white">Price Range</Label>
+                  <select 
+                    {...form.register("priceRange")}
+                    className="mt-2 w-full bg-slate-800/50 border border-slate-600 text-white rounded-md px-3 py-2"
+                    data-testid="select-price-range"
+                  >
+                    <option value="budget">Budget-friendly</option>
+                    <option value="mid-range">Mid-range</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full gradient-button transition-all duration-200 font-medium"
+              disabled={generateSEOMutation.isPending}
+              data-testid="button-generate"
+            >
+              {generateSEOMutation.isPending ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Optimizing SEO content...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Generate SEO Content
+                </>
+              )}
+            </Button>
+          </form>
+        </DashboardCard>
+
         {seoResult && (
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
@@ -280,7 +277,6 @@ export default function SEOTitlesMeta() {
               <h2 className="text-2xl font-semibold text-white">Your SEO-Optimized Content</h2>
             </div>
 
-            {/* SEO Score */}
             <Card className={`border-2 ${getScoreBg(seoResult.seoScore)}`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -309,7 +305,6 @@ export default function SEOTitlesMeta() {
               </CardContent>
             </Card>
 
-            {/* SEO Title */}
             <Card className="border-2 border-blue-400/30 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -323,6 +318,7 @@ export default function SEOTitlesMeta() {
                     size="icon"
                     onClick={() => copyToClipboard(seoResult.title, "SEO Title")}
                     className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
+                    data-testid="button-copy-title"
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -335,7 +331,6 @@ export default function SEOTitlesMeta() {
               </CardContent>
             </Card>
 
-            {/* Meta Description */}
             <Card className="border-2 border-purple-400/30 bg-gradient-to-br from-purple-900/20 to-violet-900/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -349,6 +344,7 @@ export default function SEOTitlesMeta() {
                     size="icon"
                     onClick={() => copyToClipboard(seoResult.metaDescription, "Meta Description")}
                     className="text-purple-300 hover:text-purple-200 hover:bg-purple-400/10"
+                    data-testid="button-copy-meta"
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -362,7 +358,7 @@ export default function SEOTitlesMeta() {
             </Card>
           </div>
         )}
-      </PageContainer>
-    </div>
+      </div>
+    </PageShell>
   );
 }

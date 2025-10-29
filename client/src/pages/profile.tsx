@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -319,17 +319,14 @@ export default function ProfilePage() {
 
             {/* Profile Card Tab */}
             <TabsContent value="profile">
-              <Card className="gradient-card hover:shadow-cyan-500/20 transition-all duration-500">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <User className="w-5 h-5 text-primary" />
-                    <span>Profile Information</span>
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Update your personal information and profile image
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+              <DashboardCard
+                title="Profile Information"
+                description="Update your personal information and profile image"
+                headerAction={<User className="w-5 h-5 text-primary" />}
+                testId="card-profile-info"
+                className="hover:shadow-cyan-500/20 transition-all duration-500"
+              >
+                <div className="space-y-6">
                   {/* Profile Image Section */}
                   <div className="flex items-center space-x-6">
                     <div className="relative group">
@@ -440,24 +437,19 @@ export default function ProfilePage() {
                       </div>
                     </form>
                   </Form>
-                </CardContent>
-              </Card>
+                </div>
+              </DashboardCard>
             </TabsContent>
 
 
             {/* Password Tab */}
             <TabsContent value="password">
-              <Card className="gradient-card">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <Lock className="w-5 h-5" />
-                    <span>Change Password</span>
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Update your password to keep your account secure
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              <DashboardCard
+                title="Change Password"
+                description="Update your password to keep your account secure"
+                headerAction={<Lock className="w-5 h-5" />}
+                testId="card-password"
+              >
                   <Form {...passwordForm}>
                     <form 
                       onSubmit={passwordForm.handleSubmit((data) => changePasswordMutation.mutate(data))}
@@ -575,25 +567,19 @@ export default function ProfilePage() {
                       </Button>
                     </form>
                   </Form>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </TabsContent>
 
             {/* Stores Tab */}
             <TabsContent value="stores">
               <div className="space-y-6">
                 {/* Connected Stores */}
-                <Card className="gradient-card">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center space-x-2">
-                      <Store className="w-5 h-5" />
-                      <span>Connected Stores</span>
-                    </CardTitle>
-                    <CardDescription className="text-slate-300">
-                      Manage your connected e-commerce platforms
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+                <DashboardCard
+                  title="Connected Stores"
+                  description="Manage your connected e-commerce platforms"
+                  headerAction={<Store className="w-5 h-5" />}
+                  testId="card-connected-stores"
+                >
                     {storeConnections.length > 0 ? (
                       <div className="space-y-4">
                         {storeConnections.map((store: any) => (
@@ -642,18 +628,14 @@ export default function ProfilePage() {
                         No stores connected yet. Add your first store below.
                       </p>
                     )}
-                  </CardContent>
-                </Card>
+                </DashboardCard>
 
                 {/* Connect New Store */}
-                <Card className="gradient-card">
-                  <CardHeader>
-                    <CardTitle className="text-white">Connect New Store</CardTitle>
-                    <CardDescription className="text-slate-300">
-                      Add a new Shopify or WooCommerce store to sync with Zyra AI
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+                <DashboardCard
+                  title="Connect New Store"
+                  description="Add a new Shopify or WooCommerce store to sync with Zyra AI"
+                  testId="card-connect-store"
+                >
                     <Form {...storeForm}>
                       <form 
                         onSubmit={storeForm.handleSubmit((data) => connectStoreMutation.mutate(data))}
@@ -746,24 +728,18 @@ export default function ProfilePage() {
                         </Button>
                       </form>
                     </Form>
-                  </CardContent>
-                </Card>
+                </DashboardCard>
               </div>
             </TabsContent>
 
             {/* Language Tab */}
             <TabsContent value="language">
-              <Card className="gradient-card">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <Globe className="w-5 h-5" />
-                    <span>Language Preferences</span>
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Choose your preferred language for the interface
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              <DashboardCard
+                title="Language Preferences"
+                description="Choose your preferred language for the interface"
+                headerAction={<Globe className="w-5 h-5" />}
+                testId="card-language"
+              >
                   <div className="space-y-4">
                     <Label className="text-white">Preferred Language</Label>
                     <Select
@@ -785,8 +761,7 @@ export default function ProfilePage() {
                       <p className="text-slate-400 text-sm">Updating language preference...</p>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </TabsContent>
             </Tabs>
           )}

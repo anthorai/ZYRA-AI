@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   RefreshCw,
   CheckCircle,
@@ -190,15 +191,16 @@ export default function ScheduledRefresh() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        {/* Benefits Overview */}
-        <Card className="gradient-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Calendar className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Why Schedule Content Refresh?</h2>
-            </div>
+    <PageShell
+      title="Scheduled Refresh"
+      subtitle="Automatically update product content with seasonal trends and fresh keywords"
+      backTo="/dashboard"
+    >
+      {/* Benefits Overview */}
+      <DashboardCard
+        title="Why Schedule Content Refresh?"
+        description="Keep your content fresh and relevant with automated, recurring updates"
+      >
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-full bg-green-400/20 text-green-400 flex items-center justify-center">
@@ -219,18 +221,13 @@ export default function ScheduledRefresh() {
                 <span className="text-slate-300">Maintain search ranking positions</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Active Schedules */}
-        <Card className="gradient-card">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Active Refresh Schedules</CardTitle>
-            <CardDescription className="text-slate-300">
-              Manage your automated content refresh schedules
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Active Schedules */}
+      <DashboardCard
+        title="Active Refresh Schedules"
+        description="Manage your automated content refresh schedules"
+      >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {schedules.map((schedule) => (
                 <Card key={schedule.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl">
@@ -291,21 +288,16 @@ export default function ScheduledRefresh() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
+                </DashboardCard>
               ))}
             </div>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Create New Schedule */}
-        <Card className="gradient-card">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Create New Schedule</CardTitle>
-            <CardDescription className="text-slate-300">
-              Set up automatic content refresh for your products
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Create New Schedule */}
+      <DashboardCard
+        title="Create New Schedule"
+        description="Set up automatic content refresh for your products"
+      >
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -388,15 +380,12 @@ export default function ScheduledRefresh() {
                 )}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Refresh History */}
-        <Card className="gradient-card">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
+      {/* Refresh History */}
+      <DashboardCard
+        title="Recent Activity"
+      >
             <div className="space-y-4">
               <div className="flex items-center space-x-4 p-4 bg-slate-800/30 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-green-400" />
@@ -425,9 +414,7 @@ export default function ScheduledRefresh() {
                 <div className="text-sm text-slate-400">3 days ago</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </PageContainer>
-    </div>
+      </DashboardCard>
+    </PageShell>
   );
 }

@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Brain,
   Upload,
@@ -228,15 +229,16 @@ export default function BrandVoiceMemory() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        {/* Learning Process */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Brain className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">How Zyra AI Learns Your Voice</h2>
-            </div>
+    <PageShell
+      title="Brand Voice Memory"
+      subtitle="Teach Zyra AI your brand's unique voice and tone to maintain consistency across all content"
+      backTo="/dashboard"
+    >
+      {/* Learning Process */}
+      <DashboardCard
+        title="How Zyra AI Learns Your Voice"
+        description="AI analyzes your brand guidelines and sample content to understand and replicate your unique voice"
+      >
             <div className="grid md:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
@@ -255,18 +257,13 @@ export default function BrandVoiceMemory() {
                 <span className="text-slate-300">Apply consistently across all content</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Brand Information Form */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Teach Zyra AI Your Brand Voice</CardTitle>
-            <CardDescription className="text-slate-300">
-              Provide your brand information and sample content for AI analysis
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      {/* Brand Information Form */}
+      <DashboardCard
+        title="Teach Zyra AI Your Brand Voice"
+        description="Provide your brand information and sample content for AI analysis"
+      >
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -371,12 +368,11 @@ export default function BrandVoiceMemory() {
                 )}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Brand Analysis Results */}
-        {brandAnalysis && (
-          <div className="space-y-6">
+      {/* Brand Analysis Results */}
+      {brandAnalysis && (
+        <div className="space-y-6">
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-400" />
               <h2 className="text-2xl font-semibold text-white">Brand Voice Analysis</h2>
@@ -429,8 +425,7 @@ export default function BrandVoiceMemory() {
 
             {/* Voice Guidelines */}
             <div className="grid md:grid-cols-2 gap-6">
-              <Card className="border-2 border-green-400/30 bg-gradient-to-br from-green-900/20 to-emerald-900/20">
-                <CardContent className="p-6">
+              <DashboardCard className="border-2 border-green-400/30 bg-gradient-to-br from-green-900/20 to-emerald-900/20">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
                     Do's
@@ -443,11 +438,9 @@ export default function BrandVoiceMemory() {
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-              </Card>
+              </DashboardCard>
 
-              <Card className="border-2 border-red-400/30 bg-gradient-to-br from-red-900/20 to-rose-900/20">
-                <CardContent className="p-6">
+              <DashboardCard className="border-2 border-red-400/30 bg-gradient-to-br from-red-900/20 to-rose-900/20">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <X className="w-5 h-5 text-red-400 mr-2" />
                     Don'ts
@@ -460,19 +453,14 @@ export default function BrandVoiceMemory() {
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </div>
 
             {/* Generate Content */}
-            <Card className="border-0 gradient-card rounded-xl">
-              <CardHeader>
-                <CardTitle className="text-2xl text-white">Test Your Brand Voice</CardTitle>
-                <CardDescription className="text-slate-300">
-                  Generate sample content using your learned brand voice
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+            <DashboardCard
+              title="Test Your Brand Voice"
+              description="Generate sample content using your learned brand voice"
+            >
                 <div className="grid md:grid-cols-3 gap-4">
                   <Button
                     onClick={() => generateContentMutation.mutate('description')}
@@ -499,8 +487,7 @@ export default function BrandVoiceMemory() {
                     <span>SMS Copy</span>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+            </DashboardCard>
 
             {/* Generated Content */}
             {generatedContent.length > 0 && (
@@ -527,14 +514,12 @@ export default function BrandVoiceMemory() {
                           {content.content}
                         </pre>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </DashboardCard>
                 ))}
               </div>
             )}
           </div>
         )}
-      </PageContainer>
-    </div>
+    </PageShell>
   );
 }

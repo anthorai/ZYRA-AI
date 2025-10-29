@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DashboardCard } from '@/components/ui/dashboard-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -54,7 +54,11 @@ function ProductCard({
   const [imageError, setImageError] = useState(false);
 
   return (
-    <Card className="group relative overflow-hidden gradient-card rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30">
+    <DashboardCard 
+      size="sm"
+      className="group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30"
+      testId={`card-product-${product.id}`}
+    >
       {canBeSelected && (
         <div className="absolute top-2 left-2 z-10">
           <Checkbox
@@ -65,8 +69,8 @@ function ProductCard({
         </div>
       )}
       
-      <div className="h-full p-3 sm:p-4 md:p-6 flex flex-col">
-        <CardHeader className="p-0 flex-1 space-y-2 sm:space-y-3">
+      <div className="h-full flex flex-col">
+        <div className="flex-1 space-y-2 sm:space-y-3">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
               <div className="text-primary flex-shrink-0">
@@ -88,9 +92,9 @@ function ProductCard({
                   <Package className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
                 )}
               </div>
-              <CardTitle className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate">
+              <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate">
                 {product.name}
-              </CardTitle>
+              </h3>
             </div>
             {product.isOptimized && (
               <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full hover:bg-green-500 flex-shrink-0 ml-2">
@@ -100,9 +104,9 @@ function ProductCard({
             )}
           </div>
           
-          <CardDescription className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-3">
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-3">
             {product.description || 'No description'}
-          </CardDescription>
+          </p>
 
           <div className="space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between text-xs sm:text-sm">
@@ -128,7 +132,7 @@ function ProductCard({
               )}
             </div>
           </div>
-        </CardHeader>
+        </div>
         
         <div className="flex justify-center mt-3 sm:mt-4">
           {product.shopifyId && product.isOptimized ? (
@@ -160,7 +164,7 @@ function ProductCard({
           )}
         </div>
       </div>
-    </Card>
+    </DashboardCard>
   );
 }
 
@@ -367,27 +371,27 @@ export default function ManageProducts() {
 
       {/* Compact Stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Card className="gradient-card border-slate-700/50">
-          <CardHeader className="p-3 sm:p-4">
-            <CardDescription className="text-slate-400 text-xs">Total</CardDescription>
-            <CardTitle className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-total-products">{products?.length || 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="gradient-card border-slate-700/50">
-          <CardHeader className="p-3 sm:p-4">
-            <CardDescription className="text-slate-400 text-xs">Synced</CardDescription>
-            <CardTitle className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-synced-products">{shopifyProducts?.length || 0}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="gradient-card border-slate-700/50">
-          <CardHeader className="p-3 sm:p-4">
-            <CardDescription className="text-slate-400 text-xs flex items-center gap-1">
+        <DashboardCard size="sm" className="border-slate-700/50" testId="stat-card-total">
+          <div className="p-3 sm:p-4">
+            <p className="text-slate-400 text-xs">Total</p>
+            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-total-products">{products?.length || 0}</p>
+          </div>
+        </DashboardCard>
+        <DashboardCard size="sm" className="border-slate-700/50" testId="stat-card-synced">
+          <div className="p-3 sm:p-4">
+            <p className="text-slate-400 text-xs">Synced</p>
+            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-synced-products">{shopifyProducts?.length || 0}</p>
+          </div>
+        </DashboardCard>
+        <DashboardCard size="sm" className="border-slate-700/50" testId="stat-card-ai">
+          <div className="p-3 sm:p-4">
+            <p className="text-slate-400 text-xs flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-primary" />
               AI
-            </CardDescription>
-            <CardTitle className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-optimized-products">{allOptimizedProducts?.length || 0}</CardTitle>
-          </CardHeader>
-        </Card>
+            </p>
+            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-optimized-products">{allOptimizedProducts?.length || 0}</p>
+          </div>
+        </DashboardCard>
       </div>
 
       {/* Select All */}
@@ -423,15 +427,15 @@ export default function ManageProducts() {
       </CardGrid>
 
       {filteredProducts?.length === 0 && (
-        <Card className="gradient-card p-12">
-          <div className="text-center space-y-3">
+        <DashboardCard testId="card-no-products">
+          <div className="text-center space-y-3 py-8">
             <Package className="w-16 h-16 mx-auto text-muted-foreground" />
             <h3 className="text-xl font-semibold">No Products Found</h3>
             <p className="text-muted-foreground">
               {searchQuery ? 'Try a different search term' : 'Sync products from Shopify to get started'}
             </p>
           </div>
-        </Card>
+        </DashboardCard>
       )}
 
       {/* Publish Dialog */}

@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   FlaskConical,
   Copy,
@@ -260,15 +261,16 @@ export default function ABTestingCopy() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        {/* A/B Testing Overview */}
-        <Card className="gradient-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <FlaskConical className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">Scientific A/B Testing</h2>
-            </div>
+    <PageShell
+      title="A/B Testing Copy"
+      subtitle="Generate and test multiple copy variations to maximize conversions"
+      backTo="/dashboard"
+    >
+      {/* A/B Testing Overview */}
+      <DashboardCard
+        title="Scientific A/B Testing"
+        description="Systematically test copy variations to find the best performing content"
+      >
             <div className="grid md:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
@@ -287,19 +289,14 @@ export default function ABTestingCopy() {
                 <span className="text-slate-300">Auto-select best performer</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Test Setup Form */}
-        {!testResults && (
-          <Card className="gradient-card">
-            <CardHeader>
-              <CardTitle className="text-2xl text-white">Create A/B Test</CardTitle>
-              <CardDescription className="text-slate-300">
-                Set up your A/B test to find the highest-converting product description
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+      {/* Test Setup Form */}
+      {!testResults && (
+        <DashboardCard
+          title="Create A/B Test"
+          description="Set up your A/B test to find the highest-converting product description"
+        >
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -363,16 +360,14 @@ export default function ABTestingCopy() {
                   )}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-        )}
+        </DashboardCard>
+      )}
 
-        {/* Test Results */}
-        {testResults && (
-          <div className="space-y-6">
-            {/* Test Progress */}
-            <Card className="gradient-card">
-              <CardContent className="p-6">
+      {/* Test Results */}
+      {testResults && (
+        <div className="space-y-6">
+          {/* Test Progress */}
+          <DashboardCard>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-semibold text-white">{testResults.testName}</h2>
                   <div className="flex items-center space-x-2">
@@ -412,13 +407,12 @@ export default function ABTestingCopy() {
                     <Progress value={testProgress} className="h-2" />
                   </div>
                 )}
-              </CardContent>
-            </Card>
+          </DashboardCard>
 
-            {/* Variants Performance */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              {testResults.variants.map((variant, index) => (
-                <Card 
+          {/* Variants Performance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            {testResults.variants.map((variant, index) => (
+              <DashboardCard 
                   key={variant.id} 
                   className={`shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl ${
                     variant.isWinner 
@@ -494,14 +488,12 @@ export default function ABTestingCopy() {
                         <div className="text-slate-300">Conv. Rate</div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+              </DashboardCard>
+            ))}
+          </div>
 
-            {/* Recommendation */}
-            <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-foreground/20">
-              <CardContent className="p-6">
+          {/* Recommendation */}
+          <DashboardCard className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-foreground/20">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-semibold text-white flex items-center">
                     <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
@@ -525,11 +517,9 @@ export default function ABTestingCopy() {
                     ✅ Results are statistically significant at {testResults.significance.toFixed(0)}% confidence level
                   </p>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </PageContainer>
-    </div>
+          </DashboardCard>
+        </div>
+      )}
+    </PageShell>
   );
 }

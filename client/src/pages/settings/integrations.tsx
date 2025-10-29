@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -761,38 +761,42 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Connected Summary */}
-      <Card className="gradient-card border-0 bg-primary/10">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Link2 className="w-6 h-6 text-primary" />
-              <div>
-                <h3 className="text-white font-semibold text-lg">
-                  {integrations.filter(i => i.isConnected).length} Active Integrations
-                </h3>
-                <p className="text-slate-400 text-sm">
-                  {integrations.filter(i => !i.isConnected).length} more available to connect
-                </p>
-              </div>
+      <DashboardCard 
+        className="bg-primary/10"
+        testId="card-integration-summary"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Link2 className="w-6 h-6 text-primary" />
+            <div>
+              <h3 className="text-white font-semibold text-lg">
+                {integrations.filter(i => i.isConnected).length} Active Integrations
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {integrations.filter(i => !i.isConnected).length} more available to connect
+              </p>
             </div>
-            <Button
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary/20"
-              data-testid="button-add-integration"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add New
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+          <Button
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary/20"
+            data-testid="button-add-integration"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New
+          </Button>
+        </div>
+      </DashboardCard>
 
       {/* Integrations List */}
       <TooltipProvider>
         <div className="space-y-4">
           {integrations.map((integration) => (
-            <Card key={integration.id} className="gradient-card border-0 relative">
-              <CardContent className="p-6">
+            <DashboardCard 
+              key={integration.id} 
+              className="relative"
+              testId={`card-integration-${integration.id}`}
+            >
                 {/* Shopify Setup Guide Button - Top Right Corner */}
                 {integration.id === 'shopify' && (
                   <Button
@@ -1013,8 +1017,7 @@ export default function IntegrationsPage() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </DashboardCard>
         ))}
         </div>
       </TooltipProvider>

@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   RotateCcw, 
@@ -147,53 +147,52 @@ export default function RollbackChanges() {
   // Error State
   if (isError) {
     return (
-      <div className="min-h-screen dark-theme-bg">
-        <PageContainer>
-          <Card className="border-0 gradient-card rounded-xl" data-testid="error-state">
-            <CardContent className="p-8 text-center">
-              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Failed to Load Version History</h3>
-              <p className="text-red-400 mb-4">Please try again.</p>
-              <Button 
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/products/history'] })}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                data-testid="button-retry"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        </PageContainer>
-      </div>
+      <PageShell
+        title="Rollback Changes"
+        subtitle="View and restore previous versions of your product data"
+        backTo="/dashboard"
+      >
+        <DashboardCard testId="error-state">
+          <div className="p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Failed to Load Version History</h3>
+            <p className="text-red-400 mb-4">Please try again.</p>
+            <Button 
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/products/history'] })}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              data-testid="button-retry"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </DashboardCard>
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen dark-theme-bg">
-      <PageContainer>
-        {/* Summary & Bulk Actions */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl text-white">Version History</CardTitle>
-                <CardDescription className="text-slate-300">
-                  View and rollback recent changes to ensure data safety
-                </CardDescription>
-              </div>
-              <Button
-                onClick={handleBulkRollback}
-                disabled={isLoading || rollbackableCount === 0 || rollbackMutation.isPending}
-                className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
-                data-testid="button-bulk-rollback"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Rollback All Recent
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
+    <PageShell
+      title="Rollback Changes"
+      subtitle="View and restore previous versions of your product data"
+      backTo="/dashboard"
+    >
+      {/* Summary & Bulk Actions */}
+      <DashboardCard
+        title="Version History"
+        description="View and rollback recent changes to ensure data safety"
+        headerAction={
+          <Button
+            onClick={handleBulkRollback}
+            disabled={isLoading || rollbackableCount === 0 || rollbackMutation.isPending}
+            className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
+            data-testid="button-bulk-rollback"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Rollback All Recent
+          </Button>
+        }
+      >
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {[...Array(4)].map((_, i) => (
@@ -223,64 +222,59 @@ export default function RollbackChanges() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+      </DashboardCard>
 
-        {/* Version History List */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-white">Recent Changes</h2>
-          
-          {/* Loading State */}
-          {isLoading && (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="border-0 gradient-card rounded-xl">
-                  <CardHeader>
-                    <div className="space-y-3">
-                      <Skeleton className="h-6 w-1/3" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-24 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!isLoading && versionHistory.length === 0 && (
-            <Card className="border-0 gradient-card rounded-xl" data-testid="empty-state">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="rounded-full bg-slate-800/50 p-6 mb-4">
-                  <Inbox className="w-16 h-16 text-slate-400" />
+      {/* Version History List */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-white">Recent Changes</h2>
+        
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <DashboardCard key={i}>
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-1/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-24 w-full" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">No Version History</h3>
-                <p className="text-slate-400 text-center max-w-md">
-                  Your product changes will appear here once you start optimizing or making updates.
-                  All changes are automatically tracked for easy rollback.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+              </DashboardCard>
+            ))}
+          </div>
+        )}
 
-          {/* Version History Items */}
-          {!isLoading && versionHistory.map((version) => (
-            <Card key={version.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2 min-w-0 flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        {getChangeTypeIcon(version.changeType)}
-                      </div>
-                      <CardTitle className="text-base sm:text-lg md:text-xl text-white truncate min-w-0">{version.productName}</CardTitle>
-                      <Badge className={getChangeTypeColor(version.changeType)}>
-                        {version.changeType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </Badge>
+        {/* Empty State */}
+        {!isLoading && versionHistory.length === 0 && (
+          <DashboardCard testId="empty-state">
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="rounded-full bg-slate-800/50 p-6 mb-4">
+                <Inbox className="w-16 h-16 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">No Version History</h3>
+              <p className="text-slate-400 text-center max-w-md">
+                Your product changes will appear here once you start optimizing or making updates.
+                All changes are automatically tracked for easy rollback.
+              </p>
+            </div>
+          </DashboardCard>
+        )}
+
+        {/* Version History Items */}
+        {!isLoading && versionHistory.map((version) => (
+          <DashboardCard key={version.id}>
+            <div className="space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex-shrink-0">
+                      {getChangeTypeIcon(version.changeType)}
                     </div>
-                    <div className="flex items-center space-x-4 text-[10px] sm:text-xs md:text-sm text-slate-400">
+                    <h3 className="text-base sm:text-lg md:text-xl text-white truncate min-w-0">{version.productName}</h3>
+                    <Badge className={getChangeTypeColor(version.changeType)}>
+                      {version.changeType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center space-x-4 text-[10px] sm:text-xs md:text-sm text-slate-400">
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
                         <span className="truncate" data-testid={`date-${version.id}`}>
@@ -291,42 +285,40 @@ export default function RollbackChanges() {
                         <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
                         <span className="truncate" data-testid={`changed-by-${version.id}`}>by {version.changedBy}</span>
                       </div>
-                      <Badge variant="outline" className="text-xs" data-testid={`changes-count-${version.id}`}>
-                        {version.changes.length} changes
-                      </Badge>
-                    </div>
+                    <Badge variant="outline" className="text-xs" data-testid={`changes-count-${version.id}`}>
+                      {version.changes.length} changes
+                    </Badge>
                   </div>
-                  {version.canRollback ? (
-                    <Button
-                      onClick={() => handleRollback(version.id)}
-                      disabled={rollbackMutation.isPending}
-                      className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
-                      data-testid={`button-rollback-${version.id}`}
-                    >
-                      {rollbackMutation.isPending ? (
-                        <>
-                          <Clock className="w-4 h-4 mr-2 animate-spin" />
-                          Rolling Back...
-                        </>
-                      ) : (
-                        <>
-                          <RotateCcw className="w-4 h-4 mr-2" />
-                          Rollback
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <div className="flex items-center space-x-2 text-slate-400">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span className="text-sm">Cannot rollback</span>
-                    </div>
-                  )}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4 p-3 sm:p-4 md:p-6">
-                <h4 className="text-slate-300 font-medium">Before vs After Comparison</h4>
-                {version.changes.map((change, idx) => (
-                  <div key={idx} className="grid md:grid-cols-2 gap-6 p-4 bg-slate-800/30 rounded-lg">
+                {version.canRollback ? (
+                  <Button
+                    onClick={() => handleRollback(version.id)}
+                    disabled={rollbackMutation.isPending}
+                    className="bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
+                    data-testid={`button-rollback-${version.id}`}
+                  >
+                    {rollbackMutation.isPending ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        Rolling Back...
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Rollback
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="flex items-center space-x-2 text-slate-400">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-sm">Cannot rollback</span>
+                  </div>
+                )}
+              </div>
+              <h4 className="text-slate-300 font-medium">Before vs After Comparison</h4>
+              {version.changes.map((change, idx) => (
+                <div key={idx} className="grid md:grid-cols-2 gap-6 p-4 bg-slate-800/30 rounded-lg">
                     <div>
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="text-red-300 font-medium text-sm">{change.field} - Before</span>
@@ -343,29 +335,26 @@ export default function RollbackChanges() {
                         <p className="text-slate-300 text-sm">{change.after}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Safety Information */}
-        <Card className="border-0 bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-400/20">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-4">
-              <Shield className="w-6 h-6 text-green-400 mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="text-white font-semibold mb-2">Safety & Data Protection</h3>
-                <p className="text-slate-300 text-sm">
-                  All changes are automatically versioned and stored for 30 days. Rollbacks are instant and preserve 
-                  your data integrity. Critical system changes (like pricing sync) cannot be rolled back for security reasons.
-                </p>
-              </div>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      </PageContainer>
-    </div>
+          </DashboardCard>
+        ))}
+      </div>
+
+      {/* Safety Information */}
+      <DashboardCard className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-400/20">
+        <div className="flex items-start space-x-4">
+          <Shield className="w-6 h-6 text-green-400 mt-1 flex-shrink-0" />
+          <div>
+            <h3 className="text-white font-semibold mb-2">Safety & Data Protection</h3>
+            <p className="text-slate-300 text-sm">
+              All changes are automatically versioned and stored for 30 days. Rollbacks are instant and preserve 
+              your data integrity. Critical system changes (like pricing sync) cannot be rolled back for security reasons.
+            </p>
+          </div>
+        </div>
+      </DashboardCard>
+    </PageShell>
   );
 }

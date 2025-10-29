@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Zap, 
   Copy, 
@@ -59,15 +60,12 @@ export default function SmartProductDescriptions() {
   });
 
 
-  // Real AI generation mutation using the new prompt template system
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateForm) => {
       const { productName, category, features, audience, shortInput, targetKeywords } = data;
       
-      // Prepare the full context for AI generation
       const fullFeatures = [features, shortInput].filter(Boolean).join('. ');
       
-      // Generate descriptions for each brand voice using the new template system
       const promises = ['sales', 'seo', 'casual'].map(async (brandVoice) => {
         const response = await apiRequest("POST", "/api/generate-description", {
           productName,
@@ -76,7 +74,7 @@ export default function SmartProductDescriptions() {
           audience,
           brandVoice,
           keywords: targetKeywords,
-          specs: shortInput // Use shortInput as specs for professional voice
+          specs: shortInput
         });
         
         const result = await response.json();
@@ -85,7 +83,6 @@ export default function SmartProductDescriptions() {
       
       const results = await Promise.all(promises);
       
-      // Transform results into the expected format
       const generatedResults: GeneratedResult = {};
       results.forEach(({ brandVoice, description }) => {
         if (brandVoice === 'sales') generatedResults.sales = description;
@@ -140,7 +137,6 @@ export default function SmartProductDescriptions() {
   };
 
   const saveToProducts = (text: string, type: string) => {
-    // Simulate saving to Supabase products table
     toast({
       title: "Saved!",
       description: `${type} description saved to your products database.`,
@@ -154,152 +150,153 @@ export default function SmartProductDescriptions() {
   ];
 
   return (
-    <div>
-      <PageContainer>
-        {/* Process Overview */}
-        <Card className="gradient-card border-0 rounded-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-white">How Zyra AI Works</h2>
+    <PageShell
+      title="Smart Product Descriptions"
+      subtitle="Generate compelling product descriptions in multiple brand voices using AI"
+      backTo="/dashboard"
+    >
+      <div className="space-y-6 sm:space-y-8">
+        <DashboardCard
+          title="How Zyra AI Works"
+          description="Three simple steps to generate professional product descriptions"
+          icon={<Sparkles className="w-5 h-5" />}
+          testId="card-how-it-works"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
+              <span className="text-slate-300 truncate">Enter product details & target keywords</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
-                <span className="text-slate-300 truncate">Enter product details & target keywords</span>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">2</div>
-                <span className="text-slate-300 truncate">AI generates 3 style variations</span>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">3</div>
-                <span className="text-slate-300 truncate">Copy or save to your products</span>
-              </div>
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">2</div>
+              <span className="text-slate-300 truncate">AI generates 3 style variations</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">3</div>
+              <span className="text-slate-300 truncate">Copy or save to your products</span>
+            </div>
+          </div>
+        </DashboardCard>
 
-        {/* Generation Form */}
-        <Card className="gradient-card">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Product Information</CardTitle>
-            <CardDescription className="text-slate-300">
-              Provide details about your product for AI-powered description generation
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="productName" className="text-white">Product Name *</Label>
-                    <Input
-                      id="productName"
-                      className="mt-2 form-input text-white placeholder:text-slate-400"
-                      placeholder="e.g., Wireless Bluetooth Headphones"
-                      {...form.register("productName", { required: true })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="category" className="text-white">Product Category</Label>
-                    <Select 
-                      value={form.watch("category")} 
-                      onValueChange={(value) => form.setValue("category", value)}
-                    >
-                      <SelectTrigger className="mt-2 form-select text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="gradient-surface">
-                        <SelectItem value="Electronics">Electronics</SelectItem>
-                        <SelectItem value="Clothing & Accessories">Clothing & Accessories</SelectItem>
-                        <SelectItem value="Home & Garden">Home & Garden</SelectItem>
-                        <SelectItem value="Sports & Outdoors">Sports & Outdoors</SelectItem>
-                        <SelectItem value="Beauty & Health">Beauty & Health</SelectItem>
-                        <SelectItem value="Books & Media">Books & Media</SelectItem>
-                        <SelectItem value="Toys & Games">Toys & Games</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="audience" className="text-white">Target Audience</Label>
-                    <Select 
-                      value={form.watch("audience")} 
-                      onValueChange={(value) => form.setValue("audience", value)}
-                    >
-                      <SelectTrigger className="mt-2 form-select text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="gradient-surface">
-                        <SelectItem value="General consumers">General consumers</SelectItem>
-                        <SelectItem value="Tech enthusiasts">Tech enthusiasts</SelectItem>
-                        <SelectItem value="Business professionals">Business professionals</SelectItem>
-                        <SelectItem value="Athletes & fitness enthusiasts">Athletes & fitness enthusiasts</SelectItem>
-                        <SelectItem value="Students">Students</SelectItem>
-                        <SelectItem value="Parents & families">Parents & families</SelectItem>
-                        <SelectItem value="Creative professionals">Creative professionals</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+        <DashboardCard
+          title="Product Information"
+          description="Provide details about your product for AI-powered description generation"
+          testId="card-product-info"
+        >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="productName" className="text-white">Product Name *</Label>
+                  <Input
+                    id="productName"
+                    className="mt-2 form-input text-white placeholder:text-slate-400"
+                    placeholder="e.g., Wireless Bluetooth Headphones"
+                    {...form.register("productName", { required: true })}
+                    data-testid="input-product-name"
+                  />
                 </div>
 
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="features" className="text-white">Key Features (comma-separated)</Label>
-                    <Textarea
-                      id="features"
-                      className="mt-2 h-24 resize-none form-textarea text-white placeholder:text-slate-400"
-                      placeholder="e.g., Noise cancelling, 30-hour battery, wireless charging"
-                      {...form.register("features")}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="category" className="text-white">Product Category</Label>
+                  <Select 
+                    value={form.watch("category")} 
+                    onValueChange={(value) => form.setValue("category", value)}
+                  >
+                    <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="gradient-surface">
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Clothing & Accessories">Clothing & Accessories</SelectItem>
+                      <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                      <SelectItem value="Sports & Outdoors">Sports & Outdoors</SelectItem>
+                      <SelectItem value="Beauty & Health">Beauty & Health</SelectItem>
+                      <SelectItem value="Books & Media">Books & Media</SelectItem>
+                      <SelectItem value="Toys & Games">Toys & Games</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div>
-                    <Label htmlFor="targetKeywords" className="text-white">Target Keywords (for SEO)</Label>
-                    <Input
-                      id="targetKeywords"
-                      className="mt-2 form-input text-white placeholder:text-slate-400"
-                      placeholder="e.g., best wireless headphones, noise canceling"
-                      {...form.register("targetKeywords")}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="shortInput" className="text-white">Additional Context (Optional)</Label>
-                    <Textarea
-                      id="shortInput"
-                      className="mt-2 h-24 resize-none form-textarea text-white placeholder:text-slate-400"
-                      placeholder="Any specific details, benefits, or unique selling points"
-                      {...form.register("shortInput")}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="audience" className="text-white">Target Audience</Label>
+                  <Select 
+                    value={form.watch("audience")} 
+                    onValueChange={(value) => form.setValue("audience", value)}
+                  >
+                    <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="gradient-surface">
+                      <SelectItem value="General consumers">General consumers</SelectItem>
+                      <SelectItem value="Tech enthusiasts">Tech enthusiasts</SelectItem>
+                      <SelectItem value="Business professionals">Business professionals</SelectItem>
+                      <SelectItem value="Athletes & fitness enthusiasts">Athletes & fitness enthusiasts</SelectItem>
+                      <SelectItem value="Students">Students</SelectItem>
+                      <SelectItem value="Parents & families">Parents & families</SelectItem>
+                      <SelectItem value="Creative professionals">Creative professionals</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full gradient-button"
-                disabled={generateMutation.isPending}
-              >
-                {generateMutation.isPending ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Zyra AI is working her magic...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Generate 3 Styles
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="features" className="text-white">Key Features (comma-separated)</Label>
+                  <Textarea
+                    id="features"
+                    className="mt-2 h-24 resize-none form-textarea text-white placeholder:text-slate-400"
+                    placeholder="e.g., Noise cancelling, 30-hour battery, wireless charging"
+                    {...form.register("features")}
+                    data-testid="input-features"
+                  />
+                </div>
 
-        {/* Generated Results */}
+                <div>
+                  <Label htmlFor="targetKeywords" className="text-white">Target Keywords (for SEO)</Label>
+                  <Input
+                    id="targetKeywords"
+                    className="mt-2 form-input text-white placeholder:text-slate-400"
+                    placeholder="e.g., best wireless headphones, noise canceling"
+                    {...form.register("targetKeywords")}
+                    data-testid="input-keywords"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="shortInput" className="text-white">Additional Context (Optional)</Label>
+                  <Textarea
+                    id="shortInput"
+                    className="mt-2 h-24 resize-none form-textarea text-white placeholder:text-slate-400"
+                    placeholder="Any specific details, benefits, or unique selling points"
+                    {...form.register("shortInput")}
+                    data-testid="input-context"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full gradient-button"
+              disabled={generateMutation.isPending}
+              data-testid="button-generate"
+            >
+              {generateMutation.isPending ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Zyra AI is working her magic...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Generate 3 Styles
+                </>
+              )}
+            </Button>
+          </form>
+        </DashboardCard>
+
         {Object.keys(generatedResults).length > 0 && (
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
@@ -322,12 +319,14 @@ export default function SmartProductDescriptions() {
                         size="icon"
                         onClick={() => copyToClipboard(generatedResults.sales!, "Sales")}
                         className="text-green-300 hover:text-green-200 hover:bg-green-400/10"
+                        data-testid="button-copy-sales"
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
                       <Button 
                         onClick={() => saveToProducts(generatedResults.sales!, "Sales")}
                         className="bg-green-500 hover:bg-green-600 text-white"
+                        data-testid="button-save-sales"
                       >
                         Save to Products
                       </Button>
@@ -357,12 +356,14 @@ export default function SmartProductDescriptions() {
                         size="icon"
                         onClick={() => copyToClipboard(generatedResults.seo!, "SEO")}
                         className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
+                        data-testid="button-copy-seo"
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
                       <Button 
                         onClick={() => saveToProducts(generatedResults.seo!, "SEO")}
                         className="bg-blue-500 hover:bg-blue-600 text-white"
+                        data-testid="button-save-seo"
                       >
                         Save to Products
                       </Button>
@@ -392,12 +393,14 @@ export default function SmartProductDescriptions() {
                         size="icon"
                         onClick={() => copyToClipboard(generatedResults.casual!, "Casual")}
                         className="text-pink-300 hover:text-pink-200 hover:bg-pink-400/10"
+                        data-testid="button-copy-casual"
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
                       <Button 
                         onClick={() => saveToProducts(generatedResults.casual!, "Casual")}
                         className="bg-pink-500 hover:bg-pink-600 text-white"
+                        data-testid="button-save-casual"
                       >
                         Save to Products
                       </Button>
@@ -413,7 +416,7 @@ export default function SmartProductDescriptions() {
             )}
           </div>
         )}
-      </PageContainer>
-    </div>
+      </div>
+    </PageShell>
   );
 }

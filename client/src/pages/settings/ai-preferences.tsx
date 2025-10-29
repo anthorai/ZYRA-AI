@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,17 +45,13 @@ export default function AIPreferencesPage() {
       </div>
 
       {/* Brand Voice Selection */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Brand Voice & Tone</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Select the default voice that best matches your brand personality
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Brand Voice & Tone"
+        description="Select the default voice that best matches your brand personality"
+        headerAction={<Sparkles className="w-5 h-5 text-primary" />}
+        testId="card-brand-voice"
+      >
+        <div className="space-y-4">
           <div className="space-y-3">
             <Label htmlFor="brand-voice" className="text-white">Default Brand Voice</Label>
             <Select value={brandVoice} onValueChange={setBrandVoice}>
@@ -111,21 +107,17 @@ export default function AIPreferencesPage() {
             </div>
             <p className="text-xs text-slate-500">Current: {creativity[0]}%</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Automation Settings */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Zap className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Automation Settings</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Configure automatic content generation and optimization features
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <DashboardCard
+        title="Automation Settings"
+        description="Configure automatic content generation and optimization features"
+        headerAction={<Zap className="w-5 h-5 text-primary" />}
+        testId="card-automation"
+      >
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label className="text-white font-medium">Auto-Save AI Outputs</Label>
@@ -168,21 +160,17 @@ export default function AIPreferencesPage() {
               data-testid="switch-scheduled-updates"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Model Performance */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Performance Settings</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Choose between speed and quality for AI generation
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Performance Settings"
+        description="Choose between speed and quality for AI generation"
+        headerAction={<Clock className="w-5 h-5 text-primary" />}
+        testId="card-performance"
+      >
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             <Button
               variant="outline"
@@ -212,8 +200,8 @@ export default function AIPreferencesPage() {
               <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Highest quality, slower</div>
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Save Button */}
       <div className="flex justify-end space-x-3 pt-4">

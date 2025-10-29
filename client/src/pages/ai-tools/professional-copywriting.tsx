@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Zap, 
   Copy, 
@@ -66,13 +66,11 @@ interface GeneratedCopy {
 
 export default function ProfessionalCopywriting() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopy | null>(null);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Get session storage value for navigation source
   const [navigationSource, setNavigationSource] = useState<string | null>(null);
 
   useEffect(() => {
@@ -131,13 +129,11 @@ export default function ProfessionalCopywriting() {
     }
   ];
 
-  // Real AI copywriting generation mutation
   const generateCopyMutation = useMutation({
     mutationFn: async (data: CopyForm) => {
       setIsGenerating(true);
       setAnalysisProgress(0);
 
-      // Simulate analysis progress
       for (let i = 0; i <= 100; i += 10) {
         await new Promise(resolve => setTimeout(resolve, 100));
         setAnalysisProgress(i);
@@ -203,186 +199,185 @@ export default function ProfessionalCopywriting() {
   };
 
   return (
-    <div>
-      <PageContainer>
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
-        {/* Frameworks Overview */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Choose Your Framework</CardTitle>
-            <CardDescription className="text-slate-300">
-              Select a proven copywriting framework that matches your product and goals
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              {copywritingFrameworks.map((framework) => (
-                <Card 
-                  key={framework.id}
-                  className={`group relative shadow-lg border transition-all duration-300 rounded-xl sm:rounded-2xl cursor-pointer hover:scale-105 ${
-                    selectedFramework === framework.id 
-                      ? 'border-primary/50 hover:border-primary/50 bg-gradient-to-br from-primary/10 to-primary-foreground/20' 
-                      : 'border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10'
-                  }`}
-                  onClick={() => {
-                    setSelectedFramework(framework.id);
-                    form.setValue('framework', framework.id);
-                  }}
-                >
-                  <CardContent className="p-3 sm:p-4 md:p-6 overflow-hidden">
-                    <div className="flex items-start space-x-3 mb-3">
-                      <div className="flex-shrink-0">
-                        {framework.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-white mb-1 truncate">{framework.name}</h3>
-                        <p className="text-slate-300 text-sm mb-2">{framework.description}</p>
-                        <Badge variant="secondary" className="text-xs bg-primary/20 text-primary">
-                          {framework.bestFor}
-                        </Badge>
-                      </div>
+    <PageShell
+      title="Professional Copywriting"
+      subtitle="Generate conversion-focused copy using proven frameworks like AIDA, PAS, and FAB"
+      backTo="/dashboard"
+    >
+      <div className="space-y-6 sm:space-y-8">
+        <DashboardCard 
+          title="Choose Your Framework"
+          description="Select a proven copywriting framework that matches your product and goals"
+          testId="card-frameworks"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            {copywritingFrameworks.map((framework) => (
+              <Card 
+                key={framework.id}
+                className={`group relative shadow-lg border transition-all duration-300 rounded-xl sm:rounded-2xl cursor-pointer hover:scale-105 ${
+                  selectedFramework === framework.id 
+                    ? 'border-primary/50 hover:border-primary/50 bg-gradient-to-br from-primary/10 to-primary-foreground/20' 
+                    : 'border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10'
+                }`}
+                onClick={() => {
+                  setSelectedFramework(framework.id);
+                  form.setValue('framework', framework.id);
+                }}
+              >
+                <CardContent className="p-3 sm:p-4 md:p-6 overflow-hidden">
+                  <div className="flex items-start space-x-3 mb-3">
+                    <div className="flex-shrink-0">
+                      {framework.icon}
                     </div>
-                    {selectedFramework === framework.id && (
-                      <div className="flex items-center space-x-2 mt-3 text-primary">
-                        <CheckCircle className="w-4 h-4" />
-                        <span className="text-sm font-medium">Selected</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-white mb-1 truncate">{framework.name}</h3>
+                      <p className="text-slate-300 text-sm mb-2">{framework.description}</p>
+                      <Badge variant="secondary" className="text-xs bg-primary/20 text-primary">
+                        {framework.bestFor}
+                      </Badge>
+                    </div>
+                  </div>
+                  {selectedFramework === framework.id && (
+                    <div className="flex items-center space-x-2 mt-3 text-primary">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">Selected</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DashboardCard>
 
-        {/* Generation Form */}
-        <Card className="border-0 gradient-card rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Product Information</CardTitle>
-            <CardDescription className="text-slate-300">
-              Provide details about your product for AI-powered copy generation
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="productName" className="text-white">Product Name *</Label>
-                  <Input
-                    id="productName"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Premium Wireless Headphones"
-                    {...form.register("productName", { required: true })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category" className="text-white">Category</Label>
-                  <Input
-                    id="category"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Electronics, Audio"
-                    {...form.register("category")}
-                  />
-                </div>
-              </div>
-
+        <DashboardCard
+          title="Product Information"
+          description="Provide details about your product for AI-powered copy generation"
+          testId="card-product-info"
+        >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="features" className="text-white">Key Features & Benefits *</Label>
-                <Textarea
-                  id="features"
-                  className="mt-2 h-24 resize-none bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="List the main features and benefits of your product..."
-                  {...form.register("features", { required: true })}
+                <Label htmlFor="productName" className="text-white">Product Name *</Label>
+                <Input
+                  id="productName"
+                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                  placeholder="e.g., Premium Wireless Headphones"
+                  {...form.register("productName", { required: true })}
+                  data-testid="input-product-name"
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="audience" className="text-white">Target Audience</Label>
-                  <Input
-                    id="audience"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Music enthusiasts, Professionals"
-                    {...form.register("audience")}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="category" className="text-white">Category</Label>
+                <Input
+                  id="category"
+                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                  placeholder="e.g., Electronics, Audio"
+                  {...form.register("category")}
+                  data-testid="input-category"
+                />
+              </div>
+            </div>
 
-                <div>
-                  <Label htmlFor="industry" className="text-white">Industry</Label>
-                  <Input
-                    id="industry"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Consumer Electronics"
-                    {...form.register("industry")}
-                  />
-                </div>
+            <div>
+              <Label htmlFor="features" className="text-white">Key Features & Benefits *</Label>
+              <Textarea
+                id="features"
+                className="mt-2 h-24 resize-none bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                placeholder="List the main features and benefits of your product..."
+                {...form.register("features", { required: true })}
+                data-testid="input-features"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="audience" className="text-white">Target Audience</Label>
+                <Input
+                  id="audience"
+                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                  placeholder="e.g., Music enthusiasts, Professionals"
+                  {...form.register("audience")}
+                  data-testid="input-audience"
+                />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="framework" className="text-white">Copywriting Framework</Label>
-                  <Select 
-                    value={form.watch("framework")}
-                    onValueChange={(value) => {
-                      form.setValue("framework", value);
-                      setSelectedFramework(value);
-                    }}
-                  >
-                    <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white">
-                      <SelectValue placeholder="Select framework" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {copywritingFrameworks.map(fw => (
-                        <SelectItem key={fw.id} value={fw.id}>{fw.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="industry" className="text-white">Industry</Label>
+                <Input
+                  id="industry"
+                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                  placeholder="e.g., Consumer Electronics"
+                  {...form.register("industry")}
+                  data-testid="input-industry"
+                />
+              </div>
+            </div>
 
-                <div>
-                  <Label htmlFor="maxWords" className="text-white">Max Words</Label>
-                  <Input
-                    id="maxWords"
-                    type="number"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    {...form.register("maxWords", { valueAsNumber: true })}
-                  />
-                </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="framework" className="text-white">Copywriting Framework</Label>
+                <Select 
+                  value={form.watch("framework")}
+                  onValueChange={(value) => {
+                    form.setValue("framework", value);
+                    setSelectedFramework(value);
+                  }}
+                >
+                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-framework">
+                    <SelectValue placeholder="Select framework" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {copywritingFrameworks.map(fw => (
+                      <SelectItem key={fw.id} value={fw.id}>{fw.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {isGenerating && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-300">Crafting professional copy...</span>
-                    <span className="text-white">{analysisProgress}%</span>
-                  </div>
-                  <Progress value={analysisProgress} className="h-2" />
+              <div>
+                <Label htmlFor="maxWords" className="text-white">Max Words</Label>
+                <Input
+                  id="maxWords"
+                  type="number"
+                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                  {...form.register("maxWords", { valueAsNumber: true })}
+                  data-testid="input-max-words"
+                />
+              </div>
+            </div>
+
+            {isGenerating && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-300">Crafting professional copy...</span>
+                  <span className="text-white">{analysisProgress}%</span>
                 </div>
+                <Progress value={analysisProgress} className="h-2" />
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={generateCopyMutation.isPending}
+              className="w-full gradient-button transition-all duration-200 font-medium"
+              data-testid="button-generate"
+            >
+              {generateCopyMutation.isPending ? (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2 animate-spin" />
+                  Generating professional copy...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Generate Professional Copy
+                </>
               )}
+            </Button>
+          </form>
+        </DashboardCard>
 
-              <Button
-                type="submit"
-                disabled={generateCopyMutation.isPending}
-                className="w-full gradient-button transition-all duration-200 font-medium"
-              >
-                {generateCopyMutation.isPending ? (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                    Generating professional copy...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Generate Professional Copy
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Generated Copy Results */}
         {generatedCopy && (
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
@@ -393,7 +388,6 @@ export default function ProfessionalCopywriting() {
               </Badge>
             </div>
 
-            {/* Quality Score */}
             <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-foreground/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -467,7 +461,6 @@ export default function ProfessionalCopywriting() {
               </CardContent>
             </Card>
 
-            {/* Main Copy */}
             <Card className="border-2 border-blue-400/30 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -481,6 +474,7 @@ export default function ProfessionalCopywriting() {
                     size="icon"
                     onClick={() => copyToClipboard(generatedCopy.content, "Main copy")}
                     className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
+                    data-testid="button-copy-main"
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -493,7 +487,6 @@ export default function ProfessionalCopywriting() {
               </CardContent>
             </Card>
 
-            {/* Headline & CTA */}
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="border-2 border-purple-400/30 bg-gradient-to-br from-purple-900/20 to-violet-900/20">
                 <CardContent className="p-6">
@@ -507,6 +500,7 @@ export default function ProfessionalCopywriting() {
                       size="icon"
                       onClick={() => copyToClipboard(generatedCopy.headline, "Headline")}
                       className="text-purple-300 hover:text-purple-200 hover:bg-purple-400/10"
+                      data-testid="button-copy-headline"
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
@@ -531,6 +525,7 @@ export default function ProfessionalCopywriting() {
                       size="icon"
                       onClick={() => copyToClipboard(generatedCopy.callToAction, "Call to action")}
                       className="text-green-300 hover:text-green-200 hover:bg-green-400/10"
+                      data-testid="button-copy-cta"
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
@@ -544,49 +539,33 @@ export default function ProfessionalCopywriting() {
               </Card>
             </div>
 
-            {/* Alternative Variants */}
             {generatedCopy.variants && generatedCopy.variants.length > 0 && (
-              <Card className="border-0 gradient-card rounded-xl">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white">Alternative Variations</CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Different angles and approaches for A/B testing
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="variant-1" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
-                      {generatedCopy.variants.map((_, index) => (
-                        <TabsTrigger key={index} value={`variant-${index + 1}`} className="text-white">
-                          Variant {index + 1}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    {generatedCopy.variants.map((variant, index) => (
-                      <TabsContent key={index} value={`variant-${index + 1}`} className="mt-4">
-                        <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-600 relative">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyToClipboard(variant, `Variant ${index + 1}`)}
-                            className="absolute top-2 right-2 text-slate-300 hover:text-white"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <p className="text-slate-100 leading-relaxed whitespace-pre-wrap pr-10">
-                            {variant}
-                          </p>
-                        </div>
-                      </TabsContent>
+              <DashboardCard
+                title="Alternative Variations"
+                description="Different angles and approaches for A/B testing"
+                testId="card-variants"
+              >
+                <Tabs defaultValue="variant-1" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
+                    {generatedCopy.variants.map((_, index) => (
+                      <TabsTrigger key={index} value={`variant-${index + 1}`} className="text-white">
+                        Variant {index + 1}
+                      </TabsTrigger>
                     ))}
-                  </Tabs>
-                </CardContent>
-              </Card>
+                  </TabsList>
+                  {generatedCopy.variants.map((variant, index) => (
+                    <TabsContent key={index} value={`variant-${index + 1}`} className="mt-4">
+                      <div className="bg-slate-800/30 p-4 rounded-lg">
+                        <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">{variant}</p>
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </DashboardCard>
             )}
           </div>
         )}
-        </div>
-      </PageContainer>
-    </div>
+      </div>
+    </PageShell>
   );
 }

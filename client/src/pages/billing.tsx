@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -286,38 +286,35 @@ export default function BillingPage() {
   return (
     <PageContainer>
           {currentPlan && (
-            <Card className="gradient-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {currentPlan.planName && planIcons[currentPlan.planName]}
-                    <div>
-                      <CardTitle className="text-white text-2xl" data-testid="text-current-plan">
-                        {currentPlan.planName || 'Current Plan'}
-                      </CardTitle>
-                      <CardDescription className="text-slate-300">
-                        {currentPlan.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-white" data-testid="text-current-price">
-                      {formatPrice(currentPlan.price)}
-                      <span className="text-lg text-slate-300">/{currentPlan.interval}</span>
-                    </div>
-                    {currentSubscription?.status && (
-                      <Badge 
-                        variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
-                        className="capitalize mt-2"
-                        data-testid="badge-subscription-status"
-                      >
-                        {currentSubscription.status}
-                      </Badge>
-                    )}
+            <DashboardCard testId="card-current-plan">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  {currentPlan.planName && planIcons[currentPlan.planName]}
+                  <div>
+                    <h2 className="text-white text-2xl font-semibold" data-testid="text-current-plan">
+                      {currentPlan.planName || 'Current Plan'}
+                    </h2>
+                    <p className="text-slate-300">
+                      {currentPlan.description}
+                    </p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-white" data-testid="text-current-price">
+                    {formatPrice(currentPlan.price)}
+                    <span className="text-lg text-slate-300">/{currentPlan.interval}</span>
+                  </div>
+                  {currentSubscription?.status && (
+                    <Badge 
+                      variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
+                      className="capitalize mt-2"
+                      data-testid="badge-subscription-status"
+                    >
+                      {currentSubscription.status}
+                    </Badge>
+                  )}
+                </div>
+              </div>
                 {usageStats && (
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -337,8 +334,7 @@ export default function BillingPage() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+            </DashboardCard>
           )}
 
           <Tabs defaultValue="plans" className="space-y-6">
@@ -365,8 +361,8 @@ export default function BillingPage() {
                   <p className="mt-2 text-slate-300">Loading subscription plans...</p>
                 </div>
               ) : plansError ? (
-                <Card className="gradient-card">
-                  <CardContent className="text-center py-8">
+                <DashboardCard testId="card-plans-error">
+                  <div className="text-center py-8">
                     <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                       <ExternalLink className="w-6 h-6 text-red-400" />
                     </div>
@@ -381,11 +377,11 @@ export default function BillingPage() {
                     >
                       Try Again
                     </Button>
-                  </CardContent>
-                </Card>
+                  </div>
+                </DashboardCard>
               ) : plans.length === 0 ? (
-                <Card className="gradient-card">
-                  <CardContent className="text-center py-8">
+                <DashboardCard testId="card-no-plans">
+                  <div className="text-center py-8">
                     <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Crown className="w-6 h-6 text-slate-400" />
                     </div>
@@ -393,8 +389,8 @@ export default function BillingPage() {
                     <p className="text-slate-300 text-sm">
                       No subscription plans are currently available.
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </DashboardCard>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                   {plans.map((plan: SubscriptionPlan, index) => {
@@ -402,34 +398,35 @@ export default function BillingPage() {
                   const isPlanPopular = plan.planName === "Growth";
                   
                   return (
-                    <Card 
+                    <DashboardCard 
                       key={plan.id} 
-                      className={`group relative overflow-hidden gradient-card rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50 lg:scale-105' : ''}`}
-                      data-testid={`card-plan-${index}`}
+                      size="sm"
+                      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50 lg:scale-105' : ''}`}
+                      testId={`card-plan-${index}`}
                     >
                       {isPlanPopular && (
                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                           <Badge className="bg-primary text-primary-foreground">Popular</Badge>
                         </div>
                       )}
-                      <div className="h-full p-3 sm:p-4 md:p-6 flex flex-col">
-                        <CardHeader className="p-0 flex-1 space-y-2 sm:space-y-3">
+                      <div className="h-full flex flex-col">
+                        <div className="flex-1 space-y-2 sm:space-y-3">
                           <div className="flex items-center space-x-2 sm:space-x-3">
                             <div className="text-primary flex-shrink-0">
                               {planIcons[plan.planName] || <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />}
                             </div>
-                            <CardTitle className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate min-w-0" data-testid={`text-plan-name-${index}`}>
+                            <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate min-w-0" data-testid={`text-plan-name-${index}`}>
                               {plan.planName}
-                            </CardTitle>
+                            </h3>
                           </div>
-                          <CardDescription className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-2">
+                          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-2">
                             ${plan.price === 0 ? '0' : Math.floor(plan.price)}
                             <span className="text-[10px] sm:text-xs">/{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : plan.interval === 'month' ? 'per month' : plan.interval}</span>
                             {plan.description && (
                               <span className="block text-xs text-primary/80 mt-1">{plan.description}</span>
                             )}
-                          </CardDescription>
-                        </CardHeader>
+                          </p>
+                        </div>
                         
                         <div className="flex justify-center mt-3 sm:mt-4">
                           <Button
@@ -455,7 +452,7 @@ export default function BillingPage() {
                           </Button>
                         </div>
                       </div>
-                    </Card>
+                    </DashboardCard>
                   );
                 })}
                 </div>
@@ -463,17 +460,12 @@ export default function BillingPage() {
             </TabsContent>
 
             <TabsContent value="billing" className="space-y-6">
-              <Card className="gradient-card">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-primary" />
-                    Billing History
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    View and download your invoices and receipts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              <DashboardCard
+                title="Billing History"
+                description="View and download your invoices and receipts"
+                headerAction={<Calendar className="w-5 h-5 mr-2 text-primary" />}
+                testId="card-billing-history"
+              >
                   {invoicesLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -543,35 +535,29 @@ export default function BillingPage() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </TabsContent>
 
             <TabsContent value="payment" className="space-y-6">
-              <Card className="gradient-card">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-white flex items-center">
-                        <CreditCard className="w-5 h-5 mr-2 text-primary" />
-                        Payment Methods
-                      </CardTitle>
-                      <CardDescription className="text-slate-300">
-                        Manage your payment methods and billing information
-                      </CardDescription>
-                    </div>
+              <DashboardCard
+                title="Payment Methods"
+                description="Manage your payment methods and billing information"
+                headerAction={
+                  <>
+                    <CreditCard className="w-5 h-5 mr-2 text-primary" />
                     <Button
                       onClick={() => addPaymentMethodMutation.mutate()}
                       disabled={addPaymentMethodMutation.isPending}
-                      className="gradient-button"
+                      className="gradient-button ml-auto"
                       data-testid="button-add-payment-method"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Payment Method
                     </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                  </>
+                }
+                testId="card-payment-methods"
+              >
                   {paymentMethodsLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -611,22 +597,16 @@ export default function BillingPage() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">
-              <Card className="gradient-card">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Settings className="w-5 h-5 mr-2 text-primary" />
-                    Billing Settings
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    Configure your billing preferences and notifications
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              <DashboardCard
+                title="Billing Settings"
+                description="Configure your billing preferences and notifications"
+                headerAction={<Settings className="w-5 h-5 mr-2 text-primary" />}
+                testId="card-billing-settings"
+              >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
                       <div>
@@ -643,8 +623,7 @@ export default function BillingPage() {
                       <Badge>Active</Badge>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             </TabsContent>
           </Tabs>
     </PageContainer>

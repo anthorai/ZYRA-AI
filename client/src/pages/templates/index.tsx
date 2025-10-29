@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import {
   Dialog,
   DialogContent,
@@ -221,8 +222,11 @@ export default function TemplatesPage() {
   }
 
   return (
-    <PageContainer>
-      <div className="flex items-center justify-end mb-6">
+    <PageShell
+      title="Campaign Templates"
+      subtitle="Create and manage reusable templates for your campaigns"
+      backTo="/dashboard"
+      rightActions={
         <Button
           onClick={openCreateDialog}
           className="bg-primary text-white hover:bg-primary/90"
@@ -231,272 +235,268 @@ export default function TemplatesPage() {
           <Plus className="w-4 h-4 mr-2" />
           Create Template
         </Button>
-      </div>
+      }
+    >
+      {/* Info Card */}
+      <DashboardCard testId="card-template-info">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="text-white font-semibold mb-1">Template Variables</h3>
+            <p className="text-slate-400 text-sm">
+              Use variables in your templates: <code className="bg-slate-800 px-2 py-0.5 rounded text-blue-400">{"{customer_name}"}</code>,{" "}
+              <code className="bg-slate-800 px-2 py-0.5 rounded text-blue-400">{"{product_name}"}</code>,{" "}
+              <code className="bg-slate-800 px-2 py-0.5 rounded text-blue-400">{"{discount_code}"}</code>
+            </p>
+          </div>
+        </div>
+      </DashboardCard>
 
-        {/* Info Card */}
-        <Card className="dark-theme-bg border-blue-500/30 mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-400 mt-0.5" />
-              <div>
-                <h3 className="text-white font-semibold mb-1">Template Variables</h3>
-                <p className="text-slate-400 text-sm">
-                  Use variables in your templates: <code className="bg-slate-800 px-2 py-0.5 rounded text-blue-400">{"{customer_name}"}</code>,{" "}
-                  <code className="bg-slate-800 px-2 py-0.5 rounded text-blue-400">{"{product_name}"}</code>,{" "}
-                  <code className="bg-slate-800 px-2 py-0.5 rounded text-blue-400">{"{discount_code}"}</code>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Empty State */}
+      {(!templates || templates.length === 0) && (
+        <DashboardCard testId="card-empty-templates">
+          <div className="text-center py-8">
+            <FileText className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+            <h3 className="text-xl font-semibold text-white mb-2">No templates yet</h3>
+            <p className="text-slate-400 mb-6">
+              Create your first template to streamline your campaign creation
+            </p>
+            <Button
+              onClick={openCreateDialog}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Your First Template
+            </Button>
+          </div>
+        </DashboardCard>
+      )}
 
-        {/* Empty State */}
-        {(!templates || templates.length === 0) && (
-          <Card className="dark-theme-bg border-slate-700">
-            <CardContent className="py-12">
-              <div className="text-center">
-                <FileText className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
-                <h3 className="text-xl font-semibold text-white mb-2">No templates yet</h3>
-                <p className="text-slate-400 mb-6">
-                  Create your first template to streamline your campaign creation
-                </p>
-                <Button
-                  onClick={openCreateDialog}
-                  className="bg-primary text-white hover:bg-primary/90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Template
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Templates Grid */}
-        {templates && templates.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-            {templates.map((template) => (
-              <Card key={template.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl dark-theme-bg">
-                <CardHeader className="p-3 sm:p-4 md:p-6">
-                  <div className="flex items-start justify-between min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2 min-w-0">
-                        {template.type === "email" ? (
-                          <Mail className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
-                        ) : (
-                          <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
-                        )}
-                        <CardTitle className="text-white text-base sm:text-lg md:text-xl truncate">{template.name}</CardTitle>
-                        {template.isDefault && (
-                          <Badge variant="secondary" className="text-xs">Default</Badge>
-                        )}
-                      </div>
-                      {template.type === "email" && template.subject && (
-                        <CardDescription className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate">
-                          {template.subject}
-                        </CardDescription>
+      {/* Templates Grid */}
+      {templates && templates.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {templates.map((template) => (
+            <Card key={template.id} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl dark-theme-bg">
+              <CardHeader className="p-3 sm:p-4 md:p-6">
+                <div className="flex items-start justify-between min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 min-w-0">
+                      {template.type === "email" ? (
+                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
+                      ) : (
+                        <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
+                      )}
+                      <CardTitle className="text-white text-base sm:text-lg md:text-xl truncate">{template.name}</CardTitle>
+                      {template.isDefault && (
+                        <Badge variant="secondary" className="text-xs">Default</Badge>
                       )}
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    {template.type === "email" && template.subject && (
+                      <CardDescription className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate">
+                        {template.subject}
+                      </CardDescription>
+                    )}
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditDialog(template)}
+                      className="border-slate-600 text-slate-300 hover:bg-white/10"
+                    >
+                      <Edit className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                    </Button>
+                    {!template.isDefault && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => openEditDialog(template)}
-                        className="border-slate-600 text-slate-300 hover:bg-white/10"
+                        onClick={() => setDeleteConfirmId(template.id)}
+                        className="border-red-600 text-red-400 hover:bg-red-600/10"
                       >
-                        <Edit className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                       </Button>
-                      {!template.isDefault && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setDeleteConfirmId(template.id)}
-                          className="border-red-600 text-red-400 hover:bg-red-600/10"
-                        >
-                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-4 md:p-6">
-                  <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm mb-3 truncate">
-                    {template.content.length > 150
-                      ? `${template.content.substring(0, 150)}...`
-                      : template.content}
-                  </p>
-                  {extractVariables(template.content).length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {extractVariables(template.content).map((variable) => (
-                        <Badge key={variable} variant="outline" className="text-xs bg-blue-500/10 border-blue-500/30 text-blue-400">
-                          {`{${variable}}`}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Create/Edit Dialog */}
-        <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
-          if (!open) {
-            setIsCreateDialogOpen(false);
-            setIsEditDialogOpen(false);
-            setEditingTemplate(null);
-            resetForm();
-          }
-        }}>
-          <DialogContent className="dark-theme-bg border-slate-700 max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-white">
-                {isEditDialogOpen ? "Edit Template" : "Create Template"}
-              </DialogTitle>
-              <DialogDescription className="text-slate-400">
-                {isEditDialogOpen ? "Update your campaign template" : "Create a new reusable campaign template"}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              {/* Template Name */}
-              <div>
-                <Label htmlFor="template-name" className="text-white">Template Name</Label>
-                <Input
-                  id="template-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Welcome Email, Cart Recovery SMS"
-                  className="mt-1.5 bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-
-              {/* Template Type */}
-              <div>
-                <Label className="text-white">Template Type</Label>
-                <RadioGroup
-                  value={formData.type}
-                  onValueChange={(value: "email" | "sms") => setFormData({ ...formData, type: value })}
-                  className="grid grid-cols-2 gap-4 mt-2"
-                >
-                  <div className="relative">
-                    <RadioGroupItem value="email" id="type-email" className="peer sr-only" />
-                    <Label
-                      htmlFor="type-email"
-                      className="flex items-center gap-2 rounded-md border-2 border-slate-700 bg-slate-800/50 p-3 hover:bg-slate-800 peer-data-[state=checked]:border-primary cursor-pointer"
-                    >
-                      <Mail className="w-5 h-5 text-primary" />
-                      <span className="text-white">Email</span>
-                    </Label>
-                  </div>
-                  <div className="relative">
-                    <RadioGroupItem value="sms" id="type-sms" className="peer sr-only" />
-                    <Label
-                      htmlFor="type-sms"
-                      className="flex items-center gap-2 rounded-md border-2 border-slate-700 bg-slate-800/50 p-3 hover:bg-slate-800 peer-data-[state=checked]:border-primary cursor-pointer"
-                    >
-                      <MessageSquare className="w-5 h-5 text-primary" />
-                      <span className="text-white">SMS</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {/* Email Subject (only for email templates) */}
-              {formData.type === "email" && (
-                <div>
-                  <Label htmlFor="template-subject" className="text-white">Email Subject</Label>
-                  <Input
-                    id="template-subject"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="e.g., Welcome to our store, {customer_name}!"
-                    className="mt-1.5 bg-slate-800 border-slate-700 text-white"
-                  />
                 </div>
-              )}
-
-              {/* Template Content */}
-              <div>
-                <Label htmlFor="template-content" className="text-white">
-                  Template Content
-                </Label>
-                <Textarea
-                  id="template-content"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder={
-                    formData.type === "email"
-                      ? "Hi {customer_name},\n\nWelcome to our store! We're excited to have you..."
-                      : "Hi {customer_name}! Your order is ready. Check it out: {order_link}"
-                  }
-                  rows={8}
-                  className="mt-1.5 bg-slate-800 border-slate-700 text-white font-mono text-sm"
-                />
-                {extractVariables(formData.content).length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    <span className="text-xs text-slate-400">Variables:</span>
-                    {extractVariables(formData.content).map((variable) => (
+              </CardHeader>
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm mb-3 truncate">
+                  {template.content.length > 150
+                    ? `${template.content.substring(0, 150)}...`
+                    : template.content}
+                </p>
+                {extractVariables(template.content).length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {extractVariables(template.content).map((variable) => (
                       <Badge key={variable} variant="outline" className="text-xs bg-blue-500/10 border-blue-500/30 text-blue-400">
                         {`{${variable}}`}
                       </Badge>
                     ))}
                   </div>
                 )}
-              </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsCreateDialogOpen(false);
+          setIsEditDialogOpen(false);
+          setEditingTemplate(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="dark-theme-bg border-slate-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {isEditDialogOpen ? "Edit Template" : "Create Template"}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {isEditDialogOpen ? "Update your campaign template" : "Create a new reusable campaign template"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Template Name */}
+            <div>
+              <Label htmlFor="template-name" className="text-white">Template Name</Label>
+              <Input
+                id="template-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., Welcome Email, Cart Recovery SMS"
+                className="mt-1.5 bg-slate-800 border-slate-700 text-white"
+              />
             </div>
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsCreateDialogOpen(false);
-                  setIsEditDialogOpen(false);
-                  setEditingTemplate(null);
-                  resetForm();
-                }}
-                className="border-slate-700 text-slate-300"
+            {/* Template Type */}
+            <div>
+              <Label className="text-white">Template Type</Label>
+              <RadioGroup
+                value={formData.type}
+                onValueChange={(value: "email" | "sms") => setFormData({ ...formData, type: value })}
+                className="grid grid-cols-2 gap-4 mt-2"
               >
-                Cancel
-              </Button>
-              <Button
-                onClick={isEditDialogOpen ? handleUpdate : handleCreate}
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-primary text-white hover:bg-primary/90"
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Saving..."
-                  : isEditDialogOpen
-                  ? "Update Template"
-                  : "Create Template"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                <div className="relative">
+                  <RadioGroupItem value="email" id="type-email" className="peer sr-only" />
+                  <Label
+                    htmlFor="type-email"
+                    className="flex items-center gap-2 rounded-md border-2 border-slate-700 bg-slate-800/50 p-3 hover:bg-slate-800 peer-data-[state=checked]:border-primary cursor-pointer"
+                  >
+                    <Mail className="w-5 h-5 text-primary" />
+                    <span className="text-white">Email</span>
+                  </Label>
+                </div>
+                <div className="relative">
+                  <RadioGroupItem value="sms" id="type-sms" className="peer sr-only" />
+                  <Label
+                    htmlFor="type-sms"
+                    className="flex items-center gap-2 rounded-md border-2 border-slate-700 bg-slate-800/50 p-3 hover:bg-slate-800 peer-data-[state=checked]:border-primary cursor-pointer"
+                  >
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <span className="text-white">SMS</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
 
-        {/* Delete Confirmation */}
-        <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
-          <AlertDialogContent className="dark-theme-bg border-slate-700">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-400">
-                This action cannot be undone. This will permanently delete the template.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="border-slate-700 text-slate-300">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-    </PageContainer>
+            {/* Email Subject (only for email templates) */}
+            {formData.type === "email" && (
+              <div>
+                <Label htmlFor="template-subject" className="text-white">Email Subject</Label>
+                <Input
+                  id="template-subject"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="e.g., Welcome to our store, {customer_name}!"
+                  className="mt-1.5 bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+            )}
+
+            {/* Template Content */}
+            <div>
+              <Label htmlFor="template-content" className="text-white">
+                Template Content
+              </Label>
+              <Textarea
+                id="template-content"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                placeholder={
+                  formData.type === "email"
+                    ? "Hi {customer_name},\n\nWelcome to our store! We're excited to have you..."
+                    : "Hi {customer_name}! Your order is ready. Check it out: {order_link}"
+                }
+                rows={8}
+                className="mt-1.5 bg-slate-800 border-slate-700 text-white font-mono text-sm"
+              />
+              {extractVariables(formData.content).length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <span className="text-xs text-slate-400">Variables:</span>
+                  {extractVariables(formData.content).map((variable) => (
+                    <Badge key={variable} variant="outline" className="text-xs bg-blue-500/10 border-blue-500/30 text-blue-400">
+                      {`{${variable}}`}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                setIsEditDialogOpen(false);
+                setEditingTemplate(null);
+                resetForm();
+              }}
+              className="border-slate-700 text-slate-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={isEditDialogOpen ? handleUpdate : handleCreate}
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              {createMutation.isPending || updateMutation.isPending
+                ? "Saving..."
+                : isEditDialogOpen
+                ? "Update Template"
+                : "Create Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <AlertDialogContent className="dark-theme-bg border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              This action cannot be undone. This will permanently delete the template.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-slate-700 text-slate-300">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageShell>
   );
 }

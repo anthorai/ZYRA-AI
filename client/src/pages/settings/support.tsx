@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,8 +73,7 @@ export default function SupportPage() {
     <PageContainer>
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-        <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
-          <CardContent className="p-3 sm:p-4 md:p-6">
+        <DashboardCard size="sm" testId="card-live-chat">
             <Button
               variant="ghost"
               className="w-full h-auto p-0 hover:bg-transparent"
@@ -97,11 +96,9 @@ export default function SupportPage() {
                 </div>
               </div>
             </Button>
-          </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
-          <CardContent className="p-3 sm:p-4 md:p-6">
+        <DashboardCard size="sm" testId="card-documentation">
             <Button
               variant="ghost"
               className="w-full h-auto p-0 hover:bg-transparent"
@@ -124,11 +121,9 @@ export default function SupportPage() {
                 </div>
               </div>
             </Button>
-          </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">
-          <CardContent className="p-3 sm:p-4 md:p-6">
+        <DashboardCard size="sm" testId="card-community">
             <Button
               variant="ghost"
               className="w-full h-auto p-0 hover:bg-transparent"
@@ -151,22 +146,17 @@ export default function SupportPage() {
                 </div>
               </div>
             </Button>
-          </CardContent>
-        </Card>
+        </DashboardCard>
       </div>
 
       {/* Help Resources */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <FileText className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Help Resources</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Explore our documentation and learning materials
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <DashboardCard
+        title="Help Resources"
+        description="Explore our documentation and learning materials"
+        headerAction={<FileText className="w-5 h-5 text-primary" />}
+        testId="card-help-resources"
+      >
+        <div className="space-y-3">
           {resourceLinks.map((resource) => (
             <div key={resource.id}>
               <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors min-w-0">
@@ -191,21 +181,17 @@ export default function SupportPage() {
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Contact Support */}
-      <Card className="gradient-card border-0">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-primary" />
-            <CardTitle className="text-white">Contact Support</CardTitle>
-          </div>
-          <CardDescription className="text-slate-400">
-            Send us a message and we'll get back to you as soon as possible
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <DashboardCard
+        title="Contact Support"
+        description="Send us a message and we'll get back to you as soon as possible"
+        headerAction={<Mail className="w-5 h-5 text-primary" />}
+        testId="card-contact-support"
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="subject" className="text-white">Subject</Label>
             <Input
@@ -252,12 +238,11 @@ export default function SupportPage() {
               Send Message
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </DashboardCard>
 
       {/* Additional Support Options */}
-      <Card className="gradient-card border-0 bg-primary/5">
-        <CardContent className="p-6">
+      <DashboardCard className="bg-primary/5" testId="card-additional-support">
           <div className="flex items-start space-x-4">
             <div className="p-2 rounded-lg bg-primary/20">
               <LifeBuoy className="w-6 h-6 text-primary" />
@@ -289,8 +274,7 @@ export default function SupportPage() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </DashboardCard>
     </PageContainer>
   );
 }
