@@ -435,377 +435,376 @@ export default function BillingPage() {
       maxWidth="xl"
       spacing="normal"
     >
-          {currentPlan && (
-            <DashboardCard testId="card-current-plan">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  {currentPlan.planName && planIcons[currentPlan.planName]}
-                  <div>
-                    <h2 className="text-white text-2xl font-semibold" data-testid="text-current-plan">
-                      {currentPlan.planName || 'Current Plan'}
-                    </h2>
-                    <p className="text-slate-300">
-                      {currentPlan.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-white" data-testid="text-current-price">
-                    {formatPrice(currentPlan.price)}
-                    <span className="text-lg text-slate-300">/{currentPlan.interval}</span>
-                  </div>
-                  {currentSubscription?.status && (
-                    <Badge 
-                      variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
-                      className="capitalize mt-2"
-                      data-testid="badge-subscription-status"
-                    >
-                      {currentSubscription.status}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-                {usageStats && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-300">Credits Used</span>
-                        <span className="text-white font-medium" data-testid="text-credits-usage">
-                          {usageStats.creditsUsed || 0} / {currentPlan.limits.credits}
-                        </span>
-                      </div>
-                      <Progress 
-                        value={getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits)} 
-                        className="h-3"
-                      />
-                      <p className="text-xs text-slate-400 mt-1">
-                        {usageStats.creditsRemaining || currentPlan.limits.credits} credits remaining this {currentPlan.interval}
-                      </p>
-                    </div>
-                  </div>
-                )}
-            </DashboardCard>
-          )}
-
-          <Tabs defaultValue="plans" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 gradient-surface">
-              <TabsTrigger value="plans" data-testid="tab-plans">Plans</TabsTrigger>
-              <TabsTrigger value="billing" data-testid="tab-billing">Billing History</TabsTrigger>
-              <TabsTrigger value="payment" data-testid="tab-payment">Payment Methods</TabsTrigger>
-              <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="plans" className="space-y-6">
-              <div className="text-center mb-8 sm:mb-12">
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4" data-testid="text-pricing-title">
-                  Choose Your Plan
+      {currentPlan && (
+        <DashboardCard testId="card-current-plan">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              {currentPlan.planName && planIcons[currentPlan.planName]}
+              <div>
+                <h2 className="text-white text-2xl font-semibold" data-testid="text-current-plan">
+                  {currentPlan.planName || 'Current Plan'}
                 </h2>
-                <p className="text-base sm:text-lg lg:text-xl text-muted-foreground px-4 sm:px-0">
-                  Start with a 7-day free trial, upgrade anytime
+                <p className="text-slate-300">
+                  {currentPlan.description}
                 </p>
               </div>
-
-              {plansLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-slate-300">Loading subscription plans...</p>
-                </div>
-              ) : plansError ? (
-                <DashboardCard testId="card-plans-error">
-                  <div className="text-center py-8">
-                    <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <ExternalLink className="w-6 h-6 text-red-400" />
-                    </div>
-                    <h3 className="text-white font-medium mb-2">Unable to Load Plans</h3>
-                    <p className="text-slate-300 text-sm mb-4">
-                      We couldn't fetch the subscription plans. This might be due to a temporary server issue.
-                    </p>
-                    <Button
-                      onClick={() => refetchPlans()}
-                      className="gradient-button"
-                      data-testid="button-retry-plans"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                </DashboardCard>
-              ) : plans.length === 0 ? (
-                <DashboardCard testId="card-no-plans">
-                  <div className="text-center py-8">
-                    <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Crown className="w-6 h-6 text-slate-400" />
-                    </div>
-                    <h3 className="text-white font-medium mb-2">No Plans Available</h3>
-                    <p className="text-slate-300 text-sm">
-                      No subscription plans are currently available.
-                    </p>
-                  </div>
-                </DashboardCard>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                  {plans.map((plan: SubscriptionPlan, index) => {
-                  const isCurrentPlan = plan.id === currentSubscription?.planId;
-                  const isPlanPopular = plan.planName === "Growth";
-                  const details = planDetails[plan.planName];
-                  
-                  return (
-                    <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-4' : ''}`}>
-                      {isPlanPopular && (
-                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
-                          <Badge className="bg-primary text-primary-foreground px-3 py-1 text-sm font-semibold">Popular</Badge>
-                        </div>
-                      )}
-                      <DashboardCard 
-                        size="sm"
-                        className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50' : ''}`}
-                        testId={`card-plan-${index}`}
-                      >
-                      <div className="h-full flex flex-col">
-                        {/* Header Section */}
-                        <div className="space-y-4 pb-6 border-b border-slate-700/50 text-center">
-                          <div className="flex flex-col items-center space-y-3">
-                            <div className="text-primary">
-                              {planIcons[plan.planName] || <CreditCard className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />}
-                            </div>
-                            <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white" data-testid={`text-plan-name-${index}`}>
-                              {plan.planName}
-                            </h3>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <p className="text-white font-bold text-3xl md:text-4xl">
-                              ${plan.price === 0 ? '0' : Math.floor(plan.price)}
-                              <span className="text-base text-slate-400 font-normal ml-2">
-                                /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'per month'}
-                              </span>
-                            </p>
-                            {details && (
-                              <>
-                                <p className="text-primary text-base font-semibold">✨ {details.credits}</p>
-                                <p className="text-slate-300 text-sm max-w-md mx-auto">{details.tagline}</p>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Features Section */}
-                        {details && (
-                          <div className="flex-1 py-6 px-2 space-y-4">
-                            {details.categories.map((category, catIndex) => (
-                              <div key={catIndex} className="space-y-2 text-center">
-                                <h4 className="text-white font-semibold text-sm">{category.name}</h4>
-                                <ul className="space-y-1">
-                                  {category.features.map((feature, featureIndex) => (
-                                    <li key={featureIndex} className="text-slate-300 text-xs leading-snug">
-                                      {feature}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* CTA Button */}
-                        <div className="flex justify-center pt-4 border-t border-slate-700/50">
-                          <Button
-                            className={`w-full px-4 md:px-6 py-2.5 text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
-                              isCurrentPlan 
-                                ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
-                                : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
-                            }`}
-                            disabled={isCurrentPlan || changePlanMutation.isPending}
-                            onClick={() => changePlanMutation.mutate(plan.id)}
-                            data-testid={`button-choose-plan-${index}`}
-                          >
-                            <Wand2 className="w-4 h-4 mr-2" />
-                            <span className="truncate">
-                              {isCurrentPlan ? "Current Plan" :
-                               changePlanMutation.isPending ? "Processing..." : 
-                               plan.planName === "7-Day Free Trial" ? "Start Free Trial" :
-                               plan.planName === "Starter" ? "Upgrade to Starter" :
-                               plan.planName === "Growth" ? "Scale with Growth" :
-                               plan.planName === "Pro" ? "Power Up with Pro" :
-                               "Choose Plan"}
-                            </span>
-                          </Button>
-                        </div>
-                      </div>
-                    </DashboardCard>
-                    </div>
-                  );
-                })}
-                </div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-white" data-testid="text-current-price">
+                {formatPrice(currentPlan.price)}
+                <span className="text-lg text-slate-300">/{currentPlan.interval}</span>
+              </div>
+              {currentSubscription?.status && (
+                <Badge 
+                  variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
+                  className="capitalize mt-2"
+                  data-testid="badge-subscription-status"
+                >
+                  {currentSubscription.status}
+                </Badge>
               )}
-            </TabsContent>
+            </div>
+          </div>
+            {usageStats && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-300">Credits Used</span>
+                    <span className="text-white font-medium" data-testid="text-credits-usage">
+                      {usageStats.creditsUsed || 0} / {currentPlan.limits.credits}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits)} 
+                    className="h-3"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    {usageStats.creditsRemaining || currentPlan.limits.credits} credits remaining this {currentPlan.interval}
+                  </p>
+                </div>
+              </div>
+            )}
+        </DashboardCard>
+      )}
+      <Tabs defaultValue="plans" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 gradient-surface">
+          <TabsTrigger value="plans" data-testid="tab-plans">Plans</TabsTrigger>
+          <TabsTrigger value="billing" data-testid="tab-billing">Billing History</TabsTrigger>
+          <TabsTrigger value="payment" data-testid="tab-payment">Payment Methods</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="billing" className="space-y-6">
-              <DashboardCard
-                title="Billing History"
-                description="View and download your invoices and receipts"
-                headerAction={<Calendar className="w-5 h-5 mr-2 text-primary" />}
-                testId="card-billing-history"
-              >
-                  {invoicesLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-slate-300">Loading invoices...</p>
+        <TabsContent value="plans" className="space-y-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4" data-testid="text-pricing-title">
+              Choose Your Plan
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground px-4 sm:px-0">
+              Start with a 7-day free trial, upgrade anytime
+            </p>
+          </div>
+
+          {plansLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-slate-300">Loading subscription plans...</p>
+            </div>
+          ) : plansError ? (
+            <DashboardCard testId="card-plans-error">
+              <div className="text-center py-8">
+                <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ExternalLink className="w-6 h-6 text-red-400" />
+                </div>
+                <h3 className="text-white font-medium mb-2">Unable to Load Plans</h3>
+                <p className="text-slate-300 text-sm mb-4">
+                  We couldn't fetch the subscription plans. This might be due to a temporary server issue.
+                </p>
+                <Button
+                  onClick={() => refetchPlans()}
+                  className="gradient-button"
+                  data-testid="button-retry-plans"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </DashboardCard>
+          ) : plans.length === 0 ? (
+            <DashboardCard testId="card-no-plans">
+              <div className="text-center py-8">
+                <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Crown className="w-6 h-6 text-slate-400" />
+                </div>
+                <h3 className="text-white font-medium mb-2">No Plans Available</h3>
+                <p className="text-slate-300 text-sm">
+                  No subscription plans are currently available.
+                </p>
+              </div>
+            </DashboardCard>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              {plans.map((plan: SubscriptionPlan, index) => {
+              const isCurrentPlan = plan.id === currentSubscription?.planId;
+              const isPlanPopular = plan.planName === "Growth";
+              const details = planDetails[plan.planName];
+              
+              return (
+                <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-4' : ''}`}>
+                  {isPlanPopular && (
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
+                      <Badge className="bg-primary text-primary-foreground px-3 py-1 text-sm font-semibold">Popular</Badge>
                     </div>
-                  ) : invoices.length === 0 ? (
-                    <div className="text-center py-8 text-slate-300" data-testid="empty-state-invoices">
-                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium mb-2">No invoices yet</p>
-                      <p className="text-sm mb-6">Invoices will appear here when you subscribe to a plan</p>
-                      <Button 
-                        variant="outline"
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        className="border-slate-600 text-slate-300 hover:bg-white/10"
-                        data-testid="button-view-plans"
+                  )}
+                  <DashboardCard 
+                    size="sm"
+                    className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50' : ''}`}
+                    testId={`card-plan-${index}`}
+                  >
+                  <div className="h-full flex flex-col">
+                    {/* Header Section */}
+                    <div className="space-y-4 pb-6 border-b border-slate-700/50 text-center">
+                      <div className="flex flex-col items-center space-y-3">
+                        <div className="text-primary">
+                          {planIcons[plan.planName] || <CreditCard className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />}
+                        </div>
+                        <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white" data-testid={`text-plan-name-${index}`}>
+                          {plan.planName}
+                        </h3>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-white font-bold text-3xl md:text-4xl">
+                          ${plan.price === 0 ? '0' : Math.floor(plan.price)}
+                          <span className="text-base text-slate-400 font-normal ml-2">
+                            /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'per month'}
+                          </span>
+                        </p>
+                        {details && (
+                          <>
+                            <p className="text-primary text-base font-semibold">✨ {details.credits}</p>
+                            <p className="text-slate-300 text-sm max-w-md mx-auto">{details.tagline}</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Features Section */}
+                    {details && (
+                      <div className="flex-1 py-6 px-2 space-y-4">
+                        {details.categories.map((category, catIndex) => (
+                          <div key={catIndex} className="space-y-2 text-left">
+                            <h4 className="text-white font-semibold text-sm">{category.name}</h4>
+                            <ul className="space-y-1">
+                              {category.features.map((feature, featureIndex) => (
+                                <li key={featureIndex} className="text-slate-300 text-xs leading-snug">
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* CTA Button */}
+                    <div className="flex justify-center pt-4 border-t border-slate-700/50">
+                      <Button
+                        className={`w-full px-4 md:px-6 py-2.5 text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
+                          isCurrentPlan 
+                            ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
+                            : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
+                        }`}
+                        disabled={isCurrentPlan || changePlanMutation.isPending}
+                        onClick={() => changePlanMutation.mutate(plan.id)}
+                        data-testid={`button-choose-plan-${index}`}
                       >
-                        View Plans
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        <span className="truncate">
+                          {isCurrentPlan ? "Current Plan" :
+                           changePlanMutation.isPending ? "Processing..." : 
+                           plan.planName === "7-Day Free Trial" ? "Start Free Trial" :
+                           plan.planName === "Starter" ? "Upgrade to Starter" :
+                           plan.planName === "Growth" ? "Scale with Growth" :
+                           plan.planName === "Pro" ? "Power Up with Pro" :
+                           "Choose Plan"}
+                        </span>
                       </Button>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                      {invoices.map((invoice) => (
-                        <div 
-                          key={invoice.id} 
-                          className="flex flex-col p-3 sm:p-4 md:p-6 bg-slate-800/30 border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl shadow-lg"
-                          data-testid={`invoice-${invoice.id}`}
-                        >
-                          <div className="flex items-center space-x-3 sm:space-x-4 mb-3">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
-                              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-white font-medium text-base sm:text-lg md:text-xl truncate" data-testid={`text-invoice-number-${invoice.id}`}>
-                                Invoice #{invoice.invoiceNumber}
-                              </p>
-                              <p className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate" data-testid={`text-invoice-date-${invoice.id}`}>
-                                {formatDate(invoice.createdAt)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between space-x-3 sm:space-x-4">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-white font-medium text-base sm:text-lg md:text-xl truncate" data-testid={`text-invoice-amount-${invoice.id}`}>
-                                {formatPrice(invoice.amount, invoice.currency)}
-                              </p>
-                              <Badge 
-                                variant={invoice.status === 'paid' ? 'default' : 'secondary'}
-                                className="capitalize text-[10px] sm:text-xs"
-                                data-testid={`badge-invoice-status-${invoice.id}`}
-                              >
-                                {invoice.status}
-                              </Badge>
-                            </div>
-                            {invoice.pdfUrl && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => window.open(invoice.pdfUrl, '_blank')}
-                                data-testid={`button-download-invoice-${invoice.id}`}
-                                className="flex-shrink-0"
-                              >
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-              </DashboardCard>
-            </TabsContent>
-
-            <TabsContent value="payment" className="space-y-6">
-              <DashboardCard
-                title="Payment Methods"
-                description="Manage your payment methods and billing information"
-                headerAction={
-                  <>
-                    <CreditCard className="w-5 h-5 mr-2 text-primary" />
-                    <Button
-                      onClick={() => addPaymentMethodMutation.mutate()}
-                      disabled={addPaymentMethodMutation.isPending}
-                      className="gradient-button ml-auto"
-                      data-testid="button-add-payment-method"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Payment Method
-                    </Button>
-                  </>
-                }
-                testId="card-payment-methods"
-              >
-                  {paymentMethodsLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-slate-300">Loading payment methods...</p>
-                    </div>
-                  ) : paymentMethods.length === 0 ? (
-                    <div className="text-center py-8 text-slate-300" data-testid="empty-state-payment-methods">
-                      <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium mb-2">No payment methods yet</p>
-                      <p className="text-sm">Add a payment method to manage your subscriptions</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                      {paymentMethods.map((method) => (
-                        <div 
-                          key={method.id} 
-                          className="flex flex-col p-3 sm:p-4 md:p-6 bg-slate-800/30 border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl shadow-lg"
-                          data-testid={`payment-method-${method.id}`}
-                        >
-                          <div className="flex items-center space-x-3 mb-3">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
-                              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-white font-medium text-base sm:text-lg truncate">
-                                {method.cardBrand} •••• {method.cardLast4}
-                              </p>
-                              <p className="text-[10px] sm:text-xs text-slate-300 truncate">
-                                Expires {method.cardExpMonth}/{method.cardExpYear}
-                              </p>
-                            </div>
-                          </div>
-                          {method.isDefault && (
-                            <Badge className="bg-primary/20 text-primary text-[10px] sm:text-xs">Default</Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-              </DashboardCard>
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-6">
-              <DashboardCard
-                title="Billing Settings"
-                description="Configure your billing preferences and notifications"
-                headerAction={<Settings className="w-5 h-5 mr-2 text-primary" />}
-                testId="card-billing-settings"
-              >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
-                      <div>
-                        <p className="text-white font-medium">Email Receipts</p>
-                        <p className="text-sm text-slate-300">Receive email confirmation for all payments</p>
-                      </div>
-                      <Badge>Enabled</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
-                      <div>
-                        <p className="text-white font-medium">Auto-Renew</p>
-                        <p className="text-sm text-slate-300">Automatically renew subscription at period end</p>
-                      </div>
-                      <Badge>Active</Badge>
-                    </div>
                   </div>
-              </DashboardCard>
-            </TabsContent>
-          </Tabs>
+                </DashboardCard>
+                </div>
+              );
+            })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-6">
+          <DashboardCard
+            title="Billing History"
+            description="View and download your invoices and receipts"
+            headerAction={<Calendar className="w-5 h-5 mr-2 text-primary" />}
+            testId="card-billing-history"
+          >
+              {invoicesLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-slate-300">Loading invoices...</p>
+                </div>
+              ) : invoices.length === 0 ? (
+                <div className="text-center py-8 text-slate-300" data-testid="empty-state-invoices">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No invoices yet</p>
+                  <p className="text-sm mb-6">Invoices will appear here when you subscribe to a plan</p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="border-slate-600 text-slate-300 hover:bg-white/10"
+                    data-testid="button-view-plans"
+                  >
+                    View Plans
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                  {invoices.map((invoice) => (
+                    <div 
+                      key={invoice.id} 
+                      className="flex flex-col p-3 sm:p-4 md:p-6 bg-slate-800/30 border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl shadow-lg"
+                      data-testid={`invoice-${invoice.id}`}
+                    >
+                      <div className="flex items-center space-x-3 sm:space-x-4 mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                          <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-medium text-base sm:text-lg md:text-xl truncate" data-testid={`text-invoice-number-${invoice.id}`}>
+                            Invoice #{invoice.invoiceNumber}
+                          </p>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate" data-testid={`text-invoice-date-${invoice.id}`}>
+                            {formatDate(invoice.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between space-x-3 sm:space-x-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-medium text-base sm:text-lg md:text-xl truncate" data-testid={`text-invoice-amount-${invoice.id}`}>
+                            {formatPrice(invoice.amount, invoice.currency)}
+                          </p>
+                          <Badge 
+                            variant={invoice.status === 'paid' ? 'default' : 'secondary'}
+                            className="capitalize text-[10px] sm:text-xs"
+                            data-testid={`badge-invoice-status-${invoice.id}`}
+                          >
+                            {invoice.status}
+                          </Badge>
+                        </div>
+                        {invoice.pdfUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(invoice.pdfUrl, '_blank')}
+                            data-testid={`button-download-invoice-${invoice.id}`}
+                            className="flex-shrink-0"
+                          >
+                            <Download className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+          </DashboardCard>
+        </TabsContent>
+
+        <TabsContent value="payment" className="space-y-6">
+          <DashboardCard
+            title="Payment Methods"
+            description="Manage your payment methods and billing information"
+            headerAction={
+              <>
+                <CreditCard className="w-5 h-5 mr-2 text-primary" />
+                <Button
+                  onClick={() => addPaymentMethodMutation.mutate()}
+                  disabled={addPaymentMethodMutation.isPending}
+                  className="gradient-button ml-auto"
+                  data-testid="button-add-payment-method"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Payment Method
+                </Button>
+              </>
+            }
+            testId="card-payment-methods"
+          >
+              {paymentMethodsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-slate-300">Loading payment methods...</p>
+                </div>
+              ) : paymentMethods.length === 0 ? (
+                <div className="text-center py-8 text-slate-300" data-testid="empty-state-payment-methods">
+                  <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No payment methods yet</p>
+                  <p className="text-sm">Add a payment method to manage your subscriptions</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                  {paymentMethods.map((method) => (
+                    <div 
+                      key={method.id} 
+                      className="flex flex-col p-3 sm:p-4 md:p-6 bg-slate-800/30 border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl shadow-lg"
+                      data-testid={`payment-method-${method.id}`}
+                    >
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                          <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-medium text-base sm:text-lg truncate">
+                            {method.cardBrand} •••• {method.cardLast4}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-slate-300 truncate">
+                            Expires {method.cardExpMonth}/{method.cardExpYear}
+                          </p>
+                        </div>
+                      </div>
+                      {method.isDefault && (
+                        <Badge className="bg-primary/20 text-primary text-[10px] sm:text-xs">Default</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+          </DashboardCard>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <DashboardCard
+            title="Billing Settings"
+            description="Configure your billing preferences and notifications"
+            headerAction={<Settings className="w-5 h-5 mr-2 text-primary" />}
+            testId="card-billing-settings"
+          >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
+                  <div>
+                    <p className="text-white font-medium">Email Receipts</p>
+                    <p className="text-sm text-slate-300">Receive email confirmation for all payments</p>
+                  </div>
+                  <Badge>Enabled</Badge>
+                </div>
+                <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
+                  <div>
+                    <p className="text-white font-medium">Auto-Renew</p>
+                    <p className="text-sm text-slate-300">Automatically renew subscription at period end</p>
+                  </div>
+                  <Badge>Active</Badge>
+                </div>
+              </div>
+          </DashboardCard>
+        </TabsContent>
+      </Tabs>
     </PageShell>
   );
 }
