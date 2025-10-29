@@ -97,59 +97,62 @@ export default function Footer({ className = "" }: FooterProps) {
           </div>
         </div>
 
-        {/* Mobile Layout - Responsive for Portrait/Landscape */}
-        <div className="md:hidden py-6 space-y-4 landscape:space-y-2 landscape:py-4">
-          {/* Logo & Zyra AI Text - Top */}
-          <div className="text-center landscape:mb-1">
+        {/* Mobile Layout - Horizontal Compact */}
+        <div className="md:hidden py-3 space-y-2">
+          {/* Logo & Zyra AI Text */}
+          <div className="text-center">
             <div
               onClick={handleLogoClick}
-              className="inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group landscape:gap-2 landscape:px-3 landscape:py-1"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group"
               data-testid="link-footer-logo-mobile"
             >
               <img 
                 src={zyraLogo} 
                 alt="Zyra AI Logo" 
-                className="w-8 h-8 rounded-lg landscape:w-6 landscape:h-6"
+                className="w-6 h-6 rounded-lg"
               />
-              <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300 landscape:text-base">
+              <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-base font-bold font-sans transition-colors duration-300">
                 Zyra AI
               </span>
             </div>
           </div>
 
-          {/* Navigation Links - Horizontal in Landscape */}
-          <div className="flex flex-col landscape:flex-row items-center justify-center gap-4 landscape:gap-6">
+          {/* All Footer Items - Single Row */}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
             {/* About Link */}
             <Link href={navigationLinks[0].href}>
               <span
-                className="text-[#EAEAEA] hover:text-[#00F0FF] text-sm font-medium font-sans py-2 px-4 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 inline-block cursor-pointer landscape:py-1 landscape:px-3"
+                className="text-[#EAEAEA] hover:text-[#00F0FF] font-medium font-sans px-2 py-1 rounded transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer"
                 data-testid={`${navigationLinks[0].testId}-mobile`}
               >
                 {navigationLinks[0].label}
               </span>
             </Link>
 
+            <span className="text-[#00F0FF]/30">•</span>
+
             {/* Privacy Policy Link */}
             <Link href={navigationLinks[1].href}>
               <span
-                className="text-[#EAEAEA] hover:text-[#00F0FF] text-sm font-medium font-sans py-2 px-4 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 inline-block cursor-pointer landscape:py-1 landscape:px-3"
+                className="text-[#EAEAEA] hover:text-[#00F0FF] font-medium font-sans px-2 py-1 rounded transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer"
                 data-testid={`${navigationLinks[1].testId}-mobile`}
               >
                 {navigationLinks[1].label}
               </span>
             </Link>
-          </div>
 
-          {/* Language Switcher & Powered by - Horizontal in Landscape */}
-          <div className="flex flex-col landscape:flex-row items-center justify-center gap-4 landscape:gap-6">
+            <span className="text-[#00F0FF]/30">•</span>
+
             {/* Language Switcher */}
             <div className="flex justify-center" data-testid="button-language-switcher-mobile">
               <LanguageSwitcher />
             </div>
 
+            <span className="text-[#00F0FF]/30">•</span>
+
             {/* Powered by */}
             <span
-              className="text-[#EAEAEA] text-sm font-medium font-sans inline-flex items-center gap-2"
+              className="text-[#EAEAEA] font-medium font-sans inline-flex items-center gap-1"
               data-testid="text-powered-by-mobile"
             >
               {t('footer.poweredBy')}
