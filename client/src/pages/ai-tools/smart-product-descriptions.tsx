@@ -211,7 +211,7 @@ export default function SmartProductDescriptions() {
                         <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent side="bottom" align="start" sideOffset={5}>
                           <SelectItem value="Fashion & Apparel">Fashion & Apparel</SelectItem>
                           <SelectItem value="Electronics & Gadgets">Electronics & Gadgets</SelectItem>
                           <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
@@ -248,7 +248,7 @@ export default function SmartProductDescriptions() {
                         <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent side="bottom" align="start" sideOffset={5}>
                           <SelectItem value="General Consumers">General Consumers</SelectItem>
                           <SelectItem value="Tech Enthusiasts">Tech Enthusiasts</SelectItem>
                           <SelectItem value="Business Professionals">Business Professionals</SelectItem>
