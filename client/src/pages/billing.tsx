@@ -373,6 +373,15 @@ export default function BillingPage() {
                   const isCurrentPlan = plan.id === currentSubscription?.planId;
                   const isPlanPopular = plan.planName === "Growth";
                   
+                  const planDescriptions: Record<string, string> = {
+                    "7-Day Free Trial": "New users exploring Zyra features",
+                    "Starter": "Best for new Shopify stores just getting started",
+                    "Growth": "For scaling merchants ready to grow",
+                    "Pro": "For high-revenue brands & enterprise"
+                  };
+                  
+                  const enhancedDescription = planDescriptions[plan.planName] || plan.description || "Subscription plan";
+                  
                   return (
                     <DashboardCard 
                       key={plan.id} 
@@ -395,13 +404,15 @@ export default function BillingPage() {
                               {plan.planName}
                             </h3>
                           </div>
-                          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-2">
-                            ${plan.price === 0 ? '0' : Math.floor(plan.price)}
-                            <span className="text-[10px] sm:text-xs">/{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : plan.interval === 'month' ? 'per month' : plan.interval}</span>
-                            {plan.description && (
-                              <span className="block text-xs text-primary/80 mt-1">{plan.description}</span>
-                            )}
-                          </p>
+                          <div className="space-y-2">
+                            <p className="text-white font-bold text-lg sm:text-xl md:text-2xl">
+                              ${plan.price === 0 ? '0' : Math.floor(plan.price)}
+                              <span className="text-xs sm:text-sm text-slate-400 font-normal">/{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : plan.interval === 'month' ? 'per month' : plan.interval}</span>
+                            </p>
+                            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                              {enhancedDescription}
+                            </p>
+                          </div>
                         </div>
                         
                         <div className="flex justify-center mt-3 sm:mt-4">
