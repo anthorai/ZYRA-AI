@@ -13,9 +13,12 @@ Preferred communication style: Simple, everyday language.
   - **Credit allocations**: Prominently displays credits per period (100/7 days, 1,000/month, 5,000/month, 20,000/month) with ✨ emoji
   - **Individual feature breakdowns**: Shows credit costs for each feature (e.g., "Optimized Products – 200 credits")
   - **Marketing taglines**: "Who it's for" descriptions for each tier
-  - **Enhanced layout**: Header section with plan name/icon/pricing, scrollable features section (max 384px height), and footer CTA button
+  - **Enhanced layout**: Header section with plan name/icon/pricing, auto-expanding features section showing all content, and footer CTA button
   - **Responsive design**: Changed from 3-column to 2-column grid on large screens for better readability of dense content
-- **Result**: Professional, informative plan cards that help merchants understand exactly what they get at each tier
+  - **Removed scroll system**: Eliminated overflow-y-auto scroll to show all features at once in naturally expanding cards
+  - **Optimized spacing**: Tightened spacing between features (space-y-3, space-y-1.5, space-y-0.5, leading-snug) for a clean, professional presentation
+  - **Badge positioning fix**: "Popular" badge on Growth plan now fully visible above the card using relative wrapper with conditional padding
+- **Result**: Professional, landing-page-quality plan cards where merchants can see all features at a glance without scrolling
 
 ### Smart Product Descriptions Enhancement
 - **Expanded dropdown options from 7 to 15** for better merchant targeting:
