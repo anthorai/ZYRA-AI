@@ -2,10 +2,6 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import NotificationCenter from "@/components/dashboard/notification-center";
-import { UnifiedHeader } from "@/components/ui/unified-header";
 import { DashboardCard, MetricCard } from "@/components/ui/dashboard-card";
 import { PageShell } from "@/components/ui/page-shell";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,47 +13,19 @@ import {
   ShoppingBag, 
   TrendingUp, 
   Calendar,
-  User, 
-  LogOut, 
-  Settings as SettingsIcon,
   Eye,
   Edit,
   AlertCircle,
-  RefreshCw,
-  Sparkles
+  RefreshCw
 } from "lucide-react";
 
 type Product = typeof products.$inferSelect;
 
 export default function OptimizedProducts() {
-  const { user, appUser, logout } = useAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Get display name and initials (matching dashboard pattern)
-  const getDisplayName = () => {
-    if (appUser?.fullName) return appUser.fullName;
-    if (user?.user_metadata?.full_name) return user.user_metadata.full_name;
-    if (user?.user_metadata?.name) return user.user_metadata.name;
-    if (user?.email) return user.email.split('@')[0];
-    return "User";
-  };
-
-  const getInitials = () => {
-    const name = getDisplayName();
-    if (name === "User") return "U";
-    return name.charAt(0).toUpperCase();
-  };
-
-  const displayName = getDisplayName();
-  const initials = getInitials();
-
-  // Handle logout
-  const handleLogout = () => {
-    logout();
-    setLocation("/auth");
-  };
 
   // Fetch optimized products from API
   const { data: products = [], isLoading, error, isError } = useQuery<Product[]>({
@@ -90,71 +58,12 @@ export default function OptimizedProducts() {
     }
   }, [isError, error, toast]);
 
-  // Right actions (notification center + user dropdown)
-  const rightActions = (
-    <>
-      <NotificationCenter />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="relative h-10 w-10 rounded-full text-slate-200 hover:text-primary transition-all duration-300 ease-in-out"
-            data-testid="button-user-menu"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="" alt={displayName} />
-              <AvatarFallback className="dark-theme-bg text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 dark-theme-bg text-white" align="end" forceMount>
-          <div className="flex items-center justify-start gap-2 p-2">
-            <div className="flex flex-col space-y-1 leading-none">
-              <p className="font-bold text-white text-sm">{displayName}</p>
-              <p className="text-xs text-slate-300">{appUser?.email || user?.email}</p>
-            </div>
-          </div>
-          <DropdownMenuSeparator className="bg-slate-700/30" />
-          <DropdownMenuItem
-            className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
-            onClick={() => setLocation("/profile")}
-            data-testid="menu-profile"
-          >
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
-            onClick={() => setLocation("/billing")}
-            data-testid="menu-settings"
-          >
-            <SettingsIcon className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-slate-700/30" />
-          <DropdownMenuItem
-            className="text-red-300 hover:text-red-200 hover:bg-red-500/20 focus:text-red-200 focus:bg-red-500/20 cursor-pointer"
-            onClick={handleLogout}
-            data-testid="menu-logout"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
-
   // Error state
   if (isError) {
     return (
       <PageShell
         title="Optimized Products"
         subtitle="AI-enhanced product descriptions and SEO optimization"
-        
-        rightActions={rightActions}
       >
         <DashboardCard testId="error-state">
           <div className="p-8 text-center">
@@ -181,8 +90,6 @@ export default function OptimizedProducts() {
     <PageShell
       title="Optimized Products"
       subtitle="AI-enhanced product descriptions and SEO optimization"
-      
-      rightActions={rightActions}
     >
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
