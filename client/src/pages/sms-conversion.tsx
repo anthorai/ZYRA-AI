@@ -5,8 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageContainer } from "@/components/ui/standardized-layout";
+import NotificationCenter from "@/components/dashboard/notification-center";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useLogout } from "@/hooks/useLogout";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { 
@@ -18,17 +29,32 @@ import {
   Eye,
   BarChart,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft,
+  User,
+  Settings as SettingsIcon,
+  LogOut
 } from "lucide-react";
 
 export default function SmsConversion() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user, appUser } = useAuth();
+  const { handleLogout: performLogout } = useLogout();
 
   // Fetch campaigns from API
   const { data: allCampaigns, isLoading, error, isError } = useQuery<Campaign[]>({
     queryKey: ['/api/campaigns']
   });
+
+  // Handle logout
+  const handleLogout = () => {
+    performLogout("/auth");
+  };
+
+  // User display info
+  const displayName = appUser?.fullName || user?.email?.split('@')[0] || "User";
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   // Show toast notification when errors occur
   useEffect(() => {
@@ -86,8 +112,92 @@ export default function SmsConversion() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      <PageContainer>
-        {/* Summary Cards */}
+      {/* Header */}
+      <header className="dark-theme-bg backdrop-blur-sm border border-border/50 rounded-2xl mx-4 sm:mx-6 mt-4 px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.history.back()}
+              className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+            
+            {/* Page Title */}
+            <div className="min-w-0 flex-1">
+              <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl truncate">
+                SMS Marketing Performance
+              </h1>
+              <p className="text-slate-300 text-xs sm:text-sm lg:text-base truncate">
+                Track SMS campaign conversions and revenue impact
+              </p>
+            </div>
+          </div>
+
+          {/* Right Section - Notifications + Profile */}
+          <div className="flex items-center justify-end space-x-2 sm:space-x-4 flex-shrink-0">
+            <NotificationCenter />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-10 w-10 rounded-full text-slate-200 hover:text-primary transition-all duration-300 ease-in-out"
+                  data-testid="button-user-menu"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" alt={displayName} />
+                    <AvatarFallback className="dark-theme-bg text-primary">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 dark-theme-bg text-white" align="end" forceMount>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-bold text-white text-sm">{displayName}</p>
+                    <p className="text-xs text-slate-300">{appUser?.email || user?.email}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator className="bg-slate-700/30" />
+                <DropdownMenuItem
+                  className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
+                  onClick={() => setLocation("/profile")}
+                  data-testid="menu-profile"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
+                  onClick={() => setLocation("/billing")}
+                  data-testid="menu-settings"
+                >
+                  <SettingsIcon className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-slate-700/30" />
+                <DropdownMenuItem
+                  className="text-red-300 hover:text-red-200 hover:bg-red-500/20 focus:text-red-200 focus:bg-red-500/20 cursor-pointer"
+                  onClick={handleLogout}
+                  data-testid="menu-logout"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
+      <div className="px-4 sm:px-6 mt-4 sm:mt-6">
+        <PageContainer>
+          {/* Summary Cards */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {[1, 2, 3, 4].map((i) => (
@@ -323,6 +433,7 @@ export default function SmsConversion() {
           </CardContent>
         </Card>
       </PageContainer>
+      </div>
     </div>
   );
 }

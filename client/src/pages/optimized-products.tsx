@@ -184,16 +184,28 @@ export default function OptimizedProducts() {
       {/* Header */}
       <header className="dark-theme-bg backdrop-blur-sm border border-border/50 rounded-2xl mx-4 sm:mx-6 mt-4 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          {/* Left Section - Back Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => window.history.back()}
-            className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Button>
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.history.back()}
+              className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+            
+            {/* Page Title */}
+            <div className="min-w-0 flex-1">
+              <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl truncate">
+                Optimized Products
+              </h1>
+              <p className="text-slate-300 text-xs sm:text-sm lg:text-base truncate">
+                AI-enhanced product descriptions and SEO optimization
+              </p>
+            </div>
+          </div>
 
           {/* Right Section - Notifications + Profile */}
           <div className="flex items-center justify-end space-x-2 sm:space-x-4 flex-shrink-0">
