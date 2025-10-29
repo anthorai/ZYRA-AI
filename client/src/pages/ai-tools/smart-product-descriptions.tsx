@@ -203,13 +203,15 @@ export default function SmartProductDescriptions() {
                     control={form.control}
                     render={({ field }) => (
                       <Select 
-                        value={field.value} 
+                        value={field.value || "Fashion & Apparel"} 
                         onValueChange={field.onChange}
+                        disabled={field.disabled}
+                        name={field.name}
                       >
                         <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="gradient-surface">
+                        <SelectContent>
                           <SelectItem value="Fashion & Apparel">Fashion & Apparel</SelectItem>
                           <SelectItem value="Electronics & Gadgets">Electronics & Gadgets</SelectItem>
                           <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
@@ -238,13 +240,15 @@ export default function SmartProductDescriptions() {
                     control={form.control}
                     render={({ field }) => (
                       <Select 
-                        value={field.value} 
+                        value={field.value || "General Consumers"} 
                         onValueChange={field.onChange}
+                        disabled={field.disabled}
+                        name={field.name}
                       >
                         <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
-                          <SelectValue placeholder="Select audience" />
+                          <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="gradient-surface">
+                        <SelectContent>
                           <SelectItem value="General Consumers">General Consumers</SelectItem>
                           <SelectItem value="Tech Enthusiasts">Tech Enthusiasts</SelectItem>
                           <SelectItem value="Business Professionals">Business Professionals</SelectItem>
