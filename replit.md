@@ -7,12 +7,23 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## October 29, 2025
+### Billing Page - Comprehensive Subscription Plan Cards
+- **Redesigned subscription plan cards** with landing-page-quality presentation:
+  - **Detailed plan data structure**: Each plan now displays comprehensive feature lists organized into 5 categories (Product Optimization & SEO, Conversion Boosting & Sales Automation, Content & Branding at Scale, Performance Tracking & ROI Insights, Workflow & Integration Tools)
+  - **Credit allocations**: Prominently displays credits per period (100/7 days, 1,000/month, 5,000/month, 20,000/month) with ✨ emoji
+  - **Individual feature breakdowns**: Shows credit costs for each feature (e.g., "Optimized Products – 200 credits")
+  - **Marketing taglines**: "Who it's for" descriptions for each tier
+  - **Enhanced layout**: Header section with plan name/icon/pricing, scrollable features section (max 384px height), and footer CTA button
+  - **Responsive design**: Changed from 3-column to 2-column grid on large screens for better readability of dense content
+- **Result**: Professional, informative plan cards that help merchants understand exactly what they get at each tier
+
 ### Smart Product Descriptions Enhancement
 - **Expanded dropdown options from 7 to 15** for better merchant targeting:
   - **Product Categories** (15 options): Fashion & Apparel, Electronics & Gadgets, Home & Kitchen, Beauty & Personal Care, Health & Fitness, Groceries & Food, Books & Stationery, Toys & Baby Products, Automotive, Sports & Outdoor, Pet Supplies, Jewelry & Watches, Furniture & Home Improvement, Digital Products, Arts & Crafts
   - **Target Audiences** (15 options): General Consumers, Tech Enthusiasts, Business Professionals, Athletes & Fitness Enthusiasts, Students, Parents & Families, Creative Professionals, Eco-conscious Shoppers, Luxury Buyers, Travelers & Adventurers, Home Improvers, Pet Owners, Gamers, Beauty & Self-care Lovers, Lifelong Learners
+- **Fixed dropdown styling** to match application's slate-blue theme (#14142B) instead of black backgrounds
 - **Fixed runtime errors** by replacing Radix UI Select components with native HTML select elements to resolve Vite error overlay compatibility issue
-- **Result**: More granular AI-powered product description targeting with stable, error-free dropdowns that work perfectly across all browsers
+- **Result**: More granular AI-powered product description targeting with stable, error-free, theme-matching dropdowns
 
 # System Architecture
 
