@@ -291,51 +291,8 @@
     transition: color 0.3s ease;
   }
 
-  /* Custom animations for Zyra AI background effects */
-  .animate-spin-slow {
-    animation: spin 8s linear infinite;
-  }
-  
-  .animate-ping-slow {
-    animation: ping 4s cubic-bezier(0, 0, 0.2, 1) infinite;
-  }
-
   /* Smooth scroll for better UX */
   html {
     scroll-behavior: smooth;
-  }
-
-  /* Better responsive spacing */
-  .responsive-padding {
-    @apply px-4 sm:px-6 lg:px-8;
-  }
-
-  .responsive-margin {
-    @apply mx-4 sm:mx-6 lg:mx-8;
-  }
-
-  /* Prevent horizontal overflow */
-  .no-horizontal-scroll {
-    @apply overflow-x-hidden max-w-full;
-  }
-
-  .container-no-overflow {
-    @apply overflow-x-hidden w-full max-w-full;
-  }
-  
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  
-  @keyframes ping {
-    75%, 100% {
-      transform: scale(2);
-      opacity: 0;
-    }
   }
 }
