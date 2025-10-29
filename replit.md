@@ -11,8 +11,8 @@ Preferred communication style: Simple, everyday language.
 - **Expanded dropdown options from 7 to 15** for better merchant targeting:
   - **Product Categories** (15 options): Fashion & Apparel, Electronics & Gadgets, Home & Kitchen, Beauty & Personal Care, Health & Fitness, Groceries & Food, Books & Stationery, Toys & Baby Products, Automotive, Sports & Outdoor, Pet Supplies, Jewelry & Watches, Furniture & Home Improvement, Digital Products, Arts & Crafts
   - **Target Audiences** (15 options): General Consumers, Tech Enthusiasts, Business Professionals, Athletes & Fitness Enthusiasts, Students, Parents & Families, Creative Professionals, Eco-conscious Shoppers, Luxury Buyers, Travelers & Adventurers, Home Improvers, Pet Owners, Gamers, Beauty & Self-care Lovers, Lifelong Learners
-- **Fixed runtime errors** by refactoring Select components to use react-hook-form Controller with proper field integration, fallback values, and improved prop handling
-- **Result**: More granular AI-powered product description targeting with stable, error-free dropdowns
+- **Fixed runtime errors** by replacing Radix UI Select components with native HTML select elements to resolve Vite error overlay compatibility issue
+- **Result**: More granular AI-powered product description targeting with stable, error-free dropdowns that work perfectly across all browsers
 
 # System Architecture
 
