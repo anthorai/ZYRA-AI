@@ -789,23 +789,6 @@ export default function IntegrationsPage() {
               className="relative"
               testId={`card-integration-${integration.id}`}
             >
-                {/* Mobile: Setup Guide Button at Top */}
-                {integration.id === 'shopify' && (
-                  <div className="flex justify-end mb-3 md:mb-0 md:absolute md:top-4 md:right-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={validateShopifySetup}
-                      disabled={isValidating}
-                      className="h-8 px-3 text-xs text-primary/80 hover:text-primary hover:bg-primary/10 border border-primary/20"
-                      data-testid="button-shopify-setup-guide"
-                    >
-                      <Info className="w-3.5 h-3.5 mr-1.5" />
-                      {isValidating ? "Checking..." : "Setup Guide"}
-                    </Button>
-                  </div>
-                )}
-                
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-1">
                     <div className={`p-3 rounded-lg ${integration.isConnected ? 'bg-primary/20' : 'bg-slate-800/50'} flex-shrink-0`}>
