@@ -57,27 +57,49 @@ export default function SEOTitlesMeta() {
 
   const generateSEOMutation = useMutation({
     mutationFn: async (data: SEOForm) => {
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
       const { productName, targetKeywords, category, primaryBenefit, priceRange } = data;
       
-      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
-      const primaryKeyword = keywords[0] || productName;
+      // Build current title and meta from form data
+      const currentTitle = `${productName} - ${category}`;
+      const currentMeta = primaryBenefit || '';
       
-      const title = `${productName} ${primaryKeyword ? `- ${primaryKeyword}` : ''} | ${priceRange === 'budget' ? 'Best Price' : priceRange === 'premium' ? 'Premium' : 'Quality'} ${category}`.substring(0, 70);
+      // Call the real AI API endpoint
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || '';
+
+      const response = await fetch('/api/optimize-seo', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentTitle,
+          keywords: targetKeywords,
+          currentMeta,
+          category
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to generate SEO content');
+      }
+
+      const result = await response.json();
       
-      const metaDescription = `Shop ${productName} ${keywords.length > 0 ? `for ${keywords.slice(0, 2).join(', ')}` : ''}. ${primaryBenefit || 'High-quality product'} with free shipping. ${priceRange === 'budget' ? 'Best prices guaranteed' : priceRange === 'premium' ? 'Premium quality' : 'Great value'}. Order now!`.substring(0, 160);
-      
+      // Transform API response to match component expectations
+      const title = result.optimizedTitle || currentTitle;
+      const metaDescription = result.optimizedMeta || currentMeta;
       const titleLength = title.length;
       const metaLength = metaDescription.length;
-      const keywordDensity = keywords.length > 0 ? 
-        (title.toLowerCase().includes(keywords[0].toLowerCase()) ? 1 : 0) +
-        (metaDescription.toLowerCase().includes(keywords[0].toLowerCase()) ? 1 : 0) : 0;
       
-      let seoScore = 50;
-      if (titleLength >= 50 && titleLength <= 60) seoScore += 20;
-      if (metaLength >= 150 && metaLength <= 160) seoScore += 20;
-      if (keywordDensity >= 2) seoScore += 10;
+      // Calculate keyword density from AI-suggested keywords
+      const keywords = result.keywords || [];
+      const keywordDensity = keywords.length > 0 ? 
+        (title.toLowerCase().includes(keywords[0]?.toLowerCase() || '') ? 1 : 0) +
+        (metaDescription.toLowerCase().includes(keywords[0]?.toLowerCase() || '') ? 1 : 0) : 0;
       
       return {
         title,
@@ -85,7 +107,7 @@ export default function SEOTitlesMeta() {
         titleLength,
         metaLength,
         keywordDensity,
-        seoScore: Math.min(seoScore, 100)
+        seoScore: result.seoScore || 75
       };
     },
     onSuccess: (result) => {
@@ -154,7 +176,6 @@ export default function SEOTitlesMeta() {
         <DashboardCard
           title="SEO Best Practices"
           description="Guidelines for creating effective SEO titles and meta descriptions"
-          icon={<Target className="w-5 h-5" />}
           testId="card-best-practices"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
