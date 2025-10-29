@@ -67,14 +67,14 @@ export default function AboutPage() {
     <PageContainer>
       <div className="mb-6">
         <Button
-          onClick={() => setLocation('/dashboard')}
+          onClick={() => window.history.back()}
           variant="ghost"
           size="sm"
           className="hover:bg-primary/10"
           data-testid="button-back"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Back
         </Button>
       </div>
       <div className="min-h-screen bg-gradient-to-br from-[#0D0D1F] via-[#14142B] to-[#0D0D1F]">
