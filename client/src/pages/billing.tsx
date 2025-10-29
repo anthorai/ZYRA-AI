@@ -93,6 +93,180 @@ const planIcons: Record<string, JSX.Element> = {
   "Enterprise": <Building className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />
 };
 
+interface PlanFeatureCategory {
+  name: string;
+  features: string[];
+}
+
+interface PlanDetails {
+  credits: string;
+  tagline: string;
+  categories: PlanFeatureCategory[];
+}
+
+const planDetails: Record<string, PlanDetails> = {
+  "7-Day Free Trial": {
+    credits: "100 credits / 7 days",
+    tagline: "New users exploring Zyra features",
+    categories: [
+      {
+        name: "Product Optimization & SEO",
+        features: [
+          "Optimized Products – 20 credits",
+          "SEO Keyword Density Analysis – 10 credits"
+        ]
+      },
+      {
+        name: "Conversion Boosting & Sales Automation",
+        features: [
+          "AI-Powered Growth Intelligence – 20 credits",
+          "Basic A/B Testing – 10 credits"
+        ]
+      },
+      {
+        name: "Content & Branding at Scale",
+        features: [
+          "Smart Product Descriptions – 20 credits",
+          "Limited Dynamic Templates – 10 credits"
+        ]
+      },
+      {
+        name: "Performance Tracking & ROI Insights",
+        features: ["Email Performance Analytics – 10 credits"]
+      },
+      {
+        name: "Workflow & Integration Tools",
+        features: [
+          "One-Click Shopify Publish – 10 credits",
+          "Rollback Button – included"
+        ]
+      }
+    ]
+  },
+  "Starter": {
+    credits: "1,000 credits / month",
+    tagline: "Best for new Shopify stores just getting started",
+    categories: [
+      {
+        name: "Product Optimization & SEO",
+        features: [
+          "Optimized Products – 200 credits",
+          "SEO Keyword Density Analysis – 100 credits",
+          "AI Image Alt-Text Generator – 100 credits",
+          "Smart SEO Titles & Meta Tags – 100 credits"
+        ]
+      },
+      {
+        name: "Conversion Boosting & Sales Automation",
+        features: [
+          "AI-Powered Growth Intelligence – 150 credits",
+          "A/B Testing – 50 credits",
+          "Upsell Email Receipts – 100 credits",
+          "Abandoned Cart SMS – 50 credits"
+        ]
+      },
+      {
+        name: "Content & Branding at Scale",
+        features: [
+          "Smart Product Descriptions – 100 credits",
+          "Dynamic Templates – 50 credits",
+          "Brand Voice Memory – included"
+        ]
+      },
+      {
+        name: "Performance Tracking & ROI Insights",
+        features: ["Email & SMS Conversion Analytics – included"]
+      },
+      {
+        name: "Workflow & Integration Tools",
+        features: [
+          "CSV Import/Export – included",
+          "One-Click Shopify Publish – included",
+          "Rollback Button – included",
+          "Smart Bulk Suggestions – included"
+        ]
+      }
+    ]
+  },
+  "Growth": {
+    credits: "5,000 credits / month",
+    tagline: "For scaling merchants ready to grow",
+    categories: [
+      {
+        name: "Product Optimization & SEO",
+        features: [
+          "All Starter features +",
+          "SEO Ranking Tracker – 200 credits",
+          "Bulk Optimization & Smart Bulk Suggestions – 500 credits",
+          "Scheduled Refresh for Content & SEO Updates – 300 credits"
+        ]
+      },
+      {
+        name: "Conversion Boosting & Sales Automation",
+        features: [
+          "AI Upsell Suggestions & Triggers – 300 credits",
+          "Dynamic Segmentation of Customers – 200 credits",
+          "Behavioral Targeting – 200 credits",
+          "Full A/B Test Results Dashboard – included"
+        ]
+      },
+      {
+        name: "Content & Branding at Scale",
+        features: [
+          "Custom Templates – included",
+          "Multimodal AI (text + image + insights) – 300 credits",
+          "Multi-Channel Content Repurposing – 300 credits"
+        ]
+      },
+      {
+        name: "Performance Tracking & ROI Insights",
+        features: [
+          "Full Email & SMS tracking – included",
+          "Content ROI Tracking – included",
+          "Revenue Impact Attribution – included",
+          "Product Management Dashboard – included"
+        ]
+      },
+      {
+        name: "Workflow & Integration Tools",
+        features: ["Unlimited Starter workflow tools"]
+      }
+    ]
+  },
+  "Pro": {
+    credits: "20,000 credits / month",
+    tagline: "For high-revenue brands & enterprise",
+    categories: [
+      {
+        name: "Product Optimization & SEO",
+        features: ["All Growth features + priority processing"]
+      },
+      {
+        name: "Conversion Boosting & Sales Automation",
+        features: ["Full AI-driven automation for campaigns, upsells, and behavioral targeting"]
+      },
+      {
+        name: "Content & Branding at Scale",
+        features: [
+          "Full template library, advanced brand voice memory,",
+          "multimodal AI insights, multi-channel automation"
+        ]
+      },
+      {
+        name: "Performance Tracking & ROI Insights",
+        features: ["Enterprise-grade analytics and revenue attribution dashboard"]
+      },
+      {
+        name: "Workflow & Integration Tools",
+        features: [
+          "Enterprise bulk management, CSV import/export,",
+          "rollback, smart bulk suggestions at scale"
+        ]
+      }
+    ]
+  }
+};
+
 export default function BillingPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -368,25 +542,17 @@ export default function BillingPage() {
                   </div>
                 </DashboardCard>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                   {plans.map((plan: SubscriptionPlan, index) => {
                   const isCurrentPlan = plan.id === currentSubscription?.planId;
                   const isPlanPopular = plan.planName === "Growth";
-                  
-                  const planDescriptions: Record<string, string> = {
-                    "7-Day Free Trial": "New users exploring Zyra features",
-                    "Starter": "Best for new Shopify stores just getting started",
-                    "Growth": "For scaling merchants ready to grow",
-                    "Pro": "For high-revenue brands & enterprise"
-                  };
-                  
-                  const enhancedDescription = planDescriptions[plan.planName] || plan.description || "Subscription plan";
+                  const details = planDetails[plan.planName];
                   
                   return (
                     <DashboardCard 
                       key={plan.id} 
                       size="sm"
-                      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50 lg:scale-105' : ''}`}
+                      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50' : ''}`}
                       testId={`card-plan-${index}`}
                     >
                       {isPlanPopular && (
@@ -395,29 +561,55 @@ export default function BillingPage() {
                         </div>
                       )}
                       <div className="h-full flex flex-col">
-                        <div className="flex-1 space-y-2 sm:space-y-3">
-                          <div className="flex items-center space-x-2 sm:space-x-3">
+                        {/* Header Section */}
+                        <div className="space-y-3 pb-4 border-b border-slate-700/50">
+                          <div className="flex items-center space-x-3">
                             <div className="text-primary flex-shrink-0">
-                              {planIcons[plan.planName] || <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />}
+                              {planIcons[plan.planName] || <CreditCard className="w-7 h-7 lg:w-8 lg:h-8 text-primary" />}
                             </div>
-                            <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white leading-tight truncate min-w-0" data-testid={`text-plan-name-${index}`}>
+                            <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight" data-testid={`text-plan-name-${index}`}>
                               {plan.planName}
                             </h3>
                           </div>
-                          <div className="space-y-2">
-                            <p className="text-white font-bold text-lg sm:text-xl md:text-2xl">
+                          
+                          <div className="space-y-1">
+                            <p className="text-white font-bold text-2xl md:text-3xl">
                               ${plan.price === 0 ? '0' : Math.floor(plan.price)}
-                              <span className="text-xs sm:text-sm text-slate-400 font-normal">/{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : plan.interval === 'month' ? 'per month' : plan.interval}</span>
+                              <span className="text-sm text-slate-400 font-normal ml-1">
+                                /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'per month'}
+                              </span>
                             </p>
-                            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                              {enhancedDescription}
-                            </p>
+                            {details && (
+                              <>
+                                <p className="text-primary text-sm font-medium">✨ {details.credits}</p>
+                                <p className="text-slate-300 text-sm">{details.tagline}</p>
+                              </>
+                            )}
                           </div>
                         </div>
                         
-                        <div className="flex justify-center mt-3 sm:mt-4">
+                        {/* Features Section */}
+                        {details && (
+                          <div className="flex-1 py-4 space-y-4 overflow-y-auto max-h-96">
+                            {details.categories.map((category, catIndex) => (
+                              <div key={catIndex} className="space-y-2">
+                                <h4 className="text-white font-semibold text-sm">• {category.name}:</h4>
+                                <ul className="space-y-1 ml-3">
+                                  {category.features.map((feature, featureIndex) => (
+                                    <li key={featureIndex} className="text-slate-300 text-xs leading-relaxed">
+                                      • {feature}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* CTA Button */}
+                        <div className="flex justify-center pt-4 border-t border-slate-700/50">
                           <Button
-                            className={`w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
+                            className={`w-full px-4 md:px-6 py-2.5 text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
                               isCurrentPlan 
                                 ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
                                 : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
@@ -426,7 +618,7 @@ export default function BillingPage() {
                             onClick={() => changePlanMutation.mutate(plan.id)}
                             data-testid={`button-choose-plan-${index}`}
                           >
-                            <Wand2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <Wand2 className="w-4 h-4 mr-2" />
                             <span className="truncate">
                               {isCurrentPlan ? "Current Plan" :
                                changePlanMutation.isPending ? "Processing..." : 
