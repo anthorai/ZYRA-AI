@@ -314,12 +314,12 @@ export default function ManageProducts() {
         {/* Search and Action Buttons */}
       <div className="flex flex-col gap-3">
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 sm:w-5 sm:h-5" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5 pointer-events-none" />
           <Input
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base bg-slate-800/50 border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/50 transition-all"
+            className="pl-11 sm:pl-12 pr-4 py-2 sm:py-3 text-sm sm:text-base bg-slate-800/50 border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/50 transition-all"
             data-testid="input-search-products"
           />
         </div>
