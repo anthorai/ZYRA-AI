@@ -1,60 +1,33 @@
 import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import NotificationCenter from "@/components/dashboard/notification-center";
-import { UnifiedHeader } from "@/components/ui/unified-header";
 import { DashboardCard, MetricCard } from "@/components/ui/dashboard-card";
 import { PageShell } from "@/components/ui/page-shell";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useLogout } from "@/hooks/useLogout";
 import { queryClient } from "@/lib/queryClient";
 import type { Campaign } from "@shared/schema";
 import { 
   MessageSquare, 
   TrendingUp, 
   DollarSign,
-  Users,
   ShoppingCart,
   Eye,
   BarChart,
   AlertCircle,
-  RefreshCw,
-  User,
-  Settings as SettingsIcon,
-  LogOut
+  RefreshCw
 } from "lucide-react";
 
 export default function SmsConversion() {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, appUser } = useAuth();
-  const { handleLogout: performLogout } = useLogout();
 
   // Fetch campaigns from API
   const { data: allCampaigns, isLoading, error, isError } = useQuery<Campaign[]>({
     queryKey: ['/api/campaigns']
   });
-
-  // Handle logout
-  const handleLogout = () => {
-    performLogout("/auth");
-  };
-
-  // User display info
-  const displayName = appUser?.fullName || user?.email?.split('@')[0] || "User";
-  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   // Show toast notification when errors occur
   useEffect(() => {
@@ -85,62 +58,8 @@ export default function SmsConversion() {
   
   const avgConversionRate = totalSent > 0 ? (totalConverted / totalSent * 100).toFixed(1) : '0.0';
 
-  // Right actions (notification center + user dropdown)
-  const rightActions = (
-    <>
-      <NotificationCenter />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="relative h-10 w-10 rounded-full text-slate-200 hover:text-primary transition-all duration-300 ease-in-out"
-            data-testid="button-user-menu"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="" alt={displayName} />
-              <AvatarFallback className="dark-theme-bg text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 dark-theme-bg text-white" align="end" forceMount>
-          <div className="flex items-center justify-start gap-2 p-2">
-            <div className="flex flex-col space-y-1 leading-none">
-              <p className="font-bold text-white text-sm">{displayName}</p>
-              <p className="text-xs text-slate-300">{appUser?.email || user?.email}</p>
-            </div>
-          </div>
-          <DropdownMenuSeparator className="bg-slate-700/30" />
-          <DropdownMenuItem
-            className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
-            onClick={() => setLocation("/profile")}
-            data-testid="menu-profile"
-          >
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
-            onClick={() => setLocation("/billing")}
-            data-testid="menu-settings"
-          >
-            <SettingsIcon className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-slate-700/30" />
-          <DropdownMenuItem
-            className="text-red-300 hover:text-red-200 hover:bg-red-500/20 focus:text-red-200 focus:bg-red-500/20 cursor-pointer"
-            onClick={handleLogout}
-            data-testid="menu-logout"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
+  // Right actions (notification center only)
+  const rightActions = <NotificationCenter />;
 
   // Error State
   if (isError) {
@@ -259,14 +178,15 @@ export default function SmsConversion() {
               <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
               <h3 className="text-xl font-semibold text-white mb-2">No SMS campaigns yet</h3>
               <p className="text-slate-300 mb-6">Send your first SMS campaign to recover abandoned carts</p>
-              <Button 
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => setLocation('/abandoned-cart-sms')}
-                data-testid="button-create-sms-campaign"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Send SMS Campaign
-              </Button>
+              <Link href="/abandoned-cart-sms">
+                <Button 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  data-testid="button-create-sms-campaign"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Send SMS Campaign
+                </Button>
+              </Link>
             </div>
           ) : (
             smsCampaigns.map((campaign) => {
