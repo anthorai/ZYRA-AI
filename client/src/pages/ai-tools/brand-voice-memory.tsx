@@ -232,7 +232,7 @@ export default function BrandVoiceMemory() {
     <PageShell
       title="Brand Voice Memory"
       subtitle="Teach Zyra AI your brand's unique voice and tone to maintain consistency across all content"
-      backTo="/dashboard"
+      
     >
       {/* Learning Process */}
       <DashboardCard

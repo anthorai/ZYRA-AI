@@ -29,7 +29,7 @@ export default function UpsellEmailReceiptsPage() {
     <PageShell
       title="Upsell Email Receipts"
       subtitle="Add AI-powered product recommendations to order confirmation emails"
-      backTo="/dashboard"
+      
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl gradient-card">

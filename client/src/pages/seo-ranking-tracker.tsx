@@ -193,7 +193,6 @@ export default function SeoRankingTracker() {
     <PageShell
       title="SEO Ranking Tracker"
       subtitle="Track keyword positions and search visibility over time"
-      backTo="/dashboard"
       rightActions={rightActions}
     >
       {/* Summary Cards */}

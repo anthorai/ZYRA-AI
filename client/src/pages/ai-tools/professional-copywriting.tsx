@@ -202,7 +202,7 @@ export default function ProfessionalCopywriting() {
     <PageShell
       title="Professional Copywriting"
       subtitle="Generate conversion-focused copy using proven frameworks like AIDA, PAS, and FAB"
-      backTo="/dashboard"
+      
     >
       <div className="space-y-6 sm:space-y-8">
         <DashboardCard 

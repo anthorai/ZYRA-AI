@@ -142,7 +142,7 @@ export default function AIImageAltText() {
     <PageShell
       title="AI Image Alt Text Generator"
       subtitle="Generate SEO-optimized alt text descriptions for your product images using AI vision analysis"
-      backTo="/dashboard"
+      
     >
       <DashboardCard
         title="How It Works"

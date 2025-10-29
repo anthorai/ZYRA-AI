@@ -283,7 +283,6 @@ export default function SeoKeywordDensity() {
     <PageShell
       title="SEO Keyword Density"
       subtitle="Keyword optimization and search ranking improvements"
-      backTo="/dashboard"
       rightActions={rightActions}
     >
       {/* Summary Cards */}

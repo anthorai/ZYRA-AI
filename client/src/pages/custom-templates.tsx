@@ -44,7 +44,7 @@ export default function CustomTemplatesPage() {
     <PageShell
       title="Custom Templates"
       subtitle="Design reusable templates for your marketing campaigns"
-      backTo="/dashboard"
+      
     >
       {/* Template Editor */}
       <DashboardCard

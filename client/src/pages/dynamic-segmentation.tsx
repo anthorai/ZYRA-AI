@@ -38,7 +38,7 @@ export default function DynamicSegmentationPage() {
     <PageShell
       title="Dynamic Segmentation"
       subtitle="Automatically segment customers based on behavior and spending patterns"
-      backTo="/dashboard"
+      
     >
       {mockCustomerSegments.map((segment) => (
         <DashboardCard 

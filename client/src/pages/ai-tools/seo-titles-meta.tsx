@@ -170,7 +170,7 @@ export default function SEOTitlesMeta() {
     <PageShell
       title="SEO Titles & Meta Descriptions"
       subtitle="Generate search-optimized titles and meta descriptions for better rankings"
-      backTo="/dashboard"
+      
     >
       <div className="space-y-6 sm:space-y-8">
         <DashboardCard

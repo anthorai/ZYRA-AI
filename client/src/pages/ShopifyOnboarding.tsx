@@ -150,7 +150,7 @@ export default function ShopifyOnboarding() {
     <PageShell
       title="Welcome to Zyra AI!"
       subtitle="Connect your Shopify store to get started with AI-powered optimization"
-      backTo="/dashboard"
+      
       maxWidth="md"
       spacing="normal"
     >

@@ -67,7 +67,7 @@ export default function SmsConversion() {
       <PageShell
         title="SMS Marketing Performance"
         subtitle="Track SMS campaign conversions and revenue impact"
-        backTo="/dashboard"
+        
         rightActions={rightActions}
       >
         <DashboardCard testId="error-state">
@@ -93,7 +93,7 @@ export default function SmsConversion() {
     <PageShell
       title="SMS Marketing Performance"
       subtitle="Track SMS campaign conversions and revenue impact"
-      backTo="/dashboard"
+      
       rightActions={rightActions}
     >
       {/* Summary Cards */}

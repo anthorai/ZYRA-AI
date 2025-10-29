@@ -225,7 +225,7 @@ export default function TemplatesPage() {
     <PageShell
       title="Campaign Templates"
       subtitle="Create and manage reusable templates for your campaigns"
-      backTo="/dashboard"
+      
       rightActions={
         <Button
           onClick={openCreateDialog}

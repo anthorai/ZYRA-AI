@@ -153,7 +153,7 @@ export default function SmartProductDescriptions() {
     <PageShell
       title="Smart Product Descriptions"
       subtitle="Generate compelling product descriptions in multiple brand voices using AI"
-      backTo="/dashboard"
+      
     >
       <div className="space-y-6 sm:space-y-8">
         <DashboardCard

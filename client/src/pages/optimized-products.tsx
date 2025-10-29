@@ -153,7 +153,7 @@ export default function OptimizedProducts() {
       <PageShell
         title="Optimized Products"
         subtitle="AI-enhanced product descriptions and SEO optimization"
-        backTo="/dashboard"
+        
         rightActions={rightActions}
       >
         <DashboardCard testId="error-state">
@@ -181,7 +181,7 @@ export default function OptimizedProducts() {
     <PageShell
       title="Optimized Products"
       subtitle="AI-enhanced product descriptions and SEO optimization"
-      backTo="/dashboard"
+      
       rightActions={rightActions}
     >
       {/* Summary Cards */}

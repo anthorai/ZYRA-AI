@@ -114,7 +114,7 @@ export default function ShopifyPublish() {
     <PageShell
       title="Shopify Publish"
       subtitle="Publish your AI-optimized products directly to your Shopify store"
-      backTo="/dashboard"
+      
     >
       {/* Summary Card */}
       <DashboardCard

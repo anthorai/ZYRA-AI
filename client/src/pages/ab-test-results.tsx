@@ -79,7 +79,6 @@ export default function ABTestResults() {
       <PageShell
         title="A/B Test Results"
         subtitle="Compare different versions and track which optimizations perform better"
-        backTo="/dashboard"
       >
         <DashboardCard testId="error-state">
           <div className="p-8 text-center">
@@ -104,7 +103,6 @@ export default function ABTestResults() {
     <PageShell
       title="A/B Test Results"
       subtitle="Compare different versions and track which optimizations perform better"
-      backTo="/dashboard"
     >
       {/* Summary Cards */}
       {isLoading ? (

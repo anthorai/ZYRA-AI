@@ -194,7 +194,7 @@ export default function ScheduledRefresh() {
     <PageShell
       title="Scheduled Refresh"
       subtitle="Automatically update product content with seasonal trends and fresh keywords"
-      backTo="/dashboard"
+      
     >
       {/* Benefits Overview */}
       <DashboardCard

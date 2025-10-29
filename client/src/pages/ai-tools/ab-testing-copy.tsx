@@ -264,7 +264,7 @@ export default function ABTestingCopy() {
     <PageShell
       title="A/B Testing Copy"
       subtitle="Generate and test multiple copy variations to maximize conversions"
-      backTo="/dashboard"
+      
     >
       {/* A/B Testing Overview */}
       <DashboardCard

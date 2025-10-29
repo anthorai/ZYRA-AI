@@ -158,7 +158,7 @@ export default function BulkOptimization() {
     <PageShell
       title="Bulk Optimization"
       subtitle="Upload CSV files and optimize hundreds of products at once with AI"
-      backTo="/dashboard"
+      
     >
       <div className="space-y-6 sm:space-y-8">
         <DashboardCard

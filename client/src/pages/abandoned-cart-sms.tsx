@@ -36,7 +36,7 @@ export default function AbandonedCartSMSPage() {
     <PageShell
       title="Abandoned Cart SMS"
       subtitle="Recover lost sales with AI-powered SMS reminders"
-      backTo="/dashboard"
+      
     >
       {/* Abandoned Carts Grid */}
       <div className="space-y-4">
