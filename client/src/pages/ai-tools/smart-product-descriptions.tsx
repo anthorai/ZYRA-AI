@@ -235,7 +235,7 @@ export default function SmartProductDescriptions() {
                     render={({ field }) => (
                       <select
                         {...field}
-                        className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 form-select text-white [&>option]:bg-[#14142B] [&>option]:text-slate-100"
+                        className="mt-2 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 form-select text-white [&>option]:bg-[#14142B] [&>option]:text-slate-100 bg-[#14142b]"
                         data-testid="select-audience"
                       >
                         <option value="General Consumers">General Consumers</option>
