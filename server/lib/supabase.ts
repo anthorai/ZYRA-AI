@@ -1,25 +1,37 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Development mode allows running without Supabase for UI testing
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 // Supabase configuration for server-side operations
-// Server MUST use service role key for proper permissions
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl) {
-  throw new Error('SUPABASE_URL environment variable is required for server operations');
+// In production, require all Supabase credentials
+if (!isDevelopment) {
+  if (!supabaseUrl) {
+    throw new Error('SUPABASE_URL environment variable is required for server operations');
+  }
+  if (!supabaseServiceKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations');
+  }
+  if (!supabaseAnonKey) {
+    throw new Error('SUPABASE_ANON_KEY environment variable is required for auth verification');
+  }
 }
 
-if (!supabaseServiceKey) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required for server operations');
-}
+// Development mode: use mock credentials if not provided
+const devUrl = supabaseUrl || 'https://mock-supabase-url.supabase.co';
+const devServiceKey = supabaseServiceKey || 'mock-service-role-key';
+const devAnonKey = supabaseAnonKey || 'mock-anon-key';
 
-if (!supabaseAnonKey) {
-  throw new Error('SUPABASE_ANON_KEY environment variable is required for auth verification');
+if (isDevelopment && (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey)) {
+  console.log('⚠️  Development mode: Running without Supabase credentials (auth disabled)');
 }
 
 // Create Supabase client for server-side operations (admin tasks)
-export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+export const supabase = createClient(devUrl, devServiceKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
@@ -27,8 +39,7 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Create Supabase client for auth token verification
-// This client uses the anon key which can verify user JWTs
-export const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabaseAuth = createClient(devUrl, devAnonKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
