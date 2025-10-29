@@ -562,27 +562,27 @@ export default function BillingPage() {
                       >
                       <div className="h-full flex flex-col">
                         {/* Header Section */}
-                        <div className="space-y-3 pb-4 border-b border-slate-700/50">
-                          <div className="flex items-center space-x-3">
-                            <div className="text-primary flex-shrink-0">
-                              {planIcons[plan.planName] || <CreditCard className="w-7 h-7 lg:w-8 lg:h-8 text-primary" />}
+                        <div className="space-y-4 pb-6 border-b border-slate-700/50 text-center">
+                          <div className="flex flex-col items-center space-y-3">
+                            <div className="text-primary">
+                              {planIcons[plan.planName] || <CreditCard className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />}
                             </div>
-                            <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight" data-testid={`text-plan-name-${index}`}>
+                            <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white" data-testid={`text-plan-name-${index}`}>
                               {plan.planName}
                             </h3>
                           </div>
                           
-                          <div className="space-y-1">
-                            <p className="text-white font-bold text-2xl md:text-3xl">
+                          <div className="space-y-2">
+                            <p className="text-white font-bold text-3xl md:text-4xl">
                               ${plan.price === 0 ? '0' : Math.floor(plan.price)}
-                              <span className="text-sm text-slate-400 font-normal ml-1">
+                              <span className="text-base text-slate-400 font-normal ml-2">
                                 /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'per month'}
                               </span>
                             </p>
                             {details && (
                               <>
-                                <p className="text-primary text-sm font-medium">✨ {details.credits}</p>
-                                <p className="text-slate-300 text-sm">{details.tagline}</p>
+                                <p className="text-primary text-base font-semibold">✨ {details.credits}</p>
+                                <p className="text-slate-300 text-sm max-w-md mx-auto">{details.tagline}</p>
                               </>
                             )}
                           </div>
@@ -590,14 +590,14 @@ export default function BillingPage() {
                         
                         {/* Features Section */}
                         {details && (
-                          <div className="flex-1 py-4 space-y-3">
+                          <div className="flex-1 py-6 px-2 space-y-4">
                             {details.categories.map((category, catIndex) => (
-                              <div key={catIndex} className="space-y-1.5">
-                                <h4 className="text-white font-semibold text-sm">• {category.name}:</h4>
-                                <ul className="space-y-0.5 ml-3">
+                              <div key={catIndex} className="space-y-2 text-center">
+                                <h4 className="text-white font-semibold text-sm">{category.name}</h4>
+                                <ul className="space-y-1">
                                   {category.features.map((feature, featureIndex) => (
                                     <li key={featureIndex} className="text-slate-300 text-xs leading-snug">
-                                      • {feature}
+                                      {feature}
                                     </li>
                                   ))}
                                 </ul>
