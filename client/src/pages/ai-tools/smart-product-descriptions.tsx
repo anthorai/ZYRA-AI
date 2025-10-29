@@ -202,33 +202,27 @@ export default function SmartProductDescriptions() {
                     name="category"
                     control={form.control}
                     render={({ field }) => (
-                      <Select 
-                        value={field.value || "Fashion & Apparel"} 
-                        onValueChange={field.onChange}
-                        disabled={field.disabled}
-                        name={field.name}
+                      <select
+                        {...field}
+                        className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 form-select text-white"
+                        data-testid="select-category"
                       >
-                        <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent side="bottom" align="start" sideOffset={5}>
-                          <SelectItem value="Fashion & Apparel">Fashion & Apparel</SelectItem>
-                          <SelectItem value="Electronics & Gadgets">Electronics & Gadgets</SelectItem>
-                          <SelectItem value="Home & Kitchen">Home & Kitchen</SelectItem>
-                          <SelectItem value="Beauty & Personal Care">Beauty & Personal Care</SelectItem>
-                          <SelectItem value="Health & Fitness">Health & Fitness</SelectItem>
-                          <SelectItem value="Groceries & Food">Groceries & Food</SelectItem>
-                          <SelectItem value="Books & Stationery">Books & Stationery</SelectItem>
-                          <SelectItem value="Toys & Baby Products">Toys & Baby Products</SelectItem>
-                          <SelectItem value="Automotive">Automotive</SelectItem>
-                          <SelectItem value="Sports & Outdoor">Sports & Outdoor</SelectItem>
-                          <SelectItem value="Pet Supplies">Pet Supplies</SelectItem>
-                          <SelectItem value="Jewelry & Watches">Jewelry & Watches</SelectItem>
-                          <SelectItem value="Furniture & Home Improvement">Furniture & Home Improvement</SelectItem>
-                          <SelectItem value="Digital Products">Digital Products</SelectItem>
-                          <SelectItem value="Arts & Crafts">Arts & Crafts</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <option value="Fashion & Apparel">Fashion & Apparel</option>
+                        <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
+                        <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+                        <option value="Health & Fitness">Health & Fitness</option>
+                        <option value="Groceries & Food">Groceries & Food</option>
+                        <option value="Books & Stationery">Books & Stationery</option>
+                        <option value="Toys & Baby Products">Toys & Baby Products</option>
+                        <option value="Automotive">Automotive</option>
+                        <option value="Sports & Outdoor">Sports & Outdoor</option>
+                        <option value="Pet Supplies">Pet Supplies</option>
+                        <option value="Jewelry & Watches">Jewelry & Watches</option>
+                        <option value="Furniture & Home Improvement">Furniture & Home Improvement</option>
+                        <option value="Digital Products">Digital Products</option>
+                        <option value="Arts & Crafts">Arts & Crafts</option>
+                      </select>
                     )}
                   />
                 </div>
@@ -239,33 +233,27 @@ export default function SmartProductDescriptions() {
                     name="audience"
                     control={form.control}
                     render={({ field }) => (
-                      <Select 
-                        value={field.value || "General Consumers"} 
-                        onValueChange={field.onChange}
-                        disabled={field.disabled}
-                        name={field.name}
+                      <select
+                        {...field}
+                        className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 form-select text-white"
+                        data-testid="select-audience"
                       >
-                        <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent side="bottom" align="start" sideOffset={5}>
-                          <SelectItem value="General Consumers">General Consumers</SelectItem>
-                          <SelectItem value="Tech Enthusiasts">Tech Enthusiasts</SelectItem>
-                          <SelectItem value="Business Professionals">Business Professionals</SelectItem>
-                          <SelectItem value="Athletes & Fitness Enthusiasts">Athletes & Fitness Enthusiasts</SelectItem>
-                          <SelectItem value="Students">Students</SelectItem>
-                          <SelectItem value="Parents & Families">Parents & Families</SelectItem>
-                          <SelectItem value="Creative Professionals">Creative Professionals</SelectItem>
-                          <SelectItem value="Eco-conscious Shoppers">Eco-conscious Shoppers</SelectItem>
-                          <SelectItem value="Luxury Buyers">Luxury Buyers</SelectItem>
-                          <SelectItem value="Travelers & Adventurers">Travelers & Adventurers</SelectItem>
-                          <SelectItem value="Home Improvers">Home Improvers</SelectItem>
-                          <SelectItem value="Pet Owners">Pet Owners</SelectItem>
-                          <SelectItem value="Gamers">Gamers</SelectItem>
-                          <SelectItem value="Beauty & Self-care Lovers">Beauty & Self-care Lovers</SelectItem>
-                          <SelectItem value="Lifelong Learners">Lifelong Learners</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <option value="General Consumers">General Consumers</option>
+                        <option value="Tech Enthusiasts">Tech Enthusiasts</option>
+                        <option value="Business Professionals">Business Professionals</option>
+                        <option value="Athletes & Fitness Enthusiasts">Athletes & Fitness Enthusiasts</option>
+                        <option value="Students">Students</option>
+                        <option value="Parents & Families">Parents & Families</option>
+                        <option value="Creative Professionals">Creative Professionals</option>
+                        <option value="Eco-conscious Shoppers">Eco-conscious Shoppers</option>
+                        <option value="Luxury Buyers">Luxury Buyers</option>
+                        <option value="Travelers & Adventurers">Travelers & Adventurers</option>
+                        <option value="Home Improvers">Home Improvers</option>
+                        <option value="Pet Owners">Pet Owners</option>
+                        <option value="Gamers">Gamers</option>
+                        <option value="Beauty & Self-care Lovers">Beauty & Self-care Lovers</option>
+                        <option value="Lifelong Learners">Lifelong Learners</option>
+                      </select>
                     )}
                   />
                 </div>
