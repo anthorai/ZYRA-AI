@@ -301,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark error as resolved
-  app.patch("/api/admin/error-logs/:id/resolve", requireAuth, async (req, res) => {
+  app.patch("/api/admin/error-logs/:id/resolve", requireAuth, apiLimiter, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
       
@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Server-side auth proxy endpoints (fixes CORS/CSP issues with Supabase)
   
   // Registration endpoint - proxies to Supabase from server
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", authLimiter, sanitizeBody, async (req, res) => {
     try {
       const { email, password, fullName } = req.body;
       
@@ -520,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Login endpoint - proxies to Supabase from server
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", authLimiter, sanitizeBody, async (req, res) => {
     try {
       const { email, password } = req.body;
       
@@ -546,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Logout endpoint - proxies to Supabase from server
-  app.post("/api/auth/logout", async (req, res) => {
+  app.post("/api/auth/logout", apiLimiter, async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -591,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== 2FA (Two-Factor Authentication) Routes =====
 
   // Setup 2FA - Generate secret and QR code
-  app.post("/api/2fa/setup", requireAuth, async (req, res) => {
+  app.post("/api/2fa/setup", requireAuth, apiLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const userEmail = (req as AuthenticatedRequest).user.email;
@@ -635,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enable 2FA - Verify token and enable
-  app.post("/api/2fa/enable", requireAuth, async (req, res) => {
+  app.post("/api/2fa/enable", requireAuth, authLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { token } = req.body;
@@ -669,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Disable 2FA
-  app.post("/api/2fa/disable", requireAuth, async (req, res) => {
+  app.post("/api/2fa/disable", requireAuth, authLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { token } = req.body;
@@ -705,7 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Verify 2FA token (for login or sensitive operations)
-  app.post("/api/2fa/verify", requireAuth, async (req, res) => {
+  app.post("/api/2fa/verify", requireAuth, authLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { token } = req.body;
@@ -1341,7 +1341,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/brand-voice/preferences", requireAuth, async (req, res) => {
+  app.post("/api/brand-voice/preferences", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { preferredBrandVoice, customInstructions, tonePreferences, learningEnabled } = req.body;
@@ -1380,7 +1380,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Learn from user edits to improve brand voice
-  app.post("/api/brand-voice/learn", requireAuth, async (req, res) => {
+  app.post("/api/brand-voice/learn", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { originalContent, editedContent, contentType } = req.body;
@@ -1553,7 +1553,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/products", requireAuth, async (req, res) => {
+  app.post("/api/products", requireAuth, sanitizeBody, async (req, res) => {
     try {
       // Validate the request body using the insertProductSchema
       const validation = insertProductSchema.safeParse(req.body);
@@ -1590,7 +1590,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.patch("/api/products/:id", requireAuth, async (req, res) => {
+  app.patch("/api/products/:id", requireAuth, sanitizeBody, async (req, res) => {
     try {
       // Validate partial update data
       const validation = insertProductSchema.partial().safeParse(req.body);
@@ -1618,7 +1618,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.delete("/api/products/:id", requireAuth, async (req, res) => {
+  app.delete("/api/products/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       // Check if the product exists and belongs to the user
       const existingProduct = await supabaseStorage.getProduct(req.params.id);
@@ -1649,7 +1649,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/products/history/rollback/:id", requireAuth, async (req, res) => {
+  app.post("/api/products/history/rollback/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const historyId = req.params.id;
@@ -1681,7 +1681,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Optimize all products endpoint
-  app.post("/api/products/optimize-all", requireAuth, async (req, res) => {
+  app.post("/api/products/optimize-all", requireAuth, aiLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
@@ -1831,7 +1831,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/ab-tests", requireAuth, async (req, res) => {
+  app.post("/api/ab-tests", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const validation = insertAbTestSchema.safeParse(req.body);
       if (!validation.success) {
@@ -1850,7 +1850,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.patch("/api/ab-tests/:id", requireAuth, async (req, res) => {
+  app.patch("/api/ab-tests/:id", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const validation = insertAbTestSchema.partial().safeParse(req.body);
       if (!validation.success) {
@@ -1899,7 +1899,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/notifications", requireAuth, async (req, res) => {
+  app.post("/api/notifications", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const validation = insertNotificationSchema.safeParse(req.body);
       if (!validation.success) {
@@ -1918,7 +1918,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
+  app.patch("/api/notifications/:id/read", requireAuth, apiLimiter, async (req, res) => {
     try {
       await supabaseStorage.markNotificationAsRead(req.params.id);
       res.json({ message: "Notification marked as read" });
@@ -1928,7 +1928,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/notifications/mark-all-read", requireAuth, async (req, res) => {
+  app.post("/api/notifications/mark-all-read", requireAuth, apiLimiter, async (req, res) => {
     try {
       await supabaseStorage.markAllNotificationsAsRead((req as AuthenticatedRequest).user.id);
       res.json({ message: "All notifications marked as read" });
@@ -1938,7 +1938,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
+  app.delete("/api/notifications/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       await supabaseStorage.markNotificationAsRead(req.params.id);
       // Always succeeds
@@ -1952,7 +1952,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/notifications/clear-all", requireAuth, async (req, res) => {
+  app.post("/api/notifications/clear-all", requireAuth, apiLimiter, async (req, res) => {
     try {
       await supabaseStorage.markAllNotificationsAsRead((req as AuthenticatedRequest).user.id);
       res.json({ message: "All notifications cleared successfully" });
@@ -2017,7 +2017,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Apply preset mode
-  app.post("/api/notification-preferences/preset", requireAuth, async (req, res) => {
+  app.post("/api/notification-preferences/preset", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { preset } = req.body;
@@ -2076,7 +2076,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Create notification rule
-  app.post("/api/notification-rules", requireAuth, async (req, res) => {
+  app.post("/api/notification-rules", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const validated = insertNotificationRuleSchema.parse({ userId, ...req.body });
@@ -2101,7 +2101,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Delete notification rule
-  app.delete("/api/notification-rules/:id", requireAuth, async (req, res) => {
+  app.delete("/api/notification-rules/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       await storage.deleteNotificationRule(req.params.id);
       res.json({ message: "Rule deleted successfully" });
@@ -2124,7 +2124,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Create notification channel
-  app.post("/api/notification-channels", requireAuth, async (req, res) => {
+  app.post("/api/notification-channels", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const validated = insertNotificationChannelSchema.parse({ userId, ...req.body });
@@ -2149,7 +2149,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Delete notification channel
-  app.delete("/api/notification-channels/:id", requireAuth, async (req, res) => {
+  app.delete("/api/notification-channels/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       await storage.deleteNotificationChannel(req.params.id);
       res.json({ message: "Channel deleted successfully" });
@@ -2294,7 +2294,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/update-subscription", requireAuth, async (req, res) => {
+  app.post("/api/update-subscription", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
       const { planId } = req.body;
       if (!planId) {
@@ -2315,7 +2315,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Change subscription plan (alternative endpoint for billing page)
-  app.post("/api/subscription/change-plan", requireAuth, async (req, res) => {
+  app.post("/api/subscription/change-plan", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
       const { planId, gateway = 'razorpay' } = req.body;
       console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "gateway:", gateway);
@@ -2457,7 +2457,7 @@ Output format: Markdown with clear section headings.`;
   // === RAZORPAY ROUTES ===
   
   // Create Razorpay order
-  app.post("/api/payments/razorpay/create-order", requireAuth, async (req, res) => {
+  app.post("/api/payments/razorpay/create-order", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
       if (!isRazorpayConfigured()) {
         return res.status(503).json({ error: "Razorpay is not configured" });
@@ -2493,7 +2493,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Verify Razorpay payment and activate subscription
-  app.post("/api/payments/razorpay/verify", requireAuth, async (req, res) => {
+  app.post("/api/payments/razorpay/verify", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
       const { orderId, paymentId, signature, transactionId } = req.body;
       const user = (req as AuthenticatedRequest).user;
@@ -2700,7 +2700,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Verify PayPal payment and activate subscription
-  app.post("/api/payments/paypal/verify-subscription", requireAuth, async (req, res) => {
+  app.post("/api/payments/paypal/verify-subscription", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
       const { transactionId, planId, paypalOrderId } = req.body;
       const user = (req as AuthenticatedRequest).user;
@@ -2903,7 +2903,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Request refund
-  app.post("/api/payments/refund/:transactionId", requireAuth, async (req, res) => {
+  app.post("/api/payments/refund/:transactionId", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
       const { transactionId } = req.params;
       const { amount, reason } = req.body;
@@ -3380,7 +3380,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post('/api/upload-profile-image', requireAuth, upload.single('image'), async (req, res) => {
+  app.post('/api/upload-profile-image', requireAuth, uploadLimiter, upload.single('image'), async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       if (!userId) {
@@ -3436,7 +3436,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post('/api/store-connections', requireAuth, async (req, res) => {
+  app.post('/api/store-connections', requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       if (!userId) {
@@ -3463,7 +3463,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.delete('/api/store-connections/:id', requireAuth, async (req, res) => {
+  app.delete('/api/store-connections/:id', requireAuth, apiLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       if (!userId) {
@@ -3482,7 +3482,7 @@ Output format: Markdown with clear section headings.`;
   // ===== PROFILE API ROUTES (matching frontend expectations) =====
   
   // PATCH /api/profile - Update profile information
-  app.patch('/api/profile', requireAuth, async (req, res) => {
+  app.patch('/api/profile', requireAuth, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { fullName, email } = req.body;
@@ -3500,7 +3500,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // POST /api/profile/upload-image - Upload profile image
-  app.post('/api/profile/upload-image', requireAuth, upload.single('image'), async (req, res) => {
+  app.post('/api/profile/upload-image', requireAuth, uploadLimiter, upload.single('image'), async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
@@ -3541,7 +3541,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // POST /api/profile/change-password - Change password
-  app.post('/api/profile/change-password', requireAuth, async (req, res) => {
+  app.post('/api/profile/change-password', requireAuth, authLimiter, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { oldPassword, newPassword, confirmPassword } = req.body;
@@ -4245,7 +4245,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Initiate Shopify OAuth flow (authenticated users)
-  app.post('/api/shopify/auth', requireAuth, async (req, res) => {
+  app.post('/api/shopify/auth', requireAuth, apiLimiter, async (req, res) => {
     console.log('🔵 [SHOPIFY AUTH] POST /api/shopify/auth endpoint hit');
     console.log('🔵 [SHOPIFY AUTH] Request body:', req.body);
     console.log('🔵 [SHOPIFY AUTH] User ID:', (req as AuthenticatedRequest).user?.id);
@@ -4810,7 +4810,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Disconnect Shopify
-  app.post('/api/shopify/disconnect', requireAuth, async (req, res) => {
+  app.post('/api/shopify/disconnect', requireAuth, apiLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const connections = await supabaseStorage.getStoreConnections(userId);
@@ -5520,7 +5520,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Update campaign
-  app.patch('/api/campaigns/:id', requireAuth, async (req, res) => {
+  app.patch('/api/campaigns/:id', requireAuth, campaignLimiter, sanitizeBody, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
@@ -5542,7 +5542,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Delete campaign
-  app.delete('/api/campaigns/:id', requireAuth, async (req, res) => {
+  app.delete('/api/campaigns/:id', requireAuth, campaignLimiter, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
