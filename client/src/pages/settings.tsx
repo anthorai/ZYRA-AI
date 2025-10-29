@@ -73,8 +73,8 @@ export default function SettingsPage() {
                 <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
               <div className="min-w-0 flex-1">
-                <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl" data-testid="text-page-title">Settings & Configuration</h1>
-                <p className="text-slate-300 text-xs sm:text-sm lg:text-base" data-testid="text-page-subtitle">Customize your Zyra AI experience, manage integrations, and configure AI preferences</p>
+                <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl" data-testid="text-page-title">Settings</h1>
+                <p className="text-slate-300 text-xs sm:text-sm lg:text-base" data-testid="text-page-subtitle">Manage your integrations and preferences</p>
               </div>
             </div>
 
