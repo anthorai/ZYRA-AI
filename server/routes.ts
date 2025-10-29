@@ -5853,6 +5853,100 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Click tracking endpoint (link click tracking)
+  app.get('/click/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const { url } = req.query;
+      
+      if (!url) {
+        return res.status(400).send('Missing destination URL');
+      }
+      
+      try {
+        const destinationUrl = new URL(url as string);
+        const allowedDomains = [
+          'myshopify.com',
+          '.myshopify.com',
+          process.env.PRODUCTION_DOMAIN?.replace(/^https?:\/\//, ''),
+          ...(process.env.REPLIT_DOMAINS?.split(',').map(d => d.trim()) || [])
+        ].filter((d): d is string => Boolean(d));
+        
+        const isAllowed = allowedDomains.some(domain => {
+          return destinationUrl.hostname === domain || 
+                 destinationUrl.hostname.endsWith(`.${domain}`) ||
+                 destinationUrl.hostname === domain.replace(/^\./, '');
+        });
+        
+        if (!isAllowed && !destinationUrl.hostname.endsWith('.myshopify.com')) {
+          console.warn(`[SECURITY] Blocked redirect to untrusted domain: ${destinationUrl.hostname}`);
+          return res.status(403).send('Redirect to external domains not allowed');
+        }
+      } catch (urlError) {
+        console.error('[SECURITY] Invalid URL format:', url);
+        return res.status(400).send('Invalid URL format');
+      }
+      
+      const trackingTokenResult = await db.select().from(trackingTokens)
+        .where(eq(trackingTokens.token, token))
+        .limit(1);
+      
+      if (trackingTokenResult.length > 0) {
+        const trackingToken = trackingTokenResult[0];
+        const { campaignId, userId, recipientEmail } = trackingToken;
+        
+        const campaign = await supabaseStorage.getCampaign(campaignId);
+        
+        if (campaign) {
+          try {
+            await db.insert(campaignEvents).values({
+              campaignId,
+              userId,
+              recipientEmail,
+              eventType: 'click',
+              ipAddress: req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+              userAgent: req.headers['user-agent'] || 'unknown',
+              metadata: { 
+                timestamp: new Date().toISOString(),
+                destinationUrl: url as string
+              }
+            });
+            
+            const totalClicks = await db.select({ count: sql<number>`count(*)` })
+              .from(campaignEvents)
+              .where(and(
+                eq(campaignEvents.campaignId, campaignId),
+                eq(campaignEvents.eventType, 'click')
+              ));
+            
+            const clickCount = totalClicks[0]?.count || 0;
+            const sentCount = campaign.sentCount || 0;
+            const clickRate = sentCount > 0 
+              ? Math.round((Number(clickCount) / sentCount) * 100) 
+              : 0;
+            
+            await db.update(campaigns)
+              .set({ clickRate })
+              .where(eq(campaigns.id, campaignId));
+          } catch (insertError: any) {
+            if (!insertError.message?.includes('unique')) {
+              console.error('Campaign click event insert error:', insertError);
+            }
+          }
+        }
+      }
+      
+      res.redirect(url as string);
+    } catch (error) {
+      console.error('Click tracking error:', error);
+      if (req.query.url) {
+        res.redirect(req.query.url as string);
+      } else {
+        res.status(500).send('Tracking error');
+      }
+    }
+  });
+
   // ===== ABANDONED CART ROUTES =====
   
   // Get abandoned carts
