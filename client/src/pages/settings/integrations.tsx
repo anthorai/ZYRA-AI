@@ -789,44 +789,46 @@ export default function IntegrationsPage() {
               className="relative"
               testId={`card-integration-${integration.id}`}
             >
-                {/* Shopify Setup Guide Button - Top Right Corner */}
+                {/* Mobile: Setup Guide Button at Top */}
                 {integration.id === 'shopify' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={validateShopifySetup}
-                    disabled={isValidating}
-                    className="absolute top-4 right-4 h-8 px-3 text-xs text-primary/80 hover:text-primary hover:bg-primary/10 border border-primary/20"
-                    data-testid="button-shopify-setup-guide"
-                  >
-                    <Info className="w-3.5 h-3.5 mr-1.5" />
-                    {isValidating ? "Checking..." : "Setup Guide"}
-                  </Button>
+                  <div className="flex justify-end mb-3 md:mb-0 md:absolute md:top-4 md:right-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={validateShopifySetup}
+                      disabled={isValidating}
+                      className="h-8 px-3 text-xs text-primary/80 hover:text-primary hover:bg-primary/10 border border-primary/20"
+                      data-testid="button-shopify-setup-guide"
+                    >
+                      <Info className="w-3.5 h-3.5 mr-1.5" />
+                      {isValidating ? "Checking..." : "Setup Guide"}
+                    </Button>
+                  </div>
                 )}
                 
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className={`p-3 rounded-lg ${integration.isConnected ? 'bg-primary/20' : 'bg-slate-800/50'}`}>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-1">
+                    <div className={`p-3 rounded-lg ${integration.isConnected ? 'bg-primary/20' : 'bg-slate-800/50'} flex-shrink-0`}>
                       <div className={integration.isConnected ? 'text-primary' : 'text-slate-400'}>
                         {integration.icon}
                       </div>
                     </div>
-                    <div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-white font-semibold">{integration.name}</h3>
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 className="text-white font-semibold text-base sm:text-lg">{integration.name}</h3>
                         <Badge
                           variant={integration.isConnected ? "default" : "secondary"}
-                          className={integration.isConnected
+                          className={`text-xs ${integration.isConnected
                             ? "bg-green-500/20 text-green-400"
                             : "bg-slate-500/20 text-slate-400"
-                          }
+                          }`}
                         >
                           {integration.isConnected ? "Connected" : "Not Connected"}
                         </Badge>
                         {integration.comingSoon && (
                           <Badge
                             variant="outline"
-                            className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
+                            className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 text-xs"
                           >
                             Coming Soon
                           </Badge>
@@ -851,8 +853,8 @@ export default function IntegrationsPage() {
                         </TooltipContent>
                       </Tooltip>
                       
-                      <p className="text-sm text-slate-400 mt-2">{integration.type}</p>
-                      <p className="text-sm text-slate-300 mt-1">{integration.description}</p>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-2">{integration.type}</p>
+                      <p className="text-xs sm:text-sm text-slate-300 mt-1">{integration.description}</p>
                     </div>
                   </div>
                 
@@ -860,7 +862,7 @@ export default function IntegrationsPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleDisconnect(integration.id, integration.name)}
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                    className="border-red-500/50 text-red-400 hover:bg-red-500/10 w-full sm:w-auto md:w-auto"
                     data-testid={`button-disconnect-${integration.id}`}
                   >
                     <X className="w-4 h-4 mr-2" />
@@ -869,7 +871,7 @@ export default function IntegrationsPage() {
                 ) : (
                   <Button
                     onClick={() => handleConnect(integration.id)}
-                    className="gradient-button"
+                    className="gradient-button w-full sm:w-auto md:w-auto"
                     disabled={integration.comingSoon}
                     data-testid={`button-connect-${integration.id}`}
                   >
