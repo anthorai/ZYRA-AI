@@ -722,18 +722,15 @@ export default function BillingPage() {
             title="Payment Methods"
             description="Manage your payment methods and billing information"
             headerAction={
-              <>
-                <CreditCard className="w-5 h-5 mr-2 text-primary" />
-                <Button
-                  onClick={() => addPaymentMethodMutation.mutate()}
-                  disabled={addPaymentMethodMutation.isPending}
-                  className="gradient-button ml-auto"
-                  data-testid="button-add-payment-method"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Payment Method
-                </Button>
-              </>
+              <Button
+                onClick={() => addPaymentMethodMutation.mutate()}
+                disabled={addPaymentMethodMutation.isPending}
+                className="gradient-button ml-auto"
+                data-testid="button-add-payment-method"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Payment Method
+              </Button>
             }
             testId="card-payment-methods"
           >
