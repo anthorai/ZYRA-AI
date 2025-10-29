@@ -12,8 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { PageContainer } from "@/components/ui/standardized-layout";
-import Footer from "@/components/ui/footer";
+import { PageShell } from "@/components/ui/page-shell";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
@@ -21,19 +20,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
-  ArrowLeft,
   User, 
   Lock, 
   Store, 
   Globe, 
   Camera, 
-  Settings, 
   Eye, 
   EyeOff,
   CheckCircle,
   AlertCircle,
-  Trash2,
-  LogOut
+  Trash2
 } from "lucide-react";
 
 const updateProfileSchema = z.object({
@@ -67,34 +63,6 @@ export default function ProfilePage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Handle navigation
-  const handleGoBack = () => {
-    // Check if we came from Settings specifically
-    const navigationSource = sessionStorage.getItem('navigationSource');
-    if (navigationSource === 'settings') {
-      setLocation('/settings');
-      sessionStorage.removeItem('navigationSource');
-      return;
-    }
-    
-    // Check for same-origin referrer and meaningful history
-    const sameOriginReferrer = document.referrer && 
-      new URL(document.referrer).origin === window.location.origin;
-    
-    if (sameOriginReferrer && window.history.length > 1) {
-      // Safe in-app navigation - go back in history
-      window.history.back();
-    } else {
-      // Direct/external navigation or no history - fallback to dashboard
-      setLocation('/dashboard');
-    }
-  };
-
-  // Handle logout with standardized behavior
-  const onLogoutClick = () => {
-    handleLogout("/auth"); // Redirect to /auth as expected by this component
-  };
 
   // Fetch user data from API
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -287,35 +255,38 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Main Content */}
-      <div className="flex-1 p-4 sm:p-6">
-        <PageContainer>
-        <div className="max-w-4xl mx-auto space-y-6">
-          {isLoadingUser ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-4 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
-              <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Profile</span>
-              </TabsTrigger>
-              <TabsTrigger value="password" className="flex items-center space-x-2 data-[state=active]:active-tab">
-                <Lock className="w-4 h-4" />
-                <span className="hidden sm:inline">Password</span>
-              </TabsTrigger>
-              <TabsTrigger value="stores" className="flex items-center space-x-2 data-[state=active]:active-tab">
-                <Store className="w-4 h-4" />
-                <span className="hidden sm:inline">Stores</span>
-              </TabsTrigger>
-              <TabsTrigger value="language" className="flex items-center space-x-2 data-[state=active]:active-tab">
-                <Globe className="w-4 h-4" />
-                <span className="hidden sm:inline">Language</span>
-              </TabsTrigger>
-            </TabsList>
+    <PageShell
+      title="Profile Settings"
+      subtitle="Manage your personal information and preferences"
+      backTo="/dashboard"
+      maxWidth="xl"
+      spacing="normal"
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
+        {isLoadingUser ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-4 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
+            <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="password" className="flex items-center space-x-2 data-[state=active]:active-tab">
+              <Lock className="w-4 h-4" />
+              <span className="hidden sm:inline">Password</span>
+            </TabsTrigger>
+            <TabsTrigger value="stores" className="flex items-center space-x-2 data-[state=active]:active-tab">
+              <Store className="w-4 h-4" />
+              <span className="hidden sm:inline">Stores</span>
+            </TabsTrigger>
+            <TabsTrigger value="language" className="flex items-center space-x-2 data-[state=active]:active-tab">
+              <Globe className="w-4 h-4" />
+              <span className="hidden sm:inline">Language</span>
+            </TabsTrigger>
+          </TabsList>
 
             {/* Profile Card Tab */}
             <TabsContent value="profile">
@@ -763,13 +734,9 @@ export default function ProfilePage() {
                   </div>
               </DashboardCard>
             </TabsContent>
-            </Tabs>
-          )}
-        </div>
-      </PageContainer>
-    </div>
-    {/* Footer */}
-    <Footer />
-  </div>
+          </Tabs>
+        )}
+      </div>
+    </PageShell>
   );
 }

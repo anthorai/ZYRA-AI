@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Check, ArrowLeft, Shield, CreditCard, Zap } from "lucide-react";
+import { PageShell } from "@/components/ui/page-shell";
+import { Check, Shield, CreditCard, Zap } from "lucide-react";
 import { SiPaypal } from "react-icons/si";
 import SubscriptionPayPalButton from "@/components/SubscriptionPayPalButton";
 
@@ -49,6 +50,11 @@ export default function CheckoutPage() {
       navigate('/billing');
     }
     setIsLoading(false);
+
+    // Cleanup: Remove pending subscription on component unmount (any exit path)
+    return () => {
+      sessionStorage.removeItem('pending_subscription');
+    };
   }, [navigate, toast]);
 
   // Verify PayPal payment and activate subscription
@@ -110,11 +116,6 @@ export default function CheckoutPage() {
     });
   };
 
-  const handleGoBack = () => {
-    sessionStorage.removeItem('pending_subscription');
-    navigate('/billing');
-  };
-
   if (isLoading || !pendingSubscription) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -127,28 +128,13 @@ export default function CheckoutPage() {
   const amount = parseFloat(pendingSubscription.amount);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleGoBack}
-            className="mb-4"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Plans
-          </Button>
-          <h1 className="text-3xl font-bold mb-2" data-testid="text-checkout-title">
-            Complete Your Upgrade
-          </h1>
-          <p className="text-muted-foreground" data-testid="text-checkout-subtitle">
-            Secure checkout powered by PayPal - Complete in seconds
-          </p>
-        </div>
-
+    <PageShell
+      title="Complete Your Upgrade"
+      subtitle="Secure checkout powered by PayPal - Complete in seconds"
+      backTo="/billing"
+      maxWidth="xl"
+      spacing="normal"
+    >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Plan Details - Left Column */}
           <div className="lg:col-span-2 space-y-6">
@@ -297,8 +283,7 @@ export default function CheckoutPage() {
             </DashboardCard>
           </div>
         </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
 

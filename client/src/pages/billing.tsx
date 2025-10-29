@@ -9,33 +9,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { 
-  ArrowLeft,
   CreditCard, 
   Calendar, 
   Download, 
-  ChevronRight, 
-  Check, 
   Crown, 
   Zap,
-  Globe,
-  Shield,
-  Star,
-  TrendingUp,
   Building,
-  ArrowUp,
-  ArrowDown,
   ExternalLink,
   Plus,
-  User,
   Settings,
-  LogOut,
-  Gift,
-  Award,
   Rocket,
   BarChart,
   Wand2
@@ -107,35 +94,10 @@ const planIcons: Record<string, JSX.Element> = {
 };
 
 export default function BillingPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  // Handle navigation
-  const handleGoBack = () => {
-    const navigationSource = sessionStorage.getItem('navigationSource');
-    if (navigationSource === 'settings') {
-      setLocation('/settings');
-      sessionStorage.removeItem('navigationSource');
-      return;
-    }
-    
-    const sameOriginReferrer = document.referrer && 
-      new URL(document.referrer).origin === window.location.origin;
-    
-    if (sameOriginReferrer && window.history.length > 1) {
-      window.history.back();
-    } else {
-      setLocation('/dashboard');
-    }
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    logout();
-    setLocation("/auth");
-  };
 
   // Fetch real subscription plans from API
   const { 
@@ -274,17 +236,31 @@ export default function BillingPage() {
 
   if (plansLoading || subscriptionLoading || usageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-slate-300">Loading billing information...</p>
+      <PageShell
+        title="Billing & Subscription"
+        subtitle="Manage your subscription plans and billing"
+        backTo="/dashboard"
+        maxWidth="xl"
+        spacing="normal"
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-slate-300">Loading billing information...</p>
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <PageContainer>
+    <PageShell
+      title="Billing & Subscription"
+      subtitle="Manage your subscription plans and billing"
+      backTo="/dashboard"
+      maxWidth="xl"
+      spacing="normal"
+    >
           {currentPlan && (
             <DashboardCard testId="card-current-plan">
               <div className="flex items-center justify-between mb-6">
@@ -626,6 +602,6 @@ export default function BillingPage() {
               </DashboardCard>
             </TabsContent>
           </Tabs>
-    </PageContainer>
+    </PageShell>
   );
 }

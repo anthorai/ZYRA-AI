@@ -10,7 +10,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { ShopifyPublishDialog } from '@/components/shopify/publish-dialog';
 import { PublishContent, useShopifyBulkPublish } from '@/hooks/use-shopify-publish';
 import { useProductRealtime } from '@/hooks/use-product-realtime';
-import { PageContainer, CardGrid } from '@/components/ui/standardized-layout';
+import { CardGrid } from '@/components/ui/standardized-layout';
+import { PageShell } from '@/components/ui/page-shell';
 import {
   Package,
   Search,
@@ -308,8 +309,13 @@ export default function ManageProducts() {
   }
 
   return (
-    <div>
-      <PageContainer>
+    <PageShell
+      title="Manage Products"
+      subtitle="Sync, optimize, and publish your products to Shopify"
+      backTo="/dashboard"
+      maxWidth="xl"
+      spacing="normal"
+    >
 
       {/* Search and Action Buttons */}
       <div className="flex flex-col gap-3">
@@ -451,7 +457,6 @@ export default function ManageProducts() {
           }}
         />
       )}
-      </PageContainer>
-    </div>
+    </PageShell>
   );
 }

@@ -6,12 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { Bell, ArrowLeft, Mail, Smartphone, Monitor, MessageSquare, TrendingUp, CreditCard, Sparkles } from "lucide-react";
+import { PageShell } from "@/components/ui/page-shell";
+import { Mail, Smartphone, Monitor, MessageSquare, TrendingUp, CreditCard, Sparkles } from "lucide-react";
 
 export default function NotificationsPage() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [inAppNotifications, setInAppNotifications] = useState(true);
@@ -32,20 +31,13 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-300">
-      {/* Navigation */}
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation('/settings')}
-          className="text-slate-300 hover:text-white hover:bg-slate-800"
-          data-testid="button-back-to-settings"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Settings
-        </Button>
-      </div>
-
+    <PageShell
+      title="Notification Settings"
+      subtitle="Manage how and when you receive notifications"
+      backTo="/settings"
+      maxWidth="xl"
+      spacing="normal"
+    >
       {/* Notification Channels */}
       <DashboardCard
         title="Notification Channels"
@@ -229,14 +221,6 @@ export default function NotificationsPage() {
       {/* Save Button */}
       <div className="flex justify-end space-x-3 pt-4">
         <Button
-          variant="outline"
-          onClick={() => setLocation('/settings')}
-          className="border-slate-600 text-slate-300 hover:bg-slate-800"
-          data-testid="button-cancel"
-        >
-          Cancel
-        </Button>
-        <Button
           onClick={handleSave}
           className="gradient-button"
           data-testid="button-save-notifications"
@@ -244,6 +228,6 @@ export default function NotificationsPage() {
           Save Changes
         </Button>
       </div>
-    </div>
+    </PageShell>
   );
 }

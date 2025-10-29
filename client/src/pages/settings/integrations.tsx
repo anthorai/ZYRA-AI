@@ -9,8 +9,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { Zap, ArrowLeft, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info } from "lucide-react";
+import { PageShell } from "@/components/ui/page-shell";
+import { Zap, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info } from "lucide-react";
 import { SiSendgrid, SiTwilio } from "react-icons/si";
 
 interface Integration {
@@ -28,7 +28,6 @@ interface Integration {
 
 export default function IntegrationsPage() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   
   const [integrations, setIntegrations] = useState<Integration[]>([
     {
@@ -746,20 +745,13 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-300">
-      {/* Navigation */}
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation('/settings')}
-          className="text-slate-300 hover:text-white hover:bg-slate-800"
-          data-testid="button-back-to-settings"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Settings
-        </Button>
-      </div>
-
+    <PageShell
+      title="Integrations"
+      subtitle="Connect third-party services to enhance your Zyra AI experience"
+      backTo="/settings"
+      maxWidth="xl"
+      spacing="normal"
+    >
       {/* Connected Summary */}
       <DashboardCard 
         className="bg-primary/10"
@@ -1190,6 +1182,6 @@ export default function IntegrationsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }

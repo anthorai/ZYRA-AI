@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
 import { 
   CreditCard, 
   Receipt, 
@@ -194,7 +194,13 @@ export default function SubscriptionManagement() {
   }
 
   return (
-    <PageContainer>
+    <PageShell
+      title="Subscription Management"
+      subtitle="View and manage your subscription, invoices, and billing history"
+      backTo="/dashboard"
+      maxWidth="xl"
+      spacing="normal"
+    >
       {/* Current Subscription */}
       <DashboardCard 
         title="Current Subscription"
@@ -431,6 +437,6 @@ export default function SubscriptionManagement() {
             <p className="text-center text-muted-foreground py-8" data-testid="text-no-invoices">No invoices available</p>
           )}
       </DashboardCard>
-    </PageContainer>
+    </PageShell>
   );
 }

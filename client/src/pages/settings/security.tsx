@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
 import { Shield, Lock, Smartphone, Key, Download, Trash2, Eye, Chrome, Monitor } from "lucide-react";
 
 export default function SecurityPage() {
@@ -106,7 +106,13 @@ export default function SecurityPage() {
   };
 
   return (
-    <PageContainer>
+    <PageShell
+      title="Security Settings"
+      subtitle="Protect your account with advanced security features"
+      backTo="/settings"
+      maxWidth="xl"
+      spacing="normal"
+    >
       {/* Two-Factor Authentication */}
       <DashboardCard
         title="Two-Factor Authentication"
@@ -328,6 +334,6 @@ export default function SecurityPage() {
           </div>
         </div>
       </DashboardCard>
-    </PageContainer>
+    </PageShell>
   );
 }

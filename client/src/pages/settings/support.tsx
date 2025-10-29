@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
 import { HelpCircle, FileText, MessageSquare, Mail, Users, ExternalLink, Send, Book, Video, LifeBuoy } from "lucide-react";
 
 export default function SupportPage() {
@@ -70,7 +70,13 @@ export default function SupportPage() {
   ];
 
   return (
-    <PageContainer>
+    <PageShell
+      title="Help & Support"
+      subtitle="Get help, browse resources, and contact our support team"
+      backTo="/settings"
+      maxWidth="xl"
+      spacing="normal"
+    >
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         <DashboardCard size="sm" testId="card-live-chat">
@@ -275,6 +281,6 @@ export default function SupportPage() {
             </div>
           </div>
       </DashboardCard>
-    </PageContainer>
+    </PageShell>
   );
 }

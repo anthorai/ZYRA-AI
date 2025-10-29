@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PageContainer } from "@/components/ui/standardized-layout";
+import { PageShell } from "@/components/ui/page-shell";
 import { Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 
 export default function ShopifyOnboarding() {
@@ -147,30 +147,36 @@ export default function ShopifyOnboarding() {
 
   // Manual setup
   return (
-    <PageContainer>
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md gradient-card border-0">
-        <CardContent className="p-8 text-center">
-          <div className="mb-6">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-10 h-10 text-primary" />
+    <PageShell
+      title="Welcome to Zyra AI!"
+      subtitle="Connect your Shopify store to get started with AI-powered optimization"
+      backTo="/dashboard"
+      maxWidth="md"
+      spacing="normal"
+    >
+      <div className="flex items-center justify-center py-8">
+        <Card className="w-full max-w-md gradient-card border-0">
+          <CardContent className="p-8 text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+                <Sparkles className="w-10 h-10 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Get Started</h2>
+              <p className="text-slate-400 mb-6">
+                Connect your Shopify store to unlock AI-powered optimization
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Welcome to Zyra AI!</h2>
-            <p className="text-slate-400 mb-6">
-              Connect your Shopify store to get started with AI-powered optimization
-            </p>
-          </div>
-          
-          <Button
-            onClick={handleManualSetup}
-            className="gradient-button w-full"
-            data-testid="button-go-to-integrations"
-          >
-            Connect Shopify Store
-          </Button>
-        </CardContent>
-      </Card>
+            
+            <Button
+              onClick={handleManualSetup}
+              className="gradient-button w-full"
+              data-testid="button-go-to-integrations"
+            >
+              Connect Shopify Store
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </PageContainer>
+    </PageShell>
   );
 }

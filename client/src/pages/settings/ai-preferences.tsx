@@ -7,12 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { Brain, ArrowLeft, Sparkles, Zap, Clock } from "lucide-react";
+import { PageShell } from "@/components/ui/page-shell";
+import { Brain, Sparkles, Zap, Clock } from "lucide-react";
 
 export default function AIPreferencesPage() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
   
   const [brandVoice, setBrandVoice] = useState("professional");
   const [contentStyle, setContentStyle] = useState("seo");
@@ -30,20 +29,13 @@ export default function AIPreferencesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-300">
-      {/* Navigation */}
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          onClick={() => setLocation('/settings')}
-          className="text-slate-300 hover:text-white hover:bg-slate-800"
-          data-testid="button-back-to-settings"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Settings
-        </Button>
-      </div>
-
+    <PageShell
+      title="AI Preferences"
+      subtitle="Customize AI behavior and automation settings"
+      backTo="/settings"
+      maxWidth="xl"
+      spacing="normal"
+    >
       {/* Brand Voice Selection */}
       <DashboardCard
         title="Brand Voice & Tone"
@@ -206,14 +198,6 @@ export default function AIPreferencesPage() {
       {/* Save Button */}
       <div className="flex justify-end space-x-3 pt-4">
         <Button
-          variant="outline"
-          onClick={() => setLocation('/settings')}
-          className="border-slate-600 text-slate-300 hover:bg-slate-800"
-          data-testid="button-cancel"
-        >
-          Cancel
-        </Button>
-        <Button
           onClick={handleSave}
           className="gradient-button"
           data-testid="button-save-preferences"
@@ -221,6 +205,6 @@ export default function AIPreferencesPage() {
           Save Changes
         </Button>
       </div>
-    </div>
+    </PageShell>
   );
 }
