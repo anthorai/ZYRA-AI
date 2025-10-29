@@ -514,7 +514,8 @@ export default function BrandVoiceMemory() {
                           {content.content}
                         </pre>
                       </div>
-                    </DashboardCard>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}

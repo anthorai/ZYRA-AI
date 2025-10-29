@@ -288,7 +288,7 @@ export default function ScheduledRefresh() {
                       </div>
                     </div>
                   </CardContent>
-                </DashboardCard>
+                </Card>
               ))}
             </div>
       </DashboardCard>

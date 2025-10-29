@@ -488,6 +488,7 @@ export default function ABTestingCopy() {
                         <div className="text-slate-300">Conv. Rate</div>
                       </div>
                     </div>
+                  </CardContent>
               </DashboardCard>
             ))}
           </div>
