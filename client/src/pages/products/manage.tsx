@@ -309,15 +309,9 @@ export default function ManageProducts() {
   }
 
   return (
-    <PageShell
-      title="Manage Products"
-      subtitle="Sync, optimize, and publish your products to Shopify"
-      backTo="/dashboard"
-      maxWidth="xl"
-      spacing="normal"
-    >
-
-      {/* Search and Action Buttons */}
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto w-full">
+        {/* Search and Action Buttons */}
       <div className="flex flex-col gap-3">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 sm:w-5 sm:h-5" />
@@ -457,6 +451,7 @@ export default function ManageProducts() {
           }}
         />
       )}
-    </PageShell>
+      </main>
+    </div>
   );
 }
