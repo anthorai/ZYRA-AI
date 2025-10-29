@@ -549,17 +549,17 @@ export default function BillingPage() {
                   const details = planDetails[plan.planName];
                   
                   return (
-                    <DashboardCard 
-                      key={plan.id} 
-                      size="sm"
-                      className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50' : ''}`}
-                      testId={`card-plan-${index}`}
-                    >
+                    <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-4' : ''}`}>
                       {isPlanPopular && (
-                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                          <Badge className="bg-primary text-primary-foreground">Popular</Badge>
+                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
+                          <Badge className="bg-primary text-primary-foreground px-3 py-1 text-sm font-semibold">Popular</Badge>
                         </div>
                       )}
+                      <DashboardCard 
+                        size="sm"
+                        className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50' : ''}`}
+                        testId={`card-plan-${index}`}
+                      >
                       <div className="h-full flex flex-col">
                         {/* Header Section */}
                         <div className="space-y-3 pb-4 border-b border-slate-700/50">
@@ -632,6 +632,7 @@ export default function BillingPage() {
                         </div>
                       </div>
                     </DashboardCard>
+                    </div>
                   );
                 })}
                 </div>
