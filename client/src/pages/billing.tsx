@@ -590,13 +590,13 @@ export default function BillingPage() {
                         
                         {/* Features Section */}
                         {details && (
-                          <div className="flex-1 py-4 space-y-4 overflow-y-auto max-h-96">
+                          <div className="flex-1 py-4 space-y-3">
                             {details.categories.map((category, catIndex) => (
-                              <div key={catIndex} className="space-y-2">
+                              <div key={catIndex} className="space-y-1.5">
                                 <h4 className="text-white font-semibold text-sm">• {category.name}:</h4>
-                                <ul className="space-y-1 ml-3">
+                                <ul className="space-y-0.5 ml-3">
                                   {category.features.map((feature, featureIndex) => (
-                                    <li key={featureIndex} className="text-slate-300 text-xs leading-relaxed">
+                                    <li key={featureIndex} className="text-slate-300 text-xs leading-snug">
                                       • {feature}
                                     </li>
                                   ))}
