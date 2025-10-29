@@ -203,7 +203,7 @@ export default function SmartProductDescriptions() {
                     onValueChange={(value) => form.setValue("category", value)}
                   >
                     <SelectTrigger className="mt-2 form-select text-white" data-testid="select-category">
-                      <SelectValue />
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="gradient-surface">
                       <SelectItem value="Fashion & Apparel">Fashion & Apparel</SelectItem>
@@ -232,7 +232,7 @@ export default function SmartProductDescriptions() {
                     onValueChange={(value) => form.setValue("audience", value)}
                   >
                     <SelectTrigger className="mt-2 form-select text-white" data-testid="select-audience">
-                      <SelectValue />
+                      <SelectValue placeholder="Select audience" />
                     </SelectTrigger>
                     <SelectContent className="gradient-surface">
                       <SelectItem value="General Consumers">General Consumers</SelectItem>
