@@ -7,6 +7,14 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## October 29, 2025
+### Navigation UX Improvements
+- **Fixed back button navigation** across all informational pages (Privacy Policy, Terms of Service, About):
+  - Replaced hardcoded `/dashboard` routes with proper browser history navigation (`window.history.back()`)
+  - Updated button text from "Back to Dashboard" to simply "Back" for clearer UX
+  - Users now navigate to their actual previous page instead of always being sent to dashboard
+  - Maintained auth-specific navigation where appropriate (e.g., forgot-password correctly returns to login page)
+- **Result**: Improved navigation flow that respects user's browsing history and provides expected back button behavior
+
 ### Billing Page - Comprehensive Subscription Plan Cards
 - **Redesigned subscription plan cards** with landing-page-quality presentation:
   - **Detailed plan data structure**: Each plan now displays comprehensive feature lists organized into 5 categories (Product Optimization & SEO, Conversion Boosting & Sales Automation, Content & Branding at Scale, Performance Tracking & ROI Insights, Workflow & Integration Tools)
