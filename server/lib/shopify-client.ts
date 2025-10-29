@@ -208,14 +208,30 @@ export class ShopifyClient {
   }
 
   async updateProductMetafields(productId: string, metafields: ShopifyMetafieldUpdate[]): Promise<void> {
+    const existingMetafields = await this.getProductMetafields(productId);
+    
     for (const metafield of metafields) {
-      await this.makeRequest(`/products/${productId}/metafields.json`, 'POST', {
-        metafield: {
-          ...metafield,
-          owner_resource: 'product',
-          owner_id: productId
-        }
-      });
+      const existing = existingMetafields.find(
+        m => m.namespace === metafield.namespace && m.key === metafield.key
+      );
+      
+      if (existing) {
+        await this.makeRequest(`/metafields/${existing.id}.json`, 'PUT', {
+          metafield: {
+            id: existing.id,
+            value: metafield.value,
+            type: metafield.type
+          }
+        });
+      } else {
+        await this.makeRequest(`/products/${productId}/metafields.json`, 'POST', {
+          metafield: {
+            ...metafield,
+            owner_resource: 'product',
+            owner_id: productId
+          }
+        });
+      }
     }
   }
 
