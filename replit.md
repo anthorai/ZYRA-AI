@@ -6,6 +6,19 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## October 30, 2025
+### Browser Caching & Sidebar Persistence Improvements
+- **Added comprehensive cache-control headers** to prevent browser caching issues:
+  - HTML files now include `no-cache, no-store, must-revalidate` headers in both production and Vercel deployments
+  - Added `Pragma: no-cache` and `Expires: 0` for legacy browser compatibility
+  - Static assets (JS, CSS, images) remain aggressively cached with 1-year max-age for optimal performance
+  - **Result**: Users always see the latest application version without manual hard refresh (Ctrl+Shift+R)
+- **Sidebar state persistence with localStorage**:
+  - Sidebar now remembers open/closed state across page navigations and browser sessions
+  - Initial state respects user's screen size (desktop: open by default, mobile: closed by default)
+  - Smart resize behavior: only auto-closes when switching to mobile view, preserves user preference on desktop
+  - **Result**: Sidebar no longer auto-opens unexpectedly when navigating back to dashboard
+
 ## October 29, 2025
 ### Navigation UX Improvements
 - **Fixed back button navigation** across all informational pages (Privacy Policy, Terms of Service, About):

@@ -501,11 +501,23 @@ if (!isVercelServerless) {
       maxAge: '1y',
       immutable: true,
       etag: true,
-      lastModified: true
+      lastModified: true,
+      setHeaders: (res, filePath) => {
+        // HTML files should always revalidate to get latest content
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        }
+      }
     }));
     
     // SPA fallback - serve index.html for all non-API routes
     app.get("*", (req, res) => {
+      // HTML should always revalidate to get latest content
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
@@ -544,11 +556,23 @@ if (!isVercelServerless) {
       maxAge: '1y',
       immutable: true,
       etag: true,
-      lastModified: true
+      lastModified: true,
+      setHeaders: (res, filePath) => {
+        // HTML files should always revalidate to get latest content
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        }
+      }
     }));
     
     // SPA fallback - serve index.html for all non-API routes
     app.get("*", (req, res) => {
+      // HTML should always revalidate to get latest content
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(distPath, "index.html"));
     });
     

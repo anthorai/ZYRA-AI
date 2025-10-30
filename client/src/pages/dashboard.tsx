@@ -33,7 +33,18 @@ export default function Dashboard() {
   const { handleLogout, isLoggingOut } = useLogout();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Initialize sidebar state from localStorage, default to true for desktop, false for mobile
+  const getInitialSidebarState = () => {
+    const saved = localStorage.getItem('sidebarOpen');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    // Default: open on desktop, closed on mobile
+    return window.innerWidth >= 1024;
+  };
+  
+  const [sidebarOpen, setSidebarOpen] = useState(getInitialSidebarState);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -113,21 +124,25 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Handle responsive behavior - close sidebar on mobile by default
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('sidebarOpen', String(sidebarOpen));
+  }, [sidebarOpen]);
+
+  // Handle responsive behavior - auto-close on mobile resize only
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
+      // Only auto-close when resizing to mobile, don't auto-open when resizing to desktop
+      // This preserves user's choice
+      if (window.innerWidth < 1024 && sidebarOpen) {
         setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
       }
     };
 
-    handleResize(); // Check initial size
     window.addEventListener('resize', handleResize);
     
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [sidebarOpen]);
 
   // Generate stats from real-time data with icons
   const stats = formattedStats.map((stat, index) => {
