@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
@@ -23,7 +23,16 @@ export function UnifiedHeader({
   rightActions,
   className
 }: UnifiedHeaderProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  // Track navigation history in sessionStorage
+  useEffect(() => {
+    const currentPath = sessionStorage.getItem('currentPath');
+    if (currentPath && currentPath !== location) {
+      sessionStorage.setItem('previousPath', currentPath);
+    }
+    sessionStorage.setItem('currentPath', location);
+  }, [location]);
 
   const handleBack = () => {
     if (onBack) {
@@ -31,7 +40,15 @@ export function UnifiedHeader({
     } else if (backTo) {
       setLocation(backTo);
     } else {
-      window.history.back();
+      // Get the actual previous path from sessionStorage
+      const previousPath = sessionStorage.getItem('previousPath');
+      
+      if (previousPath && previousPath !== location && previousPath !== '/') {
+        setLocation(previousPath);
+      } else {
+        // Fallback: use history.back() if available
+        window.history.back();
+      }
     }
   };
 
