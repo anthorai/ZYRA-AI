@@ -7,6 +7,17 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## October 30, 2025
+### Unified Navigation Button Standardization
+- **Standardized all back buttons** across informational pages (Privacy Policy, Terms of Service, About):
+  - Replaced inconsistent button implementations with unified design matching `unified-header.tsx` pattern
+  - **Icon-only design**: Removed text labels for cleaner, more compact UI
+  - **Consistent styling**: All buttons now use `variant="ghost"`, `size="icon"` with standardized classes
+  - **Unified hover effects**: `text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out`
+  - **Responsive sizing**: Icon scales from `w-4 h-4` on mobile to `w-5 h-5` on larger screens
+  - **Preserved navigation**: Continues using `window.history.back()` for proper browser history navigation
+- **Auth pages unchanged**: Login, forgot-password, and other auth flows maintain their existing full-width button patterns for better UX in authentication contexts
+- **Result**: Consistent, professional navigation UI across all informational pages with smooth animations and responsive design
+
 ### Browser Caching & Sidebar Persistence Improvements
 - **Added comprehensive cache-control headers** to prevent browser caching issues:
   - HTML files now include `no-cache, no-store, must-revalidate` headers in both production and Vercel deployments

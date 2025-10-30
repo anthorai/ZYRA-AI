@@ -11,14 +11,13 @@ export default function TermsOfService() {
     <PageContainer>
       <div className="mb-6">
         <Button
-          onClick={() => window.history.back()}
           variant="ghost"
-          size="sm"
-          className="hover:bg-primary/10"
+          size="icon"
+          onClick={() => window.history.back()}
+          className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
           data-testid="button-back"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
         </Button>
       </div>
       <Card>
