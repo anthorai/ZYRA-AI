@@ -19,8 +19,17 @@ import Footer from "@/components/ui/footer";
 
 export default function AboutPage() {
   const { t } = useLanguage();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Track navigation history in sessionStorage
+  useEffect(() => {
+    const currentPath = sessionStorage.getItem('currentPath');
+    if (currentPath && currentPath !== location) {
+      sessionStorage.setItem('previousPath', currentPath);
+    }
+    sessionStorage.setItem('currentPath', location);
+  }, [location]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,6 +42,15 @@ export default function AboutPage() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBack = () => {
+    const previousPath = sessionStorage.getItem('previousPath');
+    if (previousPath && previousPath !== location && previousPath !== '/') {
+      setLocation(previousPath);
+    } else {
+      window.history.back();
+    }
   };
 
   const features = [
@@ -69,7 +87,7 @@ export default function AboutPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => window.history.back()}
+          onClick={handleBack}
           className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
           data-testid="button-back"
         >

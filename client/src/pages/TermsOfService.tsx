@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,25 @@ import { useLocation } from "wouter";
 import { PageContainer } from "@/components/ui/standardized-layout";
 
 export default function TermsOfService() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  // Track navigation history in sessionStorage
+  useEffect(() => {
+    const currentPath = sessionStorage.getItem('currentPath');
+    if (currentPath && currentPath !== location) {
+      sessionStorage.setItem('previousPath', currentPath);
+    }
+    sessionStorage.setItem('currentPath', location);
+  }, [location]);
+
+  const handleBack = () => {
+    const previousPath = sessionStorage.getItem('previousPath');
+    if (previousPath && previousPath !== location && previousPath !== '/') {
+      setLocation(previousPath);
+    } else {
+      window.history.back();
+    }
+  };
 
   return (
     <PageContainer>
@@ -13,7 +32,7 @@ export default function TermsOfService() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => window.history.back()}
+          onClick={handleBack}
           className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
           data-testid="button-back"
         >
