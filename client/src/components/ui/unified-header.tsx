@@ -28,47 +28,25 @@ export function UnifiedHeader({
   // Track navigation history in sessionStorage
   useEffect(() => {
     const currentPath = sessionStorage.getItem('currentPath');
-    console.log('🔍 [Navigation] Location changed:', {
-      newLocation: location,
-      oldCurrentPath: currentPath,
-    });
     
     if (currentPath && currentPath !== location) {
       sessionStorage.setItem('previousPath', currentPath);
-      console.log('✅ [Navigation] Updated previousPath:', currentPath);
     }
     sessionStorage.setItem('currentPath', location);
-    
-    console.log('📍 [Navigation] SessionStorage state:', {
-      currentPath: sessionStorage.getItem('currentPath'),
-      previousPath: sessionStorage.getItem('previousPath')
-    });
   }, [location]);
 
   const handleBack = () => {
-    console.log('🔙 [Navigation] Back button clicked from:', location);
-    
     if (onBack) {
-      console.log('↩️ [Navigation] Using custom onBack handler');
       onBack();
     } else if (backTo) {
-      console.log('↩️ [Navigation] Using backTo prop:', backTo);
       setLocation(backTo);
     } else {
       // Get the actual previous path from sessionStorage
       const previousPath = sessionStorage.getItem('previousPath');
       
-      console.log('🔍 [Navigation] SessionStorage check:', {
-        previousPath,
-        currentLocation: location,
-        willNavigate: previousPath && previousPath !== location && previousPath !== '/'
-      });
-      
       if (previousPath && previousPath !== location && previousPath !== '/') {
-        console.log('✅ [Navigation] Navigating to previousPath:', previousPath);
         setLocation(previousPath);
       } else {
-        console.log('⬅️ [Navigation] Using browser history.back()');
         window.history.back();
       }
     }
