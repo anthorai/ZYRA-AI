@@ -131,7 +131,6 @@ export default function CheckoutPage() {
     <PageShell
       title="Complete Your Upgrade"
       subtitle="Secure checkout powered by PayPal - Complete in seconds"
-      backTo="/billing"
       maxWidth="xl"
       spacing="normal"
     >

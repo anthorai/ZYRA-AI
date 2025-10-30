@@ -73,7 +73,6 @@ export default function SupportPage() {
     <PageShell
       title="Help & Support"
       subtitle="Get help, browse resources, and contact our support team"
-      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >

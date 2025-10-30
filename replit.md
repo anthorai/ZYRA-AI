@@ -16,7 +16,11 @@ Preferred communication style: Simple, everyday language.
   - **Responsive sizing**: Icon scales from `w-4 h-4` on mobile to `w-5 h-5` on larger screens
   - **Preserved navigation**: Continues using `window.history.back()` for proper browser history navigation
 - **Auth pages unchanged**: Login, forgot-password, and other auth flows maintain their existing full-width button patterns for better UX in authentication contexts
-- **Result**: Consistent, professional navigation UI across all informational pages with smooth animations and responsive design
+- **Removed hardcoded navigation routes**: Eliminated all `backTo` props from PageShell components across settings pages, checkout, and notifications
+  - **Pages updated**: CheckoutPage, Integrations, Support, Security Settings, Notification Settings, AI Preferences, Advanced Notification Settings
+  - **Navigation behavior**: All back buttons now use browser history (`window.history.back()`) instead of redirecting to hardcoded routes
+  - **User experience**: Users return to their actual previous page instead of being forced to specific routes like `/settings` or `/billing`
+- **Result**: Consistent, professional navigation UI across all pages with smooth animations, responsive design, and proper browser history navigation
 
 ### Browser Caching & Sidebar Persistence Improvements
 - **Added comprehensive cache-control headers** to prevent browser caching issues:

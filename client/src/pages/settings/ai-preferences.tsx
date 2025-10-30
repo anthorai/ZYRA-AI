@@ -32,7 +32,6 @@ export default function AIPreferencesPage() {
     <PageShell
       title="AI Preferences"
       subtitle="Customize AI behavior and automation settings"
-      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >

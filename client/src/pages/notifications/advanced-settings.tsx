@@ -18,7 +18,6 @@ export default function AdvancedNotificationSettings() {
     <PageShell
       title="Advanced Notification Settings"
       subtitle="Take complete control of your notification preferences with smart presets, channel controls, and scheduling"
-      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >

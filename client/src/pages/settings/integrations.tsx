@@ -748,7 +748,6 @@ export default function IntegrationsPage() {
     <PageShell
       title="Integrations"
       subtitle="Connect third-party services to enhance your Zyra AI experience"
-      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >

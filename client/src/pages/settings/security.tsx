@@ -109,7 +109,6 @@ export default function SecurityPage() {
     <PageShell
       title="Security Settings"
       subtitle="Protect your account with advanced security features"
-      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >

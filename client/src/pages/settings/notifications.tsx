@@ -34,7 +34,6 @@ export default function NotificationsPage() {
     <PageShell
       title="Notification Settings"
       subtitle="Manage how and when you receive notifications"
-      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >
