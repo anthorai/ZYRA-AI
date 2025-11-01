@@ -33,7 +33,7 @@ export function UnifiedHeader({
       // Use custom route if specified
       setLocation(backTo);
     } else {
-      // Use browser history to go back to previous page
+      // Use browser history to go back to the actual previous page
       window.history.back();
     }
   };
