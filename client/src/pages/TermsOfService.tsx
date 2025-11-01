@@ -1,29 +1,12 @@
-import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { Link } from "wouter";
 import { PageContainer } from "@/components/ui/standardized-layout";
 
 export default function TermsOfService() {
-  const [location, setLocation] = useLocation();
-
-  // Track navigation history in sessionStorage
-  useEffect(() => {
-    const currentPath = sessionStorage.getItem('currentPath');
-    if (currentPath && currentPath !== location) {
-      sessionStorage.setItem('previousPath', currentPath);
-    }
-    sessionStorage.setItem('currentPath', location);
-  }, [location]);
-
   const handleBack = () => {
-    const previousPath = sessionStorage.getItem('previousPath');
-    if (previousPath && previousPath !== location && previousPath !== '/') {
-      setLocation(previousPath);
-    } else {
-      window.history.back();
-    }
+    window.history.back();
   };
 
   return (
@@ -138,14 +121,15 @@ export default function TermsOfService() {
             <p className="text-muted-foreground">
               Your use of ZYRA is also governed by our Privacy Policy. We collect and process your data as described in our Privacy Policy to provide and improve our services.
             </p>
-            <Button 
-              variant="link" 
-              className="p-0 h-auto"
-              onClick={() => setLocation("/privacy-policy")}
-              data-testid="link-privacy-policy"
-            >
-              View Privacy Policy →
-            </Button>
+            <Link href="/privacy-policy">
+              <Button 
+                variant="link" 
+                className="p-0 h-auto"
+                data-testid="link-privacy-policy"
+              >
+                View Privacy Policy →
+              </Button>
+            </Link>
           </section>
 
           <section>

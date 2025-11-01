@@ -49,14 +49,7 @@ export default function AbandonedCartSMSPage() {
               <p className="text-slate-300 mb-6 text-sm sm:text-base">Great news! All customers completed their purchases</p>
               <Button 
                 variant="outline"
-                onClick={() => {
-                  const previousPath = sessionStorage.getItem('previousPath');
-                  if (previousPath && previousPath !== '/abandoned-cart-sms' && previousPath !== '/') {
-                    setLocation(previousPath);
-                  } else {
-                    setLocation('/dashboard');
-                  }
-                }}
+                onClick={() => window.history.back()}
                 className="border-slate-600 text-slate-300 hover:bg-white/10"
                 data-testid="button-back-dashboard"
               >

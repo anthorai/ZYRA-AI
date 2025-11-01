@@ -19,17 +19,7 @@ import Footer from "@/components/ui/footer";
 
 export default function AboutPage() {
   const { t } = useLanguage();
-  const [location, setLocation] = useLocation();
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  // Track navigation history in sessionStorage
-  useEffect(() => {
-    const currentPath = sessionStorage.getItem('currentPath');
-    if (currentPath && currentPath !== location) {
-      sessionStorage.setItem('previousPath', currentPath);
-    }
-    sessionStorage.setItem('currentPath', location);
-  }, [location]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,12 +35,7 @@ export default function AboutPage() {
   };
 
   const handleBack = () => {
-    const previousPath = sessionStorage.getItem('previousPath');
-    if (previousPath && previousPath !== location && previousPath !== '/') {
-      setLocation(previousPath);
-    } else {
-      window.history.back();
-    }
+    window.history.back();
   };
 
   const features = [

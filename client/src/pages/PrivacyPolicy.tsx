@@ -1,29 +1,12 @@
-import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Download, Trash2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { Link } from "wouter";
 import { PageContainer } from "@/components/ui/standardized-layout";
 
 export default function PrivacyPolicy() {
-  const [location, setLocation] = useLocation();
-
-  // Track navigation history in sessionStorage
-  useEffect(() => {
-    const currentPath = sessionStorage.getItem('currentPath');
-    if (currentPath && currentPath !== location) {
-      sessionStorage.setItem('previousPath', currentPath);
-    }
-    sessionStorage.setItem('currentPath', location);
-  }, [location]);
-
   const handleBack = () => {
-    const previousPath = sessionStorage.getItem('previousPath');
-    if (previousPath && previousPath !== location && previousPath !== '/') {
-      setLocation(previousPath);
-    } else {
-      window.history.back();
-    }
+    window.history.back();
   };
 
   return (
@@ -108,24 +91,26 @@ export default function PrivacyPolicy() {
             <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
               <p className="font-medium">Exercise Your Rights:</p>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setLocation("/settings")}
-                  data-testid="button-export-data"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export My Data
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => setLocation("/settings")}
-                  data-testid="button-delete-account"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete My Account
-                </Button>
+                <Link href="/settings">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    data-testid="button-export-data"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export My Data
+                  </Button>
+                </Link>
+                <Link href="/settings">
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    data-testid="button-delete-account"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete My Account
+                  </Button>
+                </Link>
               </div>
             </div>
           </section>

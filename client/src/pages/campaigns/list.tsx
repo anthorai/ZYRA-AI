@@ -74,21 +74,12 @@ export default function CampaignListPage() {
   }
 
   if (error) {
-    const handleBack = () => {
-      const previousPath = sessionStorage.getItem('previousPath');
-      if (previousPath && previousPath !== '/campaigns' && previousPath !== '/') {
-        setLocation(previousPath);
-      } else {
-        setLocation('/dashboard');
-      }
-    };
-
     return (
       <div className="min-h-screen dark-theme-bg flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400">Failed to load campaigns</p>
           <Button
-            onClick={handleBack}
+            onClick={() => window.history.back()}
             variant="outline"
             className="mt-4"
           >
