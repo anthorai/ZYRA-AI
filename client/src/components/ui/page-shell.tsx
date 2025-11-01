@@ -22,7 +22,7 @@ export function PageShell({
   children,
   backTo,
   onBack,
-  showBackButton = true,
+  showBackButton = false,
   rightActions,
   maxWidth = "full",
   spacing = "normal",

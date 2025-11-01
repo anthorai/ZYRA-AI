@@ -19,7 +19,7 @@ export function UnifiedHeader({
   subtitle,
   backTo,
   onBack,
-  showBackButton = true,
+  showBackButton = false,
   rightActions,
   className
 }: UnifiedHeaderProps) {
