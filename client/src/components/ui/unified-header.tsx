@@ -54,7 +54,7 @@ export function UnifiedHeader({
               variant="ghost"
               size="icon"
               onClick={handleBack}
-              className="text-slate-200 hover:text-[#00F0FF] hover:shadow-[0_0_8px_#00F0FF] hover:bg-white/5 transition-all duration-300 ease-in-out flex-shrink-0"
+              className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
               data-testid="button-back"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
