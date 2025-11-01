@@ -29,15 +29,12 @@ export function UnifiedHeader({
     if (onBack) {
       // Custom onBack handler takes priority
       onBack();
-    } else if (window.history.length > 1) {
-      // Go to previous page if history exists
-      window.history.back();
     } else if (backTo) {
-      // Optional custom route fallback
+      // Use custom route if specified
       setLocation(backTo);
     } else {
-      // Ultimate fallback to dashboard
-      setLocation("/dashboard");
+      // Use browser history to go back to previous page
+      window.history.back();
     }
   };
 
