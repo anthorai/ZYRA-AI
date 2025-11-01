@@ -1,14 +1,11 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 interface UnifiedHeaderProps {
   title: string;
   subtitle: string;
-  backTo?: string;
-  onBack?: () => void;
   showBackButton?: boolean;
   rightActions?: ReactNode;
   className?: string;
@@ -17,39 +14,12 @@ interface UnifiedHeaderProps {
 export function UnifiedHeader({
   title,
   subtitle,
-  backTo,
-  onBack,
   showBackButton = true,
   rightActions,
   className
 }: UnifiedHeaderProps) {
-  const [location, setLocation] = useLocation();
-
-  // Track navigation history in sessionStorage
-  useEffect(() => {
-    const currentPath = sessionStorage.getItem('currentPath');
-    
-    if (currentPath && currentPath !== location) {
-      sessionStorage.setItem('previousPath', currentPath);
-    }
-    sessionStorage.setItem('currentPath', location);
-  }, [location]);
-
   const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else if (backTo) {
-      setLocation(backTo);
-    } else {
-      // Get the actual previous path from sessionStorage
-      const previousPath = sessionStorage.getItem('previousPath');
-      
-      if (previousPath && previousPath !== location && previousPath !== '/') {
-        setLocation(previousPath);
-      } else {
-        window.history.back();
-      }
-    }
+    window.history.back();
   };
 
   return (
