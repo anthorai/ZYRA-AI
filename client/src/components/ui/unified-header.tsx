@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,11 +23,21 @@ export function UnifiedHeader({
   rightActions,
   className
 }: UnifiedHeaderProps) {
+  const [, setLocation] = useLocation();
+
   const handleBack = () => {
     if (onBack) {
+      // Custom onBack handler takes priority
       onBack();
-    } else {
+    } else if (window.history.length > 1) {
+      // Go to previous page if history exists
       window.history.back();
+    } else if (backTo) {
+      // Optional custom route fallback
+      setLocation(backTo);
+    } else {
+      // Ultimate fallback to dashboard
+      setLocation("/dashboard");
     }
   };
 
@@ -43,7 +54,7 @@ export function UnifiedHeader({
               variant="ghost"
               size="icon"
               onClick={handleBack}
-              className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+              className="text-slate-200 hover:text-[#00F0FF] hover:shadow-[0_0_8px_#00F0FF] hover:bg-white/5 transition-all duration-300 ease-in-out flex-shrink-0"
               data-testid="button-back"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
