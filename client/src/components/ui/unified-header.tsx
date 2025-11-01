@@ -1,11 +1,14 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 interface UnifiedHeaderProps {
   title: string;
   subtitle: string;
+  backTo?: string;
+  onBack?: () => void;
   showBackButton?: boolean;
   rightActions?: ReactNode;
   className?: string;
@@ -14,11 +17,45 @@ interface UnifiedHeaderProps {
 export function UnifiedHeader({
   title,
   subtitle,
+  backTo,
+  onBack,
   showBackButton = true,
   rightActions,
   className
 }: UnifiedHeaderProps) {
+  const [location, setLocation] = useLocation();
+
+  // Track navigation history in sessionStorage
+  useEffect(() => {
+    const currentPath = sessionStorage.getItem('currentPath');
+    
+    if (currentPath && currentPath !== location) {
+      sessionStorage.setItem('previousPath', currentPath);
+    }
+    sessionStorage.setItem('currentPath', location);
+  }, [location]);
+
   const handleBack = () => {
+    // Priority 1: Use custom onBack callback if provided
+    if (onBack) {
+      onBack();
+      return;
+    }
+    
+    // Priority 2: Use backTo route if provided
+    if (backTo) {
+      setLocation(backTo);
+      return;
+    }
+    
+    // Priority 3: Use tracked previous path from sessionStorage
+    const previousPath = sessionStorage.getItem('previousPath');
+    if (previousPath && previousPath !== location && previousPath !== '/') {
+      setLocation(previousPath);
+      return;
+    }
+    
+    // Priority 4: Fallback to browser history
     window.history.back();
   };
 
