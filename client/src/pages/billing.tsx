@@ -541,17 +541,19 @@ export default function BillingPage() {
               </div>
             </DashboardCard>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
               {plans.map((plan: SubscriptionPlan, index) => {
               const isCurrentPlan = plan.id === currentSubscription?.planId;
               const isPlanPopular = plan.planName === "Growth";
               const details = planDetails[plan.planName];
               
               return (
-                <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-4' : ''}`}>
+                <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-6 sm:pt-6' : ''}`}>
                   {isPlanPopular && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge className="bg-primary text-primary-foreground px-3 py-1 text-sm font-semibold">Popular</Badge>
+                      <Badge className="bg-primary text-primary-foreground px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-lg">
+                        ⭐ Popular
+                      </Badge>
                     </div>
                   )}
                   <DashboardCard 
@@ -561,27 +563,27 @@ export default function BillingPage() {
                   >
                   <div className="h-full flex flex-col">
                     {/* Header Section */}
-                    <div className="space-y-4 pb-6 border-b border-slate-700/50 text-center">
-                      <div className="flex flex-col items-center space-y-3">
+                    <div className="space-y-3 sm:space-y-4 pb-4 sm:pb-6 border-b border-slate-700/50 text-center">
+                      <div className="flex flex-col items-center space-y-2 sm:space-y-3">
                         <div className="text-primary">
-                          {planIcons[plan.planName] || <CreditCard className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />}
+                          {planIcons[plan.planName] || <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-10 xl:h-10 text-primary" />}
                         </div>
-                        <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white" data-testid={`text-plan-name-${index}`}>
+                        <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-xl font-bold text-white leading-tight" data-testid={`text-plan-name-${index}`}>
                           {plan.planName}
                         </h3>
                       </div>
                       
-                      <div className="space-y-2">
-                        <p className="text-white font-bold text-3xl md:text-4xl">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <p className="text-white font-bold text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-3xl">
                           ${plan.price === 0 ? '0' : Math.floor(plan.price)}
-                          <span className="text-base text-slate-400 font-normal ml-2">
-                            /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'per month'}
+                          <span className="text-sm sm:text-base text-slate-400 font-normal ml-1 sm:ml-2">
+                            /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'mo'}
                           </span>
                         </p>
                         {details && (
                           <>
-                            <p className="text-primary text-base font-semibold">✨ {details.credits}</p>
-                            <p className="text-slate-300 text-sm max-w-md mx-auto">{details.tagline}</p>
+                            <p className="text-primary text-sm sm:text-base font-semibold">✨ {details.credits}</p>
+                            <p className="text-slate-300 text-xs sm:text-sm px-2 sm:px-4">{details.tagline}</p>
                           </>
                         )}
                       </div>
@@ -589,13 +591,13 @@ export default function BillingPage() {
                     
                     {/* Features Section */}
                     {details && (
-                      <div className="flex-1 py-6 px-2 space-y-4">
+                      <div className="flex-1 py-4 sm:py-5 md:py-6 px-1 sm:px-2 space-y-3 sm:space-y-4">
                         {details.categories.map((category, catIndex) => (
-                          <div key={catIndex} className="space-y-2 text-left">
-                            <h4 className="text-white font-semibold text-sm">{category.name}</h4>
-                            <ul className="space-y-1">
+                          <div key={catIndex} className="space-y-1.5 sm:space-y-2 text-left">
+                            <h4 className="text-white font-semibold text-xs sm:text-sm">{category.name}</h4>
+                            <ul className="space-y-0.5 sm:space-y-1">
                               {category.features.map((feature, featureIndex) => (
-                                <li key={featureIndex} className="text-slate-300 text-xs leading-snug">
+                                <li key={featureIndex} className="text-slate-300 text-[11px] sm:text-xs leading-relaxed">
                                   {feature}
                                 </li>
                               ))}
@@ -606,9 +608,9 @@ export default function BillingPage() {
                     )}
                     
                     {/* CTA Button */}
-                    <div className="flex justify-center pt-4 border-t border-slate-700/50">
+                    <div className="flex justify-center pt-3 sm:pt-4 border-t border-slate-700/50">
                       <Button
-                        className={`w-full px-4 md:px-6 py-2.5 text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
+                        className={`w-full px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
                           isCurrentPlan 
                             ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
                             : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
@@ -617,7 +619,7 @@ export default function BillingPage() {
                         onClick={() => changePlanMutation.mutate(plan.id)}
                         data-testid={`button-choose-plan-${index}`}
                       >
-                        <Wand2 className="w-4 h-4 mr-2" />
+                        <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         <span className="truncate">
                           {isCurrentPlan ? "Current Plan" :
                            changePlanMutation.isPending ? "Processing..." : 
