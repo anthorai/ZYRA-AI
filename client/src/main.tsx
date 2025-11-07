@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import App from "./App";
 import "./index.css";
+import { register as registerServiceWorker, showUpdateNotification } from "./lib/serviceWorkerRegistration";
 
 // Initialize Sentry for frontend error tracking
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -33,6 +34,19 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   console.log('✅ Sentry frontend monitoring initialized');
 } else {
   console.log('⚠️  Sentry DSN not configured - error tracking disabled');
+}
+
+// Register service worker for PWA capabilities
+if (import.meta.env.PROD) {
+  registerServiceWorker({
+    onSuccess: () => console.log('✅ Service Worker registered successfully'),
+    onUpdate: (registration) => {
+      console.log('🔄 New app version available');
+      showUpdateNotification(registration);
+    }
+  });
+} else {
+  console.log('⚙️  Service Worker disabled in development mode');
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
