@@ -1,3 +1,29 @@
+import * as Sentry from "@sentry/node";
+
+// Initialize Sentry FIRST - before any other imports
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    beforeSend(event) {
+      // Filter out sensitive information
+      if (event.request) {
+        delete event.request.cookies;
+        if (event.request.headers) {
+          delete event.request.headers['authorization'];
+          delete event.request.headers['cookie'];
+        }
+      }
+      return event;
+    },
+  });
+  console.log('✅ Sentry monitoring initialized');
+} else {
+  console.log('⚠️  Sentry DSN not configured - error tracking disabled');
+}
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { log } from "./lib/logger";
@@ -168,6 +194,24 @@ const globalErrorHandler = (err: any, req: Request, res: Response, _next: NextFu
   const status = (err as any).status || (err as any).statusCode || 500;
   const message = error.message || "Internal Server Error";
 
+  // Report critical errors to Sentry (5xx errors only)
+  if (status >= 500 && process.env.SENTRY_DSN) {
+    Sentry.captureException(error, {
+      tags: {
+        endpoint: req.path,
+        method: req.method,
+        statusCode: status,
+      },
+      extra: {
+        userId: (req as any).user?.id,
+        // NEVER send req.body or req.query - they may contain sensitive data
+        // Only send safe metadata
+        contentType: req.headers['content-type'],
+        userAgent: req.headers['user-agent'],
+      },
+    });
+  }
+
   // Log error with full context (non-blocking)
   ErrorLogger.logFromRequest(error, req, {
     errorType: (err as any).errorType || 'api_error',
@@ -179,8 +223,13 @@ const globalErrorHandler = (err: any, req: Request, res: Response, _next: NextFu
     }
   });
 
+  // Return user-friendly error messages
+  const userMessage = status >= 500 
+    ? "Something went wrong. Our team has been notified." 
+    : message;
+
   res.status(status).json({ 
-    message,
+    message: userMessage,
     error: process.env.NODE_ENV === 'development' ? error.stack : undefined
   });
 };
@@ -240,6 +289,32 @@ async function runDatabaseMigrations() {
 
 // Start async initialization
 async function startServer() {
+  // Health check endpoint - must be registered before routes
+  app.get('/health', async (req, res) => {
+    try {
+      // Check database connectivity
+      const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+        database: 'connected',
+        uptime: process.uptime(),
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+        database: 'disconnected',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   // Test Supabase connection on startup
   try {
     log("🔄 Testing Supabase connection...");
