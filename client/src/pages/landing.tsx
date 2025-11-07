@@ -223,9 +223,11 @@ export default function Landing() {
         }}
       />
 
-      {/* Hero Section */}
-      <section className="pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6">
-        <div className="container mx-auto text-center max-w-4xl">
+      {/* Main Content */}
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6">
+          <div className="container mx-auto text-center max-w-4xl">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent" data-testid="text-hero-title">
             Smarter Sales, Faster Growth
           </h1>
@@ -603,9 +605,10 @@ export default function Landing() {
           </Button>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
-      <footer className="py-6 sm:py-8 px-4 sm:px-6 border-t border-border">
+      <footer className="py-6 sm:py-8 px-4 sm:px-6 border-t border-border" role="contentinfo">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-3 sm:mb-4">
             <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">

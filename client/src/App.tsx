@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SettingsLayout from "@/components/layouts/SettingsLayout";
+import { SkipLink } from "@/components/ui/skip-link";
 import { Suspense, lazy } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -522,6 +523,7 @@ function App() {
         <AuthProvider>
           <LanguageProvider>
             <TooltipProvider>
+              <SkipLink />
               <Toaster />
               <Router />
             </TooltipProvider>
