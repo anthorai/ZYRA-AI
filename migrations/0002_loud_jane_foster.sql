@@ -1,0 +1,1 @@
+CREATE INDEX "seo_meta_product_id_idx" ON "seo_meta" USING btree ("product_id");

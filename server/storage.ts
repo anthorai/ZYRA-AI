@@ -928,6 +928,7 @@ export class MemStorage {
       ...product,
       description: product.description || null,
       originalDescription: product.originalDescription || null,
+      originalCopy: product.originalCopy || null,
       category: product.category, // Required field, no fallback to null
       price: product.price, // Required field from new schema
       stock: product.stock || 0, // Default to 0 if not provided

@@ -15,6 +15,13 @@
       "when": 1761559327329,
       "tag": "0001_cool_preak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762489414578,
+      "tag": "0002_loud_jane_foster",
+      "breakpoints": true
     }
   ]
 }

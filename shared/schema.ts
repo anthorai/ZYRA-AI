@@ -59,7 +59,9 @@ export const seoMeta = pgTable("seo_meta", {
   optimizedMeta: text("optimized_meta"),
   seoScore: integer("seo_score"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
-});
+}, (table) => [
+  index('seo_meta_product_id_idx').on(table.productId),
+]);
 
 export const campaigns = pgTable("campaigns", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
