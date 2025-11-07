@@ -30,7 +30,7 @@ Provides real email/SMS delivery via SendGrid and Twilio, featuring campaign sch
 A real-time dashboard tracks campaigns, revenue, conversions, and ROI, with export capabilities for PDF and CSV.
 
 ### Error Tracking & Monitoring
-Production-ready error logging to a `error_logs` table via an `ErrorLogger` utility with global error middleware.
+**Enhanced (November 7, 2025)** - Production-grade monitoring infrastructure with Sentry integration for both backend and frontend. Features real-time error tracking with 5xx error alerts, session replay for debugging, user-friendly error messages in production, and comprehensive health check endpoint (`/health`) for database connectivity monitoring. Sensitive data protection ensures no passwords, payment data, or request bodies are leaked to monitoring services. Backend and frontend error boundaries capture and report issues immediately with proper context (endpoint, method, statusCode) while maintaining user privacy.
 
 ### Security & Compliance
 Includes multi-tier rate limiting, comprehensive input sanitization, GDPR compliance, enhanced security with AES-256-GCM encryption, bcrypt hashing, critical CORS fixes, comprehensive security headers (helmet.js), and secure credential management.
