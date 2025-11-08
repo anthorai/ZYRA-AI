@@ -604,19 +604,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/temp-set-admin", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      console.log('🔧 Updating user role to admin for userId:', userId);
+      console.log('🔧 [ADMIN UPGRADE] Starting role update for userId:', userId);
       
-      const updated = await supabaseStorage.updateUser(userId, { role: 'admin' });
-      console.log('✅ Updated user:', updated);
+      // Use direct SQL update for reliability
+      const { data: updateResult, error: updateError } = await supabase
+        .from('users')
+        .update({ role: 'admin' })
+        .eq('id', userId)
+        .select();
+      
+      if (updateError) {
+        console.error('❌ [ADMIN UPGRADE] Update failed:', updateError);
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+      
+      console.log('✅ [ADMIN UPGRADE] Update successful:', updateResult);
       
       // Verify the update
-      const verified = await supabaseStorage.getUser(userId);
-      console.log('✅ Verified user after update:', verified);
+      const { data: verifyResult, error: verifyError } = await supabase
+        .from('users')
+        .select('id, email, full_name, role, plan')
+        .eq('id', userId)
+        .single();
       
-      res.json({ message: "Role updated to admin", user: updated, verified });
+      if (verifyError) {
+        console.error('❌ [ADMIN UPGRADE] Verification failed:', verifyError);
+      } else {
+        console.log('✅ [ADMIN UPGRADE] Verified user:', verifyResult);
+      }
+      
+      res.json({ 
+        success: true,
+        message: "Role updated to admin successfully!", 
+        user: verifyResult,
+        timestamp: new Date().toISOString()
+      });
     } catch (error: any) {
-      console.error('❌ Error updating role:', error);
-      res.status(500).json({ message: error.message });
+      console.error('❌ [ADMIN UPGRADE] Error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || "Failed to update role",
+        error: error.toString()
+      });
     }
   });
 
