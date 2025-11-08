@@ -33,7 +33,7 @@ import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { storage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, getSubscriptionPlans, updateUserSubscription } from "./db";
+import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon } from "./db";
 import { eq, desc, sql, and } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -228,6 +228,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(500).json({ message: "Failed to create user profile" });
           }
         }
+      }
+
+      // CRITICAL FIX: Ensure user exists in Neon database for foreign key constraints
+      // oauth_states table (and others) in Neon require users to exist there
+      try {
+        const neonUser = await getUserById(userProfile.id);
+        if (!neonUser) {
+          console.log(`🔧 [AUTH SYNC] User ${userProfile.id} not found in Neon, creating...`);
+          await createUserInNeon({
+            id: userProfile.id,
+            email: userProfile.email,
+            fullName: userProfile.fullName,
+            password: null, // No password for Supabase Auth users
+            plan: userProfile.plan || 'trial',
+            role: userProfile.role || 'user'
+          });
+          console.log(`✅ [AUTH SYNC] User ${userProfile.id} synced to Neon successfully`);
+        }
+      } catch (neonError) {
+        // Log but don't fail auth - Neon sync is supplementary
+        console.error('⚠️ [AUTH SYNC] Failed to sync user to Neon:', neonError);
       }
 
       console.log('🔍 Final userProfile being attached to request:', {
