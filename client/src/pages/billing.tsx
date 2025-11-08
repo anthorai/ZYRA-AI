@@ -272,6 +272,7 @@ export default function BillingPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
 
   // Fetch real subscription plans from API
   const { 
@@ -323,6 +324,9 @@ export default function BillingPage() {
       const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'paypal' });
       return await response.json();
     },
+    onMutate: async (planId: string) => {
+      setProcessingPlanId(planId);
+    },
     onSuccess: async (data: any) => {
       console.log('💳 Payment flow started:', data);
       
@@ -349,8 +353,10 @@ export default function BillingPage() {
           description: "Your subscription plan has been successfully updated.",
         });
       }
+      setProcessingPlanId(null);
     },
     onError: (error: any) => {
+      setProcessingPlanId(null);
       toast({
         title: "Error",
         description: error.message || "Failed to update subscription plan.",
@@ -615,14 +621,14 @@ export default function BillingPage() {
                             ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
                             : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
                         }`}
-                        disabled={isCurrentPlan || changePlanMutation.isPending}
+                        disabled={isCurrentPlan || processingPlanId !== null}
                         onClick={() => changePlanMutation.mutate(plan.id)}
                         data-testid={`button-choose-plan-${index}`}
                       >
                         <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         <span className="truncate">
                           {isCurrentPlan ? "Current Plan" :
-                           changePlanMutation.isPending ? "Processing..." : 
+                           processingPlanId === plan.id ? "Processing..." : 
                            plan.planName === "7-Day Free Trial" ? "Start Free Trial" :
                            plan.planName === "Starter" ? "Upgrade to Starter" :
                            plan.planName === "Growth" ? "Scale with Growth" :
