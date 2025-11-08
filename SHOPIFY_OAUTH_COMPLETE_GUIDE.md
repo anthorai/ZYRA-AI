@@ -10,8 +10,8 @@ The Shopify OAuth flow is **fully implemented** and working. All required compon
 
 ### Technology Stack
 - **Backend**: Express.js (NOT Next.js App Router)
-- **Database**: PostgreSQL via Neon with `store_connections` table
-- **Storage Layer**: Supabase Storage Service
+- **Database**: Supabase PostgreSQL with `store_connections` table
+- **Storage Layer**: Supabase client for database operations
 - **OAuth Flow**: Standard OAuth 2.0 authorization code flow
 
 ---
@@ -154,7 +154,7 @@ GET /api/shopify/callback?code=xxx&state=xxx&shop=xxx&hmac=xxx
 ## 🗄️ Database Schema
 
 ### Table: `store_connections`
-**Location**: Neon PostgreSQL database
+**Location**: Supabase PostgreSQL database
 
 ```sql
 CREATE TABLE store_connections (
@@ -163,7 +163,7 @@ CREATE TABLE store_connections (
   platform TEXT NOT NULL,          -- 'shopify'
   store_name TEXT NOT NULL,         -- Shop display name
   store_url TEXT,                   -- https://mystore.myshopify.com
-  access_token TEXT NOT NULL,       -- Shopify access token (encrypted at rest)
+  access_token TEXT NOT NULL,       -- Shopify access token (plain text - recommend encryption)
   refresh_token TEXT,               -- Future use
   status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'inactive' | 'error'
   last_sync_at TIMESTAMP,           -- Last product sync timestamp
@@ -317,7 +317,7 @@ SELECT * FROM store_connections WHERE platform = 'shopify' ORDER BY created_at D
 -- platform: 'shopify'
 -- store_name: Your shop name
 -- store_url: https://yourstore.myshopify.com
--- access_token: shpat_xxx (encrypted)
+-- access_token: shpat_xxx (plain text - consider encryption)
 -- status: 'active'
 ```
 
@@ -399,7 +399,7 @@ All OAuth steps are logged with emoji indicators:
 3. **Credential Masking**: All logs mask sensitive API keys/tokens
 4. **State Expiration**: OAuth states expire after 10 minutes
 5. **Automatic Cleanup**: Expired states deleted every 10 minutes
-6. **Secure Storage**: Access tokens encrypted at rest in database
+6. **Database Security**: Access tokens stored in PostgreSQL (recommend adding encryption layer)
 7. **HTTPS Only**: All OAuth redirects use HTTPS
 
 ---
