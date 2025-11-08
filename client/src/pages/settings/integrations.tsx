@@ -377,7 +377,19 @@ export default function IntegrationsPage() {
       if (!shop) return;
 
       try {
-        console.log('🔵 [SHOPIFY] Starting OAuth flow for shop:', shop);
+        // Sanitize shop domain: remove protocol, trailing slashes, and whitespace
+        let cleanShop = shop.trim();
+        cleanShop = cleanShop.replace(/^https?:\/\//, ''); // Remove http:// or https://
+        cleanShop = cleanShop.replace(/\/$/, ''); // Remove trailing slash
+        cleanShop = cleanShop.toLowerCase(); // Normalize to lowercase
+        
+        // If user just entered the store name (e.g., "mystore"), append .myshopify.com
+        if (!cleanShop.includes('.')) {
+          cleanShop = `${cleanShop}.myshopify.com`;
+        }
+        
+        console.log('🔵 [SHOPIFY] Starting OAuth flow for shop:', cleanShop);
+        console.log('🔵 [SHOPIFY] Original input:', shop, '→ Cleaned:', cleanShop);
         
         const { supabase } = await import('@/lib/supabaseClient');
         const { data: sessionData } = await supabase.auth.getSession();
@@ -408,7 +420,7 @@ export default function IntegrationsPage() {
         console.log('🔵 [SHOPIFY] Request details:', {
           url: '/api/shopify/auth',
           method: 'POST',
-          shop: shop.trim(),
+          shop: cleanShop,
           hasToken: !!token,
           tokenLength: token.length
         });
@@ -419,7 +431,7 @@ export default function IntegrationsPage() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ shop: shop.trim() }),
+          body: JSON.stringify({ shop: cleanShop }),
           credentials: 'include'
         });
 
@@ -441,7 +453,7 @@ export default function IntegrationsPage() {
         console.log('\n🔵 ========================================');
         console.log('🔵 SHOPIFY OAUTH INITIATED');
         console.log('🔵 ========================================');
-        console.log('📍 Shop domain:', shop);
+        console.log('📍 Shop domain (cleaned):', cleanShop);
         console.log('🔗 Redirect URI:', data.redirectUri);
         console.log('🚀 Full auth URL:', data.authUrl);
         console.log('========================================\n');
