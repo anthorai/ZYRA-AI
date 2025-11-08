@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { PageContainer } from "@/components/ui/standardized-layout";
-import { supabase } from "@/lib/supabaseClient";
 import { 
   Settings as SettingsIcon,
   User,
@@ -17,8 +16,7 @@ import {
   Zap,
   Shield,
   HelpCircle,
-  Store,
-  ShieldCheck
+  Store
 } from "lucide-react";
 
 interface SettingsCard {
@@ -35,55 +33,6 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const [upgradingRole, setUpgradingRole] = useState(false);
-
-  const handleUpgradeToAdmin = async () => {
-    setUpgradingRole(true);
-    try {
-      // Get the access token from Supabase auth session
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      
-      const response = await fetch('/api/temp-set-admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast({
-          title: "Success!",
-          description: "Your account has been upgraded to Admin. Refreshing page...",
-        });
-        
-        // Refresh the page to reload user data
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || "Failed to upgrade role",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to connect to server",
-        variant: "destructive",
-      });
-    } finally {
-      setUpgradingRole(false);
-    }
-  };
 
   // Mock settings data for UI-only mode
   const mockUserPreferences = {

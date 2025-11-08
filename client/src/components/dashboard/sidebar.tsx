@@ -18,8 +18,7 @@ import {
   LogOut,
   User,
   X,
-  Cog,
-  ShieldCheck
+  Cog
 } from "lucide-react";
 
 interface SidebarProps {
@@ -114,22 +113,6 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     { id: "settings", label: t('navigation.settings'), icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
   ];
 
-  // Add admin link only for admin users
-  console.log('🔍 Sidebar - appUser:', appUser);
-  console.log('🔍 Sidebar - appUser.role:', appUser?.role);
-  
-  if (appUser?.role === 'admin') {
-    console.log('✅ Admin role detected - adding admin nav item');
-    navItems.push({
-      id: "admin",
-      label: "Admin Panel",
-      icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
-      tourAttr: "admin"
-    });
-  } else {
-    console.log('❌ Not admin role - appUser:', appUser);
-  }
-
   return (
     <>
       {/* Overlay - closes sidebar when clicking outside */}
@@ -177,13 +160,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
             {navItems.map((item) => (
               <Button
                 key={item.id}
-                onClick={() => {
-                  if (item.id === "admin") {
-                    setLocation("/admin");
-                  } else {
-                    onTabChange(item.id);
-                  }
-                }}
+                onClick={() => onTabChange(item.id)}
                 variant="ghost"
                 className={`w-full justify-start px-4 py-3 h-auto ${
                   activeTab === item.id

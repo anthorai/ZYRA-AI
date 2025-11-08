@@ -600,54 +600,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // TEMPORARY: Update role to admin (for testing)
-  app.post("/api/temp-set-admin", requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      console.log('🔧 [ADMIN UPGRADE] Starting role update for userId:', userId);
-      
-      // Use direct SQL update for reliability
-      const { data: updateResult, error: updateError } = await supabase
-        .from('users')
-        .update({ role: 'admin' })
-        .eq('id', userId)
-        .select();
-      
-      if (updateError) {
-        console.error('❌ [ADMIN UPGRADE] Update failed:', updateError);
-        throw new Error(`Database update failed: ${updateError.message}`);
-      }
-      
-      console.log('✅ [ADMIN UPGRADE] Update successful:', updateResult);
-      
-      // Verify the update
-      const { data: verifyResult, error: verifyError } = await supabase
-        .from('users')
-        .select('id, email, full_name, role, plan')
-        .eq('id', userId)
-        .single();
-      
-      if (verifyError) {
-        console.error('❌ [ADMIN UPGRADE] Verification failed:', verifyError);
-      } else {
-        console.log('✅ [ADMIN UPGRADE] Verified user:', verifyResult);
-      }
-      
-      res.json({ 
-        success: true,
-        message: "Role updated to admin successfully!", 
-        user: verifyResult,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error: any) {
-      console.error('❌ [ADMIN UPGRADE] Error:', error);
-      res.status(500).json({ 
-        success: false,
-        message: error.message || "Failed to update role",
-        error: error.toString()
-      });
-    }
-  });
 
   // ===== 2FA (Two-Factor Authentication) Routes =====
 
