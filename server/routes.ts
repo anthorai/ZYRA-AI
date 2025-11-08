@@ -4901,6 +4901,49 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Run comprehensive Shopify integration tests (Admin only)
+  app.post('/api/shopify/run-integration-tests', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Restrict to admin users only
+      if (user.role !== 'admin') {
+        return res.status(403).json({ 
+          error: 'Forbidden',
+          message: 'Only administrators can run integration tests' 
+        });
+      }
+      
+      console.log('🧪 Starting Shopify integration test suite for admin user:', user.id);
+      
+      // Import test suite
+      const { ShopifyIntegrationTester, formatTestResults } = await import('./lib/shopify-integration-test');
+      
+      // Create tester instance
+      const tester = new ShopifyIntegrationTester(supabaseStorage);
+      
+      // Run all tests
+      const report = await tester.runAllTests(user.id);
+      
+      // Format results for console
+      const formattedReport = formatTestResults(report);
+      console.log(formattedReport);
+      
+      // Return JSON report to client
+      res.json({
+        success: report.summary.failed === 0,
+        report
+      });
+    } catch (error: any) {
+      console.error('Integration test error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to run integration tests',
+        message: error.message 
+      });
+    }
+  });
+
   // Get Shopify sync status (for real-time status component)
   app.get('/api/shopify/sync-status', requireAuth, async (req, res) => {
     try {
