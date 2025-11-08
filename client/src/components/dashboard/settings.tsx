@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,8 @@ import {
   Zap,
   Shield,
   HelpCircle,
-  Store
+  Store,
+  ShieldCheck
 } from "lucide-react";
 
 interface SettingsCard {
@@ -32,6 +34,43 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [upgradingRole, setUpgradingRole] = useState(false);
+
+  const handleUpgradeToAdmin = async () => {
+    setUpgradingRole(true);
+    try {
+      const response = await fetch('/api/temp-set-admin', {
+        method: 'POST',
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: "Your account has been upgraded to Admin. Refreshing page...",
+        });
+        
+        // Refresh the page to reload user data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to upgrade role",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+    } finally {
+      setUpgradingRole(false);
+    }
+  };
 
   // Mock settings data for UI-only mode
   const mockUserPreferences = {
@@ -202,6 +241,31 @@ export default function Settings() {
 
   return (
     <PageContainer>
+      {/* Developer Tool - Upgrade to Admin */}
+      <div className="mb-6">
+        <Card className="border-2 border-amber-500/50 bg-amber-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <ShieldCheck className="w-6 h-6 text-amber-500" />
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Developer Tool</h3>
+                  <p className="text-sm text-slate-300">Upgrade your account to Admin role to access the Admin Panel</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleUpgradeToAdmin}
+                disabled={upgradingRole}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                data-testid="button-upgrade-admin"
+              >
+                {upgradingRole ? "Upgrading..." : "Upgrade to Admin"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Settings Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {settingsCards.map((card) => {
