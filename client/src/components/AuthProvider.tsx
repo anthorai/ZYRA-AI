@@ -299,8 +299,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (response.ok) {
           const data = await response.json();
-          setAppUser(data.user || data); // Handle different response formats
-          console.log('✅ App user fetched successfully');
+          const userProfile = data.user || data;
+          console.log('✅ App user fetched successfully:', userProfile);
+          setAppUser(userProfile);
           return;
         } else if (response.status === 401) {
           console.warn('⚠️ Unauthorized - user may need to re-authenticate');

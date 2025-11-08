@@ -115,13 +115,19 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   ];
 
   // Add admin link only for admin users
+  console.log('🔍 Sidebar - appUser:', appUser);
+  console.log('🔍 Sidebar - appUser.role:', appUser?.role);
+  
   if (appUser?.role === 'admin') {
+    console.log('✅ Admin role detected - adding admin nav item');
     navItems.push({
       id: "admin",
       label: "Admin Panel",
       icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
       tourAttr: "admin"
     });
+  } else {
+    console.log('❌ Not admin role - appUser:', appUser);
   }
 
   return (

@@ -206,9 +206,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user profile from Supabase storage by ID first, then email fallback
       let userProfile = await supabaseStorage.getUser(user.id);
+      console.log('🔍 DB userProfile from getUser:', userProfile);
+      
       if (!userProfile) {
         // Try email lookup (for backwards compatibility)
         userProfile = await supabaseStorage.getUserByEmail(user.email!);
+        console.log('🔍 DB userProfile from getUserByEmail:', userProfile);
+        
         if (!userProfile) {
           // Auto-provision profile for Supabase user using Supabase storage
           try {
@@ -225,6 +229,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
+
+      console.log('🔍 Final userProfile being attached to request:', {
+        id: userProfile.id,
+        email: userProfile.email,
+        fullName: userProfile.fullName,
+        role: userProfile.role,
+        plan: userProfile.plan
+      });
 
       // Attach user to request
       (req as AuthenticatedRequest).user = {
@@ -586,6 +598,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imageUrl: user.imageUrl
       } 
     });
+  });
+
+  // TEMPORARY: Update role to admin (for testing)
+  app.post("/api/temp-set-admin", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      console.log('🔧 Updating user role to admin for userId:', userId);
+      
+      const updated = await supabaseStorage.updateUser(userId, { role: 'admin' });
+      console.log('✅ Updated user:', updated);
+      
+      // Verify the update
+      const verified = await supabaseStorage.getUser(userId);
+      console.log('✅ Verified user after update:', verified);
+      
+      res.json({ message: "Role updated to admin", user: updated, verified });
+    } catch (error: any) {
+      console.error('❌ Error updating role:', error);
+      res.status(500).json({ message: error.message });
+    }
   });
 
   // ===== 2FA (Two-Factor Authentication) Routes =====
