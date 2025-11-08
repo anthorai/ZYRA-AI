@@ -41,6 +41,10 @@ export default function Settings() {
     try {
       const response = await fetch('/api/temp-set-admin', {
         method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       const data = await response.json();
       
