@@ -254,31 +254,6 @@ export default function Settings() {
 
   return (
     <PageContainer>
-      {/* Developer Tool - Upgrade to Admin */}
-      <div className="mb-6">
-        <Card className="border-2 border-amber-500/50 bg-amber-900/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <ShieldCheck className="w-6 h-6 text-amber-500" />
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Developer Tool</h3>
-                  <p className="text-sm text-slate-300">Upgrade your account to Admin role to access the Admin Panel</p>
-                </div>
-              </div>
-              <Button
-                onClick={handleUpgradeToAdmin}
-                disabled={upgradingRole}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                data-testid="button-upgrade-admin"
-              >
-                {upgradingRole ? "Upgrading..." : "Upgrade to Admin"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Settings Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {settingsCards.map((card) => {
