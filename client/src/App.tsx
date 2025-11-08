@@ -87,6 +87,7 @@ const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes")
 
 // Admin pages
 const WebhookSetup = lazy(() => import("@/pages/admin/webhook-setup"));
+const AdminPanel = lazy(() => import("@/pages/admin"));
 
 // Shopify installation onboarding
 const ShopifyOnboarding = lazy(() => import("@/pages/ShopifyOnboarding"));
@@ -255,6 +256,13 @@ function Router() {
       )} />
 
       {/* Admin routes */}
+      <Route path="/admin" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <AdminPanel />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
       <Route path="/admin/webhook-setup" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>

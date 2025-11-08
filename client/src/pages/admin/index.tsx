@@ -15,7 +15,7 @@ import {
   Clock,
   Activity
 } from "lucide-react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 interface TestResult {
@@ -40,14 +40,14 @@ interface TestReport {
 
 export default function AdminPage() {
   const { appUser } = useAuth();
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   const [isRunning, setIsRunning] = useState(false);
   const [report, setReport] = useState<TestReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Redirect if not admin
   if (appUser && appUser.role !== 'admin') {
-    navigate('/dashboard');
+    setLocation('/dashboard');
     return null;
   }
 
@@ -57,14 +57,21 @@ export default function AdminPage() {
     setReport(null);
 
     try {
-      const response = await apiRequest('/api/shopify/run-integration-tests', {
-        method: 'POST'
-      });
+      const response = await apiRequest(
+        'POST',
+        '/api/shopify/run-integration-tests'
+      );
 
-      if (response.success) {
-        setReport(response.report);
+      if (!response.ok) {
+        throw new Error('Failed to run integration tests');
+      }
+
+      const data = await response.json() as { success: boolean; report: TestReport; error?: string };
+
+      if (data.success) {
+        setReport(data.report);
       } else {
-        setError(response.error || 'Failed to run integration tests');
+        setError(data.error || 'Failed to run integration tests');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred while running tests');
