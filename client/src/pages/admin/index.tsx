@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,11 +44,29 @@ export default function AdminPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [report, setReport] = useState<TestReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Redirect if not admin
-  if (appUser && appUser.role !== 'admin') {
-    setLocation('/dashboard');
-    return null;
+  // Redirect if not admin (in effect to avoid render-time navigation)
+  useEffect(() => {
+    if (appUser !== undefined) {
+      if (appUser?.role !== 'admin') {
+        setLocation('/dashboard');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    }
+  }, [appUser, setLocation]);
+
+  // Show loading state until auth is verified
+  if (isCheckingAuth || !appUser) {
+    return (
+      <div className="min-h-screen dark-theme-bg flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-slate-400">Verifying admin access...</p>
+        </div>
+      </div>
+    );
   }
 
   const runIntegrationTests = async () => {
@@ -131,12 +149,14 @@ export default function AdminPage() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white font-medium">{appUser?.email}</p>
-                <p className="text-sm text-slate-400">Role: {appUser?.role}</p>
+                <p className="text-white font-medium">{appUser.email}</p>
+                <p className="text-sm text-slate-400">Role: {appUser.role}</p>
               </div>
-              <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                Admin Access
-              </Badge>
+              {appUser.role === 'admin' && (
+                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                  Admin Access
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useLocation } from "wouter";
 import { 
   Zap, 
   Home, 
@@ -17,7 +18,8 @@ import {
   LogOut,
   User,
   X,
-  Cog
+  Cog,
+  ShieldCheck
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,6 +34,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   const { appUser, user: supabaseUser } = useAuth();
   const { handleLogout, isLoggingOut } = useLogout();
   const { t } = useLanguage();
+  const [, setLocation] = useLocation();
   
   // Robust user name display logic - same as avatar components
   const getDisplayName = () => {
@@ -111,6 +114,16 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     { id: "settings", label: t('navigation.settings'), icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
   ];
 
+  // Add admin link only for admin users
+  if (appUser?.role === 'admin') {
+    navItems.push({
+      id: "admin",
+      label: "Admin Panel",
+      icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
+      tourAttr: "admin"
+    });
+  }
+
   return (
     <>
       {/* Overlay - closes sidebar when clicking outside */}
@@ -158,7 +171,13 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
             {navItems.map((item) => (
               <Button
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
+                onClick={() => {
+                  if (item.id === "admin") {
+                    setLocation("/admin");
+                  } else {
+                    onTabChange(item.id);
+                  }
+                }}
                 variant="ghost"
                 className={`w-full justify-start px-4 py-3 h-auto ${
                   activeTab === item.id
