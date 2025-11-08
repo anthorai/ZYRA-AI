@@ -4420,13 +4420,35 @@ Output format: Markdown with clear section headings.`;
     console.log('\n🔵 ========================================');
     console.log('🔵 SHOPIFY OAUTH CALLBACK RECEIVED');
     console.log('🔵 ========================================');
-    console.log('📥 Query params:', {
+    console.log('📥 Query params summary (non-sensitive):', {
       hasCode: !!req.query.code,
+      codeLength: req.query.code ? (req.query.code as string).length : 0,
       hasState: !!req.query.state,
+      stateLength: req.query.state ? (req.query.state as string).length : 0,
       shop: req.query.shop,
       hasHmac: !!req.query.hmac,
-      timestamp: req.query.timestamp
+      timestamp: req.query.timestamp,
+      hasError: !!req.query.error,
+      error: req.query.error || null,
+      errorDescription: req.query.error_description || null
     });
+    
+    // Check for Shopify error responses
+    if (req.query.error) {
+      console.log('❌ SHOPIFY RETURNED ERROR:');
+      console.log('  Error type:', req.query.error);
+      console.log('  Description:', req.query.error_description || 'No description');
+      console.log('  Shop:', req.query.shop);
+      
+      const errorCode = req.query.error === 'access_denied' ? 'user_declined' : 'shopify_error';
+      
+      // Use trusted domain from env - never use req.get('host') for redirects (open redirect vulnerability)
+      const baseUrl = getBaseUrl();
+      const redirectUrl = `${baseUrl}/settings/integrations?error=${errorCode}`;
+      
+      console.log('  Redirecting to:', redirectUrl);
+      return res.redirect(redirectUrl);
+    }
     
     try {
       const { code, state, shop, hmac, timestamp } = req.query;
