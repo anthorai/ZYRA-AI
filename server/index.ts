@@ -136,19 +136,53 @@ app.use(helmet({
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production'
     ? function (origin: any, callback: any) {
-        // Only allow exact production domains with credentials
-        // NEVER use regex patterns for Replit domains - security risk!
-        const allowedOrigins = [
-          process.env.PRODUCTION_DOMAIN,
-          process.env.REPLIT_DOMAIN // Must be exact URL, not pattern
-        ].filter(Boolean);
+        // Build list of allowed origins from environment variables
+        const allowedOrigins: string[] = [];
+        
+        // Add production domain
+        if (process.env.PRODUCTION_DOMAIN) {
+          allowedOrigins.push(process.env.PRODUCTION_DOMAIN);
+        }
+        
+        // Add Replit domains (supports comma-separated list)
+        if (process.env.REPLIT_DOMAINS) {
+          const replitDomains = process.env.REPLIT_DOMAINS.split(',').map(d => d.trim());
+          replitDomains.forEach(domain => {
+            // Support both with and without protocol
+            if (domain.startsWith('http://') || domain.startsWith('https://')) {
+              allowedOrigins.push(domain);
+            } else {
+              allowedOrigins.push(`https://${domain}`);
+            }
+          });
+        }
+        
+        // Fallback: Also check singular REPLIT_DOMAIN for backwards compatibility
+        if (process.env.REPLIT_DOMAIN) {
+          const domain = process.env.REPLIT_DOMAIN;
+          if (domain.startsWith('http://') || domain.startsWith('https://')) {
+            allowedOrigins.push(domain);
+          } else {
+            allowedOrigins.push(`https://${domain}`);
+          }
+        }
+        
+        // Log CORS configuration on first request (cache to avoid spam)
+        if (!(global as any).corsConfigLogged) {
+          console.log('🔒 [CORS] Production mode - Allowed origins:', allowedOrigins);
+          (global as any).corsConfigLogged = true;
+        }
         
         if (!origin) {
-          // Allow requests with no origin (mobile apps, curl, etc.)
+          // Allow requests with no origin (mobile apps, curl, server-to-server, etc.)
           callback(null, true);
         } else if (allowedOrigins.includes(origin)) {
+          // Origin is in the whitelist
           callback(null, true);
         } else {
+          // Log blocked origin for debugging
+          console.error(`❌ [CORS] Blocked origin: ${origin}`);
+          console.error(`🔒 [CORS] Allowed origins are:`, allowedOrigins);
           callback(new Error('Not allowed by CORS'));
         }
       }

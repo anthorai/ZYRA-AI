@@ -232,24 +232,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // CRITICAL FIX: Ensure user exists in Neon database for foreign key constraints
       // oauth_states table (and others) in Neon require users to exist there
-      try {
-        const neonUser = await getUserById(userProfile.id);
-        if (!neonUser) {
-          console.log(`🔧 [AUTH SYNC] User ${userProfile.id} not found in Neon, creating...`);
-          await createUserInNeon({
-            id: userProfile.id,
-            email: userProfile.email,
-            fullName: userProfile.fullName,
-            password: null, // No password for Supabase Auth users
-            plan: userProfile.plan || 'trial',
-            role: userProfile.role || 'user'
-          });
-          console.log(`✅ [AUTH SYNC] User ${userProfile.id} synced to Neon successfully`);
+      // Use retry logic for transient database failures
+      const syncUserToNeon = async (maxRetries = 3) => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const neonUser = await getUserById(userProfile.id);
+            if (!neonUser) {
+              console.log(`🔧 [AUTH SYNC] User ${userProfile.id} not found in Neon (attempt ${attempt}/${maxRetries}), creating...`);
+              await createUserInNeon({
+                id: userProfile.id,
+                email: userProfile.email,
+                fullName: userProfile.fullName,
+                password: null // No password for Supabase Auth users
+                // plan and role will use database defaults: 'trial' and 'user'
+              });
+              console.log(`✅ [AUTH SYNC] User ${userProfile.id} synced to Neon successfully`);
+            } else {
+              // User already exists in Neon
+              console.log(`✓ [AUTH SYNC] User ${userProfile.id} already exists in Neon`);
+            }
+            return true; // Success
+          } catch (error: any) {
+            const isLastAttempt = attempt === maxRetries;
+            const errorMessage = error?.message || 'Unknown error';
+            
+            if (isLastAttempt) {
+              // Final attempt failed - log detailed error
+              console.error(`❌ [AUTH SYNC] Failed to sync user ${userProfile.id} to Neon after ${maxRetries} attempts:`, {
+                error: errorMessage,
+                stack: error?.stack,
+                userId: userProfile.id,
+                email: userProfile.email
+              });
+              return false; // Failed
+            } else {
+              // Retry with exponential backoff
+              const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+              console.warn(`⚠️ [AUTH SYNC] Attempt ${attempt} failed, retrying in ${backoffMs}ms:`, errorMessage);
+              await new Promise(resolve => setTimeout(resolve, backoffMs));
+            }
+          }
         }
-      } catch (neonError) {
-        // Log but don't fail auth - Neon sync is supplementary
-        console.error('⚠️ [AUTH SYNC] Failed to sync user to Neon:', neonError);
-      }
+        return false;
+      };
+      
+      await syncUserToNeon();
 
       console.log('🔍 Final userProfile being attached to request:', {
         id: userProfile.id,
