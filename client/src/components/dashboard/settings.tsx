@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { PageContainer } from "@/components/ui/standardized-layout";
+import { supabase } from "@/lib/supabaseClient";
 import { 
   Settings as SettingsIcon,
   User,
@@ -39,11 +40,19 @@ export default function Settings() {
   const handleUpgradeToAdmin = async () => {
     setUpgradingRole(true);
     try {
+      // Get the access token from Supabase auth session
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       const response = await fetch('/api/temp-set-admin', {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
       const data = await response.json();
@@ -65,10 +74,10 @@ export default function Settings() {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to connect to server",
+        description: error.message || "Failed to connect to server",
         variant: "destructive",
       });
     } finally {
