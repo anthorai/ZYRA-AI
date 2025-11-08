@@ -188,11 +188,11 @@ export interface ISupabaseStorage {
   incrementUsageStat(userId: string, stat: keyof UsageStats, amount?: number): Promise<void>;
 
   // Activity log methods
-  createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
+  createActivityLog(userId: string, logData: any): Promise<any>;
   getUserActivityLogs(userId: string, limit?: number): Promise<ActivityLog[]>;
 
   // Tools access methods
-  trackToolAccess(access: InsertToolsAccess): Promise<ToolsAccess>;
+  trackToolAccess(userId: string, toolName: string): Promise<any>;
   getUserToolsAccess(userId: string): Promise<ToolsAccess[]>;
 
   // Realtime metrics methods
@@ -1725,16 +1725,17 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   // Activity log methods
-  async createActivityLog(log: InsertActivityLog): Promise<ActivityLog> {
-    const logData = {
-      ...log,
+  async createActivityLog(userId: string, logData: any): Promise<any> {
+    const activityData = {
       id: randomUUID(),
+      userId,
+      ...logData,
       createdAt: new Date().toISOString()
     };
 
     const { data, error } = await supabase
       .from('activity_logs')
-      .insert(logData)
+      .insert(activityData)
       .select()
       .single();
     
@@ -1755,21 +1756,43 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   // Tools access methods
-  async trackToolAccess(access: InsertToolsAccess): Promise<ToolsAccess> {
-    const accessData = {
-      ...access,
-      id: randomUUID(),
-      createdAt: new Date().toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('tools_access')
-      .insert(accessData)
-      .select()
-      .single();
+  async trackToolAccess(userId: string, toolName: string): Promise<any> {
+    const existingTools = await this.getUserToolsAccess(userId);
+    const existingTool = existingTools.find(tool => tool.toolName === toolName);
     
-    if (error) throw new Error(`Failed to track tool access: ${error.message}`);
-    return data;
+    if (existingTool) {
+      const { data, error } = await supabase
+        .from('tools_access')
+        .update({ 
+          accessCount: (existingTool.accessCount || 0) + 1,
+          lastAccessed: new Date().toISOString()
+        })
+        .eq('id', existingTool.id)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to update tool access: ${error.message}`);
+      return data;
+    } else {
+      const accessData = {
+        id: randomUUID(),
+        userId,
+        toolName,
+        accessCount: 1,
+        lastAccessed: new Date().toISOString(),
+        firstAccessed: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('tools_access')
+        .insert(accessData)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to create tool access: ${error.message}`);
+      return data;
+    }
   }
 
   async getUserToolsAccess(userId: string): Promise<ToolsAccess[]> {
@@ -1860,6 +1883,50 @@ export class SupabaseStorage implements ISupabaseStorage {
       metricName: "initialization",
       changePercent: "0",
       isPositive: true
+    });
+  }
+
+  async getDashboardData(userId: string): Promise<{
+    user: User | undefined;
+    profile: any;
+    usageStats: any;
+    activityLogs: any[];
+    toolsAccess: any[];
+    realtimeMetrics: any[];
+  }> {
+    const user = await this.getUser(userId);
+    const usageStats = await this.getUserUsageStats(userId);
+    const activityLogs = await this.getUserActivityLogs(userId);
+    const toolsAccess = await this.getUserToolsAccess(userId);
+    const realtimeMetrics = await this.getUserRealtimeMetrics(userId);
+    
+    return {
+      user,
+      profile: user ? { 
+        userId: user.id, 
+        name: user.fullName, 
+        email: user.email,
+        plan: user.plan 
+      } : null,
+      usageStats,
+      activityLogs: activityLogs.slice(0, 10),
+      toolsAccess: toolsAccess || [],
+      realtimeMetrics: realtimeMetrics ? [realtimeMetrics] : [],
+    };
+  }
+
+  async updateUsageStats(userId: string, statField: string, increment: number): Promise<void> {
+    await this.incrementUsageStat(userId, statField as keyof UsageStats, increment);
+  }
+
+  async generateSampleMetrics(userId: string): Promise<void> {
+    // Generate sample realtime metrics for demo purposes
+    await this.updateRealtimeMetric(userId, {
+      userId: userId,
+      value: String(Math.floor(Math.random() * 1000) + 500),
+      metricName: "sample_metric",
+      changePercent: String(Math.floor(Math.random() * 50) - 25),
+      isPositive: Math.random() > 0.5
     });
   }
 }
