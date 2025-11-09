@@ -3676,6 +3676,18 @@ Output format: Markdown with clear section headings.`;
         return res.status(400).json({ message: 'New passwords do not match' });
       }
 
+      // Validate password strength
+      const { PasswordValidator } = await import('./lib/password-validator');
+      const validation = PasswordValidator.validate(newPassword);
+      
+      if (!validation.isValid) {
+        return res.status(400).json({ 
+          message: 'Password does not meet security requirements',
+          feedback: validation.feedback,
+          score: validation.score
+        });
+      }
+
       await supabaseStorage.changeUserPassword(userId, oldPassword, newPassword);
       res.json({ success: true, message: 'Password changed successfully' });
     } catch (error: any) {

@@ -16,6 +16,8 @@ import { AccessibleLoading } from "@/components/ui/accessible-loading";
 import type { Session } from "@shared/schema";
 import { TwoFactorEnrollDialog } from "@/components/security/TwoFactorEnrollDialog";
 import { TwoFactorDisableDialog } from "@/components/security/TwoFactorDisableDialog";
+import { PasswordStrengthMeter } from "@/components/security/PasswordStrengthMeter";
+import { PasswordValidation } from "@shared/password-validation";
 
 // Helper to get icon based on device type or browser
 function getDeviceIcon(deviceType?: string | null, browser?: string | null) {
@@ -90,7 +92,14 @@ export default function SecurityPage() {
   const passwordChangeMutation = useMutation({
     mutationFn: async (data: { oldPassword: string; newPassword: string; confirmPassword: string }) => {
       const response = await apiRequest('POST', '/api/profile/change-password', data);
-      return response.json();
+      const result = await response.json();
+      
+      // If response contains feedback, it's a validation error
+      if (result.feedback && !response.ok) {
+        throw { message: result.message, feedback: result.feedback };
+      }
+      
+      return result;
     },
     onSuccess: () => {
       toast({
@@ -104,11 +113,18 @@ export default function SecurityPage() {
       setConfirmPassword("");
     },
     onError: (error: any) => {
+      // Show detailed feedback if available
+      let description = error.message || "Failed to change password";
+      if (error.feedback && error.feedback.length > 0) {
+        const feedbackList = error.feedback.map((f: string) => `• ${f}`).join('\n');
+        description = `${error.message}\n${feedbackList}`;
+      }
+        
       toast({
         title: "Password Change Failed",
-        description: error.message || "Failed to change password",
+        description,
         variant: "destructive",
-        duration: 3000,
+        duration: 5000,
       });
     }
   });
@@ -135,12 +151,15 @@ export default function SecurityPage() {
       return;
     }
 
-    if (newPassword.length < 8) {
+    // Validate password strength using shared validation
+    const validation = PasswordValidation.validate(newPassword);
+    if (!validation.isValid) {
+      const feedbackList = validation.feedback.map(f => `• ${f}`).join('\n');
       toast({
-        title: "Weak Password",
-        description: "Password must be at least 8 characters long",
+        title: "Password Too Weak",
+        description: `Please address the following:\n${feedbackList}`,
         variant: "destructive",
-        duration: 3000,
+        duration: 5000,
       });
       return;
     }
@@ -315,6 +334,7 @@ export default function SecurityPage() {
                   className="bg-slate-900/50 border-slate-600 text-white"
                   data-testid="input-new-password"
                 />
+                <PasswordStrengthMeter password={newPassword} />
               </div>
               
               <div className="space-y-2">
@@ -345,7 +365,11 @@ export default function SecurityPage() {
                 </Button>
                 <Button
                   onClick={handlePasswordUpdate}
-                  disabled={passwordChangeMutation.isPending}
+                  disabled={
+                    passwordChangeMutation.isPending ||
+                    !newPassword ||
+                    !PasswordValidation.validate(newPassword).isValid
+                  }
                   className="gradient-button"
                   data-testid="button-update-password"
                 >

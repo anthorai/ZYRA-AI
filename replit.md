@@ -32,7 +32,16 @@ A real-time dashboard tracks campaigns, revenue, conversions, and ROI, with expo
 Production-grade monitoring infrastructure with Sentry integration for both backend and frontend, featuring real-time error tracking with 5xx error alerts, session replay, user-friendly error messages, and a comprehensive health check endpoint (`/health`). Sensitive data protection ensures no confidential information is leaked.
 
 ### Security & Compliance
-Production-ready security with zero critical vulnerabilities. Features include multi-tier rate limiting, comprehensive input sanitization, GDPR compliance, AES-256-GCM encryption, bcrypt hashing, CORS protection, helmet.js security headers, and secure credential management.
+Production-ready security with zero critical vulnerabilities. Features include:
+- **Multi-tier rate limiting**: Brute force protection for all auth endpoints
+- **Comprehensive input sanitization**: XSS and SQL injection prevention
+- **GDPR compliance**: Data export, account deletion, privacy controls
+- **AES-256-GCM encryption**: Sensitive data protection
+- **bcrypt hashing**: Password and 2FA backup code hashing
+- **CORS protection**: Helmet.js security headers
+- **Secure credential management**: Environment-based secrets
+- **Two-Factor Authentication**: TOTP-based 2FA with QR enrollment, backup codes, and recovery flow
+- **Password Strength Validation**: Production-grade password strength meter with shared validation logic (shared/password-validation.ts) ensuring perfect client-server alignment. Enforces minimum score of 3, character variety (uppercase, lowercase, numbers, special chars), and blocks weak patterns (sequences, common words, all-numeric/alpha). Real-time visual feedback with color-coded strength bar and actionable guidance.
 
 ### Notification System
 Advanced preferences for multi-channel notifications (Email, SMS, In-App, Push) with granular control, including proactive trial expiration notifications.
