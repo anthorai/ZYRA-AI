@@ -54,11 +54,17 @@ export default function SecurityPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Fetch 2FA status from backend
+  const { data: twoFactorStatus, isLoading: twoFactorLoading, error: twoFactorError } = useQuery<{ enabled: boolean }>({
+    queryKey: ['/api/2fa/status'],
+  });
+
+  const twoFactorEnabled = twoFactorStatus?.enabled || false;
 
   // Fetch active sessions from backend
   const { data: sessions, isLoading: sessionsLoading, error: sessionsError } = useQuery<Session[]>({
@@ -66,12 +72,10 @@ export default function SecurityPage() {
   });
 
   const handleToggle2FA = (enabled: boolean) => {
-    setTwoFactorEnabled(enabled);
+    // TODO: Implement 2FA enable/disable flow in task 4
     toast({
-      title: enabled ? "2FA Enabled" : "2FA Disabled",
-      description: enabled 
-        ? "Two-factor authentication has been enabled for your account"
-        : "Two-factor authentication has been disabled",
+      title: "Coming Soon",
+      description: "2FA enable/disable flow will be implemented next",
       duration: 3000,
     });
   };
@@ -190,15 +194,26 @@ export default function SecurityPage() {
         title="Two-Factor Authentication"
         description="Add an extra layer of security to your account"
         headerAction={
-          <Badge
-            variant={twoFactorEnabled ? "default" : "secondary"}
-            className={twoFactorEnabled
-              ? "bg-green-500/20 text-green-400"
-              : "bg-slate-500/20 text-slate-400"
-            }
-          >
-            {twoFactorEnabled ? "Enabled" : "Disabled"}
-          </Badge>
+          twoFactorLoading ? (
+            <Badge variant="secondary" className="bg-slate-500/20 text-slate-400" data-testid="badge-2fa-status">
+              Loading...
+            </Badge>
+          ) : twoFactorError ? (
+            <Badge variant="secondary" className="bg-red-500/20 text-red-400" data-testid="badge-2fa-status">
+              Error
+            </Badge>
+          ) : (
+            <Badge
+              variant={twoFactorEnabled ? "default" : "secondary"}
+              className={twoFactorEnabled
+                ? "bg-green-500/20 text-green-400"
+                : "bg-slate-500/20 text-slate-400"
+              }
+              data-testid="badge-2fa-status"
+            >
+              {twoFactorEnabled ? "Enabled" : "Disabled"}
+            </Badge>
+          )
         }
         testId="card-2fa"
       >
@@ -215,6 +230,7 @@ export default function SecurityPage() {
             <Switch
               checked={twoFactorEnabled}
               onCheckedChange={handleToggle2FA}
+              disabled={twoFactorLoading || !!twoFactorError}
               className="data-[state=checked]:bg-primary"
               data-testid="switch-2fa"
             />
