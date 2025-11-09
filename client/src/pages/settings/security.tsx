@@ -14,6 +14,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { AccessibleLoading } from "@/components/ui/accessible-loading";
 import type { Session } from "@shared/schema";
+import { TwoFactorEnrollDialog } from "@/components/security/TwoFactorEnrollDialog";
+import { TwoFactorDisableDialog } from "@/components/security/TwoFactorDisableDialog";
 
 // Helper to get icon based on device type or browser
 function getDeviceIcon(deviceType?: string | null, browser?: string | null) {
@@ -58,6 +60,8 @@ export default function SecurityPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showEnrollDialog, setShowEnrollDialog] = useState(false);
+  const [showDisableDialog, setShowDisableDialog] = useState(false);
 
   // Fetch 2FA status from backend
   const { data: twoFactorStatus, isLoading: twoFactorLoading, error: twoFactorError } = useQuery<{ enabled: boolean }>({
@@ -72,12 +76,15 @@ export default function SecurityPage() {
   });
 
   const handleToggle2FA = (enabled: boolean) => {
-    // TODO: Implement 2FA enable/disable flow in task 4
-    toast({
-      title: "Coming Soon",
-      description: "2FA enable/disable flow will be implemented next",
-      duration: 3000,
-    });
+    if (enabled) {
+      setShowEnrollDialog(true);
+    } else {
+      setShowDisableDialog(true);
+    }
+  };
+
+  const handle2FASuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/2fa/status'] });
   };
 
   const passwordChangeMutation = useMutation({
@@ -183,12 +190,24 @@ export default function SecurityPage() {
   };
 
   return (
-    <PageShell
-      title="Security Settings"
-      subtitle="Protect your account with advanced security features"
-      maxWidth="xl"
-      spacing="normal"
-    >
+    <>
+      <TwoFactorEnrollDialog
+        open={showEnrollDialog}
+        onOpenChange={setShowEnrollDialog}
+        onSuccess={handle2FASuccess}
+      />
+      <TwoFactorDisableDialog
+        open={showDisableDialog}
+        onOpenChange={setShowDisableDialog}
+        onSuccess={handle2FASuccess}
+      />
+
+      <PageShell
+        title="Security Settings"
+        subtitle="Protect your account with advanced security features"
+        maxWidth="xl"
+        spacing="normal"
+      >
       {/* Two-Factor Authentication */}
       <DashboardCard
         title="Two-Factor Authentication"
@@ -218,14 +237,15 @@ export default function SecurityPage() {
         testId="card-2fa"
       >
         <div className="space-y-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Smartphone className="w-5 h-5 text-primary" />
           <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-white font-medium">Enable 2FA</Label>
-              <p className="text-sm text-slate-400 mt-1">
-                Require a code from your authenticator app when signing in
-              </p>
+            <div className="flex items-center space-x-2">
+              <Smartphone className="w-5 h-5 text-primary" />
+              <div>
+                <Label className="text-white font-medium">Enable 2FA</Label>
+                <p className="text-sm text-slate-400 mt-1">
+                  Require a code from your authenticator app when signing in
+                </p>
+              </div>
             </div>
             <Switch
               checked={twoFactorEnabled}
@@ -243,7 +263,6 @@ export default function SecurityPage() {
               </p>
             </div>
           )}
-          </div>
         </div>
       </DashboardCard>
 
@@ -452,6 +471,7 @@ export default function SecurityPage() {
           </div>
         </div>
       </DashboardCard>
-    </PageShell>
+      </PageShell>
+    </>
   );
 }

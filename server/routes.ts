@@ -745,20 +745,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: '2FA is not enabled' });
       }
 
-      // Verify token
-      const isValid = TwoFactorAuthService.verifyToken(settings.twoFactorSecret || '', token);
-      if (!isValid) {
-        return res.status(400).json({ message: 'Invalid token' });
+      // Try to verify as TOTP token first
+      let isValid = TwoFactorAuthService.verifyToken(settings.twoFactorSecret || '', token);
+      let usedBackupCode = false;
+
+      // If TOTP verification fails, try backup codes
+      if (!isValid && settings.backupCodes) {
+        const backupCodesArray = settings.backupCodes as string[];
+        const backupCodeValid = await TwoFactorAuthService.verifyBackupCode(token, backupCodesArray);
+        
+        if (backupCodeValid) {
+          isValid = true;
+          usedBackupCode = true;
+        }
       }
 
-      // Disable 2FA
+      // If both TOTP and backup code verification failed, return error
+      if (!isValid) {
+        return res.status(400).json({ message: 'Invalid token or backup code' });
+      }
+
+      // Disable 2FA and clear all secrets
       await supabaseStorage.updateSecuritySettings(userId, {
         twoFactorEnabled: false,
         twoFactorSecret: null,
         backupCodes: null
       });
 
-      res.json({ message: '2FA disabled successfully' });
+      res.json({ 
+        message: '2FA disabled successfully',
+        usedBackupCode
+      });
     } catch (error: any) {
       console.error('2FA disable error:', error);
       res.status(500).json({ message: 'Failed to disable 2FA' });
