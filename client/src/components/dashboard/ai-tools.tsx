@@ -226,6 +226,9 @@ export default function AITools() {
       return;
     }
 
+    // Store navigation source so dashboard knows to return to AI tools tab
+    sessionStorage.setItem('navigationSource', 'ai-tools');
+
     // Navigate to dedicated AI tool pages
     switch (toolId) {
       case 'professional-copywriting':

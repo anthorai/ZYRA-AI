@@ -34,6 +34,7 @@ export function UnifiedHeader({
       setLocation(backTo);
     } else {
       // Use browser history to go back to the actual previous page
+      // The dashboard's useEffect will check navigationSource and switch to the correct tab
       window.history.back();
     }
   };

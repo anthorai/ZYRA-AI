@@ -109,7 +109,7 @@ export default function Dashboard() {
   
 
 
-  // Handle navigation source from sessionStorage (for back button from AI tools, automation, and campaigns)
+  // Handle navigation source from sessionStorage (for back button from AI tools, automation, campaigns, and settings)
   useEffect(() => {
     const navigationSource = sessionStorage.getItem('navigationSource');
     if (navigationSource === 'ai-tools') {
@@ -120,6 +120,9 @@ export default function Dashboard() {
       sessionStorage.removeItem('navigationSource'); // Clean up after use
     } else if (navigationSource === 'campaigns') {
       setActiveTab('campaigns');
+      sessionStorage.removeItem('navigationSource'); // Clean up after use
+    } else if (navigationSource === 'settings') {
+      setActiveTab('settings');
       sessionStorage.removeItem('navigationSource'); // Clean up after use
     }
   }, []);

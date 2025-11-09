@@ -124,6 +124,9 @@ export default function AutomationTools() {
       return;
     }
 
+    // Store navigation source so dashboard knows to return to automation tab
+    sessionStorage.setItem('navigationSource', 'automation');
+
     // Navigate to the specific automation tool page
     const routeMap = {
       'csv-import-export': '/automation/csv-import-export',
