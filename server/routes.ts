@@ -4186,6 +4186,40 @@ Output format: Markdown with clear section headings.`;
     }
   });
   
+  /**
+   * Normalize Shopify shop domain to the permanent .myshopify.com format
+   * Required by Shopify 2025 OAuth rules - OAuth must use permanent domain, not admin.shopify.com
+   */
+  function normalizeShopDomain(shop: string): string {
+    // Remove whitespace and convert to lowercase
+    let normalized = shop.trim().toLowerCase();
+    
+    // Handle admin.shopify.com/store/{shop} pattern (Shopify admin URL format)
+    if (normalized.includes('admin.shopify.com/store/')) {
+      const storeMatch = normalized.match(/store\/([a-z0-9-]+)/i);
+      if (storeMatch && storeMatch[1]) {
+        normalized = `${storeMatch[1]}.myshopify.com`;
+        console.log(`🔄 Converted admin URL to permanent domain: ${shop} → ${normalized}`);
+        return normalized;
+      }
+    }
+    
+    // Remove protocol (http:// or https://)
+    normalized = normalized.replace(/^https?:\/\//, '');
+    
+    // Remove trailing slash
+    normalized = normalized.replace(/\/$/, '');
+    
+    // If the domain doesn't already end with .myshopify.com, append it
+    if (!normalized.endsWith('.myshopify.com')) {
+      // Extract just the shop name if there's any domain
+      const shopName = normalized.split('.')[0];
+      normalized = `${shopName}.myshopify.com`;
+    }
+    
+    return normalized;
+  }
+
   // Cleanup expired OAuth states every 10 minutes
   setInterval(async () => {
     try {
@@ -4211,16 +4245,8 @@ Output format: Markdown with clear section headings.`;
         return res.status(400).json({ error: 'Shop domain is required' });
       }
 
-      // Sanitize and validate shop domain
-      let shopDomain = (shop as string).trim()
-        .toLowerCase()
-        .replace(/^https?:\/\//, '') // Remove protocol
-        .replace(/\/$/, ''); // Remove trailing slash
-      
-      // Ensure .myshopify.com format
-      if (!shopDomain.includes('.myshopify.com')) {
-        shopDomain = `${shopDomain}.myshopify.com`;
-      }
+      // Normalize shop domain to permanent .myshopify.com format
+      const shopDomain = normalizeShopDomain(shop as string);
 
       // Validate domain format
       if (!/^[a-z0-9-]+\.myshopify\.com$/.test(shopDomain)) {
@@ -4341,16 +4367,8 @@ Output format: Markdown with clear section headings.`;
         return res.status(400).json({ error: 'Shop domain is required' });
       }
 
-      // Sanitize and validate shop domain
-      let shopDomain = shop.trim()
-        .toLowerCase()
-        .replace(/^https?:\/\//, '') // Remove protocol
-        .replace(/\/$/, ''); // Remove trailing slash
-      
-      // Ensure .myshopify.com format
-      if (!shopDomain.includes('.myshopify.com')) {
-        shopDomain = `${shopDomain}.myshopify.com`;
-      }
+      // Normalize shop domain to permanent .myshopify.com format (Shopify 2025 OAuth requirement)
+      const shopDomain = normalizeShopDomain(shop);
 
       // Validate domain format
       if (!/^[a-z0-9-]+\.myshopify\.com$/.test(shopDomain)) {
