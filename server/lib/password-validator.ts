@@ -6,7 +6,8 @@ import { PasswordValidation } from '../../shared/password-validation';
  */
 export class PasswordValidator {
   static validate = PasswordValidation.validate;
-  static getStrengthLabel(score: number): string {
-    return PasswordValidation.getStrengthLabel(score, false);
-  }
+  
+  // All other methods available via PasswordValidation directly:
+  // - PasswordValidation.getStrengthLabel(score, hasFeedback)
+  // - PasswordValidation.getStrengthColor(score, hasFeedback)
 }
