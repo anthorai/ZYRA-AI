@@ -170,6 +170,7 @@ export interface ISupabaseStorage {
   saveSession(session: InsertSession): Promise<Session>;
   getSession(sessionId: string): Promise<Session | undefined>;
   getUserSessions(userId: string): Promise<Session[]>;
+  updateSession(sessionId: string, updates: Partial<Session>): Promise<Session>;
   deleteSession(sessionId: string): Promise<void>;
   cleanupExpiredSessions(): Promise<void>;
 
@@ -1492,7 +1493,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { data, error } = await supabase
       .from('sessions')
       .select('*')
-      .eq('id', sessionId)
+      .eq('session_id', sessionId)
       .single();
     
     if (error) {
@@ -1506,7 +1507,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     const { error } = await supabase
       .from('sessions')
       .delete()
-      .eq('id', sessionId);
+      .eq('session_id', sessionId);
     
     if (error) throw new Error(`Failed to delete session: ${error.message}`);
   }
@@ -1529,6 +1530,28 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to get user sessions: ${error.message}`);
     return data || [];
+  }
+
+  async updateSession(sessionId: string, updates: Partial<Session>): Promise<Session> {
+    // Convert Date objects to ISO strings for Supabase
+    const sanitizedUpdates: any = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (value instanceof Date) {
+        sanitizedUpdates[key] = value.toISOString();
+      } else if (value !== undefined) {
+        sanitizedUpdates[key] = value;
+      }
+    }
+
+    const { data, error} = await supabase
+      .from('sessions')
+      .update(sanitizedUpdates)
+      .eq('session_id', sessionId)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to update session: ${error.message}`);
+    return data;
   }
 
   // Subscription methods
