@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -9,6 +10,10 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { Brain, Sparkles, Zap, Clock } from "lucide-react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type PerformanceMode = 'fast' | 'balanced' | 'quality';
 
 export default function AIPreferencesPage() {
   const { toast } = useToast();
@@ -19,12 +24,60 @@ export default function AIPreferencesPage() {
   const [scheduledUpdates, setScheduledUpdates] = useState(true);
   const [brandMemory, setBrandMemory] = useState(true);
   const [creativity, setCreativity] = useState([70]);
+  const [performanceMode, setPerformanceMode] = useState<PerformanceMode>('balanced');
+
+  // Fetch user preferences
+  const { data: preferences, isLoading } = useQuery<any>({
+    queryKey: ['/api/settings/preferences'],
+  });
+
+  // Update local state when preferences are loaded
+  useEffect(() => {
+    if (preferences?.aiSettings) {
+      const ai = preferences.aiSettings;
+      setBrandVoice(ai.defaultBrandVoice || 'professional');
+      setContentStyle(ai.contentStyle || 'seo');
+      setAutoSave(ai.autoSaveOutputs !== false);
+      setBrandMemory(ai.brandMemory !== false);
+      setScheduledUpdates(ai.scheduledUpdates !== false);
+      setCreativity([ai.creativityLevel || 70]);
+      setPerformanceMode(ai.performanceMode || 'balanced');
+    }
+  }, [preferences]);
+
+  // Save preferences mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest('PUT', '/api/settings/preferences', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/preferences'] });
+      toast({
+        title: "AI Preferences Saved",
+        description: "Your AI settings have been updated successfully",
+        duration: 3000,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save preferences",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSave = () => {
-    toast({
-      title: "AI Preferences Saved",
-      description: "Your AI settings have been updated successfully",
-      duration: 3000,
+    saveMutation.mutate({
+      aiSettings: {
+        defaultBrandVoice: brandVoice,
+        contentStyle,
+        autoSaveOutputs: autoSave,
+        brandMemory,
+        scheduledUpdates,
+        creativityLevel: creativity[0],
+        performanceMode,
+      }
     });
   };
 
@@ -161,37 +214,63 @@ export default function AIPreferencesPage() {
         headerAction={<Clock className="w-5 h-5 text-primary" />}
         testId="card-performance"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-            <Button
-              variant="outline"
-              className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl h-auto p-3 sm:p-4 md:p-6 flex flex-col items-start"
-              data-testid="button-mode-fast"
-            >
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mb-2 text-primary flex-shrink-0" />
-              <div className="font-semibold text-white text-base sm:text-lg md:text-xl truncate w-full">Fast Mode</div>
-              <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Quick results, good quality</div>
-            </Button>
-            <Button
-              variant="outline"
-              className="shadow-lg border border-primary/30 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-primary/10 hover:bg-primary/20 h-auto p-3 sm:p-4 md:p-6 flex flex-col items-start"
-              data-testid="button-mode-balanced"
-            >
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mb-2 text-primary flex-shrink-0" />
-              <div className="font-semibold text-white text-base sm:text-lg md:text-xl truncate w-full">Balanced</div>
-              <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Best quality-speed ratio</div>
-            </Button>
-            <Button
-              variant="outline"
-              className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl h-auto p-3 sm:p-4 md:p-6 flex flex-col items-start"
-              data-testid="button-mode-quality"
-            >
-              <Brain className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mb-2 text-primary flex-shrink-0" />
-              <div className="font-semibold text-white text-base sm:text-lg md:text-xl truncate w-full">Quality Mode</div>
-              <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Highest quality, slower</div>
-            </Button>
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full bg-slate-800/50" />
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <Button
+                variant="outline"
+                onClick={() => setPerformanceMode('fast')}
+                className={`shadow-lg border transition-all duration-300 rounded-xl sm:rounded-2xl h-auto p-3 sm:p-4 md:p-6 flex flex-col items-start ${
+                  performanceMode === 'fast'
+                    ? 'border-primary/50 bg-primary/10 hover:bg-primary/20 hover:shadow-xl hover:shadow-primary/10'
+                    : 'border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10'
+                }`}
+                data-testid="button-mode-fast"
+              >
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mb-2 text-primary flex-shrink-0" />
+                <div className="font-semibold text-white text-base sm:text-lg md:text-xl truncate w-full">Fast Mode</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Quick results, good quality</div>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setPerformanceMode('balanced')}
+                className={`shadow-lg border transition-all duration-300 rounded-xl sm:rounded-2xl h-auto p-3 sm:p-4 md:p-6 flex flex-col items-start ${
+                  performanceMode === 'balanced'
+                    ? 'border-primary/50 bg-primary/10 hover:bg-primary/20 hover:shadow-xl hover:shadow-primary/10'
+                    : 'border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10'
+                }`}
+                data-testid="button-mode-balanced"
+              >
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mb-2 text-primary flex-shrink-0" />
+                <div className="font-semibold text-white text-base sm:text-lg md:text-xl truncate w-full">Balanced</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Best quality-speed ratio</div>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setPerformanceMode('quality')}
+                className={`shadow-lg border transition-all duration-300 rounded-xl sm:rounded-2xl h-auto p-3 sm:p-4 md:p-6 flex flex-col items-start ${
+                  performanceMode === 'quality'
+                    ? 'border-primary/50 bg-primary/10 hover:bg-primary/20 hover:shadow-xl hover:shadow-primary/10'
+                    : 'border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10'
+                }`}
+                data-testid="button-mode-quality"
+              >
+                <Brain className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 mb-2 text-primary flex-shrink-0" />
+                <div className="font-semibold text-white text-base sm:text-lg md:text-xl truncate w-full">Quality Mode</div>
+                <div className="text-[10px] sm:text-xs md:text-sm text-slate-400 mt-1 truncate w-full">Highest quality, slower</div>
+              </Button>
+            </div>
+            <div className="text-xs text-slate-400 pt-2">
+              {performanceMode === 'fast' && '⚡ Uses GPT-4o-mini for faster generation with good quality'}
+              {performanceMode === 'balanced' && '✨ Uses GPT-4o-mini with optimized prompts for best balance'}
+              {performanceMode === 'quality' && '🧠 Uses GPT-4o for highest quality results (PRO plan)'}
+            </div>
+          </div>
+        )}
       </DashboardCard>
 
       {/* Save Button */}

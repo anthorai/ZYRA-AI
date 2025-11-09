@@ -171,19 +171,32 @@ export function estimateTaskCost(
 export type SubscriptionPlan = 'free' | 'starter' | 'growth' | 'pro' | 'trial';
 
 /**
- * Determine model based on user's subscription plan and task complexity
+ * Performance mode preference for AI generation
+ */
+export type PerformanceMode = 'fast' | 'balanced' | 'quality';
+
+/**
+ * Determine model based on user's subscription plan, task complexity, and performance preference
+ * 
+ * Performance Mode:
+ * - Fast: Always use GPT-4o-mini for fastest results
+ * - Balanced: Use GPT-4o-mini with optimized parameters (default)
+ * - Quality: Use GPT-4o when available (PRO plan required)
  * 
  * PRO Plan Rules (Zyra Engine Guidelines):
  * - Use GPT-4o for deep reasoning, tone optimization, A/B testing
  * - Use GPT-4o for strategy insights, campaign strategy, professional copywriting
+ * - Quality mode allows GPT-4o for all tasks
  * 
  * Standard/Free Plan Rules:
  * - Use GPT-4o-mini for all lightweight tasks (titles, alt text, bulk updates)
+ * - Quality mode unavailable (requires PRO plan)
  * - Restricted from advanced strategic features
  */
 export function getModelForPlan(
   taskType: AITaskType, 
-  userPlan: SubscriptionPlan = 'free'
+  userPlan: SubscriptionPlan = 'free',
+  performanceMode: PerformanceMode = 'balanced'
 ): {
   model: AIModel;
   temperature: number;
@@ -192,7 +205,28 @@ export function getModelForPlan(
 } {
   const baseConfig = MODEL_CONFIG[taskType];
   
-  // PRO plan gets access to GPT-4o for advanced tasks
+  // Fast mode always uses GPT-4o-mini regardless of plan
+  if (performanceMode === 'fast') {
+    return {
+      model: 'gpt-4o-mini',
+      temperature: baseConfig.temperature,
+      maxTokens: baseConfig.maxTokens,
+      description: `${baseConfig.description} (Fast Mode)`
+    };
+  }
+  
+  // Quality mode requires PRO plan
+  if (performanceMode === 'quality' && (userPlan === 'pro' || userPlan === 'growth')) {
+    // Use GPT-4o for all tasks in quality mode (PRO users only)
+    return {
+      model: 'gpt-4o',
+      temperature: baseConfig.temperature * 0.95, // Slightly lower for more consistent quality
+      maxTokens: Math.min(baseConfig.maxTokens * 1.5, 2000),
+      description: `${baseConfig.description} (Quality Mode - GPT-4o)`
+    };
+  }
+  
+  // PRO plan gets access to GPT-4o for advanced tasks (balanced mode)
   if (userPlan === 'pro' || userPlan === 'growth') {
     // Upgrade specific tasks to GPT-4o for PRO users
     if (taskType === 'professional_copywriting') {
@@ -210,7 +244,7 @@ export function getModelForPlan(
     }
   }
   
-  // Free/Starter plans use GPT-4o-mini for all tasks
+  // Free/Starter plans use GPT-4o-mini for all tasks (balanced/quality modes)
   if ((userPlan === 'free' || userPlan === 'starter' || userPlan === 'trial') && 
       baseConfig.model === 'gpt-4o') {
     // Downgrade to mini for non-PRO users
@@ -235,7 +269,39 @@ export function hasPremiumAccess(userPlan: SubscriptionPlan): boolean {
 /**
  * Get model type name for display (Zyra Engine context)
  */
-export function getModelDisplayName(taskType: AITaskType, userPlan: SubscriptionPlan = 'free'): string {
-  const config = getModelForPlan(taskType, userPlan);
+export function getModelDisplayName(taskType: AITaskType, userPlan: SubscriptionPlan = 'free', performanceMode: PerformanceMode = 'balanced'): string {
+  const config = getModelForPlan(taskType, userPlan, performanceMode);
   return config.model === 'gpt-4o' ? 'GPT-4o (PRO)' : 'GPT-4o-mini (FAST MODE)';
+}
+
+/**
+ * Helper to get model config from user preferences
+ * Fetches user's AI settings and returns appropriate model configuration
+ */
+export async function getModelFromUserPreferences(
+  userId: string,
+  taskType: AITaskType,
+  storage: any // IStorage interface
+): Promise<{
+  model: AIModel;
+  temperature: number;
+  maxTokens: number;
+  description: string;
+}> {
+  // Get user's plan and preferences
+  const user = await storage.getUserById(userId);
+  const userPlan = (user?.plan || 'trial') as SubscriptionPlan;
+  
+  // Get performance mode from preferences
+  let performanceMode: PerformanceMode = 'balanced'; // default
+  try {
+    const preferences = await storage.getUserPreferences(userId);
+    if (preferences?.aiSettings?.performanceMode) {
+      performanceMode = preferences.aiSettings.performanceMode as PerformanceMode;
+    }
+  } catch (error) {
+    console.warn('Failed to fetch user preferences, using balanced mode:', error);
+  }
+  
+  return getModelForPlan(taskType, userPlan, performanceMode);
 }

@@ -1088,23 +1088,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get Zyra Pro Mode system prompt for product descriptions
       const proModePrompt = getSystemPromptForTool('productDescriptions');
 
-      // Using GPT-4o mini model with Zyra Pro Mode + AI Response Caching
-      const cacheKey = `${proModePrompt}\n\n${selectedPrompt}`;
+      // Get model configuration based on user's performance mode preference
+      const { getModelFromUserPreferences } = await import('./lib/ai-model-selector');
+      const modelConfig = await getModelFromUserPreferences(userId, 'product_description', storage);
+      
+      // Using selected model with Zyra Pro Mode + AI Response Caching
+      const cacheKey = `${proModePrompt}\n\n${selectedPrompt}\n\nModel:${modelConfig.model}`;
       let tokensUsed = 0;
       
       const result = await cachedTextGeneration(
         { 
           prompt: cacheKey,
-          model: "gpt-4o-mini",
-          maxTokens: 1000
+          model: modelConfig.model,
+          maxTokens: modelConfig.maxTokens
         },
         async () => {
           const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: modelConfig.model,
             messages: [
               { role: "system", content: proModePrompt },
               { role: "user", content: selectedPrompt }
             ],
+            temperature: modelConfig.temperature,
+            max_tokens: modelConfig.maxTokens,
             response_format: { type: "json_object" },
           });
 
@@ -1124,7 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           outputData: { description: result.description },
           brandVoice: selectedBrandVoice,
           tokensUsed,
-          model: 'gpt-4o-mini'
+          model: modelConfig.model
         });
       }
       
@@ -3749,7 +3755,8 @@ Output format: Markdown with clear section headings.`;
           aiSettings: {
             defaultBrandVoice: "professional",
             autoSaveOutputs: true,
-            contentStyle: "seo"
+            contentStyle: "seo",
+            performanceMode: "balanced"
           },
           notificationSettings: {
             email: true,
