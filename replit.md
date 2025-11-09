@@ -131,6 +131,33 @@ Configured for VM deployment on Replit, with a build process using Vite for fron
 - Frontend initial load: <2s (estimated with code splitting)
 - 90th percentile target: <200ms
 
+# Recent Bug Fixes
+
+## November 9, 2025 - Critical Dependency and Path Issues Resolved
+**Fixed by:** Agent bug check
+**Status:** ✅ Resolved and tested
+
+### Bug #1: Missing Vite Package (Critical)
+- **Issue**: Fatal startup error "Cannot find package 'vite'" despite vite@5.4.21 being declared in package.json devDependencies
+- **Impact**: Application could not start in development mode, blocking all development work
+- **Root Cause**: npm was not installing devDependencies properly in the Replit environment
+- **Fix**: Ran `npm install --include=dev vite@5.4.21 @vitejs/plugin-react@4.7.0 --force` to force installation of Vite and related packages
+- **Result**: Added 166 packages, all LSP errors cleared, development mode now works correctly
+
+### Bug #2: Incorrect Production Asset Path
+- **Issue**: Production mode was looking for built static files in `/public/` but they were actually in `/dist/public/`
+- **Impact**: Production deployments would fail with "ENOENT: no such file or directory" errors
+- **Files Modified**: `server/index.ts` (lines 610 and 658)
+- **Fix**: Changed `path.resolve(__dirname, "..", "public")` to `path.resolve(__dirname, "..", "dist", "public")` for both standard and Vercel production modes
+- **Result**: Production mode now correctly serves static assets from dist/public directory
+
+### Verification
+- ✅ Development mode runs without errors
+- ✅ Production mode tested and working
+- ✅ All LSP diagnostics cleared
+- ✅ Application loads correctly with full UI rendering
+- ✅ No regressions introduced
+
 # External Dependencies
 
 ## Database & Hosting
