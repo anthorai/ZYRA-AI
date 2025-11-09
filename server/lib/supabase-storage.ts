@@ -169,6 +169,7 @@ export interface ISupabaseStorage {
   // Session methods (for custom auth if needed)
   saveSession(session: InsertSession): Promise<Session>;
   getSession(sessionId: string): Promise<Session | undefined>;
+  getUserSessions(userId: string): Promise<Session[]>;
   deleteSession(sessionId: string): Promise<void>;
   cleanupExpiredSessions(): Promise<void>;
 
@@ -1517,6 +1518,17 @@ export class SupabaseStorage implements ISupabaseStorage {
       .lt('expiresAt', new Date().toISOString());
     
     if (error) throw new Error(`Failed to cleanup expired sessions: ${error.message}`);
+  }
+
+  async getUserSessions(userId: string): Promise<Session[]> {
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('last_seen_at', { ascending: false });
+    
+    if (error) throw new Error(`Failed to get user sessions: ${error.message}`);
+    return data || [];
   }
 
   // Subscription methods

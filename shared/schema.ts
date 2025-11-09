@@ -205,11 +205,20 @@ export const sessions = pgTable("sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sessionId: text("session_id").notNull().unique(),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  refreshTokenId: text("refresh_token_id"), // Maps to Supabase refresh token for revocation
+  userAgent: text("user_agent"), // Full user agent string
+  deviceType: text("device_type"), // 'desktop', 'mobile', 'tablet'
+  browser: text("browser"), // 'Chrome', 'Firefox', 'Safari', etc.
+  os: text("os"), // 'Windows', 'macOS', 'iOS', 'Android', etc.
+  ipAddress: text("ip_address"), // Hashed IP address for privacy
+  location: text("location"), // Coarse geolocation (city, country)
+  lastSeenAt: timestamp("last_seen_at").default(sql`NOW()`),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").default(sql`NOW()`),
 }, (table) => [
   index('sessions_user_id_idx').on(table.userId),
   index('sessions_expires_at_idx').on(table.expiresAt),
+  index('sessions_last_seen_idx').on(table.lastSeenAt),
 ]);
 
 export const usageStats = pgTable("usage_stats", {

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { 
   type User, 
   type InsertUser, 
@@ -47,6 +47,8 @@ import {
   type InsertAbTest,
   type ProductHistory,
   type InsertProductHistory,
+  type Session,
+  type InsertSession,
   users, 
   products, 
   seoMeta, 
@@ -69,7 +71,8 @@ import {
   notificationChannels,
   notificationAnalytics,
   abTests,
-  productHistory
+  productHistory,
+  sessions
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 // Using Supabase for authentication - no local password handling needed
@@ -230,6 +233,15 @@ export interface IStorage {
   createABTest(data: InsertAbTest): Promise<AbTest>;
   updateABTest(id: string, updates: Partial<AbTest>): Promise<AbTest>;
   deleteABTest(id: string): Promise<void>;
+
+  // Session management methods
+  getUserSessions(userId: string): Promise<Session[]>;
+  getSession(sessionId: string): Promise<Session | undefined>;
+  createSession(data: InsertSession): Promise<Session>;
+  updateSession(sessionId: string, updates: Partial<Session>): Promise<Session>;
+  deleteSession(sessionId: string): Promise<void>;
+  deleteUserSessions(userId: string, excludeSessionId?: string): Promise<void>;
+  cleanupExpiredSessions(): Promise<void>;
 }
 
 export class DatabaseStorage {
@@ -756,6 +768,75 @@ export class DatabaseStorage {
       .where(eq(notificationAnalytics.id, id))
       .returning();
     return result[0];
+  }
+
+  // Session management methods
+  async getUserSessions(userId: string): Promise<Session[]> {
+    if (!db) throw new Error("Database not configured");
+    console.log("[DB] Starting operation: getUserSessions");
+    const result = await db.select().from(sessions)
+      .where(eq(sessions.userId, userId))
+      .orderBy(desc(sessions.lastSeenAt));
+    console.log("[DB] Operation completed successfully: getUserSessions");
+    return result;
+  }
+
+  async getSession(sessionId: string): Promise<Session | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(sessions)
+      .where(eq(sessions.sessionId, sessionId));
+    return result[0];
+  }
+
+  async createSession(data: InsertSession): Promise<Session> {
+    if (!db) throw new Error("Database not configured");
+    console.log("[DB] Starting operation: createSession");
+    const result = await db.insert(sessions).values(data).returning();
+    console.log("[DB] Operation completed successfully: createSession");
+    return result[0];
+  }
+
+  async updateSession(sessionId: string, updates: Partial<Session>): Promise<Session> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(sessions)
+      .set({ ...updates, lastSeenAt: new Date() })
+      .where(eq(sessions.sessionId, sessionId))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    console.log("[DB] Starting operation: deleteSession", sessionId);
+    await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
+    console.log("[DB] Operation completed successfully: deleteSession");
+  }
+
+  async deleteUserSessions(userId: string, excludeSessionId?: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    console.log("[DB] Starting operation: deleteUserSessions");
+    if (excludeSessionId) {
+      // Delete all user sessions EXCEPT the excluded one
+      await db.delete(sessions).where(
+        and(
+          eq(sessions.userId, userId),
+          sql`${sessions.sessionId} != ${excludeSessionId}`
+        )
+      );
+    } else {
+      await db.delete(sessions).where(eq(sessions.userId, userId));
+    }
+    console.log("[DB] Operation completed successfully: deleteUserSessions");
+  }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    console.log("[DB] Starting operation: cleanupExpiredSessions");
+    // Delete sessions where expiresAt is in the past
+    await db.delete(sessions).where(
+      sql`${sessions.expiresAt} < NOW()`
+    );
+    console.log("[DB] Operation completed successfully: cleanupExpiredSessions");
   }
 }
 
@@ -1767,6 +1848,51 @@ export class MemStorage {
     const updated = { ...analytics, ...updates };
     this.notificationAnalyticsData.set(id, updated);
     return updated;
+  }
+
+  // Session management stub methods (not fully functional in memory storage)
+  async getUserSessions(userId: string): Promise<Session[]> {
+    return [];
+  }
+
+  async getSession(sessionId: string): Promise<Session | undefined> {
+    return undefined;
+  }
+
+  async createSession(data: InsertSession): Promise<Session> {
+    const id = randomUUID();
+    const session: Session = {
+      id,
+      sessionId: data.sessionId,
+      userId: data.userId,
+      refreshTokenId: data.refreshTokenId || null,
+      userAgent: data.userAgent || null,
+      deviceType: data.deviceType || null,
+      browser: data.browser || null,
+      os: data.os || null,
+      ipAddress: data.ipAddress || null,
+      location: data.location || null,
+      lastSeenAt: data.lastSeenAt || new Date(),
+      expiresAt: data.expiresAt,
+      createdAt: new Date()
+    };
+    return session;
+  }
+
+  async updateSession(sessionId: string, updates: Partial<Session>): Promise<Session> {
+    throw new Error("Session update not implemented in memory storage");
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    // No-op in memory storage
+  }
+
+  async deleteUserSessions(userId: string, excludeSessionId?: string): Promise<void> {
+    // No-op in memory storage
+  }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    // No-op in memory storage
   }
 }
 

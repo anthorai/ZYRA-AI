@@ -831,6 +831,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session management endpoints
+  app.get("/api/sessions", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      const sessions = await supabaseStorage.getUserSessions(userId);
+      
+      res.json(sessions);
+    } catch (error: any) {
+      console.error('[Sessions] Error fetching user sessions:', error);
+      res.status(500).json({ message: 'Failed to fetch sessions' });
+    }
+  });
+
+  app.delete("/api/sessions/:sessionId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { sessionId } = req.params;
+      
+      // Verify session belongs to user
+      const session = await supabaseStorage.getSession(sessionId);
+      if (!session || session.userId !== userId) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+      
+      // Delete the session from our database
+      await supabaseStorage.deleteSession(sessionId);
+      
+      // TODO: Revoke Supabase refresh token if refreshTokenId exists
+      // This will be implemented in session tracking middleware
+      
+      res.json({ message: 'Session revoked successfully' });
+    } catch (error: any) {
+      console.error('[Sessions] Error revoking session:', error);
+      res.status(500).json({ message: 'Failed to revoke session' });
+    }
+  });
+
   // Professional AI Copywriting with Multi-Agent Pipeline & A/B Testing
   app.post("/api/generate-professional-copy", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
