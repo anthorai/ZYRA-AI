@@ -604,7 +604,7 @@ if (!isVercelServerless) {
   } else {
     // Production: serve pre-built static files without importing Vite
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const distPath = path.resolve(__dirname, "..", "public");
+    const distPath = path.resolve(__dirname, "..", "dist", "public");
     
     app.use(express.static(distPath, {
       maxAge: '1y',
@@ -652,7 +652,7 @@ if (!isVercelServerless) {
   serverPromise.then(async (server) => {
     // Vercel: serve pre-built static files without importing Vite
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const distPath = path.resolve(__dirname, "..", "public");
+    const distPath = path.resolve(__dirname, "..", "dist", "public");
     
     // Verify dist/public exists (fail fast if misconfigured)
     if (!fs.existsSync(distPath)) {
