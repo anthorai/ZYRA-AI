@@ -9,7 +9,46 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { PageShell } from "@/components/ui/page-shell";
-import { Shield, Lock, Smartphone, Key, Download, Trash2, Eye, Chrome, Monitor } from "lucide-react";
+import { Shield, Lock, Smartphone, Key, Download, Trash2, Eye, Chrome, Monitor, Laptop } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { AccessibleLoading } from "@/components/ui/accessible-loading";
+import type { Session } from "@shared/schema";
+
+// Helper to get icon based on device type or browser
+function getDeviceIcon(deviceType?: string | null, browser?: string | null) {
+  const browserName = browser?.toLowerCase() ?? '';
+  
+  if (deviceType === 'mobile' || deviceType?.includes('mobile')) {
+    return <Smartphone className="w-5 h-5" />;
+  }
+  if (browserName.includes('chrome')) {
+    return <Chrome className="w-5 h-5" />;
+  }
+  if (deviceType === 'desktop' || deviceType?.includes('desktop')) {
+    return <Monitor className="w-5 h-5" />;
+  }
+  return <Laptop className="w-5 h-5" />;
+}
+
+// Helper to format last seen time
+function formatLastSeen(lastSeenAt: string | null) {
+  if (!lastSeenAt) return "Unknown";
+  
+  const lastSeen = new Date(lastSeenAt);
+  const now = new Date();
+  const diffMs = now.getTime() - lastSeen.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return "Active now";
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
 
 export default function SecurityPage() {
   const { toast } = useToast();
@@ -21,29 +60,10 @@ export default function SecurityPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const activeSessions = [
-    {
-      id: "1",
-      device: "Chrome on Windows",
-      location: "New York, USA",
-      lastActive: "Active now",
-      icon: <Chrome className="w-5 h-5" />
-    },
-    {
-      id: "2",
-      device: "Safari on iPhone",
-      location: "New York, USA",
-      lastActive: "2 hours ago",
-      icon: <Smartphone className="w-5 h-5" />
-    },
-    {
-      id: "3",
-      device: "Firefox on MacOS",
-      location: "Boston, USA",
-      lastActive: "1 day ago",
-      icon: <Monitor className="w-5 h-5" />
-    }
-  ];
+  // Fetch active sessions from backend
+  const { data: sessions, isLoading: sessionsLoading, error: sessionsError } = useQuery<Session[]>({
+    queryKey: ['/api/sessions'],
+  });
 
   const handleToggle2FA = (enabled: boolean) => {
     setTwoFactorEnabled(enabled);
@@ -56,7 +76,34 @@ export default function SecurityPage() {
     });
   };
 
+  const passwordChangeMutation = useMutation({
+    mutationFn: async (data: { oldPassword: string; newPassword: string; confirmPassword: string }) => {
+      const response = await apiRequest('POST', '/api/profile/change-password', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Updated",
+        description: "Your password has been changed successfully",
+        duration: 3000,
+      });
+      setShowPasswordForm(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Password Change Failed",
+        description: error.message || "Failed to change password",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  });
+
   const handlePasswordUpdate = () => {
+    // Client-side validation
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast({
         title: "Missing Fields",
@@ -77,24 +124,50 @@ export default function SecurityPage() {
       return;
     }
 
-    toast({
-      title: "Password Updated",
-      description: "Your password has been changed successfully",
-      duration: 3000,
+    if (newPassword.length < 8) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Call backend API
+    passwordChangeMutation.mutate({
+      oldPassword: currentPassword,
+      newPassword,
+      confirmPassword
     });
-    
-    setShowPasswordForm(false);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
   };
 
+  const revokeSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const response = await apiRequest('DELETE', `/api/sessions/${sessionId}`);
+      return response.json();
+    },
+    onSuccess: (_, sessionId) => {
+      // Invalidate sessions query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/sessions'] });
+      toast({
+        title: "Session Revoked",
+        description: "The session has been logged out successfully",
+        duration: 3000,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Revoke Session",
+        description: error.message || "Unable to revoke the session",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  });
+
   const handleRevokeSession = (sessionId: string, device: string) => {
-    toast({
-      title: "Session Revoked",
-      description: `Logged out from ${device}`,
-      duration: 3000,
-    });
+    revokeSessionMutation.mutate(sessionId);
   };
 
   const handleExportData = () => {
@@ -237,10 +310,11 @@ export default function SecurityPage() {
                 </Button>
                 <Button
                   onClick={handlePasswordUpdate}
+                  disabled={passwordChangeMutation.isPending}
                   className="gradient-button"
                   data-testid="button-update-password"
                 >
-                  Update Password
+                  {passwordChangeMutation.isPending ? "Updating..." : "Update Password"}
                 </Button>
               </div>
             </div>
@@ -255,36 +329,65 @@ export default function SecurityPage() {
         headerAction={<Monitor className="w-5 h-5 text-primary" />}
         testId="card-active-sessions"
       >
-        <div className="space-y-4">
-          {activeSessions.map((session, index) => (
-            <div key={session.id}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-lg bg-slate-800/50">
-                    <div className="text-primary">{session.icon}</div>
+        {sessionsLoading ? (
+          <AccessibleLoading message="Loading active sessions..." />
+        ) : sessionsError ? (
+          <div className="text-center py-4">
+            <p className="text-red-400 mb-2">Failed to load active sessions</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/sessions'] })}
+              className="border-slate-600 text-slate-300 hover:bg-slate-800"
+            >
+              Retry
+            </Button>
+          </div>
+        ) : sessions && sessions.length > 0 ? (
+          <div className="space-y-4">
+            {sessions.map((session: Session, index: number) => {
+              const deviceName = session.browser && session.os 
+                ? `${session.browser} on ${session.os}`
+                : session.userAgent || 'Unknown Device';
+              
+              return (
+                <div key={session.sessionId}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 rounded-lg bg-slate-800/50">
+                        <div className="text-primary">
+                          {getDeviceIcon(session.deviceType, session.browser)}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">{deviceName}</p>
+                        <p className="text-sm text-slate-400">
+                          {session.location || session.ipAddress || 'Unknown location'}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatLastSeen(session.lastSeenAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRevokeSession(session.sessionId, deviceName)}
+                      disabled={revokeSessionMutation.isPending}
+                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                      data-testid={`button-revoke-session-${session.sessionId}`}
+                    >
+                      {revokeSessionMutation.isPending ? "Revoking..." : "Revoke"}
+                    </Button>
                   </div>
-                  <div>
-                    <p className="text-white font-medium">{session.device}</p>
-                    <p className="text-sm text-slate-400">{session.location}</p>
-                    <p className="text-xs text-slate-500">{session.lastActive}</p>
-                  </div>
+                  {index < sessions.length - 1 && <Separator className="bg-slate-700 mt-4" />}
                 </div>
-                {session.id !== "1" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRevokeSession(session.id, session.device)}
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                    data-testid={`button-revoke-session-${session.id}`}
-                  >
-                    Revoke
-                  </Button>
-                )}
-              </div>
-              {index < activeSessions.length - 1 && <Separator className="bg-slate-700 mt-4" />}
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-slate-400 text-center py-4">No active sessions found</p>
+        )}
       </DashboardCard>
 
       {/* Data Management */}
