@@ -32,10 +32,10 @@ function getDeviceIcon(deviceType?: string | null, browser?: string | null) {
 }
 
 // Helper to format last seen time
-function formatLastSeen(lastSeenAt: string | null) {
+function formatLastSeen(lastSeenAt: Date | string | null) {
   if (!lastSeenAt) return "Unknown";
   
-  const lastSeen = new Date(lastSeenAt);
+  const lastSeen = lastSeenAt instanceof Date ? lastSeenAt : new Date(lastSeenAt);
   const now = new Date();
   const diffMs = now.getTime() - lastSeen.getTime();
   const diffMins = Math.floor(diffMs / 60000);
