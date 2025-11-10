@@ -493,11 +493,11 @@ export default function BillingPage() {
         </DashboardCard>
       )}
       <Tabs defaultValue="plans" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 gradient-surface">
-          <TabsTrigger value="plans" data-testid="tab-plans">Plans</TabsTrigger>
-          <TabsTrigger value="billing" data-testid="tab-billing">Billing History</TabsTrigger>
-          <TabsTrigger value="payment" data-testid="tab-payment">Payment Methods</TabsTrigger>
-          <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
+        <TabsList className="inline-flex flex-nowrap w-full sm:grid sm:grid-cols-4 gradient-surface overflow-x-auto gap-2">
+          <TabsTrigger value="plans" data-testid="tab-plans" className="flex-none min-w-max sm:flex-auto">Plans</TabsTrigger>
+          <TabsTrigger value="billing" data-testid="tab-billing" className="flex-none min-w-max sm:flex-auto">Billing History</TabsTrigger>
+          <TabsTrigger value="payment" data-testid="tab-payment" className="flex-none min-w-max sm:flex-auto">Payment Methods</TabsTrigger>
+          <TabsTrigger value="settings" data-testid="tab-settings" className="flex-none min-w-max sm:flex-auto">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="plans" className="space-y-6">
