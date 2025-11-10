@@ -101,6 +101,24 @@ export default function Auth() {
 
   // Google sign-in removed - using session-based auth only
 
+  // Show session expired message if redirected
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirectReason = params.get('redirected');
+    
+    if (redirectReason === 'session_expired') {
+      toast({
+        title: "Session Expired",
+        description: "Your session has expired. Please sign in again.",
+        variant: "destructive",
+      });
+      
+      // Clean up the URL parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [toast]);
+
   // Redirect if user is already logged in
   useEffect(() => {
     console.log('🔍 Auth page - user state:', { hasUser: !!user, userId: user?.id });
