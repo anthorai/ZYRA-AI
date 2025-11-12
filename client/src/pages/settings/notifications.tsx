@@ -243,6 +243,7 @@ export default function NotificationsPage() {
       subtitle="Manage how and when you receive notifications"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings"
     >
       {isLoading ? (
         <DashboardCard>

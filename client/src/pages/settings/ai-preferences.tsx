@@ -87,6 +87,7 @@ export default function AIPreferencesPage() {
       subtitle="Customize AI behavior and automation settings"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings"
     >
       {/* Brand Voice Selection */}
       <DashboardCard

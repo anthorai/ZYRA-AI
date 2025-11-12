@@ -226,6 +226,7 @@ export default function SecurityPage() {
         subtitle="Protect your account with advanced security features"
         maxWidth="xl"
         spacing="normal"
+        backTo="/settings"
       >
       {/* Two-Factor Authentication */}
       <DashboardCard
