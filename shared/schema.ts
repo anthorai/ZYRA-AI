@@ -71,6 +71,8 @@ export const campaigns = pgTable("campaigns", {
   subject: text("subject"),
   content: text("content").notNull(),
   templateId: varchar("template_id"),
+  goalType: text("goal_type"), // 'acquisition' | 'retention' | 'conversion' | 'engagement' | 'custom'
+  audience: text("audience"), // 'all' | 'abandoned_cart' | 'recent_customers' | 'inactive_customers'
   status: text("status").notNull().default("draft"), // draft, scheduled, sending, sent, failed
   scheduledFor: timestamp("scheduled_for"),
   sentAt: timestamp("sent_at"),
@@ -85,6 +87,7 @@ export const campaigns = pgTable("campaigns", {
 }, (table) => [
   index('campaigns_user_id_idx').on(table.userId),
   index('campaigns_status_idx').on(table.status),
+  index('campaigns_goal_type_idx').on(table.goalType),
   index('campaigns_scheduled_for_idx').on(table.scheduledFor),
   index('campaigns_created_at_idx').on(table.createdAt),
 ]);
@@ -127,14 +130,17 @@ export const campaignTemplates = pgTable("campaign_templates", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   name: text("name").notNull(),
   type: text("type").notNull(), // 'email' | 'sms'
+  presetType: text("preset_type"), // 'cart_recovery' | 'welcome' | 'winback' | 'product_launch' | 'promo' | 'custom'
   subject: text("subject"),
   content: text("content").notNull(),
+  description: text("description"), // Template description for easier selection
   variables: jsonb("variables"), // template variable placeholders
   isDefault: boolean("is_default").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
 }, (table) => [
   index('campaign_templates_user_id_idx').on(table.userId),
+  index('campaign_templates_preset_type_idx').on(table.presetType),
   index('campaign_templates_created_at_idx').on(table.createdAt),
 ]);
 
@@ -387,6 +393,9 @@ export const insertCampaignSchema = createInsertSchema(campaigns).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  goalType: z.string().optional(),
+  audience: z.string().optional(),
 });
 
 export const insertCampaignEventSchema = createInsertSchema(campaignEvents).omit({
@@ -403,6 +412,9 @@ export const insertCampaignTemplateSchema = createInsertSchema(campaignTemplates
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  presetType: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export const insertAbandonedCartSchema = createInsertSchema(abandonedCarts).omit({
