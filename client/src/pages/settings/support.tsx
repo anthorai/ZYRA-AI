@@ -75,6 +75,7 @@ export default function SupportPage() {
       subtitle="Get help, browse resources, and contact our support team"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings"
     >
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
