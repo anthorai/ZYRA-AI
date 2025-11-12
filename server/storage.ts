@@ -49,6 +49,12 @@ import {
   type InsertProductHistory,
   type Session,
   type InsertSession,
+  type ContentPerformance,
+  type InsertContentPerformance,
+  type LearningPattern,
+  type InsertLearningPattern,
+  type ContentQualityScore,
+  type InsertContentQualityScore,
   users, 
   products, 
   seoMeta, 
@@ -72,7 +78,10 @@ import {
   notificationAnalytics,
   abTests,
   productHistory,
-  sessions
+  sessions,
+  contentPerformance,
+  learningPatterns,
+  contentQualityScores
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 // Using Supabase for authentication - no local password handling needed
@@ -198,6 +207,21 @@ export interface IStorage {
   
   getAiGenerationHistory(userId: string, limit?: number): Promise<AiGenerationHistory[]>;
   createAiGenerationHistory(history: InsertAiGenerationHistory): Promise<AiGenerationHistory>;
+
+  // Performance tracking & self-learning methods
+  getContentPerformance(userId: string, filters?: { productId?: string, aiGenerationId?: string }): Promise<ContentPerformance[]>;
+  createContentPerformance(performance: InsertContentPerformance): Promise<ContentPerformance>;
+  updateContentPerformance(id: string, updates: Partial<ContentPerformance>): Promise<ContentPerformance>;
+  getTopPerformingContent(userId: string, limit?: number): Promise<ContentPerformance[]>;
+  
+  getLearningPatterns(userId: string, filters?: { category?: string, patternType?: string }): Promise<LearningPattern[]>;
+  createLearningPattern(pattern: InsertLearningPattern): Promise<LearningPattern>;
+  updateLearningPattern(id: string, updates: Partial<LearningPattern>): Promise<LearningPattern>;
+  getActivePatterns(userId: string): Promise<LearningPattern[]>;
+  
+  getContentQualityScore(aiGenerationId: string): Promise<ContentQualityScore | undefined>;
+  createContentQualityScore(score: InsertContentQualityScore): Promise<ContentQualityScore>;
+  getQualityScoresByUser(userId: string, limit?: number): Promise<ContentQualityScore[]>;
 
   // Payment transaction methods
   createPaymentTransaction(transaction: any): Promise<any>;
@@ -567,6 +591,51 @@ export class DatabaseStorage {
 
   async createAiGenerationHistory(history: InsertAiGenerationHistory): Promise<AiGenerationHistory> {
     throw new Error("Settings data not available in DatabaseStorage - use MemStorage");
+  }
+
+  // Performance tracking & self-learning stubs
+  async getContentPerformance(userId: string, filters?: { productId?: string, aiGenerationId?: string }): Promise<ContentPerformance[]> {
+    throw new Error("Performance tracking not available in DatabaseStorage - use MemStorage");
+  }
+
+  async createContentPerformance(performance: InsertContentPerformance): Promise<ContentPerformance> {
+    throw new Error("Performance tracking not available in DatabaseStorage - use MemStorage");
+  }
+
+  async updateContentPerformance(id: string, updates: Partial<ContentPerformance>): Promise<ContentPerformance> {
+    throw new Error("Performance tracking not available in DatabaseStorage - use MemStorage");
+  }
+
+  async getTopPerformingContent(userId: string, limit?: number): Promise<ContentPerformance[]> {
+    throw new Error("Performance tracking not available in DatabaseStorage - use MemStorage");
+  }
+
+  async getLearningPatterns(userId: string, filters?: { category?: string, patternType?: string }): Promise<LearningPattern[]> {
+    throw new Error("Learning patterns not available in DatabaseStorage - use MemStorage");
+  }
+
+  async createLearningPattern(pattern: InsertLearningPattern): Promise<LearningPattern> {
+    throw new Error("Learning patterns not available in DatabaseStorage - use MemStorage");
+  }
+
+  async updateLearningPattern(id: string, updates: Partial<LearningPattern>): Promise<LearningPattern> {
+    throw new Error("Learning patterns not available in DatabaseStorage - use MemStorage");
+  }
+
+  async getActivePatterns(userId: string): Promise<LearningPattern[]> {
+    throw new Error("Learning patterns not available in DatabaseStorage - use MemStorage");
+  }
+
+  async getContentQualityScore(aiGenerationId: string): Promise<ContentQualityScore | undefined> {
+    throw new Error("Quality scores not available in DatabaseStorage - use MemStorage");
+  }
+
+  async createContentQualityScore(score: InsertContentQualityScore): Promise<ContentQualityScore> {
+    throw new Error("Quality scores not available in DatabaseStorage - use MemStorage");
+  }
+
+  async getQualityScoresByUser(userId: string, limit?: number): Promise<ContentQualityScore[]> {
+    throw new Error("Quality scores not available in DatabaseStorage - use MemStorage");
   }
 
   // Payment transaction methods
@@ -1600,6 +1669,159 @@ export class MemStorage {
     };
     this.aiGenerationHistoryData.set(id, newHistory);
     return newHistory;
+  }
+
+  // Performance tracking & self-learning methods
+  private contentPerformanceData: Map<string, ContentPerformance> = new Map();
+  private learningPatternsData: Map<string, LearningPattern> = new Map();
+  private contentQualityScoresData: Map<string, ContentQualityScore> = new Map();
+
+  async getContentPerformance(userId: string, filters?: { productId?: string, aiGenerationId?: string }): Promise<ContentPerformance[]> {
+    let performances = Array.from(this.contentPerformanceData.values())
+      .filter(p => p.userId === userId);
+    
+    if (filters?.productId) {
+      performances = performances.filter(p => p.productId === filters.productId);
+    }
+    if (filters?.aiGenerationId) {
+      performances = performances.filter(p => p.aiGenerationId === filters.aiGenerationId);
+    }
+    
+    return performances;
+  }
+
+  async createContentPerformance(performance: InsertContentPerformance): Promise<ContentPerformance> {
+    const id = randomUUID();
+    const newPerformance: ContentPerformance = {
+      id,
+      ...performance,
+      aiGenerationId: performance.aiGenerationId || null,
+      productId: performance.productId || null,
+      views: performance.views || 0,
+      clicks: performance.clicks || 0,
+      conversions: performance.conversions || 0,
+      revenue: performance.revenue || "0",
+      ctr: performance.ctr || "0",
+      conversionRate: performance.conversionRate || "0",
+      performanceScore: performance.performanceScore || 0,
+      engagementScore: performance.engagementScore || 0,
+      wordCount: performance.wordCount || null,
+      readabilityScore: performance.readabilityScore || null,
+      emotionalTone: performance.emotionalTone || null,
+      keywordDensity: performance.keywordDensity || null,
+      performanceDelta: performance.performanceDelta || null,
+      baselineScore: performance.baselineScore || null,
+      firstRecordedAt: new Date(),
+      lastUpdatedAt: new Date(),
+      measurementPeriodDays: performance.measurementPeriodDays || 7
+    };
+    this.contentPerformanceData.set(id, newPerformance);
+    return newPerformance;
+  }
+
+  async updateContentPerformance(id: string, updates: Partial<ContentPerformance>): Promise<ContentPerformance> {
+    const performance = this.contentPerformanceData.get(id);
+    if (!performance) throw new Error("Content performance record not found");
+    const updated = { ...performance, ...updates, lastUpdatedAt: new Date() };
+    this.contentPerformanceData.set(id, updated);
+    return updated;
+  }
+
+  async getTopPerformingContent(userId: string, limit: number = 10): Promise<ContentPerformance[]> {
+    return Array.from(this.contentPerformanceData.values())
+      .filter(p => p.userId === userId)
+      .sort((a, b) => (b.performanceScore || 0) - (a.performanceScore || 0))
+      .slice(0, limit);
+  }
+
+  async getLearningPatterns(userId: string, filters?: { category?: string, patternType?: string }): Promise<LearningPattern[]> {
+    let patterns = Array.from(this.learningPatternsData.values())
+      .filter(p => p.userId === userId);
+    
+    if (filters?.category) {
+      patterns = patterns.filter(p => p.category === filters.category);
+    }
+    if (filters?.patternType) {
+      patterns = patterns.filter(p => p.patternType === filters.patternType);
+    }
+    
+    return patterns;
+  }
+
+  async createLearningPattern(pattern: InsertLearningPattern): Promise<LearningPattern> {
+    const id = randomUUID();
+    const newPattern: LearningPattern = {
+      id,
+      ...pattern,
+      category: pattern.category || null,
+      targetAudience: pattern.targetAudience || null,
+      priceRange: pattern.priceRange || null,
+      framework: pattern.framework || null,
+      confidence: pattern.confidence || "0",
+      lastValidated: new Date(),
+      timesApplied: pattern.timesApplied || 0,
+      timesSucceeded: pattern.timesSucceeded || 0,
+      isActive: pattern.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      averagePerformanceScore: pattern.averagePerformanceScore || null,
+      averageConversionRate: pattern.averageConversionRate || null
+    };
+    this.learningPatternsData.set(id, newPattern);
+    return newPattern;
+  }
+
+  async updateLearningPattern(id: string, updates: Partial<LearningPattern>): Promise<LearningPattern> {
+    const pattern = this.learningPatternsData.get(id);
+    if (!pattern) throw new Error("Learning pattern not found");
+    const updated = { ...pattern, ...updates, updatedAt: new Date() };
+    this.learningPatternsData.set(id, updated);
+    return updated;
+  }
+
+  async getActivePatterns(userId: string): Promise<LearningPattern[]> {
+    return Array.from(this.learningPatternsData.values())
+      .filter(p => p.userId === userId && p.isActive)
+      .sort((a, b) => parseFloat(b.successRate || "0") - parseFloat(a.successRate || "0"));
+  }
+
+  async getContentQualityScore(aiGenerationId: string): Promise<ContentQualityScore | undefined> {
+    return Array.from(this.contentQualityScoresData.values())
+      .find(score => score.aiGenerationId === aiGenerationId);
+  }
+
+  async createContentQualityScore(score: InsertContentQualityScore): Promise<ContentQualityScore> {
+    const id = randomUUID();
+    const newScore: ContentQualityScore = {
+      id,
+      ...score,
+      seoScore: score.seoScore || 0,
+      keywordOptimization: score.keywordOptimization || 0,
+      metaQuality: score.metaQuality || 0,
+      readabilityScore: score.readabilityScore || 0,
+      gradeLevel: score.gradeLevel || null,
+      sentenceComplexity: score.sentenceComplexity || 0,
+      emotionalScore: score.emotionalScore || 0,
+      persuasionScore: score.persuasionScore || 0,
+      urgencyScore: score.urgencyScore || 0,
+      brandConsistencyScore: score.brandConsistencyScore || 0,
+      toneMatch: score.toneMatch || 0,
+      overallScore: score.overallScore || 0,
+      passedValidation: score.passedValidation ?? true,
+      validationIssues: score.validationIssues || null,
+      competitorScore: score.competitorScore || null,
+      industryBenchmark: score.industryBenchmark || null,
+      createdAt: new Date()
+    };
+    this.contentQualityScoresData.set(id, newScore);
+    return newScore;
+  }
+
+  async getQualityScoresByUser(userId: string, limit: number = 50): Promise<ContentQualityScore[]> {
+    return Array.from(this.contentQualityScoresData.values())
+      .filter(score => score.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
+      .slice(0, limit);
   }
 
   // Payment transaction methods (mock implementation)

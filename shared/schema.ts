@@ -555,6 +555,128 @@ export const aiGenerationHistory = pgTable("ai_generation_history", {
   index('ai_generation_history_user_date_idx').on(table.userId, table.createdAt),
 ]);
 
+// Performance tracking for AI-generated content (self-learning system)
+export const contentPerformance = pgTable("content_performance", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  aiGenerationId: varchar("ai_generation_id").references(() => aiGenerationHistory.id),
+  productId: varchar("product_id").references(() => products.id),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  contentType: text("content_type").notNull(), // 'title', 'description', 'seo_meta', 'copy'
+  
+  // Performance metrics
+  views: integer("views").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  revenue: numeric("revenue", { precision: 10, scale: 2 }).default("0"),
+  ctr: numeric("ctr", { precision: 5, scale: 2 }).default("0"), // click-through rate percentage
+  conversionRate: numeric("conversion_rate", { precision: 5, scale: 2 }).default("0"),
+  
+  // Quality metrics (calculated from performance)
+  performanceScore: integer("performance_score").default(0), // 0-100 score
+  engagementScore: integer("engagement_score").default(0), // 0-100 score
+  
+  // Content analysis
+  wordCount: integer("word_count"),
+  readabilityScore: integer("readability_score"), // Flesch reading ease
+  emotionalTone: text("emotional_tone"), // 'positive', 'neutral', 'urgent', 'persuasive'
+  keywordDensity: numeric("keyword_density", { precision: 5, scale: 2 }),
+  
+  // Comparison data
+  performanceDelta: numeric("performance_delta", { precision: 5, scale: 2 }), // vs previous version
+  baselineScore: integer("baseline_score"), // original non-AI content score
+  
+  // Tracking
+  firstRecordedAt: timestamp("first_recorded_at").default(sql`NOW()`),
+  lastUpdatedAt: timestamp("last_updated_at").default(sql`NOW()`),
+  measurementPeriodDays: integer("measurement_period_days").default(7), // how long we've been tracking
+}, (table) => [
+  index('content_performance_ai_gen_idx').on(table.aiGenerationId),
+  index('content_performance_product_idx').on(table.productId),
+  index('content_performance_user_idx').on(table.userId),
+  index('content_performance_score_idx').on(table.performanceScore),
+  index('content_performance_type_idx').on(table.contentType),
+]);
+
+// Learning patterns - what works (winning formulas extracted from high-performing content)
+export const learningPatterns = pgTable("learning_patterns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  patternType: text("pattern_type").notNull(), // 'word_choice', 'structure', 'emotional_trigger', 'framework'
+  category: text("category"), // product category this pattern works for
+  
+  // Pattern details
+  patternName: text("pattern_name").notNull(),
+  patternData: jsonb("pattern_data").notNull(), // the actual pattern (words, phrases, structure)
+  
+  // Performance data
+  successRate: numeric("success_rate", { precision: 5, scale: 2 }).notNull(), // percentage
+  sampleSize: integer("sample_size").notNull(), // how many times tested
+  averagePerformanceScore: numeric("avg_performance_score", { precision: 5, scale: 2 }),
+  averageConversionRate: numeric("avg_conversion_rate", { precision: 5, scale: 2 }),
+  
+  // Conditions where this pattern works
+  targetAudience: text("target_audience"),
+  priceRange: text("price_range"), // 'budget', 'mid-range', 'premium'
+  framework: text("framework"), // AIDA, PAS, BAB, etc.
+  
+  // Learning metadata
+  confidence: numeric("confidence", { precision: 3, scale: 2 }).default("0"), // 0-1 confidence score
+  lastValidated: timestamp("last_validated").default(sql`NOW()`),
+  timesApplied: integer("times_applied").default(0),
+  timesSucceeded: integer("times_succeeded").default(0),
+  
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('learning_patterns_user_idx').on(table.userId),
+  index('learning_patterns_type_idx').on(table.patternType),
+  index('learning_patterns_success_idx').on(table.successRate),
+  index('learning_patterns_active_idx').on(table.isActive),
+]);
+
+// Pre-validation quality scores (before content is returned to user)
+export const contentQualityScores = pgTable("content_quality_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  aiGenerationId: varchar("ai_generation_id").references(() => aiGenerationHistory.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // SEO scores
+  seoScore: integer("seo_score").default(0), // 0-100
+  keywordOptimization: integer("keyword_optimization").default(0), // 0-100
+  metaQuality: integer("meta_quality").default(0), // 0-100
+  
+  // Readability scores
+  readabilityScore: integer("readability_score").default(0), // Flesch reading ease
+  gradeLevel: numeric("grade_level", { precision: 3, scale: 1 }), // reading grade level
+  sentenceComplexity: integer("sentence_complexity").default(0), // 0-100
+  
+  // Emotional & persuasion scores
+  emotionalScore: integer("emotional_score").default(0), // 0-100 emotional resonance
+  persuasionScore: integer("persuasion_score").default(0), // 0-100 persuasiveness
+  urgencyScore: integer("urgency_score").default(0), // 0-100 sense of urgency
+  
+  // Brand consistency
+  brandConsistencyScore: integer("brand_consistency_score").default(0), // 0-100
+  toneMatch: integer("tone_match").default(0), // 0-100 match to brand voice
+  
+  // Overall quality
+  overallScore: integer("overall_score").default(0), // 0-100 weighted average
+  passedValidation: boolean("passed_validation").default(true),
+  validationIssues: jsonb("validation_issues"), // array of issues found
+  
+  // Comparison scores
+  competitorScore: integer("competitor_score"), // 0-100 vs competitor content
+  industryBenchmark: integer("industry_benchmark"), // 0-100 vs industry average
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('quality_scores_ai_gen_idx').on(table.aiGenerationId),
+  index('quality_scores_user_idx').on(table.userId),
+  index('quality_scores_overall_idx').on(table.overallScore),
+  index('quality_scores_passed_idx').on(table.passedValidation),
+]);
+
 export const abTests = pgTable("ab_tests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -636,6 +758,23 @@ export const insertAbTestSchema = createInsertSchema(abTests).omit({
 });
 
 export const insertProductHistorySchema = createInsertSchema(productHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertContentPerformanceSchema = createInsertSchema(contentPerformance).omit({
+  id: true,
+  firstRecordedAt: true,
+  lastUpdatedAt: true,
+});
+
+export const insertLearningPatternSchema = createInsertSchema(learningPatterns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentQualityScoreSchema = createInsertSchema(contentQualityScores).omit({
   id: true,
   createdAt: true,
 });
@@ -964,3 +1103,11 @@ export type AbTest = typeof abTests.$inferSelect;
 export type InsertAbTest = z.infer<typeof insertAbTestSchema>;
 export type ProductHistory = typeof productHistory.$inferSelect;
 export type InsertProductHistory = z.infer<typeof insertProductHistorySchema>;
+
+// Performance Tracking & Self-Learning Types
+export type ContentPerformance = typeof contentPerformance.$inferSelect;
+export type InsertContentPerformance = z.infer<typeof insertContentPerformanceSchema>;
+export type LearningPattern = typeof learningPatterns.$inferSelect;
+export type InsertLearningPattern = z.infer<typeof insertLearningPatternSchema>;
+export type ContentQualityScore = typeof contentQualityScores.$inferSelect;
+export type InsertContentQualityScore = z.infer<typeof insertContentQualityScoreSchema>;
