@@ -105,31 +105,30 @@ export default function Campaigns() {
 
 
   const handleToolAction = (toolId: string) => {
-    const presetMap: Record<string, string> = {
+    const wizardPresets: Record<string, string> = {
       'abandoned-cart-sms': 'cart_recovery_sms',
       'upsell-receipts': 'promotional',
-      'custom-templates': '',
-      'behavioral-triggers': '',
-      'ai-upsell-suggestions': '',
-      'dynamic-segmentation': '',
-      'multi-channel-repurposing': ''
+      'custom-templates': 'custom'
     };
 
-    const legacyRouteMap: Record<string, string> = {
+    const legacyRoutes: Record<string, string> = {
       'ai-upsell-suggestions': '/ai-upsell-suggestions',
       'dynamic-segmentation': '/dynamic-segmentation',
       'multi-channel-repurposing': '/multi-channel-repurposing',
-      'custom-templates': '/templates',
       'behavioral-triggers': '/behavioral-triggers'
     };
 
     sessionStorage.setItem('navigationSource', 'campaigns');
 
-    const preset = presetMap[toolId];
-    if (preset) {
-      setLocation(`/campaigns/create?preset=${preset}`);
-    } else if (legacyRouteMap[toolId]) {
-      setLocation(legacyRouteMap[toolId]);
+    if (wizardPresets[toolId]) {
+      setLocation(`/campaigns/create?preset=${wizardPresets[toolId]}`);
+    } else if (legacyRoutes[toolId]) {
+      setLocation(legacyRoutes[toolId]);
+    } else {
+      toast({
+        title: "Coming Soon",
+        description: "This feature will be available soon!",
+      });
     }
   };
 
