@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -56,6 +57,25 @@ export default function BrandVoiceMemory() {
   const [brandAnalysis, setBrandAnalysis] = useState<BrandAnalysis | null>(null);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent[]>([]);
   const [learningProgress, setLearningProgress] = useState(0);
+
+  const targetAudiences = [
+    "Young Adults (18-25)",
+    "Millennials (26-40)",
+    "Gen X (41-56)",
+    "Baby Boomers (57+)",
+    "Parents with Young Children",
+    "Working Professionals",
+    "Students",
+    "Entrepreneurs & Small Business Owners",
+    "Budget-Conscious Shoppers",
+    "Luxury Seekers",
+    "Health & Wellness Enthusiasts",
+    "Tech Early Adopters",
+    "Eco-Conscious Consumers",
+    "Busy Families",
+    "Retirees",
+    "Gamers & Tech Enthusiasts"
+  ];
 
   const form = useForm<BrandVoiceForm>({
     defaultValues: {
@@ -289,11 +309,21 @@ export default function BrandVoiceMemory() {
 
                   <div>
                     <Label htmlFor="targetAudience" className="text-white">Target Audience</Label>
-                    <Input
-                      id="targetAudience"
-                      className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                      placeholder="e.g., Tech professionals, millennials"
-                      {...form.register("targetAudience")}
+                    <Controller
+                      name="targetAudience"
+                      control={form.control}
+                      render={({ field: { value, onChange } }) => (
+                        <Select onValueChange={onChange} value={value ?? ""}>
+                          <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-target-audience">
+                            <SelectValue placeholder="Select your target audience" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {targetAudiences.map((audience) => (
+                              <SelectItem key={audience} value={audience}>{audience}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     />
                   </div>
 
