@@ -6069,6 +6069,21 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Save campaign draft (autosave)
+  app.post('/api/campaigns/draft', requireAuth, sanitizeBody, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const draftData = { ...req.body, userId, status: 'draft' };
+      const validated = insertCampaignSchema.parse(draftData);
+      const campaign = await supabaseStorage.createCampaign(validated);
+      
+      res.status(200).json({ success: true, draftId: campaign.id });
+    } catch (error: any) {
+      console.error('Draft save error:', error);
+      res.status(500).json({ error: 'Failed to save draft' });
+    }
+  });
+
   // Create campaign
   app.post('/api/campaigns', requireAuth, campaignLimiter, sanitizeBody, validateCampaign, checkValidation, async (req: Request, res: Response) => {
     try {

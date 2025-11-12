@@ -91,10 +91,13 @@ const wizardSteps = [
 ];
 
 export default function CreateCampaignPageV2() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>();
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const presetFromUrl = urlParams.get('preset');
+  const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>(presetFromUrl || undefined);
 
   const {
     register,

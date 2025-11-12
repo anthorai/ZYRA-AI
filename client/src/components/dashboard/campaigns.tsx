@@ -105,21 +105,31 @@ export default function Campaigns() {
 
 
   const handleToolAction = (toolId: string) => {
-    const routeMap: Record<string, string> = {
+    const presetMap: Record<string, string> = {
+      'abandoned-cart-sms': 'cart_recovery_sms',
+      'upsell-receipts': 'promotional',
+      'custom-templates': '',
+      'behavioral-triggers': '',
+      'ai-upsell-suggestions': '',
+      'dynamic-segmentation': '',
+      'multi-channel-repurposing': ''
+    };
+
+    const legacyRouteMap: Record<string, string> = {
       'ai-upsell-suggestions': '/ai-upsell-suggestions',
       'dynamic-segmentation': '/dynamic-segmentation',
       'multi-channel-repurposing': '/multi-channel-repurposing',
-      'upsell-receipts': '/upsell-email-receipts',
-      'abandoned-cart-sms': '/abandoned-cart-sms',
       'custom-templates': '/templates',
       'behavioral-triggers': '/behavioral-triggers'
     };
-    
-    const route = routeMap[toolId];
-    if (route) {
-      // Store navigation source so dashboard knows to return to campaigns tab
-      sessionStorage.setItem('navigationSource', 'campaigns');
-      setLocation(route);
+
+    sessionStorage.setItem('navigationSource', 'campaigns');
+
+    const preset = presetMap[toolId];
+    if (preset) {
+      setLocation(`/campaigns/create?preset=${preset}`);
+    } else if (legacyRouteMap[toolId]) {
+      setLocation(legacyRouteMap[toolId]);
     }
   };
 
@@ -128,7 +138,7 @@ export default function Campaigns() {
       <div className="flex justify-center">
         <Button
           onClick={() => setLocation('/campaigns/create')}
-          className="bg-primary hover:bg-primary/90 text-[#000000]"
+          className="bg-primary text-[#000000]"
           data-testid="button-create-campaign"
         >
           <Mail className="w-4 h-4 mr-2" />
