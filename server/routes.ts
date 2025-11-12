@@ -399,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get plan limits from subscription plans
       const plans = await supabaseStorage.getSubscriptionPlans();
-      const currentPlan = plans.find(p => p.planName.toLowerCase() === userPlan.toLowerCase());
+      const currentPlan = plans.find(p => p.planName?.toLowerCase() === userPlan.toLowerCase());
 
       if (!currentPlan) {
         // If no plan found, allow trial users limited access
@@ -1203,7 +1203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get model configuration based on user's performance mode preference
       const { getModelFromUserPreferences } = await import('./lib/ai-model-selector');
-      const modelConfig = await getModelFromUserPreferences(userId, 'product_description', storage);
+      const modelConfig = await getModelFromUserPreferences(userId, 'product_description', supabaseStorage);
       
       // Using selected model with Zyra Pro Mode + AI Response Caching
       const cacheKey = `${proModePrompt}\n\n${selectedPrompt}\n\nModel:${modelConfig.model}`;
