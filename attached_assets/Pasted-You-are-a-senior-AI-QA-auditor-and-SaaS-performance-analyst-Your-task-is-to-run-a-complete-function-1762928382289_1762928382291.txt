@@ -1,0 +1,112 @@
+You are a senior AI QA auditor and SaaS performance analyst.
+Your task is to run a complete functional test and stability review of a Shopify-connected AI automation platform built for eCommerce and dropshipping.
+
+The platform’s purpose: act as a Shopify sales-boosting autopilot — optimizing products, SEO, analytics, and content.
+
+Objective: Verify that every existing function, feature, and AI tool is fully operational, accurate, and aligned with production-ready quality.
+Do not suggest new integrations or features. Focus only on the functionality, logic, and performance of what’s already built.
+
+🔍 1. Functional Verification
+
+For each active feature, perform a validation test:
+
+Shopify Store Connection:
+
+Confirm stable store authentication, token validity, and product sync accuracy.
+
+Test reconnection flow and session persistence.
+
+Product Optimization Engine:
+
+Verify AI improves product titles, descriptions, and tags without breaking data structure.
+
+Check keyword density, formatting, and SEO compliance.
+
+SEO Analyzer & Rank Booster:
+
+Validate keyword tracking, density scoring, and meta-tag generation.
+
+Ensure output follows current Shopify SEO best practices.
+
+AI Content Generator:
+
+Test copy generation for clarity, emotion, and conversion quality.
+
+Check templates (ads, descriptions, emails) for tone and grammar.
+
+Pricing & Profit Logic:
+
+Verify algorithm correctness for profit margins, price adjustments, and alerts.
+
+Ensure data reflects live synced store values.
+
+Analytics & Insights Dashboard:
+
+Confirm correct fetching of store stats, conversion data, and trend analysis.
+
+Validate dashboard filters, charts, and metrics visibility.
+
+Sales Booster Modules:
+
+Test upsell, cross-sell, abandoned cart reminder flows.
+
+Confirm triggers fire at correct events and data tracking is accurate.
+
+Automation & Scheduling:
+
+Verify tasks (SEO refresh, content rewrite, analytics scan) run as scheduled.
+
+Confirm logs and notifications are generated correctly.
+
+User Interface & Experience:
+
+Test all buttons, modals, dropdowns, and pages for responsiveness.
+
+Ensure dark mode (Cyberwave theme) visuals and UX are consistent.
+
+Supabase Database Connectivity:
+
+Confirm all reads/writes, user settings, and live data saving work correctly.
+
+Check error handling and rollback logic.
+
+🔄 2. Performance & Stability
+
+Measure API latency, response time, and system load under multiple test users.
+
+Check for memory leaks, error handling, and rate limit protection.
+
+Validate background jobs, worker queues, and caching logic.
+
+🧠 3. AI Logic & Output Quality
+
+Evaluate the consistency, relevance, and quality of generated outputs.
+
+Run 5 sample tests per module (SEO, content, pricing, analytics).
+
+Detect repetitive phrasing, irrelevant text, or outdated patterns.
+
+🔐 4. Security & Compliance
+
+Confirm all API keys and tokens are encrypted.
+
+Validate OAuth flows, user sessions, and logout handling.
+
+Test data privacy according to GDPR and Shopify Partner guidelines.
+
+📋 5. Report & Roadmap Output
+
+Generate a comprehensive test report including:
+
+✅ Passed Modules
+
+⚠️ Minor Issues
+
+❌ Critical Errors
+
+💡 Suggested Fix or Logic Adjustment (within existing scope only)
+
+Format output as a checklist table with results + recommendations.
+
+Final Goal:
+Certify that the Zyra AI system is market-ready, stable, accurate, and intelligent — functioning as a Shopify sales autopilot that truly boosts performance, content quality, and sales conversion for eCommerce and dropshipping businesses.
