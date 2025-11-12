@@ -80,7 +80,6 @@ export default function NotificationsPage() {
   const queryClient = useQueryClient();
   
   // Channel verification state
-  const [smsVerifyOpen, setSmsVerifyOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
 
@@ -178,7 +177,11 @@ export default function NotificationsPage() {
 
   const handleSMSToggle = (checked: boolean) => {
     if (!hasSMS) {
-      setSmsVerifyOpen(true);
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter your phone number below to enable SMS notifications",
+        variant: "default",
+      });
       return;
     }
     if (smsChannel) {
@@ -224,7 +227,6 @@ export default function NotificationsPage() {
       enabled: true,
       isPrimary: true
     });
-    setSmsVerifyOpen(false);
     setPhoneNumber("");
   };
 
@@ -415,34 +417,71 @@ export default function NotificationsPage() {
                   <Separator className="bg-slate-700" />
 
                   {/* SMS */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 flex-1">
-                      <div className="p-2 rounded-lg bg-slate-800/50">
-                        <MessageSquare className="w-5 h-5 text-green-400" />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className="p-2 rounded-lg bg-slate-800/50">
+                          <MessageSquare className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <Label className="text-white font-medium">SMS Alerts</Label>
+                          <p className="text-sm text-slate-400">
+                            {hasSMS 
+                              ? `Configured: ${smsChannel?.channelValue}` 
+                              : 'Critical alerts via text message'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-white font-medium">SMS Alerts</Label>
-                        <p className="text-sm text-slate-400">
-                          {hasSMS 
-                            ? `Configured: ${smsChannel?.channelValue}` 
-                            : 'Critical alerts via text message'}
+                      <div className="flex items-center gap-2">
+                        {!hasSMS && (
+                          <Badge variant="outline" className="text-xs">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Setup Required
+                          </Badge>
+                        )}
+                        <Switch
+                          checked={hasSMS && smsEnabled}
+                          onCheckedChange={handleSMSToggle}
+                          className="data-[state=checked]:bg-primary"
+                          data-testid="switch-sms-notifications"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Inline SMS Input - Show when not configured */}
+                    {!hasSMS && (
+                      <div className="ml-14 space-y-2 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+                        <Label htmlFor="phone" className="text-sm text-slate-300">Phone Number</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="+1 (555) 123-4567"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            data-testid="input-phone-number"
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={handleSMSVerify}
+                            disabled={createChannelMutation.isPending || !phoneNumber}
+                            data-testid="button-save-phone"
+                          >
+                            {createChannelMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              'Save'
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-slate-400">
+                          Include country code (e.g., +1 for US)
                         </p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!hasSMS && (
-                        <Badge variant="outline" className="text-xs">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Setup Required
-                        </Badge>
-                      )}
-                      <Switch
-                        checked={hasSMS && smsEnabled}
-                        onCheckedChange={handleSMSToggle}
-                        className="data-[state=checked]:bg-primary"
-                        data-testid="switch-sms-notifications"
-                      />
-                    </div>
+                    )}
                   </div>
 
                   <Separator className="bg-slate-700" />
@@ -491,58 +530,6 @@ export default function NotificationsPage() {
           </Tabs>
         </>
       )}
-
-
-      {/* SMS Verification Dialog */}
-      <Dialog open={smsVerifyOpen} onOpenChange={setSmsVerifyOpen}>
-        <DialogContent data-testid="dialog-sms-verify">
-          <DialogHeader>
-            <DialogTitle>Configure SMS Notifications</DialogTitle>
-            <DialogDescription>
-              Enter your phone number to receive SMS notifications. Standard message rates may apply.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                data-testid="input-phone-number"
-              />
-              <p className="text-xs text-slate-400">
-                Include country code (e.g., +1 for US)
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setSmsVerifyOpen(false)}
-              data-testid="button-cancel-sms"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSMSVerify}
-              disabled={createChannelMutation.isPending}
-              data-testid="button-verify-sms"
-            >
-              {createChannelMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Phone Number'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
     </PageShell>
   );
