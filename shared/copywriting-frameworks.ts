@@ -291,7 +291,7 @@ export const INDUSTRY_TEMPLATES: IndustryTemplate[] = [
 ];
 
 export function getCopywritingFramework(acronym: string): CopywritingFramework | undefined {
-  return COPYWRITING_FRAMEWORKS.find(f => f.acronym === acronym);
+  return COPYWRITING_FRAMEWORKS.find(f => f.acronym.toUpperCase() === acronym.toUpperCase());
 }
 
 export function getIndustryTemplate(industry: string): IndustryTemplate | undefined {
