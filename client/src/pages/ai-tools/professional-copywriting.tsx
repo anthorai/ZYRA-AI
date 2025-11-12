@@ -91,6 +91,65 @@ export default function ProfessionalCopywriting() {
   });
 
 
+  const productCategories = [
+    "Electronics",
+    "Fashion & Apparel",
+    "Beauty & Cosmetics",
+    "Home & Garden",
+    "Sports & Fitness",
+    "Food & Beverage",
+    "Health & Wellness",
+    "Toys & Games",
+    "Books & Media",
+    "Automotive",
+    "Jewelry & Accessories",
+    "Pet Supplies",
+    "Office Supplies",
+    "Baby & Toddler",
+    "Arts & Crafts",
+    "Furniture",
+    "Luggage & Bags"
+  ];
+
+  const targetAudiences = [
+    "Young Adults (18-25)",
+    "Millennials (26-40)",
+    "Gen X (41-56)",
+    "Baby Boomers (57+)",
+    "Parents with Young Children",
+    "Working Professionals",
+    "Students",
+    "Entrepreneurs & Small Business Owners",
+    "Budget-Conscious Shoppers",
+    "Luxury Seekers",
+    "Health & Wellness Enthusiasts",
+    "Tech Early Adopters",
+    "Eco-Conscious Consumers",
+    "Busy Families",
+    "Retirees",
+    "Gamers & Tech Enthusiasts"
+  ];
+
+  const industries = [
+    "E-commerce & Retail",
+    "SaaS & Technology",
+    "Healthcare & Medical",
+    "Education & Training",
+    "Real Estate",
+    "Finance & Banking",
+    "Hospitality & Tourism",
+    "Food & Restaurant",
+    "Manufacturing",
+    "Professional Services",
+    "Marketing & Advertising",
+    "Entertainment & Media",
+    "Fashion & Beauty",
+    "Fitness & Wellness",
+    "Automotive",
+    "Home Services",
+    "Agriculture"
+  ];
+
   const copywritingFrameworks = [
     {
       id: 'aida',
@@ -269,13 +328,19 @@ export default function ProfessionalCopywriting() {
 
               <div>
                 <Label htmlFor="category" className="text-white">Category</Label>
-                <Input
-                  id="category"
-                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="e.g., Electronics, Audio"
-                  {...form.register("category")}
-                  data-testid="input-category"
-                />
+                <Select 
+                  value={form.watch("category")}
+                  onValueChange={(value) => form.setValue("category", value)}
+                >
+                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productCategories.map((category) => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -293,24 +358,36 @@ export default function ProfessionalCopywriting() {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="audience" className="text-white">Target Audience</Label>
-                <Input
-                  id="audience"
-                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="e.g., Music enthusiasts, Professionals"
-                  {...form.register("audience")}
-                  data-testid="input-audience"
-                />
+                <Select 
+                  value={form.watch("audience")}
+                  onValueChange={(value) => form.setValue("audience", value)}
+                >
+                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-audience">
+                    <SelectValue placeholder="Select target audience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {targetAudiences.map((audience) => (
+                      <SelectItem key={audience} value={audience}>{audience}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="industry" className="text-white">Industry</Label>
-                <Input
-                  id="industry"
-                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="e.g., Consumer Electronics"
-                  {...form.register("industry")}
-                  data-testid="input-industry"
-                />
+                <Select 
+                  value={form.watch("industry")}
+                  onValueChange={(value) => form.setValue("industry", value)}
+                >
+                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-industry">
+                    <SelectValue placeholder="Select industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industries.map((industry) => (
+                      <SelectItem key={industry} value={industry}>{industry}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
