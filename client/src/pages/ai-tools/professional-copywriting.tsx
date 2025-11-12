@@ -31,11 +31,11 @@ import {
 
 interface CopyForm {
   productName: string;
-  category: string;
+  category?: string;
   features: string;
-  audience: string;
+  audience?: string;
   framework: string;
-  industry: string;
+  industry?: string;
   maxWords: number;
 }
 
@@ -81,11 +81,11 @@ export default function ProfessionalCopywriting() {
   const form = useForm<CopyForm>({
     defaultValues: {
       productName: "",
-      category: "",
+      category: undefined,
       features: "",
-      audience: "",
+      audience: undefined,
       framework: "aida",
-      industry: "",
+      industry: undefined,
       maxWords: 150,
     },
   });
