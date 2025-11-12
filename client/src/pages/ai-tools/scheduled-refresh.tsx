@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,27 @@ export default function ScheduledRefresh() {
       frequency: 'Monthly'
     }
   ]);
+
+  const categories = [
+    "All Products",
+    "Electronics",
+    "Fashion & Apparel",
+    "Home & Garden",
+    "Beauty & Personal Care",
+    "Sports & Outdoors",
+    "Toys & Games",
+    "Books & Media",
+    "Food & Beverage",
+    "Health & Wellness",
+    "Automotive",
+    "Pet Supplies",
+    "Office & Stationery",
+    "Baby & Kids",
+    "Arts & Crafts",
+    "Jewelry & Accessories",
+    "Tools & Hardware",
+    "Musical Instruments"
+  ];
 
   const form = useForm<ScheduleForm>({
     defaultValues: {
@@ -314,11 +336,21 @@ export default function ScheduledRefresh() {
 
                 <div>
                   <Label htmlFor="productCategories" className="text-white">Product Categories (Optional)</Label>
-                  <Input
-                    id="productCategories"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Electronics, Fashion (leave empty for all)"
-                    {...form.register("productCategories")}
+                  <Controller
+                    name="productCategories"
+                    control={form.control}
+                    render={({ field: { value, onChange } }) => (
+                      <Select onValueChange={onChange} value={value ?? ""}>
+                        <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
+                          <SelectValue placeholder="Select category or leave for all products" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>{category}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
               </div>

@@ -94,21 +94,21 @@ export default function ProfessionalCopywriting() {
   const productCategories = [
     "Electronics",
     "Fashion & Apparel",
-    "Beauty & Cosmetics",
     "Home & Garden",
-    "Sports & Fitness",
-    "Food & Beverage",
-    "Health & Wellness",
+    "Beauty & Personal Care",
+    "Sports & Outdoors",
     "Toys & Games",
     "Books & Media",
+    "Food & Beverage",
+    "Health & Wellness",
     "Automotive",
-    "Jewelry & Accessories",
     "Pet Supplies",
-    "Office Supplies",
-    "Baby & Toddler",
+    "Office & Stationery",
+    "Baby & Kids",
     "Arts & Crafts",
-    "Furniture",
-    "Luggage & Bags"
+    "Jewelry & Accessories",
+    "Tools & Hardware",
+    "Musical Instruments"
   ];
 
   const targetAudiences = [
