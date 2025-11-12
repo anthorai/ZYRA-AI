@@ -18,6 +18,7 @@ import { TemplateSelector } from "@/components/campaigns/TemplateSelector";
 import { campaignPresets, getPresetById } from "@/lib/campaign-presets";
 import { useAutosave } from "@/hooks/use-autosave";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Mail, 
   MessageSquare, 
@@ -147,22 +148,13 @@ export default function CreateCampaignPageV2() {
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: CampaignFormData) => {
-      const response = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          status: data.scheduleType === "now" ? "sending" : "scheduled",
-          scheduledFor: data.scheduleType === "later" ? data.scheduledFor : new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create campaign");
-      }
-
-      return response.json();
+      const payload = {
+        ...data,
+        status: data.scheduleType === "now" ? "sending" : "scheduled",
+        scheduledFor: data.scheduleType === "later" ? data.scheduledFor : new Date().toISOString(),
+      };
+      
+      return apiRequest("POST", "/api/campaigns", payload);
     },
     onSuccess: () => {
       toast({

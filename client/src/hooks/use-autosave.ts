@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type AutosaveOptions = {
   endpoint: string;
@@ -18,17 +19,7 @@ export function useAutosave({ endpoint, data, enabled, debounceMs = 2000 }: Auto
 
   const saveMutation = useMutation({
     mutationFn: async (draftData: any) => {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draftData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save draft");
-      }
-
-      return response.json();
+      return apiRequest("POST", endpoint, draftData);
     },
     onSuccess: () => {
       setLastSaved(new Date());
