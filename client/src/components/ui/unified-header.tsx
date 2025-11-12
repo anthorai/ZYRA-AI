@@ -33,9 +33,8 @@ export function UnifiedHeader({
       // Use custom route if specified
       setLocation(backTo);
     } else {
-      // Use browser history to go back to the actual previous page
-      // The dashboard's useEffect will check navigationSource and switch to the correct tab
-      window.history.back();
+      // Default to dashboard if no specific route is provided
+      setLocation('/dashboard');
     }
   };
 
