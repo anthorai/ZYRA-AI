@@ -35,12 +35,17 @@ export default function ChannelMatrix() {
   });
 
   useEffect(() => {
-    if (rules) {
+    if (rules && rules.length > 0) {
       const rulesMap: Record<string, any> = {};
       rules.forEach(rule => {
         rulesMap[rule.category] = rule;
       });
-      setLocalRules(rulesMap);
+      
+      // Only update if there's actually a difference
+      const hasChanged = JSON.stringify(localRules) !== JSON.stringify(rulesMap);
+      if (hasChanged) {
+        setLocalRules(rulesMap);
+      }
     }
   }, [rules]);
 
