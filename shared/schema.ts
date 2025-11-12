@@ -396,6 +396,9 @@ export const insertCampaignSchema = createInsertSchema(campaigns).omit({
 }).extend({
   goalType: z.string().optional(),
   audience: z.string().optional(),
+  scheduledFor: z.union([z.string(), z.date()]).optional().transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
 });
 
 export const insertCampaignEventSchema = createInsertSchema(campaignEvents).omit({
