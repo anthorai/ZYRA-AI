@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Mail, Smartphone, Monitor, MessageSquare, 
   Zap, Moon, Filter, Settings2, CheckCircle2,
-  AlertCircle, Loader2
+  AlertCircle, Loader2, Briefcase, Target, Bell
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -29,23 +29,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 // Preset configurations
 const PRESETS = {
   work: {
     name: "Work Mode",
     description: "Essential notifications only during work hours",
-    icon: "💼",
+    icon: Briefcase,
+    iconColor: "text-blue-400",
     settings: {
       enableQuietHours: true,
       quietHoursStart: "18:00",
@@ -59,7 +50,8 @@ const PRESETS = {
   focus: {
     name: "Focus Mode",
     description: "Critical alerts only, minimize distractions",
-    icon: "🎯",
+    icon: Target,
+    iconColor: "text-purple-400",
     settings: {
       enableQuietHours: false,
       minPriority: "high",
@@ -71,7 +63,8 @@ const PRESETS = {
   full_alerts: {
     name: "Full Alerts",
     description: "Receive all notifications instantly",
-    icon: "🔔",
+    icon: Bell,
+    iconColor: "text-green-400",
     settings: {
       enableQuietHours: false,
       minPriority: "low",
@@ -91,8 +84,6 @@ export default function NotificationsPage() {
   const [smsVerifyOpen, setSmsVerifyOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
   // Fetch user preferences
   const { data: preferences, isLoading: preferencesLoading } = useQuery<NotificationPreferences>({
@@ -236,10 +227,6 @@ export default function NotificationsPage() {
   };
 
   const handlePresetClick = (preset: string) => {
-    if (unsavedChanges) {
-      setShowUnsavedDialog(true);
-      return;
-    }
     applyPresetMutation.mutate(preset);
   };
 
@@ -271,6 +258,7 @@ export default function NotificationsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.entries(PRESETS).map(([key, preset]) => {
                 const isActive = currentPreset === key;
+                const IconComponent = preset.icon;
                 return (
                   <button
                     key={key}
@@ -291,7 +279,9 @@ export default function NotificationsPage() {
                         <CheckCircle2 className="w-5 h-5 text-primary" />
                       </div>
                     )}
-                    <div className="text-3xl mb-3">{preset.icon}</div>
+                    <div className="mb-3">
+                      <IconComponent className={`w-8 h-8 ${preset.iconColor}`} />
+                    </div>
                     <h3 className="text-white font-semibold mb-1">{preset.name}</h3>
                     <p className="text-sm text-slate-400">{preset.description}</p>
                   </button>
@@ -565,26 +555,6 @@ export default function NotificationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Unsaved Changes Dialog */}
-      <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Applying a preset will override your current settings. Do you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setUnsavedChanges(false);
-              setShowUnsavedDialog(false);
-            }}>
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </PageShell>
   );
 }
