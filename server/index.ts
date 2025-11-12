@@ -103,7 +103,9 @@ app.use(helmet({
         "https://www.paypal.com",
         "https://www.sandbox.paypal.com",
         "https://*.supabase.co",
-        "wss://*.supabase.co"
+        "wss://*.supabase.co",
+        "https://*.ingest.us.sentry.io",
+        "https://*.ingest.sentry.io"
       ],
       frameSrc: [
         "'self'",
@@ -116,6 +118,7 @@ app.use(helmet({
         "data:",
         "https://fonts.gstatic.com"
       ],
+      workerSrc: ["'self'", "blob:"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
     }
