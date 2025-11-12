@@ -993,6 +993,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
+        framework,
+        wordCount: variants.emotional.copy?.split(' ').length || 0,
         variants: [
           {
             id: 'emotional',
