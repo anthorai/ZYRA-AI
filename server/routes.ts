@@ -4179,6 +4179,226 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // AI Content Performance Tracking Routes (Self-Learning System)
+  // Track when AI-generated content is applied to a product
+  app.post('/api/ai-content/track-usage', requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { aiGenerationId, productId, contentType, appliedContent } = req.body;
+
+      if (!aiGenerationId || !productId || !contentType) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Create content performance record
+      const performance = await storage.createContentPerformance({
+        userId,
+        aiGenerationId,
+        productId,
+        contentType,
+        appliedContent: appliedContent || null
+      });
+
+      // Initialize quality score prediction
+      const { analyzeContent } = await import('../shared/content-performance-analyzer');
+      const metrics = analyzeContent(appliedContent || '');
+      
+      await storage.createContentQualityScore({
+        aiGenerationId,
+        predictedScore: metrics.readabilityScore,
+        actualPerformance: null,
+        metricsSnapshot: {
+          readability: metrics.readabilityScore,
+          complexity: metrics.sentenceComplexity,
+          tone: metrics.emotionalTone
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        performanceId: performance.id,
+        message: 'AI content usage tracked successfully' 
+      });
+    } catch (error: any) {
+      console.error('Track AI content usage error:', error);
+      res.status(500).json({ message: 'Failed to track content usage' });
+    }
+  });
+
+  // Update performance metrics for AI-generated content
+  app.patch('/api/ai-content/performance/:performanceId', requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { performanceId } = req.params;
+      const { views, clickThroughRate, sales, conversionRate } = req.body;
+
+      // Verify ownership
+      const existing = await storage.getContentPerformanceById(performanceId);
+      if (!existing || existing.userId !== userId) {
+        return res.status(404).json({ message: 'Performance record not found' });
+      }
+
+      // Update performance metrics
+      const updated = await storage.updateContentPerformance(performanceId, {
+        views: views ?? existing.views,
+        clickThroughRate: clickThroughRate ?? existing.clickThroughRate,
+        sales: sales ?? existing.sales,
+        conversionRate: conversionRate ?? existing.conversionRate
+      });
+
+      // Check if performance is high enough to trigger pattern learning
+      const shouldLearn = (
+        (updated.views || 0) >= 100 && 
+        (updated.conversionRate || 0) >= 2.0
+      );
+
+      if (shouldLearn) {
+        // Trigger pattern extraction (in background)
+        setImmediate(async () => {
+          try {
+            const { extractWinningPatterns } = await import('../shared/content-performance-analyzer');
+            const content = updated.appliedContent || '';
+            const pattern = extractWinningPatterns(content);
+            
+            await storage.createLearningPattern({
+              userId,
+              category: existing.contentType || 'General',
+              patternType: existing.contentType || 'General',
+              patternData: pattern,
+              performanceScore: ((updated.conversionRate || 0) * 10).toString(),
+              confidence: ((updated.views || 0) / 1000).toFixed(2)
+            });
+            
+            console.log(`✅ [LEARNING] New pattern extracted from high-performing content (${updated.conversionRate}% CVR)`);
+          } catch (error) {
+            console.error('Pattern extraction error:', error);
+          }
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        performance: updated,
+        learningTriggered: shouldLearn
+      });
+    } catch (error: any) {
+      console.error('Update performance metrics error:', error);
+      res.status(500).json({ message: 'Failed to update performance metrics' });
+    }
+  });
+
+  // Get performance data for a specific AI generation
+  app.get('/api/ai-content/performance/:aiGenerationId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { aiGenerationId } = req.params;
+
+      const performance = await storage.getContentPerformance(aiGenerationId);
+      
+      if (!performance || performance.userId !== userId) {
+        return res.status(404).json({ message: 'Performance data not found' });
+      }
+
+      res.json(performance);
+    } catch (error: any) {
+      console.error('Get performance data error:', error);
+      res.status(500).json({ message: 'Failed to get performance data' });
+    }
+  });
+
+  // Get top performing content for learning
+  app.get('/api/ai-content/top-performing', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const topContent = await storage.getTopPerformingContent(userId, limit);
+
+      res.json({ 
+        success: true,
+        topPerformers: topContent,
+        insights: {
+          averageConversionRate: topContent.reduce((sum, c) => sum + (c.conversionRate || 0), 0) / topContent.length,
+          totalSales: topContent.reduce((sum, c) => sum + (c.sales || 0), 0)
+        }
+      });
+    } catch (error: any) {
+      console.error('Get top performing content error:', error);
+      res.status(500).json({ message: 'Failed to get top performing content' });
+    }
+  });
+
+  // Get active learning patterns
+  app.get('/api/ai-content/learning-patterns', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { category, patternType } = req.query;
+
+      const patterns = await storage.getLearningPatterns(userId, {
+        category: category as string,
+        patternType: patternType as string
+      });
+
+      res.json({ 
+        success: true,
+        patterns,
+        count: patterns.length
+      });
+    } catch (error: any) {
+      console.error('Get learning patterns error:', error);
+      res.status(500).json({ message: 'Failed to get learning patterns' });
+    }
+  });
+
+  // Manually trigger pattern learning from successful content
+  app.post('/api/ai-content/learn-patterns', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { minConversionRate = 2.0, minViews = 100 } = req.body;
+
+      // Get top performing content
+      const topContent = await storage.getTopPerformingContent(userId, 50);
+      
+      // Filter by thresholds
+      const qualifying = topContent.filter(c => 
+        (c.conversionRate || 0) >= minConversionRate &&
+        (c.views || 0) >= minViews
+      );
+
+      const { extractWinningPatterns } = await import('../shared/content-performance-analyzer');
+      const patternsCreated = [];
+
+      for (const content of qualifying) {
+        try {
+          const pattern = extractWinningPatterns(content.appliedContent || '');
+          
+          const created = await storage.createLearningPattern({
+            userId,
+            category: content.contentType || 'General',
+            patternType: content.contentType || 'General',
+            patternData: pattern,
+            performanceScore: ((content.conversionRate || 0) * 10).toString(),
+            confidence: ((content.views || 0) / 1000).toFixed(2)
+          });
+          
+          patternsCreated.push(created);
+        } catch (error) {
+          console.error('Pattern creation error:', error);
+        }
+      }
+
+      res.json({ 
+        success: true,
+        patternsLearned: patternsCreated.length,
+        patterns: patternsCreated,
+        message: `Successfully learned ${patternsCreated.length} new patterns from ${qualifying.length} high-performing content pieces`
+      });
+    } catch (error: any) {
+      console.error('Learn patterns error:', error);
+      res.status(500).json({ message: 'Failed to learn patterns' });
+    }
+  });
+
   // CSV Import/Export Routes
   app.get('/api/products/export-csv', requireAuth, async (req, res) => {
     try {
