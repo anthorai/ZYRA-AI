@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -328,19 +328,22 @@ export default function ProfessionalCopywriting() {
 
               <div>
                 <Label htmlFor="category" className="text-white">Category</Label>
-                <Select 
-                  value={form.watch("category")}
-                  onValueChange={(value) => form.setValue("category", value)}
-                >
-                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {productCategories.map((category) => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="category"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productCategories.map((category) => (
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
 
@@ -358,36 +361,42 @@ export default function ProfessionalCopywriting() {
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="audience" className="text-white">Target Audience</Label>
-                <Select 
-                  value={form.watch("audience")}
-                  onValueChange={(value) => form.setValue("audience", value)}
-                >
-                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-audience">
-                    <SelectValue placeholder="Select target audience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {targetAudiences.map((audience) => (
-                      <SelectItem key={audience} value={audience}>{audience}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="audience"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-audience">
+                        <SelectValue placeholder="Select target audience" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {targetAudiences.map((audience) => (
+                          <SelectItem key={audience} value={audience}>{audience}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div>
                 <Label htmlFor="industry" className="text-white">Industry</Label>
-                <Select 
-                  value={form.watch("industry")}
-                  onValueChange={(value) => form.setValue("industry", value)}
-                >
-                  <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-industry">
-                    <SelectValue placeholder="Select industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {industries.map((industry) => (
-                      <SelectItem key={industry} value={industry}>{industry}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="industry"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-industry">
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {industries.map((industry) => (
+                          <SelectItem key={industry} value={industry}>{industry}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
 
