@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
@@ -43,6 +44,26 @@ export default function SEOTitlesMeta() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [seoResult, setSEOResult] = useState<SEOResult | null>(null);
+
+  const productCategories = [
+    "Electronics",
+    "Fashion & Apparel",
+    "Beauty & Cosmetics",
+    "Home & Garden",
+    "Sports & Fitness",
+    "Food & Beverage",
+    "Health & Wellness",
+    "Toys & Games",
+    "Books & Media",
+    "Automotive",
+    "Jewelry & Accessories",
+    "Pet Supplies",
+    "Office Supplies",
+    "Baby & Toddler",
+    "Arts & Crafts",
+    "Furniture",
+    "Luggage & Bags"
+  ];
 
   const form = useForm<SEOForm>({
     defaultValues: {
@@ -233,12 +254,21 @@ export default function SEOTitlesMeta() {
 
                 <div>
                   <Label htmlFor="category" className="text-white">Category</Label>
-                  <Input
-                    id="category"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Electronics, Audio"
-                    {...form.register("category")}
-                    data-testid="input-category"
+                  <Controller
+                    name="category"
+                    control={form.control}
+                    render={({ field: { value, onChange } }) => (
+                      <Select onValueChange={onChange} value={value ?? ""}>
+                        <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {productCategories.map((category) => (
+                            <SelectItem key={category} value={category}>{category}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
               </div>
