@@ -31,11 +31,11 @@ import {
 
 interface CopyForm {
   productName: string;
-  category?: string;
+  category: string;
   features: string;
-  audience?: string;
+  audience: string;
   framework: string;
-  industry?: string;
+  industry: string;
   maxWords: number;
 }
 
@@ -81,11 +81,11 @@ export default function ProfessionalCopywriting() {
   const form = useForm<CopyForm>({
     defaultValues: {
       productName: "",
-      category: undefined,
+      category: "",
       features: "",
-      audience: undefined,
+      audience: "",
       framework: "aida",
-      industry: undefined,
+      industry: "",
       maxWords: 150,
     },
   });
@@ -331,8 +331,8 @@ export default function ProfessionalCopywriting() {
                 <Controller
                   name="category"
                   control={form.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
+                  render={({ field: { value, onChange } }) => (
+                    <Select onValueChange={onChange} value={value ?? ""}>
                       <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
@@ -364,8 +364,8 @@ export default function ProfessionalCopywriting() {
                 <Controller
                   name="audience"
                   control={form.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
+                  render={({ field: { value, onChange } }) => (
+                    <Select onValueChange={onChange} value={value ?? ""}>
                       <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-audience">
                         <SelectValue placeholder="Select target audience" />
                       </SelectTrigger>
@@ -384,8 +384,8 @@ export default function ProfessionalCopywriting() {
                 <Controller
                   name="industry"
                   control={form.control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
+                  render={({ field: { value, onChange } }) => (
+                    <Select onValueChange={onChange} value={value ?? ""}>
                       <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-industry">
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
