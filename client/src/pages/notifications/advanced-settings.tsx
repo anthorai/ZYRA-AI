@@ -20,6 +20,7 @@ export default function AdvancedNotificationSettings() {
       subtitle="Take complete control of your notification preferences with smart presets, channel controls, and scheduling"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings/notifications"
     >
         {isLoading ? (
           <div className="space-y-6">
