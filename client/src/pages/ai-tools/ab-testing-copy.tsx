@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +63,26 @@ export default function ABTestingCopy() {
   const [testResults, setTestResults] = useState<ABTestResults | null>(null);
   const [testProgress, setTestProgress] = useState(0);
   const [testActive, setTestActive] = useState(false);
+
+  const categories = [
+    "Electronics",
+    "Fashion & Apparel",
+    "Home & Garden",
+    "Beauty & Personal Care",
+    "Sports & Outdoors",
+    "Toys & Games",
+    "Books & Media",
+    "Food & Beverage",
+    "Health & Wellness",
+    "Automotive",
+    "Pet Supplies",
+    "Office & Stationery",
+    "Baby & Kids",
+    "Arts & Crafts",
+    "Jewelry & Accessories",
+    "Tools & Hardware",
+    "Musical Instruments"
+  ];
 
   const form = useForm<ABTestForm>({
     defaultValues: {
@@ -311,11 +332,21 @@ export default function ABTestingCopy() {
 
                   <div>
                     <Label htmlFor="category" className="text-white">Category</Label>
-                    <Input
-                      id="category"
-                      className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                      placeholder="e.g., Electronics"
-                      {...form.register("category")}
+                    <Controller
+                      name="category"
+                      control={form.control}
+                      render={({ field: { value, onChange } }) => (
+                        <Select onValueChange={onChange} value={value ?? ""}>
+                          <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
+                            <SelectValue placeholder="Select product category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category} value={category}>{category}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     />
                   </div>
                 </div>
