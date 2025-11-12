@@ -54,14 +54,37 @@ interface QualityScore {
   };
 }
 
-interface GeneratedCopy {
-  content: string;
-  wordCount: number;
-  framework: string;
-  qualityScore: QualityScore;
-  variants: string[];
+interface CopyVariant {
+  id: string;
+  type: string;
   headline: string;
-  callToAction: string;
+  copy: string;
+  cta: string;
+  qualityScore: QualityScore;
+  validation: {
+    passed: boolean;
+    score: number;
+    readability: number;
+    seo: number;
+    issues: any[];
+    suggestions: any[];
+  };
+  framework: string;
+  psychologicalTriggers: string[];
+}
+
+interface GeneratedCopy {
+  success: boolean;
+  framework: string;
+  wordCount: number;
+  variants: CopyVariant[];
+  analysis: any;
+  recommendedVariant: string;
+  validationSummary: {
+    allPassed: boolean;
+    averageScore: number;
+    patternsUsed: number;
+  };
 }
 
 export default function ProfessionalCopywriting() {
@@ -464,7 +487,9 @@ export default function ProfessionalCopywriting() {
           </form>
         </DashboardCard>
 
-        {generatedCopy && (
+        {generatedCopy && (() => {
+          const recommendedVariant = generatedCopy.variants.find(v => v.id === generatedCopy.recommendedVariant) || generatedCopy.variants[0];
+          return (
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-400" />
@@ -482,7 +507,7 @@ export default function ProfessionalCopywriting() {
                     <h3 className="text-2xl font-semibold text-white">Quality Score</h3>
                   </div>
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-primary">{generatedCopy.qualityScore.overall}</div>
+                    <div className="text-4xl font-bold text-primary">{Math.round(recommendedVariant.qualityScore.overall || 0)}</div>
                     <div className="text-sm text-slate-300">out of 100</div>
                   </div>
                 </div>
@@ -490,10 +515,10 @@ export default function ProfessionalCopywriting() {
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="bg-slate-800/30 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-300 text-sm">Conversion Potential</span>
+                      <span className="text-slate-300 text-sm">Validation Score</span>
                       <Award className="w-4 h-4 text-yellow-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">{generatedCopy.qualityScore.conversionPotential}</div>
+                    <div className="text-2xl font-bold text-white">{Math.round(recommendedVariant.validation.score || 0)}</div>
                   </div>
 
                   <div className="bg-slate-800/30 p-4 rounded-lg">
@@ -501,49 +526,34 @@ export default function ProfessionalCopywriting() {
                       <span className="text-slate-300 text-sm">SEO Score</span>
                       <Target className="w-4 h-4 text-green-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">{generatedCopy.qualityScore.seoScore}</div>
+                    <div className="text-2xl font-bold text-white">{Math.round(recommendedVariant.validation.seo || 0)}</div>
                   </div>
 
                   <div className="bg-slate-800/30 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-300 text-sm">Emotional Impact</span>
+                      <span className="text-slate-300 text-sm">Readability</span>
                       <Heart className="w-4 h-4 text-red-400" />
                     </div>
-                    <div className="text-2xl font-bold text-white">{generatedCopy.qualityScore.emotionalImpact}</div>
+                    <div className="text-2xl font-bold text-white">{Math.round(recommendedVariant.validation.readability || 0)}</div>
                   </div>
                 </div>
 
-                <div className="mt-6 grid md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-white font-semibold mb-2 flex items-center">
-                      <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                      Strengths
-                    </h4>
-                    <ul className="space-y-1">
-                      {generatedCopy.qualityScore.breakdown.strengths.map((strength, index) => (
-                        <li key={index} className="text-slate-300 text-sm flex items-start">
-                          <span className="text-green-400 mr-2">•</span>
-                          {strength}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
+                {recommendedVariant.validation.suggestions?.length > 0 && (
+                  <div className="mt-6">
                     <h4 className="text-white font-semibold mb-2 flex items-center">
                       <Lightbulb className="w-4 h-4 text-yellow-400 mr-2" />
-                      Suggested Improvements
+                      AI Suggestions
                     </h4>
                     <ul className="space-y-1">
-                      {generatedCopy.qualityScore.breakdown.improvements.map((improvement, index) => (
+                      {recommendedVariant.validation.suggestions.slice(0, 3).map((suggestion: any, index: number) => (
                         <li key={index} className="text-slate-300 text-sm flex items-start">
                           <span className="text-yellow-400 mr-2">•</span>
-                          {improvement}
+                          {suggestion.message || suggestion}
                         </li>
                       ))}
                     </ul>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -558,7 +568,7 @@ export default function ProfessionalCopywriting() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => copyToClipboard(generatedCopy.content, "Main copy")}
+                    onClick={() => copyToClipboard(recommendedVariant.copy, "Main copy")}
                     className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
                     data-testid="button-copy-main"
                   >
@@ -567,7 +577,7 @@ export default function ProfessionalCopywriting() {
                 </div>
                 <div className="bg-slate-800/30 p-4 rounded-lg border border-blue-400/20">
                   <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">
-                    {generatedCopy.content}
+                    {recommendedVariant.copy}
                   </p>
                 </div>
               </CardContent>
@@ -584,7 +594,7 @@ export default function ProfessionalCopywriting() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => copyToClipboard(generatedCopy.headline, "Headline")}
+                      onClick={() => copyToClipboard(recommendedVariant.headline, "Headline")}
                       className="text-purple-300 hover:text-purple-200 hover:bg-purple-400/10"
                       data-testid="button-copy-headline"
                     >
@@ -593,7 +603,7 @@ export default function ProfessionalCopywriting() {
                   </div>
                   <div className="bg-slate-800/30 p-4 rounded-lg border border-purple-400/20">
                     <p className="text-slate-100 font-medium">
-                      {generatedCopy.headline}
+                      {recommendedVariant.headline}
                     </p>
                   </div>
                 </CardContent>
@@ -609,7 +619,7 @@ export default function ProfessionalCopywriting() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => copyToClipboard(generatedCopy.callToAction, "Call to action")}
+                      onClick={() => copyToClipboard(recommendedVariant.cta, "Call to action")}
                       className="text-green-300 hover:text-green-200 hover:bg-green-400/10"
                       data-testid="button-copy-cta"
                     >
@@ -618,31 +628,47 @@ export default function ProfessionalCopywriting() {
                   </div>
                   <div className="bg-slate-800/30 p-4 rounded-lg border border-green-400/20">
                     <p className="text-slate-100 font-medium">
-                      {generatedCopy.callToAction}
+                      {recommendedVariant.cta}
                     </p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {generatedCopy.variants && generatedCopy.variants.length > 0 && (
+            {generatedCopy.variants && generatedCopy.variants.length > 1 && (
               <DashboardCard
                 title="Alternative Variations"
-                description="Different angles and approaches for A/B testing"
+                description="Different psychological approaches for A/B testing"
                 testId="card-variants"
               >
-                <Tabs defaultValue="variant-1" className="w-full">
+                <Tabs defaultValue="variant-0" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
-                    {generatedCopy.variants.map((_, index) => (
-                      <TabsTrigger key={index} value={`variant-${index + 1}`} className="text-white">
-                        Variant {index + 1}
+                    {generatedCopy.variants.map((variant, index) => (
+                      <TabsTrigger key={index} value={`variant-${index}`} className="text-white">
+                        {variant.type}
                       </TabsTrigger>
                     ))}
                   </TabsList>
                   {generatedCopy.variants.map((variant, index) => (
-                    <TabsContent key={index} value={`variant-${index + 1}`} className="mt-4">
-                      <div className="bg-slate-800/30 p-4 rounded-lg">
-                        <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">{variant}</p>
+                    <TabsContent key={index} value={`variant-${index}`} className="mt-4 space-y-4">
+                      <div className="bg-slate-800/30 p-4 rounded-lg space-y-3">
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-300 mb-2">Headline</h4>
+                          <p className="text-slate-100 font-medium">{variant.headline}</p>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-300 mb-2">Copy</h4>
+                          <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">{variant.copy}</p>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-slate-300 mb-2">Call to Action</h4>
+                          <p className="text-slate-100 font-medium">{variant.cta}</p>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm text-slate-400">
+                          <span>Quality Score: {Math.round(variant.qualityScore.overall || 0)}</span>
+                          <span>•</span>
+                          <span>Validation: {Math.round(variant.validation.score || 0)}</span>
+                        </div>
                       </div>
                     </TabsContent>
                   ))}
@@ -650,7 +676,7 @@ export default function ProfessionalCopywriting() {
               </DashboardCard>
             )}
           </div>
-        )}
+        );})()}
       </div>
     </PageShell>
   );
