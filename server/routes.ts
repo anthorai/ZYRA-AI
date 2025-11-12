@@ -909,6 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import advanced copywriting modules
       const { generateMultiAgentCopy, scoreACopy } = await import('../shared/ai-quality-scoring');
       const { getCopywritingFramework, getIndustryTemplate, getPsychologicalTrigger } = await import('../shared/copywriting-frameworks');
+      const { validateAIContent } = await import('../shared/ai-content-validator');
 
       // Get framework template
       const frameworkTemplate = getCopywritingFramework(framework);
@@ -929,12 +930,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         psychologicalTriggers // Pass triggers for enhanced persuasion
       );
 
-      // Score each variant
+      // Fetch learned patterns for this user/category to enhance validation
+      const patterns = await storage.getLearningPatterns(userId, { 
+        category: category || 'General',
+        patternType: 'ad_copy'
+      });
+      
+      // Score each variant with AI quality scoring + pre-validation
       const [emotionalScore, logicalScore, hybridScore] = await Promise.all([
         scoreACopy(variants.emotional.copy || '', audience || 'General', industry || category || 'General', openai),
         scoreACopy(variants.logical.copy || '', audience || 'General', industry || category || 'General', openai),
         scoreACopy(variants.hybrid.copy || '', audience || 'General', industry || category || 'General', openai)
       ]);
+      
+      // Pre-validate each variant using learned patterns
+      const [emotionalValidation, logicalValidation, hybridValidation] = [
+        validateAIContent(variants.emotional.copy || '', 'ad_copy', patterns, { 
+          minOverallScore: 65, 
+          category: category || 'General',
+          targetAudience: audience 
+        }),
+        validateAIContent(variants.logical.copy || '', 'ad_copy', patterns, { 
+          minOverallScore: 65, 
+          category: category || 'General',
+          targetAudience: audience 
+        }),
+        validateAIContent(variants.hybrid.copy || '', 'ad_copy', patterns, { 
+          minOverallScore: 65, 
+          category: category || 'General',
+          targetAudience: audience 
+        })
+      ];
 
       // Track total tokens used (estimate 3x for 3 variants + scoring)
       const estimatedTokens = 1500;
@@ -975,6 +1001,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             copy: variants.emotional.copy,
             cta: variants.emotional.cta,
             qualityScore: emotionalScore,
+            validation: {
+              passed: emotionalValidation.passed,
+              score: emotionalValidation.overallScore,
+              readability: emotionalValidation.readabilityScore,
+              seo: emotionalValidation.seoScore,
+              issues: emotionalValidation.issues.filter(i => i.severity === 'critical' || i.severity === 'warning'),
+              suggestions: emotionalValidation.suggestions.slice(0, 3)
+            },
             framework,
             psychologicalTriggers: psychologicalTriggers.filter((t: string) => ['Scarcity', 'Urgency', 'Loss Aversion'].includes(t))
           },
@@ -985,6 +1019,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             copy: variants.logical.copy,
             cta: variants.logical.cta,
             qualityScore: logicalScore,
+            validation: {
+              passed: logicalValidation.passed,
+              score: logicalValidation.overallScore,
+              readability: logicalValidation.readabilityScore,
+              seo: logicalValidation.seoScore,
+              issues: logicalValidation.issues.filter(i => i.severity === 'critical' || i.severity === 'warning'),
+              suggestions: logicalValidation.suggestions.slice(0, 3)
+            },
             framework,
             psychologicalTriggers: psychologicalTriggers.filter((t: string) => ['Authority', 'Social Proof'].includes(t))
           },
@@ -995,13 +1037,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             copy: variants.hybrid.copy,
             cta: variants.hybrid.cta,
             qualityScore: hybridScore,
+            validation: {
+              passed: hybridValidation.passed,
+              score: hybridValidation.overallScore,
+              readability: hybridValidation.readabilityScore,
+              seo: hybridValidation.seoScore,
+              issues: hybridValidation.issues.filter(i => i.severity === 'critical' || i.severity === 'warning'),
+              suggestions: hybridValidation.suggestions.slice(0, 3)
+            },
             framework,
             psychologicalTriggers
           }
         ],
         analysis: variants.analysis,
         recommendedVariant: hybridScore.overall >= Math.max(emotionalScore.overall, logicalScore.overall) ? 'hybrid' : 
-                            emotionalScore.overall > logicalScore.overall ? 'emotional' : 'logical'
+                            emotionalScore.overall > logicalScore.overall ? 'emotional' : 'logical',
+        validationSummary: {
+          allPassed: emotionalValidation.passed && logicalValidation.passed && hybridValidation.passed,
+          averageScore: Math.round((emotionalValidation.overallScore + logicalValidation.overallScore + hybridValidation.overallScore) / 3),
+          patternsUsed: patterns.length
+        }
       });
     } catch (error: any) {
       console.error("Professional copy generation error:", error);
@@ -1124,8 +1179,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use provided brand voice, or fall back to saved preference, or default to 'sales'
       const selectedBrandVoice = brandVoice || savedBrandVoice || "sales";
 
-      // Import Zyra Pro Mode prompts
+      // Import Zyra Pro Mode prompts and validation
       const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const { validateAIContent } = await import('../shared/ai-content-validator');
       
       // Generate the dynamic prompt using pro mode + template system
       let selectedPrompt = processPromptTemplate("Product Description", selectedBrandVoice, templateVariables);
@@ -1176,13 +1232,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
       
+      // Fetch learned patterns for validation
+      const patterns = await storage.getLearningPatterns(userId, { 
+        category: category || 'General',
+        patternType: 'product_description'
+      });
+      
+      // Pre-validate the generated description
+      const validation = validateAIContent(
+        result.description || '', 
+        'product_description', 
+        patterns, 
+        { 
+          minOverallScore: 65,
+          category: category || 'General',
+          targetAudience: audience
+        }
+      );
+      
       // Store generation in AI history for learning (only if not from cache)
       if (tokensUsed > 0) {
         await supabaseStorage.createAiGenerationHistory({
           userId,
           generationType: 'product_description',
           inputData: { productName, category, features, audience, keywords, specs },
-          outputData: { description: result.description },
+          outputData: { 
+            description: result.description,
+            validationScore: validation.overallScore,
+            validationPassed: validation.passed
+          },
           brandVoice: selectedBrandVoice,
           tokensUsed,
           model: modelConfig.model
@@ -1192,7 +1270,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send AI generation complete notification
       await NotificationService.notifyAIGenerationComplete(userId, 'product description', productName);
       
-      res.json({ description: result.description, brandVoiceUsed: selectedBrandVoice });
+      res.json({ 
+        description: result.description, 
+        brandVoiceUsed: selectedBrandVoice,
+        validation: {
+          passed: validation.passed,
+          score: validation.overallScore,
+          readability: validation.readabilityScore,
+          seo: validation.seoScore,
+          issues: validation.issues.filter(i => i.severity === 'critical' || i.severity === 'warning'),
+          suggestions: validation.suggestions.slice(0, 3),
+          patternsUsed: patterns.length
+        }
+      });
     } catch (error: any) {
       console.error("AI generation error:", error);
       res.status(500).json({ message: "Failed to generate description" });
@@ -1208,8 +1298,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title and keywords are required" });
       }
 
-      // Import Zyra Pro Mode prompts
+      // Import Zyra Pro Mode prompts and validation
       const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const { validateAIContent } = await import('../shared/ai-content-validator');
       const proModePrompt = getSystemPromptForTool('seoTitles');
 
       const prompt = `Optimize the following product for SEO:
@@ -1256,11 +1347,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
       
+      // Fetch learned patterns for validation
+      const patterns = await storage.getLearningPatterns(userId, { 
+        category: category || 'General',
+        patternType: 'seo_content'
+      });
+      
+      // Pre-validate the generated meta description
+      const metaValidation = validateAIContent(
+        result.optimizedMeta || '', 
+        'meta_description', 
+        patterns, 
+        { 
+          minOverallScore: 70,
+          minSEOScore: 75,
+          category: category || 'General'
+        }
+      );
+      
       // Send SEO optimization notification with performance improvement
-      const improvement = `SEO Score: ${result.seoScore || 'N/A'}/100`;
+      const improvement = `SEO Score: ${result.seoScore || 'N/A'}/100 | Validation: ${metaValidation.overallScore}/100`;
       await NotificationService.notifyPerformanceOptimizationComplete(userId, currentTitle, improvement);
       
-      res.json(result);
+      res.json({
+        ...result,
+        validation: {
+          passed: metaValidation.passed,
+          score: metaValidation.overallScore,
+          readability: metaValidation.readabilityScore,
+          seo: metaValidation.seoScore,
+          issues: metaValidation.issues.filter(i => i.severity === 'critical' || i.severity === 'warning'),
+          suggestions: metaValidation.suggestions.slice(0, 3),
+          patternsUsed: patterns.length
+        }
+      });
     } catch (error: any) {
       console.error("SEO optimization error:", error);
       res.status(500).json({ message: "Failed to optimize SEO" });
