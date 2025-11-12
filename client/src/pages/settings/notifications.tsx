@@ -80,7 +80,6 @@ export default function NotificationsPage() {
   const queryClient = useQueryClient();
   
   // Channel verification state
-  const [emailVerifyOpen, setEmailVerifyOpen] = useState(false);
   const [smsVerifyOpen, setSmsVerifyOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
@@ -162,7 +161,11 @@ export default function NotificationsPage() {
 
   const handleEmailToggle = (checked: boolean) => {
     if (!hasEmail) {
-      setEmailVerifyOpen(true);
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address below to enable notifications",
+        variant: "default",
+      });
       return;
     }
     if (emailChannel) {
@@ -202,7 +205,6 @@ export default function NotificationsPage() {
       enabled: true,
       isPrimary: true
     });
-    setEmailVerifyOpen(false);
     setEmailAddress("");
   };
 
@@ -320,34 +322,68 @@ export default function NotificationsPage() {
               >
                 <div className="space-y-6">
                   {/* Email */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 flex-1">
-                      <div className="p-2 rounded-lg bg-slate-800/50">
-                        <Mail className="w-5 h-5 text-blue-400" />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className="p-2 rounded-lg bg-slate-800/50">
+                          <Mail className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <Label className="text-white font-medium">Email Notifications</Label>
+                          <p className="text-sm text-slate-400">
+                            {hasEmail 
+                              ? `Configured: ${emailChannel?.channelValue}` 
+                              : 'Receive updates via email'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-white font-medium">Email Notifications</Label>
-                        <p className="text-sm text-slate-400">
-                          {hasEmail 
-                            ? `Configured: ${emailChannel?.channelValue}` 
-                            : 'Receive updates via email'}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        {!hasEmail && (
+                          <Badge variant="outline" className="text-xs">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Setup Required
+                          </Badge>
+                        )}
+                        <Switch
+                          checked={hasEmail && emailEnabled}
+                          onCheckedChange={handleEmailToggle}
+                          className="data-[state=checked]:bg-primary"
+                          data-testid="switch-email-notifications"
+                        />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!hasEmail && (
-                        <Badge variant="outline" className="text-xs">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Setup Required
-                        </Badge>
-                      )}
-                      <Switch
-                        checked={hasEmail && emailEnabled}
-                        onCheckedChange={handleEmailToggle}
-                        className="data-[state=checked]:bg-primary"
-                        data-testid="switch-email-notifications"
-                      />
-                    </div>
+                    
+                    {/* Inline Email Input - Show when not configured */}
+                    {!hasEmail && (
+                      <div className="ml-14 space-y-2 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+                        <Label htmlFor="email" className="text-sm text-slate-300">Email Address</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="your.email@example.com"
+                            value={emailAddress}
+                            onChange={(e) => setEmailAddress(e.target.value)}
+                            data-testid="input-email-address"
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={handleEmailVerify}
+                            disabled={createChannelMutation.isPending || !emailAddress}
+                            data-testid="button-save-email"
+                          >
+                            {createChannelMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              'Save'
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Separator className="bg-slate-700" />
@@ -456,53 +492,6 @@ export default function NotificationsPage() {
         </>
       )}
 
-      {/* Email Verification Dialog */}
-      <Dialog open={emailVerifyOpen} onOpenChange={setEmailVerifyOpen}>
-        <DialogContent data-testid="dialog-email-verify">
-          <DialogHeader>
-            <DialogTitle>Configure Email Notifications</DialogTitle>
-            <DialogDescription>
-              Enter your email address to receive email notifications
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={emailAddress}
-                onChange={(e) => setEmailAddress(e.target.value)}
-                data-testid="input-email-address"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setEmailVerifyOpen(false)}
-              data-testid="button-cancel-email"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleEmailVerify}
-              disabled={createChannelMutation.isPending}
-              data-testid="button-verify-email"
-            >
-              {createChannelMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Email'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* SMS Verification Dialog */}
       <Dialog open={smsVerifyOpen} onOpenChange={setSmsVerifyOpen}>
