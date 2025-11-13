@@ -6,7 +6,6 @@ import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,24 +20,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   User, 
-  Lock, 
-  Camera, 
-  Eye, 
-  EyeOff
+  Camera
 } from "lucide-react";
 
 const updateProfileSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email address"),
-});
-
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 export default function ProfilePage() {
@@ -48,9 +35,6 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Fetch user data from API
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -75,16 +59,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Password change form
-  const passwordForm = useForm({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
   // Profile update mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -98,24 +72,6 @@ export default function ProfilePage() {
       toast({
         title: "Error",
         description: error.message || "Failed to update profile",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Password change mutation
-  const changePasswordMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("PUT", "/api/change-password", data);
-    },
-    onSuccess: () => {
-      passwordForm.reset();
-      toast({ title: "Success", description: "Password changed successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to change password",
         variant: "destructive",
       });
     },
@@ -170,20 +126,7 @@ export default function ProfilePage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-2 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
-            <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Profile</span>
-            </TabsTrigger>
-            <TabsTrigger value="password" className="flex items-center space-x-2 data-[state=active]:active-tab">
-              <Lock className="w-4 h-4" />
-              <span className="hidden sm:inline">Password</span>
-            </TabsTrigger>
-          </TabsList>
-
-            {/* Profile Card Tab */}
-            <TabsContent value="profile">
+          <div className="space-y-6">
               <DashboardCard
                 title="Profile Information"
                 description="Update your personal information and profile image"
@@ -304,139 +247,7 @@ export default function ProfilePage() {
                   </Form>
                 </div>
               </DashboardCard>
-            </TabsContent>
-
-
-            {/* Password Tab */}
-            <TabsContent value="password">
-              <DashboardCard
-                title="Change Password"
-                description="Update your password to keep your account secure"
-                headerAction={<Lock className="w-5 h-5" />}
-                testId="card-password"
-              >
-                  <Form {...passwordForm}>
-                    <form 
-                      onSubmit={passwordForm.handleSubmit((data) => changePasswordMutation.mutate(data))}
-                      className="space-y-4"
-                    >
-                      <FormField
-                        control={passwordForm.control}
-                        name="currentPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-white">Current Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  type={showCurrentPassword ? "text" : "password"}
-                                  className="bg-slate-800 border-slate-600 text-white pr-10"
-                                  placeholder="Enter current password"
-                                  data-testid="input-current-password"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                >
-                                  {showCurrentPassword ? (
-                                    <EyeOff className="h-4 w-4 text-slate-400" />
-                                  ) : (
-                                    <Eye className="h-4 w-4 text-slate-400" />
-                                  )}
-                                </Button>
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={passwordForm.control}
-                        name="newPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-white">New Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  type={showNewPassword ? "text" : "password"}
-                                  className="bg-slate-800 border-slate-600 text-white pr-10"
-                                  placeholder="Enter new password"
-                                  data-testid="input-new-password"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                  onClick={() => setShowNewPassword(!showNewPassword)}
-                                >
-                                  {showNewPassword ? (
-                                    <EyeOff className="h-4 w-4 text-slate-400" />
-                                  ) : (
-                                    <Eye className="h-4 w-4 text-slate-400" />
-                                  )}
-                                </Button>
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={passwordForm.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-white">Confirm New Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  type={showConfirmPassword ? "text" : "password"}
-                                  className="bg-slate-800 border-slate-600 text-white pr-10"
-                                  placeholder="Confirm new password"
-                                  data-testid="input-confirm-password"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                >
-                                  {showConfirmPassword ? (
-                                    <EyeOff className="h-4 w-4 text-slate-400" />
-                                  ) : (
-                                    <Eye className="h-4 w-4 text-slate-400" />
-                                  )}
-                                </Button>
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="submit"
-                        disabled={changePasswordMutation.isPending}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        data-testid="button-change-password"
-                      >
-                        {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
-                      </Button>
-                    </form>
-                  </Form>
-              </DashboardCard>
-            </TabsContent>
-
-            
-          </Tabs>
+          </div>
         )}
       </div>
     </PageShell>
