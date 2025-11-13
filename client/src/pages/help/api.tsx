@@ -2,7 +2,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Code, Key, Zap, Shield, BookOpen, Copy, Check } from "lucide-react";
+import { Code, Key, Zap, Shield, BookOpen, Copy, Check, Info } from "lucide-react";
 import { useState } from "react";
 
 export default function APIDocumentationPage() {
@@ -119,6 +119,25 @@ fetch('https://api.zyra.ai/api/ai/generate-description', {
       maxWidth="xl"
       spacing="normal"
     >
+      {/* Coming Soon Notice */}
+      <DashboardCard className="bg-blue-500/10 border border-blue-500/30" testId="card-api-preview-notice">
+        <div className="flex items-start space-x-4">
+          <div className="p-2 rounded-lg bg-blue-500/20 flex-shrink-0">
+            <Info className="w-6 h-6 text-blue-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-white font-semibold mb-2 text-lg">Preview Documentation - API Coming Soon</h3>
+            <p className="text-blue-200 text-sm mb-3">
+              This API is currently under development and not yet available. The documentation below shows what will be possible when the API launches. 
+              Use this as a reference to understand the capabilities and plan your integration.
+            </p>
+            <p className="text-blue-300 text-xs">
+              <strong>Note:</strong> All endpoints, authentication methods, and code examples shown are for planning purposes only and are not currently functional.
+            </p>
+          </div>
+        </div>
+      </DashboardCard>
+
       {/* Quick Start */}
       <DashboardCard
         title="Quick Start"
