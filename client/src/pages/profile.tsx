@@ -22,13 +22,9 @@ import { z } from "zod";
 import { 
   User, 
   Lock, 
-  Store, 
   Camera, 
   Eye, 
-  EyeOff,
-  CheckCircle,
-  AlertCircle,
-  Trash2
+  EyeOff
 } from "lucide-react";
 
 const updateProfileSchema = z.object({
@@ -43,13 +39,6 @@ const changePasswordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-});
-
-const connectStoreSchema = z.object({
-  platform: z.enum(["shopify", "woocommerce"]),
-  storeName: z.string().min(1, "Store name is required"),
-  storeUrl: z.string().url("Invalid store URL"),
-  accessToken: z.string().min(1, "Access token is required"),
 });
 
 export default function ProfilePage() {
@@ -73,15 +62,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Fetch store connections from API
-  const { data: storeConnections = [], isLoading: isLoadingStores } = useQuery({
-    queryKey: ["/api/store-connections"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/store-connections");
-      return await response.json();
-    },
-  });
-
   // Profile update form
   const profileForm = useForm({
     resolver: zodResolver(updateProfileSchema),
@@ -102,17 +82,6 @@ export default function ProfilePage() {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
-    },
-  });
-
-  // Store connection form
-  const storeForm = useForm({
-    resolver: zodResolver(connectStoreSchema),
-    defaultValues: {
-      platform: "shopify" as const,
-      storeName: "",
-      storeUrl: "",
-      accessToken: "",
     },
   });
 
@@ -152,25 +121,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Store connection mutation
-  const connectStoreMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/store-connections", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/store-connections"] });
-      storeForm.reset();
-      toast({ title: "Success", description: "Store connected successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to connect store",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Profile image upload mutation
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -186,24 +136,6 @@ export default function ProfilePage() {
       toast({
         title: "Error",
         description: error.message || "Failed to upload image",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Disconnect store mutation
-  const disconnectStoreMutation = useMutation({
-    mutationFn: async (storeId: string) => {
-      return await apiRequest("DELETE", `/api/store-connections/${storeId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/store-connections"] });
-      toast({ title: "Success", description: "Store disconnected successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to disconnect store",
         variant: "destructive",
       });
     },
@@ -239,7 +171,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-3 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
+          <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-2 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
             <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -247,10 +179,6 @@ export default function ProfilePage() {
             <TabsTrigger value="password" className="flex items-center space-x-2 data-[state=active]:active-tab">
               <Lock className="w-4 h-4" />
               <span className="hidden sm:inline">Password</span>
-            </TabsTrigger>
-            <TabsTrigger value="stores" className="flex items-center space-x-2 data-[state=active]:active-tab">
-              <Store className="w-4 h-4" />
-              <span className="hidden sm:inline">Stores</span>
             </TabsTrigger>
           </TabsList>
 
@@ -507,167 +435,7 @@ export default function ProfilePage() {
               </DashboardCard>
             </TabsContent>
 
-            {/* Stores Tab */}
-            <TabsContent value="stores">
-              <div className="space-y-6">
-                {/* Connected Stores */}
-                <DashboardCard
-                  title="Connected Stores"
-                  description="Manage your connected e-commerce platforms"
-                  headerAction={<Store className="w-5 h-5" />}
-                  testId="card-connected-stores"
-                >
-                    {storeConnections.length > 0 ? (
-                      <div className="space-y-4">
-                        {storeConnections.map((store: any) => (
-                          <div
-                            key={store.id}
-                            className="flex items-center justify-between p-4 bg-slate-800 rounded-lg border border-slate-600"
-                            data-testid={`store-connection-${store.id}`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center">
-                                <Store className="w-5 h-5 text-primary" />
-                              </div>
-                              <div>
-                                <h3 className="text-white font-medium">{store.storeName}</h3>
-                                <p className="text-slate-400 text-sm capitalize">{store.platform}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge 
-                                variant={store.status === "active" ? "default" : "destructive"}
-                                className={store.status === "active" ? "bg-green-500/20 text-green-400" : ""}
-                              >
-                                {store.status === "active" ? (
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                ) : (
-                                  <AlertCircle className="w-3 h-3 mr-1" />
-                                )}
-                                {store.status}
-                              </Badge>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => disconnectStoreMutation.mutate(store.id)}
-                                disabled={disconnectStoreMutation.isPending}
-                                className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                                data-testid={`button-disconnect-${store.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-slate-400 text-center py-8">
-                        No stores connected yet. Add your first store below.
-                      </p>
-                    )}
-                </DashboardCard>
-
-                {/* Connect New Store */}
-                <DashboardCard
-                  title="Connect New Store"
-                  description="Add a new Shopify or WooCommerce store to sync with Zyra AI"
-                  testId="card-connect-store"
-                >
-                    <Form {...storeForm}>
-                      <form 
-                        onSubmit={storeForm.handleSubmit((data) => connectStoreMutation.mutate(data))}
-                        className="space-y-4"
-                      >
-                        <FormField
-                          control={storeForm.control}
-                          name="platform"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-white">Platform</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="form-select text-white" data-testid="select-platform">
-                                    <SelectValue placeholder="Select platform" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="gradient-surface">
-                                  <SelectItem value="shopify">Shopify</SelectItem>
-                                  <SelectItem value="woocommerce">WooCommerce</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={storeForm.control}
-                          name="storeName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-white">Store Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="form-input text-white"
-                                  placeholder="My Store"
-                                  data-testid="input-store-name"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={storeForm.control}
-                          name="storeUrl"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-white">Store URL</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="url"
-                                  className="form-input text-white"
-                                  placeholder="https://mystore.shopify.com"
-                                  data-testid="input-store-url"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={storeForm.control}
-                          name="accessToken"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-white">Access Token</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="password"
-                                  className="form-input text-white"
-                                  placeholder="Enter your access token"
-                                  data-testid="input-access-token"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="submit"
-                          disabled={connectStoreMutation.isPending}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90"
-                          data-testid="button-connect-store"
-                        >
-                          {connectStoreMutation.isPending ? "Connecting..." : "Connect Store"}
-                        </Button>
-                      </form>
-                    </Form>
-                </DashboardCard>
-              </div>
-            </TabsContent>
+            
           </Tabs>
         )}
       </div>
