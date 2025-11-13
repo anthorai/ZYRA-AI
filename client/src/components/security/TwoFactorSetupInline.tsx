@@ -207,7 +207,7 @@ Keep these codes in a safe place. You will need them if you lose access to your 
             </CardHeader>
             <CardContent>
               <ol className="list-decimal list-inside space-y-3 text-slate-300">
-                <li>Scan a QR code with your authenticator app</li>
+                <li>Scan a QR code with Google Authenticator or another authenticator app</li>
                 <li>Enter the 6-digit code to verify</li>
                 <li>Save your backup codes in a secure location</li>
               </ol>
@@ -253,7 +253,7 @@ Keep these codes in a safe place. You will need them if you lose access to your 
               <Card className="p-6 bg-white border-0">
                 <div className="flex flex-col items-center space-y-3">
                   <p className="text-sm text-slate-600 text-center font-medium">
-                    Scan this QR code with your authenticator app
+                    Scan this QR code with Google Authenticator or another authenticator app
                   </p>
                   <img
                     src={setupData.qrCode}
@@ -362,7 +362,7 @@ Keep these codes in a safe place. You will need them if you lose access to your 
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="verification-code" className="text-white">
-                  Enter the 6-digit code from your authenticator app
+                  Enter the 6-digit code from Google Authenticator or your authenticator app
                 </Label>
                 <Input
                   id="verification-code"
