@@ -4,12 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,11 +16,9 @@ import {
   Lock, 
   Store, 
   Camera, 
-  Settings, 
   Eye, 
   EyeOff,
   CheckCircle,
-  AlertCircle,
   Trash2
 } from "lucide-react";
 
@@ -39,13 +34,6 @@ const changePasswordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-});
-
-const connectStoreSchema = z.object({
-  platform: z.enum(["shopify", "woocommerce"]),
-  storeName: z.string().min(1, "Store name is required"),
-  storeUrl: z.string().url("Invalid store URL"),
-  accessToken: z.string().min(1, "Access token is required"),
 });
 
 export default function Profile() {
@@ -89,17 +77,6 @@ export default function Profile() {
     },
   });
 
-  // Store connection form
-  const storeForm = useForm({
-    resolver: zodResolver(connectStoreSchema),
-    defaultValues: {
-      platform: "shopify" as const,
-      storeName: "",
-      storeUrl: "",
-      accessToken: "",
-    },
-  });
-
   // Profile update mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -131,25 +108,6 @@ export default function Profile() {
       toast({
         title: "Error",
         description: error.message || "Failed to change password",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Store connection mutation
-  const connectStoreMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/store-connections", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/store-connections"] });
-      storeForm.reset();
-      toast({ title: "Success", description: "Store connected successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to connect store",
         variant: "destructive",
       });
     },
@@ -490,10 +448,10 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <Store className="w-5 h-5" />
-                <span>Store Connections</span>
+                <span>Connected Stores</span>
               </CardTitle>
               <CardDescription className="text-slate-300">
-                Connect and manage your e-commerce store integrations
+                View and manage your connected e-commerce stores. To connect new stores, visit Settings &gt; Integrations.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -539,107 +497,10 @@ export default function Profile() {
                 ) : (
                   <div className="text-center py-8">
                     <Store className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-400 mb-4">No stores connected yet</p>
+                    <p className="text-slate-400 mb-2">No stores connected yet</p>
+                    <p className="text-sm text-slate-500">Connect stores via Settings &gt; Integrations</p>
                   </div>
                 )}
-
-                {/* Connect New Store Form */}
-                <div className="pt-6 border-t border-slate-600/30">
-                  <h4 className="text-white font-medium mb-4">Connect New Store</h4>
-                  <Form {...storeForm}>
-                    <form 
-                      onSubmit={storeForm.handleSubmit((data) => connectStoreMutation.mutate(data))}
-                      className="space-y-4"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={storeForm.control}
-                          name="platform"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-white">Platform</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="form-select text-white">
-                                    <SelectValue placeholder="Select platform" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="gradient-surface">
-                                  <SelectItem value="shopify">Shopify</SelectItem>
-                                  <SelectItem value="woocommerce">WooCommerce</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={storeForm.control}
-                          name="storeName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-white">Store Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="form-input text-white"
-                                  placeholder="My Store"
-                                  data-testid="input-store-name"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                        control={storeForm.control}
-                        name="storeUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-white">Store URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="form-input text-white"
-                                placeholder="https://your-store.com"
-                                data-testid="input-store-url"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={storeForm.control}
-                        name="accessToken"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-white">Access Token</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="password"
-                                className="form-input text-white"
-                                placeholder="Enter your store access token"
-                                data-testid="input-access-token"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="submit"
-                        disabled={connectStoreMutation.isPending}
-                        className="gradient-button"
-                        data-testid="button-connect-store"
-                      >
-                        {connectStoreMutation.isPending ? "Connecting..." : "Connect Store"}
-                      </Button>
-                    </form>
-                  </Form>
-                </div>
               </div>
             </CardContent>
           </Card>
