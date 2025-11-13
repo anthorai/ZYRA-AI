@@ -1,4 +1,3 @@
-import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
@@ -18,7 +17,6 @@ import { useState, useEffect } from "react";
 import Footer from "@/components/ui/footer";
 
 export default function AboutPage() {
-  const { t } = useLanguage();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -41,28 +39,28 @@ export default function AboutPage() {
   const features = [
     {
       icon: Sparkles,
-      title: t('aboutPage.features.productOptimization.title'),
-      description: t('aboutPage.features.productOptimization.description'),
+      title: "AI Product Optimization",
+      description: "Transform your product listings with intelligent AI-powered descriptions, SEO optimization, and conversion-focused content.",
     },
     {
       icon: TrendingUp,
-      title: t('aboutPage.features.conversionBoost.title'),
-      description: t('aboutPage.features.conversionBoost.description'),
+      title: "Conversion Boost",
+      description: "Increase sales with data-driven product descriptions designed to convert visitors into customers.",
     },
     {
       icon: PenTool,
-      title: t('aboutPage.features.contentBranding.title'),
-      description: t('aboutPage.features.contentBranding.description'),
+      title: "Brand Voice & Content",
+      description: "Maintain consistent brand messaging across all products with AI that learns your unique voice and style.",
     },
     {
       icon: BarChart3,
-      title: t('aboutPage.features.roiTracking.title'),
-      description: t('aboutPage.features.roiTracking.description'),
+      title: "ROI Tracking & Analytics",
+      description: "Track the impact of AI-generated content on your sales with comprehensive analytics and reporting.",
     },
     {
       icon: Zap,
-      title: t('aboutPage.features.workflowTools.title'),
-      description: t('aboutPage.features.workflowTools.description'),
+      title: "Automated Workflow Tools",
+      description: "Save hours with bulk operations, automated publishing, and intelligent content scheduling.",
     },
   ];
 
@@ -89,7 +87,7 @@ export default function AboutPage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 mb-8">
               <Zap className="w-4 h-4 text-[#00F0FF]" />
               <span className="text-[#00F0FF] text-sm font-medium" data-testid="text-hero-badge">
-                {t('aboutPage.hero.badge')}
+                AI-Powered E-Commerce Platform
               </span>
             </div>
             
@@ -97,21 +95,21 @@ export default function AboutPage() {
               className="text-4xl md:text-6xl font-bold text-[#EAEAEA] mb-6 leading-tight"
               data-testid="text-hero-title"
             >
-              {t('aboutPage.hero.title')}
+              About Zyra AI
             </h1>
             
             <p 
               className="text-xl md:text-2xl text-[#EAEAEA]/80 max-w-4xl mx-auto mb-8"
               data-testid="text-hero-subtitle"
             >
-              {t('aboutPage.hero.subtitle')}
+              Transforming E-Commerce with Intelligent Automation
             </p>
             
             <p 
               className="text-lg text-[#EAEAEA]/60 max-w-3xl mx-auto"
               data-testid="text-hero-description"
             >
-              {t('aboutPage.hero.description')}
+              Zyra AI is your intelligent partner for e-commerce success, combining advanced artificial intelligence with practical automation to help businesses grow faster and smarter.
             </p>
           </div>
         </div>
@@ -126,20 +124,20 @@ export default function AboutPage() {
                 className="text-3xl md:text-4xl font-bold text-[#00F0FF] mb-6 text-center"
                 data-testid="text-vision-title"
               >
-                {t('aboutPage.vision.title')}
+                Our Vision
               </h2>
               
               <div className="space-y-6 text-[#EAEAEA]/80 text-lg leading-relaxed">
                 <p data-testid="text-vision-paragraph-1">
-                  {t('aboutPage.vision.paragraph1')}
+                  We believe that every e-commerce business, regardless of size, deserves access to enterprise-level AI technology. Zyra AI was built to democratize intelligent automation, making advanced marketing and content optimization accessible to all online sellers.
                 </p>
                 
                 <p data-testid="text-vision-paragraph-2">
-                  {t('aboutPage.vision.paragraph2')}
+                  Our platform combines cutting-edge artificial intelligence with deep e-commerce expertise to help businesses create compelling product content, run effective marketing campaigns, and maximize their return on investment.
                 </p>
                 
                 <p data-testid="text-vision-paragraph-3">
-                  {t('aboutPage.vision.paragraph3')}
+                  We're committed to continuous innovation, constantly evolving our AI capabilities to meet the changing needs of modern e-commerce while maintaining our focus on simplicity, reliability, and measurable results.
                 </p>
               </div>
             </div>
@@ -155,13 +153,13 @@ export default function AboutPage() {
               className="text-3xl md:text-4xl font-bold text-[#EAEAEA] mb-4"
               data-testid="text-features-title"
             >
-              {t('aboutPage.features.title')}
+              Core Features
             </h2>
             <p 
               className="text-lg text-[#EAEAEA]/60 max-w-2xl mx-auto"
               data-testid="text-features-subtitle"
             >
-              {t('aboutPage.features.subtitle')}
+              Powerful tools designed to accelerate your e-commerce growth
             </p>
           </div>
 
@@ -208,43 +206,43 @@ export default function AboutPage() {
               className="text-3xl md:text-4xl font-bold text-[#00F0FF] mb-12 text-center"
               data-testid="text-impact-title"
             >
-              {t('aboutPage.impact.title')}
+              Measurable Impact
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="text-center" data-testid="card-impact-time">
                 <div className="text-5xl font-bold text-[#00F0FF] mb-3">
-                  {t('aboutPage.impact.timeSaved.value')}
+                  80%
                 </div>
                 <div className="text-xl font-semibold text-[#EAEAEA] mb-2">
-                  {t('aboutPage.impact.timeSaved.label')}
+                  Time Saved
                 </div>
                 <p className="text-[#EAEAEA]/60">
-                  {t('aboutPage.impact.timeSaved.description')}
+                  On average, merchants save 80% of the time they previously spent on product content creation
                 </p>
               </div>
 
               <div className="text-center" data-testid="card-impact-sales">
                 <div className="text-5xl font-bold text-[#00F0FF] mb-3">
-                  {t('aboutPage.impact.salesBoost.value')}
+                  35%
                 </div>
                 <div className="text-xl font-semibold text-[#EAEAEA] mb-2">
-                  {t('aboutPage.impact.salesBoost.label')}
+                  Sales Boost
                 </div>
                 <p className="text-[#EAEAEA]/60">
-                  {t('aboutPage.impact.salesBoost.description')}
+                  Businesses see an average 35% increase in conversions with optimized product descriptions
                 </p>
               </div>
 
               <div className="text-center" data-testid="card-impact-roi">
                 <div className="text-5xl font-bold text-[#00F0FF] mb-3">
-                  {t('aboutPage.impact.roiMaximization.value')}
+                  10x
                 </div>
                 <div className="text-xl font-semibold text-[#EAEAEA] mb-2">
-                  {t('aboutPage.impact.roiMaximization.label')}
+                  ROI Maximization
                 </div>
                 <p className="text-[#EAEAEA]/60">
-                  {t('aboutPage.impact.roiMaximization.description')}
+                  Our users report an average 10x return on their Zyra AI investment within the first quarter
                 </p>
               </div>
             </div>
@@ -259,21 +257,21 @@ export default function AboutPage() {
             className="text-3xl md:text-4xl font-bold text-[#EAEAEA] mb-6"
             data-testid="text-future-title"
           >
-            {t('aboutPage.future.title')}
+            The Future of E-Commerce
           </h2>
           
           <p 
             className="text-xl text-[#EAEAEA]/80 leading-relaxed mb-6"
             data-testid="text-future-description"
           >
-            {t('aboutPage.future.description')}
+            As AI technology continues to evolve, we're committed to staying at the forefront of innovation. We're constantly developing new features, integrations, and capabilities to ensure Zyra AI remains the most powerful and accessible e-commerce AI platform available.
           </p>
           
           <p 
             className="text-lg text-[#00F0FF] font-semibold"
             data-testid="text-future-tagline"
           >
-            {t('aboutPage.future.tagline')}
+            Together, we're building the future of intelligent e-commerce.
           </p>
         </div>
       </section>
@@ -286,14 +284,14 @@ export default function AboutPage() {
               className="text-3xl md:text-4xl font-bold text-[#EAEAEA] mb-6"
               data-testid="text-cta-title"
             >
-              {t('aboutPage.cta.title')}
+              Ready to Transform Your E-Commerce Business?
             </h2>
             
             <p 
               className="text-xl text-[#EAEAEA]/80 mb-8"
               data-testid="text-cta-description"
             >
-              {t('aboutPage.cta.description')}
+              Join thousands of merchants who are already growing their businesses with Zyra AI
             </p>
             
             <Link href="/dashboard">
@@ -302,7 +300,7 @@ export default function AboutPage() {
                 className="bg-[#00F0FF] hover:bg-[#00F0FF]/90 text-[#0D0D1F] font-bold text-lg px-8 py-6 h-auto"
                 data-testid="button-cta-start"
               >
-                {t('aboutPage.cta.button')}
+                Get Started Now
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

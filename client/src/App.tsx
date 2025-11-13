@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/components/AuthProvider";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SettingsLayout from "@/components/layouts/SettingsLayout";
@@ -20,7 +19,7 @@ import NotFound from "@/pages/not-found";
 
 // Lazy load all other pages for better performance
 const AboutPage = lazy(() => import("@/pages/about"));
-const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicy"));
+const PrivacyPolicyPage = lazy(() => import("@/pages/privacy-policy"));
 const TermsOfServicePage = lazy(() => import("@/pages/TermsOfService"));
 const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
@@ -555,14 +554,12 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <LanguageProvider>
-            <TooltipProvider>
-              <SkipLink />
-              <NetworkStatus />
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </LanguageProvider>
+          <TooltipProvider>
+            <SkipLink />
+            <NetworkStatus />
+            <Toaster />
+            <Router />
+          </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>

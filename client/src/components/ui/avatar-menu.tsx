@@ -10,13 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
-import { useLanguage } from "@/hooks/useLanguage";
 import { User, Settings as SettingsIcon, LogOut } from "lucide-react";
 
 export function AvatarMenu() {
   const { appUser, user } = useAuth();
   const { handleLogout, isLoggingOut } = useLogout();
-  const { t } = useLanguage();
   const [, setLocation] = useLocation();
 
   // Get display name with robust fallback logic
@@ -88,7 +86,7 @@ export function AvatarMenu() {
           data-testid="menuitem-profile"
         >
           <User className="mr-2 h-4 w-4" />
-          {t('navigation.profile')}
+          Profile
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
@@ -96,7 +94,7 @@ export function AvatarMenu() {
           data-testid="menuitem-settings"
         >
           <SettingsIcon className="mr-2 h-4 w-4" />
-          {t('navigation.settings')}
+          Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-border/30" />
         <DropdownMenuItem
@@ -106,7 +104,7 @@ export function AvatarMenu() {
           data-testid="menuitem-logout"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          {isLoggingOut ? t('auth.loggingOut') : t('auth.logout')}
+          {isLoggingOut ? 'Logging Out...' : 'Logout'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

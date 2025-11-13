@@ -1,6 +1,4 @@
 import { Link, useLocation } from "wouter";
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { useLanguage } from '@/hooks/useLanguage';
 import zyraLogo from "@assets/zyra logo_1759205684268.png";
 
 interface FooterProps {
@@ -8,12 +6,11 @@ interface FooterProps {
 }
 
 export default function Footer({ className = "" }: FooterProps) {
-  const { t } = useLanguage();
   const [location, setLocation] = useLocation();
   
   const navigationLinks = [
-    { label: t('footer.about'), href: "/about", testId: "link-footer-about", id: "about" },
-    { label: t('footer.privacyPolicy'), href: "/privacy-policy", testId: "link-footer-privacy", id: "privacy" },
+    { label: "About", href: "/about", testId: "link-footer-about", id: "about" },
+    { label: "Privacy Policy", href: "/privacy-policy", testId: "link-footer-privacy", id: "privacy" },
   ];
 
   const handleLogoClick = (e: React.MouseEvent) => {
@@ -80,18 +77,13 @@ export default function Footer({ className = "" }: FooterProps) {
 
           {/* Right Side */}
           <div className="flex items-center gap-4">
-            {/* Language Switcher */}
-            <div className="flex-shrink-0">
-              <LanguageSwitcher />
-            </div>
-
             {/* Powered by */}
             <div className="flex-shrink-0">
               <span
                 className="text-[#EAEAEA] text-sm font-medium font-sans flex items-center gap-2"
                 data-testid="text-powered-by"
               >
-                {t('footer.poweredBy')}
+                Powered by Zyra AI
               </span>
             </div>
           </div>
@@ -143,19 +135,12 @@ export default function Footer({ className = "" }: FooterProps) {
 
             <span className="text-[#00F0FF]/30">•</span>
 
-            {/* Language Switcher */}
-            <div className="flex justify-center" data-testid="button-language-switcher-mobile">
-              <LanguageSwitcher />
-            </div>
-
-            <span className="text-[#00F0FF]/30">•</span>
-
             {/* Powered by */}
             <span
               className="text-[#EAEAEA] font-medium font-sans inline-flex items-center gap-1"
               data-testid="text-powered-by-mobile"
             >
-              {t('footer.poweredBy')}
+              Powered by Zyra AI
             </span>
           </div>
         </div>

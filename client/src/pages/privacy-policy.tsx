@@ -1,4 +1,3 @@
-import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
@@ -24,7 +23,6 @@ import { useState, useEffect } from "react";
 import Footer from "@/components/ui/footer";
 
 export default function PrivacyPolicyPage() {
-  const { t } = useLanguage();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -44,196 +42,196 @@ export default function PrivacyPolicyPage() {
     {
       id: "introduction",
       icon: Shield,
-      title: t('privacyPolicy.introduction.title'),
+      title: "Introduction",
       content: [
-        t('privacyPolicy.introduction.paragraph1'),
-        t('privacyPolicy.introduction.paragraph2'),
-        t('privacyPolicy.introduction.paragraph3'),
+        "At Zyra AI, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our platform and services.",
+        "We value your trust and take our responsibility to protect your privacy seriously. This policy applies to all users of Zyra AI's platform, including those who access our services through web browsers, mobile applications, or API integrations.",
+        "By using Zyra AI, you agree to the collection and use of information in accordance with this policy. If you do not agree with our policies and practices, please do not use our services.",
       ],
     },
     {
       id: "information-collection",
       icon: Database,
-      title: t('privacyPolicy.informationCollection.title'),
+      title: "Information We Collect",
       content: [
-        t('privacyPolicy.informationCollection.intro'),
+        "We collect various types of information to provide and improve our services to you:",
       ],
       subsections: [
         {
-          subtitle: t('privacyPolicy.informationCollection.accountInfo.title'),
-          items: t('privacyPolicy.informationCollection.accountInfo.items'),
+          subtitle: "Account Information",
+          items: ["Name and email address", "Business or store information", "Payment and billing details", "Authentication credentials"],
         },
         {
-          subtitle: t('privacyPolicy.informationCollection.usageData.title'),
-          items: t('privacyPolicy.informationCollection.usageData.items'),
+          subtitle: "Usage Data",
+          items: ["Product data and descriptions", "AI generation history and preferences", "Campaign and automation activity", "Platform interactions and feature usage"],
         },
         {
-          subtitle: t('privacyPolicy.informationCollection.cookies.title'),
-          items: t('privacyPolicy.informationCollection.cookies.items'),
+          subtitle: "Cookies and Tracking",
+          items: ["Session cookies for authentication", "Analytics cookies for performance tracking", "Preference cookies for personalization", "Third-party integration cookies"],
         },
         {
-          subtitle: t('privacyPolicy.informationCollection.integrations.title'),
-          items: t('privacyPolicy.informationCollection.integrations.items'),
+          subtitle: "Integration Data",
+          items: ["Shopify store data (if connected)", "Email service provider information", "Payment gateway data", "Third-party app connections"],
         },
       ],
     },
     {
       id: "information-use",
       icon: Users,
-      title: t('privacyPolicy.informationUse.title'),
+      title: "How We Use Your Information",
       content: [
-        t('privacyPolicy.informationUse.intro'),
+        "We use the information we collect for various legitimate business purposes:",
       ],
-      legalBasis: t('privacyPolicy.informationUse.legalBasis'),
+      legalBasis: "Legal Basis (GDPR): We process your data based on contract performance, legitimate interests, legal obligations, and your consent where required.",
       list: [
-        t('privacyPolicy.informationUse.items.provideServices'),
-        t('privacyPolicy.informationUse.items.optimizePerformance'),
-        t('privacyPolicy.informationUse.items.improveFeatures'),
-        t('privacyPolicy.informationUse.items.communicate'),
-        t('privacyPolicy.informationUse.items.security'),
-        t('privacyPolicy.informationUse.items.compliance'),
+        "Provide and maintain our AI-powered services and features",
+        "Optimize and personalize your experience with content recommendations",
+        "Improve our platform through analytics and feature development",
+        "Communicate with you about updates, offers, and support",
+        "Detect, prevent, and address security issues and fraud",
+        "Comply with legal obligations and enforce our terms of service",
       ],
     },
     {
       id: "data-sharing",
       icon: Share2,
-      title: t('privacyPolicy.dataSharing.title'),
+      title: "How We Share Your Information",
       content: [
-        t('privacyPolicy.dataSharing.intro'),
+        "We do not sell your personal information. We may share your data only in the following circumstances:",
       ],
       subsections: [
         {
-          subtitle: t('privacyPolicy.dataSharing.thirdParty.title'),
-          description: t('privacyPolicy.dataSharing.thirdParty.description'),
+          subtitle: "Third-Party Service Providers",
+          description: "We work with trusted partners who help us operate our platform, including cloud hosting providers, payment processors, email service providers, and AI technology partners. These partners are contractually obligated to protect your data and use it only for the services they provide to us.",
         },
         {
-          subtitle: t('privacyPolicy.dataSharing.legal.title'),
-          description: t('privacyPolicy.dataSharing.legal.description'),
+          subtitle: "Legal Requirements",
+          description: "We may disclose your information if required by law, court order, or government regulation, or if we believe disclosure is necessary to protect our rights, your safety, or the safety of others, investigate fraud, or respond to a government request.",
         },
         {
-          subtitle: t('privacyPolicy.dataSharing.businessTransfers.title'),
-          description: t('privacyPolicy.dataSharing.businessTransfers.description'),
+          subtitle: "Business Transfers",
+          description: "In the event of a merger, acquisition, or sale of assets, your information may be transferred to the acquiring entity. We will notify you of any such change in ownership or control of your personal information.",
         },
       ],
     },
     {
       id: "data-security",
       icon: Lock,
-      title: t('privacyPolicy.dataSecurity.title'),
+      title: "Data Security",
       content: [
-        t('privacyPolicy.dataSecurity.paragraph1'),
-        t('privacyPolicy.dataSecurity.paragraph2'),
+        "We implement industry-standard security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction. Our security practices include:",
+        "While we strive to protect your data, no method of transmission over the internet or electronic storage is 100% secure. We cannot guarantee absolute security but remain committed to maintaining the highest standards of data protection.",
       ],
       list: [
-        t('privacyPolicy.dataSecurity.measures.encryption'),
-        t('privacyPolicy.dataSecurity.measures.accessControls'),
-        t('privacyPolicy.dataSecurity.measures.monitoring'),
-        t('privacyPolicy.dataSecurity.measures.regularAudits'),
+        "End-to-end encryption for data in transit and at rest",
+        "Strict access controls and authentication requirements",
+        "Continuous monitoring and threat detection systems",
+        "Regular security audits and penetration testing",
       ],
     },
     {
       id: "user-rights",
       icon: UserCheck,
-      title: t('privacyPolicy.userRights.title'),
+      title: "Your Rights and Choices",
       content: [
-        t('privacyPolicy.userRights.intro'),
+        "You have important rights regarding your personal information. Depending on your location, you may have the following rights:",
       ],
-      ccpaNote: t('privacyPolicy.userRights.ccpaNote'),
+      ccpaNote: "California Residents: Under the CCPA, you have specific rights including the right to know what personal information we collect, the right to delete your information, and the right to opt-out of the sale of your information (which we do not engage in).",
       list: [
-        t('privacyPolicy.userRights.rights.access'),
-        t('privacyPolicy.userRights.rights.correction'),
-        t('privacyPolicy.userRights.rights.deletion'),
-        t('privacyPolicy.userRights.rights.portability'),
-        t('privacyPolicy.userRights.rights.optOut'),
-        t('privacyPolicy.userRights.rights.complaint'),
+        "Access: Request a copy of the personal information we hold about you",
+        "Correction: Request correction of inaccurate or incomplete data",
+        "Deletion: Request deletion of your personal information, subject to legal obligations",
+        "Data Portability: Receive your data in a structured, machine-readable format",
+        "Opt-Out: Unsubscribe from marketing communications at any time",
+        "Complaint: Lodge a complaint with your local data protection authority",
       ],
     },
     {
       id: "cookies-tracking",
       icon: Cookie,
-      title: t('privacyPolicy.cookiesTracking.title'),
+      title: "Cookies and Tracking Technologies",
       content: [
-        t('privacyPolicy.cookiesTracking.paragraph1'),
-        t('privacyPolicy.cookiesTracking.paragraph2'),
+        "We use cookies and similar tracking technologies to track activity on our platform and store certain information. Cookies are files with small amounts of data that may include an anonymous unique identifier.",
+        "You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our service.",
       ],
       subsections: [
         {
-          subtitle: t('privacyPolicy.cookiesTracking.types.essential.title'),
-          description: t('privacyPolicy.cookiesTracking.types.essential.description'),
+          subtitle: "Essential Cookies",
+          description: "These cookies are necessary for the platform to function properly. They enable core functionality such as security, authentication, and accessibility features. These cookies cannot be disabled in our systems.",
         },
         {
-          subtitle: t('privacyPolicy.cookiesTracking.types.analytics.title'),
-          description: t('privacyPolicy.cookiesTracking.types.analytics.description'),
+          subtitle: "Analytics Cookies",
+          description: "We use analytics cookies to understand how visitors interact with our platform. This helps us measure and improve the performance of our services. These cookies collect information in an aggregated and anonymous form.",
         },
         {
-          subtitle: t('privacyPolicy.cookiesTracking.types.preferences.title'),
-          description: t('privacyPolicy.cookiesTracking.types.preferences.description'),
+          subtitle: "Preference Cookies",
+          description: "These cookies allow the platform to remember choices you make (such as your language preference or region) and provide enhanced, personalized features based on your preferences.",
         },
       ],
     },
     {
       id: "third-party-integrations",
       icon: Puzzle,
-      title: t('privacyPolicy.thirdPartyIntegrations.title'),
+      title: "Third-Party Services and Integrations",
       content: [
-        t('privacyPolicy.thirdPartyIntegrations.intro'),
+        "We integrate with various third-party services to provide you with a comprehensive platform. When you use these integrations, you are also subject to those third parties' privacy policies and terms of service:",
       ],
       list: [
-        t('privacyPolicy.thirdPartyIntegrations.services.shopify'),
-        t('privacyPolicy.thirdPartyIntegrations.services.sendgrid'),
-        t('privacyPolicy.thirdPartyIntegrations.services.stripe'),
-        t('privacyPolicy.thirdPartyIntegrations.services.openai'),
-        t('privacyPolicy.thirdPartyIntegrations.services.analytics'),
+        "Shopify: E-commerce platform integration for product management and sales data",
+        "SendGrid: Email delivery service for transactional and marketing communications",
+        "Stripe & PayPal: Payment processing for secure subscription and billing management",
+        "OpenAI: AI technology provider for content generation and optimization",
+        "Analytics Providers: Tools for measuring platform performance and user engagement",
       ],
     },
     {
       id: "data-retention",
       icon: Archive,
-      title: t('privacyPolicy.dataRetention.title'),
+      title: "Data Retention",
       content: [
-        t('privacyPolicy.dataRetention.paragraph1'),
-        t('privacyPolicy.dataRetention.paragraph2'),
-        t('privacyPolicy.dataRetention.paragraph3'),
+        "We retain your personal information only for as long as necessary to fulfill the purposes for which it was collected, including legal, accounting, or reporting requirements.",
+        "When you close your account, we will delete or anonymize your personal information within 90 days, unless we are required by law to retain it longer. Backup copies may persist for a limited time in our systems.",
+        "We maintain different retention periods for different types of data based on their nature and purpose. For example, transaction records may be retained longer for tax and accounting purposes.",
       ],
     },
     {
       id: "international-transfers",
       icon: Globe,
-      title: t('privacyPolicy.internationalTransfers.title'),
+      title: "International Data Transfers",
       content: [
-        t('privacyPolicy.internationalTransfers.paragraph1'),
-        t('privacyPolicy.internationalTransfers.paragraph2'),
+        "Your information may be transferred to and maintained on servers located outside of your state, province, country, or other governmental jurisdiction where data protection laws may differ from those in your jurisdiction.",
+        "If you are located outside the United States and choose to provide information to us, please note that we transfer the data to the United States and process it there. We ensure appropriate safeguards are in place to protect your data in accordance with this Privacy Policy and applicable law, including Standard Contractual Clauses where required.",
       ],
     },
     {
       id: "policy-updates",
       icon: Bell,
-      title: t('privacyPolicy.policyUpdates.title'),
+      title: "Changes to This Privacy Policy",
       content: [
-        t('privacyPolicy.policyUpdates.paragraph1'),
-        t('privacyPolicy.policyUpdates.paragraph2'),
+        "We may update our Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or other factors. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the 'Last Updated' date.",
+        "We encourage you to review this Privacy Policy periodically to stay informed about how we are protecting your information. Your continued use of our services after we post changes constitutes your acceptance of the updated policy.",
       ],
     },
     {
       id: "contact",
       icon: Mail,
-      title: t('privacyPolicy.contact.title'),
+      title: "Contact Us",
       content: [
-        t('privacyPolicy.contact.paragraph1'),
+        "If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us using the information below. We are committed to resolving any privacy-related issues promptly and transparently.",
       ],
       contactInfo: {
-        email: t('privacyPolicy.contact.email'),
-        support: t('privacyPolicy.contact.support'),
+        email: "privacy@zyra.ai",
+        support: "For general support inquiries, visit our Help Center in the dashboard",
       },
     },
     {
       id: "childrens-privacy",
       icon: Baby,
-      title: t('privacyPolicy.childrensPrivacy.title'),
+      title: "Children's Privacy",
       content: [
-        t('privacyPolicy.childrensPrivacy.paragraph1'),
-        t('privacyPolicy.childrensPrivacy.paragraph2'),
-        t('privacyPolicy.childrensPrivacy.paragraph3'),
+        "Our services are not intended for individuals under the age of 18. We do not knowingly collect personally identifiable information from children under 18 years of age.",
+        "If you are a parent or guardian and you believe that your child has provided us with personal information, please contact us immediately. If we become aware that we have collected personal information from children without verification of parental consent, we will take steps to remove that information from our servers.",
+        "For users in the European Economic Area (EEA), we comply with the age requirements specified by the GDPR and process personal data of minors only with appropriate parental consent where required.",
       ],
     },
   ];
@@ -249,7 +247,7 @@ export default function PrivacyPolicyPage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 mb-8">
               <Shield className="w-4 h-4 text-[#00F0FF]" />
               <span className="text-[#00F0FF] text-sm font-medium" data-testid="text-hero-badge">
-                {t('privacyPolicy.hero.badge')}
+                Your Privacy Matters
               </span>
             </div>
             
@@ -257,21 +255,21 @@ export default function PrivacyPolicyPage() {
               className="text-4xl md:text-6xl font-bold text-[#EAEAEA] mb-6 leading-tight"
               data-testid="heading-hero"
             >
-              {t('privacyPolicy.hero.title')}
+              Privacy Policy
             </h1>
             
             <p 
               className="text-lg text-[#EAEAEA]/60 mb-4"
               data-testid="text-last-updated"
             >
-              {t('privacyPolicy.hero.lastUpdated')}: {t('privacyPolicy.hero.date')}
+              Last Updated: January 15, 2025
             </p>
             
             <p 
               className="text-xl text-[#EAEAEA]/80 max-w-3xl mx-auto"
               data-testid="text-hero-description"
             >
-              {t('privacyPolicy.hero.description')}
+              This Privacy Policy describes how Zyra AI collects, uses, and protects your personal information when you use our platform and services.
             </p>
           </div>
         </div>
@@ -435,14 +433,14 @@ export default function PrivacyPolicyPage() {
               className="text-3xl md:text-4xl font-bold text-[#EAEAEA] mb-6"
               data-testid="text-cta-title"
             >
-              {t('privacyPolicy.cta.title')}
+              Questions About Your Privacy?
             </h2>
             
             <p 
               className="text-xl text-[#EAEAEA]/80 mb-8"
               data-testid="text-cta-description"
             >
-              {t('privacyPolicy.cta.description')}
+              If you have any concerns or questions about our privacy practices, our team is here to help
             </p>
             
             <Link href="/dashboard">
@@ -451,7 +449,7 @@ export default function PrivacyPolicyPage() {
                 className="bg-[#00F0FF] hover:bg-[#00F0FF]/90 text-[#0D0D1F] font-bold text-lg px-8 py-6 h-auto"
                 data-testid="button-go-dashboard"
               >
-                {t('privacyPolicy.cta.button')}
+                Go to Dashboard
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

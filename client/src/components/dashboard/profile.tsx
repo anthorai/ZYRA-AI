@@ -18,7 +18,6 @@ import {
   User, 
   Lock, 
   Store, 
-  Globe, 
   Camera, 
   Settings, 
   Eye, 
@@ -156,24 +155,6 @@ export default function Profile() {
     },
   });
 
-  // Language update mutation
-  const updateLanguageMutation = useMutation({
-    mutationFn: async (language: string) => {
-      return await apiRequest("PUT", "/api/language", { preferredLanguage: language });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      toast({ title: "Success", description: "Language preference updated" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update language",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Profile image upload mutation
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -227,21 +208,10 @@ export default function Profile() {
     }
   };
 
-  const languages = [
-    { code: "en", name: "English" },
-    { code: "es", name: "Spanish" },
-    { code: "fr", name: "French" },
-    { code: "de", name: "German" },
-    { code: "pt", name: "Portuguese" },
-    { code: "zh", name: "Chinese" },
-    { code: "ja", name: "Japanese" },
-    { code: "ko", name: "Korean" },
-  ];
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 gradient-surface border border-slate-700">
+        <TabsList className="grid w-full grid-cols-3 gradient-surface border border-slate-700">
           <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
             <User className="w-4 h-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -253,10 +223,6 @@ export default function Profile() {
           <TabsTrigger value="stores" className="flex items-center space-x-2 data-[state=active]:active-tab">
             <Store className="w-4 h-4" />
             <span className="hidden sm:inline">Stores</span>
-          </TabsTrigger>
-          <TabsTrigger value="language" className="flex items-center space-x-2 data-[state=active]:active-tab">
-            <Globe className="w-4 h-4" />
-            <span className="hidden sm:inline">Language</span>
           </TabsTrigger>
         </TabsList>
 
@@ -673,48 +639,6 @@ export default function Profile() {
                       </Button>
                     </form>
                   </Form>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Language Tab */}
-        <TabsContent value="language">
-          <Card className="gradient-card border-0">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center space-x-2">
-                <Globe className="w-5 h-5" />
-                <span>Language Preferences</span>
-              </CardTitle>
-              <CardDescription className="text-slate-300">
-                Set your preferred language for the interface and AI content generation
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-white">Preferred Language</Label>
-                  <Select 
-                    defaultValue={user?.preferredLanguage || "en"}
-                    onValueChange={(value) => updateLanguageMutation.mutate(value)}
-                  >
-                    <SelectTrigger className="form-select text-white">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {languages.map((lang) => (
-                        <SelectItem key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="pt-4 border-t border-slate-600/30">
-                  <p className="text-sm text-slate-400">
-                    Your language preference affects AI-generated content, emails, and interface text.
-                  </p>
                 </div>
               </div>
             </CardContent>

@@ -23,7 +23,6 @@ import {
   User, 
   Lock, 
   Store, 
-  Globe, 
   Camera, 
   Eye, 
   EyeOff,
@@ -172,24 +171,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Language update mutation
-  const updateLanguageMutation = useMutation({
-    mutationFn: async (language: string) => {
-      return await apiRequest("PUT", "/api/language", { preferredLanguage: language });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      toast({ title: "Success", description: "Language preference updated" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update language",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Profile image upload mutation
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -243,17 +224,6 @@ export default function ProfilePage() {
     }
   };
 
-  const languages = [
-    { code: "en", name: "English" },
-    { code: "es", name: "Spanish" },
-    { code: "fr", name: "French" },
-    { code: "de", name: "German" },
-    { code: "pt", name: "Portuguese" },
-    { code: "zh", name: "Chinese" },
-    { code: "ja", name: "Japanese" },
-    { code: "ko", name: "Korean" },
-  ];
-
   return (
     <PageShell
       title="Profile Settings"
@@ -269,7 +239,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-4 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
+          <TabsList className="h-10 items-center justify-center rounded-md p-1 grid w-full grid-cols-3 border border-slate-700 text-[#f7f9ff] bg-[#16162c]">
             <TabsTrigger value="profile" className="flex items-center space-x-2 data-[state=active]:active-tab">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -281,10 +251,6 @@ export default function ProfilePage() {
             <TabsTrigger value="stores" className="flex items-center space-x-2 data-[state=active]:active-tab">
               <Store className="w-4 h-4" />
               <span className="hidden sm:inline">Stores</span>
-            </TabsTrigger>
-            <TabsTrigger value="language" className="flex items-center space-x-2 data-[state=active]:active-tab">
-              <Globe className="w-4 h-4" />
-              <span className="hidden sm:inline">Language</span>
             </TabsTrigger>
           </TabsList>
 
@@ -701,38 +667,6 @@ export default function ProfilePage() {
                     </Form>
                 </DashboardCard>
               </div>
-            </TabsContent>
-
-            {/* Language Tab */}
-            <TabsContent value="language">
-              <DashboardCard
-                title="Language Preferences"
-                description="Choose your preferred language for the interface"
-                headerAction={<Globe className="w-5 h-5" />}
-                testId="card-language"
-              >
-                  <div className="space-y-4">
-                    <Label className="text-white">Preferred Language</Label>
-                    <Select
-                      value={userData?.preferredLanguage || "en"}
-                      onValueChange={(value) => updateLanguageMutation.mutate(value)}
-                    >
-                      <SelectTrigger className="bg-slate-800 border-slate-600 text-white" data-testid="select-language">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent className="gradient-surface">
-                        {languages.map((lang) => (
-                          <SelectItem key={lang.code} value={lang.code}>
-                            {lang.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {updateLanguageMutation.isPending && (
-                      <p className="text-slate-400 text-sm">Updating language preference...</p>
-                    )}
-                  </div>
-              </DashboardCard>
             </TabsContent>
           </Tabs>
         )}

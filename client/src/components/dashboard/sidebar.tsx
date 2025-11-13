@@ -5,7 +5,6 @@ import zyraLogo from "@assets/zyra logo_1758518826550.png";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
-import { useLanguage } from "@/hooks/useLanguage";
 import { useLocation } from "wouter";
 import { 
   Zap, 
@@ -32,7 +31,6 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose }: SidebarProps) {
   const { appUser, user: supabaseUser } = useAuth();
   const { handleLogout, isLoggingOut } = useLogout();
-  const { t } = useLanguage();
   const [, setLocation] = useLocation();
   
   // Robust user name display logic - same as avatar components
@@ -105,12 +103,12 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   };
 
   const navItems = [
-    { id: "overview", label: t('navigation.dashboard'), icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
-    { id: "ai-tools", label: t('navigation.aiTools'), icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "ai-tools" },
-    { id: "automate", label: t('navigation.automate'), icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "analytics" },
-    { id: "campaigns", label: t('navigation.campaigns'), icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "campaigns" },
-    { id: "products", label: t('navigation.products'), icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
-    { id: "settings", label: t('navigation.settings'), icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
+    { id: "overview", label: "Dashboard", icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
+    { id: "ai-tools", label: "AI Tools", icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "ai-tools" },
+    { id: "automate", label: "Automate", icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "analytics" },
+    { id: "campaigns", label: "Campaigns", icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "campaigns" },
+    { id: "products", label: "Products", icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
+    { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
   ];
 
   return (

@@ -19,7 +19,6 @@ import Footer from "@/components/ui/footer";
 import ManageProducts from "@/pages/products/manage";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
-import { useLanguage } from "@/hooks/useLanguage";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useDashboard, useSkeletonLoader, useConnectionStatus } from "@/hooks/useDashboard";
 import { useLocation } from "wouter";
@@ -31,7 +30,6 @@ import { Zap, TrendingUp, ShoppingCart, Eye, RotateCcw, Plus, Menu, User, LogOut
 export default function Dashboard() {
   const { user, appUser } = useAuth();
   const { handleLogout, isLoggingOut } = useLogout();
-  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
   
   // Initialize sidebar state from localStorage, default to true for desktop, false for mobile
@@ -267,13 +265,13 @@ export default function Dashboard() {
 
   const getPageTitle = () => {
     const titles = {
-      overview: { title: t('navigation.dashboard'), subtitle: t('dashboard.subtitleOverview') },
-      "ai-tools": { title: t('navigation.aiTools'), subtitle: t('dashboard.subtitleAiTools') },
-      "automate": { title: t('navigation.automate'), subtitle: t('dashboard.subtitleAutomate') },
-      campaigns: { title: t('navigation.campaigns'), subtitle: t('dashboard.subtitleCampaigns') },
-      products: { title: t('navigation.products'), subtitle: t('dashboard.subtitleProducts') },
-      profile: { title: t('navigation.profile'), subtitle: t('dashboard.subtitleProfile') },
-      settings: { title: t('navigation.settings'), subtitle: t('dashboard.subtitleSettings') },
+      overview: { title: "Dashboard", subtitle: "Overview and quick actions" },
+      "ai-tools": { title: "AI Tools", subtitle: "AI-powered content generation" },
+      "automate": { title: "Automation", subtitle: "Bulk operations and workflows" },
+      campaigns: { title: "Campaigns", subtitle: "Email and SMS marketing" },
+      products: { title: "Products", subtitle: "Manage your product catalog" },
+      profile: { title: "Profile", subtitle: "Your account information" },
+      settings: { title: "Settings", subtitle: "App configuration and preferences" },
     };
     return titles[activeTab as keyof typeof titles] || titles.overview;
   };
@@ -367,7 +365,7 @@ export default function Dashboard() {
                     data-testid="menuitem-profile"
                   >
                     <User className="mr-2 h-4 w-4" />
-                    {t('navigation.profile')}
+                    Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
@@ -375,7 +373,7 @@ export default function Dashboard() {
                     data-testid="menuitem-settings"
                   >
                     <SettingsIcon className="mr-2 h-4 w-4" />
-                    {t('navigation.settings')}
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border/30" />
                   <DropdownMenuItem
@@ -385,7 +383,7 @@ export default function Dashboard() {
                     data-testid="menuitem-logout"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    {isLoggingOut ? t('auth.loggingOut') : t('auth.logout')}
+                    {isLoggingOut ? "Logging Out..." : "Logout"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

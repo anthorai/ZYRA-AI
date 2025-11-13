@@ -3604,26 +3604,6 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.put('/api/language', requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-
-      const { preferredLanguage } = req.body;
-      if (!preferredLanguage) {
-        return res.status(400).json({ error: 'Preferred language is required' });
-      }
-
-      const updatedUser = await supabaseStorage.updateUserLanguage(userId, preferredLanguage);
-      res.json(updatedUser);
-    } catch (error) {
-      console.error('Update language error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
   app.post('/api/upload-profile-image', requireAuth, uploadLimiter, upload.single('image'), async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
