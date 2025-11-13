@@ -1,27 +1,17 @@
-import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageShell } from "@/components/ui/page-shell";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useLogout } from "@/hooks/useLogout";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  User, 
-  Camera
-} from "lucide-react";
+import { User } from "lucide-react";
 
 const updateProfileSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
@@ -30,11 +20,8 @@ const updateProfileSchema = z.object({
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const { handleLogout } = useLogout();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch user data from API
   const { data: userData, isLoading: isLoadingUser } = useQuery({
@@ -77,41 +64,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Profile image upload mutation
-  const uploadImageMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("image", file);
-      return await apiRequest("POST", "/api/profile/upload-image", formData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-      toast({ title: "Success", description: "Profile image updated successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload image",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "Error",
-          description: "Image size must be less than 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      uploadImageMutation.mutate(file);
-    }
-  };
-
   return (
     <PageShell
       title="Profile Settings"
@@ -135,43 +87,13 @@ export default function ProfilePage() {
                 className="hover:shadow-cyan-500/20 transition-all duration-500"
               >
                 <div className="space-y-6">
-                  {/* Profile Image Section */}
-                  <div className="flex items-center space-x-6">
-                    <div className="relative group">
-                      <Avatar className="w-24 h-24 border-4 border-primary/20 group-hover:border-primary/40 transition-all duration-300">
-                        <AvatarImage src={userData?.imageUrl} alt={userData?.fullName || "User"} />
-                        <AvatarFallback className="text-xl bg-gradient-to-br gradient-surface text-primary font-bold">
-                          {userData?.fullName?.slice(0, 2).toUpperCase() || "US"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Camera className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="space-y-2">
-                        <Button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadImageMutation.isPending}
-                          className="gradient-button transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25"
-                          data-testid="button-upload-image"
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          {uploadImageMutation.isPending ? "Uploading..." : "Change Photo"}
-                        </Button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                          data-testid="input-file-upload"
-                        />
-                        <p className="text-xs text-slate-400">
-                          JPG, PNG or GIF up to 5MB
-                        </p>
-                      </div>
-                    </div>
+                  {/* Profile Avatar Section */}
+                  <div className="flex justify-center mb-8">
+                    <Avatar className="w-32 h-32 border-4 border-primary/30 shadow-lg shadow-primary/20">
+                      <AvatarFallback className="text-4xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 text-white font-bold tracking-wide">
+                        {userData?.fullName?.slice(0, 2).toUpperCase() || "US"}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
 
                   {/* Profile Form */}
