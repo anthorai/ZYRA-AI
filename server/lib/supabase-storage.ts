@@ -1172,13 +1172,18 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async createSecuritySettings(settings: InsertSecuritySettings): Promise<SecuritySettings> {
+    // Convert camelCase to snake_case for database
     const settingsData = {
-      ...settings,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      // Encrypt 2FA secret if provided
-      twoFactorSecret: settings.twoFactorSecret ? encrypt(settings.twoFactorSecret) : null
+      user_id: settings.userId,
+      two_factor_enabled: settings.twoFactorEnabled ?? false,
+      two_factor_secret: settings.twoFactorSecret ? encrypt(settings.twoFactorSecret) : null,
+      backup_codes: settings.backupCodes ?? null,
+      login_notifications: settings.loginNotifications ?? true,
+      session_timeout: settings.sessionTimeout ?? 3600,
+      last_password_change: settings.lastPasswordChange ?? new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -1190,20 +1195,25 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (error) throw new Error(`Failed to create security settings: ${error.message}`);
     
     // Decrypt 2FA secret before returning
-    if (data.twoFactorSecret && isEncrypted(data.twoFactorSecret)) {
-      data.twoFactorSecret = decrypt(data.twoFactorSecret);
+    if (data.two_factor_secret && isEncrypted(data.two_factor_secret)) {
+      data.two_factor_secret = decrypt(data.two_factor_secret);
     }
     
     return data;
   }
 
   async updateSecuritySettings(userId: string, updates: Partial<SecuritySettings>): Promise<SecuritySettings> {
-    const updateData = {
-      ...updates,
-      updatedAt: new Date().toISOString(),
-      // Encrypt 2FA secret if being updated
-      ...(updates.twoFactorSecret ? { twoFactorSecret: encrypt(updates.twoFactorSecret) } : {})
+    // Convert camelCase to snake_case for database
+    const updateData: any = {
+      updated_at: new Date().toISOString()
     };
+    
+    if (updates.twoFactorEnabled !== undefined) updateData.two_factor_enabled = updates.twoFactorEnabled;
+    if (updates.twoFactorSecret !== undefined) updateData.two_factor_secret = updates.twoFactorSecret ? encrypt(updates.twoFactorSecret) : null;
+    if (updates.backupCodes !== undefined) updateData.backup_codes = updates.backupCodes;
+    if (updates.loginNotifications !== undefined) updateData.login_notifications = updates.loginNotifications;
+    if (updates.sessionTimeout !== undefined) updateData.session_timeout = updates.sessionTimeout;
+    if (updates.lastPasswordChange !== undefined) updateData.last_password_change = updates.lastPasswordChange;
     
     const { data, error } = await supabase
       .from('security_settings')
@@ -1215,8 +1225,8 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (error) throw new Error(`Failed to update security settings: ${error.message}`);
     
     // Decrypt 2FA secret before returning
-    if (data.twoFactorSecret && isEncrypted(data.twoFactorSecret)) {
-      data.twoFactorSecret = decrypt(data.twoFactorSecret);
+    if (data.two_factor_secret && isEncrypted(data.two_factor_secret)) {
+      data.two_factor_secret = decrypt(data.two_factor_secret);
     }
     
     return data;
