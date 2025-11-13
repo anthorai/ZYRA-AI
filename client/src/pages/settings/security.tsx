@@ -14,7 +14,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { AccessibleLoading } from "@/components/ui/accessible-loading";
 import type { Session } from "@shared/schema";
-import { TwoFactorEnrollDialog } from "@/components/security/TwoFactorEnrollDialog";
+import { TwoFactorSetupInline } from "@/components/security/TwoFactorSetupInline";
 import { TwoFactorDisableDialog } from "@/components/security/TwoFactorDisableDialog";
 import { PasswordStrengthMeter } from "@/components/security/PasswordStrengthMeter";
 import { PasswordValidation } from "@shared/password-validation";
@@ -62,7 +62,7 @@ export default function SecurityPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showEnrollDialog, setShowEnrollDialog] = useState(false);
+  const [showSetupInline, setShowSetupInline] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
 
   // Fetch 2FA status from backend
@@ -79,14 +79,19 @@ export default function SecurityPage() {
 
   const handleToggle2FA = (enabled: boolean) => {
     if (enabled) {
-      setShowEnrollDialog(true);
+      setShowSetupInline(true);
     } else {
       setShowDisableDialog(true);
     }
   };
 
   const handle2FASuccess = () => {
+    setShowSetupInline(false);
     queryClient.invalidateQueries({ queryKey: ['/api/2fa/status'] });
+  };
+
+  const handle2FACancel = () => {
+    setShowSetupInline(false);
   };
 
   const passwordChangeMutation = useMutation({
@@ -210,11 +215,6 @@ export default function SecurityPage() {
 
   return (
     <>
-      <TwoFactorEnrollDialog
-        open={showEnrollDialog}
-        onOpenChange={setShowEnrollDialog}
-        onSuccess={handle2FASuccess}
-      />
       <TwoFactorDisableDialog
         open={showDisableDialog}
         onOpenChange={setShowDisableDialog}
@@ -228,8 +228,18 @@ export default function SecurityPage() {
         spacing="normal"
         backTo="/settings"
       >
-      {/* Two-Factor Authentication */}
-      <DashboardCard
+        {/* Two-Factor Authentication Setup */}
+        {showSetupInline ? (
+          <DashboardCard testId="card-2fa-setup">
+            <TwoFactorSetupInline
+              onSuccess={handle2FASuccess}
+              onCancel={handle2FACancel}
+            />
+          </DashboardCard>
+        ) : (
+          <>
+            {/* Two-Factor Authentication */}
+            <DashboardCard
         title="Two-Factor Authentication"
         description="Add an extra layer of security to your account"
         headerAction={
@@ -286,8 +296,8 @@ export default function SecurityPage() {
         </div>
       </DashboardCard>
 
-      {/* Password Management */}
-      <DashboardCard
+            {/* Password Management */}
+            <DashboardCard
         title="Password"
         description="Update your password regularly to keep your account secure"
         headerAction={<Lock className="w-5 h-5 text-primary" />}
@@ -382,8 +392,8 @@ export default function SecurityPage() {
         </div>
       </DashboardCard>
 
-      {/* Active Sessions */}
-      <DashboardCard
+            {/* Active Sessions */}
+            <DashboardCard
         title="Active Sessions"
         description="Manage devices currently signed into your account"
         headerAction={<Monitor className="w-5 h-5 text-primary" />}
@@ -450,8 +460,8 @@ export default function SecurityPage() {
         )}
       </DashboardCard>
 
-      {/* Data Management */}
-      <DashboardCard
+            {/* Data Management */}
+            <DashboardCard
         title="Data Management"
         description="Export or delete your account data (GDPR compliant)"
         headerAction={<Key className="w-5 h-5 text-primary" />}
@@ -495,7 +505,9 @@ export default function SecurityPage() {
             </Button>
           </div>
         </div>
-      </DashboardCard>
+            </DashboardCard>
+          </>
+        )}
       </PageShell>
     </>
   );
