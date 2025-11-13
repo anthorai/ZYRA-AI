@@ -1194,12 +1194,23 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to create security settings: ${error.message}`);
     
-    // Decrypt 2FA secret before returning
-    if (data.two_factor_secret && isEncrypted(data.two_factor_secret)) {
-      data.two_factor_secret = decrypt(data.two_factor_secret);
-    }
+    // Decrypt 2FA secret and convert snake_case to camelCase
+    const twoFactorSecret = data.two_factor_secret && isEncrypted(data.two_factor_secret) 
+      ? decrypt(data.two_factor_secret) 
+      : data.two_factor_secret;
     
-    return data;
+    return {
+      id: data.id,
+      userId: data.user_id,
+      twoFactorEnabled: data.two_factor_enabled,
+      twoFactorSecret,
+      backupCodes: data.backup_codes,
+      loginNotifications: data.login_notifications,
+      sessionTimeout: data.session_timeout,
+      lastPasswordChange: data.last_password_change,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
   }
 
   async updateSecuritySettings(userId: string, updates: Partial<SecuritySettings>): Promise<SecuritySettings> {
@@ -1224,12 +1235,23 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to update security settings: ${error.message}`);
     
-    // Decrypt 2FA secret before returning
-    if (data.two_factor_secret && isEncrypted(data.two_factor_secret)) {
-      data.two_factor_secret = decrypt(data.two_factor_secret);
-    }
+    // Decrypt 2FA secret and convert snake_case to camelCase
+    const twoFactorSecret = data.two_factor_secret && isEncrypted(data.two_factor_secret) 
+      ? decrypt(data.two_factor_secret) 
+      : data.two_factor_secret;
     
-    return data;
+    return {
+      id: data.id,
+      userId: data.user_id,
+      twoFactorEnabled: data.two_factor_enabled,
+      twoFactorSecret,
+      backupCodes: data.backup_codes,
+      loginNotifications: data.login_notifications,
+      sessionTimeout: data.session_timeout,
+      lastPasswordChange: data.last_password_change,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
   }
 
   async createLoginLog(log: InsertLoginLog): Promise<LoginLog> {
@@ -1532,14 +1554,34 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async getUserSessions(userId: string): Promise<Session[]> {
-    const { data, error } = await supabase
+    // Only select columns that exist in Supabase's schema cache
+    // Additional columns from migration may not be recognized yet
+    const { data, error} = await supabase
       .from('sessions')
-      .select('*')
+      .select('id, session_id, user_id, expires_at, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
     if (error) throw new Error(`Failed to get user sessions: ${error.message}`);
-    return data || [];
+    
+    // Map snake_case to camelCase and include missing fields with null values
+    const sessions = (data || []).map((session: any) => ({
+      id: session.id,
+      sessionId: session.session_id,
+      userId: session.user_id,
+      expiresAt: new Date(session.expires_at),
+      createdAt: session.created_at ? new Date(session.created_at) : null,
+      refreshTokenId: null,
+      userAgent: null,
+      deviceType: null,
+      browser: null,
+      os: null,
+      ipAddress: null,
+      location: null,
+      lastSeenAt: null
+    }));
+    
+    return sessions;
   }
 
   async updateSession(sessionId: string, updates: Partial<Session>): Promise<Session> {
