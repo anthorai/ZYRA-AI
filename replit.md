@@ -9,6 +9,8 @@ Preferred communication style: Simple, everyday language.
 ## UI/UX Decisions
 The frontend uses React 18, TypeScript, and Vite, featuring shadcn/ui components with Radix UI and Wouter for routing. Styling is managed by Tailwind CSS with a dark theme, following a component-based architecture. Navigation uses the browser's native `window.history.back()` API for consistent back button behavior. Browser caching is controlled to ensure the latest application version, and the sidebar state persists across sessions using `localStorage`. The application is WCAG 2.1 AA compliant, with comprehensive accessibility features including keyboard navigation, visible focus indicators, logical tab order, color contrast verification, screen reader support (ARIA labels, semantic landmarks), and accessible components for loading states and forms. PWA capabilities with service worker caching provide offline support, faster repeat visits, and installability.
 
+**Page Layout System**: The PageShell component provides standardized page structure with optional header suppression via `hideHeader` prop. This allows pages like Products Manage to render without headers while maintaining required layout contracts (routing context, responsive gutters, standardized spacing). All protected routes should use PageShell to ensure consistency.
+
 ## Technical Implementations
 The server uses Express.js with TypeScript, providing RESTful API endpoints. Authentication is session-based via `express-session` and Passport.js. PostgreSQL with Drizzle ORM is used for type-safe database operations, and Drizzle Kit manages migrations. AES-256-GCM encryption is used for sensitive data.
 
