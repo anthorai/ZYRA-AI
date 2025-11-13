@@ -3955,7 +3955,15 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const updates = insertUserPreferencesSchema.partial().parse(req.body);
-      const preferences = await supabaseStorage.updateUserPreferences(userId, updates);
+      
+      // Convert camelCase to snake_case for Supabase columns
+      const dbUpdates: any = {};
+      if (updates.aiSettings !== undefined) dbUpdates.ai_settings = updates.aiSettings;
+      if (updates.notificationSettings !== undefined) dbUpdates.notification_settings = updates.notificationSettings;
+      if (updates.uiPreferences !== undefined) dbUpdates.ui_preferences = updates.uiPreferences;
+      if (updates.privacySettings !== undefined) dbUpdates.privacy_settings = updates.privacySettings;
+      
+      const preferences = await supabaseStorage.updateUserPreferences(userId, dbUpdates);
       res.json(preferences);
     } catch (error) {
       console.error('Update user preferences error:', error);
