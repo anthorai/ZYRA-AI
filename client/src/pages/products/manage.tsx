@@ -19,10 +19,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
   Sparkles,
   Layers,
-  Image as ImageIcon,
 } from 'lucide-react';
 
 interface Product {
