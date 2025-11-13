@@ -4156,6 +4156,74 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Admin Support Ticket Routes
+  app.get('/api/admin/support-tickets', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Admin-only access
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+      }
+      
+      // Parse query filters
+      const filters = {
+        status: req.query.status as string | undefined,
+        category: req.query.category as string | undefined,
+        priority: req.query.priority as string | undefined,
+        search: req.query.search as string | undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : 0
+      };
+      
+      const tickets = await supabaseStorage.getAllSupportTickets(filters);
+      res.json(tickets);
+    } catch (error) {
+      console.error('Admin get support tickets error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/admin/support-tickets/:id', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Admin-only access
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+      }
+      
+      const ticket = await supabaseStorage.getSupportTicketById(req.params.id);
+      res.json(ticket);
+    } catch (error) {
+      console.error('Admin get support ticket error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.patch('/api/admin/support-tickets/:id', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Admin-only access
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+      }
+      
+      // Validate updates (allow status, priority, category updates)
+      const updates = insertSupportTicketSchema
+        .partial()
+        .omit({ userId: true })
+        .parse(req.body);
+      
+      const ticket = await supabaseStorage.updateSupportTicket(req.params.id, updates);
+      res.json(ticket);
+    } catch (error) {
+      console.error('Admin update support ticket error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // AI Generation History Routes  
   app.get('/api/settings/ai-history', requireAuth, async (req, res) => {
     try {

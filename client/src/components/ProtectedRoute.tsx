@@ -4,9 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const auth = useAuth();
   const [, setLocation] = useLocation();
   const hasRedirected = useRef(false);
@@ -25,11 +26,17 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       setLocation("/auth");
     }
     
+    // Redirect to dashboard if admin access is required but user is not admin
+    if (!isLoading && isAuthenticated && requireAdmin && user?.role !== 'admin') {
+      hasRedirected.current = true;
+      setLocation("/dashboard");
+    }
+    
     // Reset redirect flag when user becomes authenticated
     if (isAuthenticated) {
       hasRedirected.current = false;
     }
-  }, [isLoading, isAuthenticated, setLocation, auth]);
+  }, [isLoading, isAuthenticated, setLocation, auth, requireAdmin, user]);
 
   if (isLoading) {
     return (
@@ -43,6 +50,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
+
+  // Check admin requirement
+  if (requireAdmin && user?.role !== 'admin') {
     return null; // Will redirect via useEffect
   }
 

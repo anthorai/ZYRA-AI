@@ -156,6 +156,9 @@ export interface ISupabaseStorage {
   getSupportTickets(userId: string): Promise<SupportTicket[]>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
   updateSupportTicket(id: string, updates: Partial<SupportTicket>): Promise<SupportTicket>;
+  // Admin support ticket methods
+  getAllSupportTickets(filters?: { status?: string; category?: string; priority?: string; search?: string; limit?: number; offset?: number }): Promise<any[]>;
+  getSupportTicketById(id: string): Promise<any>;
 
   // AI generation history methods
   getAiGenerationHistory(userId: string, limit?: number): Promise<AiGenerationHistory[]>;
@@ -1325,6 +1328,68 @@ export class SupabaseStorage implements ISupabaseStorage {
       .single();
     
     if (error) throw new Error(`Failed to update support ticket: ${error.message}`);
+    return data;
+  }
+
+  // Admin support ticket methods
+  async getAllSupportTickets(filters?: { status?: string; category?: string; priority?: string; search?: string; limit?: number; offset?: number }): Promise<any[]> {
+    let query = supabase
+      .from('support_tickets')
+      .select(`
+        *,
+        user:users!user_id (
+          id,
+          email,
+          full_name,
+          plan
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    // Apply filters
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+    if (filters?.category) {
+      query = query.eq('category', filters.category);
+    }
+    if (filters?.priority) {
+      query = query.eq('priority', filters.priority);
+    }
+    if (filters?.search) {
+      // Escape special characters in search term
+      const term = filters.search.replace(/[,()]/g, '\\$&');
+      query = query.or(`(subject.ilike.%${term}%,message.ilike.%${term}%)`);
+    }
+    
+    // Apply pagination
+    const limit = filters?.limit || 50;
+    const offset = filters?.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+    
+    const { data, error } = await query;
+    
+    if (error) throw new Error(`Failed to get all support tickets: ${error.message}`);
+    return data || [];
+  }
+
+  async getSupportTicketById(id: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select(`
+        *,
+        user:users!user_id (
+          id,
+          email,
+          full_name,
+          plan,
+          image_url
+        )
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw new Error(`Failed to get support ticket: ${error.message}`);
     return data;
   }
 

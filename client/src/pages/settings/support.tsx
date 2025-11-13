@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { PageShell } from "@/components/ui/page-shell";
 import { HelpCircle, FileText, MessageSquare, Mail, Users, ExternalLink, Send, Book, Video, LifeBuoy } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function SupportPage() {
   const { toast } = useToast();
@@ -16,6 +18,38 @@ export default function SupportPage() {
   
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+
+  const submitTicketMutation = useMutation({
+    mutationFn: async (data: { subject: string; message: string }) => {
+      return await apiRequest('/api/settings/support', {
+        method: 'POST',
+        body: JSON.stringify({
+          subject: data.subject,
+          message: data.message,
+          category: 'general',
+          priority: 'medium',
+          status: 'open'
+        })
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message Sent",
+        description: "Thank you! Our team will review your message shortly",
+        duration: 3000,
+      });
+      setSubject("");
+      setMessage("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Send",
+        description: error.message || "Please try again later",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  });
 
   const handleSubmitFeedback = () => {
     if (!subject.trim() || !message.trim()) {
@@ -28,14 +62,7 @@ export default function SupportPage() {
       return;
     }
 
-    toast({
-      title: "Feedback Submitted",
-      description: "Thank you! Our team will review your feedback shortly",
-      duration: 3000,
-    });
-    
-    setSubject("");
-    setMessage("");
+    submitTicketMutation.mutate({ subject, message });
   };
 
   const resourceLinks = [
@@ -246,10 +273,11 @@ export default function SupportPage() {
             <Button
               onClick={handleSubmitFeedback}
               className="gradient-button"
+              disabled={submitTicketMutation.isPending}
               data-testid="button-submit-support"
             >
               <Send className="w-4 h-4 mr-2" />
-              Send Message
+              {submitTicketMutation.isPending ? "Sending..." : "Send Message"}
             </Button>
           </div>
         </div>

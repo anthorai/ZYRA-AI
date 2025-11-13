@@ -40,6 +40,9 @@ const IntegrationsPage = lazy(() => import("@/pages/settings/integrations"));
 const SecurityPage = lazy(() => import("@/pages/settings/security"));
 const SupportPage = lazy(() => import("@/pages/settings/support"));
 
+// Admin pages
+const AdminSupportInboxPage = lazy(() => import("@/pages/admin/support-inbox"));
+
 // Help/Documentation pages
 const GettingStartedPage = lazy(() => import("@/pages/help/getting-started"));
 const TutorialsPage = lazy(() => import("@/pages/help/tutorials"));
@@ -254,6 +257,15 @@ function Router() {
               <SupportPage />
             </Suspense>
           </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+
+      {/* Admin routes */}
+      <Route path="/admin/support-inbox" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminSupportInboxPage />
+          </Suspense>
         </ProtectedRoute>
       )} />
 
