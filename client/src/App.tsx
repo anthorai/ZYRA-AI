@@ -41,6 +41,12 @@ const IntegrationsPage = lazy(() => import("@/pages/settings/integrations"));
 const SecurityPage = lazy(() => import("@/pages/settings/security"));
 const SupportPage = lazy(() => import("@/pages/settings/support"));
 
+// Help/Documentation pages
+const GettingStartedPage = lazy(() => import("@/pages/help/getting-started"));
+const TutorialsPage = lazy(() => import("@/pages/help/tutorials"));
+const APIDocumentationPage = lazy(() => import("@/pages/help/api"));
+const BestPracticesPage = lazy(() => import("@/pages/help/best-practices"));
+
 // Analytics pages
 const OptimizedProducts = lazy(() => import("@/pages/optimized-products"));
 const EmailPerformance = lazy(() => import("@/pages/email-performance"));
@@ -247,6 +253,44 @@ function Router() {
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
               <SupportPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+
+      {/* Help/Documentation routes */}
+      <Route path="/help/getting-started" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <GettingStartedPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/help/tutorials" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <TutorialsPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/help/api" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <APIDocumentationPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/help/best-practices" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <BestPracticesPage />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>

@@ -178,6 +178,15 @@ export default function SupportPage() {
                   variant="ghost"
                   size="sm"
                   className="text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    const routes: Record<string, string> = {
+                      'getting-started': '/help/getting-started',
+                      'video-tutorials': '/help/tutorials',
+                      'api-docs': '/help/api',
+                      'best-practices': '/help/best-practices'
+                    };
+                    setLocation(routes[resource.id] || '/help/getting-started');
+                  }}
                   data-testid={`button-resource-${resource.id}`}
                 >
                   {resource.action}
