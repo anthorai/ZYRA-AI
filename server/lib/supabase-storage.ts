@@ -1536,7 +1536,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       .from('sessions')
       .select('*')
       .eq('user_id', userId)
-      .order('last_seen_at', { ascending: false });
+      .order('created_at', { ascending: false });
     
     if (error) throw new Error(`Failed to get user sessions: ${error.message}`);
     return data || [];
