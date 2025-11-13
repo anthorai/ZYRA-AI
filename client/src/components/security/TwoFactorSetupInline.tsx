@@ -37,6 +37,10 @@ export function TwoFactorSetupInline({
   const setupMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/2fa/setup");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to setup 2FA");
+      }
       return response.json() as Promise<SetupResponse>;
     },
     onSuccess: (data) => {
@@ -55,6 +59,10 @@ export function TwoFactorSetupInline({
   const enableMutation = useMutation({
     mutationFn: async (token: string) => {
       const response = await apiRequest("POST", "/api/2fa/enable", { token });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to enable 2FA");
+      }
       return response.json();
     },
     onSuccess: () => {
