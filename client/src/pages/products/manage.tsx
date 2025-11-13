@@ -300,19 +300,16 @@ export default function ManageProducts() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <PageShell hideHeader>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <PageShell
-      title="Manage Products"
-      subtitle="Sync, optimize, and publish your Shopify products with AI"
-      maxWidth="xl"
-      spacing="normal"
-    >
+    <PageShell hideHeader maxWidth="xl" spacing="normal">
       {/* Search and Action Buttons */}
       <div className="flex flex-col gap-3">
         <div className="relative w-full">

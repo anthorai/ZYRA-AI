@@ -3,8 +3,8 @@ import { UnifiedHeader } from "@/components/ui/unified-header";
 import { cn } from "@/lib/utils";
 
 interface PageShellProps {
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   children: ReactNode;
   backTo?: string;
   onBack?: () => void;
@@ -14,11 +14,12 @@ interface PageShellProps {
   spacing?: "compact" | "normal" | "relaxed";
   className?: string;
   contentClassName?: string;
+  hideHeader?: boolean;
 }
 
 export function PageShell({
-  title,
-  subtitle,
+  title = "",
+  subtitle = "",
   children,
   backTo,
   onBack,
@@ -27,7 +28,8 @@ export function PageShell({
   maxWidth = "full",
   spacing = "normal",
   className,
-  contentClassName
+  contentClassName,
+  hideHeader = false
 }: PageShellProps) {
   const maxWidthClasses = {
     sm: "max-w-2xl",
@@ -47,14 +49,16 @@ export function PageShell({
   return (
     <div className={cn("min-h-screen flex flex-col", className)}>
       {/* Header */}
-      <UnifiedHeader
-        title={title}
-        subtitle={subtitle}
-        backTo={backTo}
-        onBack={onBack}
-        showBackButton={showBackButton}
-        rightActions={rightActions}
-      />
+      {!hideHeader && (
+        <UnifiedHeader
+          title={title}
+          subtitle={subtitle}
+          backTo={backTo}
+          onBack={onBack}
+          showBackButton={showBackButton}
+          rightActions={rightActions}
+        />
+      )}
 
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-6">
