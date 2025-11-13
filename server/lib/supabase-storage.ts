@@ -1006,7 +1006,7 @@ export class SupabaseStorage implements ISupabaseStorage {
   async updateUserPreferences(userId: string, updates: Partial<UserPreferences>): Promise<UserPreferences> {
     const { data, error } = await supabase
       .from('user_preferences')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('user_id', userId)
       .select()
       .single();
