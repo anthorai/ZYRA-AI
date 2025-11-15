@@ -4311,7 +4311,10 @@ Output format: Markdown with clear section headings.`;
         setImmediate(async () => {
           try {
             const { extractWinningPatterns } = await import('../shared/content-performance-analyzer');
-            const pattern = extractWinningPatterns('Sample content pattern');
+            const pattern = extractWinningPatterns([{
+              content: `High performing ${existing.contentType}`,
+              performanceScore: updated.performanceScore || 0
+            }]);
             
             await storage.createLearningPattern({
               userId,
@@ -4425,7 +4428,10 @@ Output format: Markdown with clear section headings.`;
 
       for (const content of qualifying) {
         try {
-          const pattern = extractWinningPatterns('Sample content pattern');
+          const pattern = extractWinningPatterns([{
+            content: `High performing ${content.contentType}`,
+            performanceScore: content.performanceScore || 0
+          }]);
           const conversionRate = parseFloat(content.conversionRate || "0");
           
           const created = await storage.createLearningPattern({
