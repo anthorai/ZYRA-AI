@@ -1,12 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Zap, Star, TrendingUp, ShoppingCart, Mail, Search, BarChart3, Cog, ArrowRight, Play, Check, Gift, Crown, Award, 
   Settings, FileText, Network, Activity, Shield, Palette, LogOut, CheckCircle2, Sparkles, Lock, Clock,
-  Users, DollarSign, Target, Rocket, ChevronDown, ChevronUp, Quote, ExternalLink, Timer
+  Users, DollarSign, Target, Rocket, ChevronDown, ChevronUp, Quote, ExternalLink, Timer, Pause, Volume2, VolumeX
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,77 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [isAnnual, setIsAnnual] = useState(false);
+  
+  // Video player state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const userPausedRef = useRef(false);
+
+  // Auto-play video when scrolled into view using Intersection Observer
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = videoContainerRef.current;
+
+    if (!video || !container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        
+        if (entry.isIntersecting) {
+          // Only auto-play if user hasn't manually paused
+          if (!userPausedRef.current) {
+            video.play().catch((err) => {
+              console.log('Autoplay prevented:', err);
+              setIsPlaying(false);
+            });
+            setIsPlaying(true);
+          }
+        } else {
+          // Reset user pause flag when video scrolls out of view
+          video.pause();
+          setIsPlaying(false);
+          userPausedRef.current = false;
+        }
+      },
+      {
+        threshold: 0.5, // Play when 50% visible
+        rootMargin: '0px'
+      }
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+        userPausedRef.current = true; // Track manual pause
+      } else {
+        videoRef.current.play().catch((err) => {
+          console.error('Play failed:', err);
+          setIsPlaying(false);
+        });
+        setIsPlaying(true);
+        userPausedRef.current = false; // Allow auto-play again
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   // Handle logout functionality
   const handleLogout = async () => {
@@ -631,6 +702,109 @@ export default function Landing() {
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground" data-testid="trust-live-activity">
               <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               <span>342 merchants started their trial in the last 30 days</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Product Demo Video Section */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background">
+          <div className="container mx-auto">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4" data-testid="badge-video-section">
+                See Zyra AI In Action
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                Watch How <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF00F5] bg-clip-text text-transparent">Zyra Transforms</span> Your Store
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                See our AI-powered tools in action. This 2-minute demo shows you exactly how Zyra optimizes products, recovers carts, and drives revenue.
+              </p>
+            </div>
+
+            {/* Video Player */}
+            <div 
+              ref={videoContainerRef} 
+              className="relative max-w-5xl mx-auto rounded-xl overflow-hidden shadow-2xl"
+              data-testid="container-demo-video"
+            >
+              {/* Video Element */}
+              <video
+                ref={videoRef}
+                className="w-full aspect-video object-cover"
+                muted={isMuted}
+                loop
+                playsInline
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300F0FF;stop-opacity:0.3' /%3E%3Cstop offset='100%25' style='stop-color:%23FF00F5;stop-opacity:0.3' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='675' fill='%23111827'/%3E%3Crect width='1200' height='675' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial,sans-serif' font-size='48' fill='%2300F0FF' text-anchor='middle'%3EZyra AI Demo%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial,sans-serif' font-size='24' fill='%23ffffff' opacity='0.7' text-anchor='middle'%3EProduct Optimization in Action%3C/text%3E%3C/svg%3E"
+                data-testid="video-demo-player"
+              >
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+
+              {/* Video Controls Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none">
+                {/* Play/Pause Button */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="w-16 h-16 rounded-full bg-background/90 backdrop-blur-sm border-2 border-primary/50 hover:border-primary pointer-events-auto"
+                    onClick={togglePlay}
+                    data-testid="button-video-toggle-play"
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-8 h-8 text-primary" />
+                    ) : (
+                      <Play className="w-8 h-8 text-primary ml-1" />
+                    )}
+                  </Button>
+                </div>
+
+                {/* Bottom Controls */}
+                <div className="absolute bottom-4 right-4 flex items-center gap-2 pointer-events-auto">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                    onClick={toggleMute}
+                    data-testid="button-video-toggle-mute"
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Gradient Border Effect */}
+              <div className="absolute inset-0 rounded-xl border-2 border-transparent bg-gradient-to-r from-[#00F0FF]/20 to-[#FF00F5]/20 pointer-events-none" />
+            </div>
+
+            {/* Video Features Below */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 max-w-4xl mx-auto">
+              <div className="text-center" data-testid="feature-video-1">
+                <div className="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Zap className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-1">AI Product Optimization</h3>
+                <p className="text-sm text-muted-foreground">Watch AI generate perfect product descriptions in seconds</p>
+              </div>
+              <div className="text-center" data-testid="feature-video-2">
+                <div className="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Mail className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-1">Cart Recovery Automation</h3>
+                <p className="text-sm text-muted-foreground">See how personalized emails bring customers back</p>
+              </div>
+              <div className="text-center" data-testid="feature-video-3">
+                <div className="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-1">Real-Time Analytics</h3>
+                <p className="text-sm text-muted-foreground">Track ROI and performance across all channels</p>
+              </div>
             </div>
           </div>
         </section>
