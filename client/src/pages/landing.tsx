@@ -557,9 +557,47 @@ export default function Landing() {
         {/* Trust Bar Section */}
         <section className="py-8 px-4 sm:px-6 border-y border-border/50 bg-muted/30">
           <div className="container mx-auto">
-            {/* Star rating + user count */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6">
-              <div className="flex items-center gap-2">
+            {/* Client Logos Strip */}
+            <div className="mb-8">
+              <p className="text-center text-sm text-muted-foreground mb-2">Join thousands of successful Shopify merchants</p>
+              <p className="text-center text-xs text-muted-foreground/60 mb-4 italic">Illustrative client examples</p>
+              <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-50">
+                <div className="flex flex-col items-center gap-2" data-testid="logo-client-1">
+                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <span className="text-sm font-bold tracking-wider text-foreground/60">FASHION CO</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2" data-testid="logo-client-2">
+                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <span className="text-sm font-bold tracking-wider text-foreground/60">BEAUTY PLUS</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2" data-testid="logo-client-3">
+                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <span className="text-sm font-bold tracking-wider text-foreground/60">TECH STORE</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2" data-testid="logo-client-4">
+                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <span className="text-sm font-bold tracking-wider text-foreground/60">HOME SHOP</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2" data-testid="logo-client-5">
+                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <span className="text-sm font-bold tracking-wider text-foreground/60">FIT GEAR</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2" data-testid="logo-client-6">
+                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                    <span className="text-sm font-bold tracking-wider text-foreground/60">LIFESTYLE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Star rating + security badges */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-6 flex-wrap">
+              <div className="flex items-center gap-2" data-testid="trust-star-rating">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -568,21 +606,31 @@ export default function Landing() {
                 <span className="text-sm font-semibold">4.9/5 from 2,300+ reviews</span>
               </div>
               <div className="h-4 w-px bg-border hidden md:block" />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-testid="trust-shopify-partner">
                 <CheckCircle2 className="w-5 h-5 text-primary" />
                 <span className="text-sm">Official Shopify Partner</span>
               </div>
               <div className="h-4 w-px bg-border hidden md:block" />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-testid="trust-encryption">
                 <Lock className="w-5 h-5 text-primary" />
                 <span className="text-sm">Bank-Level Encryption</span>
+              </div>
+              <div className="h-4 w-px bg-border hidden md:block" />
+              <div className="flex items-center gap-2" data-testid="trust-gdpr">
+                <Shield className="w-5 h-5 text-primary" />
+                <span className="text-sm">GDPR Compliant</span>
+              </div>
+              <div className="h-4 w-px bg-border hidden md:block" />
+              <div className="flex items-center gap-2" data-testid="trust-soc2">
+                <Award className="w-5 h-5 text-primary" />
+                <span className="text-sm">SOC 2 Certified</span>
               </div>
             </div>
 
             {/* Live social proof */}
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground" data-testid="trust-live-activity">
               <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span>342 merchants started their trial today</span>
+              <span>342 merchants started their trial in the last 30 days</span>
             </div>
           </div>
         </section>
