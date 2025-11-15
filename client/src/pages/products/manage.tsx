@@ -12,6 +12,7 @@ import { PublishContent, useShopifyBulkPublish } from '@/hooks/use-shopify-publi
 import { useProductRealtime } from '@/hooks/use-product-realtime';
 import { CardGrid } from '@/components/ui/standardized-layout';
 import { PageShell } from '@/components/ui/page-shell';
+import { GradientPageHeader } from '@/components/ui/page-hero';
 import {
   Package,
   Search,
@@ -310,6 +311,13 @@ export default function ManageProducts() {
 
   return (
     <PageShell hideHeader maxWidth="xl" spacing="normal">
+      {/* Header */}
+      <GradientPageHeader
+        icon={<Package className="w-8 h-8 text-primary" />}
+        title="Product Management"
+        subtitle="Sync products from Shopify, optimize with AI, and publish updates to your store"
+      />
+
       {/* Search and Action Buttons */}
       <div className="flex flex-col gap-3">
         <div className="relative w-full">

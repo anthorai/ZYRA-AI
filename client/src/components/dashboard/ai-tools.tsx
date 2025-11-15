@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { GradientPageHeader } from "@/components/ui/page-hero";
 import { 
   Zap, 
   Copy, 
@@ -299,17 +300,11 @@ export default function AITools() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* AI Tools Hub Header */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-2">
-          <Sparkles className="w-8 h-8 text-primary" />
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-            AI Tools Hub
-          </h1>
-        </div>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Supercharge your e-commerce with AI-powered content generation, optimization, and automation
-        </p>
-      </div>
+      <GradientPageHeader
+        icon={<Sparkles className="w-8 h-8 text-primary" />}
+        title="AI Tools Hub"
+        subtitle="Supercharge your e-commerce with AI-powered content generation, optimization, and automation"
+      />
 
       {/* Tools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
