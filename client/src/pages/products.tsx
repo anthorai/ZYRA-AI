@@ -601,6 +601,19 @@ export default function ProductsPage() {
           <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             <div>
               <PageContainer>
+                {/* Header */}
+                <div className="text-center space-y-4 mb-8">
+                  <div className="flex items-center justify-center space-x-2">
+                    <Package className="w-8 h-8 text-primary" />
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                      Product Catalog
+                    </h1>
+                  </div>
+                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                    Manage your inventory, optimize product descriptions, and boost conversions with AI
+                  </p>
+                </div>
+
                 {/* Products Grid */}
                 <ProductGrid 
                   products={products} 
