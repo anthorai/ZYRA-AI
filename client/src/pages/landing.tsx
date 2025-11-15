@@ -8,7 +8,7 @@ import {
   Zap, Star, TrendingUp, ShoppingCart, Mail, Search, BarChart3, Cog, ArrowRight, Play, Check, Gift, Crown, Award, 
   Settings, FileText, Network, Activity, Shield, Palette, LogOut, CheckCircle2, Sparkles, Lock, Clock,
   Users, DollarSign, Target, Rocket, ChevronDown, ChevronUp, Quote, ExternalLink, Timer, Pause, Volume2, VolumeX,
-  BadgeCheck, Store
+  BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -634,35 +634,41 @@ export default function Landing() {
             <div className="mb-8">
               <p className="text-center text-sm text-muted-foreground mb-2">Join thousands of successful Shopify merchants</p>
               <p className="text-center text-xs text-muted-foreground/60 mb-4 italic">Illustrative client examples</p>
-              <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-50">
+              <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 opacity-60">
                 <div className="flex flex-col items-center gap-2" data-testid="logo-client-1">
-                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-wider text-foreground/60">FASHION CO</span>
+                  <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex flex-col items-center justify-center gap-1 hover-elevate transition-all">
+                    <Shirt className="w-5 h-5 text-primary/70" />
+                    <span className="text-xs font-semibold tracking-wide text-foreground/70">FASHION CO</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2" data-testid="logo-client-2">
-                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-wider text-foreground/60">BEAUTY PLUS</span>
+                  <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex flex-col items-center justify-center gap-1 hover-elevate transition-all">
+                    <Sparkles className="w-5 h-5 text-primary/70" />
+                    <span className="text-xs font-semibold tracking-wide text-foreground/70">BEAUTY PLUS</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2" data-testid="logo-client-3">
-                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-wider text-foreground/60">TECH STORE</span>
+                  <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex flex-col items-center justify-center gap-1 hover-elevate transition-all">
+                    <Laptop className="w-5 h-5 text-primary/70" />
+                    <span className="text-xs font-semibold tracking-wide text-foreground/70">TECH STORE</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2" data-testid="logo-client-4">
-                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-wider text-foreground/60">HOME SHOP</span>
+                  <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex flex-col items-center justify-center gap-1 hover-elevate transition-all">
+                    <Home className="w-5 h-5 text-primary/70" />
+                    <span className="text-xs font-semibold tracking-wide text-foreground/70">HOME SHOP</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2" data-testid="logo-client-5">
-                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-wider text-foreground/60">FIT GEAR</span>
+                  <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex flex-col items-center justify-center gap-1 hover-elevate transition-all">
+                    <Dumbbell className="w-5 h-5 text-primary/70" />
+                    <span className="text-xs font-semibold tracking-wide text-foreground/70">FIT GEAR</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2" data-testid="logo-client-6">
-                  <div className="w-20 h-12 rounded-md bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-bold tracking-wider text-foreground/60">LIFESTYLE</span>
+                  <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex flex-col items-center justify-center gap-1 hover-elevate transition-all">
+                    <Heart className="w-5 h-5 text-primary/70" />
+                    <span className="text-xs font-semibold tracking-wide text-foreground/70">LIFESTYLE</span>
                   </div>
                 </div>
               </div>
