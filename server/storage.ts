@@ -1161,8 +1161,7 @@ export class MemStorage {
       recipientList: campaign.recipientList || null,
       metadata: campaign.metadata || null,
       goalType: campaign.goalType || null,
-      goalValue: campaign.goalValue || null,
-      goalMetric: campaign.goalMetric || null,
+      audience: campaign.audience || null,
     };
     this.campaigns.set(id, newCampaign);
     return newCampaign;
