@@ -17,8 +17,7 @@ import {
   LogOut,
   User,
   X,
-  Cog,
-  Inbox
+  Cog
 } from "lucide-react";
 
 interface SidebarProps {
@@ -104,7 +103,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   };
 
   // Build navigation items based on user role
-  const baseNavItems = [
+  const navItems = [
     { id: "overview", label: "Dashboard", icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
     { id: "ai-tools", label: "AI Tools", icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "ai-tools" },
     { id: "automate", label: "Automate", icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "analytics" },
@@ -112,13 +111,6 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     { id: "products", label: "Products", icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
     { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
   ];
-
-  // Add admin-only items
-  const adminNavItems = appUser?.role === 'admin' 
-    ? [{ id: "support-inbox", label: "Support Inbox", icon: <Inbox className="w-4 h-4 sm:w-5 sm:h-5" />, onClick: () => setLocation("/admin/support-inbox") }]
-    : [];
-
-  const navItems = [...baseNavItems, ...adminNavItems];
 
   return (
     <>
