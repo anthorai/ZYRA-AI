@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
 import { CardGrid } from "@/components/ui/standardized-layout";
+import { GradientPageHeader } from "@/components/ui/page-hero";
 import { 
   ShoppingBag,
   Mail,
@@ -271,6 +272,13 @@ export default function GrowthDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      {/* Header */}
+      <GradientPageHeader
+        icon={<TrendingUp className="w-8 h-8 text-primary" />}
+        title="Growth Command Center"
+        subtitle="Monitor your business performance, track AI-powered optimizations, and analyze marketing campaigns in real-time"
+      />
+
       {/* Analytics Cards Grid - Mobile-First Redesign */}
       <CardGrid>
         {isLoading ? (
