@@ -4896,18 +4896,22 @@ Output format: Markdown with clear section headings.`;
         throw dbError;
       }
       
-      const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+      // Shopify 2025 OAuth URL format: https://admin.shopify.com/store/{shop-name}/oauth/authorize
+      // Extract shop name from domain (e.g., "anthor-ai" from "anthor-ai.myshopify.com")
+      const shopName = shopDomain.replace('.myshopify.com', '');
+      const authUrl = `https://admin.shopify.com/store/${shopName}/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
       
       // Detailed OAuth URL logging for troubleshooting (mask sensitive data)
-      console.log('🚀 Generated Shopify OAuth URL for shop:', shopDomain);
+      console.log('🚀 Generated Shopify OAuth URL (2025 format) for shop:', shopDomain);
       console.log('📋 OAuth Parameters:');
       console.log('  - Shop Domain:', shopDomain);
+      console.log('  - Shop Name:', shopName);
       console.log('  - Client ID:', apiKey ? `${apiKey.substring(0, 8)}...` : 'undefined');
       console.log('  - Redirect URI:', redirectUri);
       console.log('  - Redirect URI (encoded):', encodeURIComponent(redirectUri));
       console.log('  - Scopes:', scopes);
       console.log('  - State length:', state.length);
-      console.log('  - Auth URL (masked):', `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey.substring(0, 8)}...&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=...`);
+      console.log('  - Auth URL (masked):', `https://admin.shopify.com/store/${shopName}/oauth/authorize?client_id=${apiKey.substring(0, 8)}...&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=...`);
       console.log('✅ [SHOPIFY AUTH] OAuth initiated successfully, sending response');
       
       res.json({ authUrl, redirectUri }); // Include redirectUri in response for debugging
