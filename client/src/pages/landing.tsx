@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Zap, Star, TrendingUp, ShoppingCart, Mail, Search, BarChart3, Cog, ArrowRight, Play, Check, Gift, Crown, Award, 
   Settings, FileText, Network, Activity, Shield, Palette, LogOut, CheckCircle2, Sparkles, Lock, Clock,
@@ -14,11 +14,6 @@ import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
-import testimonial1 from "@assets/stock_images/professional_busines_cfd761ea.jpg";
-import testimonial2 from "@assets/stock_images/professional_busines_66dd936d.jpg";
-import testimonial3 from "@assets/stock_images/professional_busines_9cf8562c.jpg";
-import testimonial4 from "@assets/stock_images/professional_busines_2392763a.jpg";
-import testimonial5 from "@assets/stock_images/professional_busines_f82dea03.jpg";
 import { Helmet } from "react-helmet";
 
 export default function Landing() {
@@ -173,9 +168,6 @@ export default function Landing() {
     {
       name: "Jessica Chen",
       company: "Urban Home Decor",
-      photo: testimonial1,
-      initials: "JC",
-      gradient: "from-purple-500 to-pink-500",
       rating: 5,
       quote: "I was skeptical about AI-generated product descriptions, but Zyra blew me away. My conversion rate jumped 34% in the first month. The ROI is insane.",
       result: "+34% conversion rate",
@@ -185,9 +177,6 @@ export default function Landing() {
     {
       name: "Mike Rodriguez",
       company: "TechGear Pro",
-      photo: testimonial2,
-      initials: "MR",
-      gradient: "from-blue-500 to-cyan-500",
       rating: 5,
       quote: "Zyra saves me 15+ hours every week. I used to dread writing product descriptions. Now I focus on marketing while Zyra handles the content. Game changer.",
       result: "15hrs saved weekly",
@@ -197,9 +186,6 @@ export default function Landing() {
     {
       name: "Sarah Thompson",
       company: "FashionForward",
-      photo: testimonial3,
-      initials: "ST",
-      gradient: "from-orange-500 to-red-500",
       rating: 5,
       quote: "We recovered $18,000 in abandoned carts in our first 60 days with Zyra. The automated email sequences are pure magic. Worth every penny.",
       result: "$18K recovered",
@@ -209,9 +195,6 @@ export default function Landing() {
     {
       name: "David Park",
       company: "Dropshipper",
-      photo: testimonial4,
-      initials: "DP",
-      gradient: "from-green-500 to-emerald-500",
       rating: 5,
       quote: "As a solo founder, I can't afford a copywriter or marketing team. Zyra gives me enterprise-level AI for $49/month. My sales tripled.",
       result: "3X sales increase",
@@ -221,9 +204,6 @@ export default function Landing() {
     {
       name: "Amanda Foster",
       company: "GlobalRetail Inc.",
-      photo: testimonial5,
-      initials: "AF",
-      gradient: "from-indigo-500 to-purple-500",
       rating: 5,
       quote: "Managing 5,000+ SKUs manually was impossible. Zyra optimized everything in 48 hours. Our organic traffic is up 120%. Best investment we've made.",
       result: "+120% traffic",
@@ -896,13 +876,8 @@ export default function Landing() {
                     {/* Customer Info with Avatar */}
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="w-14 h-14 border-2 border-primary/30" data-testid={`avatar-testimonial-${index}`}>
-                        <AvatarImage 
-                          src={testimonial.photo} 
-                          alt={`${testimonial.name} - ${testimonial.company}`}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className={`bg-gradient-to-br ${testimonial.gradient} text-white font-bold text-lg`}>
-                          {testimonial.initials}
+                        <AvatarFallback className="bg-gradient-to-br from-[#00F0FF] to-[#FF00F5] text-white font-bold text-xl">
+                          {testimonial.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
