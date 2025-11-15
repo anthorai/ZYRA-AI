@@ -102,10 +102,18 @@ export default function SEOTools() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-4" data-testid="text-seo-tools-title">SEO Optimization Tools</h2>
-        <p className="text-muted-foreground">Optimize your product titles, meta descriptions, and keywords for better search rankings</p>
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center space-x-2">
+          <Search className="w-8 h-8 text-primary" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+            SEO Optimization Tools
+          </h1>
+        </div>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Optimize your product titles, meta descriptions, and keywords for better search rankings
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

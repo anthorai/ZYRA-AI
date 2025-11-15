@@ -16,7 +16,8 @@ import {
   BarChart3,
   ChevronDown,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Activity
 } from "lucide-react";
 import { generateCSV, generatePDF, downloadFile, getExportFilename, type ExportData } from "@/lib/exportUtils";
 
@@ -160,11 +161,20 @@ export default function Analytics() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold mb-2" data-testid="text-analytics-title">Analytics Dashboard</h2>
-          <p className="text-muted-foreground">Track your optimization performance and ROI</p>
+      <div className="text-center space-y-4 mb-8">
+        <div className="flex items-center justify-center space-x-2">
+          <Activity className="w-8 h-8 text-primary" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+            Analytics Dashboard
+          </h1>
         </div>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Track your optimization performance and ROI with real-time insights
+        </p>
+      </div>
+
+      {/* Export Controls */}
+      <div className="flex items-center justify-end gap-4">
         <div className="flex items-center space-x-4">
           <Select defaultValue="7days">
             <SelectTrigger className="form-input w-40" data-testid="select-date-range">

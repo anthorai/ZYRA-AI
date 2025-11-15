@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageContainer, CardGrid } from "@/components/ui/standardized-layout";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, 
   MessageSquare, 
@@ -29,6 +30,7 @@ interface CampaignTool {
 
 export default function Campaigns() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const campaignTools: CampaignTool[] = [
     {
@@ -134,6 +136,19 @@ export default function Campaigns() {
 
   return (
     <PageContainer>
+      {/* Header */}
+      <div className="text-center space-y-4 mb-8">
+        <div className="flex items-center justify-center space-x-2">
+          <Target className="w-8 h-8 text-primary" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+            Campaign Hub
+          </h1>
+        </div>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Create, manage, and optimize email & SMS marketing campaigns to boost your revenue
+        </p>
+      </div>
+
       <div className="flex justify-center">
         <Button
           onClick={() => setLocation('/campaigns/create')}

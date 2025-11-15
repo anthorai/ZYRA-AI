@@ -143,6 +143,19 @@ export default function AutomationTools() {
 
   return (
     <PageContainer>
+      {/* Header */}
+      <div className="text-center space-y-4 mb-8">
+        <div className="flex items-center justify-center space-x-2">
+          <Brain className="w-8 h-8 text-primary" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+            Automation Hub
+          </h1>
+        </div>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Save time with intelligent bulk operations, Shopify sync, and AI-powered optimization
+        </p>
+      </div>
+
       {/* Automation Tools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 ml-[5px] mr-[5px]">
         {automationTools.map((tool) => (
