@@ -133,6 +133,11 @@ export default function IntegrationsPage() {
   const [showShopifySetup, setShowShopifySetup] = useState(false);
   const [shopifyValidation, setShopifyValidation] = useState<any>(null);
   const [isValidating, setIsValidating] = useState(false);
+  
+  // Shopify connect modal state
+  const [showShopifyConnectModal, setShowShopifyConnectModal] = useState(false);
+  const [shopifyConnectDomain, setShopifyConnectDomain] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Check for success/error query parameters on mount (from Shopify OAuth redirect)
   useEffect(() => {
@@ -370,15 +375,41 @@ export default function IntegrationsPage() {
     });
   };
 
-  const handleConnect = async (id: string) => {
-    // Special handling for Shopify OAuth
-    if (id === 'shopify') {
-      const shop = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com or just mystore):');
-      if (!shop) return;
-
-      try {
+  const initiateShopifyOAuth = async (shop: string) => {
+    // Validate input before processing
+    const trimmedShop = shop.trim();
+    if (!trimmedShop) {
+      toast({
+        title: "Store Domain Required",
+        description: "Please enter your Shopify store domain",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    
+    // Remove protocol and trailing slash for validation
+    let cleanedForValidation = trimmedShop.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
+    
+    // Extract store name from domain (remove .myshopify.com if present)
+    const storeName = cleanedForValidation.replace(/\.myshopify\.com$/, '');
+    
+    // Validate store name contains only alphanumeric characters and hyphens
+    const validStoreNamePattern = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
+    if (!validStoreNamePattern.test(storeName)) {
+      toast({
+        title: "Invalid Store Domain",
+        description: "Store name must contain only lowercase letters, numbers, and hyphens (e.g., 'my-store' or 'mystore123')",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+    
+    setIsConnecting(true);
+    try {
         // Sanitize shop domain: remove protocol, trailing slashes, and whitespace
-        let cleanShop = shop.trim();
+        let cleanShop = trimmedShop;
         cleanShop = cleanShop.replace(/^https?:\/\//, ''); // Remove http:// or https://
         cleanShop = cleanShop.replace(/\/$/, ''); // Remove trailing slash
         cleanShop = cleanShop.toLowerCase(); // Normalize to lowercase
@@ -413,6 +444,8 @@ export default function IntegrationsPage() {
             variant: "destructive",
             duration: 3000,
           });
+          // Reset loading state to allow retry after re-authentication
+          setIsConnecting(false);
           return;
         }
 
@@ -462,7 +495,16 @@ export default function IntegrationsPage() {
         // After authorization, Shopify will redirect back to our callback
         // which will then redirect to settings page with success/error status
         console.log('🔄 Redirecting to Shopify authorization...');
-        window.location.href = data.authUrl;
+        
+        // Close modal and reset state before redirect
+        setShowShopifyConnectModal(false);
+        setShopifyConnectDomain("");
+        setIsConnecting(false);
+        
+        // Small delay to allow state updates before redirect
+        setTimeout(() => {
+          window.location.href = data.authUrl;
+        }, 100);
       } catch (error: any) {
         console.error('Shopify OAuth error:', error);
         const errorMessage = error.message || "Failed to connect to Shopify";
@@ -481,7 +523,16 @@ export default function IntegrationsPage() {
           // Auto-open setup guide after a short delay
           setTimeout(() => validateShopifySetup(), 1000);
         }
+        
+        // Reset loading state but KEEP modal open for immediate retry
+        setIsConnecting(false);
       }
+  };
+
+  const handleConnect = async (id: string) => {
+    // Special handling for Shopify OAuth
+    if (id === 'shopify') {
+      setShowShopifyConnectModal(true);
       return;
     }
 
@@ -1127,6 +1178,74 @@ export default function IntegrationsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Shopify Connect Modal */}
+      <Dialog open={showShopifyConnectModal} onOpenChange={setShowShopifyConnectModal}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              Connect Shopify Store
+            </DialogTitle>
+            <DialogDescription className="text-slate-300">
+              Enter your Shopify store domain to connect your store to Zyra AI
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="shopify-domain" className="text-white">
+                Store Domain
+              </Label>
+              <Input
+                id="shopify-domain"
+                type="text"
+                value={shopifyConnectDomain}
+                onChange={(e) => setShopifyConnectDomain(e.target.value)}
+                placeholder="mystore.myshopify.com or just mystore"
+                className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
+                disabled={isConnecting}
+                data-testid="input-shopify-domain"
+              />
+              <p className="text-xs text-slate-400">
+                Enter your store name (e.g., "mystore") or full domain (e.g., "mystore.myshopify.com")
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowShopifyConnectModal(false);
+                setShopifyConnectDomain("");
+              }}
+              disabled={isConnecting}
+              className="border-slate-600 text-slate-300 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => initiateShopifyOAuth(shopifyConnectDomain)}
+              disabled={!shopifyConnectDomain.trim() || isConnecting}
+              className="gradient-button"
+              data-testid="button-connect-shopify-confirm"
+            >
+              {isConnecting ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-4 h-4 mr-2" />
+                  Connect Store
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </PageShell>
