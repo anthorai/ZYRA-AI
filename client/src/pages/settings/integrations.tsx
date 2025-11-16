@@ -1236,7 +1236,14 @@ export default function IntegrationsPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => initiateShopifyOAuth(shopifyConnectDomain)}
+              onClick={() => {
+                console.log('🔵 [BUTTON CLICK] Connect Store button clicked');
+                console.log('🔵 [BUTTON CLICK] Domain value:', shopifyConnectDomain);
+                console.log('🔵 [BUTTON CLICK] Trimmed value:', shopifyConnectDomain.trim());
+                console.log('🔵 [BUTTON CLICK] Is connecting:', isConnecting);
+                console.log('🔵 [BUTTON CLICK] Button disabled?:', !shopifyConnectDomain.trim() || isConnecting);
+                initiateShopifyOAuth(shopifyConnectDomain);
+              }}
               disabled={!shopifyConnectDomain.trim() || isConnecting}
               className="gradient-button"
               data-testid="button-connect-shopify-confirm"
@@ -1254,6 +1261,18 @@ export default function IntegrationsPage() {
               )}
             </Button>
           </div>
+          
+          {/* Debug info below button */}
+          {shopifyConnectDomain && !shopifyConnectDomain.trim() && (
+            <p className="text-xs text-yellow-400 mt-2">
+              ⚠️ Input contains only whitespace
+            </p>
+          )}
+          {!shopifyConnectDomain && (
+            <p className="text-xs text-slate-400 mt-2">
+              Please enter your store domain above
+            </p>
+          )}
         </DialogContent>
       </Dialog>
     </PageShell>
