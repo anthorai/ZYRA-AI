@@ -5847,29 +5847,44 @@ Output format: Markdown with clear section headings.`;
       
       console.log('🧹 [CLEANUP] Starting duplicate cleanup for user:', userId);
       
-      // Find all products with duplicate shopifyIds
-      const duplicateQuery = await db.execute(sql`
-        WITH ranked_products AS (
-          SELECT 
-            id,
-            shopify_id,
-            updated_at,
-            ROW_NUMBER() OVER (
-              PARTITION BY user_id, shopify_id 
-              ORDER BY updated_at DESC
-            ) as rn
-          FROM products
-          WHERE user_id = ${userId}
-            AND shopify_id IS NOT NULL
-        )
-        SELECT id
-        FROM ranked_products
-        WHERE rn > 1
-      `);
+      // Get all products for this user from Supabase
+      const allProducts = await supabaseStorage.getProducts(userId);
+      console.log(`📊 [CLEANUP] Found ${allProducts.length} total products for user`);
       
-      const duplicateIds = duplicateQuery.rows.map((row: any) => row.id);
+      // Group products by shopifyId
+      const productsByShopifyId = new Map<string, typeof allProducts>();
       
-      if (duplicateIds.length === 0) {
+      for (const product of allProducts) {
+        if (product.shopifyId) {
+          const existing = productsByShopifyId.get(product.shopifyId) || [];
+          existing.push(product);
+          productsByShopifyId.set(product.shopifyId, existing);
+        }
+      }
+      
+      // Find duplicates (shopifyIds with more than 1 product)
+      const duplicatesToRemove: string[] = [];
+      
+      for (const [shopifyId, productGroup] of productsByShopifyId) {
+        if (productGroup.length > 1) {
+          console.log(`🔍 [CLEANUP] Found ${productGroup.length} duplicates for shopifyId: ${shopifyId}`);
+          
+          // Sort by updatedAt DESC to keep the most recent
+          productGroup.sort((a, b) => {
+            const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return dateB - dateA;
+          });
+          
+          // Keep the first (most recent), remove the rest
+          for (let i = 1; i < productGroup.length; i++) {
+            duplicatesToRemove.push(productGroup[i].id);
+            console.log(`  ➡️  Will remove duplicate product: ${productGroup[i].name} (ID: ${productGroup[i].id})`);
+          }
+        }
+      }
+      
+      if (duplicatesToRemove.length === 0) {
         console.log('✅ [CLEANUP] No duplicates found');
         return res.json({
           success: true,
@@ -5878,26 +5893,70 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      console.log(`🗑️  [CLEANUP] Found ${duplicateIds.length} duplicate products to remove`);
+      console.log(`🗑️  [CLEANUP] Removing ${duplicatesToRemove.length} duplicate products from Supabase...`);
       
-      // Delete duplicate products
-      await db.delete(products)
-        .where(
-          and(
-            eq(products.userId, userId),
-            sql`${products.id} = ANY(${duplicateIds})`
-          )
-        );
+      // Delete duplicates using Supabase storage (production database)
+      let removedCount = 0;
+      const deleteErrors: { productId: string; error: string }[] = [];
       
-      console.log(`✅ [CLEANUP] Removed ${duplicateIds.length} duplicate products`);
+      for (const productId of duplicatesToRemove) {
+        try {
+          await supabaseStorage.deleteProduct(productId);
+          removedCount++;
+          console.log(`  ✅ Deleted duplicate product ${productId}`);
+        } catch (deleteError) {
+          const errorMsg = deleteError instanceof Error ? deleteError.message : String(deleteError);
+          console.error(`  ❌ Failed to delete product ${productId}:`, errorMsg);
+          deleteErrors.push({ productId, error: errorMsg });
+        }
+      }
+      
+      // Verify all deletions succeeded - fail fast if any deletion failed
+      if (deleteErrors.length > 0) {
+        const errorMessage = `Failed to delete ${deleteErrors.length} product(s). Successfully deleted ${removedCount}. Errors: ${deleteErrors.map(e => `${e.productId}: ${e.error}`).join(', ')}`;
+        console.error(`❌ [CLEANUP] ${errorMessage}`);
+        throw new Error(errorMessage);
+      }
+      
+      console.log(`✅ [CLEANUP] Successfully removed ${removedCount} duplicate products from Supabase`);
+      
+      // Verify duplicates are actually gone by re-fetching products
+      console.log('🔍 [CLEANUP] Verifying duplicates were removed...');
+      const remainingProducts = await supabaseStorage.getProducts(userId);
+      const remainingDuplicates = new Map<string, number>();
+      
+      for (const product of remainingProducts) {
+        if (product.shopifyId) {
+          const count = remainingDuplicates.get(product.shopifyId) || 0;
+          remainingDuplicates.set(product.shopifyId, count + 1);
+        }
+      }
+      
+      const stillDuplicated: string[] = [];
+      for (const [shopifyId, count] of remainingDuplicates) {
+        if (count > 1) {
+          stillDuplicated.push(`${shopifyId} (${count} copies)`);
+        }
+      }
+      
+      if (stillDuplicated.length > 0) {
+        const verificationError = `Verification failed: Found ${stillDuplicated.length} shopifyId(s) still duplicated: ${stillDuplicated.join(', ')}`;
+        console.error(`❌ [CLEANUP] ${verificationError}`);
+        throw new Error(verificationError);
+      }
+      
+      console.log(`✅ [CLEANUP] Verification passed: No duplicates remaining`);
+      console.log(`📊 [CLEANUP] Final product count: ${remainingProducts.length}`);
       
       res.json({
         success: true,
-        message: `Successfully removed ${duplicateIds.length} duplicate products`,
-        removed: duplicateIds.length
+        message: `Successfully removed ${removedCount} duplicate product${removedCount !== 1 ? 's' : ''}`,
+        removed: removedCount,
+        remainingProducts: remainingProducts.length
       });
     } catch (error) {
       console.error('❌ [CLEANUP] Cleanup failed:', error);
+      console.error('❌ [CLEANUP] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({
         error: 'Failed to cleanup duplicates',
         message: error instanceof Error ? error.message : 'Unknown error'
