@@ -5232,10 +5232,10 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation from Shopify App Store - redirect to dashboard
+        // Direct installation from Shopify App Store - redirect to frontend callback
         const redirectUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/settings/integrations?shopify=connected`
-          : `${req.protocol}://${req.get('host')}/dashboard?shopify=connected`;
+          ? `${process.env.PRODUCTION_DOMAIN}/auth/callback?shopify=connected`
+          : `${req.protocol}://${req.get('host')}/auth/callback?shopify=connected`;
         
         res.send(`
           <html>
@@ -5246,7 +5246,7 @@ Output format: Markdown with clear section headings.`;
               <script>
                 window.location.href = '${redirectUrl}';
               </script>
-              <p>Connection successful! Redirecting to your dashboard...</p>
+              <p>Connection successful! Redirecting...</p>
             </body>
           </html>
         `);
@@ -5304,10 +5304,10 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation - redirect to settings with specific error code
+        // Direct installation - redirect to frontend callback with specific error code
         const redirectUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/settings/integrations?error=${errorCode}`
-          : `${req.protocol}://${req.get('host')}/settings/integrations?error=${errorCode}`;
+          ? `${process.env.PRODUCTION_DOMAIN}/auth/callback?shopify_error=${errorCode}`
+          : `${req.protocol}://${req.get('host')}/auth/callback?shopify_error=${errorCode}`;
         
         res.send(`
           <html>
