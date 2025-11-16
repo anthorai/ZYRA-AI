@@ -138,6 +138,7 @@ export default function IntegrationsPage() {
   const [showShopifyConnectModal, setShowShopifyConnectModal] = useState(false);
   const [shopifyConnectDomain, setShopifyConnectDomain] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Check for success/error query parameters on mount (from Shopify OAuth redirect)
   useEffect(() => {
