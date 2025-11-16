@@ -5878,22 +5878,32 @@ Output format: Markdown with clear section headings.`;
       }));
       console.log(`📋 [CLEANUP] Sample products:`, JSON.stringify(sampleProducts, null, 2));
       
-      // Group products by shopifyId
+      // Group products by shopifyId (for valid shopifyIds)
       const productsByShopifyId = new Map<string, typeof allProducts>();
+      
+      // Group products WITHOUT shopifyId by name (these are legacy duplicates)
+      const productsWithoutShopifyId = new Map<string, typeof allProducts>();
       
       for (const product of allProducts) {
         if (product.shopifyId) {
           const existing = productsByShopifyId.get(product.shopifyId) || [];
           existing.push(product);
           productsByShopifyId.set(product.shopifyId, existing);
+        } else {
+          // Group null shopifyId products by name
+          const existing = productsWithoutShopifyId.get(product.name) || [];
+          existing.push(product);
+          productsWithoutShopifyId.set(product.name, existing);
         }
       }
       
       console.log(`🔍 [CLEANUP] Unique shopifyIds found: ${productsByShopifyId.size}`);
+      console.log(`🔍 [CLEANUP] Product names with null shopifyIds: ${productsWithoutShopifyId.size}`);
       
       // Find duplicates (shopifyIds with more than 1 product)
       const duplicatesToRemove: string[] = [];
       
+      // Check products WITH valid shopifyIds
       for (const [shopifyId, productGroup] of Array.from(productsByShopifyId.entries())) {
         if (productGroup.length > 1) {
           console.log(`🔍 [CLEANUP] Found ${productGroup.length} duplicates for shopifyId: ${shopifyId}`);
@@ -5909,6 +5919,27 @@ Output format: Markdown with clear section headings.`;
           for (let i = 1; i < productGroup.length; i++) {
             duplicatesToRemove.push(productGroup[i].id);
             console.log(`  ➡️  Will remove duplicate product: ${productGroup[i].name} (ID: ${productGroup[i].id})`);
+          }
+        }
+      }
+      
+      // Check products WITHOUT shopifyId (legacy duplicates grouped by name)
+      for (const [productName, productGroup] of Array.from(productsWithoutShopifyId.entries())) {
+        if (productGroup.length > 1) {
+          console.log(`🔍 [CLEANUP] Found ${productGroup.length} legacy duplicates (null shopifyId) for product: ${productName}`);
+          
+          // Sort by updatedAt DESC to keep the most recent
+          productGroup.sort((a: typeof allProducts[0], b: typeof allProducts[0]) => {
+            const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return dateB - dateA;
+          });
+          
+          // Delete ALL of them (including the newest) since they have no valid shopifyId
+          // The next Shopify sync will create 1 fresh product with a valid shopifyId
+          for (let i = 0; i < productGroup.length; i++) {
+            duplicatesToRemove.push(productGroup[i].id);
+            console.log(`  ➡️  Will remove legacy product without shopifyId: ${productGroup[i].name} (ID: ${productGroup[i].id})`);
           }
         }
       }
