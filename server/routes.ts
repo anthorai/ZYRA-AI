@@ -5722,26 +5722,46 @@ Output format: Markdown with clear section headings.`;
             isOptimized: false
           };
 
+          // Check if product exists before upsert to track stats
           const existingProduct = await db.query.products.findFirst({
             where: and(
               eq(products.userId, userId),
               eq(products.shopifyId, product.id.toString())
             )
           });
-
+          
+          // Use UPSERT to atomically insert or update (prevents race conditions)
+          const upsertResult = await db
+            .insert(products)
+            .values({
+              ...productPayload,
+              createdAt: sql`NOW()`,
+              updatedAt: sql`NOW()`
+            })
+            .onConflictDoUpdate({
+              target: [products.userId, products.shopifyId],
+              set: {
+                name: productPayload.name,
+                description: productPayload.description,
+                originalDescription: productPayload.originalDescription,
+                price: productPayload.price,
+                category: productPayload.category,
+                stock: productPayload.stock,
+                image: productPayload.image,
+                tags: productPayload.tags,
+                updatedAt: sql`NOW()`
+              }
+            })
+            .returning();
+          
+          // Track whether this was an insert or update
           if (existingProduct) {
-            // Update existing product
-            await db.update(products)
-              .set({ ...productPayload, updatedAt: sql`NOW()` })
-              .where(eq(products.id, existingProduct.id));
             productsUpdated++;
-            imported.push({ ...productPayload, id: existingProduct.id });
           } else {
-            // Create new product
-            const newProduct = await supabaseStorage.createProduct(productPayload as any);
             productsAdded++;
-            imported.push(newProduct);
           }
+          
+          imported.push(upsertResult[0]);
         } catch (error) {
           errors.push({
             product: product.title,
