@@ -2,6 +2,9 @@ import { supabase } from './supabase';
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { encrypt, decrypt, encryptJSON, decryptJSON, isEncrypted } from './encryption';
+import { db } from '../db';
+import { products } from '@shared/schema';
+import { eq, desc } from 'drizzle-orm';
 import { 
   type User, 
   type InsertUser, 
@@ -506,13 +509,15 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   // Product methods
   async getProducts(userId: string): Promise<Product[]> {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (error) throw new Error(`Failed to get products: ${error.message}`);
-    return data || [];
+    try {
+      const results = await db.query.products.findMany({
+        where: eq(products.userId, userId),
+        orderBy: [desc(products.createdAt)]
+      });
+      return results;
+    } catch (error: any) {
+      throw new Error(`Failed to get products: ${error.message}`);
+    }
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
