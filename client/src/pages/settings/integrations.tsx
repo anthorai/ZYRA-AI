@@ -394,17 +394,25 @@ export default function IntegrationsPage() {
     // Extract store name from domain (remove .myshopify.com if present)
     const storeName = cleanedForValidation.replace(/\.myshopify\.com$/, '');
     
-    // Validate store name contains only alphanumeric characters and hyphens
-    const validStoreNamePattern = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
+    console.log('🔵 [VALIDATION] Input:', trimmedShop);
+    console.log('🔵 [VALIDATION] Cleaned:', cleanedForValidation);
+    console.log('🔵 [VALIDATION] Store name to validate:', storeName);
+    
+    // Validate store name contains only alphanumeric characters, hyphens, and underscores
+    // Shopify allows: letters, numbers, hyphens, and underscores
+    const validStoreNamePattern = /^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$/;
     if (!validStoreNamePattern.test(storeName)) {
+      console.error('🔴 [VALIDATION] Pattern test FAILED for:', storeName);
       toast({
         title: "Invalid Store Domain",
-        description: "Store name must contain only lowercase letters, numbers, and hyphens (e.g., 'my-store' or 'mystore123')",
+        description: "Store name must contain only lowercase letters, numbers, hyphens, and underscores (e.g., 'my-store', 'my_store', or 'mystore123')",
         variant: "destructive",
         duration: 5000,
       });
       return;
     }
+    
+    console.log('✅ [VALIDATION] Pattern test PASSED for:', storeName);
     
     setIsConnecting(true);
     try {
