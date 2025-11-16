@@ -875,58 +875,9 @@ export default function IntegrationsPage() {
                 )}
                 </div>
               
-              {showApiKeyInput === integration.id && !integration.isConnected && (
+              {showApiKeyInput === integration.id && !integration.isConnected && integration.id !== 'shopify' && (
                 <div className="mt-4 space-y-3 p-4 bg-slate-800/50 rounded-lg">
-                  {integration.id === 'shopify' ? (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="shop-domain" className="text-white">
-                          Shopify Store Domain
-                        </Label>
-                        <Input
-                          id="shop-domain"
-                          type="text"
-                          value={shopDomain}
-                          onChange={(e) => setShopDomain(e.target.value)}
-                          placeholder="mystore.myshopify.com or mystore"
-                          className="bg-slate-900/50 border-slate-600 text-white"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="access-token" className="text-white">
-                          Admin API Access Token
-                        </Label>
-                        <Input
-                          id="access-token"
-                          type="password"
-                          value={apiKey}
-                          onChange={(e) => setApiKey(e.target.value)}
-                          placeholder="shpat_xxxxxxxxxxxxx"
-                          className="bg-slate-900/50 border-slate-600 text-white"
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          onClick={() => handleConnect(integration.id)}
-                          className="gradient-button"
-                          disabled={!shopDomain || !apiKey}
-                        >
-                          Connect Store
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowApiKeyInput(null);
-                            setApiKey("");
-                            setShopDomain("");
-                          }}
-                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </>
-                  ) : integration.id === 'sendgrid' ? (
+                  {integration.id === 'sendgrid' ? (
                     <>
                       <p className="text-slate-300 text-sm mb-3">
                         Get your SendGrid API key from <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SendGrid Settings</a>
