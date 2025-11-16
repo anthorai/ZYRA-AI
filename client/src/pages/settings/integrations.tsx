@@ -509,23 +509,35 @@ export default function IntegrationsPage() {
         setShowShopifyConnectModal(false);
         setShopifyConnectDomain("");
         setIsConnecting(false);
+        setConnectionError(null); // Clear any previous errors
         
         // Small delay to allow state updates before redirect
         setTimeout(() => {
           window.location.href = data.authUrl;
         }, 100);
       } catch (error: any) {
-        console.error('Shopify OAuth error:', error);
+        console.error('🔴 [SHOPIFY ERROR] Full error object:', error);
+        console.error('🔴 [SHOPIFY ERROR] Error message:', error.message);
+        console.error('🔴 [SHOPIFY ERROR] Error stack:', error.stack);
+        
         const errorMessage = error.message || "Failed to connect to Shopify";
         const isRedirectUriError = errorMessage.includes('redirect_uri') || errorMessage.includes('invalid_request') || errorMessage.includes('not whitelisted');
         
+        // Store error in state for persistent display
+        const displayError = isRedirectUriError
+          ? "Redirect URI mismatch. Click 'Setup Guide' to get the correct URL for your Shopify app."
+          : `Error: ${errorMessage}`;
+        
+        setConnectionError(displayError);
+        
+        // Also show alert that won't disappear
+        alert(`SHOPIFY CONNECTION ERROR:\n\n${displayError}\n\nCheck browser console for details.`);
+        
         toast({
           title: "Connection Failed",
-          description: isRedirectUriError
-            ? "Redirect URI mismatch. Click 'Setup Guide' to get the correct URL for your Shopify app."
-            : errorMessage,
+          description: displayError,
           variant: "destructive",
-          duration: 8000,
+          duration: 60000, // 60 seconds
         });
         
         if (isRedirectUriError) {
@@ -1204,6 +1216,16 @@ export default function IntegrationsPage() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
+            {connectionError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Connection Error</AlertTitle>
+                <AlertDescription className="text-sm">
+                  {connectionError}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="shopify-domain" className="text-white">
                 Store Domain
@@ -1212,7 +1234,10 @@ export default function IntegrationsPage() {
                 id="shopify-domain"
                 type="text"
                 value={shopifyConnectDomain}
-                onChange={(e) => setShopifyConnectDomain(e.target.value)}
+                onChange={(e) => {
+                  setShopifyConnectDomain(e.target.value);
+                  setConnectionError(null); // Clear error when user types
+                }}
                 placeholder="mystore.myshopify.com or just mystore"
                 className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
                 disabled={isConnecting}
