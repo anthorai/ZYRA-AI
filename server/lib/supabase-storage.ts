@@ -355,10 +355,17 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async createStoreConnection(storeConnection: InsertStoreConnection): Promise<StoreConnection> {
     const connectionData = {
-      ...storeConnection,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user_id: storeConnection.userId,
+      platform: storeConnection.platform,
+      store_name: storeConnection.storeName,
+      store_url: storeConnection.storeUrl,
+      access_token: storeConnection.accessToken,
+      refresh_token: storeConnection.refreshToken,
+      status: storeConnection.status || 'active',
+      last_sync_at: storeConnection.lastSyncAt,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -372,9 +379,20 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateStoreConnection(id: string, updates: Partial<StoreConnection>): Promise<StoreConnection> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
+    if (updates.platform !== undefined) updateData.platform = updates.platform;
+    if (updates.storeName !== undefined) updateData.store_name = updates.storeName;
+    if (updates.storeUrl !== undefined) updateData.store_url = updates.storeUrl;
+    if (updates.accessToken !== undefined) updateData.access_token = updates.accessToken;
+    if (updates.refreshToken !== undefined) updateData.refresh_token = updates.refreshToken;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.lastSyncAt !== undefined) updateData.last_sync_at = updates.lastSyncAt;
+
     const { data, error } = await supabase
       .from('store_connections')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -494,12 +512,25 @@ export class SupabaseStorage implements ISupabaseStorage {
     return data;
   }
 
-  async createProduct(product: InsertProduct): Promise<Product> {
+  async createProduct(product: InsertProduct & { userId: string }): Promise<Product> {
     const productData = {
-      ...product,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user_id: product.userId,
+      shopify_id: product.shopifyId,
+      name: product.name,
+      description: product.description,
+      original_description: product.originalDescription,
+      original_copy: product.originalCopy,
+      price: product.price,
+      category: product.category,
+      stock: product.stock,
+      image: product.image,
+      features: product.features,
+      tags: product.tags,
+      optimized_copy: product.optimizedCopy,
+      is_optimized: product.isOptimized,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -513,9 +544,26 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
+    if (updates.shopifyId !== undefined) updateData.shopify_id = updates.shopifyId;
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.originalDescription !== undefined) updateData.original_description = updates.originalDescription;
+    if (updates.originalCopy !== undefined) updateData.original_copy = updates.originalCopy;
+    if (updates.price !== undefined) updateData.price = updates.price;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.stock !== undefined) updateData.stock = updates.stock;
+    if (updates.image !== undefined) updateData.image = updates.image;
+    if (updates.features !== undefined) updateData.features = updates.features;
+    if (updates.tags !== undefined) updateData.tags = updates.tags;
+    if (updates.optimizedCopy !== undefined) updateData.optimized_copy = updates.optimizedCopy;
+    if (updates.isOptimized !== undefined) updateData.is_optimized = updates.isOptimized;
+
     const { data, error } = await supabase
       .from('products')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -701,10 +749,26 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
     const campaignData = {
-      ...campaign,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user_id: campaign.userId,
+      type: campaign.type,
+      name: campaign.name,
+      subject: campaign.subject,
+      content: campaign.content,
+      template_id: campaign.templateId,
+      goal_type: campaign.goalType,
+      audience: campaign.audience,
+      status: campaign.status || 'draft',
+      scheduled_for: campaign.scheduledFor,
+      sent_at: campaign.sentAt,
+      sent_count: campaign.sentCount || 0,
+      open_rate: campaign.openRate || 0,
+      click_rate: campaign.clickRate || 0,
+      conversion_rate: campaign.conversionRate || 0,
+      recipient_list: campaign.recipientList,
+      metadata: campaign.metadata,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -718,9 +782,29 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.subject !== undefined) updateData.subject = updates.subject;
+    if (updates.content !== undefined) updateData.content = updates.content;
+    if (updates.templateId !== undefined) updateData.template_id = updates.templateId;
+    if (updates.goalType !== undefined) updateData.goal_type = updates.goalType;
+    if (updates.audience !== undefined) updateData.audience = updates.audience;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.scheduledFor !== undefined) updateData.scheduled_for = updates.scheduledFor;
+    if (updates.sentAt !== undefined) updateData.sent_at = updates.sentAt;
+    if (updates.sentCount !== undefined) updateData.sent_count = updates.sentCount;
+    if (updates.openRate !== undefined) updateData.open_rate = updates.openRate;
+    if (updates.clickRate !== undefined) updateData.click_rate = updates.clickRate;
+    if (updates.conversionRate !== undefined) updateData.conversion_rate = updates.conversionRate;
+    if (updates.recipientList !== undefined) updateData.recipient_list = updates.recipientList;
+    if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
+
     const { data, error } = await supabase
       .from('campaigns')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -829,10 +913,17 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async createAbandonedCart(cart: InsertAbandonedCart): Promise<AbandonedCart> {
     const cartData = {
-      ...cart,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user_id: cart.userId,
+      customer_email: cart.customerEmail,
+      customer_phone: cart.customerPhone,
+      cart_items: cart.cartItems,
+      cart_value: cart.cartValue,
+      recovery_campaign_sent: cart.recoveryCampaignSent || false,
+      recovered_at: cart.recoveredAt,
+      is_recovered: cart.isRecovered || false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -846,9 +937,20 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateAbandonedCart(id: string, updates: Partial<AbandonedCart>): Promise<AbandonedCart> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
+    if (updates.customerEmail !== undefined) updateData.customer_email = updates.customerEmail;
+    if (updates.customerPhone !== undefined) updateData.customer_phone = updates.customerPhone;
+    if (updates.cartItems !== undefined) updateData.cart_items = updates.cartItems;
+    if (updates.cartValue !== undefined) updateData.cart_value = updates.cartValue;
+    if (updates.recoveryCampaignSent !== undefined) updateData.recovery_campaign_sent = updates.recoveryCampaignSent;
+    if (updates.recoveredAt !== undefined) updateData.recovered_at = updates.recoveredAt;
+    if (updates.isRecovered !== undefined) updateData.is_recovered = updates.isRecovered;
+
     const { data, error } = await supabase
       .from('abandoned_carts')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
