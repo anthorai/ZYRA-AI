@@ -5619,37 +5619,76 @@ Output format: Markdown with clear section headings.`;
   // Sync Shopify products to Zyra (with history tracking and delta sync)
   app.post('/api/shopify/sync', requireAuth, async (req, res) => {
     let syncRecord;
+    let syncHistoryAvailable = false;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { syncType = 'manual' } = req.body; // manual | auto | webhook
+      
+      console.log('🔄 [SHOPIFY SYNC] Starting sync for user:', userId);
+      
       const connections = await supabaseStorage.getStoreConnections(userId);
       const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
       
       if (!shopifyConnection) {
+        console.error('❌ [SHOPIFY SYNC] No active Shopify connection found for user:', userId);
         return res.status(404).json({ error: 'No active Shopify connection found' });
       }
 
-      // Create sync history record
-      syncRecord = await supabaseStorage.createSyncHistory({
-        userId,
-        storeConnectionId: shopifyConnection.id,
-        syncType,
-        status: 'started'
+      console.log('✅ [SHOPIFY SYNC] Found connection:', {
+        store: shopifyConnection.storeName,
+        storeUrl: shopifyConnection.storeUrl,
+        hasToken: !!shopifyConnection.accessToken,
+        tokenPreview: shopifyConnection.accessToken ? `${shopifyConnection.accessToken.substring(0, 8)}...` : 'none'
       });
 
+      // Create sync history record
+      // IMPORTANT: This will fail until Supabase schema cache is reloaded
+      try {
+        syncRecord = await supabaseStorage.createSyncHistory({
+          userId,
+          storeConnectionId: shopifyConnection.id,
+          syncType,
+          status: 'started'
+        });
+        syncHistoryAvailable = true;
+        console.log('✅ [SHOPIFY SYNC] Created sync history record:', syncRecord.id);
+      } catch (historyError) {
+        console.error('⚠️  [SHOPIFY SYNC] CRITICAL: Failed to create sync history record');
+        console.error('⚠️  [SHOPIFY SYNC] Reason:', historyError instanceof Error ? historyError.message : historyError);
+        console.error('⚠️  [SHOPIFY SYNC] This means audit trail will not be recorded!');
+        console.error('⚠️  [SHOPIFY SYNC] To fix: Reload Supabase schema cache by running:');
+        console.error('⚠️  [SHOPIFY SYNC]   NOTIFY pgrst, \'reload schema\'; in Supabase SQL Editor');
+        // Continue without sync history - but this is NOT ideal
+      }
+
       // Fetch products from Shopify
+      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`);
+      
       const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`, {
         headers: {
           'X-Shopify-Access-Token': shopifyConnection.accessToken
         }
       });
 
+      console.log('📥 [SHOPIFY SYNC] Shopify API response status:', productsResponse.status);
+
       if (!productsResponse.ok) {
-        throw new Error('Failed to fetch Shopify products');
+        const errorText = await productsResponse.text();
+        console.error('❌ [SHOPIFY SYNC] Shopify API error:', {
+          status: productsResponse.status,
+          statusText: productsResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`Failed to fetch Shopify products: ${productsResponse.status} ${productsResponse.statusText}`);
       }
 
       const productsData = await productsResponse.json();
       const shopifyProducts = productsData.products || [];
+      
+      console.log('✅ [SHOPIFY SYNC] Fetched products from Shopify:', {
+        count: shopifyProducts.length,
+        firstProduct: shopifyProducts[0]?.title || 'N/A'
+      });
 
       let productsAdded = 0;
       let productsUpdated = 0;
@@ -5716,18 +5755,35 @@ Output format: Markdown with clear section headings.`;
         .set({ lastSyncAt: sql`NOW()` })
         .where(eq(storeConnections.id, shopifyConnection.id));
 
-      // Update sync history with results
-      await supabaseStorage.updateSyncHistory(syncRecord.id, {
-        status: 'completed',
+      console.log('✅ [SHOPIFY SYNC] Sync completed:', {
         productsAdded,
         productsUpdated,
-        completedAt: new Date() as any,
-        metadata: { 
-          totalProcessed: shopifyProducts.length,
-          skipped: shopifyProducts.length - (productsAdded + productsUpdated),
-          errors: errors.length
-        } as any
+        totalProcessed: shopifyProducts.length,
+        skipped: shopifyProducts.length - (productsAdded + productsUpdated),
+        errors: errors.length
       });
+
+      // Update sync history with results (only if sync record was successfully created)
+      if (syncHistoryAvailable && syncRecord) {
+        try {
+          await supabaseStorage.updateSyncHistory(syncRecord.id, {
+            status: 'completed',
+            productsAdded,
+            productsUpdated,
+            completedAt: new Date() as any,
+            metadata: { 
+              totalProcessed: shopifyProducts.length,
+              skipped: shopifyProducts.length - (productsAdded + productsUpdated),
+              errors: errors.length
+            } as any
+          });
+          console.log('✅ [SHOPIFY SYNC] Updated sync history record');
+        } catch (historyUpdateError) {
+          console.error('⚠️  [SHOPIFY SYNC] Failed to update sync history:', historyUpdateError instanceof Error ? historyUpdateError.message : historyUpdateError);
+        }
+      } else if (!syncHistoryAvailable) {
+        console.warn('⚠️  [SHOPIFY SYNC] Skipping sync history update (record was not created due to schema cache issue)');
+      }
 
       res.json({
         success: true,
@@ -5738,18 +5794,29 @@ Output format: Markdown with clear section headings.`;
         details: { imported, errors }
       });
     } catch (error) {
-      console.error('Shopify sync error:', error);
+      console.error('❌ [SHOPIFY SYNC] Sync failed:', error);
+      console.error('❌ [SHOPIFY SYNC] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       
-      // Update sync history with error
-      if (syncRecord) {
-        await supabaseStorage.updateSyncHistory(syncRecord.id, {
-          status: 'failed',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          completedAt: new Date() as any
-        });
+      // Update sync history with error (only if sync record was successfully created)
+      if (syncHistoryAvailable && syncRecord) {
+        try {
+          await supabaseStorage.updateSyncHistory(syncRecord.id, {
+            status: 'failed',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            completedAt: new Date() as any
+          });
+          console.log('✅ [SHOPIFY SYNC] Updated sync history with error status');
+        } catch (historyUpdateError) {
+          console.error('⚠️  [SHOPIFY SYNC] Failed to update sync history with error:', historyUpdateError instanceof Error ? historyUpdateError.message : historyUpdateError);
+        }
+      } else if (!syncHistoryAvailable) {
+        console.warn('⚠️  [SHOPIFY SYNC] Skipping sync history error update (record was not created due to schema cache issue)');
       }
       
-      res.status(500).json({ error: 'Failed to sync Shopify products' });
+      res.status(500).json({ 
+        error: 'Failed to sync Shopify products',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
