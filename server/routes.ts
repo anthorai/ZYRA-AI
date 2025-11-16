@@ -5728,6 +5728,11 @@ Output format: Markdown with clear section headings.`;
           
           // Smart delta sync: Skip if not updated since last sync
           if (lastSyncTime && productUpdatedAt <= lastSyncTime) {
+            console.log(`⏭️  [SHOPIFY SYNC] Skipping unchanged product (delta sync):`, {
+              title: product.title,
+              productUpdatedAt: productUpdatedAt.toISOString(),
+              lastSyncTime: lastSyncTime.toISOString()
+            });
             continue; // Skip unchanged products
           }
 
@@ -5788,9 +5793,16 @@ Output format: Markdown with clear section headings.`;
           
           imported.push(upsertResult[0]);
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error(`❌ [SHOPIFY SYNC] Error syncing product "${product.title}":`, errorMessage);
+          console.error(`❌ [SHOPIFY SYNC] Product data:`, {
+            shopifyId: product.id,
+            title: product.title,
+            updated_at: product.updated_at
+          });
           errors.push({
             product: product.title,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: errorMessage
           });
         }
       }
