@@ -32,15 +32,21 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, style, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border gradient-card p-6 shadow-lg pointer-events-auto sm:rounded-lg",
+        "fixed z-50 grid w-full max-w-lg gap-4 border gradient-card p-6 shadow-lg pointer-events-auto sm:rounded-lg",
         className
       )}
+      style={{
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        ...style
+      }}
       {...props}
     >
       {children}
