@@ -1,0 +1,77 @@
+You are my senior full-stack debugging agent. Your task is to perform a complete deep investigation into why the Shopify store connection inside my Zyra AI application is failing.
+
+You must analyze the entire codebase and detect the root cause of the failure across the following layers:
+
+### 1. FRONTEND LAYER (Next.js)
+- Check the Connect Store button for:
+  - Disabled state logic
+  - Broken onClick handler
+  - Missing or incorrect “shop” input value
+  - Validation logic that blocks valid stores
+  - Missing credentials: "include" in fetch()
+  - Any JS errors preventing request execution
+
+- Confirm the frontend actually sends a request to:
+  `/api/shopify/auth`
+
+- Verify that the correct FULL backend URL is being used
+  (NOT a relative route unless the backend is truly on the same origin)
+
+### 2. BACKEND LAYER (Express server)
+- Ensure the `/api/shopify/auth` route exists and is reachable
+- Confirm requireAuth middleware allows authenticated users
+- Check for CORS issues that silently block requests
+- Validate environment variables:
+  - SHOPIFY_API_KEY
+  - SHOPIFY_API_SECRET
+  - PRODUCTION_DOMAIN
+  - SUPABASE_URL
+  - SUPABASE_KEY
+- Verify that OAuth state creation and database writes are working
+
+### 3. NETWORK LAYER (Browser → Server → Shopify)
+- Check whether the request reaches the backend
+- Detect failed or blocked HTTPS requests
+- Detect missing or invalid cookies for auth
+- Identify CORS headers:
+  `Access-Control-Allow-Origin`
+  `Access-Control-Allow-Credentials`
+
+### 4. REDIRECT URL LAYER (Shopify)
+- Validate the correct redirect URL is registered in Shopify app settings:
+  https://zzyraai.com/api/shopify/callback
+
+- Confirm backend correctly generates:
+  https://admin.shopify.com/store/{storeName}/oauth/authorize
+  with proper state, client_id, scope, redirect_uri
+
+### 5. CALLBACK LAYER
+- Ensure the callback endpoint receives the
+  `code`, `state`, `shop`, `hmac`, `timestamp`
+- Confirm state lookup is working and not expiring prematurely
+- Validate token exchange with Shopify
+
+### 6. INTEGRATION STATUS LOGIC
+- Check whether the “Shopify Connection Failed” banner is triggered because:
+  - The frontend failed before the request
+  - The backend returned an error
+  - The callback returned shopify_error
+  - Connection was not saved in Supabase
+  - A null or undefined value caused false negative
+
+### WHAT TO PRODUCE:
+
+1. List ALL potential causes identified in the codebase.
+2. Show the EXACT file + line numbers where the failure is likely happening.
+3. Explain whether the request is failing on:
+   - Frontend side
+   - Network layer
+   - Backend entry point
+   - Callback handling
+4. Provide the EXACT root cause of the Shopify connection failure.
+5. Provide the EXACT code fix required to solve it.
+6. Provide improved logging for both frontend + backend.
+7. Provide recommended configuration changes (env, routes, CORS, fetch, etc.)
+8. Provide a final pass/fail simulation of the full OAuth flow showing where it breaks.
+
+Your analysis MUST be extremely detailed and accurate. Do not guess. Investigate like a senior engineer debugging a critical production incident.
