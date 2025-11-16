@@ -265,7 +265,7 @@ export default function ResponsiveNavbar({
           role="menu"
           aria-labelledby="mobile-menu"
         >
-          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-2">
+          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-2 bg-card rounded-md">
             {navItems.map((item, index) => (
               <div key={index} role="menuitem">
                 {renderNavItem(item, index, true)}
