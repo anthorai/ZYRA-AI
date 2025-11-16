@@ -342,6 +342,23 @@ export class SupabaseStorage implements ISupabaseStorage {
     return this.updateUser(userId, { preferredLanguage: language });
   }
 
+  // Helper methods for store connection field mapping
+  private snakeToCamelStoreConnection(data: any): StoreConnection {
+    return {
+      id: data.id,
+      userId: data.user_id,
+      platform: data.platform,
+      storeName: data.store_name,
+      storeUrl: data.store_url,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      status: data.status,
+      lastSyncAt: data.last_sync_at,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+  }
+
   // Store connections methods
   async getStoreConnections(userId: string): Promise<StoreConnection[]> {
     const { data, error } = await supabase
@@ -350,7 +367,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get store connections: ${error.message}`);
-    return data || [];
+    return (data || []).map(connection => this.snakeToCamelStoreConnection(connection));
   }
 
   async createStoreConnection(storeConnection: InsertStoreConnection): Promise<StoreConnection> {
@@ -375,7 +392,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       .single();
     
     if (error) throw new Error(`Failed to create store connection: ${error.message}`);
-    return data;
+    return this.snakeToCamelStoreConnection(data);
   }
 
   async updateStoreConnection(id: string, updates: Partial<StoreConnection>): Promise<StoreConnection> {
@@ -398,7 +415,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       .single();
     
     if (error) throw new Error(`Failed to update store connection: ${error.message}`);
-    return data;
+    return this.snakeToCamelStoreConnection(data);
   }
 
   async deleteStoreConnection(id: string): Promise<void> {
