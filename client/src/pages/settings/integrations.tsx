@@ -1191,7 +1191,7 @@ export default function IntegrationsPage() {
 
       {/* Shopify Connect Modal */}
       <Dialog open={showShopifyConnectModal} onOpenChange={setShowShopifyConnectModal}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md pointer-events-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <ShoppingBag className="w-5 h-5" />
