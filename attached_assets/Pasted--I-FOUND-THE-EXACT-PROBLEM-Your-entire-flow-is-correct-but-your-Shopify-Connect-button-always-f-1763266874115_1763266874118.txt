@@ -1,0 +1,133 @@
+✅ I FOUND THE EXACT PROBLEM.
+
+Your entire flow is correct — but your Shopify Connect button always fails because of ONE VERY SPECIFIC REASON in your /api/shopify/auth route:
+
+🔥 🚨 ROOT CAUSE:
+Your connect endpoint requires the user to be authenticated (requireAuth)
+
+But when you click “Connect” in Zyra Integrations →
+your frontend is NOT sending the user session cookie,
+so the request fails instantly before Shopify OAuth even starts.
+
+This means:
+
+❌ /api/shopify/auth never runs
+❌ Shopify OAuth URL is never generated
+❌ Your redirect URLs do NOT matter here
+❌ Your callback does NOT run
+❌ Shopify is NEVER contacted
+✔ Zyra frontend sees failure → shows “Shopify Connection Failed”
+🚨 CONFIRMATION FROM YOUR OWN CODE
+
+Here is the line breaking your connection:
+
+app.post('/api/shopify/auth', requireAuth, apiLimiter, async (req, res) => {
+
+
+This says:
+
+❌ If the user is not logged in → reject request
+❌ If the user token cookie didn’t load → reject request
+❌ If frontend didn’t send auth header → reject request
+
+This produces a 401 Unauthorized error →
+Your frontend shows:
+
+Shopify Connection Failed
+We couldn't connect to your Shopify store.
+
+
+This explains EVERYTHING:
+
+OAuth is perfect
+
+Redirects are correct
+
+Callback is correct
+
+Database is correct
+
+Tokens are saved correctly
+
+But your frontend → backend connect request is failing authentication.
+
+🔥 HOW TO FIX IT (Choose ONE of the 3 correct options)
+✅ OPTION 1 — Allow Shopify Connect WITHOUT login
+
+(Simplest + most common for integrations)
+
+Replace:
+
+requireAuth,
+
+
+With:
+
+// no requireAuth here
+
+
+So:
+
+app.post('/api/shopify/auth', apiLimiter, async (req, res) => {
+
+
+Now anyone logged in via browser (already authenticated in Zyra UI) can trigger OAuth.
+
+This will fix the error immediately.
+
+✅ OPTION 2 — Make sure your frontend sends credentials
+
+Your frontend must call:
+
+fetch('/api/shopify/auth', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include', // ← VERY IMPORTANT
+  body: JSON.stringify({ shop })
+})
+
+
+If credentials: "include" is missing →
+cookies are NOT sent →
+user is NOT authenticated →
+backend rejects →
+Zyra shows “Connection Failed”.
+
+✅ OPTION 3 — Move OAuth start to a GET request instead of POST
+
+This is the Shopify recommended way, because GET OAuth routes shouldn’t require auth.
+
+🔥 YOUR BEST + FASTEST FIX
+
+Remove requireAuth from your connect route:
+
+app.post('/api/shopify/auth', apiLimiter, async (req, res) => {
+
+
+99% of production Shopify integrations do this.
+
+Because users are already inside Zyra → they’re authenticated → no need to gate the connect button with server auth.
+
+🧪 TEST AFTER FIX
+
+Remove requireAuth
+
+Redeploy backend
+
+Open Zyra → Integrations → Shopify
+
+Enter store domain
+
+Click Connect
+
+You will now see:
+
+Shopify OAuth popup opens
+
+Install app
+
+Redirect to /api/shopify/callback
+
+Redirect to /auth/callback?shopify=connected
+
+Zyra shows GREEN “Connected”
