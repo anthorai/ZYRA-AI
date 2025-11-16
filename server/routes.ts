@@ -5689,6 +5689,17 @@ Output format: Markdown with clear section headings.`;
         count: shopifyProducts.length,
         firstProduct: shopifyProducts[0]?.title || 'N/A'
       });
+      
+      // Debug: Log the first product's raw data
+      if (shopifyProducts.length > 0) {
+        console.log('🔍 [SHOPIFY SYNC] First product raw data:', {
+          id: shopifyProducts[0].id,
+          idType: typeof shopifyProducts[0].id,
+          title: shopifyProducts[0].title,
+          updated_at: shopifyProducts[0].updated_at,
+          variants: shopifyProducts[0].variants?.length || 0
+        });
+      }
 
       let productsAdded = 0;
       let productsUpdated = 0;
