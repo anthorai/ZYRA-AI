@@ -47,6 +47,7 @@ export const products = pgTable("products", {
   index('products_user_id_idx').on(table.userId),
   index('products_is_optimized_idx').on(table.isOptimized),
   index('products_created_at_idx').on(table.createdAt),
+  uniqueIndex('products_user_shopify_unique').on(table.userId, table.shopifyId).where(sql`${table.shopifyId} IS NOT NULL`),
 ]);
 
 export const seoMeta = pgTable("seo_meta", {

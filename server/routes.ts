@@ -5820,6 +5820,71 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Clean up duplicate products (keeps most recent product per shopifyId)
+  app.post('/api/shopify/cleanup-duplicates', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      console.log('🧹 [CLEANUP] Starting duplicate cleanup for user:', userId);
+      
+      // Find all products with duplicate shopifyIds
+      const duplicateQuery = await db.execute(sql`
+        WITH ranked_products AS (
+          SELECT 
+            id,
+            shopify_id,
+            updated_at,
+            ROW_NUMBER() OVER (
+              PARTITION BY user_id, shopify_id 
+              ORDER BY updated_at DESC
+            ) as rn
+          FROM products
+          WHERE user_id = ${userId}
+            AND shopify_id IS NOT NULL
+        )
+        SELECT id
+        FROM ranked_products
+        WHERE rn > 1
+      `);
+      
+      const duplicateIds = duplicateQuery.rows.map((row: any) => row.id);
+      
+      if (duplicateIds.length === 0) {
+        console.log('✅ [CLEANUP] No duplicates found');
+        return res.json({
+          success: true,
+          message: 'No duplicate products found',
+          removed: 0
+        });
+      }
+      
+      console.log(`🗑️  [CLEANUP] Found ${duplicateIds.length} duplicate products to remove`);
+      
+      // Delete duplicate products
+      await db.delete(products)
+        .where(
+          and(
+            eq(products.userId, userId),
+            sql`${products.id} = ANY(${duplicateIds})`
+          )
+        );
+      
+      console.log(`✅ [CLEANUP] Removed ${duplicateIds.length} duplicate products`);
+      
+      res.json({
+        success: true,
+        message: `Successfully removed ${duplicateIds.length} duplicate products`,
+        removed: duplicateIds.length
+      });
+    } catch (error) {
+      console.error('❌ [CLEANUP] Cleanup failed:', error);
+      res.status(500).json({
+        error: 'Failed to cleanup duplicates',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Publish AI content to Shopify (single product)
   app.post('/api/shopify/publish/:productId', requireAuth, async (req, res) => {
     try {
