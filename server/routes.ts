@@ -5700,6 +5700,19 @@ Output format: Markdown with clear section headings.`;
 
       for (const product of shopifyProducts) {
         try {
+          // CRITICAL: Validate shopifyId exists - reject products without valid IDs
+          if (!product.id || product.id.toString().trim() === '') {
+            console.warn(`⚠️  [SHOPIFY SYNC] Skipping product with invalid/null shopifyId:`, {
+              title: product.title || 'Unknown',
+              product_type: product.product_type || 'Unknown'
+            });
+            errors.push({
+              product: product.title || 'Unknown',
+              error: 'Product missing valid Shopify ID - skipped to prevent duplicates'
+            });
+            continue; // Skip this product to prevent duplicate inserts
+          }
+          
           const productUpdatedAt = new Date(product.updated_at);
           
           // Smart delta sync: Skip if not updated since last sync
@@ -5707,10 +5720,11 @@ Output format: Markdown with clear section headings.`;
             continue; // Skip unchanged products
           }
 
+          const shopifyId = product.id.toString().trim();
           const variant = product.variants?.[0];
           const productPayload = {
             userId,
-            shopifyId: product.id.toString(),
+            shopifyId,
             name: product.title,
             description: product.body_html || '',
             originalDescription: product.body_html || '',
@@ -5726,7 +5740,7 @@ Output format: Markdown with clear section headings.`;
           const existingProduct = await db.query.products.findFirst({
             where: and(
               eq(products.userId, userId),
-              eq(products.shopifyId, product.id.toString())
+              eq(products.shopifyId, shopifyId)
             )
           });
           
