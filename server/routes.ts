@@ -5865,6 +5865,19 @@ Output format: Markdown with clear section headings.`;
       const allProducts = await supabaseStorage.getProducts(userId);
       console.log(`📊 [CLEANUP] Found ${allProducts.length} total products for user`);
       
+      // Log products with their shopifyIds for debugging
+      const nullShopifyIdCount = allProducts.filter(p => !p.shopifyId).length;
+      console.log(`🔍 [CLEANUP] Products without shopifyId: ${nullShopifyIdCount}`);
+      console.log(`🔍 [CLEANUP] Products with shopifyId: ${allProducts.length - nullShopifyIdCount}`);
+      
+      // Show sample of product names and shopifyIds
+      const sampleProducts = allProducts.slice(0, 10).map(p => ({
+        name: p.name,
+        shopifyId: p.shopifyId || 'null',
+        id: p.id
+      }));
+      console.log(`📋 [CLEANUP] Sample products:`, JSON.stringify(sampleProducts, null, 2));
+      
       // Group products by shopifyId
       const productsByShopifyId = new Map<string, typeof allProducts>();
       
@@ -5876,15 +5889,17 @@ Output format: Markdown with clear section headings.`;
         }
       }
       
+      console.log(`🔍 [CLEANUP] Unique shopifyIds found: ${productsByShopifyId.size}`);
+      
       // Find duplicates (shopifyIds with more than 1 product)
       const duplicatesToRemove: string[] = [];
       
-      for (const [shopifyId, productGroup] of productsByShopifyId) {
+      for (const [shopifyId, productGroup] of Array.from(productsByShopifyId.entries())) {
         if (productGroup.length > 1) {
           console.log(`🔍 [CLEANUP] Found ${productGroup.length} duplicates for shopifyId: ${shopifyId}`);
           
           // Sort by updatedAt DESC to keep the most recent
-          productGroup.sort((a, b) => {
+          productGroup.sort((a: typeof allProducts[0], b: typeof allProducts[0]) => {
             const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
             const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
             return dateB - dateA;
@@ -5947,7 +5962,7 @@ Output format: Markdown with clear section headings.`;
       }
       
       const stillDuplicated: string[] = [];
-      for (const [shopifyId, count] of remainingDuplicates) {
+      for (const [shopifyId, count] of Array.from(remainingDuplicates.entries())) {
         if (count > 1) {
           stillDuplicated.push(`${shopifyId} (${count} copies)`);
         }
