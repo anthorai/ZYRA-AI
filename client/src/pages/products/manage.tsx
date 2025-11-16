@@ -217,6 +217,35 @@ export default function ManageProducts() {
     },
   });
 
+  const cleanupDuplicatesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/shopify/cleanup-duplicates', {});
+      const data = await response.json();
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.removed > 0) {
+        toast({
+          title: '🧹 Duplicates Removed!',
+          description: `Successfully removed ${data.removed} duplicate product${data.removed !== 1 ? 's' : ''}.`,
+        });
+      } else {
+        toast({
+          title: '✅ No Duplicates Found',
+          description: 'Your products are already clean!',
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: '❌ Cleanup Failed',
+        description: error.message || 'Failed to cleanup duplicates',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handlePublishClick = (product: Product) => {
     if (!product.optimizedCopy) {
       toast({
@@ -373,6 +402,29 @@ export default function ManageProducts() {
               </>
             )}
           </Button>
+          {products && products.length > 0 && (
+            <Button
+              onClick={() => cleanupDuplicatesMutation.mutate()}
+              disabled={cleanupDuplicatesMutation.isPending}
+              variant="outline"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-all border-slate-600 hover:bg-slate-700"
+              data-testid="button-cleanup-duplicates"
+            >
+              {cleanupDuplicatesMutation.isPending ? (
+                <>
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                  <span className="hidden sm:inline">Cleaning...</span>
+                  <span className="sm:hidden">Clean</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Remove Duplicates</span>
+                  <span className="sm:hidden">Clean</span>
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
