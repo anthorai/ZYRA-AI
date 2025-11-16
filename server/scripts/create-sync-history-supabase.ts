@@ -1,101 +1,65 @@
-import pkg from 'pg';
-const { Client } = pkg;
+import { createClient } from '@supabase/supabase-js';
 
 async function createSyncHistoryTable() {
-  // Parse Supabase URL to get database connection details
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabasePassword = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl) {
-    console.error('❌ Missing SUPABASE_URL environment variable');
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Missing Supabase credentials');
     process.exit(1);
   }
 
-  // Extract project ref from Supabase URL
-  // Format: https://<project-ref>.supabase.co
-  const projectRef = supabaseUrl.replace('https://', '').split('.')[0];
-  
-  // Construct direct database URL
-  // Supabase database connection format:
-  const dbConfig = {
-    host: `db.${projectRef}.supabase.co`,
-    port: 5432,
-    database: 'postgres',
-    user: 'postgres',
-    password: process.env.SUPABASE_DB_PASSWORD || supabasePassword,
-    ssl: { rejectUnauthorized: false }
-  };
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-  console.log(`🔄 Connecting to Supabase database: ${dbConfig.host}`);
-  
-  const client = new Client(dbConfig);
+  console.log('🔄 Creating sync_history table in Supabase...');
 
   try {
-    await client.connect();
-    console.log('✅ Connected to Supabase database');
+    // First check if the table exists by trying to query it
+    const { error: checkError } = await supabase
+      .from('sync_history')
+      .select('id')
+      .limit(1);
 
-    // Check if table already exists
-    const checkTableSQL = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'sync_history'
-      );
-    `;
-
-    const checkResult = await client.query(checkTableSQL);
-    const tableExists = checkResult.rows[0].exists;
-
-    if (tableExists) {
-      console.log('ℹ️  sync_history table already exists');
-    } else {
-      console.log('🔄 Creating sync_history table...');
-
-      // Create sync_history table
-      const createTableSQL = `
-        CREATE TABLE "sync_history" (
-          "id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-          "user_id" varchar NOT NULL,
-          "store_connection_id" varchar,
-          "sync_type" text NOT NULL,
-          "status" text NOT NULL,
-          "products_added" integer DEFAULT 0,
-          "products_updated" integer DEFAULT 0,
-          "products_deleted" integer DEFAULT 0,
-          "error_message" text,
-          "started_at" timestamp DEFAULT NOW(),
-          "completed_at" timestamp,
-          "metadata" jsonb
-        );
-      `;
-
-      await client.query(createTableSQL);
-      console.log('✅ sync_history table created successfully');
+    if (!checkError || checkError.code !== 'PGRST204') {
+      console.log('✅ sync_history table already exists');
+      return;
     }
 
-    // Create indexes (IF NOT EXISTS)
-    console.log('🔄 Creating indexes...');
+    console.log('ℹ️  Table does not exist, you need to create it manually');
+    console.log('\n📋 Please run the following SQL in your Supabase SQL Editor:');
+    console.log('   https://supabase.com/dashboard/project/_/sql\n');
     
-    const indexes = [
-      'CREATE INDEX IF NOT EXISTS "sync_history_user_id_idx" ON "sync_history" USING btree ("user_id");',
-      'CREATE INDEX IF NOT EXISTS "sync_history_status_idx" ON "sync_history" USING btree ("status");',
-      'CREATE INDEX IF NOT EXISTS "sync_history_started_at_idx" ON "sync_history" USING btree ("started_at");',
-      'CREATE INDEX IF NOT EXISTS "sync_history_store_connection_id_idx" ON "sync_history" USING btree ("store_connection_id");'
-    ];
+    const sql = `
+-- Create sync_history table
+CREATE TABLE IF NOT EXISTS "sync_history" (
+  "id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  "user_id" varchar NOT NULL,
+  "store_connection_id" varchar,
+  "sync_type" text NOT NULL,
+  "status" text NOT NULL,
+  "products_added" integer DEFAULT 0,
+  "products_updated" integer DEFAULT 0,
+  "products_deleted" integer DEFAULT 0,
+  "error_message" text,
+  "started_at" timestamp DEFAULT NOW(),
+  "completed_at" timestamp,
+  "metadata" jsonb
+);
 
-    for (const indexSQL of indexes) {
-      await client.query(indexSQL);
-    }
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS "sync_history_user_id_idx" ON "sync_history" USING btree ("user_id");
+CREATE INDEX IF NOT EXISTS "sync_history_status_idx" ON "sync_history" USING btree ("status");
+CREATE INDEX IF NOT EXISTS "sync_history_started_at_idx" ON "sync_history" USING btree ("started_at");
+CREATE INDEX IF NOT EXISTS "sync_history_store_connection_id_idx" ON "sync_history" USING btree ("store_connection_id");
+`;
 
-    console.log('✅ Indexes created successfully');
-    console.log('✅ Migration completed successfully!');
+    console.log(sql);
+    console.log('\n⚠️  Note: The Supabase JavaScript client cannot execute DDL statements.');
+    console.log('   You must run this SQL manually in the Supabase dashboard.\n');
 
   } catch (error) {
-    console.error('❌ Migration failed:', error);
-    throw error;
-  } finally {
-    await client.end();
-    console.log('🔌 Database connection closed');
+    console.error('❌ Error:', error);
+    process.exit(1);
   }
 }
 
