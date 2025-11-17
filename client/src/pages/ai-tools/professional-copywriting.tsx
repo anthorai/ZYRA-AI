@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { ProductSelector } from "@/components/ui/product-selector";
 import { 
   Zap, 
   Copy, 
@@ -28,6 +29,7 @@ import {
   BarChart3,
   Lightbulb
 } from "lucide-react";
+import type { Product } from "@shared/schema";
 
 interface CopyForm {
   productName: string;
@@ -337,6 +339,26 @@ export default function ProfessionalCopywriting() {
           testId="card-product-info"
         >
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <ProductSelector
+              mode="single"
+              label="Quick Select from Your Products"
+              placeholder="Select a product to auto-fill details..."
+              onProductSelect={(product) => {
+                if (product && !Array.isArray(product)) {
+                  form.setValue("productName", product.name);
+                  form.setValue("category", product.category);
+                  if (product.features) {
+                    form.setValue("features", product.features);
+                  }
+                  toast({
+                    title: "Product Selected",
+                    description: `Auto-filled details for "${product.name}"`,
+                  });
+                }
+              }}
+              showSelectedBadge={true}
+            />
+
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="productName" className="text-white">Product Name *</Label>
