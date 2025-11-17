@@ -563,32 +563,37 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product> {
-    const updateData: any = { updated_at: new Date().toISOString() };
-    
-    if (updates.userId !== undefined) updateData.user_id = updates.userId;
-    if (updates.shopifyId !== undefined) updateData.shopify_id = updates.shopifyId;
-    if (updates.name !== undefined) updateData.name = updates.name;
-    if (updates.description !== undefined) updateData.description = updates.description;
-    if (updates.originalDescription !== undefined) updateData.original_description = updates.originalDescription;
-    if (updates.originalCopy !== undefined) updateData.original_copy = updates.originalCopy;
-    if (updates.price !== undefined) updateData.price = updates.price;
-    if (updates.category !== undefined) updateData.category = updates.category;
-    if (updates.stock !== undefined) updateData.stock = updates.stock;
-    if (updates.image !== undefined) updateData.image = updates.image;
-    if (updates.features !== undefined) updateData.features = updates.features;
-    if (updates.tags !== undefined) updateData.tags = updates.tags;
-    if (updates.optimizedCopy !== undefined) updateData.optimized_copy = updates.optimizedCopy;
-    if (updates.isOptimized !== undefined) updateData.is_optimized = updates.isOptimized;
+    try {
+      const updateData: any = { updatedAt: new Date() };
+      
+      if (updates.userId !== undefined) updateData.userId = updates.userId;
+      if (updates.shopifyId !== undefined) updateData.shopifyId = updates.shopifyId;
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.originalDescription !== undefined) updateData.originalDescription = updates.originalDescription;
+      if (updates.originalCopy !== undefined) updateData.originalCopy = updates.originalCopy;
+      if (updates.price !== undefined) updateData.price = updates.price;
+      if (updates.category !== undefined) updateData.category = updates.category;
+      if (updates.stock !== undefined) updateData.stock = updates.stock;
+      if (updates.image !== undefined) updateData.image = updates.image;
+      if (updates.features !== undefined) updateData.features = updates.features;
+      if (updates.tags !== undefined) updateData.tags = updates.tags;
+      if (updates.optimizedCopy !== undefined) updateData.optimizedCopy = updates.optimizedCopy;
+      if (updates.isOptimized !== undefined) updateData.isOptimized = updates.isOptimized;
 
-    const { data, error } = await supabase
-      .from('products')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw new Error(`Failed to update product: ${error.message}`);
-    return data;
+      const result = await db.update(products)
+        .set(updateData)
+        .where(eq(products.id, id))
+        .returning();
+      
+      if (!result || result.length === 0) {
+        throw new Error('Product not found');
+      }
+      
+      return result[0];
+    } catch (error: any) {
+      throw new Error(`Failed to update product: ${error.message}`);
+    }
   }
 
   async deleteProduct(id: string): Promise<void> {
