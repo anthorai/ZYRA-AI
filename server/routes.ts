@@ -6218,7 +6218,7 @@ Output format: Markdown with clear section headings.`;
       // Initialize Shopify client
       const { getShopifyClient } = await import('./lib/shopify-client');
       const shopifyClient = await getShopifyClient(
-        shopifyConnection.storeName,
+        shopifyConnection.storeUrl || shopifyConnection.storeName,
         shopifyConnection.accessToken
       );
 
@@ -6299,7 +6299,7 @@ Output format: Markdown with clear section headings.`;
       // Initialize Shopify client
       const { getShopifyClient } = await import('./lib/shopify-client');
       const shopifyClient = await getShopifyClient(
-        shopifyConnection.storeName,
+        shopifyConnection.storeUrl || shopifyConnection.storeName,
         shopifyConnection.accessToken
       );
 
@@ -6430,7 +6430,7 @@ Output format: Markdown with clear section headings.`;
       // Initialize Shopify client
       const { getShopifyClient } = await import('./lib/shopify-client');
       const shopifyClient = await getShopifyClient(
-        shopifyConnection.storeName,
+        shopifyConnection.storeUrl || shopifyConnection.storeName,
         shopifyConnection.accessToken
       );
 
