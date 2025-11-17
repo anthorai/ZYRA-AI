@@ -521,17 +521,14 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') return undefined;
+    try {
+      const result = await db.query.products.findFirst({
+        where: eq(products.id, id)
+      });
+      return result;
+    } catch (error: any) {
       throw new Error(`Failed to get product: ${error.message}`);
     }
-    return data;
   }
 
   async createProduct(product: InsertProduct & { userId: string }): Promise<Product> {
