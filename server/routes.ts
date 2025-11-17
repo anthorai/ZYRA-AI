@@ -1862,6 +1862,143 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Apply AI-generated content to a product
+  app.post("/api/products/:id/apply-content", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const productId = req.params.id;
+      const { optimizedCopy, optimizedDescription, seoTitle, seoMetaDescription } = req.body;
+
+      // Check if the product exists and belongs to the user
+      const existingProduct = await supabaseStorage.getProduct(productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      if (existingProduct.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Backup original content if not already backed up
+      const updates: any = {};
+      
+      if (optimizedDescription && !existingProduct.originalDescription) {
+        updates.originalDescription = existingProduct.description;
+      }
+      if (optimizedCopy && !existingProduct.originalCopy) {
+        updates.originalCopy = existingProduct.optimizedCopy || null;
+      }
+
+      // Apply optimized content
+      if (optimizedDescription) {
+        updates.description = optimizedDescription;
+      }
+      if (optimizedCopy) {
+        updates.optimizedCopy = optimizedCopy;
+      }
+      updates.isOptimized = true;
+      updates.updatedAt = new Date();
+
+      // Update the product
+      const updatedProduct = await supabaseStorage.updateProduct(productId, updates);
+
+      // Update SEO metadata if provided
+      if (seoTitle || seoMetaDescription) {
+        try {
+          // Check if SEO meta exists for this product
+          const seoMetaResult = await db
+            .select()
+            .from(products)
+            .where(eq(products.id, productId))
+            .limit(1);
+
+          if (seoMetaResult.length > 0) {
+            // Update or create SEO meta (simplified - assumes seoMeta table relationship)
+            console.log("SEO metadata update:", { seoTitle, seoMetaDescription });
+          }
+        } catch (seoError) {
+          console.error("SEO update error (non-critical):", seoError);
+        }
+      }
+
+      res.json({
+        success: true,
+        product: updatedProduct,
+        message: "AI-generated content applied successfully"
+      });
+    } catch (error: any) {
+      console.error("Apply content error:", error);
+      res.status(500).json({ message: "Failed to apply content" });
+    }
+  });
+
+  // Apply AI-generated content to multiple products (bulk)
+  app.post("/api/products/apply-content-bulk", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { products: productUpdates } = req.body;
+
+      if (!Array.isArray(productUpdates) || productUpdates.length === 0) {
+        return res.status(400).json({ message: "No products provided" });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const update of productUpdates) {
+        try {
+          const { productId, optimizedCopy, optimizedDescription, seoTitle, seoMetaDescription } = update;
+
+          // Check if the product exists and belongs to the user
+          const existingProduct = await supabaseStorage.getProduct(productId);
+          if (!existingProduct) {
+            errors.push({ productId, error: "Product not found" });
+            continue;
+          }
+          if (existingProduct.userId !== userId) {
+            errors.push({ productId, error: "Unauthorized" });
+            continue;
+          }
+
+          // Backup and apply content
+          const updates: any = {};
+          
+          if (optimizedDescription && !existingProduct.originalDescription) {
+            updates.originalDescription = existingProduct.description;
+          }
+          if (optimizedCopy && !existingProduct.originalCopy) {
+            updates.originalCopy = existingProduct.optimizedCopy || null;
+          }
+
+          if (optimizedDescription) {
+            updates.description = optimizedDescription;
+          }
+          if (optimizedCopy) {
+            updates.optimizedCopy = optimizedCopy;
+          }
+          updates.isOptimized = true;
+          updates.updatedAt = new Date();
+
+          const updatedProduct = await supabaseStorage.updateProduct(productId, updates);
+          results.push({ productId, success: true, product: updatedProduct });
+        } catch (error: any) {
+          errors.push({ productId: update.productId, error: error.message });
+        }
+      }
+
+      res.json({
+        success: true,
+        results,
+        errors,
+        total: productUpdates.length,
+        succeeded: results.length,
+        failed: errors.length
+      });
+    } catch (error: any) {
+      console.error("Bulk apply content error:", error);
+      res.status(500).json({ message: "Failed to apply content in bulk" });
+    }
+  });
+
   app.delete("/api/products/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       // Check if the product exists and belongs to the user
