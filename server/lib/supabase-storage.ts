@@ -1560,7 +1560,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         console.warn('⚠️  Please run this SQL in Supabase SQL Editor to fix:');
         console.warn('   ALTER TABLE ai_generation_history DISABLE ROW LEVEL SECURITY;');
         // Return a mock object to prevent breaking the flow
-        return historyData as AiGenerationHistory;
+        return historyData as unknown as AiGenerationHistory;
       }
       throw new Error(`Failed to create AI generation history: ${error.message}`);
     }
