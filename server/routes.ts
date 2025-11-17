@@ -6217,8 +6217,10 @@ Output format: Markdown with clear section headings.`;
 
       // Initialize Shopify client
       const { getShopifyClient } = await import('./lib/shopify-client');
+      // Remove protocol from storeUrl (client adds it automatically)
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
       const shopifyClient = await getShopifyClient(
-        shopifyConnection.storeUrl || shopifyConnection.storeName,
+        shopDomain,
         shopifyConnection.accessToken
       );
 
@@ -6298,8 +6300,10 @@ Output format: Markdown with clear section headings.`;
 
       // Initialize Shopify client
       const { getShopifyClient } = await import('./lib/shopify-client');
+      // Remove protocol from storeUrl (client adds it automatically)
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
       const shopifyClient = await getShopifyClient(
-        shopifyConnection.storeUrl || shopifyConnection.storeName,
+        shopDomain,
         shopifyConnection.accessToken
       );
 
@@ -6429,8 +6433,10 @@ Output format: Markdown with clear section headings.`;
 
       // Initialize Shopify client
       const { getShopifyClient } = await import('./lib/shopify-client');
+      // Remove protocol from storeUrl (client adds it automatically)
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
       const shopifyClient = await getShopifyClient(
-        shopifyConnection.storeUrl || shopifyConnection.storeName,
+        shopDomain,
         shopifyConnection.accessToken
       );
 
