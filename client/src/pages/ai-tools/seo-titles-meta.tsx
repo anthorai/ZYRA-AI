@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector } from "@/components/ui/product-selector";
@@ -46,6 +47,7 @@ export default function SEOTitlesMeta() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [seoResult, setSEOResult] = useState<SEOResult | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   const productCategories = [
     "Electronics",
@@ -161,6 +163,33 @@ export default function SEOTitlesMeta() {
     generateSEOMutation.mutate(data);
   };
 
+  const applyToProductMutation = useMutation({
+    mutationFn: async ({ productId, seoTitle, seoMetaDescription }: { productId: string; seoTitle: string; seoMetaDescription: string }) => {
+      if (!productId) {
+        throw new Error("No product selected");
+      }
+      const response = await apiRequest('POST', `/api/products/${productId}/apply-content`, {
+        seoTitle,
+        seoMetaDescription
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "✅ Applied to Product!",
+        description: "SEO title and meta description have been saved to your product.",
+      });
+      setSelectedProductId("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to apply content",
+        description: error.message || "Could not save content to product",
+        variant: "destructive",
+      });
+    },
+  });
+
   const copyToClipboard = async (text: string, type: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -233,8 +262,14 @@ export default function SEOTitlesMeta() {
               mode="single"
               label="Quick Select from Your Products"
               placeholder="Select a product to auto-fill details..."
+              value={selectedProductId}
+              onChange={(id) => {
+                // Handle both selection and deselection
+                setSelectedProductId(typeof id === 'string' ? id : "");
+              }}
               onProductSelect={(product) => {
                 if (product && !Array.isArray(product)) {
+                  setSelectedProductId(product.id);
                   form.setValue("productName", product.name);
                   form.setValue("category", product.category);
                   toast({
@@ -383,21 +418,47 @@ export default function SEOTitlesMeta() {
                     <h3 className="text-xl font-semibold text-white">SEO Title</h3>
                     <Badge className="bg-blue-400/20 text-blue-300">{seoResult.titleLength} characters</Badge>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(seoResult.title, "SEO Title")}
-                    className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
-                    data-testid="button-copy-title"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
+                  {!selectedProductId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(seoResult.title, "SEO Title")}
+                      className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
+                      data-testid="button-copy-title"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
                 <div className="bg-slate-800/30 p-4 rounded-lg border border-blue-400/20">
                   <p className="text-slate-100 leading-relaxed font-medium">
                     {seoResult.title}
                   </p>
                 </div>
+                {selectedProductId && (
+                  <Button
+                    onClick={() => applyToProductMutation.mutate({
+                      productId: selectedProductId,
+                      seoTitle: seoResult.title,
+                      seoMetaDescription: seoResult.metaDescription
+                    })}
+                    disabled={applyToProductMutation.isPending}
+                    className="w-full mt-4 gradient-button"
+                    data-testid="button-apply-title"
+                  >
+                    {applyToProductMutation.isPending ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        Applying to Product...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Apply to Product
+                      </>
+                    )}
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -409,21 +470,47 @@ export default function SEOTitlesMeta() {
                     <h3 className="text-xl font-semibold text-white">Meta Description</h3>
                     <Badge className="bg-purple-400/20 text-purple-300">{seoResult.metaLength} characters</Badge>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(seoResult.metaDescription, "Meta Description")}
-                    className="text-purple-300 hover:text-purple-200 hover:bg-purple-400/10"
-                    data-testid="button-copy-meta"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
+                  {!selectedProductId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(seoResult.metaDescription, "Meta Description")}
+                      className="text-purple-300 hover:text-purple-200 hover:bg-purple-400/10"
+                      data-testid="button-copy-meta"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
                 <div className="bg-slate-800/30 p-4 rounded-lg border border-purple-400/20">
                   <p className="text-slate-100 leading-relaxed">
                     {seoResult.metaDescription}
                   </p>
                 </div>
+                {selectedProductId && (
+                  <Button
+                    onClick={() => applyToProductMutation.mutate({
+                      productId: selectedProductId,
+                      seoTitle: seoResult.title,
+                      seoMetaDescription: seoResult.metaDescription
+                    })}
+                    disabled={applyToProductMutation.isPending}
+                    className="w-full mt-4 gradient-button"
+                    data-testid="button-apply-meta"
+                  >
+                    {applyToProductMutation.isPending ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        Applying to Product...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Apply to Product
+                      </>
+                    )}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

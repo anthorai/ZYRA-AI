@@ -49,6 +49,7 @@ export default function SmartProductDescriptions() {
   const [, setLocation] = useLocation();
   const [brandVoice, setBrandVoice] = useState("sales");
   const [generatedResults, setGeneratedResults] = useState<GeneratedResult>({});
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   const form = useForm<GenerateForm>({
     defaultValues: {
@@ -138,12 +139,31 @@ export default function SmartProductDescriptions() {
     }
   };
 
-  const saveToProducts = (text: string, type: string) => {
-    toast({
-      title: "Saved!",
-      description: `${type} description saved to your products database.`,
-    });
-  };
+  const applyToProductMutation = useMutation({
+    mutationFn: async ({ productId, description }: { productId: string; description: string }) => {
+      if (!productId) {
+        throw new Error("No product selected");
+      }
+      const response = await apiRequest('POST', `/api/products/${productId}/apply-content`, {
+        optimizedDescription: description
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "✅ Applied to Product!",
+        description: "AI-generated description has been saved to your product.",
+      });
+      setSelectedProductId("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to apply content",
+        description: error.message || "Could not save content to product",
+        variant: "destructive",
+      });
+    },
+  });
 
   const voiceButtons = [
     { id: "sales", label: "Sales", icon: <TrendingUp className="w-4 h-4" />, description: "Emotional & persuasive" },
@@ -189,8 +209,14 @@ export default function SmartProductDescriptions() {
               mode="single"
               label="Quick Select from Your Products"
               placeholder="Select a product to auto-fill details..."
+              value={selectedProductId}
+              onChange={(id) => {
+                // Handle both selection and deselection
+                setSelectedProductId(typeof id === 'string' ? id : "");
+              }}
               onProductSelect={(product) => {
                 if (product && !Array.isArray(product)) {
+                  setSelectedProductId(product.id);
                   form.setValue("productName", product.name);
                   form.setValue("category", product.category);
                   if (product.features) {
@@ -364,13 +390,26 @@ export default function SmartProductDescriptions() {
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        onClick={() => saveToProducts(generatedResults.sales!, "Sales")}
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                        data-testid="button-save-sales"
-                      >
-                        Save to Products
-                      </Button>
+                      {selectedProductId ? (
+                        <Button 
+                          onClick={() => applyToProductMutation.mutate({ productId: selectedProductId, description: generatedResults.sales! })}
+                          disabled={applyToProductMutation.isPending}
+                          className="gradient-button"
+                          data-testid="button-apply-sales"
+                        >
+                          {applyToProductMutation.isPending ? (
+                            <>
+                              <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                              Applying...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Apply to Product
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                   <div className="bg-slate-800/30 p-4 rounded-lg border border-green-400/20">
@@ -401,13 +440,26 @@ export default function SmartProductDescriptions() {
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        onClick={() => saveToProducts(generatedResults.seo!, "SEO")}
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                        data-testid="button-save-seo"
-                      >
-                        Save to Products
-                      </Button>
+                      {selectedProductId ? (
+                        <Button 
+                          onClick={() => applyToProductMutation.mutate({ productId: selectedProductId, description: generatedResults.seo! })}
+                          disabled={applyToProductMutation.isPending}
+                          className="gradient-button"
+                          data-testid="button-apply-seo"
+                        >
+                          {applyToProductMutation.isPending ? (
+                            <>
+                              <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                              Applying...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Apply to Product
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                   <div className="bg-slate-800/30 p-4 rounded-lg border border-blue-400/20">
@@ -438,13 +490,26 @@ export default function SmartProductDescriptions() {
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        onClick={() => saveToProducts(generatedResults.casual!, "Casual")}
-                        className="bg-pink-500 hover:bg-pink-600 text-white"
-                        data-testid="button-save-casual"
-                      >
-                        Save to Products
-                      </Button>
+                      {selectedProductId ? (
+                        <Button 
+                          onClick={() => applyToProductMutation.mutate({ productId: selectedProductId, description: generatedResults.casual! })}
+                          disabled={applyToProductMutation.isPending}
+                          className="gradient-button"
+                          data-testid="button-apply-casual"
+                        >
+                          {applyToProductMutation.isPending ? (
+                            <>
+                              <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                              Applying...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Apply to Product
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                   <div className="bg-slate-800/30 p-4 rounded-lg border border-pink-400/20">

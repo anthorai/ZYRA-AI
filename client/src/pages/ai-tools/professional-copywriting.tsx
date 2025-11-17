@@ -95,6 +95,7 @@ export default function ProfessionalCopywriting() {
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   const [navigationSource, setNavigationSource] = useState<string | null>(null);
 
@@ -266,6 +267,40 @@ export default function ProfessionalCopywriting() {
     generateCopyMutation.mutate(data);
   };
 
+  const applyToProductMutation = useMutation({
+    mutationFn: async ({ productId, copy }: { productId: string; copy: CopyVariant }) => {
+      if (!productId) {
+        throw new Error("No product selected");
+      }
+      const response = await apiRequest('POST', `/api/products/${productId}/apply-content`, {
+        optimizedCopy: {
+          headline: copy.headline,
+          copy: copy.copy,
+          cta: copy.cta,
+          framework: copy.framework,
+          qualityScore: copy.qualityScore,
+          psychologicalTriggers: copy.psychologicalTriggers
+        },
+        optimizedDescription: copy.copy
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "✅ Applied to Product!",
+        description: "AI-generated copy has been saved to your product.",
+      });
+      setSelectedProductId("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to apply content",
+        description: error.message || "Could not save content to product",
+        variant: "destructive",
+      });
+    },
+  });
+
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -343,8 +378,14 @@ export default function ProfessionalCopywriting() {
               mode="single"
               label="Quick Select from Your Products"
               placeholder="Select a product to auto-fill details..."
+              value={selectedProductId}
+              onChange={(id) => {
+                // Handle both selection and deselection
+                setSelectedProductId(typeof id === 'string' ? id : "");
+              }}
               onProductSelect={(product) => {
                 if (product && !Array.isArray(product)) {
+                  setSelectedProductId(product.id);
                   form.setValue("productName", product.name);
                   form.setValue("category", product.category);
                   if (product.features) {
@@ -578,6 +619,37 @@ export default function ProfessionalCopywriting() {
                 )}
               </CardContent>
             </Card>
+
+            {selectedProductId && (
+              <Card className="border-2 border-primary/50 bg-gradient-to-br from-primary/10 to-primary/5">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex-1 text-center sm:text-left">
+                      <h3 className="text-lg font-semibold text-white mb-1">Ready to Apply?</h3>
+                      <p className="text-sm text-slate-300">Save this AI-generated copy directly to your product</p>
+                    </div>
+                    <Button
+                      onClick={() => applyToProductMutation.mutate({ productId: selectedProductId, copy: recommendedVariant })}
+                      disabled={applyToProductMutation.isPending}
+                      className="gradient-button w-full sm:w-auto"
+                      data-testid="button-apply-to-product"
+                    >
+                      {applyToProductMutation.isPending ? (
+                        <>
+                          <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                          Applying...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Apply to Product
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="border-2 border-blue-400/30 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
               <CardContent className="p-6">
