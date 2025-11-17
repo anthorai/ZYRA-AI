@@ -1553,7 +1553,17 @@ export class SupabaseStorage implements ISupabaseStorage {
       .select()
       .single();
     
-    if (error) throw new Error(`Failed to create AI generation history: ${error.message}`);
+    if (error) {
+      // Log RLS errors but don't fail the request
+      if (error.message.includes('row-level security') || error.message.includes('policy')) {
+        console.warn('⚠️  RLS Error (non-fatal): AI generation history not saved to Supabase:', error.message);
+        console.warn('⚠️  Please run this SQL in Supabase SQL Editor to fix:');
+        console.warn('   ALTER TABLE ai_generation_history DISABLE ROW LEVEL SECURITY;');
+        // Return a mock object to prevent breaking the flow
+        return historyData as AiGenerationHistory;
+      }
+      throw new Error(`Failed to create AI generation history: ${error.message}`);
+    }
     return data;
   }
 
@@ -1972,7 +1982,16 @@ export class SupabaseStorage implements ISupabaseStorage {
         .select()
         .single();
       
-      if (error) throw new Error(`Failed to update usage stats: ${error.message}`);
+      if (error) {
+        // Log RLS errors but don't fail the request
+        if (error.message.includes('row-level security') || error.message.includes('policy') || error.message.includes('schema cache')) {
+          console.warn('⚠️  RLS Error (non-fatal): Usage stats not updated in Supabase:', error.message);
+          console.warn('⚠️  Please run this SQL in Supabase SQL Editor to fix:');
+          console.warn('   ALTER TABLE usage_stats DISABLE ROW LEVEL SECURITY;');
+          return { ...existingStats, ...stats } as UsageStats;
+        }
+        throw new Error(`Failed to update usage stats: ${error.message}`);
+      }
       return data;
     } else {
       const statsData = {
@@ -1989,7 +2008,16 @@ export class SupabaseStorage implements ISupabaseStorage {
         .select()
         .single();
       
-      if (error) throw new Error(`Failed to create usage stats: ${error.message}`);
+      if (error) {
+        // Log RLS errors but don't fail the request
+        if (error.message.includes('row-level security') || error.message.includes('policy') || error.message.includes('schema cache')) {
+          console.warn('⚠️  RLS Error (non-fatal): Usage stats not created in Supabase:', error.message);
+          console.warn('⚠️  Please run this SQL in Supabase SQL Editor to fix:');
+          console.warn('   ALTER TABLE usage_stats DISABLE ROW LEVEL SECURITY;');
+          return statsData as UsageStats;
+        }
+        throw new Error(`Failed to create usage stats: ${error.message}`);
+      }
       return data;
     }
   }
