@@ -278,7 +278,14 @@ export class ShopifyClient {
       updates.body_html = content.description;
     }
 
-    const updatedProduct = await this.updateProduct(productId, updates);
+    // Only update product if there are actual changes to make
+    let updatedProduct: ShopifyProduct;
+    if (Object.keys(updates).length > 0) {
+      updatedProduct = await this.updateProduct(productId, updates);
+    } else {
+      // If no product updates, just fetch current product
+      updatedProduct = await this.getProduct(productId);
+    }
 
     if (content.seoTitle && content.metaDescription) {
       await this.updateProductSEO(productId, content.seoTitle, content.metaDescription);

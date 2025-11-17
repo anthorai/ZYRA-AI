@@ -504,7 +504,11 @@ export default function ManageProducts() {
           onOpenChange={setPublishDialogOpen}
           productId={selectedProduct.id}
           productName={selectedProduct.name}
-          content={selectedProduct.optimizedCopy || {}}
+          content={{
+            description: selectedProduct.description || (selectedProduct.optimizedCopy as any)?.copy || '',
+            seoTitle: (selectedProduct.optimizedCopy as any)?.headline || selectedProduct.name,
+            metaDescription: (selectedProduct.optimizedCopy as any)?.copy?.substring(0, 160) || '',
+          }}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['/api/products'] });
           }}
