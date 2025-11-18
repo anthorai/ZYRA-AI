@@ -64,6 +64,82 @@ export const seoMeta = pgTable("seo_meta", {
   index('seo_meta_product_id_idx').on(table.productId),
 ]);
 
+// Autonomous system tables
+export const autonomousActions = pgTable("autonomous_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  actionType: text("action_type").notNull(), // 'optimize_seo' | 'fix_product' | 'send_cart_recovery' | 'run_ab_test'
+  entityType: text("entity_type"), // 'product' | 'campaign' | 'customer'
+  entityId: varchar("entity_id"), // ID of the affected entity
+  status: text("status").notNull().default("pending"), // 'pending' | 'running' | 'completed' | 'failed' | 'rolled_back'
+  decisionReason: text("decision_reason"), // Why Zyra decided to take this action
+  ruleId: varchar("rule_id"), // Which rule triggered this
+  payload: jsonb("payload"), // Action-specific data
+  result: jsonb("result"), // Results after execution
+  estimatedImpact: jsonb("estimated_impact"), // Before: predicted changes
+  actualImpact: jsonb("actual_impact"), // After: measured changes
+  executedBy: text("executed_by").default("agent"), // 'agent' | 'user' | 'scheduler'
+  dryRun: boolean("dry_run").default(false),
+  publishedToShopify: boolean("published_to_shopify").default(false),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  completedAt: timestamp("completed_at"),
+  rolledBackAt: timestamp("rolled_back_at"),
+}, (table) => [
+  index('autonomous_actions_user_id_idx').on(table.userId),
+  index('autonomous_actions_status_idx').on(table.status),
+  index('autonomous_actions_action_type_idx').on(table.actionType),
+  index('autonomous_actions_entity_id_idx').on(table.entityId),
+  index('autonomous_actions_created_at_idx').on(table.createdAt),
+]);
+
+export const autonomousRules = pgTable("autonomous_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // null for global rules
+  name: text("name").notNull(),
+  description: text("description"),
+  ruleJson: jsonb("rule_json").notNull(), // JSON rule definition
+  enabled: boolean("enabled").default(true),
+  priority: integer("priority").default(50), // Higher = runs first
+  cooldownSeconds: integer("cooldown_seconds").default(86400), // 24h default
+  isGlobal: boolean("is_global").default(false), // System-wide rules
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('autonomous_rules_user_id_idx').on(table.userId),
+  index('autonomous_rules_enabled_idx').on(table.enabled),
+  index('autonomous_rules_priority_idx').on(table.priority),
+]);
+
+export const automationSettings = pgTable("automation_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  autopilotEnabled: boolean("autopilot_enabled").default(false),
+  autopilotMode: text("autopilot_mode").default("safe"), // 'safe' | 'balanced' | 'aggressive'
+  autoPublishEnabled: boolean("auto_publish_enabled").default(false),
+  maxDailyActions: integer("max_daily_actions").default(10),
+  maxCatalogChangePercent: integer("max_catalog_change_percent").default(5), // Max % of products to change per day
+  enabledActionTypes: jsonb("enabled_action_types").default(sql`'["optimize_seo"]'::jsonb`), // Which actions are allowed
+  notificationPreferences: jsonb("notification_preferences").default(sql`'{"email_daily_summary": true}'::jsonb`),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('automation_settings_user_id_idx').on(table.userId),
+  index('automation_settings_autopilot_enabled_idx').on(table.autopilotEnabled),
+]);
+
+export const productSnapshots = pgTable("product_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  actionId: varchar("action_id").references(() => autonomousActions.id), // Which action created this snapshot
+  snapshotData: jsonb("snapshot_data").notNull(), // Full product state before change
+  reason: text("reason"), // 'before_optimization' | 'before_publish' | 'manual'
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('product_snapshots_product_id_idx').on(table.productId),
+  index('product_snapshots_action_id_idx').on(table.actionId),
+  index('product_snapshots_created_at_idx').on(table.createdAt),
+]);
+
 export const campaigns = pgTable("campaigns", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -386,6 +462,30 @@ export const insertProductSchema = createInsertSchema(products).omit({
 });
 
 export const insertSeoMetaSchema = createInsertSchema(seoMeta).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAutonomousActionSchema = createInsertSchema(autonomousActions).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+  rolledBackAt: true,
+});
+
+export const insertAutonomousRuleSchema = createInsertSchema(autonomousRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAutomationSettingsSchema = createInsertSchema(automationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductSnapshotSchema = createInsertSchema(productSnapshots).omit({
   id: true,
   createdAt: true,
 });

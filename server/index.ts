@@ -373,6 +373,10 @@ async function startServer() {
     try {
       const { initializeDatabase } = await import('./init-db');
       await initializeDatabase();
+
+      // Seed default autonomous rules
+      const { seedDefaultAutonomousRules } = await import('./lib/default-autonomous-rules');
+      await seedDefaultAutonomousRules();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       log(`⚠️ Database initialization warning: ${errorMessage}`);
@@ -488,6 +492,32 @@ if (!isVercelServerless) {
 
   // Start campaign scheduler
   initializeCampaignScheduler();
+
+  // Initialize autonomous scheduler for AI-driven automation
+  let autonomousSchedulerInitialized = false;
+  
+  async function initializeAutonomousSchedulerFn() {
+    if (autonomousSchedulerInitialized) {
+      log("[Autonomous Scheduler] Already initialized, skipping");
+      return;
+    }
+    
+    try {
+      const { initializeAutonomousScheduler } = await import('./lib/autonomous-scheduler');
+      
+      // Initialize cron jobs
+      initializeAutonomousScheduler();
+      
+      autonomousSchedulerInitialized = true;
+      log("[Autonomous Scheduler] Initialized - autonomous operations active");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log(`[Autonomous Scheduler] CRITICAL: Failed to initialize: ${errorMsg}`);
+    }
+  }
+
+  // Start autonomous scheduler
+  initializeAutonomousSchedulerFn();
 
   // Initialize background product sync scheduler
   let productSyncSchedulerInitialized = false;
