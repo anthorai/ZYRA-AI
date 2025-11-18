@@ -1,5 +1,5 @@
 # Overview
-Zyra AI is an AI-powered Shopify SaaS application designed to help e-commerce merchants boost sales, optimize product listings, recover abandoned carts, and automate growth through intelligent automation. It provides AI-generated product descriptions, SEO optimization tools, email marketing automation, Shopify store integration, and an analytics dashboard to enhance store performance and drive significant ROI.
+Zyra AI is an AI-powered Shopify SaaS application designed to empower e-commerce merchants. Its core purpose is to boost sales, optimize product listings, recover abandoned carts, and automate growth. Key capabilities include AI-generated product descriptions, SEO optimization, email marketing automation, Shopify integration, and an analytics dashboard, all aimed at enhancing store performance and driving significant ROI. The long-term vision is to evolve into a fully autonomous AI store manager that monitors, optimizes, and learns continuously.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -7,111 +7,61 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## UI/UX Decisions
-The frontend uses React 18, TypeScript, and Vite, featuring shadcn/ui components with Radix UI and Wouter for routing. Styling is managed by Tailwind CSS with a dark theme, following a component-based architecture. Navigation uses the browser's native `window.history.back()` API for consistent back button behavior. Browser caching is controlled to ensure the latest application version, and the sidebar state persists across sessions using `localStorage`. The application is WCAG 2.1 AA compliant, with comprehensive accessibility features including keyboard navigation, visible focus indicators, logical tab order, color contrast verification, screen reader support (ARIA labels, semantic landmarks), and accessible components for loading states and forms. PWA capabilities with service worker caching provide offline support, faster repeat visits, and installability.
-
-**Page Layout System**: The PageShell component provides standardized page structure with optional header suppression via `hideHeader` prop. This allows pages like Products Manage to render without headers while maintaining required layout contracts (routing context, responsive gutters, standardized spacing). All protected routes should use PageShell to ensure consistency.
+The frontend leverages React 18, TypeScript, and Vite, utilizing shadcn/ui components with Radix UI and Wouter for routing. Styling is managed by Tailwind CSS with a dark theme and a component-based architecture. The application prioritizes accessibility (WCAG 2.1 AA compliant) with features like keyboard navigation, screen reader support, and PWA capabilities for offline support and installability. A standardized PageShell component ensures consistent page layouts and routing context.
 
 ## Technical Implementations
-The server uses Express.js with TypeScript, providing RESTful API endpoints. Authentication is session-based via `express-session` and Passport.js. PostgreSQL with Drizzle ORM is used for type-safe database operations, and Drizzle Kit manages migrations. AES-256-GCM encryption is used for sensitive data.
+The backend is built with Express.js and TypeScript, providing RESTful API endpoints. Authentication uses `express-session` and Passport.js. PostgreSQL with Drizzle ORM handles type-safe database operations, with Drizzle Kit managing migrations. Sensitive data is encrypted using AES-256-GCM.
 
 ## Feature Specifications
 ### AI Integration
-Zyra AI employs a centralized AI prompt library and a multi-model AI system (GPT-4o, GPT-4o-mini) for professional copywriting, product description generation, automated SEO optimization, image alt-text generation, bulk product optimization, and brand voice memory. It includes a premium Strategy AI (GPT-4o) for insights, token accounting, rate limiting, and Redis-backed AI response caching with a 24hr TTL.
+Zyra AI uses a multi-model AI system (GPT-4o, GPT-4o-mini) with a centralized prompt library for professional copywriting, product description generation, SEO optimization, image alt-text generation, and bulk product optimization, maintaining brand voice memory. It includes premium Strategy AI (GPT-4o) with token accounting, rate limiting, and Redis-backed caching.
 
 ### Authentication & Authorization
-Supabase Auth provides email/password login, password reset, and JWT-based session management with bcrypt for 2FA backup codes. The system implements application-level Row Level Security (RLS) using backend JWT authentication and service role database access, with comprehensive RBAC for admin endpoints and perfect payment data isolation.
+Supabase Auth provides email/password, password reset, and JWT-based session management. It features application-level Row Level Security (RLS), RBAC for admin endpoints, perfect payment data isolation, and TOTP-based Two-Factor Authentication with backup codes and password strength validation.
 
 ### Payment System
-PayPal-only payment processing (USD globally) with secure webhook handlers for subscription payments, idempotent processing, signature verification, and error handling. It supports free trial auto-activation, paid plan checkout via PayPal SDK, payment capture, subscription activation, credit initialization, and user notifications. All subscription plans ($0, $49, $299, $999) are configured.
+The system supports PayPal-only payment processing (USD globally) with secure webhook handlers for subscription payments, including free trial auto-activation, paid plan checkout, and credit initialization. It supports multiple subscription plans.
 
 ### Marketing Automation System
-Provides real email/SMS delivery via SendGrid and Twilio, featuring campaign scheduling, abandoned cart recovery, and performance tracking.
+Real email/SMS delivery is provided via SendGrid and Twilio, enabling campaign scheduling, abandoned cart recovery, and performance tracking.
 
 ### Analytics & Reporting
-A real-time dashboard tracks campaigns, revenue, conversions, and ROI, with export capabilities for PDF and CSV.
+A real-time dashboard tracks key metrics such as campaigns, revenue, conversions, and ROI, with PDF and CSV export capabilities.
 
 ### Error Tracking & Monitoring
-Production-grade monitoring infrastructure with Sentry integration for both backend and frontend, featuring real-time error tracking with 5xx error alerts, session replay, user-friendly error messages, and a comprehensive health check endpoint (`/health`). Sensitive data protection ensures no confidential information is leaked.
+Sentry integration provides production-grade real-time error tracking for both frontend and backend, including session replay, 5xx alerts, and a `/health` endpoint, all while protecting sensitive data.
 
 ### Security & Compliance
-Production-ready security with zero critical vulnerabilities. Features include:
-- **Multi-tier rate limiting**: Brute force protection for all auth endpoints
-- **Comprehensive input sanitization**: XSS and SQL injection prevention
-- **GDPR compliance**: Data export, account deletion, privacy controls
-- **AES-256-GCM encryption**: Sensitive data protection
-- **bcrypt hashing**: Password and 2FA backup code hashing
-- **CORS protection**: Helmet.js security headers
-- **Secure credential management**: Environment-based secrets
-- **Two-Factor Authentication**: TOTP-based 2FA with QR enrollment, backup codes, and recovery flow
-- **Password Strength Validation**: Production-grade password strength meter with shared validation logic (shared/password-validation.ts) ensuring perfect client-server alignment. Enforces minimum score of 3, character variety (uppercase, lowercase, numbers, special chars), and blocks weak patterns (sequences, common words, all-numeric/alpha). Real-time visual feedback with color-coded strength bar and actionable guidance.
+The system ensures production-ready security with multi-tier rate limiting for auth endpoints, comprehensive input sanitization (XSS, SQL injection prevention), GDPR compliance (data export, account deletion), AES-256-GCM encryption, bcrypt hashing for passwords and 2FA codes, CORS protection (Helmet.js), and secure credential management.
 
 ### Notification System
-Advanced preferences for multi-channel notifications (Email, SMS, In-App, Push) with granular control, including proactive trial expiration notifications.
+Advanced multi-channel notification preferences (Email, SMS, In-App, Push) offer granular control, including proactive trial expiration notifications.
 
 ### Shopify Integration
-Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidirectional product sync and store management. Comprehensive OAuth scopes cover products, inventory, customers, orders, checkouts, marketing events, analytics, reports, and localization. Includes robust security features like state validation, shop domain protection, HMAC verification, and input sanitization. GDPR-compliant webhooks respond instantly (<100ms) with asynchronous data processing.
+Full OAuth 2.0 integration allows bidirectional product sync and store management. It covers comprehensive OAuth scopes (products, inventory, customers, orders, checkouts, marketing, analytics, reports, localization) and robust security (state validation, HMAC verification, input sanitization). GDPR-compliant webhooks ensure instant (<100ms) responses with asynchronous data processing.
 
-### Autonomous AI Store Manager (Phase 1 - MVP)
-**Vision**: Transform Zyra AI from manual optimization tools into a fully autonomous AI that monitors stores 24/7, makes optimization decisions automatically, and learns from results.
+### Autonomous AI Store Manager (MVP - Autonomous SEO)
+This system aims to transform manual optimization into autonomous, AI-driven processes.
+- **Current Implementation (Phase 1 - Autonomous SEO)**: Features a daily SEO Audit Scheduler (node-cron), a JSON-based Rule Engine for evaluating conditions and triggering optimizations, and an Action Processor using AI (GPT-4o-mini) to generate and apply SEO changes. Product Snapshots enable one-click rollback, and an Audit Trail logs all autonomous actions. Safety features include `maxDailyActions` enforcement, autopilot verification, cooldown periods, and deduplication. UI controls provide Autopilot Settings (toggle, modes, limits) and an Activity Timeline.
+- **Production Hardening (Phase 2)**: Completed critical security and data integrity enhancements (Bearer tokens, Zod validation, complete rollback, `maxCatalogChangePercent` enforcement), enhanced safety with Dry-Run Mode and Transactional Safety, and improved user experience via daily Morning Report Emails and an enhanced Activity Timeline with 7-day metrics and charts.
 
-**Current Implementation** (Phase 1 - Autonomous SEO):
-- **Daily SEO Audit Scheduler**: Runs every day at 2 AM via node-cron, scans all products for users with autopilot enabled, evaluates SEO scores against rules
-- **Rule Engine**: JSON-based rule system evaluates conditions (e.g., SEO score < 70) and triggers optimization actions automatically
-- **Action Processor**: Executes SEO optimizations via AI (GPT-4o-mini), generates optimized SEO titles and meta descriptions, applies changes to products
-- **Product Snapshots**: Creates snapshots before changes for one-click rollback capability
-- **Audit Trail**: All autonomous actions logged in `autonomous_actions` table with reasoning, results, and timestamps
-- **Safety Features**:
-  - `maxDailyActions` enforcement (default: 10/day) prevents runaway automation
-  - Autopilot mode verification before executing actions
-  - Cooldown periods (default: 7 days) prevent over-optimization
-  - Deduplication prevents multiple pending actions for same product
-  - Try/finally concurrency protection in scheduler
-- **UI Controls**:
-  - Autopilot Settings (`/ai-tools/autopilot`): Toggle on/off, modes (Safe/Balanced/Aggressive), safety limits
-  - Activity Timeline (`/ai-tools/activity-timeline`): View all autonomous actions, rollback any change
-  
-**Database Schema**:
-- `autonomous_actions`: Tracks all autonomous actions (type, status, entity, reasoning, result, impact)
-- `autonomous_rules`: Stores optimization rules (JSON conditions, actions, priority, cooldown)
-- `automation_settings`: User preferences (autopilotEnabled, mode, maxDailyActions, maxCatalogChangePercent)
-- `product_snapshots`: Pre-change snapshots for rollback capability
-
-**Phase 2 Progress** (Production Hardening):
-✅ **Priority 1: Critical Security & Data Integrity** (Completed):
-- Replaced x-user-id header with requireAuth middleware + Bearer tokens
-- Added Zod validation schemas (updateAutomationSettingsSchema) with server-side enforcement
-- Complete rollback implementation restoring both products and seoMeta tables
-- maxCatalogChangePercent enforcement with small-catalog fix (Math.max(1, Math.ceil))
-
-✅ **Priority 2: Enhanced Safety** (Completed):
-- **Dry-Run Mode**: Preview autonomous actions without execution. Scheduler creates 'dry_run' status actions when dryRunMode enabled. Processor skips dry-run actions before any writes. UI toggle in Autopilot Settings with blue "Preview (Dry Run)" badges in Activity Timeline.
-- **Transactional Safety**: Atomic database operations with deterministic failure handling. Snapshots persist outside transaction (survives all failures). AI generation happens before transaction (clean failure states). Only database updates wrapped in transaction (seoMeta + action status). Eliminates double-write conflicts and ensures audit trail completeness.
-
-✅ **Priority 3: User Experience - Morning Reports & Activity Dashboard** (Completed):
-- **Stats API Endpoint** (`/api/autopilot/stats`): Returns 7-day metrics (total actions, success rate, SEO optimizations, cart recoveries, daily breakdown for charts)
-- **Enhanced Activity Timeline**: Stats header with 4 stat cards (Total Actions, Success Rate, SEO Optimizations, Cart Recoveries) and Recharts line chart visualizing 7-day activity trends
-- **Morning Report Email System**: Daily cron job (8 AM) sends HTML email to users with autopilot enabled, showing yesterday's activity with "While you slept" summary, stats cards, and recent actions list. Email template is production-ready with responsive design and CTA button to Activity Timeline.
-- **Cron Schedule**: Morning reports run at 8 AM daily, complementing existing SEO audit (2 AM) and cart recovery (hourly) schedulers
-
-**Future Workflows** (Phase 2+):
-- Autonomous Product Fixes: Detect and fix product errors (missing images, broken links)
-- Predictive Intelligence: Learn from results and optimize rules over time
-- Smart Scheduling: Optimize execution timing based on store traffic patterns
+### Dynamic Pricing AI (In Progress)
+This feature aims to automate pricing decisions based on competitor monitoring, profit optimization, and market conditions. The database schema (competitor_products, pricing_rules, price_changes, pricing_snapshots, pricing_settings) and 13 secure API endpoints for competitor management, pricing rules, history, rollback, settings, and analytics are complete. It reuses existing autonomous infrastructure components (rule engine, scheduler, action processor, rollback system) and extends the `autonomous_actions` table. Next steps involve building a competitor price scraper, product matching algorithm, pricing rules engine, scheduler, action processor, and UI. Safety features like min/max price bounds, daily change limits, cooldowns, dry-run mode, and approval workflows are planned.
 
 ## System Design Choices
-Configured for VM deployment on Replit, with a build process using Vite for frontend and esbuild for backend. The architecture supports persistent schedulers for billing, campaigns, and product syncing. Automated database migrations managed by Drizzle Kit run on server startup, creating all 37 required tables. Performance optimizations include 95+ database indexes for optimal query performance, Redis caching (Upstash) for AI responses and data, and frontend optimizations like code splitting, response compression, and static asset caching.
+The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend. It supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup, creating all necessary tables. Performance is optimized with 95+ database indexes, Upstash Redis caching for AI responses, and frontend optimizations like code splitting, response compression, and static asset caching.
 
 # External Dependencies
 
 ## Database & Hosting
 - **PostgreSQL**: Production database.
-- **Supabase**: Provides PostgreSQL and authentication services.
+- **Supabase**: PostgreSQL and authentication services.
 - **Drizzle ORM**: Type-safe database queries.
-- **Deployment Options**: Replit VM (development/testing), Vercel (production serverless with CDN, auto-scaling, Vercel Cron, and automatic database migrations).
+- **Deployment Options**: Replit VM (development/testing), Vercel (production serverless).
 
 ## AI & Machine Learning
-- **OpenAI API**: GPT-4o mini for text generation and Vision API for image analysis.
-- **Upstash Redis**: Serverless Redis for AI response caching and performance optimization.
+- **OpenAI API**: GPT-4o mini (text generation), Vision API (image analysis).
+- **Upstash Redis**: Serverless Redis for AI response caching.
 
 ## Payment Processing
 - **PayPal**: International payment gateway.
