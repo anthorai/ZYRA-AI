@@ -87,8 +87,13 @@ Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidire
 - **Dry-Run Mode**: Preview autonomous actions without execution. Scheduler creates 'dry_run' status actions when dryRunMode enabled. Processor skips dry-run actions before any writes. UI toggle in Autopilot Settings with blue "Preview (Dry Run)" badges in Activity Timeline.
 - **Transactional Safety**: Atomic database operations with deterministic failure handling. Snapshots persist outside transaction (survives all failures). AI generation happens before transaction (clean failure states). Only database updates wrapped in transaction (seoMeta + action status). Eliminates double-write conflicts and ensures audit trail completeness.
 
+✅ **Priority 3: User Experience - Morning Reports & Activity Dashboard** (Completed):
+- **Stats API Endpoint** (`/api/autopilot/stats`): Returns 7-day metrics (total actions, success rate, SEO optimizations, cart recoveries, daily breakdown for charts)
+- **Enhanced Activity Timeline**: Stats header with 4 stat cards (Total Actions, Success Rate, SEO Optimizations, Cart Recoveries) and Recharts line chart visualizing 7-day activity trends
+- **Morning Report Email System**: Daily cron job (8 AM) sends HTML email to users with autopilot enabled, showing yesterday's activity with "While you slept" summary, stats cards, and recent actions list. Email template is production-ready with responsive design and CTA button to Activity Timeline.
+- **Cron Schedule**: Morning reports run at 8 AM daily, complementing existing SEO audit (2 AM) and cart recovery (hourly) schedulers
+
 **Future Workflows** (Phase 2+):
-- Autonomous Cart Recovery: Send personalized recovery emails automatically
 - Autonomous Product Fixes: Detect and fix product errors (missing images, broken links)
 - Predictive Intelligence: Learn from results and optimize rules over time
 - Smart Scheduling: Optimize execution timing based on store traffic patterns
