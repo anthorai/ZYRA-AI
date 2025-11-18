@@ -76,13 +76,16 @@ Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidire
 - `automation_settings`: User preferences (autopilotEnabled, mode, maxDailyActions, maxCatalogChangePercent)
 - `product_snapshots`: Pre-change snapshots for rollback capability
 
-**Known Limitations** (Phase 2 Backlog):
-- Uses `x-user-id` header pattern (matches existing app auth but needs proper auth middleware for production)
-- No Zod validation on automation API route inputs
-- Rollback only restores `products` table, not `seoMeta` (incomplete)
-- No transactional safety across related tables
-- `maxCatalogChangePercent` not yet enforced
-- No dry-run mode implementation
+**Phase 2 Progress** (Production Hardening):
+✅ **Priority 1: Critical Security & Data Integrity** (Completed):
+- Replaced x-user-id header with requireAuth middleware + Bearer tokens
+- Added Zod validation schemas (updateAutomationSettingsSchema) with server-side enforcement
+- Complete rollback implementation restoring both products and seoMeta tables
+- maxCatalogChangePercent enforcement with small-catalog fix (Math.max(1, Math.ceil))
+
+⏳ **Priority 2: Enhanced Safety** (Remaining):
+- Dry-run mode for previewing autonomous actions
+- Transactional safety for atomic operations across related tables
 
 **Future Workflows** (Phase 2+):
 - Autonomous Cart Recovery: Send personalized recovery emails automatically

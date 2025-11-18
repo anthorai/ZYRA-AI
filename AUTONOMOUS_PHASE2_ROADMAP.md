@@ -26,9 +26,9 @@
 
 ## Phase 2: Production Hardening 🔒
 
-### Priority 1: Critical Security & Data Integrity
+### Priority 1: Critical Security & Data Integrity ✅ COMPLETED
 
-#### 1.1 Authentication Middleware
+#### 1.1 Authentication Middleware ✅
 **Problem**: Currently uses `x-user-id` header pattern which is insecure for production.
 
 **Solution**:
@@ -49,11 +49,17 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 - `client/src/pages/ai-tools/autopilot.tsx` (remove hardcoded x-user-id)
 - `client/src/pages/ai-tools/activity-timeline.tsx` (remove hardcoded x-user-id)
 
-**Effort**: 2-3 hours
+**Effort**: 2-3 hours ✅ Completed
+
+**Implementation**:
+- Replaced x-user-id header pattern with requireAuth middleware
+- Updated all automation routes to use (req as AuthenticatedRequest).user.id
+- Frontend now uses apiRequest with Authorization Bearer tokens
+- Authenticated session required for all automation operations
 
 ---
 
-#### 1.2 Request Validation with Zod
+#### 1.2 Request Validation with Zod ✅
 **Problem**: Automation API routes accept raw request bodies without validation.
 
 **Solution**:
@@ -83,11 +89,17 @@ app.put("/api/automation/settings", async (req, res) => {
 - `shared/schema.ts` (add validation schemas)
 - `server/routes.ts` (apply validation to all automation routes)
 
-**Effort**: 1-2 hours
+**Effort**: 1-2 hours ✅ Completed
+
+**Implementation**:
+- Created updateAutomationSettingsSchema with proper validation
+- Enforces valid autopilotMode enum, maxDailyActions 1-100, maxCatalogChangePercent 1-100
+- Applied to PUT /api/automation/settings endpoint
+- Returns 400 with validation details on failure
 
 ---
 
-#### 1.3 Complete Rollback Implementation
+#### 1.3 Complete Rollback Implementation ✅
 **Problem**: Rollback only restores `products` table, not `seoMeta` table.
 
 **Solution**:
@@ -116,13 +128,19 @@ await db.update(seoMeta).set(snapshotData.seoMeta);
 - `server/lib/autonomous-action-processor.ts` (capture seoMeta in snapshot)
 - `server/routes.ts` (restore seoMeta in rollback route)
 
-**Effort**: 1 hour
+**Effort**: 1 hour ✅ Completed
+
+**Implementation**:
+- Updated snapshot creation to include both product and seoMeta data
+- Updated rollback route to restore both tables from snapshot
+- Handles cases where seoMeta didn't exist before (null)
+- Sets rolledBackAt timestamp on action
 
 ---
 
 ### Priority 2: Enhanced Safety
 
-#### 2.1 maxCatalogChangePercent Enforcement
+#### 2.1 maxCatalogChangePercent Enforcement ✅
 **Problem**: Not currently enforced, could change too many products at once.
 
 **Solution**:
@@ -145,7 +163,17 @@ if (todaysChangedProducts.size >= maxChanges) {
 **Files to Update**:
 - `server/lib/autonomous-scheduler.ts`
 
-**Effort**: 30 minutes
+**Effort**: 30 minutes ✅ Completed
+
+**Implementation**:
+- Calculates maxChanges using Math.max(1, Math.ceil(totalProducts * percent / 100))
+- Ensures at least 1 product can be changed even for small catalogs (1-19 products)
+- Tracks unique products changed today via Set
+- Pre-loop check: stops if catalog limit already reached
+- Mid-loop check: breaks if limit hit during execution
+- Updates Set when action is created
+
+**Critical Fix**: Changed from Math.floor to Math.max(1, Math.ceil) to prevent zero-limit regression for small catalogs.
 
 ---
 
