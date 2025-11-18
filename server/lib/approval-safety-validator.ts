@@ -199,33 +199,32 @@ async function validateMarketingAction(userId: string, payload: any): Promise<Sa
       };
     }
 
-    // CRITICAL: Also check pending approvals for this same recipient
-    // This prevents race conditions when multiple approvals are executed simultaneously
+    // CRITICAL: Check database for existing pending approvals using normalized columns
+    // This prevents race conditions via database-level unique constraint
     const { pendingApprovals } = await import('@shared/schema');
-    const pendingForRecipient = await db
+    
+    // Query using normalized recipient columns (not JSON parsing)
+    // This leverages the partial unique indexes for race condition prevention
+    const existingApprovals = await db
       .select()
       .from(pendingApprovals)
       .where(
         and(
           eq(pendingApprovals.userId, userId),
           eq(pendingApprovals.status, 'pending'),
-          sql`${pendingApprovals.actionType} IN ('send_campaign', 'send_cart_recovery')`
+          sql`${pendingApprovals.actionType} IN ('send_campaign', 'send_cart_recovery')`,
+          eq(pendingApprovals.channel, channel),
+          // Match by recipient identifier for this channel
+          channel === 'email'
+            ? eq(pendingApprovals.recipientEmail, recipientEmail!)
+            : eq(pendingApprovals.recipientPhone, recipientPhone!)
         )
       );
 
-    // Count pending approvals for this specific recipient
-    const pendingCount = pendingForRecipient.filter((approval: any) => {
-      const action = approval.recommendedAction as any || {};
-      const matches = channel === 'email'
-        ? (action.customerEmail === recipientEmail || action.recipientEmail === recipientEmail)
-        : (action.customerPhone === recipientPhone || action.recipientPhone === recipientPhone);
-      return matches && action.channel === channel;
-    }).length;
-
-    if (pendingCount > 0) {
+    if (existingApprovals.length > 0) {
       return {
         allowed: false,
-        reason: `${pendingCount} pending approval(s) for this customer already exist. Please wait for them to be processed first.`,
+        reason: `${existingApprovals.length} pending approval(s) for this ${channel} recipient already exist. Please wait for them to be processed first.`,
         violationType: 'pending_approval_exists'
       };
     }

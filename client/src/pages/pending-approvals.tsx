@@ -16,8 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Bot, TrendingUp, Mail, ShoppingCart, DollarSign, AlertCircle, Sparkles } from "lucide-react";
+import { Check, X, Bot, TrendingUp, Mail, ShoppingCart, DollarSign, AlertCircle, Sparkles, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type PendingApproval = {
@@ -201,6 +202,16 @@ export default function PendingApprovals() {
       />
 
       <div className="flex-1 p-4 sm:p-6">
+        {/* Manual Mode Disclaimer */}
+        <Alert className="mb-6 border-blue-500/30 bg-blue-500/10" data-testid="alert-manual-mode-disclaimer">
+          <Info className="h-4 w-4 text-blue-400" />
+          <AlertDescription className="text-sm text-muted-foreground" data-testid="text-disclaimer-message">
+            <strong className="text-foreground">Manual Mode:</strong> Approved actions execute immediately.
+            Marketing and cart recovery messages may be sent outside quiet hours (9 AM - 9 PM).
+            For fully autonomous operation with all safety guardrails, switch to Autonomous Mode in settings.
+          </AlertDescription>
+        </Alert>
+
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ActionTypeFilter)} className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="all" data-testid="tab-all">

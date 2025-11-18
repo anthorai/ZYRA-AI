@@ -154,6 +154,10 @@ export const pendingApprovals = pgTable("pending_approvals", {
   status: text("status").default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
   priority: text("priority").default("medium"), // 'low' | 'medium' | 'high' | 'urgent'
   estimatedImpact: jsonb("estimated_impact"), // Predicted ROI, traffic increase, conversion lift
+  // RACE CONDITION PREVENTION: Normalized recipient data for unique constraints
+  recipientEmail: text("recipient_email"), // Extracted from recommendedAction for marketing/cart recovery
+  recipientPhone: text("recipient_phone"), // Extracted from recommendedAction for SMS marketing
+  channel: text("channel"), // 'email' | 'sms' - extracted for deduplication
   createdAt: timestamp("created_at").default(sql`NOW()`),
   reviewedAt: timestamp("reviewed_at"),
   reviewedBy: varchar("reviewed_by").references(() => users.id), // Who approved/rejected
@@ -164,6 +168,22 @@ export const pendingApprovals = pgTable("pending_approvals", {
   index('pending_approvals_action_type_idx').on(table.actionType),
   index('pending_approvals_created_at_idx').on(table.createdAt),
   index('pending_approvals_priority_idx').on(table.priority),
+  // CRITICAL: Unique partial indexes to prevent duplicate approvals for same customer
+  // These indexes prevent race conditions when approving multiple marketing/cart recovery actions
+  uniqueIndex('pending_approvals_email_dedup_idx').on(
+    table.userId,
+    table.actionType,
+    table.recipientEmail,
+    table.channel,
+    table.status
+  ).where(sql`status = 'pending' AND action_type IN ('send_campaign', 'send_cart_recovery') AND recipient_email IS NOT NULL`),
+  uniqueIndex('pending_approvals_sms_dedup_idx').on(
+    table.userId,
+    table.actionType,
+    table.recipientPhone,
+    table.channel,
+    table.status
+  ).where(sql`status = 'pending' AND action_type IN ('send_campaign', 'send_cart_recovery') AND recipient_phone IS NOT NULL`),
 ]);
 
 export const productSnapshots = pgTable("product_snapshots", {
