@@ -11,6 +11,8 @@ export const integrationTypeEnum = pgEnum('integration_type', ['email', 'sms', '
 export const paymentGatewayEnum = pgEnum('payment_gateway', ['razorpay', 'paypal']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded', 'cancelled']);
 export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['card', 'upi', 'netbanking', 'wallet', 'bank_transfer']);
+export const cartRecoveryStatusEnum = pgEnum('cart_recovery_status', ['abandoned', 'contacted', 'recovered', 'expired']);
+export const recoveryChannelEnum = pgEnum('recovery_channel', ['email', 'sms', 'both']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -121,6 +123,12 @@ export const automationSettings = pgTable("automation_settings", {
   maxCatalogChangePercent: integer("max_catalog_change_percent").default(5), // Max % of products to change per day
   enabledActionTypes: jsonb("enabled_action_types").default(sql`'["optimize_seo"]'::jsonb`), // Which actions are allowed
   notificationPreferences: jsonb("notification_preferences").default(sql`'{"email_daily_summary": true}'::jsonb`),
+  // Cart Recovery Settings
+  cartRecoveryEnabled: boolean("cart_recovery_enabled").default(false),
+  minCartValue: numeric("min_cart_value", { precision: 10, scale: 2 }).default("10.00"), // Minimum cart value to recover
+  recoveryIntervals: jsonb("recovery_intervals").default(sql`'[1, 4, 24]'::jsonb`), // Hours after abandonment to send recovery [1hr, 4hr, 24hr]
+  recoveryChannel: recoveryChannelEnum("recovery_channel").default("email").notNull(), // Enum for data integrity
+  maxRecoveryAttempts: integer("max_recovery_attempts").default(3), // Max times to contact per cart
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
 }, (table) => [
@@ -139,6 +147,35 @@ export const productSnapshots = pgTable("product_snapshots", {
   index('product_snapshots_product_id_idx').on(table.productId),
   index('product_snapshots_action_id_idx').on(table.actionId),
   index('product_snapshots_created_at_idx').on(table.createdAt),
+]);
+
+// Cart Recovery System Tables
+export const abandonedCarts = pgTable("abandoned_carts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  shopifyCheckoutId: text("shopify_checkout_id"), // Shopify checkout/cart ID
+  customerEmail: text("customer_email"),
+  customerPhone: text("customer_phone"),
+  customerName: text("customer_name"),
+  cartValue: numeric("cart_value", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("USD"),
+  cartItems: jsonb("cart_items").notNull(), // Array of cart items with product details
+  checkoutUrl: text("checkout_url"), // Shopify recovery URL
+  abandonedAt: timestamp("abandoned_at").notNull(),
+  lastContactedAt: timestamp("last_contacted_at"), // When we last sent a recovery message
+  recoveredAt: timestamp("recovered_at"), // When cart was converted
+  recoveredValue: numeric("recovered_value", { precision: 10, scale: 2 }), // Actual purchase value
+  recoveryAttempts: integer("recovery_attempts").default(0), // How many times we've tried
+  status: cartRecoveryStatusEnum("status").default("abandoned").notNull(), // Enum for data integrity
+  shopifyOrderId: text("shopify_order_id"), // If recovered, the order ID
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('abandoned_carts_user_id_idx').on(table.userId),
+  index('abandoned_carts_status_idx').on(table.status),
+  index('abandoned_carts_abandoned_at_idx').on(table.abandonedAt),
+  index('abandoned_carts_shopify_checkout_idx').on(table.shopifyCheckoutId),
+  uniqueIndex('abandoned_carts_user_checkout_unique').on(table.userId, table.shopifyCheckoutId).where(sql`${table.shopifyCheckoutId} IS NOT NULL`),
 ]);
 
 export const campaigns = pgTable("campaigns", {
@@ -220,25 +257,6 @@ export const campaignTemplates = pgTable("campaign_templates", {
   index('campaign_templates_user_id_idx').on(table.userId),
   index('campaign_templates_preset_type_idx').on(table.presetType),
   index('campaign_templates_created_at_idx').on(table.createdAt),
-]);
-
-export const abandonedCarts = pgTable("abandoned_carts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  customerEmail: text("customer_email").notNull(),
-  customerPhone: text("customer_phone"),
-  cartItems: jsonb("cart_items").notNull(),
-  cartValue: numeric("cart_value", { precision: 10, scale: 2 }).notNull(),
-  recoveryCampaignSent: boolean("recovery_campaign_sent").default(false),
-  recoveredAt: timestamp("recovered_at"),
-  isRecovered: boolean("is_recovered").default(false),
-  createdAt: timestamp("created_at").default(sql`NOW()`),
-  updatedAt: timestamp("updated_at").default(sql`NOW()`),
-}, (table) => [
-  index('abandoned_carts_user_id_idx').on(table.userId),
-  index('abandoned_carts_is_recovered_idx').on(table.isRecovered),
-  index('abandoned_carts_recovery_campaign_sent_idx').on(table.recoveryCampaignSent),
-  index('abandoned_carts_created_at_idx').on(table.createdAt),
 ]);
 
 export const subscriptions = pgTable("subscriptions", {
@@ -496,6 +514,14 @@ export const updateAutomationSettingsSchema = z.object({
   maxCatalogChangePercent: z.number().int().min(1).max(100).optional(),
   enabledActionTypes: z.array(z.string()).optional(),
   notificationPreferences: z.record(z.boolean()).optional(),
+  // Cart Recovery Settings
+  cartRecoveryEnabled: z.boolean().optional(),
+  minCartValue: z.union([z.string(), z.number()]).optional().transform((val) => 
+    typeof val === 'number' ? val.toString() : val
+  ),
+  recoveryIntervals: z.array(z.number().int().positive()).optional(), // [1, 4, 24] hours
+  recoveryChannel: z.enum(['email', 'sms', 'both']).optional(),
+  maxRecoveryAttempts: z.number().int().min(1).max(10).optional(),
 });
 
 export const insertProductSnapshotSchema = createInsertSchema(productSnapshots).omit({
