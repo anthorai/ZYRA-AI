@@ -30,10 +30,7 @@ export default function AutopilotSettings() {
   // Update settings mutation
   const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
-      return await apiRequest('/api/automation/settings', {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-      });
+      return await apiRequest('PUT', '/api/automation/settings', updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/automation/settings'] });

@@ -128,7 +128,8 @@ async function executeOptimizeSEO(action: any): Promise<void> {
       .where(eq(seoMeta.productId, product.id))
       .limit(1);
 
-    // Create snapshot before changes (includes both product and seoMeta)
+    // Create snapshot BEFORE transaction - this persists even if AI/updates fail
+    // This ensures we have a record of attempted changes for debugging
     await db.insert(productSnapshots).values({
       productId: product.id,
       actionId: action.id,
@@ -139,49 +140,55 @@ async function executeOptimizeSEO(action: any): Promise<void> {
       reason: 'before_optimization',
     });
 
-    // Generate SEO content
+    // Generate SEO content BEFORE transaction
+    // If this fails, catch block marks action as failed (no transaction conflict)
     const seoContent = await generateSEOContent(product);
 
-    if (existingSeoMeta.length > 0) {
-      // Update existing
-      await db
-        .update(seoMeta)
+    // TRANSACTIONAL SAFETY: Wrap only database updates in transaction
+    // If updates fail, they roll back atomically (snapshot and AI result persist)
+    await db.transaction(async (tx) => {
+
+      if (existingSeoMeta.length > 0) {
+        // Update existing
+        await tx
+          .update(seoMeta)
+          .set({
+            seoTitle: seoContent.seoTitle,
+            metaDescription: seoContent.metaDescription,
+            seoScore: seoContent.seoScore,
+          })
+          .where(eq(seoMeta.productId, product.id));
+      } else {
+        // Create new
+        await tx.insert(seoMeta).values({
+          productId: product.id,
+          seoTitle: seoContent.seoTitle,
+          metaDescription: seoContent.metaDescription,
+          seoScore: seoContent.seoScore,
+        });
+      }
+
+      // Update action status
+      await tx
+        .update(autonomousActions)
         .set({
-          seoTitle: seoContent.seoTitle,
-          metaDescription: seoContent.metaDescription,
-          seoScore: seoContent.seoScore,
+          status: 'completed',
+          completedAt: new Date(),
+          result: {
+            seoTitle: seoContent.seoTitle,
+            metaDescription: seoContent.metaDescription,
+            seoScore: seoContent.seoScore,
+          } as any,
+          actualImpact: {
+            seoScoreChange: seoContent.seoScore - (existingSeoMeta[0]?.seoScore || 0),
+          } as any,
         })
-        .where(eq(seoMeta.productId, product.id));
-    } else {
-      // Create new
-      await db.insert(seoMeta).values({
-        productId: product.id,
-        seoTitle: seoContent.seoTitle,
-        metaDescription: seoContent.metaDescription,
-        seoScore: seoContent.seoScore,
-      });
-    }
+        .where(eq(autonomousActions.id, action.id));
 
-    // Update action status
-    await db
-      .update(autonomousActions)
-      .set({
-        status: 'completed',
-        completedAt: new Date(),
-        result: {
-          seoTitle: seoContent.seoTitle,
-          metaDescription: seoContent.metaDescription,
-          seoScore: seoContent.seoScore,
-        } as any,
-        actualImpact: {
-          seoScoreChange: seoContent.seoScore - (existingSeoMeta[0]?.seoScore || 0),
-        } as any,
-      })
-      .where(eq(autonomousActions.id, action.id));
-
-    console.log(`✅ [Action Processor] Optimized SEO for product: ${product.name}`);
-    console.log(`   - SEO Score: ${seoContent.seoScore}`);
-    console.log(`   - Title: ${seoContent.seoTitle}`);
+      console.log(`✅ [Action Processor] Optimized SEO for product: ${product.name}`);
+      console.log(`   - SEO Score: ${seoContent.seoScore}`);
+      console.log(`   - Title: ${seoContent.seoTitle}`);
+    });
   } catch (error) {
     console.error(`❌ [Action Processor] Error optimizing SEO:`, error);
 
@@ -205,7 +212,14 @@ async function executeOptimizeSEO(action: any): Promise<void> {
 export async function processAutonomousAction(action: any): Promise<void> {
   console.log(`🤖 [Action Processor] Processing action ${action.id}: ${action.actionType}`);
 
-  // Update status to running
+  // SAFETY: Skip dry-run actions BEFORE updating status
+  // Dry-run actions are preview-only and should never be executed
+  if (action.status === 'dry_run') {
+    console.log(`⏭️  [Action Processor] Skipping dry-run action ${action.id} (preview only)`);
+    return;
+  }
+
+  // Update status to running (only for pending actions)
   await db
     .update(autonomousActions)
     .set({

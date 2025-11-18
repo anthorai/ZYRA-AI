@@ -41,9 +41,7 @@ export default function ActivityTimeline() {
   // Rollback mutation
   const rollback = useMutation({
     mutationFn: async (actionId: string) => {
-      return await apiRequest(`/api/autonomous-actions/${actionId}/rollback`, {
-        method: 'POST',
-      });
+      return await apiRequest('POST', `/api/autonomous-actions/${actionId}/rollback`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/autonomous-actions'] });

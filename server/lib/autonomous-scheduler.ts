@@ -95,7 +95,7 @@ async function executeRuleActions(
         and(
           eq(autonomousActions.userId, context.userId),
           eq(autonomousActions.actionType, action.type),
-          eq(autonomousActions.entityId, context.productId),
+          context.productId ? eq(autonomousActions.entityId, context.productId) : sql`true`,
           eq(autonomousActions.ruleId, context.ruleId),
           statusFilter
         )
@@ -247,7 +247,7 @@ export async function runDailySEOAudit(): Promise<void> {
         
         // Get unique products changed today
         const uniqueProductsChanged = new Set(
-          todaysActions.map(action => action.entityId)
+          todaysActions.map((action: typeof autonomousActions.$inferSelect) => action.entityId)
         );
         
         const catalogChangesRemaining = maxCatalogChanges - uniqueProductsChanged.size;
