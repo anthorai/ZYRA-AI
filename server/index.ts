@@ -519,6 +519,32 @@ if (!isVercelServerless) {
   // Start autonomous scheduler
   initializeAutonomousSchedulerFn();
 
+  // Initialize cart recovery scheduler for autonomous cart recovery
+  let cartRecoverySchedulerInitialized = false;
+  
+  async function initializeCartRecoverySchedulerFn() {
+    if (cartRecoverySchedulerInitialized) {
+      log("[Cart Recovery] Already initialized, skipping");
+      return;
+    }
+    
+    try {
+      const { startCartRecoveryScheduler } = await import('./lib/cart-recovery-scheduler');
+      
+      // Initialize cron jobs for cart recovery
+      startCartRecoveryScheduler();
+      
+      cartRecoverySchedulerInitialized = true;
+      log("[Cart Recovery] Scheduler initialized - cart recovery active");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log(`[Cart Recovery] CRITICAL: Failed to initialize: ${errorMsg}`);
+    }
+  }
+
+  // Start cart recovery scheduler
+  initializeCartRecoverySchedulerFn();
+
   // Initialize background product sync scheduler
   let productSyncSchedulerInitialized = false;
   
