@@ -8252,6 +8252,72 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get autopilot statistics
+  app.get("/api/autopilot/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { autonomousActions } = await import('@shared/schema');
+      
+      // Get actions from last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const actions = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            sql`${autonomousActions.createdAt} >= ${sevenDaysAgo}`
+          )
+        )
+        .orderBy(autonomousActions.createdAt);
+
+      // Calculate metrics
+      const totalActions = actions.length;
+      const completedActions = actions.filter(a => a.status === 'completed').length;
+      const failedActions = actions.filter(a => a.status === 'failed').length;
+      const successRate = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+      
+      // Count by action type
+      const seoOptimizations = actions.filter(a => a.actionType === 'optimize_seo').length;
+      const cartRecoveries = actions.filter(a => a.actionType === 'send_cart_recovery').length;
+      
+      // Daily breakdown for chart
+      const dailyBreakdown: { date: string; actions: number; completed: number; failed: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const dayActions = actions.filter(a => {
+          const actionDate = new Date(a.createdAt).toISOString().split('T')[0];
+          return actionDate === dateStr;
+        });
+        
+        dailyBreakdown.push({
+          date: dateStr,
+          actions: dayActions.length,
+          completed: dayActions.filter(a => a.status === 'completed').length,
+          failed: dayActions.filter(a => a.status === 'failed').length,
+        });
+      }
+
+      res.json({
+        totalActions,
+        completedActions,
+        failedActions,
+        successRate,
+        seoOptimizations,
+        cartRecoveries,
+        dailyBreakdown,
+      });
+    } catch (error) {
+      console.error("Error fetching autopilot stats:", error);
+      res.status(500).json({ error: "Failed to fetch autopilot statistics" });
+    }
+  });
+
   // Rollback an autonomous action
   app.post("/api/autonomous-actions/:id/rollback", requireAuth, async (req, res) => {
     try {
