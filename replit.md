@@ -83,9 +83,9 @@ Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidire
 - Complete rollback implementation restoring both products and seoMeta tables
 - maxCatalogChangePercent enforcement with small-catalog fix (Math.max(1, Math.ceil))
 
-⏳ **Priority 2: Enhanced Safety** (Remaining):
-- Dry-run mode for previewing autonomous actions
-- Transactional safety for atomic operations across related tables
+✅ **Priority 2: Enhanced Safety** (Completed):
+- **Dry-Run Mode**: Preview autonomous actions without execution. Scheduler creates 'dry_run' status actions when dryRunMode enabled. Processor skips dry-run actions before any writes. UI toggle in Autopilot Settings with blue "Preview (Dry Run)" badges in Activity Timeline.
+- **Transactional Safety**: Atomic database operations with deterministic failure handling. Snapshots persist outside transaction (survives all failures). AI generation happens before transaction (clean failure states). Only database updates wrapped in transaction (seoMeta + action status). Eliminates double-write conflicts and ensures audit trail completeness.
 
 **Future Workflows** (Phase 2+):
 - Autonomous Cart Recovery: Send personalized recovery emails automatically
