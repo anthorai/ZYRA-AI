@@ -156,18 +156,37 @@ async function validateMarketingAction(userId: string, payload: any): Promise<Sa
   const db = requireDb();
   
   try {
+    // CRITICAL: Validate that payload has required recipient identifiers
+    const channel = payload.channel || 'email';
+    const recipientEmail = payload.customerEmail || payload.recipientEmail;
+    const recipientPhone = payload.customerPhone || payload.recipientPhone;
+    
+    if (channel === 'email' && !recipientEmail) {
+      return {
+        allowed: false,
+        reason: 'Marketing payload missing recipient email address',
+        violationType: 'invalid_payload'
+      };
+    }
+    
+    if (channel === 'sms' && !recipientPhone) {
+      return {
+        allowed: false,
+        reason: 'Marketing payload missing recipient phone number',
+        violationType: 'invalid_payload'
+      };
+    }
+    
     // Import marketing safety functions
     const { canSendMarketingMessage } = await import('./marketing-safety-manager');
     
     // Extract customer info from payload
     const customerInfo = {
       userId,
-      email: payload.customerEmail || payload.recipientEmail,
-      phone: payload.customerPhone || payload.recipientPhone,
+      email: recipientEmail,
+      phone: recipientPhone,
       timezone: payload.timezone || 'UTC'
     };
-
-    const channel = payload.channel || 'email';
     
     // Run all marketing safety checks (frequency caps, quiet hours, GDPR, unsubscribe)
     const safetyResult = await canSendMarketingMessage(customerInfo, channel);
@@ -177,6 +196,37 @@ async function validateMarketingAction(userId: string, payload: any): Promise<Sa
         allowed: false,
         reason: safetyResult.reason,
         violationType: safetyResult.violationType
+      };
+    }
+
+    // CRITICAL: Also check pending approvals for this same recipient
+    // This prevents race conditions when multiple approvals are executed simultaneously
+    const { pendingApprovals } = await import('@shared/schema');
+    const pendingForRecipient = await db
+      .select()
+      .from(pendingApprovals)
+      .where(
+        and(
+          eq(pendingApprovals.userId, userId),
+          eq(pendingApprovals.status, 'pending'),
+          sql`${pendingApprovals.actionType} IN ('send_campaign', 'send_cart_recovery')`
+        )
+      );
+
+    // Count pending approvals for this specific recipient
+    const pendingCount = pendingForRecipient.filter((approval: any) => {
+      const action = approval.recommendedAction as any || {};
+      const matches = channel === 'email'
+        ? (action.customerEmail === recipientEmail || action.recipientEmail === recipientEmail)
+        : (action.customerPhone === recipientPhone || action.recipientPhone === recipientPhone);
+      return matches && action.channel === channel;
+    }).length;
+
+    if (pendingCount > 0) {
+      return {
+        allowed: false,
+        reason: `${pendingCount} pending approval(s) for this customer already exist. Please wait for them to be processed first.`,
+        violationType: 'pending_approval_exists'
       };
     }
 
