@@ -8257,12 +8257,14 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { autonomousActions } = await import('@shared/schema');
+      const { getDb } = await import('./db');
+      const database = getDb();
       
       // Get actions from last 7 days
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const actions = await db
+      const actions = await database
         .select()
         .from(autonomousActions)
         .where(
@@ -8291,6 +8293,7 @@ Output format: Markdown with clear section headings.`;
         const dateStr = date.toISOString().split('T')[0];
         
         const dayActions = actions.filter(a => {
+          if (!a.createdAt) return false;
           const actionDate = new Date(a.createdAt).toISOString().split('T')[0];
           return actionDate === dateStr;
         });

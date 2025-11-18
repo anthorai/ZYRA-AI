@@ -15,11 +15,15 @@ import {
   ShoppingCart,
   Mail,
   MessageSquare,
-  DollarSign
+  DollarSign,
+  TrendingUp,
+  Target,
+  Zap
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AutonomousAction {
   id: string;
@@ -34,8 +38,29 @@ interface AutonomousAction {
   completedAt: string | null;
 }
 
+interface AutopilotStats {
+  totalActions: number;
+  completedActions: number;
+  failedActions: number;
+  successRate: number;
+  seoOptimizations: number;
+  cartRecoveries: number;
+  dailyBreakdown: {
+    date: string;
+    actions: number;
+    completed: number;
+    failed: number;
+  }[];
+}
+
 export default function ActivityTimeline() {
   const { toast } = useToast();
+
+  // Fetch autopilot statistics
+  const { data: stats, isLoading: statsLoading } = useQuery<AutopilotStats>({
+    queryKey: ['/api/autopilot/stats'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   // Fetch autonomous actions
   const { data: actions, isLoading } = useQuery<AutonomousAction[]>({
@@ -143,6 +168,117 @@ export default function ActivityTimeline() {
           View all autonomous actions performed by your AI Store Manager
         </p>
       </div>
+
+      {/* Stats Overview */}
+      {stats && !statsLoading && stats.totalActions > 0 && (
+        <div className="mb-6 space-y-4">
+          {/* Stat Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Actions</CardTitle>
+                <Zap className="w-4 h-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold" data-testid="stat-total-actions">{stats.totalActions}</div>
+                <p className="text-xs text-muted-foreground">Last 7 days</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                <Target className="w-4 h-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-500" data-testid="stat-success-rate">{stats.successRate}%</div>
+                <p className="text-xs text-muted-foreground">{stats.completedActions} completed</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">SEO Optimizations</CardTitle>
+                <Sparkles className="w-4 h-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold" data-testid="stat-seo-optimizations">{stats.seoOptimizations}</div>
+                <p className="text-xs text-muted-foreground">Products improved</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cart Recoveries</CardTitle>
+                <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold" data-testid="stat-cart-recoveries">{stats.cartRecoveries}</div>
+                <p className="text-xs text-muted-foreground">Recovery attempts</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Activity Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Activity Over Time
+              </CardTitle>
+              <CardDescription>Autonomous actions in the last 7 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={stats.dailyBreakdown}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    className="text-xs"
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return `${date.getMonth() + 1}/${date.getDate()}`;
+                    }}
+                  />
+                  <YAxis className="text-xs" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--popover))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '0.5rem'
+                    }}
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="actions" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    name="Total Actions"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="completed" 
+                    stroke="hsl(var(--success))" 
+                    strokeWidth={2}
+                    name="Completed"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="failed" 
+                    stroke="hsl(var(--destructive))" 
+                    strokeWidth={2}
+                    name="Failed"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {!actions || actions.length === 0 ? (
         <Card>
