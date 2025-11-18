@@ -1,4 +1,4 @@
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { eq, desc, and, gte, lt, sql, notInArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -37,7 +37,7 @@ import {
 // Check for DATABASE_URL and only initialize if available
 // This prevents connection attempts to localhost when DATABASE_URL is missing
 let pool: Pool | undefined;
-let db: any;
+let db: NodePgDatabase<typeof schema> | null;
 
 if (process.env.DATABASE_URL) {
   pool = new Pool({
