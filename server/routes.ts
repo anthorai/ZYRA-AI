@@ -25,6 +25,7 @@ import {
   campaignEvents,
   trackingTokens,
   products,
+  seoMeta,
   storeConnections,
   oauthStates
 } from "@shared/schema";
@@ -1905,15 +1906,30 @@ Output format: Markdown with clear section headings.`;
       if (seoTitle || seoMetaDescription) {
         try {
           // Check if SEO meta exists for this product
-          const seoMetaResult = await db
+          const existingSeoMeta = await db
             .select()
-            .from(products)
-            .where(eq(products.id, productId))
+            .from(seoMeta)
+            .where(eq(seoMeta.productId, productId))
             .limit(1);
 
-          if (seoMetaResult.length > 0) {
-            // Update or create SEO meta (simplified - assumes seoMeta table relationship)
-            console.log("SEO metadata update:", { seoTitle, seoMetaDescription });
+          if (existingSeoMeta.length > 0) {
+            // Update existing SEO meta
+            await db
+              .update(seoMeta)
+              .set({
+                seoTitle: seoTitle || existingSeoMeta[0].seoTitle,
+                metaDescription: seoMetaDescription || existingSeoMeta[0].metaDescription,
+              })
+              .where(eq(seoMeta.productId, productId));
+            console.log("✅ SEO metadata updated for product:", productId);
+          } else {
+            // Create new SEO meta record
+            await db.insert(seoMeta).values({
+              productId,
+              seoTitle: seoTitle || null,
+              metaDescription: seoMetaDescription || null,
+            });
+            console.log("✅ SEO metadata created for product:", productId);
           }
         } catch (seoError) {
           console.error("SEO update error (non-critical):", seoError);
