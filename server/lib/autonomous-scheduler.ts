@@ -641,10 +641,86 @@ async function runDailyPricingScan(): Promise<void> {
 
         console.log(`📊 [Pricing Scan] User ${userId}: ${currentActionCount}/${maxDailyActions} daily actions used, ${remainingActions} remaining`);
 
-        // 4. Create price change actions (limited by daily max)
-        const decisionsToCreate = decisions.slice(0, remainingActions);
+        // 4. Check maxCatalogChangePercent limit from automation settings
+        const { products: productsTable } = await import('@shared/schema');
+        const totalProducts = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(productsTable)
+          .where(eq(productsTable.userId, userId));
+        
+        const productCount = Number(totalProducts[0]?.count || 0);
+        const maxCatalogChangePercent = parseFloat(autoSettings.maxCatalogChangePercent || '20');
+        
+        // 🛡️ SAFETY: Ensure at least 1 product can change if catalog has products
+        // Prevents small catalogs (<5 products at 20%) from being locked out
+        let maxProductsToChange = Math.floor((productCount * maxCatalogChangePercent) / 100);
+        if (productCount > 0 && maxProductsToChange === 0) {
+          maxProductsToChange = 1; // Allow at least 1 change for small catalogs
+        }
+        
+        // Apply most restrictive limit
+        const effectiveLimit = Math.min(remainingActions, maxProductsToChange);
+        
+        console.log(`📊 [Pricing Scan] Catalog limits: ${productCount} total products, max ${maxProductsToChange} (${maxCatalogChangePercent}%) can change`);
+        console.log(`📊 [Pricing Scan] Effective limit: ${effectiveLimit} changes allowed`);
 
-        for (const { productId, decision } of decisionsToCreate) {
+        // 🛡️ SAFETY: Warn if effective limit is zero
+        if (effectiveLimit === 0) {
+          console.log(`⚠️  [Pricing Scan] User ${userId}: Effective limit is 0 - no price changes will be created`);
+          if (remainingActions === 0) {
+            console.log(`   Reason: Daily action limit reached (${currentActionCount}/${maxDailyActions} used today)`);
+          } else if (maxProductsToChange === 0) {
+            console.log(`   Reason: Catalog change limit too restrictive (${productCount} products * ${maxCatalogChangePercent}% = 0)`);
+          }
+          // Still log summary even if no actions created
+          console.log(`📊 [Pricing Scan] User ${userId} summary:`);
+          console.log(`   - Decisions evaluated: ${decisions.length}`);
+          console.log(`   - Created: 0 price changes (limit is 0)`);
+          console.log(`   - Postponed: ${decisions.length} decisions waiting for next run`);
+          continue; // Skip to next user
+        }
+
+        // 5. Create price change actions - iterate until we hit the limit
+        // This ensures cooldown skips don't waste the allowance
+        let createdCount = 0;
+        let skippedCooldown = 0;
+        let skippedDuplicate = 0;
+        let processedCount = 0;
+
+        // Iterate through decisions until we create enough actions or run out
+        for (const { productId, decision } of decisions) {
+          // Stop if we've reached the effective limit
+          if (createdCount >= effectiveLimit) {
+            break;
+          }
+          
+          processedCount++;
+          // Check cooldown period (default 7 days) from automation settings
+          const cooldownDays = parseFloat(autoSettings.changeCooldownDays || '7');
+          const cooldownTime = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
+          
+          const recentPriceChanges = await db
+            .select()
+            .from(autonomousActions)
+            .where(
+              and(
+                eq(autonomousActions.userId, userId),
+                eq(autonomousActions.actionType, 'price_change'),
+                eq(autonomousActions.entityId, productId),
+                sql`${autonomousActions.status} = 'completed'`,
+                sql`${autonomousActions.completedAt} > ${cooldownTime}`
+              )
+            )
+            .limit(1);
+
+          if (recentPriceChanges.length > 0) {
+            const lastChange = recentPriceChanges[0].completedAt;
+            const daysSince = Math.floor((Date.now() - new Date(lastChange!).getTime()) / (1000 * 60 * 60 * 24));
+            console.log(`⏭️  [Pricing Scan] Skipping product ${productId}: changed ${daysSince} days ago (cooldown: ${cooldownDays} days)`);
+            skippedCooldown++;
+            continue;
+          }
+
           // Check for existing pending/running actions
           const statusFilter = isDryRun 
             ? sql`${autonomousActions.status} = 'dry_run'`
@@ -665,15 +741,20 @@ async function runDailyPricingScan(): Promise<void> {
 
           if (existingAction.length > 0) {
             console.log(`⏭️  [Pricing Scan] Skipping duplicate price_change for product ${productId}`);
+            skippedDuplicate++;
             continue;
           }
 
-          // Check if approval is required
+          // 🛡️ SAFETY: Check if approval is required based on price change magnitude
           const requiresApproval = await priceCalculator.requiresApproval(
             userId,
             parseFloat(decision.currentMargin || '0'), // Using current margin as proxy for old price
             parseFloat(decision.newPrice || '0')
           );
+          
+          if (requiresApproval) {
+            console.log(`🛡️ [Pricing Scan] Approval required for product ${productId}: change exceeds threshold`);
+          }
 
           // Create autonomous action
           await db.insert(autonomousActions).values({
@@ -697,11 +778,35 @@ async function runDailyPricingScan(): Promise<void> {
           });
 
           totalActions++;
+          createdCount++;
           console.log(`✅ [Pricing Scan] Created price_change action for product ${productId} (${decision.newPrice})`);
         }
 
-        if (decisions.length > remainingActions) {
-          console.log(`⚠️  [Pricing Scan] Hit daily limit for user ${userId}: ${decisions.length - remainingActions} changes postponed`);
+        // Log safety guardrail statistics with accurate tracking
+        const notProcessed = Math.max(0, decisions.length - processedCount);
+        const totalSkipped = skippedCooldown + skippedDuplicate;
+        
+        console.log(`📊 [Pricing Scan] User ${userId} summary:`);
+        console.log(`   - Decisions evaluated: ${decisions.length}`);
+        console.log(`   - Processed: ${processedCount}`);
+        console.log(`   - Created: ${createdCount} price changes`);
+        console.log(`   - Skipped total: ${totalSkipped}`);
+        console.log(`     • Cooldown: ${skippedCooldown}`);
+        console.log(`     • Duplicate: ${skippedDuplicate}`);
+        console.log(`   - Not processed (limit reached): ${notProcessed}`);
+        
+        // Log why we stopped if there are unprocessed decisions
+        if (notProcessed > 0) {
+          if (createdCount >= effectiveLimit) {
+            const limitType = effectiveLimit === remainingActions ? 'daily action limit' : 'catalog change limit';
+            console.log(`⚠️  [Pricing Scan] Hit ${limitType} for user ${userId}: ${notProcessed} changes postponed to next run`);
+          } else {
+            console.log(`ℹ️  [Pricing Scan] ${notProcessed} decisions not processed (all eligible products processed)`);
+          }
+        }
+        
+        if (createdCount === 0 && decisions.length > 0) {
+          console.log(`⚠️  [Pricing Scan] No actions created despite ${decisions.length} decisions (all skipped due to cooldown/duplicates)`);
         }
       } catch (error) {
         console.error(`❌ [Pricing Scan] Error processing user ${setting.userId}:`, error);

@@ -1,6 +1,6 @@
 import { requireDb } from '../db';
-import { pricingSettings } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { pricingSettings, autonomousActions } from '@shared/schema';
+import { eq, and, sql } from 'drizzle-orm';
 
 interface PriceCalculation {
   originalPrice: number;
@@ -9,11 +9,50 @@ interface PriceCalculation {
   psychologicalPrice: number;
   appliedBounds: boolean;
   reasoning: string[];
+  safetyChecks: {
+    extremeChangeBlocked: boolean;
+    boundsApplied: boolean;
+    approvalRequired: boolean;
+  };
 }
 
+/**
+ * 🛡️ SAFETY GUARDRAILS SUMMARY
+ * 
+ * This price calculator implements multiple layers of protection:
+ * 
+ * 1. **Extreme Price Swing Protection** (50% max change)
+ *    - Blocks price changes >50% from current price
+ *    - Caps increases at +50% and decreases at -50%
+ * 
+ * 2. **Global Bounds from Settings**
+ *    - Enforces minimum margin (default 10%)
+ *    - Enforces maximum discount (default 30%)
+ *    - Prevents prices from violating user-configured limits
+ * 
+ * 3. **Custom Min/Max Bounds**
+ *    - Allows product-specific price boundaries
+ *    - Overrides calculated prices if they exceed bounds
+ * 
+ * 4. **Approval Threshold** (default 10%)
+ *    - Flags large price changes for manual review
+ *    - Requires approval before execution
+ * 
+ * 5. **Psychological Pricing**
+ *    - Applies .99 ending for better conversions
+ *    - Maintains price attractiveness
+ * 
+ * Additional safety layers in autonomous-scheduler.ts:
+ * - Daily action limits (maxDailyActions)
+ * - Catalog change percentage limits (maxCatalogChangePercent)
+ * - Cooldown periods between changes (changeCooldownDays)
+ * - Dry-run mode for testing
+ */
 export class PriceCalculator {
   /**
    * Calculate optimal price with all constraints and psychological pricing
+   * 
+   * @returns PriceCalculation with safety check results
    */
   async calculateOptimalPrice(
     userId: string,
@@ -80,21 +119,25 @@ export class PriceCalculator {
         reasoning.push('Applied psychological pricing (.99 ending)');
       }
 
-      // Prevent extreme price changes (>50% change)
+      // 🛡️ SAFETY CHECK: Prevent extreme price changes (>50% change)
       const percentageChange = Math.abs((psychologicalPrice - currentPrice) / currentPrice) * 100;
       
       let finalPrice = psychologicalPrice;
+      let extremeChangeBlocked = false;
       
       if (percentageChange > 50) {
-        reasoning.push(`Prevented extreme price change (${percentageChange.toFixed(1)}% change)`);
+        reasoning.push(`🛡️ SAFETY: Blocked extreme price change (${percentageChange.toFixed(1)}% would have been ${psychologicalPrice.toFixed(2)})`);
         // Limit change to 50%
         if (psychologicalPrice > currentPrice) {
           finalPrice = currentPrice * 1.5;
+          reasoning.push(`Limited increase to +50%: ${finalPrice.toFixed(2)}`);
         } else {
           finalPrice = currentPrice * 0.5;
+          reasoning.push(`Limited decrease to -50%: ${finalPrice.toFixed(2)}`);
         }
         finalPrice = this.applyPsychologicalPricing(finalPrice);
         appliedBounds = true;
+        extremeChangeBlocked = true;
       }
 
       return {
@@ -104,6 +147,11 @@ export class PriceCalculator {
         psychologicalPrice,
         appliedBounds,
         reasoning,
+        safetyChecks: {
+          extremeChangeBlocked,
+          boundsApplied: appliedBounds,
+          approvalRequired: false, // Set by caller using requiresApproval()
+        },
       };
     } catch (error) {
       console.error('[Price Calculator] Error calculating optimal price:', error);
@@ -118,6 +166,11 @@ export class PriceCalculator {
         psychologicalPrice,
         appliedBounds: false,
         reasoning: ['Error during calculation, using fallback pricing'],
+        safetyChecks: {
+          extremeChangeBlocked: false,
+          boundsApplied: false,
+          approvalRequired: false,
+        },
       };
     }
   }
@@ -175,7 +228,12 @@ export class PriceCalculator {
   }
 
   /**
-   * Validate if price change meets approval threshold
+   * 🛡️ SAFETY CHECK: Validate if price change meets approval threshold
+   * 
+   * Large price changes (default >10%) require manual approval to prevent
+   * unintended pricing errors from affecting your store.
+   * 
+   * @returns true if approval is required, false if change can be auto-applied
    */
   async requiresApproval(
     userId: string,
@@ -198,10 +256,57 @@ export class PriceCalculator {
       const approvalThreshold = parseFloat(settings.approvalThreshold || '10');
       const percentageChange = Math.abs((newPrice - oldPrice) / oldPrice) * 100;
 
-      return percentageChange >= approvalThreshold;
+      const requiresApproval = percentageChange >= approvalThreshold;
+      
+      if (requiresApproval) {
+        console.log(`🛡️ [Price Calculator] Approval required: ${percentageChange.toFixed(1)}% change exceeds threshold of ${approvalThreshold}%`);
+      }
+
+      return requiresApproval;
     } catch (error) {
       console.error('[Price Calculator] Error checking approval requirement:', error);
-      return true; // Err on the side of caution
+      return true; // 🛡️ SAFETY: Err on the side of caution - require approval if check fails
+    }
+  }
+
+  /**
+   * 🛡️ SAFETY CHECK: Check if product has been changed recently (cooldown)
+   * 
+   * Prevents rapid price fluctuations by enforcing a cooldown period
+   * between price changes on the same product.
+   * 
+   * @param userId - User ID
+   * @param productId - Product ID to check
+   * @param cooldownDays - Cooldown period in days (default: 7)
+   * @returns true if product is within cooldown period, false if safe to change
+   */
+  async isInCooldownPeriod(
+    userId: string,
+    productId: string,
+    cooldownDays: number = 7
+  ): Promise<boolean> {
+    try {
+      const db = requireDb();
+      const cooldownTime = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
+
+      const recentChanges = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            eq(autonomousActions.actionType, 'price_change'),
+            eq(autonomousActions.entityId, productId),
+            sql`${autonomousActions.status} = 'completed'`,
+            sql`${autonomousActions.completedAt} > ${cooldownTime}`
+          )
+        )
+        .limit(1);
+
+      return recentChanges.length > 0;
+    } catch (error) {
+      console.error('[Price Calculator] Error checking cooldown period:', error);
+      return true; // 🛡️ SAFETY: Err on the side of caution - treat as in cooldown if check fails
     }
   }
 
