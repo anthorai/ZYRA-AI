@@ -88,6 +88,7 @@ const ScheduledRefresh = lazy(() => import("@/pages/ai-tools/scheduled-refresh")
 const AutopilotSettings = lazy(() => import("@/pages/ai-tools/autopilot"));
 const ActivityTimeline = lazy(() => import("@/pages/ai-tools/activity-timeline"));
 const PricingSettings = lazy(() => import("@/pages/ai-tools/pricing-settings"));
+const CompetitorsPage = lazy(() => import("@/pages/ai-tools/competitors"));
 const StrategyInsights = lazy(() => import("@/pages/strategy-insights"));
 
 // Automation pages
@@ -538,6 +539,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <PricingSettings />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/ai-tools/competitors" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <CompetitorsPage />
           </Suspense>
         </ProtectedRoute>
       )} />
