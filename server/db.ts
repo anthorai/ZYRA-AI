@@ -719,6 +719,3 @@ export async function generateSampleMetrics(userId: string): Promise<void> {
     console.log(`[DB] Generated sample metrics for user ${userId}`);
   }, "generateSampleMetrics");
 }
-
-// Export the database instance for direct queries if needed
-export { db };

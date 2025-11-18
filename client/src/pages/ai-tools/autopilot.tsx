@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Bot, Zap, Shield, Activity, AlertTriangle } from "lucide-react";
+import { Bot, Zap, Shield, Activity, AlertTriangle, ShoppingCart, Mail, MessageSquare } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +18,11 @@ interface AutomationSettings {
   autoPublishEnabled: boolean;
   maxDailyActions: number;
   maxCatalogChangePercent: number;
+  cartRecoveryEnabled: boolean;
+  minCartValue: string | number;
+  recoveryIntervals: number[];
+  recoveryChannel: 'email' | 'sms' | 'both';
+  maxRecoveryAttempts: number;
 }
 
 export default function AutopilotSettings() {
@@ -70,6 +76,36 @@ export default function AutopilotSettings() {
     await updateSettings.mutateAsync({
       dryRunMode: enabled,
     });
+  };
+
+  const handleCartRecoveryToggle = async (enabled: boolean) => {
+    await updateSettings.mutateAsync({
+      cartRecoveryEnabled: enabled,
+    });
+  };
+
+  const handleRecoveryChannelChange = async (channel: string) => {
+    await updateSettings.mutateAsync({
+      recoveryChannel: channel,
+    });
+  };
+
+  const handleMinCartValueChange = async (value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      await updateSettings.mutateAsync({
+        minCartValue: numValue,
+      });
+    }
+  };
+
+  const handleMaxAttemptsChange = async (value: string) => {
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1 && numValue <= 10) {
+      await updateSettings.mutateAsync({
+        maxRecoveryAttempts: numValue,
+      });
+    }
   };
 
   if (isLoading) {
@@ -269,7 +305,7 @@ export default function AutopilotSettings() {
       </Card>
 
       {/* Safety Limits */}
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Safety Limits</CardTitle>
           <CardDescription>
@@ -289,6 +325,131 @@ export default function AutopilotSettings() {
               <p className="text-xs text-muted-foreground">Of total products</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Cart Recovery */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-md">
+              <ShoppingCart className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Cart Recovery</CardTitle>
+              <CardDescription>
+                Automatically send personalized recovery emails/SMS to customers who abandon their carts
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="cart-recovery-toggle" className="text-base font-medium">
+                Enable Cart Recovery
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                AI will send personalized recovery messages at 1hr, 4hr, and 24hr intervals
+              </p>
+            </div>
+            <Switch
+              id="cart-recovery-toggle"
+              data-testid="switch-cart-recovery"
+              checked={settings?.cartRecoveryEnabled || false}
+              onCheckedChange={handleCartRecoveryToggle}
+              disabled={!isAutopilotEnabled}
+            />
+          </div>
+
+          {settings?.cartRecoveryEnabled && (
+            <div className="space-y-4 p-4 bg-muted/50 rounded-md border">
+              <div className="space-y-2">
+                <Label htmlFor="recovery-channel">Recovery Channel</Label>
+                <Select
+                  value={settings?.recoveryChannel || 'email'}
+                  onValueChange={handleRecoveryChannelChange}
+                >
+                  <SelectTrigger id="recovery-channel" data-testid="select-recovery-channel">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="email" data-testid="option-email">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Email Only
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sms" data-testid="option-sms">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        SMS Only
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="both" data-testid="option-both">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        <MessageSquare className="w-4 h-4" />
+                        Email + SMS
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="min-cart-value">Min Cart Value ($)</Label>
+                  <Input
+                    id="min-cart-value"
+                    data-testid="input-min-cart-value"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={settings?.minCartValue || 10}
+                    onChange={(e) => handleMinCartValueChange(e.target.value)}
+                    onBlur={(e) => handleMinCartValueChange(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Only recover carts above this value
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="max-attempts">Max Attempts</Label>
+                  <Input
+                    id="max-attempts"
+                    data-testid="input-max-attempts"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={settings?.maxRecoveryAttempts || 3}
+                    onChange={(e) => handleMaxAttemptsChange(e.target.value)}
+                    onBlur={(e) => handleMaxAttemptsChange(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Contact customer this many times
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-background rounded-md border">
+                <div className="text-sm font-medium mb-2">Recovery Timeline</div>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  <div>• 1 hour after abandonment</div>
+                  <div>• 4 hours after abandonment</div>
+                  <div>• 24 hours after abandonment</div>
+                </div>
+              </div>
+
+              <Alert>
+                <Activity className="h-4 w-4" />
+                <AlertDescription>
+                  AI will generate personalized messages based on cart contents, customer history, and your brand voice.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

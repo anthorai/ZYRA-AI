@@ -11,7 +11,11 @@ import {
   XCircle, 
   Undo2,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  ShoppingCart,
+  Mail,
+  MessageSquare,
+  DollarSign
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +27,8 @@ interface AutonomousAction {
   status: string;
   entityId: string;
   entityType: string;
-  reasoning: any;
+  decisionReason?: string;
+  payload?: any;
   result: any;
   createdAt: string;
   completedAt: string | null;
@@ -104,10 +109,20 @@ export default function ActivityTimeline() {
       case 'fix_product':
         return 'Product Fix';
       case 'send_cart_recovery':
-        return 'Cart Recovery Email';
+        const channel = action.payload?.channel || 'email';
+        if (channel === 'both') return 'Cart Recovery (Email + SMS)';
+        if (channel === 'sms') return 'Cart Recovery (SMS)';
+        return 'Cart Recovery (Email)';
       default:
         return action.actionType;
     }
+  };
+
+  const getActionIcon = (action: AutonomousAction) => {
+    if (action.actionType === 'send_cart_recovery') {
+      return <ShoppingCart className="w-4 h-4 text-primary" />;
+    }
+    return <Sparkles className="w-4 h-4 text-primary" />;
   };
 
   if (isLoading) {
@@ -151,7 +166,7 @@ export default function ActivityTimeline() {
                     </div>
                     <div className="flex-1">
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
+                        {getActionIcon(action)}
                         {getActionTitle(action)}
                       </CardTitle>
                       <CardDescription className="mt-1">
@@ -178,18 +193,86 @@ export default function ActivityTimeline() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {/* Reasoning */}
-                  {action.reasoning?.reason && (
+                  {/* Decision Reason */}
+                  {action.decisionReason && (
                     <div>
                       <div className="text-sm font-medium mb-1">Reasoning</div>
                       <div className="text-sm text-muted-foreground">
-                        {action.reasoning.reason}
+                        {action.decisionReason}
                       </div>
                     </div>
                   )}
 
-                  {/* Result */}
-                  {action.result && action.status === 'completed' && (
+                  {/* Cart Recovery Details */}
+                  {action.actionType === 'send_cart_recovery' && action.payload && (
+                    <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-md">
+                      {action.payload.cartValue && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Cart Value</div>
+                          <div className="text-sm font-medium flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            {parseFloat(action.payload.cartValue).toFixed(2)} {action.payload.currency || 'USD'}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.attemptNumber && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Attempt</div>
+                          <div className="text-sm font-medium">
+                            {action.payload.attemptNumber} of {action.payload.maxAttempts || 3}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.channel && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Channel</div>
+                          <div className="text-sm font-medium flex items-center gap-1">
+                            {action.payload.channel === 'email' && <Mail className="w-3 h-3" />}
+                            {action.payload.channel === 'sms' && <MessageSquare className="w-3 h-3" />}
+                            {action.payload.channel === 'both' && (
+                              <>
+                                <Mail className="w-3 h-3" />
+                                <MessageSquare className="w-3 h-3" />
+                              </>
+                            )}
+                            {action.payload.channel.charAt(0).toUpperCase() + action.payload.channel.slice(1)}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.customerEmail && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Customer</div>
+                          <div className="text-sm font-medium truncate">
+                            {action.payload.customerName || action.payload.customerEmail.split('@')[0]}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Cart Recovery Result */}
+                  {action.actionType === 'send_cart_recovery' && action.result && action.status === 'completed' && (
+                    <div>
+                      <div className="text-sm font-medium mb-1">Delivery Status</div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {action.result.emailSent !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3 h-3" />
+                            Email: {action.result.emailSent ? '✓ Sent' : '✗ Failed'}
+                          </div>
+                        )}
+                        {action.result.smsSent !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="w-3 h-3" />
+                            SMS: {action.result.smsSent ? '✓ Sent' : '✗ Failed'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SEO Result */}
+                  {action.actionType === 'optimize_seo' && action.result && action.status === 'completed' && (
                     <div>
                       <div className="text-sm font-medium mb-1">Changes Made</div>
                       <div className="text-sm text-muted-foreground space-y-1">
