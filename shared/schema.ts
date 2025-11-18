@@ -71,7 +71,7 @@ export const autonomousActions = pgTable("autonomous_actions", {
   actionType: text("action_type").notNull(), // 'optimize_seo' | 'fix_product' | 'send_cart_recovery' | 'run_ab_test'
   entityType: text("entity_type"), // 'product' | 'campaign' | 'customer'
   entityId: varchar("entity_id"), // ID of the affected entity
-  status: text("status").notNull().default("pending"), // 'pending' | 'running' | 'completed' | 'failed' | 'rolled_back'
+  status: text("status").notNull().default("pending"), // 'pending' | 'running' | 'completed' | 'failed' | 'rolled_back' | 'dry_run'
   decisionReason: text("decision_reason"), // Why Zyra decided to take this action
   ruleId: varchar("rule_id"), // Which rule triggered this
   payload: jsonb("payload"), // Action-specific data
@@ -115,6 +115,7 @@ export const automationSettings = pgTable("automation_settings", {
   userId: varchar("user_id").references(() => users.id).notNull().unique(),
   autopilotEnabled: boolean("autopilot_enabled").default(false),
   autopilotMode: text("autopilot_mode").default("safe"), // 'safe' | 'balanced' | 'aggressive'
+  dryRunMode: boolean("dry_run_mode").default(false), // Preview mode - creates actions but doesn't execute
   autoPublishEnabled: boolean("auto_publish_enabled").default(false),
   maxDailyActions: integer("max_daily_actions").default(10),
   maxCatalogChangePercent: integer("max_catalog_change_percent").default(5), // Max % of products to change per day
@@ -489,6 +490,7 @@ export const insertAutomationSettingsSchema = createInsertSchema(automationSetti
 export const updateAutomationSettingsSchema = z.object({
   autopilotEnabled: z.boolean().optional(),
   autopilotMode: z.enum(['safe', 'balanced', 'aggressive']).optional(),
+  dryRunMode: z.boolean().optional(),
   autoPublishEnabled: z.boolean().optional(),
   maxDailyActions: z.number().int().min(1).max(100).optional(),
   maxCatalogChangePercent: z.number().int().min(1).max(100).optional(),

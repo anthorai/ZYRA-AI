@@ -75,13 +75,19 @@ async function evaluateRuleCondition(
  */
 async function executeRuleActions(
   actions: RuleAction[],
-  context: { productId?: string; userId: string; ruleId: string }
+  context: { productId?: string; userId: string; ruleId: string; dryRun?: boolean }
 ): Promise<void> {
   for (const action of actions) {
-    console.log(`🔧 [Autonomous] Executing action: ${action.type} for product ${context.productId}`);
+    const isDryRun = context.dryRun ?? false;
+    console.log(`🔧 [Autonomous] ${isDryRun ? 'Preview' : 'Executing'} action: ${action.type} for product ${context.productId}`);
 
     // CRITICAL FIX: Check for existing pending/running actions BEFORE inserting
     // Include actionType to allow multi-action rules (e.g., optimize + notify)
+    // For dry-run mode, also check for existing dry_run actions
+    const statusFilter = isDryRun 
+      ? sql`${autonomousActions.status} = 'dry_run'`
+      : sql`${autonomousActions.status} IN ('pending', 'running')`;
+    
     const existingAction = await db
       .select()
       .from(autonomousActions)
@@ -91,7 +97,7 @@ async function executeRuleActions(
           eq(autonomousActions.actionType, action.type),
           eq(autonomousActions.entityId, context.productId),
           eq(autonomousActions.ruleId, context.ruleId),
-          sql`${autonomousActions.status} IN ('pending', 'running')`
+          statusFilter
         )
       )
       .limit(1);
@@ -107,14 +113,15 @@ async function executeRuleActions(
       actionType: action.type,
       entityType: 'product',
       entityId: context.productId,
-      status: 'pending',
-      decisionReason: `Triggered by rule: ${context.ruleId}`,
+      status: isDryRun ? 'dry_run' : 'pending',
+      decisionReason: isDryRun 
+        ? `[DRY RUN] Would be triggered by rule: ${context.ruleId}` 
+        : `Triggered by rule: ${context.ruleId}`,
       ruleId: context.ruleId,
       executedBy: 'agent',
     });
 
-    // Actual execution will happen in the action processor
-    // For now, we just create the action record
+    // Actual execution will happen in the action processor (unless dry-run)
   }
 }
 
@@ -294,13 +301,15 @@ export async function runDailySEOAudit(): Promise<void> {
               });
 
               if (matches) {
-                console.log(`✅ [SEO Audit] Rule "${rule.name}" matched for product: ${product.name}`);
+                const isDryRun = settings.dryRunMode ?? false;
+                console.log(`✅ [SEO Audit] Rule "${rule.name}" matched for product: ${product.name}${isDryRun ? ' (DRY RUN)' : ''}`);
 
-                // Execute actions
+                // Execute actions (or create dry-run preview)
                 await executeRuleActions(ruleJson.then, {
                   productId: product.id,
                   userId: settings.userId,
                   ruleId: rule.id,
+                  dryRun: isDryRun,
                 });
 
                 actionsCreated++;

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AutomationSettings {
   autopilotEnabled: boolean;
   autopilotMode: 'safe' | 'balanced' | 'aggressive';
+  dryRunMode: boolean;
   autoPublishEnabled: boolean;
   maxDailyActions: number;
   maxCatalogChangePercent: number;
@@ -65,6 +66,12 @@ export default function AutopilotSettings() {
   const handlePublishToggle = async (enabled: boolean) => {
     await updateSettings.mutateAsync({
       autoPublishEnabled: enabled,
+    });
+  };
+
+  const handleDryRunToggle = async (enabled: boolean) => {
+    await updateSettings.mutateAsync({
+      dryRunMode: enabled,
     });
   };
 
@@ -123,12 +130,40 @@ export default function AutopilotSettings() {
           </div>
 
           {isAutopilotEnabled && (
-            <Alert className="mt-4">
-              <Zap className="h-4 w-4" />
-              <AlertDescription>
-                Autopilot is active! Your store will be monitored and optimized automatically.
-              </AlertDescription>
-            </Alert>
+            <>
+              <div className="flex items-center justify-between mb-4 p-4 bg-muted/50 rounded-md border border-dashed">
+                <div>
+                  <Label htmlFor="dry-run-toggle" className="text-base font-medium">
+                    Preview Mode (Dry Run)
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Show what autopilot would do without actually making changes
+                  </p>
+                </div>
+                <Switch
+                  id="dry-run-toggle"
+                  data-testid="switch-dry-run"
+                  checked={settings?.dryRunMode || false}
+                  onCheckedChange={handleDryRunToggle}
+                />
+              </div>
+
+              {settings?.dryRunMode ? (
+                <Alert className="mt-4">
+                  <Activity className="h-4 w-4" />
+                  <AlertDescription>
+                    Dry-run mode enabled. Actions will be previewed but not executed.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="mt-4">
+                  <Zap className="h-4 w-4" />
+                  <AlertDescription>
+                    Autopilot is active! Your store will be monitored and optimized automatically.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

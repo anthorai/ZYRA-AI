@@ -73,6 +73,8 @@ export default function ActivityTimeline() {
         return <Clock className="w-4 h-4 text-muted-foreground" />;
       case 'rolled_back':
         return <Undo2 className="w-4 h-4 text-orange-500" />;
+      case 'dry_run':
+        return <Activity className="w-4 h-4 text-blue-500" />;
       default:
         return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
     }
@@ -90,6 +92,8 @@ export default function ActivityTimeline() {
         return <Badge variant="outline">Pending</Badge>;
       case 'rolled_back':
         return <Badge variant="secondary" className="bg-orange-500">Rolled Back</Badge>;
+      case 'dry_run':
+        return <Badge variant="secondary" className="bg-blue-500">Preview (Dry Run)</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
