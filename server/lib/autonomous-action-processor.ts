@@ -326,6 +326,17 @@ async function executeCartRecovery(action: any): Promise<void> {
     const success = emailSent || smsSent;
 
     if (success) {
+      // CRITICAL FIX: Update abandoned cart record after successful delivery
+      // This prevents duplicate sends and tracks delivery status
+      // Note: recoveryAttempts already incremented by scheduler
+      await db
+        .update(abandonedCarts)
+        .set({
+          lastContactedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(abandonedCarts.id, cartData.id));
+
       // Mark action as completed
       await db
         .update(autonomousActions)

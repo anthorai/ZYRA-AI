@@ -37,17 +37,30 @@ import {
 // Check for DATABASE_URL and only initialize if available
 // This prevents connection attempts to localhost when DATABASE_URL is missing
 let pool: Pool | undefined;
-let db: NodePgDatabase<typeof schema> | null;
+let _db: NodePgDatabase<typeof schema> | null;
 
 if (process.env.DATABASE_URL) {
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   });
-  db = drizzle(pool, { schema });
+  _db = drizzle(pool, { schema });
 } else {
   console.warn("⚠️ DATABASE_URL not found. Database operations will fail.");
   // Create a dummy db object to prevent import errors, but operations will fail gracefully
-  db = null;
+  _db = null;
+}
+
+// Export the database connection directly
+// Modules that use this must handle the null case or rely on runtime checks
+export const db = _db;
+
+// Type-safe database accessor for when you need guaranteed non-null db
+// This throws at runtime if db is not initialized (narrows type to non-null)
+export function requireDb(): NodePgDatabase<typeof schema> {
+  if (!db) {
+    throw new Error("Database connection not configured. Please check DATABASE_URL.");
+  }
+  return db;
 }
 
 // Error handling wrapper

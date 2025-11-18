@@ -38,7 +38,9 @@ async function shouldTriggerRecovery(
   if (cartValue < minValue) return false;
 
   // Skip if max attempts reached
-  if (cart.recoveryAttempts >= settings.maxRecoveryAttempts) return false;
+  const maxAttempts = settings.maxRecoveryAttempts ?? 3;
+  const attempts = cart.recoveryAttempts ?? 0;
+  if (attempts >= maxAttempts) return false;
 
   // Skip if already recovered or expired
   if (cart.status === 'recovered' || cart.status === 'expired') return false;
@@ -65,7 +67,7 @@ async function shouldTriggerRecovery(
   //   - Checks interval[1] (4hr): recoveryAttempts (1) === 1 AND 25hr >= 4hr ✓
   //
   // This allows "catch-up" after delayed cron while preventing duplicates
-  if (cart.recoveryAttempts !== intervalIndex) return false;
+  if (attempts !== intervalIndex) return false;
 
   // Calculate time since abandonment
   const abandonedAt = new Date(cart.abandonedAt);
@@ -93,6 +95,11 @@ async function processAbandonedCarts(): Promise<void> {
   
   try {
     console.log('🛒 [Cart Recovery] Starting cart recovery scan...');
+
+    if (!db) {
+      console.error('❌ [Cart Recovery] Database not initialized');
+      return;
+    }
 
     // Get all users with cart recovery enabled
     const usersWithRecovery = await db
@@ -133,6 +140,10 @@ async function processAbandonedCarts(): Promise<void> {
 
         // Check each cart against each interval (in sorted order)
         for (const cart of carts) {
+          // Extract null-safe values once per cart
+          const maxAttempts = settings.maxRecoveryAttempts ?? 3;
+          const attempts = cart.recoveryAttempts ?? 0;
+
           for (const intervalHours of sortedIntervals) {
             const shouldTrigger = await shouldTriggerRecovery(cart, settings, intervalHours);
             
@@ -168,31 +179,31 @@ async function processAbandonedCarts(): Promise<void> {
                 entityType: 'abandoned_cart',
                 entityId: cart.id,
                 status: isDryRun ? 'dry_run' as const : 'pending' as const,
-                reasoning: `Cart value $${cart.cartValue} abandoned ${Math.round((Date.now() - new Date(cart.abandonedAt).getTime()) / (1000 * 60 * 60))}hrs ago. Attempt ${cart.recoveryAttempts + 1}/${settings.maxRecoveryAttempts} via ${settings.recoveryChannel}.`,
-                metadata: {
+                decisionReason: `Cart value $${cart.cartValue} abandoned ${Math.round((Date.now() - new Date(cart.abandonedAt).getTime()) / (1000 * 60 * 60))}hrs ago. Attempt ${attempts + 1}/${maxAttempts} via ${settings.recoveryChannel}.`,
+                payload: {
                   cartValue: cart.cartValue,
                   currency: cart.currency,
                   customerEmail: cart.customerEmail,
                   customerPhone: cart.customerPhone,
                   customerName: cart.customerName,
                   intervalHours,
-                  attemptNumber: cart.recoveryAttempts + 1,
-                  maxAttempts: settings.maxRecoveryAttempts,
+                  attemptNumber: attempts + 1,
+                  maxAttempts,
                   channel: settings.recoveryChannel,
                   checkoutUrl: cart.checkoutUrl,
                   cartItems: cart.cartItems,
-                },
+                } as any,
               };
 
               // ATOMIC OPERATION: Create action and increment counter in one go
               // If dry-run mode, don't increment the counter (no actual attempt made)
-              await db.insert(autonomousActions).values(actionData);
+              if (db) await db.insert(autonomousActions).values(actionData);
               
-              if (!isDryRun) {
+              if (!isDryRun && db) {
                 // CRITICAL FIX: Keep status as 'abandoned' until all attempts exhausted
                 // This ensures cart remains in scheduler pool for future interval attempts
-                const newAttempts = cart.recoveryAttempts + 1;
-                const isLastAttempt = newAttempts >= settings.maxRecoveryAttempts;
+                const newAttempts = attempts + 1;
+                const isLastAttempt = newAttempts >= maxAttempts;
                 
                 await db
                   .update(abandonedCarts)
@@ -210,7 +221,7 @@ async function processAbandonedCarts(): Promise<void> {
                 }
               }
 
-              console.log(`✅ [Cart Recovery] Created ${isDryRun ? 'dry-run' : 'live'} recovery action for cart ${cart.id} (attempt ${cart.recoveryAttempts + 1})`);
+              console.log(`✅ [Cart Recovery] Created ${isDryRun ? 'dry-run' : 'live'} recovery action for cart ${cart.id} (attempt ${attempts + 1})`);
             }
           }
         }
@@ -240,6 +251,11 @@ async function processAbandonedCarts(): Promise<void> {
 async function expireOldCarts(): Promise<void> {
   try {
     console.log('⏰ [Cart Recovery] Checking for expired carts...');
+
+    if (!db) {
+      console.error('❌ [Cart Recovery] Database not initialized');
+      return;
+    }
 
     // Get all users with cart recovery enabled
     const usersWithRecovery = await db
