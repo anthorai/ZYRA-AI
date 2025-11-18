@@ -35,7 +35,7 @@ import { createClient } from "@supabase/supabase-js";
 import { storage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
 import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon } from "./db";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, sql, and, gte } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
@@ -8257,14 +8257,14 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { autonomousActions } = await import('@shared/schema');
-      const { getDb } = await import('./db');
-      const database = getDb();
+      // Database is already imported as db
+      // Using db directly
       
       // Get actions from last 7 days
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const actions = await database
+      const actions = await db
         .select()
         .from(autonomousActions)
         .where(
@@ -8421,6 +8421,518 @@ Output format: Markdown with clear section headings.`;
     } catch (error) {
       console.error("Error rolling back action:", error);
       res.status(500).json({ error: "Failed to rollback action" });
+    }
+  });
+
+  // ============================================================================
+  // DYNAMIC PRICING AUTOMATION ROUTES
+  // ============================================================================
+
+  // Get pricing settings for current user
+  app.get("/api/pricing/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { pricingSettings } = await import('@shared/schema');
+
+      const settings = await db
+        .select()
+        .from(pricingSettings)
+        .where(eq(pricingSettings.userId, userId))
+        .limit(1);
+
+      if (settings.length === 0) {
+        // Return default settings if none exist
+        res.json({
+          pricingAutomationEnabled: false,
+          defaultStrategy: 'match',
+          globalMinMargin: '10.00',
+          globalMaxDiscount: '30.00',
+          priceUpdateFrequency: 'daily',
+          requireApproval: true,
+          approvalThreshold: '10.00',
+          competitorScanEnabled: true,
+          maxCompetitorsPerProduct: 3,
+          notifyOnPriceChanges: true,
+        });
+      } else {
+        res.json(settings[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching pricing settings:", error);
+      res.status(500).json({ error: "Failed to fetch pricing settings" });
+    }
+  });
+
+  // Update pricing settings
+  app.put("/api/pricing/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { pricingSettings, updatePricingSettingsSchema } = await import('@shared/schema');
+
+      // Validate request body
+      const validatedData = updatePricingSettingsSchema.parse(req.body);
+
+      // Check if settings exist
+      const existing = await db
+        .select()
+        .from(pricingSettings)
+        .where(eq(pricingSettings.userId, userId))
+        .limit(1);
+
+      let result;
+      if (existing.length === 0) {
+        // Create new settings
+        result = await db
+          .insert(pricingSettings)
+          .values({
+            userId,
+            ...validatedData,
+          })
+          .returning();
+      } else {
+        // Update existing settings
+        result = await db
+          .update(pricingSettings)
+          .set({
+            ...validatedData,
+            updatedAt: new Date(),
+          })
+          .where(eq(pricingSettings.userId, userId))
+          .returning();
+      }
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error updating pricing settings:", error);
+      res.status(500).json({ error: "Failed to update pricing settings" });
+    }
+  });
+
+  // Get all competitor products for current user
+  app.get("/api/pricing/competitors", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { competitorProducts, products } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      const competitors = await db
+        .select({
+          id: competitorProducts.id,
+          productId: competitorProducts.productId,
+          competitorName: competitorProducts.competitorName,
+          competitorUrl: competitorProducts.competitorUrl,
+          competitorSku: competitorProducts.competitorSku,
+          productTitle: competitorProducts.productTitle,
+          currentPrice: competitorProducts.currentPrice,
+          previousPrice: competitorProducts.previousPrice,
+          currency: competitorProducts.currency,
+          inStock: competitorProducts.inStock,
+          lastScrapedAt: competitorProducts.lastScrapedAt,
+          scrapingEnabled: competitorProducts.scrapingEnabled,
+          matchConfidence: competitorProducts.matchConfidence,
+          createdAt: competitorProducts.createdAt,
+          updatedAt: competitorProducts.updatedAt,
+          productName: products.name,
+        })
+        .from(competitorProducts)
+        .leftJoin(products, eq(competitorProducts.productId, products.id))
+        .where(eq(competitorProducts.userId, userId))
+        .orderBy(desc(competitorProducts.createdAt));
+
+      res.json(competitors);
+    } catch (error) {
+      console.error("Error fetching competitor products:", error);
+      res.status(500).json({ error: "Failed to fetch competitor products" });
+    }
+  });
+
+  // Add new competitor product
+  app.post("/api/pricing/competitors", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { competitorProducts, insertCompetitorProductSchema } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Validate request body
+      const validatedData = insertCompetitorProductSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const result = await db
+        .insert(competitorProducts)
+        .values(validatedData)
+        .returning();
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error adding competitor product:", error);
+      res.status(500).json({ error: "Failed to add competitor product" });
+    }
+  });
+
+  // Update competitor product
+  app.put("/api/pricing/competitors/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const competitorId = req.params.id;
+      const { competitorProducts } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Verify ownership
+      const existing = await db
+        .select()
+        .from(competitorProducts)
+        .where(and(
+          eq(competitorProducts.id, competitorId),
+          eq(competitorProducts.userId, userId)
+        ))
+        .limit(1);
+
+      if (existing.length === 0) {
+        return res.status(404).json({ error: "Competitor product not found" });
+      }
+
+      const result = await db
+        .update(competitorProducts)
+        .set({
+          ...req.body,
+          updatedAt: new Date(),
+        })
+        .where(eq(competitorProducts.id, competitorId))
+        .returning();
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error updating competitor product:", error);
+      res.status(500).json({ error: "Failed to update competitor product" });
+    }
+  });
+
+  // Delete competitor product
+  app.delete("/api/pricing/competitors/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const competitorId = req.params.id;
+      const { competitorProducts } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Verify ownership
+      const existing = await db
+        .select()
+        .from(competitorProducts)
+        .where(and(
+          eq(competitorProducts.id, competitorId),
+          eq(competitorProducts.userId, userId)
+        ))
+        .limit(1);
+
+      if (existing.length === 0) {
+        return res.status(404).json({ error: "Competitor product not found" });
+      }
+
+      await db
+        .delete(competitorProducts)
+        .where(eq(competitorProducts.id, competitorId));
+
+      res.json({ success: true, message: "Competitor product deleted" });
+    } catch (error) {
+      console.error("Error deleting competitor product:", error);
+      res.status(500).json({ error: "Failed to delete competitor product" });
+    }
+  });
+
+  // Get all pricing rules for current user
+  app.get("/api/pricing/rules", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { pricingRules } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      const rules = await db
+        .select()
+        .from(pricingRules)
+        .where(eq(pricingRules.userId, userId))
+        .orderBy(desc(pricingRules.priority), desc(pricingRules.createdAt));
+
+      res.json(rules);
+    } catch (error) {
+      console.error("Error fetching pricing rules:", error);
+      res.status(500).json({ error: "Failed to fetch pricing rules" });
+    }
+  });
+
+  // Add new pricing rule
+  app.post("/api/pricing/rules", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { pricingRules, insertPricingRuleSchema } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Validate request body
+      const validatedData = insertPricingRuleSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const result = await db
+        .insert(pricingRules)
+        .values(validatedData)
+        .returning();
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error adding pricing rule:", error);
+      res.status(500).json({ error: "Failed to add pricing rule" });
+    }
+  });
+
+  // Update pricing rule
+  app.put("/api/pricing/rules/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const ruleId = req.params.id;
+      const { pricingRules } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Verify ownership
+      const existing = await db
+        .select()
+        .from(pricingRules)
+        .where(and(
+          eq(pricingRules.id, ruleId),
+          eq(pricingRules.userId, userId)
+        ))
+        .limit(1);
+
+      if (existing.length === 0) {
+        return res.status(404).json({ error: "Pricing rule not found" });
+      }
+
+      const result = await db
+        .update(pricingRules)
+        .set({
+          ...req.body,
+          updatedAt: new Date(),
+        })
+        .where(eq(pricingRules.id, ruleId))
+        .returning();
+
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Error updating pricing rule:", error);
+      res.status(500).json({ error: "Failed to update pricing rule" });
+    }
+  });
+
+  // Delete pricing rule
+  app.delete("/api/pricing/rules/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const ruleId = req.params.id;
+      const { pricingRules } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Verify ownership
+      const existing = await db
+        .select()
+        .from(pricingRules)
+        .where(and(
+          eq(pricingRules.id, ruleId),
+          eq(pricingRules.userId, userId)
+        ))
+        .limit(1);
+
+      if (existing.length === 0) {
+        return res.status(404).json({ error: "Pricing rule not found" });
+      }
+
+      await db
+        .delete(pricingRules)
+        .where(eq(pricingRules.id, ruleId));
+
+      res.json({ success: true, message: "Pricing rule deleted" });
+    } catch (error) {
+      console.error("Error deleting pricing rule:", error);
+      res.status(500).json({ error: "Failed to delete pricing rule" });
+    }
+  });
+
+  // Get price change history
+  app.get("/api/pricing/history", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { priceChanges, products, pricingRules } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      const history = await db
+        .select({
+          id: priceChanges.id,
+          productId: priceChanges.productId,
+          productName: products.name,
+          ruleId: priceChanges.ruleId,
+          ruleName: pricingRules.name,
+          oldPrice: priceChanges.oldPrice,
+          newPrice: priceChanges.newPrice,
+          priceChange: priceChanges.priceChange,
+          priceChangePercent: priceChanges.priceChangePercent,
+          reason: priceChanges.reason,
+          competitorPrice: priceChanges.competitorPrice,
+          status: priceChanges.status,
+          publishedToShopify: priceChanges.publishedToShopify,
+          revenueImpact: priceChanges.revenueImpact,
+          createdAt: priceChanges.createdAt,
+          appliedAt: priceChanges.appliedAt,
+          rolledBackAt: priceChanges.rolledBackAt,
+        })
+        .from(priceChanges)
+        .leftJoin(products, eq(priceChanges.productId, products.id))
+        .leftJoin(pricingRules, eq(priceChanges.ruleId, pricingRules.id))
+        .where(eq(priceChanges.userId, userId))
+        .orderBy(desc(priceChanges.createdAt))
+        .limit(100);
+
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching price history:", error);
+      res.status(500).json({ error: "Failed to fetch price history" });
+    }
+  });
+
+  // Rollback price change
+  app.post("/api/pricing/rollback/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const priceChangeId = req.params.id;
+      const { priceChanges, pricingSnapshots, products } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Get price change
+      const priceChange = await db
+        .select()
+        .from(priceChanges)
+        .where(and(
+          eq(priceChanges.id, priceChangeId),
+          eq(priceChanges.userId, userId)
+        ))
+        .limit(1);
+
+      if (priceChange.length === 0) {
+        return res.status(404).json({ error: "Price change not found" });
+      }
+
+      if (priceChange[0].status === 'rolled_back') {
+        return res.status(400).json({ error: "Price change already rolled back" });
+      }
+
+      // Get snapshot
+      const snapshot = await db
+        .select()
+        .from(pricingSnapshots)
+        .where(eq(pricingSnapshots.priceChangeId, priceChangeId))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return res.status(404).json({ error: "No snapshot found for this price change" });
+      }
+
+      // Restore old price
+      await db
+        .update(products)
+        .set({
+          price: snapshot[0].price,
+        })
+        .where(eq(products.id, priceChange[0].productId));
+
+      // Mark as rolled back
+      await db
+        .update(priceChanges)
+        .set({
+          status: 'rolled_back' as any,
+          rolledBackAt: new Date(),
+        })
+        .where(eq(priceChanges.id, priceChangeId));
+
+      res.json({ success: true, message: "Price change rolled back successfully" });
+    } catch (error) {
+      console.error("Error rolling back price change:", error);
+      res.status(500).json({ error: "Failed to rollback price change" });
+    }
+  });
+
+  // Get pricing statistics
+  app.get("/api/pricing/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { priceChanges, competitorProducts } = await import('@shared/schema');
+      // Database is already imported as db
+      // Using db directly
+
+      // Get stats for last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const recentChanges = await db
+        .select()
+        .from(priceChanges)
+        .where(and(
+          eq(priceChanges.userId, userId),
+          gte(priceChanges.createdAt, sevenDaysAgo)
+        ));
+
+      const totalCompetitors = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(competitorProducts)
+        .where(eq(competitorProducts.userId, userId));
+
+      const appliedChanges = recentChanges.filter(c => c.status === 'applied');
+      const totalPriceChanges = recentChanges.length;
+      const successRate = totalPriceChanges > 0 
+        ? Math.round((appliedChanges.length / totalPriceChanges) * 100) 
+        : 0;
+
+      // Calculate daily breakdown
+      const dailyStats = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        const nextDate = new Date(date);
+        nextDate.setDate(nextDate.getDate() + 1);
+
+        const dayChanges = recentChanges.filter(c => {
+          const createdAt = new Date(c.createdAt!);
+          return createdAt >= date && createdAt < nextDate;
+        });
+
+        dailyStats.push({
+          date: date.toISOString().split('T')[0],
+          priceChanges: dayChanges.length,
+          applied: dayChanges.filter(c => c.status === 'applied').length,
+        });
+      }
+
+      res.json({
+        totalPriceChanges,
+        appliedChanges: appliedChanges.length,
+        successRate,
+        totalCompetitors: totalCompetitors[0]?.count || 0,
+        dailyStats,
+      });
+    } catch (error) {
+      console.error("Error fetching pricing stats:", error);
+      res.status(500).json({ error: "Failed to fetch pricing stats" });
     }
   });
 
