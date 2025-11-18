@@ -85,6 +85,8 @@ const BrandVoiceMemory = lazy(() => import("@/pages/ai-tools/brand-voice-memory"
 const MultimodalAI = lazy(() => import("@/pages/ai-tools/multimodal-ai"));
 const ABTestingCopy = lazy(() => import("@/pages/ai-tools/ab-testing-copy"));
 const ScheduledRefresh = lazy(() => import("@/pages/ai-tools/scheduled-refresh"));
+const AutopilotSettings = lazy(() => import("@/pages/ai-tools/autopilot"));
+const ActivityTimeline = lazy(() => import("@/pages/ai-tools/activity-timeline"));
 const StrategyInsights = lazy(() => import("@/pages/strategy-insights"));
 
 // Automation pages
@@ -514,6 +516,20 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <ScheduledRefresh />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/ai-tools/autopilot" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <AutopilotSettings />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/ai-tools/activity-timeline" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <ActivityTimeline />
           </Suspense>
         </ProtectedRoute>
       )} />

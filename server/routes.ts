@@ -8153,6 +8153,180 @@ Output format: Markdown with clear section headings.`;
     res.status(200).json(results);
   });
 
+  // ===== AUTOMATION SETTINGS =====
+  
+  // Get user's automation settings
+  app.get("/api/automation/settings", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { automationSettings } = await import('@shared/schema');
+      
+      const settings = await db
+        .select()
+        .from(automationSettings)
+        .where(eq(automationSettings.userId, userId))
+        .limit(1);
+
+      if (settings.length === 0) {
+        // Initialize settings for user
+        const { initializeUserAutomationSettings } = await import('./lib/default-autonomous-rules');
+        await initializeUserAutomationSettings(userId);
+        
+        // Fetch again
+        const newSettings = await db
+          .select()
+          .from(automationSettings)
+          .where(eq(automationSettings.userId, userId))
+          .limit(1);
+          
+        return res.json(newSettings[0]);
+      }
+
+      res.json(settings[0]);
+    } catch (error) {
+      console.error("Error fetching automation settings:", error);
+      res.status(500).json({ error: "Failed to fetch automation settings" });
+    }
+  });
+
+  // Update user's automation settings
+  app.put("/api/automation/settings", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { automationSettings } = await import('@shared/schema');
+      
+      const updates = req.body;
+
+      await db
+        .update(automationSettings)
+        .set(updates)
+        .where(eq(automationSettings.userId, userId));
+
+      const updated = await db
+        .select()
+        .from(automationSettings)
+        .where(eq(automationSettings.userId, userId))
+        .limit(1);
+
+      res.json(updated[0]);
+    } catch (error) {
+      console.error("Error updating automation settings:", error);
+      res.status(500).json({ error: "Failed to update automation settings" });
+    }
+  });
+
+  // Get autonomous actions (activity timeline)
+  app.get("/api/autonomous-actions", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { autonomousActions } = await import('@shared/schema');
+      
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const actions = await db
+        .select()
+        .from(autonomousActions)
+        .where(eq(autonomousActions.userId, userId))
+        .orderBy(desc(autonomousActions.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      res.json(actions);
+    } catch (error) {
+      console.error("Error fetching autonomous actions:", error);
+      res.status(500).json({ error: "Failed to fetch autonomous actions" });
+    }
+  });
+
+  // Rollback an autonomous action
+  app.post("/api/autonomous-actions/:id/rollback", async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { autonomousActions, productSnapshots, products: productsTable } = await import('@shared/schema');
+      
+      const actionId = req.params.id;
+
+      // Get the action
+      const action = await db
+        .select()
+        .from(autonomousActions)
+        .where(and(
+          eq(autonomousActions.id, actionId),
+          eq(autonomousActions.userId, userId)
+        ))
+        .limit(1);
+
+      if (action.length === 0) {
+        return res.status(404).json({ error: "Action not found" });
+      }
+
+      // Get the snapshot before this action
+      const snapshot = await db
+        .select()
+        .from(productSnapshots)
+        .where(and(
+          eq(productSnapshots.actionId, actionId),
+          eq(productSnapshots.reason, 'before_optimization')
+        ))
+        .limit(1);
+
+      if (snapshot.length === 0) {
+        return res.status(400).json({ error: "No snapshot found for rollback" });
+      }
+
+      // Restore the product data
+      const snapshotData = snapshot[0].snapshotData as any;
+      
+      await db
+        .update(productsTable)
+        .set({
+          name: snapshotData.name,
+          description: snapshotData.description,
+          // Restore other fields as needed
+        })
+        .where(eq(productsTable.id, action[0].entityId as string));
+
+      // Mark action as rolled back
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'rolled_back' as any,
+          result: {
+            ...action[0].result,
+            rolledBack: true,
+            rollbackAt: new Date().toISOString(),
+          } as any,
+        })
+        .where(eq(autonomousActions.id, actionId));
+
+      res.json({ success: true, message: "Action rolled back successfully" });
+    } catch (error) {
+      console.error("Error rolling back action:", error);
+      res.status(500).json({ error: "Failed to rollback action" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

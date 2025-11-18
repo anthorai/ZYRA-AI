@@ -86,6 +86,28 @@ async function executeOptimizeSEO(action: any): Promise<void> {
   console.log(`🔧 [Action Processor] Processing optimize_seo for product ${action.entityId}`);
 
   try {
+    // SAFETY FIX: Verify autopilot is still enabled before executing
+    const { automationSettings } = await import('@shared/schema');
+    const settings = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.userId, action.userId))
+      .limit(1);
+
+    if (settings.length === 0 || !settings[0].autopilotEnabled) {
+      console.log(`⏸️  [Action Processor] Autopilot disabled for user ${action.userId}, skipping action`);
+      
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'cancelled' as any,
+          result: { reason: 'autopilot_disabled' } as any,
+        })
+        .where(eq(autonomousActions.id, action.id));
+      
+      return;
+    }
+
     // Get the product
     const productResult = await db
       .select()

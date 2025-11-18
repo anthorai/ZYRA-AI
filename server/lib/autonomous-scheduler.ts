@@ -189,23 +189,72 @@ export async function runDailySEOAudit(): Promise<void> {
 
         console.log(`🔍 [SEO Audit] Checking ${userProducts.length} products for user ${settings.userId}`);
 
+        // SAFETY FIX: Enforce maxDailyActions limit
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const todaysActions = await db
+          .select()
+          .from(autonomousActions)
+          .where(
+            and(
+              eq(autonomousActions.userId, settings.userId),
+              sql`${autonomousActions.createdAt} >= ${todayStart}`
+            )
+          );
+
+        const maxDailyActions = settings.maxDailyActions ?? 10;
+        const actionsRemaining = maxDailyActions - todaysActions.length;
+        
+        if (actionsRemaining <= 0) {
+          console.log(`⏸️  [SEO Audit] User ${settings.userId} has reached daily action limit (${maxDailyActions})`);
+          continue;
+        }
+
+        console.log(`📊 [SEO Audit] User ${settings.userId} can create ${actionsRemaining} more actions today`);
+
         let actionsCreated = 0;
 
         // Evaluate rules against each product
         for (const product of userProducts) {
+          // Check if we've hit the daily limit mid-loop
+          if (actionsCreated >= actionsRemaining) {
+            console.log(`⏸️  [SEO Audit] Reached daily action limit for user ${settings.userId}`);
+            break;
+          }
           for (const rule of allRules) {
             try {
               const ruleJson = rule.ruleJson as Rule;
 
+              // SAFETY FIX: Use ?? instead of || for null handling
+              const cooldownSeconds = rule.cooldownSeconds ?? 86400;
+              
               // Check cooldown
               const canRun = await checkCooldown(
                 rule.id,
                 product.id,
-                rule.cooldownSeconds || 86400
+                cooldownSeconds
               );
 
               if (!canRun) {
                 continue;
+              }
+
+              // SAFETY FIX: Check for duplicate pending/running actions (deduplication)
+              const existingAction = await db
+                .select()
+                .from(autonomousActions)
+                .where(
+                  and(
+                    eq(autonomousActions.entityId, product.id),
+                    eq(autonomousActions.ruleId, rule.id),
+                    sql`${autonomousActions.status} IN ('pending', 'running')`
+                  )
+                )
+                .limit(1);
+
+              if (existingAction.length > 0) {
+                continue; // Skip duplicate action
               }
 
               // Evaluate condition
