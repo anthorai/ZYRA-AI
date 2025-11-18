@@ -341,6 +341,221 @@ export async function runDailySEOAudit(): Promise<void> {
 }
 
 /**
+ * Send morning report email to users with autopilot enabled
+ * Shows what autonomous actions happened yesterday
+ */
+async function sendMorningReports(): Promise<void> {
+  const jobId = 'morning-reports';
+  
+  if (runningJobs.has(jobId)) {
+    console.log('⏭️  [Morning Reports] Already running, skipping');
+    return;
+  }
+
+  runningJobs.add(jobId);
+
+  try {
+    console.log('📧 [Morning Reports] Starting morning report generation...');
+    
+    const { getDb } = await import('../db');
+    const { automationSettings, autonomousActions, users } = await import('@shared/schema');
+    const { sendEmail } = await import('../services/email-service');
+    const { and, eq, sql } = await import('drizzle-orm');
+    const db = getDb();
+
+    // Get yesterday's date range
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get all users with autopilot enabled
+    const settings = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.autopilotEnabled, true));
+
+    console.log(`📊 [Morning Reports] Found ${settings.length} users with autopilot enabled`);
+
+    let reportsSent = 0;
+
+    for (const setting of settings) {
+      try {
+        // Get user info
+        const user = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, setting.userId))
+          .limit(1);
+
+        if (user.length === 0 || !user[0].email) {
+          console.log(`⏭️  [Morning Reports] No email for user ${setting.userId}`);
+          continue;
+        }
+
+        // Get yesterday's actions for this user
+        const actions = await db
+          .select()
+          .from(autonomousActions)
+          .where(
+            and(
+              eq(autonomousActions.userId, setting.userId),
+              sql`${autonomousActions.createdAt} >= ${yesterday}`,
+              sql`${autonomousActions.createdAt} < ${today}`
+            )
+          );
+
+        // Skip if no activity yesterday
+        if (actions.length === 0) {
+          console.log(`⏭️  [Morning Reports] No activity for user ${setting.userId}, skipping email`);
+          continue;
+        }
+
+        // Calculate stats
+        const totalActions = actions.length;
+        const completed = actions.filter(a => a.status === 'completed').length;
+        const failed = actions.filter(a => a.status === 'failed').length;
+        const successRate = totalActions > 0 ? Math.round((completed / totalActions) * 100) : 0;
+        const seoOptimizations = actions.filter(a => a.actionType === 'optimize_seo' && a.status === 'completed').length;
+        const cartRecoveries = actions.filter(a => a.actionType === 'send_cart_recovery' && a.status === 'completed').length;
+
+        // Send email
+        await sendEmail({
+          to: user[0].email,
+          subject: `🌅 Morning Report: ${totalActions} Autonomous Actions Yesterday`,
+          html: generateMorningReportHTML({
+            userName: user[0].fullName || user[0].email.split('@')[0],
+            totalActions,
+            completed,
+            failed,
+            successRate,
+            seoOptimizations,
+            cartRecoveries,
+            actions: actions.slice(0, 5), // Show top 5 actions
+          }),
+        });
+
+        reportsSent++;
+        console.log(`✅ [Morning Reports] Sent report to ${user[0].email}`);
+
+      } catch (error) {
+        console.error(`❌ [Morning Reports] Error sending report to user ${setting.userId}:`, error);
+      }
+    }
+
+    console.log(`✅ [Morning Reports] Sent ${reportsSent} morning reports`);
+
+  } catch (error) {
+    console.error('❌ [Morning Reports] Fatal error:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
+}
+
+/**
+ * Generate HTML for morning report email
+ */
+function generateMorningReportHTML(data: {
+  userName: string;
+  totalActions: number;
+  completed: number;
+  failed: number;
+  successRate: number;
+  seoOptimizations: number;
+  cartRecoveries: number;
+  actions: any[];
+}): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 28px; }
+        .header p { margin: 10px 0 0 0; opacity: 0.9; }
+        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: #f7f7f7; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 32px; font-weight: bold; color: #667eea; margin: 0; }
+        .stat-label { font-size: 14px; color: #666; margin: 5px 0 0 0; }
+        .success { color: #10b981; }
+        .section { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .section h2 { margin-top: 0; font-size: 18px; color: #333; }
+        .action-item { padding: 12px; background: #f9f9f9; border-left: 3px solid #667eea; margin-bottom: 10px; border-radius: 4px; }
+        .action-title { font-weight: bold; color: #333; }
+        .action-meta { font-size: 13px; color: #666; margin-top: 4px; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-failed { background: #fee2e2; color: #991b1b; }
+        .footer { text-align: center; color: #666; font-size: 13px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e5e5; }
+        .cta-button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🌅 Good Morning, ${data.userName}!</h1>
+        <p>Here's what your AI Store Manager did while you slept</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <p class="stat-value">${data.totalActions}</p>
+          <p class="stat-label">Total Actions</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-value success">${data.successRate}%</p>
+          <p class="stat-label">Success Rate</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-value">${data.seoOptimizations}</p>
+          <p class="stat-label">Products Optimized</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-value">${data.cartRecoveries}</p>
+          <p class="stat-label">Cart Recoveries</p>
+        </div>
+      </div>
+
+      ${data.actions.length > 0 ? `
+        <div class="section">
+          <h2>📋 Recent Actions</h2>
+          ${data.actions.map(action => {
+            const isCompleted = action.status === 'completed';
+            const badgeClass = isCompleted ? 'badge-success' : 'badge-failed';
+            const actionType = action.actionType === 'optimize_seo' ? '✨ SEO Optimization' : '🛒 Cart Recovery';
+            
+            return `
+              <div class="action-item">
+                <div class="action-title">${actionType}</div>
+                <div class="action-meta">
+                  <span class="badge ${badgeClass}">${isCompleted ? 'Completed' : 'Failed'}</span>
+                  ${action.decisionReason ? `<br>${action.decisionReason}` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+
+      <div style="text-align: center;">
+        <a href="${process.env.VITE_PUBLIC_URL || 'https://zyraai.com'}/ai-tools/activity-timeline" class="cta-button">
+          View Full Activity Timeline
+        </a>
+      </div>
+
+      <div class="footer">
+        <p><strong>Zyra AI - Your Autonomous Store Manager</strong></p>
+        <p>This is an automated report from your AI Store Manager.</p>
+        <p>You're receiving this because you have Autopilot enabled.</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
  * Initialize autonomous scheduler
  * Sets up cron jobs for various autonomous tasks
  */
@@ -353,11 +568,17 @@ export function initializeAutonomousScheduler(): void {
     await runDailySEOAudit();
   });
 
+  // Morning Report Email - runs every day at 8 AM
+  cron.schedule('0 8 * * *', async () => {
+    console.log('⏰ [Scheduler] Sending morning reports...');
+    await sendMorningReports();
+  });
+
   // For testing, also run every 5 minutes (comment out in production)
   // cron.schedule('*/5 * * * *', async () => {
   //   console.log('⏰ [Scheduler] Running test SEO audit...');
   //   await runDailySEOAudit();
   // });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit scheduled for 2 AM');
+  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM) and Morning Reports (8 AM)');
 }
