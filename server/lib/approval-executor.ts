@@ -10,27 +10,37 @@
  * maintaining consistency in safety guardrails, analytics, snapshots, and rollback functionality.
  */
 
-import { requireDb } from '@db';
+import { requireDb } from '../db';
 import { autonomousActions } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { processAutonomousAction } from './autonomous-action-processor';
+import { validateApproval } from './approval-safety-validator';
 
 export interface ExecutionResult {
   success: boolean;
   actionId?: string;
   result?: any;
   error?: string;
+  violationType?: string;
 }
 
 /**
  * Execute an approved action by creating an autonomous_action and processing it
  * through the standard action processor infrastructure.
  * 
- * This reuses ALL existing safety features:
+ * SAFETY GUARDRAILS (enforced BEFORE action creation):
+ * - Daily action limits (maxDailyActions)
+ * - Catalog change percentage limits (maxCatalogChangePercent)
+ * - Frequency caps (3/day, 5/week per customer per channel)
+ * - Per-rule daily budgets (maxActionsPerDay)
+ * - Cooldown periods (prevents rapid re-execution on same entity)
+ * - Quiet hours (9 AM - 9 PM timezone-aware for marketing)
+ * - Unsubscribe status (respects customer preferences)
+ * - GDPR consent (validates marketing permissions)
+ * 
+ * EXECUTION FEATURES (applied during processing):
  * - Product snapshots (for rollback)
  * - Transactional safety
- * - Frequency caps and quiet hours (for marketing/cart recovery)
- * - GDPR consent checks
  * - Analytics tracking
  * - SEO meta updates
  */
@@ -45,6 +55,22 @@ export async function executeApprovedAction(
   
   try {
     console.log(`✅ [Approval Executor] Executing approved action: ${actionType}`, { userId });
+
+    // CRITICAL: Validate approval against safety guardrails BEFORE creating action
+    // This prevents approving actions that would violate daily limits, frequency caps, etc.
+    const validationResult = await validateApproval(userId, actionType, actionPayload);
+    
+    if (!validationResult.allowed) {
+      console.warn(`⚠️  [Approval Executor] Action rejected by safety guardrails:`, validationResult.reason);
+      
+      return {
+        success: false,
+        error: validationResult.reason || 'Action violates safety guardrails',
+        violationType: validationResult.violationType
+      };
+    }
+
+    console.log(`✅ [Approval Executor] Safety checks passed`);
 
     // Determine entity type and ID from action type and payload
     const entityType = getEntityTypeFromAction(actionType);
