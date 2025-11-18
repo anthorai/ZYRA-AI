@@ -8227,6 +8227,136 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== PENDING APPROVALS (Manual Mode) =====
+  
+  // Get pending approvals for review
+  app.get("/api/pending-approvals", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { pendingApprovals } = await import('@shared/schema');
+      
+      const status = (req.query.status as string) || 'pending';
+      
+      const approvals = await db
+        .select()
+        .from(pendingApprovals)
+        .where(
+          and(
+            eq(pendingApprovals.userId, userId),
+            eq(pendingApprovals.status, status)
+          )
+        )
+        .orderBy(desc(pendingApprovals.createdAt));
+
+      res.json(approvals);
+    } catch (error) {
+      console.error("Error fetching pending approvals:", error);
+      res.status(500).json({ error: "Failed to fetch pending approvals" });
+    }
+  });
+
+  // Approve a recommendation and execute it
+  app.post("/api/pending-approvals/:id/approve", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const approvalId = req.params.id;
+
+      const { pendingApprovals, autonomousActions } = await import('@shared/schema');
+      
+      // Get the pending approval
+      const [approval] = await db
+        .select()
+        .from(pendingApprovals)
+        .where(
+          and(
+            eq(pendingApprovals.id, approvalId),
+            eq(pendingApprovals.userId, userId),
+            eq(pendingApprovals.status, 'pending')
+          )
+        )
+        .limit(1);
+
+      if (!approval) {
+        return res.status(404).json({ error: "Approval not found or already processed" });
+      }
+
+      // Execute the recommended action
+      const actionPayload = approval.recommendedAction as any;
+      const { executeApprovedAction } = await import('./lib/approval-executor');
+      
+      const executionResult = await executeApprovedAction(
+        userId,
+        approval.actionType,
+        actionPayload,
+        approvalId,
+        approval.aiReasoning || undefined
+      );
+
+      if (!executionResult.success) {
+        return res.status(500).json({ 
+          error: "Failed to execute approved action",
+          details: executionResult.error 
+        });
+      }
+
+      // Update approval status
+      await db
+        .update(pendingApprovals)
+        .set({
+          status: 'approved',
+          reviewedAt: new Date(),
+          reviewedBy: userId,
+          executedActionId: executionResult.actionId
+        })
+        .where(eq(pendingApprovals.id, approvalId));
+
+      res.json({ 
+        success: true,
+        actionId: executionResult.actionId,
+        result: executionResult.result
+      });
+    } catch (error) {
+      console.error("Error approving recommendation:", error);
+      res.status(500).json({ error: "Failed to approve recommendation" });
+    }
+  });
+
+  // Reject a recommendation
+  app.post("/api/pending-approvals/:id/reject", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const approvalId = req.params.id;
+
+      const { pendingApprovals } = await import('@shared/schema');
+      
+      // Update approval status
+      const updated = await db
+        .update(pendingApprovals)
+        .set({
+          status: 'rejected',
+          reviewedAt: new Date(),
+          reviewedBy: userId
+        })
+        .where(
+          and(
+            eq(pendingApprovals.id, approvalId),
+            eq(pendingApprovals.userId, userId),
+            eq(pendingApprovals.status, 'pending')
+          )
+        )
+        .returning();
+
+      if (updated.length === 0) {
+        return res.status(404).json({ error: "Approval not found or already processed" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error rejecting recommendation:", error);
+      res.status(500).json({ error: "Failed to reject recommendation" });
+    }
+  });
+
   // Get autonomous actions (activity timeline)
   app.get("/api/autonomous-actions", requireAuth, async (req, res) => {
     try {

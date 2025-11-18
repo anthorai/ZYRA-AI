@@ -119,6 +119,8 @@ export const autonomousRules = pgTable("autonomous_rules", {
 export const automationSettings = pgTable("automation_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  // MASTER AUTOMATION CONTROL - Global ON/OFF switch
+  globalAutopilotEnabled: boolean("global_autopilot_enabled").default(true), // Master toggle: true = Autonomous, false = Manual (requires approval)
   autopilotEnabled: boolean("autopilot_enabled").default(false),
   autopilotMode: text("autopilot_mode").default("safe"), // 'safe' | 'balanced' | 'aggressive'
   dryRunMode: boolean("dry_run_mode").default(false), // Preview mode - creates actions but doesn't execute
@@ -138,6 +140,30 @@ export const automationSettings = pgTable("automation_settings", {
 }, (table) => [
   index('automation_settings_user_id_idx').on(table.userId),
   index('automation_settings_autopilot_enabled_idx').on(table.autopilotEnabled),
+  index('automation_settings_global_autopilot_idx').on(table.globalAutopilotEnabled),
+]);
+
+export const pendingApprovals = pgTable("pending_approvals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  actionType: text("action_type").notNull(), // 'optimize_seo' | 'send_campaign' | 'send_cart_recovery' | 'adjust_price'
+  entityId: varchar("entity_id"), // Product ID, Campaign ID, etc
+  entityType: text("entity_type"), // 'product' | 'campaign' | 'cart' | 'competitor'
+  recommendedAction: jsonb("recommended_action").notNull(), // Full action payload to execute if approved
+  aiReasoning: text("ai_reasoning").notNull(), // Why AI recommends this action
+  status: text("status").default("pending").notNull(), // 'pending' | 'approved' | 'rejected'
+  priority: text("priority").default("medium"), // 'low' | 'medium' | 'high' | 'urgent'
+  estimatedImpact: jsonb("estimated_impact"), // Predicted ROI, traffic increase, conversion lift
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id), // Who approved/rejected
+  executedActionId: varchar("executed_action_id").references(() => autonomousActions.id), // Link to executed action if approved
+}, (table) => [
+  index('pending_approvals_user_id_idx').on(table.userId),
+  index('pending_approvals_status_idx').on(table.status),
+  index('pending_approvals_action_type_idx').on(table.actionType),
+  index('pending_approvals_created_at_idx').on(table.createdAt),
+  index('pending_approvals_priority_idx').on(table.priority),
 ]);
 
 export const productSnapshots = pgTable("product_snapshots", {
@@ -615,8 +641,16 @@ export const insertAutomationSettingsSchema = createInsertSchema(automationSetti
   updatedAt: true,
 });
 
+export const insertPendingApprovalSchema = createInsertSchema(pendingApprovals).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+  executedActionId: true,
+});
+
 // Update schema for automation settings with validation
 export const updateAutomationSettingsSchema = z.object({
+  globalAutopilotEnabled: z.boolean().optional(), // MASTER TOGGLE
   autopilotEnabled: z.boolean().optional(),
   autopilotMode: z.enum(['safe', 'balanced', 'aggressive']).optional(),
   dryRunMode: z.boolean().optional(),

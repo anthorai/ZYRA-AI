@@ -97,6 +97,7 @@ const CSVImportExport = lazy(() => import("@/pages/automation/csv-import-export"
 const ShopifyPublish = lazy(() => import("@/pages/automation/shopify-publish"));
 const SmartBulkSuggestions = lazy(() => import("@/pages/automation/smart-bulk-suggestions"));
 const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes"));
+const PendingApprovals = lazy(() => import("@/pages/pending-approvals"));
 
 
 // Shopify installation onboarding
@@ -591,6 +592,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <RollbackChanges />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/pending-approvals" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <PendingApprovals />
           </Suspense>
         </ProtectedRoute>
       )} />

@@ -17,6 +17,7 @@ import NotificationCenter from "@/components/dashboard/notification-center";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
 import ManageProducts from "@/pages/products/manage";
+import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
 import { useOnboarding } from "@/hooks/use-onboarding";
@@ -333,8 +334,9 @@ export default function Dashboard() {
 
             
 
-            {/* Right Section - Notifications + Profile */}
+            {/* Right Section - Master Toggle + Notifications + Profile */}
             <div className="flex items-center justify-end space-x-2 sm:space-x-4 flex-shrink-0">
+              <MasterAutomationToggle />
               <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
