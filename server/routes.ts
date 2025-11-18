@@ -8470,7 +8470,11 @@ Output format: Markdown with clear section headings.`;
       const { pricingSettings, updatePricingSettingsSchema } = await import('@shared/schema');
 
       // Validate request body
-      const validatedData = updatePricingSettingsSchema.parse(req.body);
+      const validation = updatePricingSettingsSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ error: "Invalid request data", details: validation.error.errors });
+      }
+      const validatedData = validation.data;
 
       // Check if settings exist
       const existing = await db
@@ -8556,10 +8560,14 @@ Output format: Markdown with clear section headings.`;
       // Using db directly
 
       // Validate request body
-      const validatedData = insertCompetitorProductSchema.parse({
+      const validation = insertCompetitorProductSchema.safeParse({
         ...req.body,
         userId,
       });
+      if (!validation.success) {
+        return res.status(400).json({ error: "Invalid request data", details: validation.error.errors });
+      }
+      const validatedData = validation.data;
 
       const result = await db
         .insert(competitorProducts)
@@ -8676,10 +8684,14 @@ Output format: Markdown with clear section headings.`;
       // Using db directly
 
       // Validate request body
-      const validatedData = insertPricingRuleSchema.parse({
+      const validation = insertPricingRuleSchema.safeParse({
         ...req.body,
         userId,
       });
+      if (!validation.success) {
+        return res.status(400).json({ error: "Invalid request data", details: validation.error.errors });
+      }
+      const validatedData = validation.data;
 
       const result = await db
         .insert(pricingRules)
@@ -8846,13 +8858,30 @@ Output format: Markdown with clear section headings.`;
         return res.status(404).json({ error: "No snapshot found for this price change" });
       }
 
+      // Verify product ownership before updating
+      const product = await db
+        .select()
+        .from(products)
+        .where(and(
+          eq(products.id, priceChange[0].productId),
+          eq(products.userId, userId)
+        ))
+        .limit(1);
+
+      if (product.length === 0) {
+        return res.status(403).json({ error: "Unauthorized: Product does not belong to this user" });
+      }
+
       // Restore old price
       await db
         .update(products)
         .set({
           price: snapshot[0].price,
         })
-        .where(eq(products.id, priceChange[0].productId));
+        .where(and(
+          eq(products.id, priceChange[0].productId),
+          eq(products.userId, userId)
+        ));
 
       // Mark as rolled back
       await db
