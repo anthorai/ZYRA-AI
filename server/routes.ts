@@ -8965,6 +8965,198 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get comprehensive pricing analytics
+  app.get("/api/pricing/analytics", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { priceChanges, competitorProducts, products } = await import('@shared/schema');
+      
+      // Get analytics for last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      // Get all price changes in last 30 days
+      const changes = await db
+        .select()
+        .from(priceChanges)
+        .where(and(
+          eq(priceChanges.userId, userId),
+          gte(priceChanges.createdAt, thirtyDaysAgo)
+        ))
+        .orderBy(desc(priceChanges.createdAt));
+
+      const appliedChanges = changes.filter(c => c.status === 'applied');
+      
+      // Calculate revenue metrics
+      let totalRevenueBefore = 0;
+      let totalRevenueAfter = 0;
+      let profitableChanges = 0;
+
+      appliedChanges.forEach(change => {
+        const revenueImpact = change.revenueImpact as any;
+        if (revenueImpact && typeof revenueImpact === 'object') {
+          const before = parseFloat(revenueImpact.before || '0');
+          const after = parseFloat(revenueImpact.after || '0');
+          
+          if (!isNaN(before) && !isNaN(after)) {
+            totalRevenueBefore += before;
+            totalRevenueAfter += after;
+            if (after > before) {
+              profitableChanges++;
+            }
+          }
+        }
+      });
+
+      const revenueIncrease = totalRevenueAfter - totalRevenueBefore;
+      const revenueIncreasePercent = totalRevenueBefore > 0 
+        ? ((revenueIncrease / totalRevenueBefore) * 100) 
+        : 0;
+
+      // Calculate win rate (percentage of profitable changes)
+      const winRate = appliedChanges.length > 0 
+        ? (profitableChanges / appliedChanges.length) * 100 
+        : 0;
+
+      // Calculate average margin improvement
+      let totalMarginImprovement = 0;
+      let changesWithMargin = 0;
+
+      appliedChanges.forEach(change => {
+        const oldPrice = parseFloat(change.oldPrice || '0');
+        const newPrice = parseFloat(change.newPrice || '0');
+        const competitorPrice = parseFloat(change.competitorPrice || '0');
+        
+        if (oldPrice > 0 && newPrice > 0 && competitorPrice > 0) {
+          const oldMargin = ((oldPrice - competitorPrice) / oldPrice) * 100;
+          const newMargin = ((newPrice - competitorPrice) / newPrice) * 100;
+          const marginChange = newMargin - oldMargin;
+          
+          if (!isNaN(marginChange)) {
+            totalMarginImprovement += marginChange;
+            changesWithMargin++;
+          }
+        }
+      });
+
+      const averageMarginImprovement = changesWithMargin > 0 
+        ? totalMarginImprovement / changesWithMargin 
+        : 0;
+
+      // Get competitor stats
+      const allCompetitors = await db
+        .select()
+        .from(competitorProducts)
+        .where(eq(competitorProducts.userId, userId));
+
+      const activeCompetitors = allCompetitors.filter(c => c.scrapingEnabled);
+      const competitorsTracked = allCompetitors.length;
+      const competitorsActive = activeCompetitors.length;
+
+      // Calculate average competitor price vs our prices
+      const allProducts = await db
+        .select()
+        .from(products)
+        .where(eq(products.userId, userId));
+
+      let totalOurPrice = 0;
+      let totalCompetitorPrice = 0;
+      let comparisonCount = 0;
+
+      allCompetitors.forEach(comp => {
+        const product = allProducts.find(p => p.id === comp.productId);
+        if (product && comp.currentPrice) {
+          totalOurPrice += parseFloat(product.price || '0');
+          totalCompetitorPrice += parseFloat(comp.currentPrice || '0');
+          comparisonCount++;
+        }
+      });
+
+      const avgPriceDifference = comparisonCount > 0 
+        ? ((totalOurPrice - totalCompetitorPrice) / comparisonCount) 
+        : 0;
+
+      // Generate 30-day trend data
+      const trendData = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        const nextDate = new Date(date);
+        nextDate.setDate(nextDate.getDate() + 1);
+
+        const dayChanges = changes.filter(c => {
+          const createdAt = new Date(c.createdAt!);
+          return createdAt >= date && createdAt < nextDate;
+        });
+
+        const dayApplied = dayChanges.filter(c => c.status === 'applied');
+        
+        // Calculate daily revenue impact
+        let dailyRevenue = 0;
+        dayApplied.forEach(change => {
+          const revenueImpact = change.revenueImpact as any;
+          if (revenueImpact && typeof revenueImpact === 'object') {
+            const before = parseFloat(revenueImpact.before || '0');
+            const after = parseFloat(revenueImpact.after || '0');
+            if (!isNaN(before) && !isNaN(after)) {
+              dailyRevenue += (after - before);
+            }
+          }
+        });
+
+        trendData.push({
+          date: date.toISOString().split('T')[0],
+          priceChanges: dayChanges.length,
+          applied: dayApplied.length,
+          revenueImpact: Math.round(dailyRevenue * 100) / 100,
+          winRate: dayApplied.length > 0 
+            ? Math.round((dayApplied.filter(c => {
+                const ri = c.revenueImpact as any;
+                if (ri && typeof ri === 'object') {
+                  const before = parseFloat(ri.before || '0');
+                  const after = parseFloat(ri.after || '0');
+                  return after > before;
+                }
+                return false;
+              }).length / dayApplied.length) * 100) 
+            : 0,
+        });
+      }
+
+      res.json({
+        summary: {
+          totalChanges: changes.length,
+          appliedChanges: appliedChanges.length,
+          pendingChanges: changes.filter(c => c.status === 'pending').length,
+          rolledBackChanges: changes.filter(c => c.status === 'rolled_back').length,
+        },
+        revenue: {
+          before: Math.round(totalRevenueBefore * 100) / 100,
+          after: Math.round(totalRevenueAfter * 100) / 100,
+          increase: Math.round(revenueIncrease * 100) / 100,
+          increasePercent: Math.round(revenueIncreasePercent * 100) / 100,
+        },
+        performance: {
+          winRate: Math.round(winRate * 100) / 100,
+          profitableChanges,
+          totalApplied: appliedChanges.length,
+          averageMarginImprovement: Math.round(averageMarginImprovement * 100) / 100,
+        },
+        competitors: {
+          total: competitorsTracked,
+          active: competitorsActive,
+          avgPriceDifference: Math.round(avgPriceDifference * 100) / 100,
+        },
+        trends: trendData,
+      });
+    } catch (error) {
+      console.error("Error fetching pricing analytics:", error);
+      res.status(500).json({ error: "Failed to fetch pricing analytics" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
