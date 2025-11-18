@@ -244,6 +244,38 @@ export class ShopifyClient {
     });
   }
 
+  /**
+   * Update variant price (for pricing automation)
+   * Note: Shopify prices are at the variant level, not product level
+   */
+  async updateVariantPrice(variantId: number, price: string): Promise<void> {
+    await this.makeRequest(`/variants/${variantId}.json`, 'PUT', {
+      variant: {
+        id: variantId,
+        price: price
+      }
+    });
+  }
+
+  /**
+   * Update price for all variants of a product (simple products have 1 variant)
+   */
+  async updateProductPrice(productId: string, price: string): Promise<void> {
+    // Get product to access variants
+    const product = await this.getProduct(productId);
+    
+    if (!product.variants || product.variants.length === 0) {
+      throw new Error(`Product ${productId} has no variants to update price`);
+    }
+
+    // Update all variants with the new price
+    // For simple products (most common), this updates the single default variant
+    // For products with variants (size/color), this updates all to same price
+    for (const variant of product.variants) {
+      await this.updateVariantPrice(variant.id, price);
+    }
+  }
+
   async getAllProducts(limit: number = 250): Promise<ShopifyProduct[]> {
     const result = await this.makeRequest(`/products.json?limit=${limit}`);
     return result.products;

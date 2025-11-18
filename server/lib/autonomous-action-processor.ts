@@ -1,10 +1,12 @@
 import { db } from '../db';
-import { autonomousActions, products, seoMeta, productSnapshots, abandonedCarts } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { autonomousActions, products, seoMeta, productSnapshots, abandonedCarts, pricingSnapshots, priceChanges } from '@shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
 import sgMail from '@sendgrid/mail';
 import twilio from 'twilio';
+import { priceCalculator } from './price-calculator';
+import { getShopifyClient } from './shopify-client';
 
 // Initialize email and SMS clients
 if (process.env.SENDGRID_API_KEY) {
@@ -388,6 +390,304 @@ async function executeCartRecovery(action: any): Promise<void> {
 }
 
 /**
+ * Execute price_change action
+ */
+async function executePriceChange(action: any): Promise<void> {
+  console.log(`💰 [Action Processor] Processing price_change for product ${action.entityId}`);
+
+  try {
+    // SAFETY: Verify pricing automation is still enabled
+    const { pricingSettings, automationSettings } = await import('@shared/schema');
+    const [autoSettings] = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.userId, action.userId))
+      .limit(1);
+
+    if (!autoSettings || !autoSettings.autopilotEnabled) {
+      console.log(`⏸️  [Action Processor] Autopilot disabled for user ${action.userId}, skipping action`);
+      
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'cancelled' as any,
+          result: { reason: 'autopilot_disabled' } as any,
+        })
+        .where(eq(autonomousActions.id, action.id));
+      
+      return;
+    }
+
+    const [settings] = await db
+      .select()
+      .from(pricingSettings)
+      .where(eq(pricingSettings.userId, action.userId))
+      .limit(1);
+
+    if (!settings || !settings.pricingAutomationEnabled) {
+      console.log(`⏸️  [Action Processor] Pricing automation disabled for user ${action.userId}, skipping action`);
+      
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'cancelled' as any,
+          result: { reason: 'pricing_automation_disabled' } as any,
+        })
+        .where(eq(autonomousActions.id, action.id));
+      
+      return;
+    }
+
+    // Get the product
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, action.entityId))
+      .limit(1);
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    const oldPrice = parseFloat(product.price);
+    const payload = action.payload as any;
+    const newPrice = parseFloat(payload?.newPrice || '0');
+
+    if (newPrice <= 0) {
+      throw new Error('Invalid new price');
+    }
+
+    // Calculate optimal price with all safety checks
+    const calculation = await priceCalculator.calculateOptimalPrice(
+      action.userId,
+      newPrice,
+      oldPrice
+    );
+
+    const finalPrice = calculation.finalPrice;
+
+    // Create pricing snapshot BEFORE changes
+    await db.insert(pricingSnapshots).values({
+      productId: product.id,
+      userId: action.userId,
+      oldPrice: oldPrice.toFixed(2),
+      newPrice: finalPrice.toFixed(2),
+      reason: 'autonomous_pricing',
+      actionId: action.id,
+      snapshotData: {
+        product,
+        calculation,
+        reasoning: action.decisionReason,
+      } as any,
+    });
+
+    console.log(`💵 [Price Change] ${product.name}: $${oldPrice} → $${finalPrice}`);
+
+    // CRITICAL: Two-phase commit for atomicity
+    // Phase 1: Update Shopify (external system, cannot rollback easily)
+    // Phase 2: Update database in transaction (can rollback)
+    // If Phase 1 fails → action fails, nothing changed
+    // If Phase 2 fails → attempt Shopify rollback, mark action failed
+    
+    let shopifyUpdated = false;
+    let shopifyClient: any = null;
+    let store: any = null;
+
+    if (product.shopifyId) {
+      console.log(`🔗 [Price Change] Updating Shopify product ${product.shopifyId} to $${finalPrice}`);
+      
+      // Get user's Shopify credentials
+      const { shopifyStores } = await import('@shared/schema');
+      [store] = await db
+        .select()
+        .from(shopifyStores)
+        .where(eq(shopifyStores.userId, action.userId))
+        .limit(1);
+
+      if (!store || !store.shop || !store.accessToken) {
+        throw new Error(`No Shopify credentials found for user ${action.userId}. Cannot update live store price.`);
+      }
+
+      // Update Shopify FIRST (if this fails, action fails immediately)
+      shopifyClient = await getShopifyClient(store.shop, store.accessToken);
+      await shopifyClient.updateProductPrice(product.shopifyId, finalPrice.toFixed(2));
+      shopifyUpdated = true;
+      console.log(`✅ [Price Change] Shopify updated successfully`);
+    }
+
+    // TRANSACTIONAL SAFETY: Wrap ALL database updates in a single transaction
+    // If any DB operation fails, transaction rolls back atomically
+    try {
+      await db.transaction(async (tx) => {
+        // Update product price
+        await tx
+          .update(products)
+          .set({
+            price: finalPrice.toFixed(2),
+            updatedAt: new Date(),
+          })
+          .where(eq(products.id, product.id));
+
+        // Record price change
+        await tx.insert(priceChanges).values({
+          userId: action.userId,
+          productId: product.id,
+          oldPrice: oldPrice.toFixed(2),
+          newPrice: finalPrice.toFixed(2),
+          changeReason: action.decisionReason || 'Autonomous pricing rule',
+          triggeredBy: 'autonomous',
+          actionId: action.id,
+          appliedAt: new Date(),
+          revenueImpact: calculation.reasoning.join('; '),
+        });
+
+        // Calculate impact metrics
+        const priceDelta = finalPrice - oldPrice;
+        const percentageChange = ((priceDelta / oldPrice) * 100).toFixed(2);
+
+        // Mark action as completed
+        await tx
+          .update(autonomousActions)
+          .set({
+            status: 'completed',
+            completedAt: new Date(),
+            result: {
+              oldPrice: oldPrice.toFixed(2),
+              newPrice: finalPrice.toFixed(2),
+              priceDelta: priceDelta.toFixed(2),
+              percentageChange,
+              reasoning: calculation.reasoning,
+            } as any,
+            actualImpact: {
+              priceChange: priceDelta.toFixed(2),
+              percentageChange,
+            } as any,
+          })
+          .where(eq(autonomousActions.id, action.id));
+
+        console.log(`✅ [Action Processor] Database transaction committed`);
+      });
+
+      // Success - both Shopify and database updated
+      const percentageChange = (((finalPrice - oldPrice) / oldPrice) * 100).toFixed(2);
+      console.log(`✅ [Action Processor] Price updated for product: ${product.name}`);
+      console.log(`   - Old Price: $${oldPrice}`);
+      console.log(`   - New Price: $${finalPrice}`);
+      console.log(`   - Change: ${percentageChange}%`);
+    } catch (dbError) {
+      console.error(`❌ [Price Change] Database transaction failed:`, dbError);
+      
+      // CRITICAL: Shopify was updated but DB transaction failed
+      // Attempt compensating rollback to Shopify with retries
+      let rollbackSucceeded = false;
+      let rollbackAttempts = 0;
+      const maxRollbackAttempts = 3;
+      
+      if (shopifyUpdated && shopifyClient && product.shopifyId) {
+        while (rollbackAttempts < maxRollbackAttempts && !rollbackSucceeded) {
+          rollbackAttempts++;
+          try {
+            console.warn(`⚠️  [Price Change] Attempting Shopify rollback to $${oldPrice} (attempt ${rollbackAttempts}/${maxRollbackAttempts})`);
+            await shopifyClient.updateProductPrice(product.shopifyId, oldPrice.toFixed(2));
+            rollbackSucceeded = true;
+            console.log(`✅ [Price Change] Shopify rollback successful - price reverted to $${oldPrice}`);
+          } catch (rollbackError) {
+            console.error(`❌ [Price Change] Rollback attempt ${rollbackAttempts} failed:`, rollbackError);
+            if (rollbackAttempts < maxRollbackAttempts) {
+              // Wait before retry with exponential backoff
+              const delay = Math.min(1000 * Math.pow(2, rollbackAttempts), 5000);
+              console.log(`   Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+        
+        // If all rollback attempts failed, persist reconciliation need
+        if (!rollbackSucceeded) {
+          console.error(`❌ [Price Change] CRITICAL: All ${maxRollbackAttempts} Shopify rollback attempts failed!`);
+          console.error(`   Shopify has price $${finalPrice} but database has $${oldPrice}`);
+          console.error(`   Creating reconciliation record for product ${product.id}`);
+          
+          // DURABLE RECONCILIATION TRACKING: Persist divergence to action record
+          // This ensures operators can detect and fix the inconsistency
+          let reconciliationPersisted = false;
+          try {
+            await db
+              .update(autonomousActions)
+              .set({
+                status: 'failed',
+                completedAt: new Date(),
+                result: {
+                  error: `Database transaction failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
+                  needsReconciliation: true,
+                  reconciliationDetails: {
+                    shopifyPrice: finalPrice.toFixed(2),
+                    databasePrice: oldPrice.toFixed(2),
+                    shopifyId: product.shopifyId,
+                    productId: product.id,
+                    productName: product.name,
+                    rollbackAttempts: maxRollbackAttempts,
+                    timestamp: new Date().toISOString(),
+                  },
+                } as any,
+              })
+              .where(eq(autonomousActions.id, action.id));
+            
+            reconciliationPersisted = true;
+            console.error(`✅ [Price Change] Reconciliation record persisted in action ${action.id}`);
+          } catch (persistError) {
+            console.error(`❌ [Price Change] Failed to persist reconciliation record:`, persistError);
+            // reconciliationPersisted remains false, outer catch will mark action as failed
+          }
+          
+          // Re-throw with reconciliation status
+          if (reconciliationPersisted) {
+            throw new Error(`RECONCILIATION_PERSISTED: Database transaction failed and Shopify rollback failed after ${maxRollbackAttempts} attempts.`);
+          } else {
+            throw new Error(`RECONCILIATION_FAILED_TO_PERSIST: Could not persist reconciliation record. Shopify has $${finalPrice}, DB has $${oldPrice}.`);
+          }
+        }
+      }
+      
+      // Re-throw error to mark action as failed (rollback succeeded, so no divergence)
+      throw new Error(`Database transaction failed: ${dbError instanceof Error ? dbError.message : String(dbError)}`);
+    }
+  } catch (error) {
+    console.error(`❌ [Action Processor] Error changing price:`, error);
+
+    // CRITICAL: Handle reconciliation scenarios properly
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Case 1: Reconciliation was successfully persisted
+    if (errorMessage.includes('RECONCILIATION_PERSISTED:')) {
+      console.error(`⚠️  [Action Processor] Reconciliation record already persisted, skipping duplicate update`);
+      // The action record was already updated with needsReconciliation=true
+      // Do NOT overwrite it here - the reconciliation details are preserved
+      return;
+    }
+    
+    // Case 2: Reconciliation persistence failed - action still needs to be marked failed
+    if (errorMessage.includes('RECONCILIATION_FAILED_TO_PERSIST:')) {
+      console.error(`❌ [Action Processor] Reconciliation persistence failed - marking action as failed with error details`);
+      // Fall through to mark action as failed with full error message
+      // This ensures the action doesn't stay in 'running' status forever
+    }
+
+    // Mark action as failed (for all non-persisted-reconciliation errors)
+    await db
+      .update(autonomousActions)
+      .set({
+        status: 'failed',
+        completedAt: new Date(),
+        result: {
+          error: errorMessage,
+        } as any,
+      })
+      .where(eq(autonomousActions.id, action.id));
+  }
+}
+
+/**
  * Execute optimize_seo action
  */
 async function executeOptimizeSEO(action: any): Promise<void> {
@@ -548,6 +848,10 @@ export async function processAutonomousAction(action: any): Promise<void> {
 
     case 'send_cart_recovery':
       await executeCartRecovery(action);
+      break;
+
+    case 'price_change':
+      await executePriceChange(action);
       break;
 
     default:

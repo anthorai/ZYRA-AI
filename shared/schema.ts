@@ -31,6 +31,7 @@ export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   shopifyId: text("shopify_id"),
+  sku: text("sku"), // Product SKU for matching with competitors
   name: text("name").notNull(),
   description: text("description"),
   originalDescription: text("original_description"),

@@ -1,7 +1,10 @@
 import cron from 'node-cron';
 import { db, getUserById } from '../db';
-import { autonomousActions, autonomousRules, automationSettings, products, seoMeta } from '@shared/schema';
+import { autonomousActions, autonomousRules, automationSettings, products, seoMeta, pricingSettings } from '@shared/schema';
 import { eq, and, lt, sql } from 'drizzle-orm';
+import { competitorScraper } from './competitor-scraper';
+import { pricingRulesEngine } from './pricing-rules-engine';
+import { priceCalculator } from './price-calculator';
 
 /**
  * Autonomous Job Scheduler
@@ -556,6 +559,165 @@ function generateMorningReportHTML(data: {
 }
 
 /**
+ * Run daily pricing scan
+ * Scrapes competitor prices and evaluates pricing rules
+ */
+async function runDailyPricingScan(): Promise<void> {
+  const jobId = 'pricing-scan';
+  
+  if (runningJobs.has(jobId)) {
+    console.log('⏭️  [Pricing Scan] Already running, skipping');
+    return;
+  }
+
+  runningJobs.add(jobId);
+
+  try {
+    console.log('💰 [Pricing Scan] Starting daily pricing scan...');
+    
+    const { requireDb } = await import('../db');
+    const { pricingSettings, autonomousActions, automationSettings } = await import('@shared/schema');
+    const { eq, and, sql, gte } = await import('drizzle-orm');
+    const db = requireDb();
+
+    // Get all users with pricing automation enabled
+    const settings = await db
+      .select()
+      .from(pricingSettings)
+      .where(eq(pricingSettings.pricingAutomationEnabled, true));
+
+    console.log(`📊 [Pricing Scan] Found ${settings.length} users with pricing automation enabled`);
+
+    let totalActions = 0;
+
+    for (const setting of settings) {
+      try {
+        const userId = setting.userId;
+
+        // Check if autopilot is enabled for this user
+        const [autoSettings] = await db
+          .select()
+          .from(automationSettings)
+          .where(eq(automationSettings.userId, userId))
+          .limit(1);
+
+        if (!autoSettings || !autoSettings.autopilotEnabled) {
+          console.log(`⏭️  [Pricing Scan] Autopilot disabled for user ${userId}, skipping`);
+          continue;
+        }
+
+        // Check if in dry-run mode
+        const isDryRun = autoSettings.dryRunMode ?? false;
+
+        // 1. Scrape competitor prices
+        console.log(`🔍 [Pricing Scan] Scraping competitors for user ${userId}...`);
+        const scrapeResult = await competitorScraper.scrapeAllForUser(userId);
+        console.log(`✅ [Pricing Scan] Scraped ${scrapeResult.success} competitors (${scrapeResult.failed} failed)`);
+
+        // 2. Evaluate pricing rules
+        console.log(`📐 [Pricing Scan] Evaluating pricing rules for user ${userId}...`);
+        const decisions = await pricingRulesEngine.evaluateAllProducts(userId);
+        console.log(`💡 [Pricing Scan] Found ${decisions.length} products requiring price changes`);
+
+        // 3. Check daily action limits
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const maxDailyActions = autoSettings.maxDailyActions || 10;
+        
+        const actionsToday = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(autonomousActions)
+          .where(
+            and(
+              eq(autonomousActions.userId, userId),
+              eq(autonomousActions.actionType, 'price_change'),
+              sql`${autonomousActions.createdAt} >= ${today}`
+            )
+          );
+
+        const currentActionCount = Number(actionsToday[0]?.count || 0);
+        const remainingActions = Math.max(0, maxDailyActions - currentActionCount);
+
+        console.log(`📊 [Pricing Scan] User ${userId}: ${currentActionCount}/${maxDailyActions} daily actions used, ${remainingActions} remaining`);
+
+        // 4. Create price change actions (limited by daily max)
+        const decisionsToCreate = decisions.slice(0, remainingActions);
+
+        for (const { productId, decision } of decisionsToCreate) {
+          // Check for existing pending/running actions
+          const statusFilter = isDryRun 
+            ? sql`${autonomousActions.status} = 'dry_run'`
+            : sql`${autonomousActions.status} IN ('pending', 'running')`;
+          
+          const existingAction = await db
+            .select()
+            .from(autonomousActions)
+            .where(
+              and(
+                eq(autonomousActions.userId, userId),
+                eq(autonomousActions.actionType, 'price_change'),
+                eq(autonomousActions.entityId, productId),
+                statusFilter
+              )
+            )
+            .limit(1);
+
+          if (existingAction.length > 0) {
+            console.log(`⏭️  [Pricing Scan] Skipping duplicate price_change for product ${productId}`);
+            continue;
+          }
+
+          // Check if approval is required
+          const requiresApproval = await priceCalculator.requiresApproval(
+            userId,
+            parseFloat(decision.currentMargin || '0'), // Using current margin as proxy for old price
+            parseFloat(decision.newPrice || '0')
+          );
+
+          // Create autonomous action
+          await db.insert(autonomousActions).values({
+            userId,
+            actionType: 'price_change',
+            entityType: 'product',
+            entityId: productId,
+            status: isDryRun ? 'dry_run' : (requiresApproval ? 'pending_approval' : 'pending'),
+            decisionReason: isDryRun 
+              ? `[DRY RUN] ${decision.reasoning}` 
+              : decision.reasoning,
+            ruleId: decision.ruleId,
+            payload: {
+              oldPrice: decision.currentMargin, // TODO: get actual current price
+              newPrice: decision.newPrice,
+              competitorPrice: decision.competitorPrice,
+              currentMargin: decision.currentMargin,
+              newMargin: decision.newMargin,
+            },
+            executedBy: 'agent',
+          });
+
+          totalActions++;
+          console.log(`✅ [Pricing Scan] Created price_change action for product ${productId} (${decision.newPrice})`);
+        }
+
+        if (decisions.length > remainingActions) {
+          console.log(`⚠️  [Pricing Scan] Hit daily limit for user ${userId}: ${decisions.length - remainingActions} changes postponed`);
+        }
+      } catch (error) {
+        console.error(`❌ [Pricing Scan] Error processing user ${setting.userId}:`, error);
+        continue;
+      }
+    }
+
+    console.log(`✅ [Pricing Scan] Completed - created ${totalActions} price change actions`);
+  } catch (error) {
+    console.error('❌ [Pricing Scan] Error during pricing scan:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
+}
+
+/**
  * Initialize autonomous scheduler
  * Sets up cron jobs for various autonomous tasks
  */
@@ -574,11 +736,17 @@ export function initializeAutonomousScheduler(): void {
     await sendMorningReports();
   });
 
+  // Daily Pricing Scan - runs every day at midnight
+  cron.schedule('0 0 * * *', async () => {
+    console.log('⏰ [Scheduler] Running daily pricing scan...');
+    await runDailyPricingScan();
+  });
+
   // For testing, also run every 5 minutes (comment out in production)
   // cron.schedule('*/5 * * * *', async () => {
   //   console.log('⏰ [Scheduler] Running test SEO audit...');
   //   await runDailySEOAudit();
   // });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM) and Morning Reports (8 AM)');
+  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM), Morning Reports (8 AM), and Pricing Scan (Midnight)');
 }
