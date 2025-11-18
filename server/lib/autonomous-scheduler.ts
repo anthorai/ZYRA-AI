@@ -80,6 +80,27 @@ async function executeRuleActions(
   for (const action of actions) {
     console.log(`🔧 [Autonomous] Executing action: ${action.type} for product ${context.productId}`);
 
+    // CRITICAL FIX: Check for existing pending/running actions BEFORE inserting
+    // Include actionType to allow multi-action rules (e.g., optimize + notify)
+    const existingAction = await db
+      .select()
+      .from(autonomousActions)
+      .where(
+        and(
+          eq(autonomousActions.userId, context.userId),
+          eq(autonomousActions.actionType, action.type),
+          eq(autonomousActions.entityId, context.productId),
+          eq(autonomousActions.ruleId, context.ruleId),
+          sql`${autonomousActions.status} IN ('pending', 'running')`
+        )
+      )
+      .limit(1);
+
+    if (existingAction.length > 0) {
+      console.log(`⏭️  [Autonomous] Skipping duplicate ${action.type} action for product ${context.productId}`);
+      continue; // Skip duplicate
+    }
+
     // Create autonomous action record
     await db.insert(autonomousActions).values({
       userId: context.userId,
@@ -238,23 +259,6 @@ export async function runDailySEOAudit(): Promise<void> {
 
               if (!canRun) {
                 continue;
-              }
-
-              // SAFETY FIX: Check for duplicate pending/running actions (deduplication)
-              const existingAction = await db
-                .select()
-                .from(autonomousActions)
-                .where(
-                  and(
-                    eq(autonomousActions.entityId, product.id),
-                    eq(autonomousActions.ruleId, rule.id),
-                    sql`${autonomousActions.status} IN ('pending', 'running')`
-                  )
-                )
-                .limit(1);
-
-              if (existingAction.length > 0) {
-                continue; // Skip duplicate action
               }
 
               // Evaluate condition

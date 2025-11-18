@@ -51,6 +51,45 @@ Advanced preferences for multi-channel notifications (Email, SMS, In-App, Push) 
 ### Shopify Integration
 Full OAuth 2.0 integration for connecting with Shopify stores, supporting bidirectional product sync and store management. Comprehensive OAuth scopes cover products, inventory, customers, orders, checkouts, marketing events, analytics, reports, and localization. Includes robust security features like state validation, shop domain protection, HMAC verification, and input sanitization. GDPR-compliant webhooks respond instantly (<100ms) with asynchronous data processing.
 
+### Autonomous AI Store Manager (Phase 1 - MVP)
+**Vision**: Transform Zyra AI from manual optimization tools into a fully autonomous AI that monitors stores 24/7, makes optimization decisions automatically, and learns from results.
+
+**Current Implementation** (Phase 1 - Autonomous SEO):
+- **Daily SEO Audit Scheduler**: Runs every day at 2 AM via node-cron, scans all products for users with autopilot enabled, evaluates SEO scores against rules
+- **Rule Engine**: JSON-based rule system evaluates conditions (e.g., SEO score < 70) and triggers optimization actions automatically
+- **Action Processor**: Executes SEO optimizations via AI (GPT-4o-mini), generates optimized SEO titles and meta descriptions, applies changes to products
+- **Product Snapshots**: Creates snapshots before changes for one-click rollback capability
+- **Audit Trail**: All autonomous actions logged in `autonomous_actions` table with reasoning, results, and timestamps
+- **Safety Features**:
+  - `maxDailyActions` enforcement (default: 10/day) prevents runaway automation
+  - Autopilot mode verification before executing actions
+  - Cooldown periods (default: 7 days) prevent over-optimization
+  - Deduplication prevents multiple pending actions for same product
+  - Try/finally concurrency protection in scheduler
+- **UI Controls**:
+  - Autopilot Settings (`/ai-tools/autopilot`): Toggle on/off, modes (Safe/Balanced/Aggressive), safety limits
+  - Activity Timeline (`/ai-tools/activity-timeline`): View all autonomous actions, rollback any change
+  
+**Database Schema**:
+- `autonomous_actions`: Tracks all autonomous actions (type, status, entity, reasoning, result, impact)
+- `autonomous_rules`: Stores optimization rules (JSON conditions, actions, priority, cooldown)
+- `automation_settings`: User preferences (autopilotEnabled, mode, maxDailyActions, maxCatalogChangePercent)
+- `product_snapshots`: Pre-change snapshots for rollback capability
+
+**Known Limitations** (Phase 2 Backlog):
+- Uses `x-user-id` header pattern (matches existing app auth but needs proper auth middleware for production)
+- No Zod validation on automation API route inputs
+- Rollback only restores `products` table, not `seoMeta` (incomplete)
+- No transactional safety across related tables
+- `maxCatalogChangePercent` not yet enforced
+- No dry-run mode implementation
+
+**Future Workflows** (Phase 2+):
+- Autonomous Cart Recovery: Send personalized recovery emails automatically
+- Autonomous Product Fixes: Detect and fix product errors (missing images, broken links)
+- Predictive Intelligence: Learn from results and optimize rules over time
+- Smart Scheduling: Optimize execution timing based on store traffic patterns
+
 ## System Design Choices
 Configured for VM deployment on Replit, with a build process using Vite for frontend and esbuild for backend. The architecture supports persistent schedulers for billing, campaigns, and product syncing. Automated database migrations managed by Drizzle Kit run on server startup, creating all 37 required tables. Performance optimizations include 95+ database indexes for optimal query performance, Redis caching (Upstash) for AI responses and data, and frontend optimizations like code splitting, response compression, and static asset caching.
 
