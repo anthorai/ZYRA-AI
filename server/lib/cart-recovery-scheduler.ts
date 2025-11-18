@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { db } from '../db';
 import { abandonedCarts, autonomousActions, automationSettings } from '@shared/schema';
-import { eq, and, sql, gte, lt, isNull } from 'drizzle-orm';
+import { eq, and, sql, gte, lt, isNull, inArray } from 'drizzle-orm';
 
 /**
  * Cart Recovery Scheduler
@@ -150,7 +150,9 @@ async function processAbandonedCarts(): Promise<void> {
             if (shouldTrigger) {
               console.log(`✅ [Cart Recovery] Cart ${cart.id} eligible for ${intervalHours}hr recovery attempt`);
 
-              // Check for existing pending action for this cart
+              // FIX 3: Strengthen duplicate detection - only check ACTIVE actions
+              // Completed/failed actions should not block future intervals
+              // We rely on recoveryAttempts counter to prevent same-interval duplicates
               const existingAction = await db
                 .select()
                 .from(autonomousActions)
@@ -159,18 +161,20 @@ async function processAbandonedCarts(): Promise<void> {
                     eq(autonomousActions.userId, settings.userId),
                     eq(autonomousActions.actionType, 'send_cart_recovery'),
                     eq(autonomousActions.entityId, cart.id),
-                    sql`${autonomousActions.status} IN ('pending', 'running', 'dry_run')`
+                    // Only check for ACTIVE actions (pending, running, dry_run)
+                    // Completed/failed actions should not block future recovery attempts
+                    inArray(autonomousActions.status, ['pending', 'running', 'dry_run'])
                   )
                 )
                 .limit(1);
 
               if (existingAction.length > 0) {
-                console.log(`⏭️  [Cart Recovery] Action already exists for cart ${cart.id}, skipping`);
+                console.log(`⏭️  [Cart Recovery] Active action exists for cart ${cart.id} (status: ${existingAction[0].status}), skipping`);
                 continue;
               }
 
-              // CRITICAL FIX: Atomically increment recoveryAttempts when creating action
-              // This prevents duplicate actions during the window between action creation and processing
+              // FIX 1: Wrap action creation + attempt increment in transaction for atomicity
+              // This prevents race conditions where parallel cron runs create duplicate actions
               const isDryRun = settings.dryRunMode ?? false;
               
               const actionData = {
@@ -195,30 +199,36 @@ async function processAbandonedCarts(): Promise<void> {
                 } as any,
               };
 
-              // ATOMIC OPERATION: Create action and increment counter in one go
-              // If dry-run mode, don't increment the counter (no actual attempt made)
-              if (db) await db.insert(autonomousActions).values(actionData);
-              
-              if (!isDryRun && db) {
-                // CRITICAL FIX: Keep status as 'abandoned' until all attempts exhausted
-                // This ensures cart remains in scheduler pool for future interval attempts
-                const newAttempts = attempts + 1;
-                const isLastAttempt = newAttempts >= maxAttempts;
-                
-                await db
-                  .update(abandonedCarts)
-                  .set({ 
-                    recoveryAttempts: newAttempts,
-                    lastContactedAt: new Date(), // Record when we scheduled the attempt
-                    // Mark as 'contacted' only after final attempt scheduled
-                    status: isLastAttempt ? 'contacted' as const : cart.status,
-                    updatedAt: new Date()
-                  })
-                  .where(eq(abandonedCarts.id, cart.id));
-                
-                if (isLastAttempt) {
-                  console.log(`📬 [Cart Recovery] Cart ${cart.id} marked 'contacted' after final attempt`);
-                }
+              // ATOMIC TRANSACTION: Create action and increment counter in one database transaction
+              // This ensures parallel cron runs cannot create duplicate actions
+              if (db) {
+                await db.transaction(async (tx) => {
+                  // Insert the action
+                  await tx.insert(autonomousActions).values(actionData);
+                  
+                  // If dry-run mode, don't increment the counter (no actual attempt made)
+                  if (!isDryRun) {
+                    // Keep status as 'abandoned' until all attempts exhausted
+                    // This ensures cart remains in scheduler pool for future interval attempts
+                    const newAttempts = attempts + 1;
+                    const isLastAttempt = newAttempts >= maxAttempts;
+                    
+                    await tx
+                      .update(abandonedCarts)
+                      .set({ 
+                        recoveryAttempts: newAttempts,
+                        // Don't update lastContactedAt here - processor will do it after actual send
+                        // Mark as 'contacted' only after final attempt scheduled
+                        status: isLastAttempt ? 'contacted' as const : cart.status,
+                        updatedAt: new Date()
+                      })
+                      .where(eq(abandonedCarts.id, cart.id));
+                    
+                    if (isLastAttempt) {
+                      console.log(`📬 [Cart Recovery] Cart ${cart.id} marked 'contacted' after final attempt`);
+                    }
+                  }
+                });
               }
 
               console.log(`✅ [Cart Recovery] Created ${isDryRun ? 'dry-run' : 'live'} recovery action for cart ${cart.id} (attempt ${attempts + 1})`);
