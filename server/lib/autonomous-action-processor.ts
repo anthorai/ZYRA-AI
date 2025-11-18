@@ -354,6 +354,25 @@ async function executeCartRecovery(action: any): Promise<void> {
   } catch (error) {
     console.error(`❌ [Action Processor] Error in cart recovery:`, error);
 
+    // CRITICAL FIX: Update cart timestamp even on failure
+    // This ensures we track ALL contact attempts (success or failure)
+    // Prevents retry loops and maintains accurate audit trail
+    const cartId = action.payload?.cartValue ? action.entityId : null;
+    if (cartId && db) {
+      try {
+        await db
+          .update(abandonedCarts)
+          .set({
+            lastContactedAt: new Date(), // Track attempt time regardless of delivery outcome
+            updatedAt: new Date(),
+          })
+          .where(eq(abandonedCarts.id, cartId));
+      } catch (updateError) {
+        console.error(`❌ [Action Processor] Failed to update cart timestamp:`, updateError);
+        // Continue with action failure marking even if cart update fails
+      }
+    }
+
     // Mark action as failed
     await db
       .update(autonomousActions)
