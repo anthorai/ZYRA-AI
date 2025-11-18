@@ -149,6 +149,113 @@ export const productSnapshots = pgTable("product_snapshots", {
   index('product_snapshots_created_at_idx').on(table.createdAt),
 ]);
 
+// Dynamic Pricing System Tables
+export const competitorProducts = pgTable("competitor_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id), // Our product (if mapped)
+  competitorName: text("competitor_name").notNull(), // Competitor store name
+  competitorUrl: text("competitor_url").notNull(), // Product URL on competitor site
+  competitorSku: text("competitor_sku"), // Competitor's SKU
+  productTitle: text("product_title").notNull(), // Product name on competitor site
+  currentPrice: numeric("current_price", { precision: 10, scale: 2 }), // Latest scraped price
+  previousPrice: numeric("previous_price", { precision: 10, scale: 2 }), // Previous price
+  currency: text("currency").default("USD"),
+  inStock: boolean("in_stock").default(true), // Availability
+  lastScrapedAt: timestamp("last_scraped_at"), // When we last checked
+  scrapingEnabled: boolean("scraping_enabled").default(true),
+  matchConfidence: integer("match_confidence"), // 0-100, how confident we are this matches our product
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('competitor_products_user_id_idx').on(table.userId),
+  index('competitor_products_product_id_idx').on(table.productId),
+  index('competitor_products_last_scraped_idx').on(table.lastScrapedAt),
+  index('competitor_products_scraping_enabled_idx').on(table.scrapingEnabled),
+]);
+
+export const pricingRules = pgTable("pricing_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  strategy: text("strategy").notNull(), // 'match' | 'beat_by_percent' | 'beat_by_amount' | 'margin_based' | 'custom'
+  strategyConfig: jsonb("strategy_config").notNull(), // Strategy-specific settings
+  conditions: jsonb("conditions").notNull(), // When to apply this rule
+  priority: integer("priority").default(50), // Higher = runs first
+  enabled: boolean("enabled").default(true),
+  minPrice: numeric("min_price", { precision: 10, scale: 2 }), // Floor price
+  maxPrice: numeric("max_price", { precision: 10, scale: 2 }), // Ceiling price
+  roundingStrategy: text("rounding_strategy").default("nearest_99"), // 'none' | 'nearest_99' | 'nearest_95' | 'nearest_whole'
+  maxDailyChanges: integer("max_daily_changes").default(5), // Per product
+  cooldownHours: integer("cooldown_hours").default(24), // How often to change price
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('pricing_rules_user_id_idx').on(table.userId),
+  index('pricing_rules_enabled_idx').on(table.enabled),
+  index('pricing_rules_priority_idx').on(table.priority),
+]);
+
+export const priceChanges = pgTable("price_changes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  ruleId: varchar("rule_id").references(() => pricingRules.id), // Which rule triggered this
+  actionId: varchar("action_id").references(() => autonomousActions.id), // Related autonomous action
+  oldPrice: numeric("old_price", { precision: 10, scale: 2 }).notNull(),
+  newPrice: numeric("new_price", { precision: 10, scale: 2 }).notNull(),
+  priceChange: numeric("price_change", { precision: 10, scale: 2 }).notNull(), // Amount changed
+  priceChangePercent: numeric("price_change_percent", { precision: 5, scale: 2 }), // Percentage changed
+  reason: text("reason"), // Why price was changed
+  competitorPrice: numeric("competitor_price", { precision: 10, scale: 2 }), // Reference competitor price
+  status: text("status").default("pending"), // 'pending' | 'applied' | 'rolled_back' | 'failed'
+  publishedToShopify: boolean("published_to_shopify").default(false),
+  revenueImpact: jsonb("revenue_impact"), // Before/after revenue metrics
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  appliedAt: timestamp("applied_at"),
+  rolledBackAt: timestamp("rolled_back_at"),
+}, (table) => [
+  index('price_changes_user_id_idx').on(table.userId),
+  index('price_changes_product_id_idx').on(table.productId),
+  index('price_changes_status_idx').on(table.status),
+  index('price_changes_created_at_idx').on(table.createdAt),
+]);
+
+export const pricingSnapshots = pgTable("pricing_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  priceChangeId: varchar("price_change_id").references(() => priceChanges.id), // Which price change created this
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(), // Price before change
+  snapshotData: jsonb("snapshot_data"), // Full pricing state (costs, margins, etc)
+  reason: text("reason"), // 'before_price_change' | 'manual'
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('pricing_snapshots_product_id_idx').on(table.productId),
+  index('pricing_snapshots_price_change_id_idx').on(table.priceChangeId),
+  index('pricing_snapshots_created_at_idx').on(table.createdAt),
+]);
+
+export const pricingSettings = pgTable("pricing_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  pricingAutomationEnabled: boolean("pricing_automation_enabled").default(false),
+  defaultStrategy: text("default_strategy").default("match"), // Default pricing strategy
+  globalMinMargin: numeric("global_min_margin", { precision: 5, scale: 2 }).default("10.00"), // Minimum profit margin %
+  globalMaxDiscount: numeric("global_max_discount", { precision: 5, scale: 2 }).default("30.00"), // Maximum discount %
+  priceUpdateFrequency: text("price_update_frequency").default("daily"), // 'hourly' | 'daily' | 'weekly'
+  requireApproval: boolean("require_approval").default(true), // Require manual approval for price changes
+  approvalThreshold: numeric("approval_threshold", { precision: 5, scale: 2 }).default("10.00"), // Require approval if change > X%
+  competitorScanEnabled: boolean("competitor_scan_enabled").default(true),
+  maxCompetitorsPerProduct: integer("max_competitors_per_product").default(3),
+  notifyOnPriceChanges: boolean("notify_on_price_changes").default(true),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('pricing_settings_user_id_idx').on(table.userId),
+  index('pricing_settings_pricing_automation_enabled_idx').on(table.pricingAutomationEnabled),
+]);
+
 // Cart Recovery System Tables
 export const abandonedCarts = pgTable("abandoned_carts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -527,6 +634,55 @@ export const updateAutomationSettingsSchema = z.object({
 export const insertProductSnapshotSchema = createInsertSchema(productSnapshots).omit({
   id: true,
   createdAt: true,
+});
+
+// Pricing system schemas
+export const insertCompetitorProductSchema = createInsertSchema(competitorProducts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingRuleSchema = createInsertSchema(pricingRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPriceChangeSchema = createInsertSchema(priceChanges).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPricingSnapshotSchema = createInsertSchema(pricingSnapshots).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPricingSettingsSchema = createInsertSchema(pricingSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Update schema for pricing settings with validation
+export const updatePricingSettingsSchema = z.object({
+  pricingAutomationEnabled: z.boolean().optional(),
+  defaultStrategy: z.enum(['match', 'beat_by_percent', 'beat_by_amount', 'margin_based', 'custom']).optional(),
+  globalMinMargin: z.union([z.string(), z.number()]).optional().transform((val) => 
+    typeof val === 'number' ? val.toString() : val
+  ),
+  globalMaxDiscount: z.union([z.string(), z.number()]).optional().transform((val) => 
+    typeof val === 'number' ? val.toString() : val
+  ),
+  priceUpdateFrequency: z.enum(['hourly', 'daily', 'weekly']).optional(),
+  requireApproval: z.boolean().optional(),
+  approvalThreshold: z.union([z.string(), z.number()]).optional().transform((val) => 
+    typeof val === 'number' ? val.toString() : val
+  ),
+  competitorScanEnabled: z.boolean().optional(),
+  maxCompetitorsPerProduct: z.number().int().min(1).max(10).optional(),
+  notifyOnPriceChanges: z.boolean().optional(),
 });
 
 export const insertCampaignSchema = createInsertSchema(campaigns).omit({
