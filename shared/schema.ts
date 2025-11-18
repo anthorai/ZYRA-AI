@@ -13,6 +13,9 @@ export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'processin
 export const paymentMethodTypeEnum = pgEnum('payment_method_type', ['card', 'upi', 'netbanking', 'wallet', 'bank_transfer']);
 export const cartRecoveryStatusEnum = pgEnum('cart_recovery_status', ['abandoned', 'contacted', 'recovered', 'expired']);
 export const recoveryChannelEnum = pgEnum('recovery_channel', ['email', 'sms', 'both']);
+export const marketingTriggerTypeEnum = pgEnum('marketing_trigger_type', ['cart_abandoned', 'inactive_customer', 'purchase_anniversary', 'product_view', 'low_stock', 'price_drop', 'new_arrival', 'custom']);
+export const customerSegmentEnum = pgEnum('customer_segment', ['hot', 'warm', 'cold', 'inactive']);
+export const cartRecoveryStageEnum = pgEnum('cart_recovery_stage', ['initial_reminder', 'first_discount', 'second_discount', 'final_offer']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1364,6 +1367,158 @@ export const notificationAnalytics = pgTable("notification_analytics", {
   index('notification_analytics_category_idx').on(table.category),
 ]);
 
+// ============================================================================
+// AUTONOMOUS MARKETING AUTOMATION TABLES
+// ============================================================================
+
+// Marketing Automation Rules - Define when/how to auto-send campaigns
+export const marketingAutomationRules = pgTable("marketing_automation_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // Nullable for global presets
+  name: text("name").notNull(),
+  triggerType: marketingTriggerTypeEnum("trigger_type").notNull(),
+  conditions: jsonb("conditions").notNull(), // JSON with thresholds, time delays, customer segments
+  campaignTemplateId: varchar("campaign_template_id").references(() => campaignTemplates.id),
+  channels: text("channels").array().notNull(), // ['email', 'sms']
+  cooldownSeconds: integer("cooldown_seconds").default(86400), // 24 hours default
+  maxActionsPerDay: integer("max_actions_per_day").default(10),
+  priority: integer("priority").default(5), // 1-10, higher = more important
+  enabled: boolean("enabled").default(true),
+  metadata: jsonb("metadata"), // Additional config like discount codes, template variables
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('marketing_rules_user_id_idx').on(table.userId),
+  index('marketing_rules_enabled_idx').on(table.enabled),
+  index('marketing_rules_trigger_idx').on(table.triggerType),
+  index('marketing_rules_user_enabled_trigger_idx').on(table.userId, table.enabled, table.triggerType),
+]);
+
+// Campaign A/B Tests - Track test variants and performance
+export const campaignAbTests = pgTable("campaign_ab_tests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  controlCampaignId: varchar("control_campaign_id").references(() => campaigns.id).notNull(),
+  variantAId: varchar("variant_a_id").references(() => campaigns.id).notNull(),
+  variantBId: varchar("variant_b_id").references(() => campaigns.id).notNull(),
+  splitPercentage: jsonb("split_percentage").default(sql`'{"control": 33, "variantA": 33, "variantB": 34}'`), // Supports >2 variants in future
+  sampleSize: integer("sample_size").notNull(),
+  startedAt: timestamp("started_at").default(sql`NOW()`),
+  endedAt: timestamp("ended_at"),
+  winnerId: varchar("winner_id").references(() => campaigns.id),
+  winnerSelectedAt: timestamp("winner_selected_at"),
+  decisionMethod: text("decision_method").default("open_rate"), // 'open_rate' | 'click_rate' | 'conversion_rate'
+  statisticalSignificance: boolean("statistical_significance").default(false),
+  metadata: jsonb("metadata"), // Test results, confidence intervals, etc.
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('campaign_ab_tests_user_id_idx').on(table.userId),
+  index('campaign_ab_tests_control_campaign_idx').on(table.controlCampaignId),
+  index('campaign_ab_tests_started_at_idx').on(table.startedAt),
+]);
+
+// Customer Engagement Scores - Track engagement levels for segmentation
+export const customerEngagementScores = pgTable("customer_engagement_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  customerEmail: text("customer_email").notNull(),
+  engagementScore: integer("engagement_score").notNull().default(50), // 0-100
+  segment: customerSegmentEnum("segment").default("warm"),
+  openCount: integer("open_count").default(0),
+  clickCount: integer("click_count").default(0),
+  purchaseCount: integer("purchase_count").default(0),
+  lifetimeValue: numeric("lifetime_value", { precision: 10, scale: 2 }).default("0"),
+  lastOpenDate: timestamp("last_open_date"),
+  lastClickDate: timestamp("last_click_date"),
+  lastPurchaseDate: timestamp("last_purchase_date"),
+  lastActivityDate: timestamp("last_activity_date"),
+  recalculatedAt: timestamp("recalculated_at").default(sql`NOW()`),
+  metadata: jsonb("metadata"), // Trend deltas, behavioral insights
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('engagement_scores_user_id_idx').on(table.userId),
+  index('engagement_scores_segment_idx').on(table.segment),
+  index('engagement_scores_score_idx').on(table.engagementScore),
+  uniqueIndex('engagement_scores_user_customer_unique').on(table.userId, table.customerEmail),
+]);
+
+// Send Time Optimization - Optimal send times per segment/customer
+export const sendTimeOptimization = pgTable("send_time_optimization", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  segmentSlug: text("segment_slug"), // e.g., 'hot_customers', 'weekend_browsers'
+  customerEmail: text("customer_email"), // For individual-level optimization
+  preferredDayOfWeek: integer("preferred_day_of_week"), // 0-6 (Sunday-Saturday)
+  preferredHour: integer("preferred_hour"), // 0-23
+  sampleSize: integer("sample_size").notNull().default(0),
+  avgOpenRate: numeric("avg_open_rate", { precision: 5, scale: 2 }).default("0"), // Percentage
+  confidenceLevel: numeric("confidence_level", { precision: 5, scale: 2 }).default("0"), // 0-100
+  lastEvaluatedAt: timestamp("last_evaluated_at").default(sql`NOW()`),
+  metadata: jsonb("metadata"), // Hourly/daily performance breakdown
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('send_time_user_id_idx').on(table.userId),
+  index('send_time_segment_idx').on(table.segmentSlug),
+  index('send_time_customer_idx').on(table.customerEmail),
+  uniqueIndex('send_time_user_segment_unique').on(table.userId, table.segmentSlug).where(sql`${table.segmentSlug} IS NOT NULL`),
+  uniqueIndex('send_time_user_customer_unique').on(table.userId, table.customerEmail).where(sql`${table.customerEmail} IS NOT NULL`),
+]);
+
+// Campaign Performance Metrics - Track campaign results and ROI
+export const campaignPerformanceMetrics = pgTable("campaign_performance_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  campaignId: varchar("campaign_id").references(() => campaigns.id).notNull(),
+  ruleId: varchar("rule_id").references(() => marketingAutomationRules.id),
+  sentCount: integer("sent_count").default(0),
+  deliveredCount: integer("delivered_count").default(0),
+  openedCount: integer("opened_count").default(0),
+  clickedCount: integer("clicked_count").default(0),
+  convertedCount: integer("converted_count").default(0),
+  bounceCount: integer("bounce_count").default(0),
+  unsubscribeCount: integer("unsubscribe_count").default(0),
+  revenue: numeric("revenue", { precision: 10, scale: 2 }).default("0"),
+  cost: numeric("cost", { precision: 10, scale: 2 }).default("0"),
+  roi: numeric("roi", { precision: 10, scale: 2 }).default("0"), // (revenue - cost) / cost * 100
+  openRate: numeric("open_rate", { precision: 5, scale: 2 }).default("0"),
+  clickRate: numeric("click_rate", { precision: 5, scale: 2 }).default("0"),
+  conversionRate: numeric("conversion_rate", { precision: 5, scale: 2 }).default("0"),
+  lastUpdatedAt: timestamp("last_updated_at").default(sql`NOW()`),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('campaign_metrics_user_id_idx').on(table.userId),
+  index('campaign_metrics_campaign_id_idx').on(table.campaignId),
+  index('campaign_metrics_rule_id_idx').on(table.ruleId),
+  uniqueIndex('campaign_metrics_campaign_unique').on(table.campaignId),
+]);
+
+// Cart Recovery Sequences - Progressive escalation for abandoned carts
+export const cartRecoverySequences = pgTable("cart_recovery_sequences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  ruleId: varchar("rule_id").references(() => marketingAutomationRules.id),
+  abandonedCartId: varchar("abandoned_cart_id").references(() => abandonedCarts.id).notNull(),
+  stage: cartRecoveryStageEnum("stage").notNull(),
+  delayHours: integer("delay_hours").notNull(), // e.g., 1, 6, 24, 72
+  offerType: text("offer_type"), // 'none' | 'percentage' | 'fixed_amount' | 'free_shipping'
+  offerValue: numeric("offer_value", { precision: 10, scale: 2 }),
+  status: text("status").notNull().default("pending"), // 'pending' | 'sent' | 'converted' | 'expired'
+  sentAt: timestamp("sent_at"),
+  convertedAt: timestamp("converted_at"),
+  lastTriggeredAt: timestamp("last_triggered_at"),
+  metadata: jsonb("metadata"), // Campaign details, tracking info
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('cart_sequences_user_id_idx').on(table.userId),
+  index('cart_sequences_cart_id_idx').on(table.abandonedCartId),
+  index('cart_sequences_status_idx').on(table.status),
+  index('cart_sequences_stage_idx').on(table.stage),
+]);
+
 // Insert schemas for advanced notification preferences
 export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
   id: true,
@@ -1386,6 +1541,41 @@ export const insertNotificationChannelSchema = createInsertSchema(notificationCh
 export const insertNotificationAnalyticsSchema = createInsertSchema(notificationAnalytics).omit({
   id: true,
   createdAt: true,
+});
+
+// Insert schemas for autonomous marketing automation
+export const insertMarketingAutomationRuleSchema = createInsertSchema(marketingAutomationRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCampaignAbTestSchema = createInsertSchema(campaignAbTests).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCustomerEngagementScoreSchema = createInsertSchema(customerEngagementScores).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSendTimeOptimizationSchema = createInsertSchema(sendTimeOptimization).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCampaignPerformanceMetricsSchema = createInsertSchema(campaignPerformanceMetrics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCartRecoverySequenceSchema = createInsertSchema(cartRecoverySequences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Types for advanced notification preferences
@@ -1423,3 +1613,15 @@ export type LearningPattern = typeof learningPatterns.$inferSelect;
 export type InsertLearningPattern = z.infer<typeof insertLearningPatternSchema>;
 export type ContentQualityScore = typeof contentQualityScores.$inferSelect;
 export type InsertContentQualityScore = z.infer<typeof insertContentQualityScoreSchema>;
+
+// Autonomous Marketing Automation Types
+export type MarketingAutomationRule = typeof marketingAutomationRules.$inferSelect;
+export type InsertMarketingAutomationRule = z.infer<typeof insertMarketingAutomationRuleSchema>;
+export type CampaignAbTest = typeof campaignAbTests.$inferSelect;
+export type InsertCampaignAbTest = z.infer<typeof insertCampaignAbTestSchema>;
+export type CustomerEngagementScore = typeof customerEngagementScores.$inferSelect;
+export type InsertCustomerEngagementScore = z.infer<typeof insertCustomerEngagementScoreSchema>;
+export type SendTimeOptimization = typeof sendTimeOptimization.$inferSelect;
+export type InsertSendTimeOptimization = z.infer<typeof insertSendTimeOptimizationSchema>;
+export type CartRecoverySequence = typeof cartRecoverySequences.$inferSelect;
+export type InsertCartRecoverySequence = z.infer<typeof insertCartRecoverySequenceSchema>;

@@ -823,6 +823,178 @@ async function runDailyPricingScan(): Promise<void> {
 }
 
 /**
+ * Run hourly marketing campaign scan
+ * Evaluates customers for marketing automation triggers
+ */
+async function runMarketingCampaignScan(): Promise<void> {
+  const jobId = 'marketing-scan';
+
+  if (runningJobs.has(jobId)) {
+    console.log('⏭️  [Marketing Scan] Already running, skipping');
+    return;
+  }
+
+  runningJobs.add(jobId);
+
+  try {
+    console.log('📧 [Marketing Scan] Starting marketing campaign scan...');
+
+    const { requireDb } = await import('../db');
+    const { marketingAutomationRules, automationSettings, autonomousActions, abandonedCarts } = await import('@shared/schema');
+    const { marketingRulesEngine } = await import('./marketing-rules-engine');
+    const { eq, and, sql } = await import('drizzle-orm');
+    const db = requireDb();
+
+    // Get all users with autopilot enabled
+    const settings = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.autopilotEnabled, true));
+
+    console.log(`📊 [Marketing Scan] Found ${settings.length} users with autopilot enabled`);
+
+    let totalCampaigns = 0;
+
+    for (const setting of settings) {
+      try {
+        const userId = setting.userId;
+
+        // Check if marketing actions are enabled
+        const enabledActions = setting.enabledActionTypes as string[];
+        if (!enabledActions?.includes('send_marketing_campaign')) {
+          console.log(`⏭️  [Marketing Scan] Marketing campaigns disabled for user ${userId}`);
+          continue;
+        }
+
+        // Check if in dry-run mode
+        const isDryRun = setting.dryRunMode ?? false;
+
+        // Get all active marketing automation rules for this user
+        const rules = await db
+          .select()
+          .from(marketingAutomationRules)
+          .where(and(
+            eq(marketingAutomationRules.userId, userId),
+            eq(marketingAutomationRules.enabled, true)
+          ));
+
+        if (rules.length === 0) {
+          console.log(`⏭️  [Marketing Scan] No active marketing rules for user ${userId}`);
+          continue;
+        }
+
+        console.log(`📐 [Marketing Scan] Evaluating marketing rules for user ${userId} (${rules.length} active rules)...`);
+
+        // Evaluate all customers for this user
+        const decisions = await marketingRulesEngine.evaluateAllCustomers(userId);
+        console.log(`💡 [Marketing Scan] Found ${decisions.length} customers requiring campaigns`);
+
+        if (decisions.length === 0) {
+          continue;
+        }
+
+        // Check daily action limits
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const maxDailyActions = setting.maxDailyActions || 10;
+
+        const actionsToday = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(autonomousActions)
+          .where(and(
+            eq(autonomousActions.userId, userId),
+            eq(autonomousActions.actionType, 'send_marketing_campaign'),
+            sql`${autonomousActions.createdAt} >= ${today}`
+          ));
+
+        const actionCount = Number(actionsToday[0]?.count || 0);
+        const remainingActions = Math.max(0, maxDailyActions - actionCount);
+
+        if (remainingActions === 0) {
+          console.log(`⚠️  [Marketing Scan] Daily action limit reached for user ${userId} (${actionCount}/${maxDailyActions})`);
+          continue;
+        }
+
+        console.log(`📊 [Marketing Scan] User ${userId} can create ${remainingActions} more marketing actions today`);
+
+        // Create campaign actions (respect daily limit)
+        let created = 0;
+        let skippedInvalid = 0;
+        for (const { customerEmail, decision } of decisions.slice(0, remainingActions)) {
+          try {
+            // Validate decision has all required metadata
+            if (!decision.shouldSendCampaign || !decision.ruleId) {
+              continue;
+            }
+
+            if (!customerEmail || !Array.isArray(decision.channels) || decision.channels.length === 0) {
+              console.warn(`⚠️  [Marketing Scan] Skipping invalid decision for ${customerEmail || 'unknown'} - missing customerEmail or channels (${JSON.stringify(decision.channels)})`);
+              skippedInvalid++;
+              continue;
+            }
+
+            // Create autonomous action for this campaign
+            await db.insert(autonomousActions).values({
+              userId,
+              actionType: 'send_marketing_campaign',
+              entityType: 'customer',
+              entityId: customerEmail,
+              status: isDryRun ? 'dry_run' : 'pending',
+              decisionReason: decision.reason,
+              ruleId: decision.ruleId,
+              payload: {
+                ruleId: decision.ruleId,
+                customerEmail,
+                channels: decision.channels,
+                campaignTemplateId: decision.campaignTemplateId || null,
+                triggerType: decision.metadata?.triggerType || 'unknown',
+                cartId: decision.metadata?.context?.cartId || null,
+              },
+              estimatedImpact: {
+                expectedAction: 'send_campaign',
+                channels: decision.channels,
+                templateId: decision.campaignTemplateId,
+              },
+              dryRun: isDryRun,
+            });
+
+            created++;
+            totalCampaigns++;
+            console.log(`✅ [Marketing Scan] Created campaign action for ${customerEmail} (rule: ${decision.ruleId}${isDryRun ? ' - DRY RUN' : ''})`);
+          } catch (error) {
+            console.error(`❌ [Marketing Scan] Error creating action for ${customerEmail}:`, error);
+          }
+        }
+
+        if (skippedInvalid > 0) {
+          console.warn(`⚠️  [Marketing Scan] Skipped ${skippedInvalid} invalid decisions (missing required metadata)`);
+        }
+
+        if (created > 0) {
+          console.log(`✅ [Marketing Scan] Created ${created} marketing campaign actions for user ${userId}${isDryRun ? ' (DRY RUN)' : ''}`);
+        }
+
+        // Log if we hit limits
+        if (decisions.length > remainingActions) {
+          const skipped = decisions.length - remainingActions;
+          console.log(`⚠️  [Marketing Scan] Skipped ${skipped} campaigns due to daily limit for user ${userId}`);
+        }
+      } catch (error) {
+        console.error(`❌ [Marketing Scan] Error processing user ${setting.userId}:`, error);
+        continue;
+      }
+    }
+
+    console.log(`✅ [Marketing Scan] Completed - created ${totalCampaigns} marketing campaign actions`);
+  } catch (error) {
+    console.error('❌ [Marketing Scan] Error during marketing scan:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
+}
+
+/**
  * Initialize autonomous scheduler
  * Sets up cron jobs for various autonomous tasks
  */
@@ -847,11 +1019,17 @@ export function initializeAutonomousScheduler(): void {
     await runDailyPricingScan();
   });
 
+  // Hourly Marketing Campaign Scan - runs every hour at :15
+  cron.schedule('15 * * * *', async () => {
+    console.log('⏰ [Scheduler] Running marketing campaign scan...');
+    await runMarketingCampaignScan();
+  });
+
   // For testing, also run every 5 minutes (comment out in production)
   // cron.schedule('*/5 * * * *', async () => {
   //   console.log('⏰ [Scheduler] Running test SEO audit...');
   //   await runDailySEOAudit();
   // });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM), Morning Reports (8 AM), and Pricing Scan (Midnight)');
+  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), and Marketing Campaigns (Hourly at :15)');
 }
