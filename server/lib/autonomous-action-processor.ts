@@ -121,23 +121,26 @@ async function executeOptimizeSEO(action: any): Promise<void> {
 
     const product = productResult[0];
 
-    // Create snapshot before changes
-    await db.insert(productSnapshots).values({
-      productId: product.id,
-      actionId: action.id,
-      snapshotData: product as any,
-      reason: 'before_optimization',
-    });
-
-    // Generate SEO content
-    const seoContent = await generateSEOContent(product);
-
-    // Update or create SEO meta
+    // Get existing SEO meta before changes
     const existingSeoMeta = await db
       .select()
       .from(seoMeta)
       .where(eq(seoMeta.productId, product.id))
       .limit(1);
+
+    // Create snapshot before changes (includes both product and seoMeta)
+    await db.insert(productSnapshots).values({
+      productId: product.id,
+      actionId: action.id,
+      snapshotData: {
+        product: product,
+        seoMeta: existingSeoMeta[0] || null,
+      } as any,
+      reason: 'before_optimization',
+    });
+
+    // Generate SEO content
+    const seoContent = await generateSEOContent(product);
 
     if (existingSeoMeta.length > 0) {
       // Update existing

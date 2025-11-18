@@ -232,6 +232,25 @@ export async function runDailySEOAudit(): Promise<void> {
           continue;
         }
 
+        // SAFETY: Enforce maxCatalogChangePercent limit
+        const totalProducts = userProducts.length;
+        const maxCatalogChangePercent = settings.maxCatalogChangePercent ?? 5;
+        // Ensure at least 1 product can be changed when autopilot is enabled
+        const maxCatalogChanges = Math.max(1, Math.ceil(totalProducts * (maxCatalogChangePercent / 100)));
+        
+        // Get unique products changed today
+        const uniqueProductsChanged = new Set(
+          todaysActions.map(action => action.entityId)
+        );
+        
+        const catalogChangesRemaining = maxCatalogChanges - uniqueProductsChanged.size;
+        
+        if (catalogChangesRemaining <= 0) {
+          console.log(`⏸️  [SEO Audit] User ${settings.userId} has reached catalog change limit: ${uniqueProductsChanged.size}/${maxCatalogChanges} products (${maxCatalogChangePercent}%)`);
+          continue;
+        }
+
+        console.log(`📊 [SEO Audit] User ${settings.userId} can change ${catalogChangesRemaining} more products today (${maxCatalogChangePercent}% limit)`);
         console.log(`📊 [SEO Audit] User ${settings.userId} can create ${actionsRemaining} more actions today`);
 
         let actionsCreated = 0;
@@ -243,6 +262,13 @@ export async function runDailySEOAudit(): Promise<void> {
             console.log(`⏸️  [SEO Audit] Reached daily action limit for user ${settings.userId}`);
             break;
           }
+          
+          // Check if we've hit the catalog change limit mid-loop
+          if (uniqueProductsChanged.size >= maxCatalogChanges) {
+            console.log(`⏸️  [SEO Audit] Reached catalog change limit for user ${settings.userId}: ${uniqueProductsChanged.size}/${maxCatalogChanges} products`);
+            break;
+          }
+          
           for (const rule of allRules) {
             try {
               const ruleJson = rule.ruleJson as Rule;
@@ -278,6 +304,7 @@ export async function runDailySEOAudit(): Promise<void> {
                 });
 
                 actionsCreated++;
+                uniqueProductsChanged.add(product.id); // Track catalog changes
               }
             } catch (error) {
               console.error(`❌ [SEO Audit] Error evaluating rule ${rule.id}:`, error);

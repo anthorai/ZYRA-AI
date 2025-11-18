@@ -485,6 +485,17 @@ export const insertAutomationSettingsSchema = createInsertSchema(automationSetti
   updatedAt: true,
 });
 
+// Update schema for automation settings with validation
+export const updateAutomationSettingsSchema = z.object({
+  autopilotEnabled: z.boolean().optional(),
+  autopilotMode: z.enum(['safe', 'balanced', 'aggressive']).optional(),
+  autoPublishEnabled: z.boolean().optional(),
+  maxDailyActions: z.number().int().min(1).max(100).optional(),
+  maxCatalogChangePercent: z.number().int().min(1).max(100).optional(),
+  enabledActionTypes: z.array(z.string()).optional(),
+  notificationPreferences: z.record(z.boolean()).optional(),
+});
+
 export const insertProductSnapshotSchema = createInsertSchema(productSnapshots).omit({
   id: true,
   createdAt: true,

@@ -8156,13 +8156,9 @@ Output format: Markdown with clear section headings.`;
   // ===== AUTOMATION SETTINGS =====
   
   // Get user's automation settings
-  app.get("/api/automation/settings", async (req, res) => {
+  app.get("/api/automation/settings", requireAuth, async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = (req as AuthenticatedRequest).user.id;
 
       const { automationSettings } = await import('@shared/schema');
       
@@ -8195,21 +8191,27 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Update user's automation settings
-  app.put("/api/automation/settings", async (req, res) => {
+  app.put("/api/automation/settings", requireAuth, async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = (req as AuthenticatedRequest).user.id;
 
-      const { automationSettings } = await import('@shared/schema');
+      const { automationSettings, updateAutomationSettingsSchema } = await import('@shared/schema');
       
-      const updates = req.body;
+      // Validate request body
+      const validated = updateAutomationSettingsSchema.safeParse(req.body);
+      if (!validated.success) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: validated.error.errors 
+        });
+      }
 
       await db
         .update(automationSettings)
-        .set(updates)
+        .set({
+          ...validated.data,
+          updatedAt: new Date(),
+        })
         .where(eq(automationSettings.userId, userId));
 
       const updated = await db
@@ -8226,13 +8228,9 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Get autonomous actions (activity timeline)
-  app.get("/api/autonomous-actions", async (req, res) => {
+  app.get("/api/autonomous-actions", requireAuth, async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = (req as AuthenticatedRequest).user.id;
 
       const { autonomousActions } = await import('@shared/schema');
       
@@ -8255,13 +8253,9 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Rollback an autonomous action
-  app.post("/api/autonomous-actions/:id/rollback", async (req, res) => {
+  app.post("/api/autonomous-actions/:id/rollback", requireAuth, async (req, res) => {
     try {
-      const userId = req.headers['x-user-id'] as string;
-      
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+      const userId = (req as AuthenticatedRequest).user.id;
 
       const { autonomousActions, productSnapshots, products: productsTable } = await import('@shared/schema');
       
@@ -8295,23 +8289,57 @@ Output format: Markdown with clear section headings.`;
         return res.status(400).json({ error: "No snapshot found for rollback" });
       }
 
-      // Restore the product data
+      const { seoMeta: seoMetaTable } = await import('@shared/schema');
+
+      // Restore both product and seoMeta data from snapshot
       const snapshotData = snapshot[0].snapshotData as any;
       
-      await db
-        .update(productsTable)
-        .set({
-          name: snapshotData.name,
-          description: snapshotData.description,
-          // Restore other fields as needed
-        })
-        .where(eq(productsTable.id, action[0].entityId as string));
+      // Restore product data (if any fields were changed)
+      if (snapshotData.product) {
+        await db
+          .update(productsTable)
+          .set({
+            name: snapshotData.product.name,
+            description: snapshotData.product.description,
+          })
+          .where(eq(productsTable.id, action[0].entityId as string));
+      }
+
+      // Restore seoMeta data
+      if (snapshotData.seoMeta) {
+        const existingSeo = await db
+          .select()
+          .from(seoMetaTable)
+          .where(eq(seoMetaTable.productId, action[0].entityId as string))
+          .limit(1);
+
+        if (existingSeo.length > 0) {
+          // Update existing
+          await db
+            .update(seoMetaTable)
+            .set({
+              seoTitle: snapshotData.seoMeta.seoTitle,
+              metaDescription: snapshotData.seoMeta.metaDescription,
+              seoScore: snapshotData.seoMeta.seoScore,
+            })
+            .where(eq(seoMetaTable.productId, action[0].entityId as string));
+        } else if (snapshotData.seoMeta.seoTitle) {
+          // Recreate if it existed before
+          await db.insert(seoMetaTable).values({
+            productId: action[0].entityId as string,
+            seoTitle: snapshotData.seoMeta.seoTitle,
+            metaDescription: snapshotData.seoMeta.metaDescription,
+            seoScore: snapshotData.seoMeta.seoScore,
+          });
+        }
+      }
 
       // Mark action as rolled back
       await db
         .update(autonomousActions)
         .set({
           status: 'rolled_back' as any,
+          rolledBackAt: new Date(),
           result: {
             ...action[0].result,
             rolledBack: true,

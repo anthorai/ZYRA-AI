@@ -13,7 +13,7 @@ import {
   Sparkles,
   AlertCircle
 } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -41,15 +41,9 @@ export default function ActivityTimeline() {
   // Rollback mutation
   const rollback = useMutation({
     mutationFn: async (actionId: string) => {
-      const response = await fetch(`/api/autonomous-actions/${actionId}/rollback`, {
+      return await apiRequest(`/api/autonomous-actions/${actionId}/rollback`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': '1', // TODO: Get from auth context
-        },
       });
-      if (!response.ok) throw new Error('Failed to rollback');
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/autonomous-actions'] });
