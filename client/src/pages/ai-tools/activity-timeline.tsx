@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Activity, 
   Clock, 
@@ -17,6 +19,7 @@ import {
   MessageSquare,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Target,
   Zap
 } from "lucide-react";
@@ -55,6 +58,7 @@ interface AutopilotStats {
 
 export default function ActivityTimeline() {
   const { toast } = useToast();
+  const [actionFilter, setActionFilter] = useState<string>("all");
 
   // Fetch autopilot statistics
   const { data: stats, isLoading: statsLoading } = useQuery<AutopilotStats>({
@@ -138,6 +142,8 @@ export default function ActivityTimeline() {
         if (channel === 'both') return 'Cart Recovery (Email + SMS)';
         if (channel === 'sms') return 'Cart Recovery (SMS)';
         return 'Cart Recovery (Email)';
+      case 'price_change':
+        return 'Dynamic Pricing Adjustment';
       default:
         return action.actionType;
     }
@@ -147,8 +153,17 @@ export default function ActivityTimeline() {
     if (action.actionType === 'send_cart_recovery') {
       return <ShoppingCart className="w-4 h-4 text-primary" />;
     }
+    if (action.actionType === 'price_change') {
+      return <DollarSign className="w-4 h-4 text-primary" />;
+    }
     return <Sparkles className="w-4 h-4 text-primary" />;
   };
+
+  // Filter actions based on selected filter
+  const filteredActions = actions?.filter(action => {
+    if (actionFilter === "all") return true;
+    return action.actionType === actionFilter;
+  }) || [];
 
   if (isLoading) {
     return (
@@ -292,7 +307,63 @@ export default function ActivityTimeline() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {actions.map((action) => (
+          {/* Action Type Filter */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Filter by Action Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={actionFilter} onValueChange={setActionFilter} data-testid="tabs-action-filter">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="all" data-testid="tab-all">
+                    All
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {actions.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="optimize_seo" data-testid="tab-seo">
+                    SEO
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {actions.filter(a => a.actionType === 'optimize_seo').length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="price_change" data-testid="tab-pricing">
+                    Pricing
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {actions.filter(a => a.actionType === 'price_change').length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="send_cart_recovery" data-testid="tab-cart">
+                    Cart Recovery
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {actions.filter(a => a.actionType === 'send_cart_recovery').length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="fix_product" data-testid="tab-fixes">
+                    Fixes
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {actions.filter(a => a.actionType === 'fix_product').length}
+                    </Badge>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Filtered Actions List */}
+          {filteredActions.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Activity className="w-12 h-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No {actionFilter === "all" ? "" : actionFilter.replace('_', ' ')} actions yet</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  This type of action hasn't been performed yet.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {filteredActions.map((action) => (
             <Card key={action.id} data-testid={`card-action-${action.id}`}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
@@ -431,6 +502,95 @@ export default function ActivityTimeline() {
                     </div>
                   )}
 
+                  {/* Price Change Details */}
+                  {action.actionType === 'price_change' && action.payload && (
+                    <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-md">
+                      {action.payload.productName && (
+                        <div className="col-span-2">
+                          <div className="text-xs text-muted-foreground mb-1">Product</div>
+                          <div className="text-sm font-medium">
+                            {action.payload.productName}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.oldPrice != null && !isNaN(parseFloat(action.payload.oldPrice)) && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Previous Price</div>
+                          <div className="text-sm font-medium">
+                            ${parseFloat(action.payload.oldPrice).toFixed(2)}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.newPrice != null && !isNaN(parseFloat(action.payload.newPrice)) && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">New Price</div>
+                          <div className="text-sm font-medium flex items-center gap-1">
+                            ${parseFloat(action.payload.newPrice).toFixed(2)}
+                            {action.payload.oldPrice != null && 
+                             action.payload.newPrice != null && 
+                             !isNaN(parseFloat(action.payload.oldPrice)) && 
+                             !isNaN(parseFloat(action.payload.newPrice)) && (() => {
+                              const oldPrice = parseFloat(action.payload.oldPrice);
+                              const newPrice = parseFloat(action.payload.newPrice);
+                              if (oldPrice === 0) return null; // Prevent division by zero
+                              const change = ((newPrice - oldPrice) / oldPrice * 100).toFixed(1);
+                              const isIncrease = newPrice > oldPrice;
+                              return (
+                                <span className={`text-xs flex items-center gap-0.5 ${isIncrease ? 'text-red-500' : 'text-green-500'}`}>
+                                  {isIncrease ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                  {isIncrease ? '+' : ''}{change}%
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.competitorPrice != null && !isNaN(parseFloat(action.payload.competitorPrice)) && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Competitor Price</div>
+                          <div className="text-sm font-medium">
+                            ${parseFloat(action.payload.competitorPrice).toFixed(2)}
+                          </div>
+                        </div>
+                      )}
+                      {action.payload.strategy && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Strategy</div>
+                          <div className="text-sm font-medium capitalize">
+                            {action.payload.strategy.replace(/_/g, ' ')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Price Change Revenue Impact */}
+                  {action.actionType === 'price_change' && 
+                   action.result?.revenueImpact && 
+                   action.status === 'completed' &&
+                   (action.result.revenueImpact.estimatedMonthlyImpact != null || 
+                    action.result.revenueImpact.marginChange != null) && (
+                    <div>
+                      <div className="text-sm font-medium mb-1">Revenue Impact Estimate</div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {action.result.revenueImpact.estimatedMonthlyImpact != null && 
+                         !isNaN(parseFloat(action.result.revenueImpact.estimatedMonthlyImpact)) && (
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-3 h-3" />
+                            Estimated Monthly Impact: ${parseFloat(action.result.revenueImpact.estimatedMonthlyImpact).toFixed(2)}
+                          </div>
+                        )}
+                        {action.result.revenueImpact.marginChange != null && 
+                         !isNaN(parseFloat(action.result.revenueImpact.marginChange)) && (
+                          <div className="flex items-center gap-2">
+                            <Target className="w-3 h-3" />
+                            Margin Change: {parseFloat(action.result.revenueImpact.marginChange).toFixed(1)}%
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Error */}
                   {action.result?.error && action.status === 'failed' && (
                     <Alert variant="destructive">
@@ -443,6 +603,8 @@ export default function ActivityTimeline() {
               </CardContent>
             </Card>
           ))}
+            </>
+          )}
         </div>
       )}
     </div>
