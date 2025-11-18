@@ -1394,8 +1394,8 @@ export const marketingAutomationRules = pgTable("marketing_automation_rules", {
   index('marketing_rules_user_enabled_trigger_idx').on(table.userId, table.enabled, table.triggerType),
 ]);
 
-// Campaign A/B Tests - Track test variants and performance
-export const campaignAbTests = pgTable("campaign_ab_tests", {
+// A/B Test Results - Track test variants and performance
+export const abTestResults = pgTable("ab_test_results", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   name: text("name").notNull(),
@@ -1418,8 +1418,8 @@ export const campaignAbTests = pgTable("campaign_ab_tests", {
   index('campaign_ab_tests_started_at_idx').on(table.startedAt),
 ]);
 
-// Customer Engagement Scores - Track engagement levels for segmentation
-export const customerEngagementScores = pgTable("customer_engagement_scores", {
+// Customer Engagement History - Track engagement levels for segmentation
+export const customerEngagementHistory = pgTable("customer_engagement_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   customerEmail: text("customer_email").notNull(),
@@ -1444,8 +1444,8 @@ export const customerEngagementScores = pgTable("customer_engagement_scores", {
   uniqueIndex('engagement_scores_user_customer_unique').on(table.userId, table.customerEmail),
 ]);
 
-// Send Time Optimization - Optimal send times per segment/customer
-export const sendTimeOptimization = pgTable("send_time_optimization", {
+// Send Time Preferences - Optimal send times per segment/customer
+export const sendTimePreferences = pgTable("send_time_preferences", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   segmentSlug: text("segment_slug"), // e.g., 'hot_customers', 'weekend_browsers'
@@ -1550,18 +1550,18 @@ export const insertMarketingAutomationRuleSchema = createInsertSchema(marketingA
   updatedAt: true,
 });
 
-export const insertCampaignAbTestSchema = createInsertSchema(campaignAbTests).omit({
+export const insertAbTestResultSchema = createInsertSchema(abTestResults).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertCustomerEngagementScoreSchema = createInsertSchema(customerEngagementScores).omit({
+export const insertCustomerEngagementHistorySchema = createInsertSchema(customerEngagementHistory).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertSendTimeOptimizationSchema = createInsertSchema(sendTimeOptimization).omit({
+export const insertSendTimePreferencesSchema = createInsertSchema(sendTimePreferences).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -1617,11 +1617,11 @@ export type InsertContentQualityScore = z.infer<typeof insertContentQualityScore
 // Autonomous Marketing Automation Types
 export type MarketingAutomationRule = typeof marketingAutomationRules.$inferSelect;
 export type InsertMarketingAutomationRule = z.infer<typeof insertMarketingAutomationRuleSchema>;
-export type CampaignAbTest = typeof campaignAbTests.$inferSelect;
-export type InsertCampaignAbTest = z.infer<typeof insertCampaignAbTestSchema>;
-export type CustomerEngagementScore = typeof customerEngagementScores.$inferSelect;
-export type InsertCustomerEngagementScore = z.infer<typeof insertCustomerEngagementScoreSchema>;
-export type SendTimeOptimization = typeof sendTimeOptimization.$inferSelect;
-export type InsertSendTimeOptimization = z.infer<typeof insertSendTimeOptimizationSchema>;
+export type AbTestResult = typeof abTestResults.$inferSelect;
+export type InsertAbTestResult = z.infer<typeof insertAbTestResultSchema>;
+export type CustomerEngagementHistory = typeof customerEngagementHistory.$inferSelect;
+export type InsertCustomerEngagementHistory = z.infer<typeof insertCustomerEngagementHistorySchema>;
+export type SendTimePreferences = typeof sendTimePreferences.$inferSelect;
+export type InsertSendTimePreferences = z.infer<typeof insertSendTimePreferencesSchema>;
 export type CartRecoverySequence = typeof cartRecoverySequences.$inferSelect;
 export type InsertCartRecoverySequence = z.infer<typeof insertCartRecoverySequenceSchema>;

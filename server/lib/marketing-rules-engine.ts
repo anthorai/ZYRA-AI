@@ -5,8 +5,8 @@ import {
   abandonedCarts,
   campaignEvents,
   campaigns,
-  customerEngagementScores,
-  sendTimeOptimization,
+  customerEngagementHistory,
+  sendTimePreferences,
   autonomousActions,
 } from "@shared/schema";
 
@@ -48,10 +48,10 @@ export class MarketingRulesEngine {
       // Get customer engagement data
       const [engagement] = await db
         .select()
-        .from(customerEngagementScores)
+        .from(customerEngagementHistory)
         .where(and(
-          eq(customerEngagementScores.customerEmail, customerEmail),
-          eq(customerEngagementScores.userId, userId)
+          eq(customerEngagementHistory.customerEmail, customerEmail),
+          eq(customerEngagementHistory.userId, userId)
         ))
         .limit(1);
 
@@ -472,11 +472,11 @@ export class MarketingRulesEngine {
     try {
       const db = requireDb();
 
-      // Get all unique customer emails from engagement scores and abandoned carts
+      // Get all unique customer emails from engagement history and abandoned carts
       const engagementCustomers = await db
-        .select({ email: customerEngagementScores.customerEmail })
-        .from(customerEngagementScores)
-        .where(eq(customerEngagementScores.userId, userId));
+        .select({ email: customerEngagementHistory.customerEmail })
+        .from(customerEngagementHistory)
+        .where(eq(customerEngagementHistory.userId, userId));
 
       const cartCustomers = await db
         .select({
