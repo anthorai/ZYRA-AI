@@ -38,13 +38,10 @@ export function MasterAutomationToggle() {
   // Toggle mutation
   const toggleMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
-      return await apiRequest('/api/automation/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ globalAutopilotEnabled: enabled })
+      const response = await apiRequest('PUT', '/api/automation/settings', { 
+        globalAutopilotEnabled: enabled 
       });
+      return response.json();
     },
     onSuccess: (_, enabled) => {
       queryClient.invalidateQueries({ queryKey: ['/api/automation/settings'] });
