@@ -103,10 +103,6 @@ function ProductCard({
               </Badge>
             )}
           </div>
-          
-          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-3">
-            {product.description || 'No description'}
-          </p>
 
           <div className="space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between text-xs sm:text-sm">
