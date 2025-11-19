@@ -368,7 +368,8 @@ async function startServer() {
   }
 
   // Run database migrations in background (non-blocking)
-  runDatabaseMigrations().then(async () => {
+  // DISABLED: Using db:push for schema management instead
+  // runDatabaseMigrations().then(async () => {
     // Initialize database after migrations complete
     try {
       const { initializeDatabase } = await import('./init-db');
@@ -381,7 +382,7 @@ async function startServer() {
       const errorMessage = error instanceof Error ? error.message : String(error);
       log(`⚠️ Database initialization warning: ${errorMessage}`);
     }
-  });
+  // });
 
   return await registerRoutes(app);
 }
