@@ -81,14 +81,19 @@ interface GeneratedCopy {
   success: boolean;
   framework: string;
   wordCount: number;
-  variants: CopyVariant[];
-  analysis: any;
-  recommendedVariant: string;
-  validationSummary: {
+  variants?: CopyVariant[]; // Optional for Fast Mode
+  analysis?: any;
+  recommendedVariant?: string;
+  validationSummary?: {
     allPassed: boolean;
     averageScore: number;
     patternsUsed: number;
   };
+  // Fast Mode specific fields
+  fastMode?: boolean;
+  headline?: string;
+  copy?: string;
+  cta?: string;
 }
 
 export default function ProfessionalCopywriting() {
@@ -821,8 +826,9 @@ export default function ProfessionalCopywriting() {
           </div>
         )}
 
-        {generatedCopy && (() => {
-          const recommendedVariant = generatedCopy.variants.find(v => v.id === generatedCopy.recommendedVariant) || generatedCopy.variants[0];
+        {generatedCopy && !generatedCopy.fastMode && (() => {
+          const recommendedVariant = generatedCopy.variants?.find(v => v.id === generatedCopy.recommendedVariant) || generatedCopy.variants?.[0];
+          if (!recommendedVariant) return null;
           return (
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
