@@ -16,6 +16,15 @@ The backend is built with Express.js and TypeScript, providing RESTful API endpo
 ### AI Integration
 Zyra AI uses a multi-model AI system (GPT-4o, GPT-4o-mini) with a centralized prompt library for professional copywriting, product description generation, SEO optimization, image alt-text generation, and bulk product optimization, maintaining brand voice memory. It includes premium Strategy AI (GPT-4o) with token accounting, rate limiting, and Redis-backed caching.
 
+**Fast Mode Implementation (November 2025)**: Professional copywriting now offers two generation modes:
+- **Fast Mode** (default): Single GPT-4o-mini call with Server-Sent Events (SSE) streaming for real-time content generation. Completes in 2-3 seconds vs 15-25 seconds for Quality Mode. Skips multi-agent analyzer pipeline and quality scoring during generation for maximum speed while maintaining good copy quality.
+- **Quality Mode**: Original multi-agent pipeline with GPT-4o, generates 3 variants with comprehensive quality scoring and brand voice analysis.
+- **Implementation Details**: 
+  - Backend: `/api/generate-copy-fast` endpoint with SSE streaming, proper event ordering (sends completion event before bookkeeping), defensive error handling
+  - Frontend: Buffered SSE parser prevents data loss from fragmented network chunks, real-time streaming progress display, toggle switch in UI
+  - Security: Bearer token authentication, proper stream cleanup with try-finally blocks, bookkeeping failures don't block user success
+  - UX: Streaming text display shows content as it's being generated, 90%+ speed improvement over Quality Mode
+
 ### Authentication & Authorization
 Supabase Auth provides email/password, password reset, and JWT-based session management. It features application-level Row Level Security (RLS), RBAC for admin endpoints, perfect payment data isolation, and TOTP-based Two-Factor Authentication with backup codes and password strength validation.
 

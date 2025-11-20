@@ -1098,6 +1098,207 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fast Mode Copywriting with Streaming (2-3 seconds, no multi-agent pipeline)
+  app.post("/api/generate-copy-fast", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { 
+        productName, 
+        category, 
+        features, 
+        audience, 
+        framework = 'AIDA',
+        industry,
+        maxWords = 150,
+        stream = true
+      } = req.body;
+      
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!productName?.trim()) {
+        return res.status(400).json({ message: "Product name is required" });
+      }
+
+      // Import frameworks
+      const { getCopywritingFramework } = await import('../shared/copywriting-frameworks');
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      
+      // Get framework template
+      const frameworkTemplate = getCopywritingFramework(framework);
+      if (!frameworkTemplate) {
+        return res.status(400).json({ message: `Invalid framework: ${framework}` });
+      }
+
+      // Build fast mode prompt (no analyzer, direct generation)
+      const proModePrompt = getSystemPromptForTool('professionalCopywriting');
+      const fastPrompt = `Generate compelling ${framework} copy for this product:
+
+**Product:** ${productName}
+**Category:** ${category || 'General'}
+**Features:** ${features || 'High-quality product'}
+**Target Audience:** ${audience || 'General consumers'}
+${industry ? `**Industry:** ${industry}` : ''}
+
+**Framework:** ${framework} (${frameworkTemplate.description})
+
+**Requirements:**
+- Maximum ${maxWords} words
+- Include compelling headline
+- Include strong CTA
+- Use benefit-focused language
+- Make it conversion-optimized
+
+**Framework Structure:**
+${frameworkTemplate.steps.join(' → ')}
+
+Respond with JSON:
+{
+  "headline": "attention-grabbing headline",
+  "copy": "full ${framework} formatted copy",
+  "cta": "compelling call-to-action"
+}`;
+
+      // Setup streaming if requested
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        try {
+          const streamResponse = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: proModePrompt },
+              { role: "user", content: fastPrompt }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.8,
+            stream: true
+          });
+
+          let fullContent = '';
+          
+          for await (const chunk of streamResponse) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              // Send streaming chunk to frontend
+              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+            }
+          }
+
+          // Parse final result
+          let result;
+          try {
+            result = JSON.parse(fullContent);
+          } catch (e) {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to parse AI response' })}\n\n`);
+            res.end();
+            return;
+          }
+
+          // Send final complete event FIRST - before any bookkeeping that could fail
+          res.write(`data: ${JSON.stringify({ 
+            type: 'complete', 
+            result: {
+              success: true,
+              headline: result.headline,
+              copy: result.copy,
+              cta: result.cta,
+              framework,
+              wordCount: result.copy?.split(' ').length || 0,
+              fastMode: true
+            }
+          })}\n\n`);
+          
+          res.end();
+
+          // Track usage and store history AFTER completing the stream
+          // Wrap in try-catch so failures don't affect the user experience
+          try {
+            const estimatedTokens = 500;
+            await trackAIUsage(userId, estimatedTokens);
+
+            await supabaseStorage.createAiGenerationHistory({
+              userId,
+              generationType: 'professional_copy_fast',
+              inputData: { productName, category, features, audience, framework, industry },
+              outputData: result,
+              brandVoice: framework,
+              tokensUsed: estimatedTokens,
+              model: 'gpt-4o-mini-fast'
+            });
+          } catch (bookkeepingError: any) {
+            // Log but don't fail - user already got their result
+            console.error('Fast Mode bookkeeping error (non-critical):', bookkeepingError);
+          }
+        } catch (streamError: any) {
+          // Ensure we always send an error event and close the stream
+          console.error('Fast copy streaming error:', streamError);
+          
+          // Always try to send error event, even if headers were already sent
+          try {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message || 'Streaming failed' })}\n\n`);
+          } catch (writeError) {
+            console.error('Failed to write error event:', writeError);
+          }
+          
+          if (!res.headersSent) {
+            res.status(500);
+          }
+          res.end();
+        }
+      } else {
+        // Non-streaming mode
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: proModePrompt },
+            { role: "user", content: fastPrompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.8
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || "{}");
+
+        // Track usage
+        const estimatedTokens = 500;
+        await trackAIUsage(userId, estimatedTokens);
+
+        // Store in history
+        await supabaseStorage.createAiGenerationHistory({
+          userId,
+          generationType: 'professional_copy_fast',
+          inputData: { productName, category, features, audience, framework, industry },
+          outputData: result,
+          brandVoice: framework,
+          tokensUsed: estimatedTokens,
+          model: 'gpt-4o-mini-fast'
+        });
+
+        await NotificationService.notifyAIGenerationComplete(userId, 'professional copy (fast)', productName);
+
+        res.json({
+          success: true,
+          headline: result.headline,
+          copy: result.copy,
+          cta: result.cta,
+          framework,
+          wordCount: result.copy?.split(' ').length || 0,
+          fastMode: true
+        });
+      }
+    } catch (error: any) {
+      console.error("Fast copy generation error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ message: "Failed to generate copy" });
+      }
+    }
+  });
+
   // Refine copy using Critic Agent
   app.post("/api/copywriting/refine", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {

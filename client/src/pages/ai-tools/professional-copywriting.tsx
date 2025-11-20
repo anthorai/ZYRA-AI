@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabaseClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector } from "@/components/ui/product-selector";
@@ -96,6 +98,9 @@ export default function ProfessionalCopywriting() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [fastMode, setFastMode] = useState(true); // Default to Fast Mode
+  const [streamingText, setStreamingText] = useState("");
+  const [fastModeResult, setFastModeResult] = useState<any | null>(null);
 
   const [navigationSource, setNavigationSource] = useState<string | null>(null);
 
@@ -214,8 +219,119 @@ export default function ProfessionalCopywriting() {
     }
   ];
 
+  // Fast Mode streaming function
+  const generateFastCopy = async (data: CopyForm) => {
+    setIsGenerating(true);
+    setStreamingText("");
+    setFastModeResult(null);
+    setAnalysisProgress(0);
+
+    try {
+      // Get the current session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch('/api/generate-copy-fast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+        },
+        body: JSON.stringify({
+          productName: data.productName,
+          category: data.category,
+          features: data.features,
+          audience: data.audience,
+          framework: data.framework,
+          industry: data.industry,
+          maxWords: data.maxWords,
+          stream: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate copy');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response stream');
+      }
+
+      let progress = 0;
+      let completed = false;
+      let buffer = ''; // Buffer for incomplete SSE lines
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            // Stream ended - if we haven't received a complete event, this is an error
+            if (!completed) {
+              throw new Error('Stream ended unexpectedly without completion');
+            }
+            break;
+          }
+
+          // Decode chunk and add to buffer
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          
+          // Split on double newlines to get complete SSE events
+          const events = buffer.split('\n\n');
+          
+          // Keep the last incomplete event in the buffer
+          buffer = events.pop() || '';
+          
+          // Process complete events
+          for (const event of events) {
+            if (event.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(event.slice(6));
+                
+                if (data.type === 'chunk') {
+                  setStreamingText(prev => prev + data.content);
+                  progress = Math.min(progress + 5, 90);
+                  setAnalysisProgress(progress);
+                } else if (data.type === 'complete') {
+                  completed = true;
+                  setFastModeResult(data.result);
+                  setAnalysisProgress(100);
+                  setIsGenerating(false);
+                  return data.result;
+                } else if (data.type === 'error') {
+                  throw new Error(data.message);
+                }
+              } catch (parseError) {
+                console.error('Failed to parse SSE data:', parseError, 'Event:', event);
+                // Continue to next event instead of failing completely
+              }
+            }
+          }
+        }
+      } finally {
+        // Always clean up, even if there was an error
+        reader.releaseLock();
+      }
+    } catch (error) {
+      setIsGenerating(false);
+      throw error;
+    } finally {
+      // Ensure isGenerating is always set to false
+      setIsGenerating(false);
+    }
+  };
+
   const generateCopyMutation = useMutation({
     mutationFn: async (data: CopyForm) => {
+      // Use Fast Mode or Quality Mode
+      if (fastMode) {
+        return await generateFastCopy(data);
+      }
+
+      // Quality Mode (original multi-agent pipeline)
       setIsGenerating(true);
       setAnalysisProgress(0);
 
@@ -373,6 +489,36 @@ export default function ProfessionalCopywriting() {
           description="Provide details about your product for AI-powered copy generation"
           testId="card-product-info"
         >
+          {/* Fast Mode Toggle */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Zap className={`w-5 h-5 ${fastMode ? 'text-primary' : 'text-slate-400'}`} />
+                <div>
+                  <h3 className="text-white font-semibold">
+                    {fastMode ? '⚡ Fast Mode' : '🎯 Quality Mode'}
+                  </h3>
+                  <p className="text-sm text-slate-300">
+                    {fastMode 
+                      ? 'Single variant, 2-3 seconds, real-time streaming'
+                      : '3 variants, quality scores, 15-25 seconds'}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={fastMode}
+                onCheckedChange={setFastMode}
+                data-testid="switch-fast-mode"
+              />
+            </div>
+            {fastMode && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-primary/80">
+                <Sparkles className="w-4 h-4" />
+                <span>Real-time streaming enabled - Watch your copy being generated live!</span>
+              </div>
+            )}
+          </div>
+
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <ProductSelector
               mode="single"
@@ -520,12 +666,28 @@ export default function ProfessionalCopywriting() {
             </div>
 
             {isGenerating && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-300">Crafting professional copy...</span>
+                  <span className="text-slate-300">
+                    {fastMode ? '⚡ Generating in fast mode...' : 'Crafting professional copy...'}
+                  </span>
                   <span className="text-white">{analysisProgress}%</span>
                 </div>
                 <Progress value={analysisProgress} className="h-2" />
+                
+                {/* Streaming preview for Fast Mode */}
+                {fastMode && streamingText && (
+                  <div className="mt-4 p-4 bg-slate-800/50 border border-primary/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                      <span className="text-sm text-primary font-medium">Streaming in real-time...</span>
+                    </div>
+                    <div className="text-slate-300 text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                      {streamingText}
+                      <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1"></span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -549,6 +711,115 @@ export default function ProfessionalCopywriting() {
             </Button>
           </form>
         </DashboardCard>
+
+        {/* Fast Mode Results */}
+        {fastModeResult && !generatedCopy && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <h2 className="text-2xl font-semibold text-white">Your Professional Copy</h2>
+                <Badge className="bg-primary/20 text-primary">
+                  {fastModeResult.framework?.toUpperCase()} Framework
+                </Badge>
+                <Badge variant="secondary" className="bg-green-500/20 text-green-400">
+                  <Zap className="w-3 h-3 mr-1" />
+                  Fast Mode
+                </Badge>
+              </div>
+            </div>
+
+            <Card className="border border-primary/30 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
+              <CardContent className="p-6 space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                    <Sparkles className="w-5 h-5 text-primary mr-2" />
+                    Headline
+                  </h3>
+                  <p className="text-lg text-slate-100 font-medium">{fastModeResult.headline}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(fastModeResult.headline, 'Headline')}
+                    className="mt-2"
+                    data-testid="button-copy-headline"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                    <Brain className="w-5 h-5 text-primary mr-2" />
+                    Copy ({fastModeResult.wordCount || 0} words)
+                  </h3>
+                  <div className="text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-800/30 p-4 rounded-lg">
+                    {fastModeResult.copy}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(fastModeResult.copy, 'Copy')}
+                    className="mt-2"
+                    data-testid="button-copy-content"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                    <Target className="w-5 h-5 text-primary mr-2" />
+                    Call to Action
+                  </h3>
+                  <p className="text-lg text-slate-100 font-medium">{fastModeResult.cta}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(fastModeResult.cta, 'CTA')}
+                    className="mt-2"
+                    data-testid="button-copy-cta"
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t border-slate-700">
+                  <Button
+                    onClick={() => copyToClipboard(
+                      `${fastModeResult.headline}\n\n${fastModeResult.copy}\n\n${fastModeResult.cta}`,
+                      'All content'
+                    )}
+                    className="flex-1"
+                    data-testid="button-copy-all"
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy All
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Switch to quality mode and regenerate
+                      setFastMode(false);
+                      setFastModeResult(null);
+                      toast({
+                        title: "Switched to Quality Mode",
+                        description: "Click 'Generate' again to get 3 variants with quality scores",
+                      });
+                    }}
+                    variant="outline"
+                    data-testid="button-quality-mode"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Try Quality Mode
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {generatedCopy && (() => {
           const recommendedVariant = generatedCopy.variants.find(v => v.id === generatedCopy.recommendedVariant) || generatedCopy.variants[0];
