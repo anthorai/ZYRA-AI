@@ -360,7 +360,10 @@ export default function ProfessionalCopywriting() {
       return result;
     },
     onSuccess: (result) => {
-      setGeneratedCopy(result);
+      // Only set generatedCopy for Quality Mode (Fast Mode uses fastModeResult)
+      if (!result.fastMode) {
+        setGeneratedCopy(result);
+      }
       toast({
         title: "✨ Professional Copy Generated!",
         description: `Created ${result.framework.toUpperCase()} framework copy with ${result.wordCount} words`,
