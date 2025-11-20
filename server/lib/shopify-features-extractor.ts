@@ -1,6 +1,7 @@
 /**
  * Extract product features from Shopify product data
  * Looks for features in metafields and product descriptions
+ * Prioritizes HTML lists over plain text parsing for reliability
  */
 
 interface ShopifyMetafield {
@@ -33,9 +34,8 @@ export function extractProductFeatures(
 
   for (const metafield of metafields) {
     const keyLower = metafield.key.toLowerCase();
-    const namespaceLower = metafield.namespace.toLowerCase();
     
-    // Check common namespaces and keys
+    // Check common keys
     if (featureMetafieldKeys.some(key => keyLower.includes(key))) {
       if (metafield.value && metafield.value.trim()) {
         // Metafield value might be JSON array or plain text
@@ -66,17 +66,27 @@ export function extractProductFeatures(
 }
 
 /**
- * Extract features from HTML description by looking for common patterns
- * - Bullet point lists with "features", "benefits", "highlights" headers
- * - Ordered lists with similar headers
+ * Extract features from HTML description
+ * Priority: HTML lists (most reliable) then text-based extraction
  */
 function extractFeaturesFromHtml(html: string): string | null {
   if (!html || !html.trim()) {
     return null;
   }
 
-  // Remove HTML tags for text analysis
-  const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  // Priority 1: Extract from HTML <ul> or <ol> lists (most reliable, unambiguous)
+  const listFeatures = extractFromHtmlLists(html);
+  if (listFeatures.length > 0) {
+    return listFeatures.join('\n');
+  }
+
+  // Priority 2: Look for text sections with feature headers
+  // Convert HTML to text, preserving newlines for bullet detection
+  const textContent = html
+    .replace(/<\/?(p|div|li|br)[^>]*>/gi, '\n') // Replace block tags with newlines
+    .replace(/<[^>]*>/g, ' ') // Remove remaining HTML tags
+    .replace(/[ \t\f\v]+/g, ' ') // Collapse horizontal whitespace only (preserve newlines)
+    .trim();
 
   // Patterns to look for features sections
   const featureHeaderPatterns = [
@@ -88,53 +98,52 @@ function extractFeaturesFromHtml(html: string): string | null {
     /product\s+features?:/i
   ];
 
-  // Try to find features section
+  // Try to find features section in text
   for (const pattern of featureHeaderPatterns) {
     const match = textContent.match(pattern);
     if (match) {
       const afterHeader = textContent.substring(match.index! + match[0].length);
       
-      // Extract bullet points or list items after the header
-      const features = extractListItems(afterHeader);
+      // Extract newline-separated bullets only (conservative, reliable)
+      const features = extractNewlineSeparatedBullets(afterHeader);
       if (features.length > 0) {
         return features.join('\n');
       }
     }
   }
 
-  // Try to extract from HTML lists directly
-  const listFeatures = extractFromHtmlLists(html);
-  if (listFeatures.length > 0) {
-    return listFeatures.join('\n');
-  }
-
   return null;
 }
 
 /**
- * Extract list items from text (looking for bullet points, dashes, numbers)
+ * Extract newline-separated bullets from text
+ * Conservative approach: only extracts bullets that are clearly on separate lines
+ * Does NOT try to parse inline bullets to avoid splitting hyphenated phrases
  */
-function extractListItems(text: string, maxItems: number = 10): string[] {
+function extractNewlineSeparatedBullets(text: string, maxItems: number = 10): string[] {
   const items: string[] = [];
   
-  // Split by common list separators
-  const lines = text.split(/[\n\r•\-\*]/);
+  // Split by newlines to get individual lines
+  const lines = text.split(/[\r\n]+/);
   
   for (const line of lines) {
-    const trimmed = line.trim();
+    if (items.length >= maxItems) break;
     
-    // Skip empty lines or very short items
+    const trimmed = line.trim();
     if (!trimmed || trimmed.length < 5) continue;
     
-    // Stop if we hit another section header
-    if (/^[A-Z][a-z]+\s*:/.test(trimmed)) break;
+    // Check if this line starts with a bullet marker: -, •, *, or numbers like 1. or 2)
+    const bulletMatch = trimmed.match(/^([-•*]|\d+[.)])\s+(.+)/);
     
-    // Take the first sentence/fragment
-    const firstSentence = trimmed.split(/[.!?]/)[0].trim();
-    if (firstSentence.length >= 5 && firstSentence.length <= 200) {
-      items.push(firstSentence);
+    if (bulletMatch) {
+      const bulletText = bulletMatch[2].trim();
       
-      if (items.length >= maxItems) break;
+      if (bulletText.length >= 5) {
+        const cleanedText = cleanBulletText(bulletText);
+        if (cleanedText) {
+          items.push(cleanedText);
+        }
+      }
     }
   }
   
@@ -143,6 +152,7 @@ function extractListItems(text: string, maxItems: number = 10): string[] {
 
 /**
  * Extract features from HTML <ul> or <ol> lists
+ * Most reliable method as HTML structure is unambiguous
  */
 function extractFromHtmlLists(html: string): string[] {
   const features: string[] = [];
@@ -175,4 +185,29 @@ function extractFromHtmlLists(html: string): string[] {
   }
   
   return features;
+}
+
+/**
+ * Clean and validate bullet text
+ */
+function cleanBulletText(text: string): string | null {
+  let cleaned = text.trim();
+  
+  // If text is too long, take first sentence
+  if (cleaned.length > 200) {
+    const firstSentence = cleaned.split(/[.!?]/)[0].trim();
+    if (firstSentence.length >= 5) {
+      cleaned = firstSentence;
+    } else {
+      // Truncate at 200 chars
+      cleaned = cleaned.substring(0, 200).trim();
+    }
+  }
+  
+  // Validate length
+  if (cleaned.length >= 5 && cleaned.length <= 200) {
+    return cleaned;
+  }
+  
+  return null;
 }
