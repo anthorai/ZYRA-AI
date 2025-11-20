@@ -73,6 +73,7 @@ import { TwoFactorAuthService } from "./lib/2fa-service";
 import { initializeUserCredits } from "./lib/credits";
 import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
 import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./lib/ai-cache";
+import { extractProductFeatures } from "./lib/shopify-features-extractor";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -6092,6 +6093,12 @@ Output format: Markdown with clear section headings.`;
 
           const shopifyId = product.id.toString().trim();
           const variant = product.variants?.[0];
+          
+          // Extract features from product description and metafields
+          // Note: For performance, we extract from description only during sync
+          // To extract from metafields, use ShopifyClient.getProductMetafields(shopifyId)
+          const extractedFeatures = extractProductFeatures([], product.body_html || '');
+          
           const productPayload = {
             userId,
             shopifyId,
@@ -6103,6 +6110,7 @@ Output format: Markdown with clear section headings.`;
             stock: variant?.inventory_quantity || 0,
             image: product.image?.src || product.images?.[0]?.src || '',
             tags: product.tags || '',
+            features: extractedFeatures,
             isOptimized: false
           };
 
@@ -6133,6 +6141,7 @@ Output format: Markdown with clear section headings.`;
                 stock: productPayload.stock,
                 image: productPayload.image,
                 tags: productPayload.tags,
+                features: productPayload.features,
                 updatedAt: sql`NOW()`
               }
             })
