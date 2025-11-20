@@ -29,7 +29,8 @@ import {
   Brain,
   Heart,
   BarChart3,
-  Lightbulb
+  Lightbulb,
+  AlertTriangle
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -795,34 +796,104 @@ export default function ProfessionalCopywriting() {
                   </Button>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-slate-700">
-                  <Button
-                    onClick={() => copyToClipboard(
-                      `${fastModeResult.headline}\n\n${fastModeResult.copy}\n\n${fastModeResult.cta}`,
-                      'All content'
-                    )}
-                    className="flex-1"
-                    data-testid="button-copy-all"
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy All
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      // Switch to quality mode and regenerate
-                      setFastMode(false);
-                      setFastModeResult(null);
-                      toast({
-                        title: "Switched to Quality Mode",
-                        description: "Click 'Generate' again to get 3 variants with quality scores",
-                      });
-                    }}
-                    variant="outline"
-                    data-testid="button-quality-mode"
-                  >
-                    <Trophy className="w-4 h-4 mr-2" />
-                    Try Quality Mode
-                  </Button>
+                <div className="pt-4 border-t border-slate-700 space-y-3">
+                  {selectedProductId ? (
+                    <div className="flex flex-col sm:flex-row items-center gap-3 p-4 bg-primary/10 rounded-lg border border-primary/30">
+                      <div className="flex-1 text-center sm:text-left">
+                        <h3 className="text-lg font-semibold text-white mb-1">Ready to Apply?</h3>
+                        <p className="text-sm text-slate-300">Save this AI-generated copy directly to your product</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          const copyVariant: CopyVariant = {
+                            headline: fastModeResult.headline,
+                            copy: fastModeResult.copy,
+                            cta: fastModeResult.cta,
+                            framework: fastModeResult.framework,
+                            type: 'Fast Mode',
+                            id: `fast-${Date.now()}`,
+                            qualityScore: {
+                              overall: 85,
+                              conversionPotential: 85,
+                              seoScore: 80,
+                              readability: 90,
+                              emotionalImpact: 85,
+                              clarity: 90,
+                              breakdown: {
+                                strengths: ['Fast generation', 'Clear messaging'],
+                                improvements: ['Run Quality Mode for detailed scoring'],
+                                keywords: ['professional', 'quality', 'fast'],
+                                sentiment: 'positive'
+                              }
+                            },
+                            validation: {
+                              passed: true,
+                              score: 85,
+                              seo: 80,
+                              readability: 90,
+                              issues: [],
+                              suggestions: []
+                            },
+                            psychologicalTriggers: fastModeResult.psychologicalTriggers || []
+                          };
+                          applyToProductMutation.mutate({ productId: selectedProductId, copy: copyVariant });
+                        }}
+                        disabled={applyToProductMutation.isPending}
+                        className="gradient-button w-full sm:w-auto"
+                        data-testid="button-apply-to-product"
+                      >
+                        {applyToProductMutation.isPending ? (
+                          <>
+                            <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                            Applying...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Apply to Product
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                      <div className="flex items-center gap-2 text-yellow-300">
+                        <AlertTriangle className="w-5 h-5" />
+                        <p className="text-sm font-medium">No product selected</p>
+                      </div>
+                      <p className="text-sm text-slate-300">Select a product above to apply this copy directly</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => copyToClipboard(
+                        `${fastModeResult.headline}\n\n${fastModeResult.copy}\n\n${fastModeResult.cta}`,
+                        'All content'
+                      )}
+                      variant="outline"
+                      className="flex-1"
+                      data-testid="button-copy-all"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy to Clipboard
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setFastMode(false);
+                        setFastModeResult(null);
+                        toast({
+                          title: "Switched to Quality Mode",
+                          description: "Click 'Generate' again to get 3 variants with quality scores",
+                        });
+                      }}
+                      variant="outline"
+                      data-testid="button-quality-mode"
+                    >
+                      <Trophy className="w-4 h-4 mr-2" />
+                      Try Quality Mode
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
