@@ -21,6 +21,12 @@ import {
 
 type Product = typeof products.$inferSelect;
 
+// Helper function to strip HTML tags from text
+function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
 export default function OptimizedProducts() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -176,13 +182,13 @@ export default function OptimizedProducts() {
                     <div>
                       <h4 className="text-slate-300 font-medium mb-2">Original Description</h4>
                       <p className="text-slate-400 text-sm bg-slate-900/50 p-3 rounded">
-                        {originalDesc || 'No original description'}
+                        {stripHtmlTags(originalDesc) || 'No original description'}
                       </p>
                     </div>
                     <div>
                       <h4 className="text-slate-300 font-medium mb-2">AI-Optimized Description</h4>
                       <p className="text-slate-300 text-sm bg-slate-800/50 p-3 rounded border border-primary/20">
-                        {optimizedDescription || 'No optimized description'}
+                        {stripHtmlTags(optimizedDescription) || 'No optimized description'}
                       </p>
                     </div>
                   </div>
