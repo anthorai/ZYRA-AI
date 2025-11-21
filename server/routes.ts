@@ -7033,107 +7033,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Publish AI content to Shopify (single product)
-  app.post('/api/shopify/publish/:productId', requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const { productId } = req.params;
-      const { content } = req.body;
-
-      // Get Shopify connection
-      const connections = await supabaseStorage.getStoreConnections(userId);
-      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
-      
-      if (!shopifyConnection) {
-        return res.status(404).json({ error: 'No active Shopify connection found' });
-      }
-
-      // Get product from database
-      const product = await db.query.products.findFirst({
-        where: and(
-          eq(products.id, productId),
-          eq(products.userId, userId)
-        )
-      });
-
-      if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-      }
-
-      if (!product.shopifyId) {
-        return res.status(400).json({ error: 'Product is not linked to Shopify. Please sync products first.' });
-      }
-
-      // Initialize Shopify client
-      const { getShopifyClient } = await import('./lib/shopify-client');
-      // Remove protocol from storeUrl (client adds it automatically)
-      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
-      const shopifyClient = await getShopifyClient(
-        shopDomain,
-        shopifyConnection.accessToken
-      );
-
-      // Fetch current Shopify product data for backup (before overwriting) - only if not already backed up
-      if (!product.originalCopy) {
-        const currentShopifyProduct = await shopifyClient.getProduct(product.shopifyId);
-        const metafields = await shopifyClient.getProductMetafields(product.shopifyId);
-        
-        // Extract SEO metafields from Shopify
-        const seoTitleMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'title_tag');
-        const metaDescMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'description_tag');
-        
-        // Save complete original content from Shopify (not local DB) for rollback
-        const originalContent = {
-          description: currentShopifyProduct.body_html,
-          seoTitle: seoTitleMetafield?.value || currentShopifyProduct.title, // Real Shopify SEO title or product title
-          metaDescription: metaDescMetafield?.value || '', // Real Shopify meta description
-          images: currentShopifyProduct.images?.map(img => ({
-            id: img.id.toString(),
-            alt: img.alt || ''
-          }))
-        };
-
-        await db.update(products)
-          .set({
-            originalCopy: originalContent,
-            originalDescription: currentShopifyProduct.body_html
-          })
-          .where(eq(products.id, productId));
-      }
-
-      // Record baseline metrics before optimization
-      const { recordProductOptimizationForProduct } = await import('./lib/record-product-optimization');
-      await recordProductOptimizationForProduct(userId, product);
-
-      // Publish content to Shopify
-      const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
-
-      // Update product in Zyra database
-      await db.update(products)
-        .set({
-          isOptimized: true,
-          optimizedCopy: content,
-          description: content.description || product.description,
-          updatedAt: sql`NOW()`
-        })
-        .where(eq(products.id, productId));
-
-      res.json({
-        success: true,
-        message: 'Content published to Shopify successfully',
-        shopifyProduct: updatedProduct
-      });
-
-    } catch (error: any) {
-      console.error('Shopify publish error:', error);
-      res.status(500).json({ 
-        error: 'Failed to publish to Shopify',
-        details: error.message 
-      });
-    }
-  });
-
-  // Bulk publish AI content to Shopify
+  // Bulk publish AI content to Shopify (MUST come before /:productId route!)
   app.post('/api/shopify/publish/bulk', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
@@ -7265,6 +7165,106 @@ Output format: Markdown with clear section headings.`;
       console.error('Bulk publish error:', error);
       res.status(500).json({ 
         error: 'Failed to bulk publish to Shopify',
+        details: error.message 
+      });
+    }
+  });
+
+  // Publish AI content to Shopify (single product)
+  app.post('/api/shopify/publish/:productId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      const { content } = req.body;
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Get product from database
+      const product = await db.query.products.findFirst({
+        where: and(
+          eq(products.id, productId),
+          eq(products.userId, userId)
+        )
+      });
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      if (!product.shopifyId) {
+        return res.status(400).json({ error: 'Product is not linked to Shopify. Please sync products first.' });
+      }
+
+      // Initialize Shopify client
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      // Remove protocol from storeUrl (client adds it automatically)
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
+      const shopifyClient = await getShopifyClient(
+        shopDomain,
+        shopifyConnection.accessToken
+      );
+
+      // Fetch current Shopify product data for backup (before overwriting) - only if not already backed up
+      if (!product.originalCopy) {
+        const currentShopifyProduct = await shopifyClient.getProduct(product.shopifyId);
+        const metafields = await shopifyClient.getProductMetafields(product.shopifyId);
+        
+        // Extract SEO metafields from Shopify
+        const seoTitleMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'title_tag');
+        const metaDescMetafield = metafields.find(m => m.namespace === 'global' && m.key === 'description_tag');
+        
+        // Save complete original content from Shopify (not local DB) for rollback
+        const originalContent = {
+          description: currentShopifyProduct.body_html,
+          seoTitle: seoTitleMetafield?.value || currentShopifyProduct.title, // Real Shopify SEO title or product title
+          metaDescription: metaDescMetafield?.value || '', // Real Shopify meta description
+          images: currentShopifyProduct.images?.map(img => ({
+            id: img.id.toString(),
+            alt: img.alt || ''
+          }))
+        };
+
+        await db.update(products)
+          .set({
+            originalCopy: originalContent,
+            originalDescription: currentShopifyProduct.body_html
+          })
+          .where(eq(products.id, productId));
+      }
+
+      // Record baseline metrics before optimization
+      const { recordProductOptimizationForProduct } = await import('./lib/record-product-optimization');
+      await recordProductOptimizationForProduct(userId, product);
+
+      // Publish content to Shopify
+      const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
+
+      // Update product in Zyra database
+      await db.update(products)
+        .set({
+          isOptimized: true,
+          optimizedCopy: content,
+          description: content.description || product.description,
+          updatedAt: sql`NOW()`
+        })
+        .where(eq(products.id, productId));
+
+      res.json({
+        success: true,
+        message: 'Content published to Shopify successfully',
+        shopifyProduct: updatedProduct
+      });
+
+    } catch (error: any) {
+      console.error('Shopify publish error:', error);
+      res.status(500).json({ 
+        error: 'Failed to publish to Shopify',
         details: error.message 
       });
     }
