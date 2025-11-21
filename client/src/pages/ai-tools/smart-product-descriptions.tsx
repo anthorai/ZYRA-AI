@@ -15,6 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector } from "@/components/ui/product-selector";
+import { supabase } from "@/lib/supabaseClient";
 import { 
   Zap, 
   Copy, 
@@ -119,6 +120,15 @@ export default function SmartProductDescriptions() {
     setIsStreaming(prev => ({ ...prev, [brandVoice]: true }));
     setGeneratedResults(prev => ({ ...prev, [brandVoice]: '' }));
     
+    // Get Supabase session token
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    if (!token) {
+      setIsStreaming(prev => ({ ...prev, [brandVoice]: false }));
+      return Promise.reject(new Error('Authentication required'));
+    }
+    
     return new Promise((resolve, reject) => {
       let buffer = '';
       
@@ -126,7 +136,7 @@ export default function SmartProductDescriptions() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           productName,
