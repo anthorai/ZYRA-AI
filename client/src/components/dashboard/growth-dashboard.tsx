@@ -192,7 +192,7 @@ export default function GrowthDashboard() {
         value: `$${(aiOptimizationRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         change: usageStats.productsOptimized > 0 ? `${usageStats.productsOptimized} products optimized` : 'No optimizations yet',
         trend: aiOptimizationRevenue > 0 ? 'up' : 'neutral',
-        actionText: 'View Products',
+        actionText: 'View Optimized',
         category: 'performance'
       },
       {
@@ -238,7 +238,7 @@ export default function GrowthDashboard() {
     // Navigation mapping for each analytics card
     const routeMapping = {
       'cart-recovery': '/cart-recovery',
-      'ai-optimization': '/products',
+      'ai-optimization': '/analytics/optimized-products',
       'optimized-products': '/analytics/optimized-products',
       'email-performance': '/analytics/email-performance',
       'sms-conversion': '/analytics/sms-conversion',

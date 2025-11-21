@@ -10,13 +10,24 @@
 
 **Solution Applied:**
 - Added route mapping for `cart-recovery` → `/cart-recovery`
-- Added route mapping for `ai-optimization` → `/products`
+- Added route mapping for `ai-optimization` → `/analytics/optimized-products`
+- Updated button text to "View Optimized" for clarity
 - Both cards now navigate to their respective functional pages
 
 **Files Modified:**
 - `client/src/components/dashboard/growth-dashboard.tsx`
 
-**Result:** ✅ Cards now work correctly and navigate to actual feature pages instead of showing "Coming Soon" messages.
+**Result:** ✅ Cards now work correctly and navigate to actual feature pages:
+- **Cart Recovery** → Shows abandoned cart recovery page with campaigns
+- **AI Optimization** → Shows only AI-optimized products with before/after comparisons
+
+**What You'll See:**
+The AI Optimization card now takes you to a dedicated page showing:
+- Total optimized products count
+- Products optimized this week
+- Side-by-side comparison of original vs AI-optimized descriptions
+- Green "Optimized" badges on enhanced products
+- View/Edit buttons for each optimized product
 
 ---
 
