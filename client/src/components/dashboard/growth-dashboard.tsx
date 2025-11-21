@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
 import { CardGrid } from "@/components/ui/standardized-layout";
 import { GradientPageHeader } from "@/components/ui/page-hero";
+import { ROISummaryCard } from "@/components/dashboard/roi-summary-card";
 import { 
   ShoppingBag,
   Mail,
@@ -278,6 +279,9 @@ export default function GrowthDashboard() {
         title="Growth Command Center"
         subtitle="Monitor your business performance, track AI-powered optimizations, and analyze marketing campaigns in real-time"
       />
+
+      {/* ROI Summary - Prominent display of total revenue generated */}
+      <ROISummaryCard />
 
       {/* Analytics Cards Grid - Mobile-First Redesign */}
       <CardGrid>

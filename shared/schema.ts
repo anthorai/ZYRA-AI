@@ -397,6 +397,26 @@ export const campaignEvents = pgTable("campaign_events", {
   uniqueIndex('campaign_events_unique_idx').on(table.campaignId, table.recipientEmail, table.eventType),
 ]);
 
+// Revenue Attribution Tracking - Track where each dollar comes from
+export const revenueAttribution = pgTable("revenue_attribution", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  source: text("source").notNull(), // 'cart_recovery' | 'email_campaign' | 'ai_optimization' | 'sms_campaign'
+  sourceId: varchar("source_id"), // ID of cart, campaign, or product
+  revenueAmount: numeric("revenue_amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("USD"),
+  customerEmail: text("customer_email"),
+  orderId: text("order_id"), // Shopify order ID if applicable
+  metadata: jsonb("metadata"), // Additional context (product IDs, conversion details, etc)
+  attributedAt: timestamp("attributed_at").default(sql`NOW()`),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('revenue_attribution_user_id_idx').on(table.userId),
+  index('revenue_attribution_source_idx').on(table.source),
+  index('revenue_attribution_attributed_at_idx').on(table.attributedAt),
+  index('revenue_attribution_source_id_idx').on(table.sourceId),
+]);
+
 export const campaignTemplates = pgTable("campaign_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -763,6 +783,12 @@ export const insertCampaignEventSchema = createInsertSchema(campaignEvents).omit
 export const insertTrackingTokenSchema = createInsertSchema(trackingTokens).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertRevenueAttributionSchema = createInsertSchema(revenueAttribution).omit({
+  id: true,
+  createdAt: true,
+  attributedAt: true,
 });
 
 export const insertCampaignTemplateSchema = createInsertSchema(campaignTemplates).omit({
@@ -1159,6 +1185,8 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type CampaignEvent = typeof campaignEvents.$inferSelect;
 export type InsertCampaignEvent = z.infer<typeof insertCampaignEventSchema>;
+export type RevenueAttribution = typeof revenueAttribution.$inferSelect;
+export type InsertRevenueAttribution = z.infer<typeof insertRevenueAttributionSchema>;
 export type CampaignTemplate = typeof campaignTemplates.$inferSelect;
 export type InsertCampaignTemplate = z.infer<typeof insertCampaignTemplateSchema>;
 export type AbandonedCart = typeof abandonedCarts.$inferSelect;
