@@ -237,6 +237,8 @@ export default function GrowthDashboard() {
   const handleAnalyticsAction = (cardId: string) => {
     // Navigation mapping for each analytics card
     const routeMapping = {
+      'cart-recovery': '/cart-recovery',
+      'ai-optimization': '/products',
       'optimized-products': '/analytics/optimized-products',
       'email-performance': '/analytics/email-performance',
       'sms-conversion': '/analytics/sms-conversion',
