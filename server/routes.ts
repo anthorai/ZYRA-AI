@@ -1345,6 +1345,197 @@ Respond with JSON:
     }
   });
 
+  // Fast Mode Copy Refinement with Streaming (2-3 seconds, direct refinement)
+  app.post("/api/copywriting/refine-fast", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { 
+        copy, 
+        audience = 'General', 
+        industry = 'General',
+        stream = true
+      } = req.body;
+      
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!copy?.trim()) {
+        return res.status(400).json({ message: "Copy text is required" });
+      }
+
+      // Import prompts
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const proModePrompt = getSystemPromptForTool('professionalCopywriting');
+
+      // Build fast mode refinement prompt (direct, no critic agent)
+      const fastPrompt = `Analyze and refine the following copy:
+
+**Original Copy:**
+${copy}
+
+**Target Audience:** ${audience}
+**Industry:** ${industry}
+
+**Your task:**
+1. Identify 3-5 key improvement areas
+2. Provide a refined version with better impact
+3. Explain what was improved and why
+4. Estimate the expected impact on conversion
+
+**Requirements:**
+- Maintain the original message intent
+- Improve clarity and persuasiveness
+- Enhance emotional appeal
+- Strengthen call-to-action
+- Keep it concise and punchy
+
+Respond with JSON:
+{
+  "refinedCopy": "your improved version here",
+  "improvements": ["improvement 1", "improvement 2", "improvement 3"],
+  "explanation": "brief explanation of changes",
+  "expectedImpact": "estimated improvement percentage"
+}`;
+
+      // Setup streaming if requested
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        try {
+          const streamResponse = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: proModePrompt },
+              { role: "user", content: fastPrompt }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.7,
+            stream: true
+          });
+
+          let fullContent = '';
+          
+          for await (const chunk of streamResponse) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              // Send streaming chunk to frontend
+              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+            }
+          }
+
+          // Parse final result
+          let result;
+          try {
+            result = JSON.parse(fullContent);
+          } catch (e) {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to parse AI response' })}\n\n`);
+            res.end();
+            return;
+          }
+
+          // Send final complete event FIRST
+          res.write(`data: ${JSON.stringify({ 
+            type: 'complete', 
+            result: {
+              success: true,
+              original: { copy },
+              refined: {
+                copy: result.refinedCopy,
+                improvements: result.improvements,
+                explanation: result.explanation,
+                expectedImpact: result.expectedImpact
+              },
+              wordCount: result.refinedCopy?.split(' ').length || 0,
+              fastMode: true
+            }
+          })}\n\n`);
+          
+          res.end();
+
+          // Track usage AFTER completing the stream
+          try {
+            const estimatedTokens = 600;
+            await trackAIUsage(userId, estimatedTokens);
+
+            await supabaseStorage.createAiGenerationHistory({
+              userId,
+              generationType: 'copy_refinement_fast',
+              inputData: { copy, audience, industry },
+              outputData: result,
+              brandVoice: 'refinement',
+              tokensUsed: estimatedTokens,
+              model: 'gpt-4o-mini-fast'
+            });
+          } catch (bookkeepingError: any) {
+            console.error('Fast Mode bookkeeping error (non-critical):', bookkeepingError);
+          }
+        } catch (streamError: any) {
+          console.error('Fast refinement streaming error:', streamError);
+          
+          try {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message || 'Streaming failed' })}\n\n`);
+          } catch (writeError) {
+            console.error('Failed to write error event:', writeError);
+          }
+          
+          if (!res.headersSent) {
+            res.status(500);
+          }
+          res.end();
+        }
+      } else {
+        // Non-streaming mode
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: proModePrompt },
+            { role: "user", content: fastPrompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || "{}");
+
+        // Track usage
+        const estimatedTokens = 600;
+        await trackAIUsage(userId, estimatedTokens);
+
+        await supabaseStorage.createAiGenerationHistory({
+          userId,
+          generationType: 'copy_refinement_fast',
+          inputData: { copy, audience, industry },
+          outputData: result,
+          brandVoice: 'refinement',
+          tokensUsed: estimatedTokens,
+          model: 'gpt-4o-mini-fast'
+        });
+
+        res.json({
+          success: true,
+          original: { copy },
+          refined: {
+            copy: result.refinedCopy,
+            improvements: result.improvements,
+            explanation: result.explanation,
+            expectedImpact: result.expectedImpact
+          },
+          wordCount: result.refinedCopy?.split(' ').length || 0,
+          fastMode: true
+        });
+      }
+    } catch (error: any) {
+      console.error("Fast refinement error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ message: "Failed to refine copy" });
+      }
+    }
+  });
+
   // Legacy endpoint - still works for backward compatibility
   app.post("/api/generate-description", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
@@ -1494,6 +1685,187 @@ Respond with JSON:
     }
   });
 
+  // Fast Mode Product Description with Streaming (2-3 seconds, single GPT-4o-mini call)
+  app.post("/api/generate-description-fast", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { 
+        productName, 
+        category, 
+        features, 
+        audience, 
+        brandVoice = 'sales',
+        keywords = '',
+        specs = '',
+        stream = true
+      } = req.body;
+      
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!productName?.trim()) {
+        return res.status(400).json({ message: "Product name is required" });
+      }
+
+      // Import prompts
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const proModePrompt = getSystemPromptForTool('productDescriptions');
+      
+      // Build fast mode prompt (direct generation, no validation pipeline)
+      const fastPrompt = `Generate a compelling ${brandVoice} product description:
+
+**Product:** ${productName}
+**Category:** ${category || 'General'}
+**Features:** ${features || 'High-quality product'}
+**Target Audience:** ${audience || 'General consumers'}
+${keywords ? `**Keywords:** ${keywords}` : ''}
+${specs ? `**Specifications:** ${specs}` : ''}
+
+**Brand Voice:** ${brandVoice}
+
+**Requirements:**
+- Engaging and conversion-focused
+- Highlight key benefits and features
+- Include relevant keywords naturally
+- Professional and polished tone
+- 100-150 words ideal length
+
+Respond with JSON:
+{
+  "description": "your compelling product description here"
+}`;
+
+      // Setup streaming if requested
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        try {
+          const streamResponse = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: proModePrompt },
+              { role: "user", content: fastPrompt }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.8,
+            stream: true
+          });
+
+          let fullContent = '';
+          
+          for await (const chunk of streamResponse) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              // Send streaming chunk to frontend
+              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+            }
+          }
+
+          // Parse final result
+          let result;
+          try {
+            result = JSON.parse(fullContent);
+          } catch (e) {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to parse AI response' })}\n\n`);
+            res.end();
+            return;
+          }
+
+          // Send final complete event FIRST
+          res.write(`data: ${JSON.stringify({ 
+            type: 'complete', 
+            result: {
+              success: true,
+              description: result.description,
+              brandVoiceUsed: brandVoice,
+              wordCount: result.description?.split(' ').length || 0,
+              fastMode: true
+            }
+          })}\n\n`);
+          
+          res.end();
+
+          // Track usage AFTER completing the stream
+          try {
+            const estimatedTokens = 400;
+            await trackAIUsage(userId, estimatedTokens);
+
+            await supabaseStorage.createAiGenerationHistory({
+              userId,
+              generationType: 'product_description_fast',
+              inputData: { productName, category, features, audience, brandVoice, keywords, specs },
+              outputData: result,
+              brandVoice,
+              tokensUsed: estimatedTokens,
+              model: 'gpt-4o-mini-fast'
+            });
+          } catch (bookkeepingError: any) {
+            console.error('Fast Mode bookkeeping error (non-critical):', bookkeepingError);
+          }
+        } catch (streamError: any) {
+          console.error('Fast description streaming error:', streamError);
+          
+          try {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message || 'Streaming failed' })}\n\n`);
+          } catch (writeError) {
+            console.error('Failed to write error event:', writeError);
+          }
+          
+          if (!res.headersSent) {
+            res.status(500);
+          }
+          res.end();
+        }
+      } else {
+        // Non-streaming mode
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: proModePrompt },
+            { role: "user", content: fastPrompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.8
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || "{}");
+
+        // Track usage
+        const estimatedTokens = 400;
+        await trackAIUsage(userId, estimatedTokens);
+
+        await supabaseStorage.createAiGenerationHistory({
+          userId,
+          generationType: 'product_description_fast',
+          inputData: { productName, category, features, audience, brandVoice, keywords, specs },
+          outputData: result,
+          brandVoice,
+          tokensUsed: estimatedTokens,
+          model: 'gpt-4o-mini-fast'
+        });
+
+        await NotificationService.notifyAIGenerationComplete(userId, 'product description (fast)', productName);
+
+        res.json({
+          success: true,
+          description: result.description,
+          brandVoiceUsed: brandVoice,
+          wordCount: result.description?.split(' ').length || 0,
+          fastMode: true
+        });
+      }
+    } catch (error: any) {
+      console.error("Fast description generation error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ message: "Failed to generate description" });
+      }
+    }
+  });
+
   // SEO Optimization
   app.post("/api/optimize-seo", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
@@ -1589,6 +1961,187 @@ Respond with JSON:
     } catch (error: any) {
       console.error("SEO optimization error:", error);
       res.status(500).json({ message: "Failed to optimize SEO" });
+    }
+  });
+
+  // Fast Mode SEO Optimization with Streaming (2-3 seconds)
+  app.post("/api/optimize-seo-fast", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { 
+        currentTitle, 
+        keywords, 
+        currentMeta = '', 
+        category = 'General',
+        stream = true
+      } = req.body;
+
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!currentTitle || !keywords) {
+        return res.status(400).json({ message: "Title and keywords are required" });
+      }
+
+      // Import prompts
+      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
+      const proModePrompt = getSystemPromptForTool('seoTitles');
+
+      // Build fast mode prompt (direct generation, no validation)
+      const fastPrompt = `Optimize the following product for SEO:
+
+**Current Title:** "${currentTitle}"
+**Target Keywords:** "${keywords}"
+**Category:** "${category}"
+${currentMeta ? `**Current Meta:** "${currentMeta}"` : ''}
+
+**Requirements:**
+- SEO title under 60 characters
+- Meta description under 160 characters
+- Include primary keywords naturally
+- 5-7 relevant keywords
+- Calculate SEO score out of 100
+
+Respond with JSON:
+{
+  "optimizedTitle": "your seo-optimized title",
+  "optimizedMeta": "your seo-optimized meta description",
+  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "seoScore": 85
+}`;
+
+      // Setup streaming if requested
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        try {
+          const streamResponse = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              { role: "system", content: proModePrompt },
+              { role: "user", content: fastPrompt }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.7,
+            stream: true
+          });
+
+          let fullContent = '';
+          
+          for await (const chunk of streamResponse) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              // Send streaming chunk to frontend
+              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+            }
+          }
+
+          // Parse final result
+          let result;
+          try {
+            result = JSON.parse(fullContent);
+          } catch (e) {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: 'Failed to parse AI response' })}\n\n`);
+            res.end();
+            return;
+          }
+
+          // Send final complete event FIRST
+          res.write(`data: ${JSON.stringify({ 
+            type: 'complete', 
+            result: {
+              success: true,
+              optimizedTitle: result.optimizedTitle,
+              optimizedMeta: result.optimizedMeta,
+              keywords: result.keywords,
+              seoScore: result.seoScore,
+              titleLength: result.optimizedTitle?.length || 0,
+              metaLength: result.optimizedMeta?.length || 0,
+              fastMode: true
+            }
+          })}\n\n`);
+          
+          res.end();
+
+          // Track usage AFTER completing the stream
+          try {
+            await trackSEOUsage(userId);
+
+            await supabaseStorage.createAiGenerationHistory({
+              userId,
+              generationType: 'seo_optimization_fast',
+              inputData: { currentTitle, keywords, currentMeta, category },
+              outputData: result,
+              brandVoice: 'seo',
+              tokensUsed: 300,
+              model: 'gpt-4o-mini-fast'
+            });
+          } catch (bookkeepingError: any) {
+            console.error('Fast Mode bookkeeping error (non-critical):', bookkeepingError);
+          }
+        } catch (streamError: any) {
+          console.error('Fast SEO streaming error:', streamError);
+          
+          try {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: streamError.message || 'Streaming failed' })}\n\n`);
+          } catch (writeError) {
+            console.error('Failed to write error event:', writeError);
+          }
+          
+          if (!res.headersSent) {
+            res.status(500);
+          }
+          res.end();
+        }
+      } else {
+        // Non-streaming mode
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: proModePrompt },
+            { role: "user", content: fastPrompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.7
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || "{}");
+
+        // Track usage
+        await trackSEOUsage(userId);
+
+        await supabaseStorage.createAiGenerationHistory({
+          userId,
+          generationType: 'seo_optimization_fast',
+          inputData: { currentTitle, keywords, currentMeta, category },
+          outputData: result,
+          brandVoice: 'seo',
+          tokensUsed: 300,
+          model: 'gpt-4o-mini-fast'
+        });
+
+        await NotificationService.notifyPerformanceOptimizationComplete(userId, currentTitle, `SEO Score: ${result.seoScore}/100`);
+
+        res.json({
+          success: true,
+          optimizedTitle: result.optimizedTitle,
+          optimizedMeta: result.optimizedMeta,
+          keywords: result.keywords,
+          seoScore: result.seoScore,
+          titleLength: result.optimizedTitle?.length || 0,
+          metaLength: result.optimizedMeta?.length || 0,
+          fastMode: true
+        });
+      }
+    } catch (error: any) {
+      console.error("Fast SEO optimization error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ message: "Failed to optimize SEO" });
+      }
     }
   });
 
