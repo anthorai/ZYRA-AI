@@ -1414,13 +1414,35 @@ Respond with JSON:
           });
 
           let fullContent = '';
+          let lastSentLength = 0;
           
           for await (const chunk of streamResponse) {
             const content = chunk.choices[0]?.delta?.content || '';
             if (content) {
               fullContent += content;
-              // Send streaming chunk to frontend
-              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+              
+              // Try to extract partial refinedCopy from accumulated JSON
+              try {
+                const refinedMatch = fullContent.match(/"refinedCopy"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/);
+                if (refinedMatch && refinedMatch[1]) {
+                  const currentRefined = refinedMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                  
+                  // Only send new content (delta)
+                  if (currentRefined.length > lastSentLength) {
+                    const delta = currentRefined.substring(lastSentLength);
+                    lastSentLength = currentRefined.length;
+                    
+                    // Send delta as plain text in the JSON event
+                    res.write(`data: ${JSON.stringify({ 
+                      type: 'chunk', 
+                      delta,
+                      refinedCopy: currentRefined 
+                    })}\n\n`);
+                  }
+                }
+              } catch (e) {
+                // Continue accumulating if we can't parse yet
+              }
             }
           }
 
@@ -1434,21 +1456,18 @@ Respond with JSON:
             return;
           }
 
-          // Send final complete event FIRST
+          // Send final complete event
           res.write(`data: ${JSON.stringify({ 
             type: 'complete', 
-            result: {
-              success: true,
-              original: { copy },
-              refined: {
-                copy: result.refinedCopy,
-                improvements: result.improvements,
-                explanation: result.explanation,
-                expectedImpact: result.expectedImpact
-              },
-              wordCount: result.refinedCopy?.split(' ').length || 0,
-              fastMode: true
-            }
+            original: { copy },
+            refined: {
+              copy: result.refinedCopy,
+              improvements: result.improvements,
+              explanation: result.explanation,
+              expectedImpact: result.expectedImpact
+            },
+            wordCount: result.refinedCopy?.split(' ').length || 0,
+            fastMode: true
           })}\n\n`);
           
           res.end();
@@ -1752,13 +1771,31 @@ Respond with JSON:
           });
 
           let fullContent = '';
+          let lastSentLength = 0;
           
           for await (const chunk of streamResponse) {
             const content = chunk.choices[0]?.delta?.content || '';
             if (content) {
               fullContent += content;
-              // Send streaming chunk to frontend
-              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+              
+              // Try to extract partial description from accumulated JSON
+              try {
+                const partialMatch = fullContent.match(/"description"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/);
+                if (partialMatch && partialMatch[1]) {
+                  const currentDescription = partialMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                  
+                  // Only send new content (delta)
+                  if (currentDescription.length > lastSentLength) {
+                    const delta = currentDescription.substring(lastSentLength);
+                    lastSentLength = currentDescription.length;
+                    
+                    // Send delta as plain text in the JSON event
+                    res.write(`data: ${JSON.stringify({ type: 'chunk', delta, description: currentDescription })}\n\n`);
+                  }
+                }
+              } catch (e) {
+                // Continue accumulating if we can't parse yet
+              }
             }
           }
 
@@ -1772,16 +1809,13 @@ Respond with JSON:
             return;
           }
 
-          // Send final complete event FIRST
+          // Send final complete event
           res.write(`data: ${JSON.stringify({ 
             type: 'complete', 
-            result: {
-              success: true,
-              description: result.description,
-              brandVoiceUsed: brandVoice,
-              wordCount: result.description?.split(' ').length || 0,
-              fastMode: true
-            }
+            description: result.description,
+            brandVoiceUsed: brandVoice,
+            wordCount: result.description?.split(' ').length || 0,
+            fastMode: true
           })}\n\n`);
           
           res.end();
@@ -2027,13 +2061,39 @@ Respond with JSON:
           });
 
           let fullContent = '';
+          let lastSent = { title: '', meta: '' };
           
           for await (const chunk of streamResponse) {
             const content = chunk.choices[0]?.delta?.content || '';
             if (content) {
               fullContent += content;
-              // Send streaming chunk to frontend
-              res.write(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+              
+              // Try to extract partial fields from accumulated JSON
+              try {
+                const titleMatch = fullContent.match(/"optimizedTitle"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/);
+                const metaMatch = fullContent.match(/"optimizedMeta"\s*:\s*"([^"\\]*(\\.[^"\\]*)*)"/);
+                
+                const currentTitle = titleMatch ? titleMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+                const currentMeta = metaMatch ? metaMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+                
+                // Send deltas for any new content
+                if (currentTitle !== lastSent.title || currentMeta !== lastSent.meta) {
+                  const titleDelta = currentTitle.substring(lastSent.title.length);
+                  const metaDelta = currentMeta.substring(lastSent.meta.length);
+                  
+                  lastSent = { title: currentTitle, meta: currentMeta };
+                  
+                  res.write(`data: ${JSON.stringify({ 
+                    type: 'chunk', 
+                    titleDelta,
+                    metaDelta,
+                    optimizedTitle: currentTitle,
+                    optimizedMeta: currentMeta
+                  })}\n\n`);
+                }
+              } catch (e) {
+                // Continue accumulating if we can't parse yet
+              }
             }
           }
 
@@ -2047,19 +2107,16 @@ Respond with JSON:
             return;
           }
 
-          // Send final complete event FIRST
+          // Send final complete event
           res.write(`data: ${JSON.stringify({ 
             type: 'complete', 
-            result: {
-              success: true,
-              optimizedTitle: result.optimizedTitle,
-              optimizedMeta: result.optimizedMeta,
-              keywords: result.keywords,
-              seoScore: result.seoScore,
-              titleLength: result.optimizedTitle?.length || 0,
-              metaLength: result.optimizedMeta?.length || 0,
-              fastMode: true
-            }
+            optimizedTitle: result.optimizedTitle,
+            optimizedMeta: result.optimizedMeta,
+            keywords: result.keywords,
+            seoScore: result.seoScore,
+            titleLength: result.optimizedTitle?.length || 0,
+            metaLength: result.optimizedMeta?.length || 0,
+            fastMode: true
           })}\n\n`);
           
           res.end();

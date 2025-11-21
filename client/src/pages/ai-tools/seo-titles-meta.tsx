@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
@@ -22,7 +23,8 @@ import {
   Zap,
   Target,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  Gauge
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -48,6 +50,11 @@ export default function SEOTitlesMeta() {
   const [, setLocation] = useLocation();
   const [seoResult, setSEOResult] = useState<SEOResult | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [fastMode, setFastMode] = useState(true); // Default to Fast Mode
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingTitle, setStreamingTitle] = useState("");
+  const [streamingMeta, setStreamingMeta] = useState("");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const productCategories = [
     "Electronics",
@@ -79,20 +86,136 @@ export default function SEOTitlesMeta() {
     },
   });
 
+  // SSE Parser for Fast Mode streaming
+  const parseSSEStream = (chunk: string, buffer: string): { events: any[], newBuffer: string } => {
+    const combined = buffer + chunk;
+    const lines = combined.split('\n');
+    const events: any[] = [];
+    let currentData = '';
+    let remainingBuffer = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (i === lines.length - 1 && !combined.endsWith('\n')) {
+        remainingBuffer = line;
+        break;
+      }
+      
+      if (line.startsWith('data: ')) {
+        currentData = line.substring(6);
+        try {
+          const parsed = JSON.parse(currentData);
+          events.push(parsed);
+          currentData = '';
+        } catch (e) {
+          remainingBuffer = line;
+        }
+      }
+    }
+    
+    return { events, newBuffer: remainingBuffer };
+  };
 
-  const generateSEOMutation = useMutation({
-    mutationFn: async (data: SEOForm) => {
-      const { productName, targetKeywords, category, primaryBenefit, priceRange } = data;
+  const generateSEOMutation = useMutation<SEOResult, Error, SEOForm>({
+    mutationFn: async (data: SEOForm): Promise<SEOResult> => {
+      const { productName, targetKeywords, category, primaryBenefit } = data;
       
       // Build current title and meta from form data
       const currentTitle = `${productName} - ${category}`;
       const currentMeta = primaryBenefit || '';
       
-      // Call the real AI API endpoint
       const { supabase } = await import('@/lib/supabaseClient');
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token || '';
 
+      // Use Fast Mode with streaming if enabled
+      if (fastMode) {
+        abortControllerRef.current = new AbortController();
+        setIsStreaming(true);
+        setStreamingTitle("");
+        setStreamingMeta("");
+        
+        return new Promise((resolve, reject) => {
+          let buffer = '';
+          
+          fetch('/api/optimize-seo-fast', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              currentTitle,
+              keywords: targetKeywords,
+              currentMeta,
+              category,
+              stream: true
+            }),
+            signal: abortControllerRef.current?.signal
+          })
+          .then(response => {
+            if (!response.ok) throw new Error('Stream failed');
+            if (!response.body) throw new Error('No response body');
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let finalResult: any = {};
+            
+            const readChunk = (): Promise<void> => {
+              return reader.read().then(({ done, value }) => {
+                if (done) {
+                  setIsStreaming(false);
+                  resolve(finalResult);
+                  return;
+                }
+                
+                const chunk = decoder.decode(value, { stream: true });
+                const { events, newBuffer } = parseSSEStream(chunk, buffer);
+                buffer = newBuffer;
+                
+                for (const event of events) {
+                  if (event.type === 'chunk') {
+                    if (event.optimizedTitle) {
+                      setStreamingTitle(event.optimizedTitle);
+                    }
+                    if (event.optimizedMeta) {
+                      setStreamingMeta(event.optimizedMeta);
+                    }
+                  } else if (event.type === 'complete') {
+                    finalResult = {
+                      title: event.optimizedTitle,
+                      metaDescription: event.optimizedMeta,
+                      titleLength: event.titleLength,
+                      metaLength: event.metaLength,
+                      keywords: event.keywords,
+                      seoScore: event.seoScore,
+                      keywordDensity: 0
+                    };
+                    setIsStreaming(false);
+                    resolve(finalResult);
+                    return;
+                  } else if (event.type === 'error') {
+                    setIsStreaming(false);
+                    reject(new Error(event.message));
+                    return;
+                  }
+                }
+                
+                return readChunk();
+              });
+            };
+            
+            return readChunk();
+          })
+          .catch(error => {
+            setIsStreaming(false);
+            reject(error);
+          });
+        });
+      }
+
+      // Quality Mode - use original endpoint
       const response = await fetch('/api/optimize-seo', {
         method: 'POST',
         headers: {
@@ -135,7 +258,7 @@ export default function SEOTitlesMeta() {
         seoScore: result.seoScore || 75
       };
     },
-    onSuccess: (result) => {
+    onSuccess: (result: SEOResult) => {
       setSEOResult(result);
       toast({
         title: "🎯 SEO Content Generated!",
@@ -354,16 +477,39 @@ export default function SEOTitlesMeta() {
               </div>
             </div>
 
+            {/* Fast/Quality Mode Toggle */}
+            <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-md border border-slate-600">
+              <div className="flex items-center gap-3">
+                <Gauge className="w-5 h-5 text-primary" />
+                <div>
+                  <Label htmlFor="fast-mode" className="text-white font-medium">
+                    {fastMode ? "Fast Mode (2-3s)" : "Quality Mode (15-25s)"}
+                  </Label>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {fastMode 
+                      ? "Single GPT-4o-mini call with streaming" 
+                      : "Multi-agent analysis with full validation"}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="fast-mode"
+                checked={fastMode}
+                onCheckedChange={setFastMode}
+                data-testid="switch-fast-mode"
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full gradient-button transition-all duration-200 font-medium"
-              disabled={generateSEOMutation.isPending}
+              disabled={generateSEOMutation.isPending || isStreaming}
               data-testid="button-generate"
             >
-              {generateSEOMutation.isPending ? (
+              {(generateSEOMutation.isPending || isStreaming) ? (
                 <>
                   <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  Optimizing SEO content...
+                  {isStreaming ? "Streaming SEO content..." : "Optimizing SEO content..."}
                 </>
               ) : (
                 <>

@@ -162,26 +162,16 @@ export default function SmartProductDescriptions() {
             
             for (const event of events) {
               if (event.type === 'chunk') {
-                // Parse the JSON chunk to extract the description field
-                try {
-                  const parsed = JSON.parse(event.content);
-                  if (parsed.description) {
-                    fullDescription = parsed.description;
-                    setGeneratedResults(prev => ({
-                      ...prev,
-                      [brandVoice]: fullDescription
-                    }));
-                  }
-                } catch (e) {
-                  // Not a complete JSON object yet, accumulate
-                  fullDescription += event.content;
+                // Use description field directly from event (no secondary JSON.parse)
+                if (event.description) {
+                  fullDescription = event.description;
                   setGeneratedResults(prev => ({
                     ...prev,
                     [brandVoice]: fullDescription
                   }));
                 }
               } else if (event.type === 'complete') {
-                fullDescription = event.result.description;
+                fullDescription = event.description;
                 setGeneratedResults(prev => ({
                   ...prev,
                   [brandVoice]: fullDescription
