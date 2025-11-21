@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
@@ -24,7 +25,8 @@ import {
   FileText,
   Sparkles,
   CheckCircle,
-  Clock
+  Clock,
+  Gauge
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -44,12 +46,21 @@ interface GeneratedResult {
   professional?: string;
 }
 
+interface StreamingStatus {
+  sales: boolean;
+  seo: boolean;
+  casual: boolean;
+}
+
 export default function SmartProductDescriptions() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [brandVoice, setBrandVoice] = useState("sales");
+  const [fastMode, setFastMode] = useState(true); // Default to Fast Mode
   const [generatedResults, setGeneratedResults] = useState<GeneratedResult>({});
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState<StreamingStatus>({ sales: false, seo: false, casual: false });
+  const abortControllersRef = useRef<AbortController[]>([]);
 
   const form = useForm<GenerateForm>({
     defaultValues: {
@@ -63,46 +74,212 @@ export default function SmartProductDescriptions() {
   });
 
 
-  const generateMutation = useMutation({
-    mutationFn: async (data: GenerateForm) => {
-      const { productName, category, features, audience, shortInput, targetKeywords } = data;
+  // Buffered SSE parser to handle fragmented chunks
+  const parseSSEStream = (chunk: string, buffer: string): { events: any[], newBuffer: string } => {
+    const combined = buffer + chunk;
+    const lines = combined.split('\n');
+    const events: any[] = [];
+    let currentData = '';
+    let remainingBuffer = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
       
-      const fullFeatures = [features, shortInput].filter(Boolean).join('. ');
+      // If this is the last line and it's incomplete, save it to buffer
+      if (i === lines.length - 1 && !combined.endsWith('\n')) {
+        remainingBuffer = line;
+        break;
+      }
       
-      const promises = ['sales', 'seo', 'casual'].map(async (brandVoice) => {
-        const response = await apiRequest("POST", "/api/generate-description", {
+      if (line.startsWith('data: ')) {
+        currentData = line.substring(6);
+        try {
+          const parsed = JSON.parse(currentData);
+          events.push(parsed);
+          currentData = '';
+        } catch (e) {
+          // Invalid JSON, might be fragmented
+          remainingBuffer = line;
+        }
+      }
+    }
+    
+    return { events, newBuffer: remainingBuffer };
+  };
+
+  // Fast Mode streaming for a single brand voice
+  const streamFastDescription = async (
+    brandVoice: 'sales' | 'seo' | 'casual',
+    data: GenerateForm,
+    abortSignal: AbortSignal
+  ): Promise<string> => {
+    const { productName, category, features, audience, shortInput, targetKeywords } = data;
+    const fullFeatures = [features, shortInput].filter(Boolean).join('. ');
+    
+    setIsStreaming(prev => ({ ...prev, [brandVoice]: true }));
+    setGeneratedResults(prev => ({ ...prev, [brandVoice]: '' }));
+    
+    return new Promise((resolve, reject) => {
+      let buffer = '';
+      
+      fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate-description-fast`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({
           productName,
           category,
           features: fullFeatures,
           audience,
           brandVoice,
           keywords: targetKeywords,
-          specs: shortInput
+          specs: shortInput,
+          stream: true
+        }),
+        signal: abortSignal
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Stream failed');
+        if (!response.body) throw new Error('No response body');
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullDescription = '';
+        
+        const readChunk = (): Promise<void> => {
+          return reader.read().then(({ done, value }) => {
+            if (done) {
+              setIsStreaming(prev => ({ ...prev, [brandVoice]: false }));
+              resolve(fullDescription);
+              return;
+            }
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const { events, newBuffer } = parseSSEStream(chunk, buffer);
+            buffer = newBuffer;
+            
+            for (const event of events) {
+              if (event.type === 'chunk') {
+                // Parse the JSON chunk to extract the description field
+                try {
+                  const parsed = JSON.parse(event.content);
+                  if (parsed.description) {
+                    fullDescription = parsed.description;
+                    setGeneratedResults(prev => ({
+                      ...prev,
+                      [brandVoice]: fullDescription
+                    }));
+                  }
+                } catch (e) {
+                  // Not a complete JSON object yet, accumulate
+                  fullDescription += event.content;
+                  setGeneratedResults(prev => ({
+                    ...prev,
+                    [brandVoice]: fullDescription
+                  }));
+                }
+              } else if (event.type === 'complete') {
+                fullDescription = event.result.description;
+                setGeneratedResults(prev => ({
+                  ...prev,
+                  [brandVoice]: fullDescription
+                }));
+                setIsStreaming(prev => ({ ...prev, [brandVoice]: false }));
+                resolve(fullDescription);
+                return;
+              } else if (event.type === 'error') {
+                setIsStreaming(prev => ({ ...prev, [brandVoice]: false }));
+                reject(new Error(event.message));
+                return;
+              }
+            }
+            
+            return readChunk();
+          });
+        };
+        
+        return readChunk();
+      })
+      .catch(error => {
+        setIsStreaming(prev => ({ ...prev, [brandVoice]: false }));
+        reject(error);
+      });
+    });
+  };
+
+  const generateMutation = useMutation({
+    mutationFn: async (data: GenerateForm) => {
+      const { productName, category, features, audience, shortInput, targetKeywords } = data;
+      
+      // Clear previous abort controllers
+      abortControllersRef.current.forEach(controller => controller.abort());
+      abortControllersRef.current = [];
+      
+      if (fastMode) {
+        // Fast Mode: Parallel streaming for all three styles
+        const abortController = new AbortController();
+        abortControllersRef.current.push(abortController);
+        
+        const streamingPromises = (['sales', 'seo', 'casual'] as const).map(voice =>
+          streamFastDescription(voice, data, abortController.signal)
+        );
+        
+        try {
+          const [sales, seo, casual] = await Promise.all(streamingPromises);
+          return { sales, seo, casual };
+        } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') {
+            throw new Error('Generation cancelled');
+          }
+          throw error;
+        }
+      } else {
+        // Quality Mode: Original multi-agent pipeline
+        const fullFeatures = [features, shortInput].filter(Boolean).join('. ');
+        
+        const promises = ['sales', 'seo', 'casual'].map(async (brandVoice) => {
+          const response = await apiRequest("POST", "/api/generate-description", {
+            productName,
+            category,
+            features: fullFeatures,
+            audience,
+            brandVoice,
+            keywords: targetKeywords,
+            specs: shortInput
+          });
+          
+          const result = await response.json();
+          return { brandVoice, description: result.description };
         });
         
-        const result = await response.json();
-        return { brandVoice, description: result.description };
-      });
-      
-      const results = await Promise.all(promises);
-      
-      const generatedResults: GeneratedResult = {};
-      results.forEach(({ brandVoice, description }) => {
-        if (brandVoice === 'sales') generatedResults.sales = description;
-        if (brandVoice === 'seo') generatedResults.seo = description;
-        if (brandVoice === 'casual') generatedResults.casual = description;
-      });
-      
-      return generatedResults;
+        const results = await Promise.all(promises);
+        
+        const generatedResults: GeneratedResult = {};
+        results.forEach(({ brandVoice, description }) => {
+          if (brandVoice === 'sales') generatedResults.sales = description;
+          if (brandVoice === 'seo') generatedResults.seo = description;
+          if (brandVoice === 'casual') generatedResults.casual = description;
+        });
+        
+        return generatedResults;
+      }
     },
     onSuccess: (result) => {
-      setGeneratedResults(result);
+      if (!fastMode) {
+        setGeneratedResults(result);
+      }
+      // In Fast Mode, results are already streamed in real-time
       toast({
         title: "🎉 AI Magic Complete!",
-        description: "Your product descriptions are ready in 3 powerful styles!",
+        description: fastMode 
+          ? "Lightning-fast descriptions generated in 2-3 seconds!"
+          : "Your product descriptions are ready in 3 powerful styles!",
       });
     },
     onError: (error: any) => {
+      setIsStreaming({ sales: false, seo: false, casual: false });
       toast({
         title: "Generation failed",
         description: error.message || "Failed to generate descriptions",
@@ -343,21 +520,44 @@ export default function SmartProductDescriptions() {
               </div>
             </div>
 
+            {/* Fast/Quality Mode Toggle */}
+            <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+              <div className="flex items-center space-x-3">
+                <Gauge className={`w-5 h-5 ${fastMode ? 'text-green-400' : 'text-blue-400'}`} />
+                <div>
+                  <div className="font-medium text-white">
+                    {fastMode ? 'Fast Mode' : 'Quality Mode'}
+                  </div>
+                  <div className="text-sm text-slate-400">
+                    {fastMode 
+                      ? '2-3 seconds • Real-time streaming • GPT-4o-mini' 
+                      : '15-25 seconds • Best quality • Multi-agent pipeline'}
+                  </div>
+                </div>
+              </div>
+              <Switch
+                checked={fastMode}
+                onCheckedChange={setFastMode}
+                disabled={generateMutation.isPending}
+                data-testid="switch-fast-mode"
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full gradient-button"
-              disabled={generateMutation.isPending}
+              disabled={generateMutation.isPending || Object.values(isStreaming).some(v => v)}
               data-testid="button-generate"
             >
-              {generateMutation.isPending ? (
+              {generateMutation.isPending || Object.values(isStreaming).some(v => v) ? (
                 <>
                   <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  Zyra AI is working her magic...
+                  {fastMode ? 'Streaming AI magic...' : 'Zyra AI is working her magic...'}
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Generate 3 Styles
+                  Generate 3 Styles {fastMode && '(Fast!)'}
                 </>
               )}
             </Button>
