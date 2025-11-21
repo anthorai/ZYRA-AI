@@ -6088,7 +6088,8 @@ Output format: Markdown with clear section headings.`;
 
       const shopInfo = await shopInfoResponse.json();
       const shopName = shopInfo.shop?.name || shop;
-      console.log('✅ Shop info received:', shopName);
+      const storeCurrency = shopInfo.shop?.currency || 'USD'; // Extract store currency (INR, USD, EUR, etc.)
+      console.log('✅ Shop info received:', { shopName, currency: storeCurrency });
 
       // Handle new installation without userId (fresh from App Store)
       if (isNewInstallation) {
@@ -6112,7 +6113,7 @@ Output format: Markdown with clear section headings.`;
         await db.insert(oauthStates).values({
           state: `pending_meta_${pendingState}`,
           userId: null,
-          shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: `https://${shop}` }),
+          shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: `https://${shop}`, currency: storeCurrency }),
           expiresAt,
         });
         
@@ -6161,9 +6162,10 @@ Output format: Markdown with clear section headings.`;
           storeName: shopName,
           storeUrl: `https://${shop}`,
           accessToken,
+          currency: storeCurrency, // Save store currency for multi-currency display
           status: 'active'
         });
-        console.log('✅ Connection created successfully');
+        console.log('✅ Connection created successfully with currency:', storeCurrency);
       }
 
       // Step 8: Register mandatory Shopify webhooks for compliance
@@ -6344,7 +6346,7 @@ Output format: Markdown with clear section headings.`;
       // Extract connection details from stored metadata
       const shopDomain = pendingRecord[0].shopDomain;
       const metadata = JSON.parse(metaRecord[0].shopDomain); // Temporary storage in shopDomain field
-      const { shopName, accessToken, storeUrl } = metadata;
+      const { shopName, accessToken, storeUrl, currency } = metadata;
       
       // Create Shopify connection
       await supabaseStorage.createStoreConnection({
@@ -6353,6 +6355,7 @@ Output format: Markdown with clear section headings.`;
         storeName: shopName,
         storeUrl,
         accessToken,
+        currency: currency || 'USD', // Save currency for multi-currency display
         status: 'active'
       });
 
@@ -8283,6 +8286,18 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { period = 'current' } = req.query; // 'current' or 'previous' month
       
+      // Fetch user's store currency for multi-currency display
+      let storeCurrency = 'USD'; // Default fallback
+      try {
+        const connections = await supabaseStorage.getStoreConnections(userId);
+        const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+        if (shopifyConnection?.currency) {
+          storeCurrency = shopifyConnection.currency;
+        }
+      } catch (currencyError) {
+        console.warn('[ROI] Could not fetch store currency, defaulting to USD:', currencyError);
+      }
+      
       const now = new Date();
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -8429,7 +8444,8 @@ Output format: Markdown with clear section headings.`;
         comparison: {
           change: Math.round(monthOverMonthChange * 10) / 10,
           trend: monthOverMonthChange > 0 ? 'up' : (monthOverMonthChange < 0 ? 'down' : 'neutral') as 'up' | 'down' | 'neutral'
-        }
+        },
+        currency: storeCurrency // Include store currency for proper display formatting
       });
     } catch (error) {
       console.error('[ROI] Get ROI summary error:', error);

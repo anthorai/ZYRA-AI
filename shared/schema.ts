@@ -596,6 +596,7 @@ export const storeConnections = pgTable("store_connections", {
   storeUrl: text("store_url"),
   accessToken: text("access_token").notNull(),
   refreshToken: text("refresh_token"),
+  currency: text("currency").default("USD"), // Store's currency code (USD, INR, EUR, GBP, etc.)
   status: text("status").notNull().default("active"), // 'active' | 'inactive' | 'error'
   lastSyncAt: timestamp("last_sync_at"),
   createdAt: timestamp("created_at").default(sql`NOW()`),

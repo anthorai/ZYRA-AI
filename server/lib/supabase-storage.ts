@@ -356,6 +356,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       status: data.status,
+      currency: data.currency || null, // ISO 4217 currency code (USD, INR, EUR, etc.)
       lastSyncAt: data.last_sync_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at
@@ -383,6 +384,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       access_token: storeConnection.accessToken,
       refresh_token: storeConnection.refreshToken,
       status: storeConnection.status || 'active',
+      currency: storeConnection.currency || null, // Store's native currency (INR, USD, EUR, etc.)
       last_sync_at: storeConnection.lastSyncAt,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -408,6 +410,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (updates.accessToken !== undefined) updateData.access_token = updates.accessToken;
     if (updates.refreshToken !== undefined) updateData.refresh_token = updates.refreshToken;
     if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.currency !== undefined) updateData.currency = updates.currency; // Store's native currency
     if (updates.lastSyncAt !== undefined) updateData.last_sync_at = updates.lastSyncAt;
 
     const { data, error } = await supabase

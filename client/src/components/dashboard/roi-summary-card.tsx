@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DollarSign, TrendingUp, TrendingDown, Minus, ShoppingCart, Mail, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useROISummary } from "@/hooks/use-roi-summary";
+import { formatCurrency } from "@/lib/utils";
 
 export function ROISummaryCard() {
   const { data, isLoading } = useROISummary();
@@ -58,6 +59,7 @@ export function ROISummaryCard() {
   const currentTotal = data?.currentMonth.total || 0;
   const breakdown = data?.currentMonth.breakdown || { cartRecovery: 0, campaigns: 0, aiOptimization: 0 };
   const change = data?.comparison.change || 0;
+  const currency = data?.currency || 'USD';
 
   return (
     <Card 
@@ -90,7 +92,7 @@ export function ROISummaryCard() {
         <div className="p-6 bg-slate-800/40 rounded-xl border border-slate-700/50">
           <div className="flex items-baseline gap-4 flex-wrap">
             <h2 className="text-5xl font-bold text-white" data-testid="text-total-revenue">
-              ${currentTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(currentTotal, currency)}
             </h2>
             <div className={`flex items-center gap-2 ${getTrendColor()}`}>
               {getTrendIcon()}
@@ -113,7 +115,7 @@ export function ROISummaryCard() {
               <h3 className="text-sm font-semibold text-slate-300">Cart Recovery</h3>
             </div>
             <p className="text-2xl font-bold text-white" data-testid="text-cart-recovery-revenue">
-              ${breakdown.cartRecovery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(breakdown.cartRecovery, currency)}
             </p>
             <p className="text-xs text-slate-400 mt-1">
               {currentTotal > 0 ? `${((breakdown.cartRecovery / currentTotal) * 100).toFixed(1)}%` : '0%'} of total
@@ -129,7 +131,7 @@ export function ROISummaryCard() {
               <h3 className="text-sm font-semibold text-slate-300">Marketing Campaigns</h3>
             </div>
             <p className="text-2xl font-bold text-white" data-testid="text-campaign-revenue">
-              ${breakdown.campaigns.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(breakdown.campaigns, currency)}
             </p>
             <p className="text-xs text-slate-400 mt-1">
               {currentTotal > 0 ? `${((breakdown.campaigns / currentTotal) * 100).toFixed(1)}%` : '0%'} of total
@@ -145,7 +147,7 @@ export function ROISummaryCard() {
               <h3 className="text-sm font-semibold text-slate-300">AI Optimization</h3>
             </div>
             <p className="text-2xl font-bold text-white" data-testid="text-ai-optimization-revenue">
-              ${breakdown.aiOptimization.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(breakdown.aiOptimization, currency)}
             </p>
             <p className="text-xs text-slate-400 mt-1">
               {currentTotal > 0 ? `${((breakdown.aiOptimization / currentTotal) * 100).toFixed(1)}%` : '0%'} of total
@@ -159,7 +161,7 @@ export function ROISummaryCard() {
             <p className="text-sm text-slate-400">
               Previous month ({data.previousMonth.period}): 
               <span className="text-white font-semibold ml-2">
-                ${data.previousMonth.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatCurrency(data.previousMonth.total, currency)}
               </span>
             </p>
           </div>

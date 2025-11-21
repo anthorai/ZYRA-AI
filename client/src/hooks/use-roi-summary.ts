@@ -23,6 +23,7 @@ export interface ROISummaryData {
     change: number;
     trend: 'up' | 'down' | 'neutral';
   };
+  currency: string; // ISO 4217 currency code (USD, INR, EUR, GBP, etc.)
 }
 
 /**
@@ -59,6 +60,7 @@ export function useROISummary() {
       change: 0,
       trend: 'neutral' as const,
     },
+    currency: 'USD', // Default currency until data loads
   };
 
   return {
