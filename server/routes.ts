@@ -7139,7 +7139,14 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { products: productUpdates } = req.body;
 
+      console.log('📦 [BULK PUBLISH] Request received:', {
+        userId,
+        productCount: productUpdates?.length,
+        productIds: productUpdates?.map(p => p.productId)
+      });
+
       if (!Array.isArray(productUpdates) || productUpdates.length === 0) {
+        console.log('❌ [BULK PUBLISH] Invalid products array');
         return res.status(400).json({ error: 'Invalid products array' });
       }
 
@@ -7165,6 +7172,8 @@ Output format: Markdown with clear section headings.`;
 
       for (const update of productUpdates) {
         try {
+          console.log('🔍 [BULK PUBLISH] Processing product:', update.productId);
+          
           const product = await db.query.products.findFirst({
             where: and(
               eq(products.id, update.productId),
@@ -7173,9 +7182,16 @@ Output format: Markdown with clear section headings.`;
           });
 
           if (!product) {
+            console.log('❌ [BULK PUBLISH] Product not found:', update.productId);
             errors.push({ productId: update.productId, error: 'Product not found' });
             continue;
           }
+          
+          console.log('✅ [BULK PUBLISH] Product found:', {
+            id: product.id,
+            name: product.name,
+            shopifyId: product.shopifyId
+          });
 
           if (!product.shopifyId) {
             errors.push({ productId: update.productId, error: 'Not linked to Shopify' });
