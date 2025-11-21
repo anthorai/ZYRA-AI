@@ -990,6 +990,146 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Autonomous AI Future Section */}
+        <section className="relative py-20 px-4 sm:px-6 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,240,255,0.15),transparent_70%)]" />
+          
+          <div className="container mx-auto max-w-6xl relative z-10">
+            <div className="text-center mb-16">
+              <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
+                <Sparkles className="w-3 h-3 mr-1" />
+                The Future of E-Commerce
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                Your Store, <span className="bg-gradient-to-r from-[#00F0FF] via-[#00FFE5] to-[#FF00F5] bg-clip-text text-transparent">Managed by AI</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Zyra isn't just a tool—it's evolving into a fully autonomous AI store manager that runs your business 24/7. 
+                No manual work. No constant monitoring. Just growth on autopilot.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <Card className="gradient-card border-0 hover-elevate">
+                <CardContent className="p-8">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Cog className="w-6 h-6 text-primary animate-spin-slow" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold mb-3">Autonomous Mode</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Turn on autopilot and Zyra takes over. AI automatically optimizes products, adjusts pricing, 
+                        sends marketing campaigns, and recovers carts—while you sleep.
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-primary">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Set it and forget it</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="gradient-card border-0 hover-elevate">
+                <CardContent className="p-8">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Users className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold mb-3">Manual Approval Mode</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Prefer control? AI creates smart recommendations, you approve what you like. 
+                        Get AI superpowers without giving up decision-making authority.
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-primary">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>You're still in charge</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-8 mb-12">
+              <h3 className="text-2xl font-bold mb-8 text-center">
+                <Rocket className="w-6 h-6 inline mr-2 text-primary" />
+                What the AI Does Autonomously
+              </h3>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-md flex items-center justify-center flex-shrink-0">
+                    <Search className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Daily SEO Audits</h4>
+                    <p className="text-sm text-muted-foreground">AI scans products, finds SEO gaps, fixes them automatically</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-md flex items-center justify-center flex-shrink-0">
+                    <DollarSign className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Dynamic Pricing</h4>
+                    <p className="text-sm text-muted-foreground">Adjusts prices based on competition, demand, and profit goals</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-md flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Smart Marketing</h4>
+                    <p className="text-sm text-muted-foreground">Sends emails & SMS at optimal times with A/B testing built-in</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-md flex items-center justify-center flex-shrink-0">
+                    <ShoppingCart className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Cart Recovery</h4>
+                    <p className="text-sm text-muted-foreground">Multi-stage sequences that escalate from email to SMS</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-xl p-8 text-center">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Shield className="w-5 h-5 text-primary" />
+                <h3 className="text-xl font-bold">Built-In Safety Guardrails</h3>
+              </div>
+              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Zyra's autonomous mode includes intelligent safety limits: daily action caps, price bounds, 
+                frequency limits, quiet hours, GDPR compliance, and one-click rollback. Your store is protected.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+                <Badge variant="outline" className="bg-background/50">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Respects Quiet Hours
+                </Badge>
+                <Badge variant="outline" className="bg-background/50">
+                  <Target className="w-3 h-3 mr-1" />
+                  Daily Limits
+                </Badge>
+                <Badge variant="outline" className="bg-background/50">
+                  <Shield className="w-3 h-3 mr-1" />
+                  GDPR Safe
+                </Badge>
+                <Badge variant="outline" className="bg-background/50">
+                  <Activity className="w-3 h-3 mr-1" />
+                  One-Click Undo
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Pricing Section (Enhanced) */}
         <section id="pricing" className="py-16 sm:py-20 px-4 sm:px-6 bg-muted/30">
           <div className="container mx-auto">
