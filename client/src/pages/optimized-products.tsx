@@ -8,6 +8,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { formatCurrency } from "@/lib/utils";
 import type { products } from "@shared/schema";
 import { 
   ShoppingBag, 
@@ -30,7 +31,7 @@ import {
 type Product = typeof products.$inferSelect;
 
 interface AISuggestion {
-  type: 'description' | 'title' | 'price' | 'meta';
+  type: 'description' | 'title' | 'pricing' | 'meta';
   severity: 'info' | 'warning' | 'success';
   message: string;
   reason: string;
@@ -89,18 +90,18 @@ function analyzeProduct(product: any): AISuggestion[] {
     });
   }
   
-  // Price Analysis
+  // Pricing Analysis
   const price = parseFloat(product.price?.toString() || '0');
   if (price === 0) {
     suggestions.push({
-      type: 'price',
+      type: 'pricing',
       severity: 'warning',
       message: 'Price not set',
       reason: 'Products without prices cannot be sold. Set a competitive price based on market research.'
     });
   } else if (!product.tags || product.tags.length === 0) {
     suggestions.push({
-      type: 'price',
+      type: 'pricing',
       severity: 'info',
       message: 'Add tags for better categorization',
       reason: 'Product tags help with internal search and customer discovery.'
@@ -184,7 +185,7 @@ function SuggestionCard({ suggestions, activeTab }: { suggestions: AISuggestion[
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, currency }: { product: Product, currency: string }) {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('description');
   const optimizedCopy = product.optimizedCopy as any;
@@ -357,7 +358,7 @@ function ProductCard({ product }: { product: Product }) {
 
           {/* Pricing Tab */}
           <TabsContent value="pricing" className="space-y-4" data-testid={`content-pricing-${product.id}`}>
-            <SuggestionCard suggestions={suggestions} activeTab="price" />
+            <SuggestionCard suggestions={suggestions} activeTab="pricing" />
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-slate-900/50 border-slate-700/50">
@@ -366,7 +367,7 @@ function ProductCard({ product }: { product: Product }) {
                 </CardHeader>
                 <CardContent>
                   <p className="text-white text-2xl font-bold">
-                    ${parseFloat(product.price?.toString() || '0').toFixed(2)}
+                    {formatCurrency(parseFloat(product.price?.toString() || '0'), currency)}
                   </p>
                 </CardContent>
               </Card>
@@ -475,6 +476,13 @@ function ProductCard({ product }: { product: Product }) {
 export default function OptimizedProducts() {
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Fetch store currency
+  const { data: storeData } = useQuery<{ currency: string }>({
+    queryKey: ['/api/store/currency'],
+    enabled: !!user,
+  });
+  const currency = storeData?.currency || 'USD';
 
   // Fetch optimized products from API
   const { data: products = [], isLoading, error, isError, refetch } = useQuery<Product[]>({
@@ -616,7 +624,7 @@ export default function OptimizedProducts() {
           </Card>
         ) : (
           optimizedProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} currency={currency} />
           ))
         )}
       </div>
