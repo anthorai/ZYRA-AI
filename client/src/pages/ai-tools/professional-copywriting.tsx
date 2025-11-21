@@ -300,12 +300,17 @@ export default function ProfessionalCopywriting() {
       let progress = 0;
       let completed = false;
       let buffer = ''; // Buffer for incomplete SSE lines
+      let errorMessage: string | null = null;
       
       try {
         while (true) {
           const { done, value } = await reader.read();
           
           if (done) {
+            // Stream ended - if we have an error, throw it
+            if (errorMessage) {
+              throw new Error(errorMessage);
+            }
             // Stream ended - if we haven't received a complete event, this is an error
             if (!completed) {
               throw new Error('Stream ended unexpectedly without completion');
@@ -340,7 +345,10 @@ export default function ProfessionalCopywriting() {
                   setIsGenerating(false);
                   return data.result;
                 } else if (data.type === 'error') {
-                  throw new Error(data.message);
+                  // Store error message and mark as completed to allow cleanup
+                  errorMessage = data.message;
+                  completed = true; // Mark as completed so stream can close gracefully
+                  break; // Exit the event processing loop
                 }
               } catch (parseError) {
                 console.error('Failed to parse SSE data:', parseError, 'Event:', event);
@@ -348,10 +356,20 @@ export default function ProfessionalCopywriting() {
               }
             }
           }
+          
+          // If we got an error, break out of the main loop
+          if (errorMessage) {
+            break;
+          }
         }
       } finally {
         // Always clean up, even if there was an error
         reader.releaseLock();
+      }
+      
+      // After cleanup, throw error if one was received
+      if (errorMessage) {
+        throw new Error(errorMessage);
       }
     } catch (error) {
       setIsGenerating(false);
