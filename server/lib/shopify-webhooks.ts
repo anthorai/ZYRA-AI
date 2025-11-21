@@ -44,6 +44,11 @@ export async function registerShopifyWebhooks(
       topic: 'shop/redact',
       address: `${baseUrl}/api/webhooks/shopify/shop/redact`,
       format: 'json'
+    },
+    {
+      topic: 'orders/paid',
+      address: `${baseUrl}/api/webhooks/shopify/orders/paid`,
+      format: 'json'
     }
   ];
 
@@ -128,7 +133,8 @@ export async function verifyWebhooksRegistered(
     'app/uninstalled',
     'customers/data_request',
     'customers/redact',
-    'shop/redact'
+    'shop/redact',
+    'orders/paid'
   ];
 
   try {

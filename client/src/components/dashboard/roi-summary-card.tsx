@@ -1,39 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DollarSign, TrendingUp, TrendingDown, Minus, ShoppingCart, Mail, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface ROISummaryData {
-  currentMonth: {
-    total: number;
-    period: string;
-    breakdown: {
-      cartRecovery: number;
-      campaigns: number;
-      aiOptimization: number;
-    };
-  };
-  previousMonth: {
-    total: number;
-    period: string;
-    breakdown: {
-      cartRecovery: number;
-      campaigns: number;
-      aiOptimization: number;
-    };
-  };
-  comparison: {
-    change: number;
-    trend: 'up' | 'down' | 'neutral';
-  };
-}
+import { useROISummary } from "@/hooks/use-roi-summary";
 
 export function ROISummaryCard() {
-  const { data, isLoading } = useQuery<ROISummaryData>({
-    queryKey: ['/api/analytics/roi-summary'],
-    refetchInterval: 30000,
-  });
+  const { data, isLoading } = useROISummary();
 
   const getTrendIcon = () => {
     if (!data) return <Minus className="w-5 h-5" />;

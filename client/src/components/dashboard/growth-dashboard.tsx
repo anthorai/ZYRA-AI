@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useROISummary } from "@/hooks/use-roi-summary";
 import { CardGrid } from "@/components/ui/standardized-layout";
 import { GradientPageHeader } from "@/components/ui/page-hero";
 import { ROISummaryCard } from "@/components/dashboard/roi-summary-card";
@@ -120,6 +121,9 @@ export default function GrowthDashboard() {
     refetchInterval: 30000,
   });
 
+  // Fetch ROI summary for revenue breakdown using shared hook
+  const { data: roiSummary } = useROISummary();
+
   // Log campaign stats errors
   if (campaignStatsError) {
     console.error('Failed to fetch campaign stats:', campaignStatsError);
@@ -151,38 +155,44 @@ export default function GrowthDashboard() {
       avgConversionRate: 0
     };
 
+    // Revenue data from ROI summary with safe defaults during loading
+    const cartRecoveryRevenue = roiSummary?.currentMonth?.breakdown?.cartRecovery ?? 0;
+    const campaignRevenue = roiSummary?.currentMonth?.breakdown?.campaigns ?? 0;
+    const aiOptimizationRevenue = roiSummary?.currentMonth?.breakdown?.aiOptimization ?? 0;
+    const recoveredCarts = cartRecoveryData?.overview?.recoveredCarts ?? 0;
+
     return [
       {
-        id: 'optimized-products',
-        title: 'Optimized Products',
-        description: 'Products enhanced by Zyra AI with improved descriptions and SEO',
+        id: 'cart-recovery',
+        title: 'Cart Recovery',
+        description: 'Revenue recovered from abandoned cart campaigns this month',
         icon: <ShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: usageStats.productsOptimized?.toString() || '0',
-        change: usageStats.productsOptimized > 0 ? `+${usageStats.productsOptimized} optimized` : 'No products yet',
-        trend: usageStats.productsOptimized > 0 ? 'up' : 'neutral',
-        actionText: 'View Products',
+        value: `$${(cartRecoveryRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: recoveredCarts > 0 ? `${recoveredCarts} carts recovered` : 'No recoveries yet',
+        trend: cartRecoveryRevenue > 0 ? 'up' : 'neutral',
+        actionText: 'View Details',
         category: 'metric'
       },
       {
         id: 'email-performance',
-        title: 'Email Performance',
-        description: 'Email open rates and click-through performance analytics',
+        title: 'Email Campaigns',
+        description: 'Revenue generated from email marketing campaigns',
         icon: <Mail className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: campaigns.emailCampaigns > 0 ? `${campaigns.avgOpenRate.toFixed(1)}%` : '0%',
-        change: campaigns.emailCampaigns > 0 ? `${campaigns.emailCampaigns} campaigns sent` : 'No campaigns yet',
-        trend: campaigns.avgOpenRate > 0 ? 'up' : 'neutral',
+        value: `$${(campaignRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: campaigns.emailCampaigns > 0 ? `${campaigns.avgOpenRate.toFixed(1)}% open rate, ${campaigns.emailCampaigns} sent` : 'No campaigns yet',
+        trend: campaignRevenue > 0 ? 'up' : 'neutral',
         actionText: 'View Analytics',
         category: 'performance'
       },
       {
-        id: 'sms-conversion',
-        title: 'SMS Conversion',
-        description: 'SMS recovery campaigns and sales conversion tracking',
-        icon: <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: campaigns.smsCampaigns > 0 ? `${campaigns.avgConversionRate.toFixed(1)}%` : '0%',
-        change: campaigns.smsCampaigns > 0 ? `${campaigns.smsCampaigns} SMS sent` : 'No SMS campaigns yet',
-        trend: campaigns.avgConversionRate > 0 ? 'up' : 'neutral',
-        actionText: 'View Campaigns',
+        id: 'ai-optimization',
+        title: 'AI Optimization',
+        description: 'Revenue lift from AI-enhanced product descriptions and SEO',
+        icon: <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
+        value: `$${(aiOptimizationRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: usageStats.productsOptimized > 0 ? `${usageStats.productsOptimized} products optimized` : 'No optimizations yet',
+        trend: aiOptimizationRevenue > 0 ? 'up' : 'neutral',
+        actionText: 'View Products',
         category: 'performance'
       },
       {

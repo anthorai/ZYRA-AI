@@ -2703,6 +2703,10 @@ Output format: Markdown with clear section headings.`;
         updates.originalCopy = existingProduct.optimizedCopy || null;
       }
 
+      // Record baseline metrics before optimization
+      const { recordProductOptimizationForProduct } = await import('./lib/record-product-optimization');
+      await recordProductOptimizationForProduct(userId, existingProduct);
+
       // Apply optimized content
       if (optimizedDescription) {
         updates.description = optimizedDescription;
@@ -2788,6 +2792,10 @@ Output format: Markdown with clear section headings.`;
             errors.push({ productId, error: "Unauthorized" });
             continue;
           }
+
+          // Record baseline metrics before optimization
+          const { recordProductOptimizationForProduct } = await import('./lib/record-product-optimization');
+          await recordProductOptimizationForProduct(userId, existingProduct);
 
           // Backup and apply content
           const updates: any = {};
@@ -7090,6 +7098,10 @@ Output format: Markdown with clear section headings.`;
           .where(eq(products.id, productId));
       }
 
+      // Record baseline metrics before optimization
+      const { recordProductOptimizationForProduct } = await import('./lib/record-product-optimization');
+      await recordProductOptimizationForProduct(userId, product);
+
       // Publish content to Shopify
       const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
 
@@ -8968,6 +8980,81 @@ Output format: Markdown with clear section headings.`;
       console.log('✅ Shop data redaction completed for:', shop_domain, 'at', new Date().toISOString());
     } catch (error) {
       console.error('❌ Error handling shop redact webhook:', error);
+      // Error is logged but doesn't affect response (already sent)
+    }
+  });
+
+  // 5. Orders Paid Webhook - Track product sales for conversion lift attribution
+  app.post('/api/webhooks/shopify/orders/paid', verifyShopifyWebhook, async (req, res) => {
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    res.status(200).json({ success: true });
+    
+    // Process order data asynchronously after responding
+    try {
+      const orderData = req.body;
+      console.log('💰 Order paid webhook received:', {
+        order_id: orderData.id,
+        order_number: orderData.order_number,
+        total_price: orderData.total_price,
+        line_items_count: orderData.line_items?.length || 0
+      });
+
+      // Import conversion tracking helper
+      const { trackProductSale } = await import('./lib/conversion-tracking');
+
+      // Process each line item
+      for (const lineItem of orderData.line_items || []) {
+        try {
+          // Find product in our database by Shopify product ID
+          const shopifyProductId = lineItem.product_id?.toString();
+          if (!shopifyProductId) continue;
+
+          const [product] = await db
+            .select()
+            .from(products)
+            .where(eq(products.shopifyId, shopifyProductId))
+            .limit(1);
+
+          if (!product) {
+            console.log(`[Orders/Paid] Product not found in database: ${shopifyProductId}`);
+            continue;
+          }
+
+          // Only track if product is optimized
+          if (!product.isOptimized) {
+            console.log(`[Orders/Paid] Skipping non-optimized product: ${product.id}`);
+            continue;
+          }
+
+          // Calculate sale metrics using correct Shopify revenue field
+          // 1. price_set.shop_money.amount is per-unit, multiply by quantity
+          // 2. total_price already includes quantity, use directly
+          // 3. price is per-unit fallback, multiply by quantity
+          const saleAmount = lineItem.price_set?.shop_money?.amount 
+            ? parseFloat(lineItem.price_set.shop_money.amount) * (lineItem.quantity || 1)
+            : lineItem.total_price
+              ? parseFloat(lineItem.total_price)
+              : parseFloat(lineItem.price) * (lineItem.quantity || 1);
+
+          // Track the sale - this will calculate lift and create revenue attribution
+          // Note: For now, we use placeholder metrics. 
+          // TODO: Integrate Shopify Analytics API to get real views/conversions
+          await trackProductSale(product.userId, product.id, saleAmount, {
+            totalViews: 100, // Placeholder - replace with Shopify Analytics
+            totalConversions: 5, // Placeholder - replace with Shopify Analytics
+            totalRevenue: saleAmount // This sale's revenue
+          });
+
+          console.log(`[Orders/Paid] Tracked sale for optimized product ${product.id}: $${saleAmount}`);
+        } catch (itemError) {
+          console.error('[Orders/Paid] Error processing line item:', itemError);
+          // Continue processing other items
+        }
+      }
+
+      console.log('✅ Order processed for conversion tracking');
+    } catch (error) {
+      console.error('❌ Error handling orders/paid webhook:', error);
       // Error is logged but doesn't affect response (already sent)
     }
   });
