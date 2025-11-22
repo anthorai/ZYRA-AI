@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { GradientPageHeader } from "@/components/ui/page-hero";
+import { PageShell } from "@/components/ui/page-shell";
 import { 
   Zap, 
   Sparkles, 
@@ -191,29 +191,15 @@ Keywords: ${generatedSEO.keywords.join(", ")}
   };
 
   return (
-    <div className="min-h-screen pb-12">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="pt-6 pb-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => setLocation('/dashboard?tab=ai-tools')}
-            data-testid="button-back"
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to AI Tools
-          </Button>
-          
-          <GradientPageHeader
-            icon={<Zap className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />}
-            title="Ultimate Product SEO Engine"
-            subtitle="AI-powered SEO Titles, Descriptions & Meta Optimization — All in one place"
-          />
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+    <PageShell
+      title="Ultimate Product SEO Engine"
+      subtitle="AI-powered SEO Titles, Descriptions & Meta Optimization — All in one place"
+      backTo="/dashboard?tab=ai-tools"
+      maxWidth="xl"
+      spacing="normal"
+    >
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar: Product Loader + AI Insights */}
           <div className="lg:col-span-1 space-y-6">
             {/* Product Loader Card */}
@@ -614,7 +600,6 @@ Keywords: ${generatedSEO.keywords.join(", ")}
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }
