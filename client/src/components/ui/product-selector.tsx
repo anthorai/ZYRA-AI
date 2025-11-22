@@ -210,7 +210,7 @@ export function ProductSelector({
         )}
       </div>
 
-      <div className="relative" ref={dropdownRef}>
+      <div ref={dropdownRef}>
         <Button
           variant="outline"
           onClick={() => setIsOpen(!isOpen)}
@@ -227,7 +227,7 @@ export function ProductSelector({
         </Button>
 
         {isOpen && (
-          <div className="absolute z-[100] w-full mt-2 bg-popover border rounded-md shadow-lg overflow-hidden">
+          <div className="w-full mt-2 bg-popover border rounded-md shadow-lg overflow-hidden">
             {products.length === 0 && !isLoading && (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 No products found. Add products first.
