@@ -10536,6 +10536,157 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ========================
+  // BULK OPTIMIZATION ROUTES
+  // ========================
+
+  // Import bulk optimization service
+  const { BulkOptimizationService } = await import('./lib/bulk-optimization-service');
+  const bulkOptService = new BulkOptimizationService(storage);
+
+  // Create a new bulk optimization job
+  app.post("/api/bulk-optimization", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productIds } = req.body;
+
+      if (!Array.isArray(productIds) || productIds.length === 0) {
+        return res.status(400).json({ error: "Product IDs array is required" });
+      }
+
+      const job = await bulkOptService.createJob(userId, productIds);
+      res.json(job);
+    } catch (error: any) {
+      console.error("Error creating bulk optimization job:", error);
+      res.status(500).json({ error: error.message || "Failed to create bulk optimization job" });
+    }
+  });
+
+  // Get all bulk optimization jobs for user
+  app.get("/api/bulk-optimization", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const jobs = await storage.getBulkOptimizationJobs(userId);
+      res.json(jobs);
+    } catch (error: any) {
+      console.error("Error fetching bulk optimization jobs:", error);
+      res.status(500).json({ error: "Failed to fetch bulk optimization jobs" });
+    }
+  });
+
+  // Get single bulk optimization job with items
+  app.get("/api/bulk-optimization/:jobId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { jobId } = req.params;
+
+      const job = await storage.getBulkOptimizationJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Verify ownership
+      if (job.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      const items = await storage.getBulkOptimizationItems(jobId);
+      res.json({ ...job, items });
+    } catch (error: any) {
+      console.error("Error fetching bulk optimization job:", error);
+      res.status(500).json({ error: "Failed to fetch bulk optimization job" });
+    }
+  });
+
+  // Start processing a bulk optimization job
+  app.post("/api/bulk-optimization/:jobId/start", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { jobId } = req.params;
+
+      const job = await storage.getBulkOptimizationJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Verify ownership
+      if (job.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      // Prevent concurrent processing
+      if (job.status === 'processing') {
+        return res.status(409).json({ error: "Job is already being processed" });
+      }
+
+      if (job.status === 'completed') {
+        return res.status(400).json({ error: "Job is already completed" });
+      }
+
+      // Start processing asynchronously (don't await)
+      bulkOptService.processJob(jobId).catch(error => {
+        console.error(`Background job processing error for ${jobId}:`, error);
+      });
+
+      res.json({ message: "Job processing started", jobId });
+    } catch (error: any) {
+      console.error("Error starting bulk optimization job:", error);
+      res.status(500).json({ error: "Failed to start bulk optimization job" });
+    }
+  });
+
+  // Retry failed items in a job
+  app.post("/api/bulk-optimization/:jobId/retry", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { jobId } = req.params;
+
+      const job = await storage.getBulkOptimizationJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Verify ownership
+      if (job.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      // Start retry asynchronously
+      bulkOptService.retryFailedItems(jobId).catch(error => {
+        console.error(`Background retry error for ${jobId}:`, error);
+      });
+
+      res.json({ message: "Retry started", jobId });
+    } catch (error: any) {
+      console.error("Error retrying failed items:", error);
+      res.status(500).json({ error: "Failed to retry failed items" });
+    }
+  });
+
+  // Delete a bulk optimization job
+  app.delete("/api/bulk-optimization/:jobId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { jobId } = req.params;
+
+      const job = await storage.getBulkOptimizationJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // Verify ownership
+      if (job.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      await storage.deleteBulkOptimizationJob(jobId);
+      res.json({ message: "Job deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting bulk optimization job:", error);
+      res.status(500).json({ error: "Failed to delete bulk optimization job" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

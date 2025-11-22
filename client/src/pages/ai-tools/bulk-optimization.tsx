@@ -1,458 +1,487 @@
-import { useState, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector } from "@/components/ui/product-selector";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
   Package,
-  Upload,
-  Download,
   CheckCircle,
   Clock,
   FileText,
   Zap,
   AlertCircle,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  Trash2,
+  Play
 } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
-interface BulkJob {
+interface BulkOptimizationJob {
   id: string;
-  fileName: string;
-  totalProducts: number;
-  processedProducts: number;
-  status: 'uploading' | 'processing' | 'completed' | 'error';
-  results?: {
-    optimized: number;
-    errors: number;
-    downloadUrl?: string;
-  };
+  userId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  totalItems: number;
+  processedItems: number;
+  optimizedItems: number;
+  failedItems: number;
+  skippedItems: number;
+  progressPercentage: number;
+  totalTokensUsed: number;
+  estimatedCost: string;
+  createdAt: string;
+  completedAt: string | null;
+  updatedAt: string;
+  errorMessage: string | null;
+}
+
+interface BulkOptimizationItem {
+  id: string;
+  jobId: string;
+  productId: string;
+  productName: string;
+  status: 'pending' | 'processing' | 'optimized' | 'failed' | 'retrying' | 'skipped';
+  retryCount: number;
+  errorMessage: string | null;
+  seoTitle: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  keywords: string[] | null;
+  seoScore: number | null;
+  tokensUsed: number | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function BulkOptimization() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currentJob, setCurrentJob] = useState<BulkJob | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [viewingJobId, setViewingJobId] = useState<string | null>(null);
 
-
-  const bulkProcessMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const jobId = Math.random().toString(36).substr(2, 9);
-      
-      const job: BulkJob = {
-        id: jobId,
-        fileName: file.name,
-        totalProducts: 0,
-        processedProducts: 0,
-        status: 'uploading'
-      };
-      
-      setCurrentJob(job);
-
-      const formData = new FormData();
-      formData.append('csv', file);
-
-      const { supabase } = await import('@/lib/supabaseClient');
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token || '';
-
-      const response = await fetch('/api/products/bulk-optimize', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to process bulk optimization');
-      }
-
-      const result = await response.json();
-      
-      setCurrentJob(prev => prev ? { 
-        ...prev, 
-        totalProducts: result.totalProducts,
-        status: 'processing' 
-      } : null);
-
-      for (let i = 0; i <= result.optimized; i++) {
-        await new Promise(resolve => setTimeout(resolve, 30));
-        const progressPercent = (i / result.optimized) * 100;
-        setProgress(progressPercent);
-        setCurrentJob(prev => prev ? { ...prev, processedProducts: i } : null);
-      }
-      
-      return {
-        optimized: result.optimized,
-        errors: result.errors,
-        downloadUrl: `bulk-optimized-${jobId}.csv`,
-        results: result.results
-      };
+  // Fetch all jobs
+  const { data: jobs = [], isLoading: jobsLoading } = useQuery<BulkOptimizationJob[]>({
+    queryKey: ['/api/bulk-optimization'],
+    refetchInterval: (query) => {
+      // Refetch every 2 seconds if any job is processing
+      const hasProcessing = query.state.data?.some((job: BulkOptimizationJob) => job.status === 'processing');
+      return hasProcessing ? 2000 : false;
     },
-    onSuccess: (result) => {
-      setCurrentJob(prev => prev ? { 
-        ...prev, 
-        status: 'completed',
-        results: result
-      } : null);
-      
+  });
+
+  // Fetch job details with items
+  const { data: jobDetails, isLoading: jobDetailsLoading } = useQuery<BulkOptimizationJob & { items: BulkOptimizationItem[] }>({
+    queryKey: ['/api/bulk-optimization', viewingJobId],
+    enabled: !!viewingJobId,
+    refetchInterval: (query) => {
+      // Refetch every 2 seconds if job is processing
+      return query.state.data?.status === 'processing' ? 2000 : false;
+    },
+  });
+
+  // Create job mutation
+  const createJobMutation = useMutation({
+    mutationFn: async (productIds: string[]) => {
+      return await apiRequest('POST', '/api/bulk-optimization', { productIds });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bulk-optimization'] });
       toast({
-        title: "🎉 Bulk Optimization Complete!",
-        description: `Successfully optimized ${result.optimized} products. Download your results below.`,
+        title: "Job created successfully",
+        description: `Created bulk optimization job for ${selectedProducts.length} products`,
       });
+      setSelectedProductIds([]);
+      setSelectedProducts([]);
+      setViewingJobId(data.id);
     },
     onError: (error: any) => {
-      setCurrentJob(prev => prev ? { ...prev, status: 'error' } : null);
       toast({
-        title: "Bulk processing failed",
-        description: error.message || "Failed to process your CSV file",
+        title: "Failed to create job",
+        description: error.message || "An error occurred",
         variant: "destructive",
       });
     },
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.name.endsWith('.csv')) {
+  // Start job mutation
+  const startJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      return await apiRequest('POST', `/api/bulk-optimization/${jobId}/start`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bulk-optimization'] });
       toast({
-        title: "Invalid file format",
-        description: "Please upload a CSV file containing your product data",
+        title: "Job started",
+        description: "Bulk optimization is now processing in the background",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to start job",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Retry failed items mutation
+  const retryJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      return await apiRequest('POST', `/api/bulk-optimization/${jobId}/retry`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bulk-optimization'] });
+      toast({
+        title: "Retry started",
+        description: "Retrying failed items in the background",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to retry",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete job mutation
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      return await apiRequest('DELETE', `/api/bulk-optimization/${jobId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bulk-optimization'] });
+      setViewingJobId(null);
+      toast({
+        title: "Job deleted",
+        description: "Bulk optimization job has been deleted",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete job",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateJob = () => {
+    if (selectedProductIds.length === 0) {
+      toast({
+        title: "No products selected",
+        description: "Please select at least one product to optimize",
         variant: "destructive",
       });
       return;
     }
-
-    bulkProcessMutation.mutate(file);
+    createJobMutation.mutate(selectedProductIds);
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { variant: any; icon: any; label: string }> = {
+      pending: { variant: "secondary", icon: Clock, label: "Pending" },
+      processing: { variant: "default", icon: Zap, label: "Processing" },
+      completed: { variant: "default", icon: CheckCircle, label: "Completed" },
+      failed: { variant: "destructive", icon: AlertCircle, label: "Failed" },
+      optimized: { variant: "default", icon: CheckCircle, label: "Optimized" },
+      retrying: { variant: "secondary", icon: RefreshCw, label: "Retrying" },
+      skipped: { variant: "secondary", icon: AlertCircle, label: "Skipped" },
+    };
+
+    const config = variants[status] || variants.pending;
+    const Icon = config.icon;
+
+    return (
+      <Badge variant={config.variant} className="gap-1">
+        <Icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
   };
 
-  const downloadResults = () => {
-    toast({
-      title: "Download started",
-      description: "Your optimized products CSV is downloading...",
-    });
-  };
+  // If viewing a specific job
+  if (viewingJobId && jobDetails) {
+    return (
+      <PageShell
+        title="Bulk Optimization Job"
+        subtitle={`Job ID: ${viewingJobId}`}
+      >
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => setViewingJobId(null)}
+              data-testid="button-back-to-jobs"
+            >
+              ← Back to Jobs
+            </Button>
+            {jobDetails.status === 'pending' && (
+              <Button
+                onClick={() => startJobMutation.mutate(viewingJobId)}
+                disabled={startJobMutation.isPending}
+                data-testid="button-start-job"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Start Processing
+              </Button>
+            )}
+            {jobDetails.status === 'completed' && jobDetails.failedItems > 0 && (
+              <Button
+                onClick={() => retryJobMutation.mutate(viewingJobId)}
+                disabled={retryJobMutation.isPending}
+                data-testid="button-retry-failed"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry Failed Items ({jobDetails.failedItems})
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              onClick={() => deleteJobMutation.mutate(viewingJobId)}
+              disabled={deleteJobMutation.isPending}
+              data-testid="button-delete-job"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Job
+            </Button>
+          </div>
 
-  const resetJob = () => {
-    setCurrentJob(null);
-    setProgress(0);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+          <DashboardCard title="Job Progress" testId="card-job-progress">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-300">Status:</span>
+                  {getStatusBadge(jobDetails.status)}
+                </div>
+                <span className="text-sm text-slate-300">
+                  {jobDetails.processedItems} / {jobDetails.totalItems} items
+                </span>
+              </div>
+              <Progress value={jobDetails.progressPercentage} className="h-2" />
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{jobDetails.optimizedItems}</div>
+                  <div className="text-xs text-slate-400">Optimized</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">{jobDetails.failedItems}</div>
+                  <div className="text-xs text-slate-400">Failed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">{jobDetails.totalTokensUsed.toLocaleString()}</div>
+                  <div className="text-xs text-slate-400">Tokens Used</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-400">${parseFloat(jobDetails.estimatedCost).toFixed(4)}</div>
+                  <div className="text-xs text-slate-400">Est. Cost</div>
+                </div>
+              </div>
+            </div>
+          </DashboardCard>
 
+          <DashboardCard title="Individual Items" testId="card-job-items">
+            <div className="space-y-2">
+              {jobDetails.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30 hover-elevate"
+                  data-testid={`item-${item.id}`}
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-white">{item.productName}</div>
+                    {item.seoTitle && (
+                      <div className="text-sm text-slate-400 mt-1">SEO Title: {item.seoTitle}</div>
+                    )}
+                    {item.errorMessage && (
+                      <div className="text-sm text-red-400 mt-1">Error: {item.errorMessage}</div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {item.seoScore !== null && (
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-400">{item.seoScore}</div>
+                        <div className="text-xs text-slate-400">Score</div>
+                      </div>
+                    )}
+                    {item.tokensUsed !== null && (
+                      <div className="text-sm text-slate-400">{item.tokensUsed} tokens</div>
+                    )}
+                    {getStatusBadge(item.status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DashboardCard>
+        </div>
+      </PageShell>
+    );
+  }
+
+  // Main jobs list view
   return (
     <PageShell
       title="Bulk Optimization"
-      subtitle="Upload CSV files and optimize hundreds of products at once with AI"
-      
+      subtitle="Optimize multiple products at once using AI-powered batch processing"
     >
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6">
         <DashboardCard
           title="Bulk Processing Workflow"
-          description="Four simple steps to optimize your entire product catalog"
+          description="Three simple steps to optimize your entire product catalog"
           testId="card-workflow"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
-              <span className="text-slate-300 truncate">Upload CSV with product data</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">1</div>
+              <span className="text-slate-300">Select products from your catalog</span>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">2</div>
-              <span className="text-slate-300 truncate">AI optimizes descriptions & SEO</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">2</div>
+              <span className="text-slate-300">AI optimizes descriptions & SEO</span>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">3</div>
-              <span className="text-slate-300 truncate">Auto-generate tags & titles</span>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">4</div>
-              <span className="text-slate-300 truncate">Download optimized CSV</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">3</div>
+              <span className="text-slate-300">View results and apply changes</span>
             </div>
           </div>
         </DashboardCard>
 
-        {!currentJob && (
-          <>
-            <DashboardCard
-              title="Option 1: Select from Your Products"
-              description="Choose multiple products from your catalog for bulk optimization"
-              testId="card-select-products"
-            >
-              <ProductSelector
-                mode="multi"
-                label="Select Products for Bulk Optimization"
-                placeholder="Select multiple products..."
-                value={selectedProductIds}
-                onChange={(ids, products) => {
-                  if (Array.isArray(ids) && Array.isArray(products)) {
-                    setSelectedProductIds(ids);
-                    setSelectedProducts(products);
-                  }
-                }}
-                onProductSelect={(products) => {
-                  if (Array.isArray(products)) {
-                    setSelectedProducts(products);
-                    setSelectedProductIds(products.map(p => p.id));
-                  } else if (products === null) {
-                    setSelectedProducts([]);
-                    setSelectedProductIds([]);
-                  }
-                }}
-                showSelectedBadge={true}
-              />
-              
-              {selectedProducts.length > 0 && (
-                <div className="mt-6">
-                  <Button
-                    onClick={() => {
-                      // Create a fake job for the selected products
-                      const job: BulkJob = {
-                        id: Math.random().toString(36).substr(2, 9),
-                        fileName: `Selected Products (${selectedProducts.length})`,
-                        totalProducts: selectedProducts.length,
-                        processedProducts: 0,
-                        status: 'processing'
-                      };
-                      
-                      setCurrentJob(job);
-                      setProgress(0);
-                      
-                      // Simulate processing (in real implementation, this would call the bulk API)
-                      let processed = 0;
-                      const interval = setInterval(() => {
-                        processed++;
-                        const progressPercent = (processed / selectedProducts.length) * 100;
-                        setProgress(progressPercent);
-                        setCurrentJob(prev => prev ? { ...prev, processedProducts: processed } : null);
-                        
-                        if (processed >= selectedProducts.length) {
-                          clearInterval(interval);
-                          setCurrentJob(prev => prev ? {
-                            ...prev,
-                            status: 'completed',
-                            results: {
-                              optimized: selectedProducts.length,
-                              errors: 0,
-                              downloadUrl: `selected-products-${job.id}.csv`
-                            }
-                          } : null);
-                          
-                          toast({
-                            title: "🎉 Bulk Optimization Complete!",
-                            description: `Successfully optimized ${selectedProducts.length} products.`,
-                          });
-                        }
-                      }, 100);
-                    }}
-                    className="w-full gradient-button"
-                    data-testid="button-optimize-selected"
-                  >
-                    <Zap className="w-4 h-4 mr-2" />
-                    Optimize {selectedProducts.length} Selected Product{selectedProducts.length > 1 ? 's' : ''}
-                  </Button>
-                </div>
-              )}
-            </DashboardCard>
-
-            <div className="flex items-center gap-4 my-6">
-              <Separator className="flex-1" />
-              <span className="text-slate-400 text-sm">OR</span>
-              <Separator className="flex-1" />
-            </div>
-
-            <DashboardCard
-              title="Option 2: Upload CSV File"
-              description="Upload a CSV file with your product data. Zyra AI will optimize descriptions, generate SEO titles, and create tags for each product."
-              testId="card-upload"
-            >
-              <div 
-                className="border-2 border-dashed border-primary/30 rounded-lg p-12 text-center hover:border-primary/50 transition-colors cursor-pointer bg-slate-800/20"
-                onClick={handleUploadClick}
-                data-testid="upload-zone"
-              >
-                <Upload className="w-16 h-16 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Drag & drop your CSV file here</h3>
-                <p className="text-slate-300 mb-4">or click to browse and select your file</p>
-                <p className="text-sm text-slate-400">Supports CSV files up to 10MB with 20-100+ products</p>
-                <input 
-                  type="file" 
-                  ref={fileInputRef}
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                  className="hidden" 
-                  data-testid="input-file"
-                />
-              </div>
+        <DashboardCard
+          title="Create New Bulk Optimization Job"
+          description="Select products from your catalog to optimize with AI"
+          testId="card-create-job"
+        >
+          <div className="space-y-4">
+            <ProductSelector
+              mode="multi"
+              label="Select Products for Bulk Optimization"
+              placeholder="Select multiple products..."
+              value={selectedProductIds}
+              onChange={(ids, products) => {
+                if (Array.isArray(ids) && Array.isArray(products)) {
+                  setSelectedProductIds(ids);
+                  setSelectedProducts(products);
+                }
+              }}
+              onProductSelect={(products) => {
+                if (Array.isArray(products)) {
+                  setSelectedProducts(products);
+                  setSelectedProductIds(products.map(p => p.id));
+                } else if (products === null) {
+                  setSelectedProducts([]);
+                  setSelectedProductIds([]);
+                }
+              }}
+              showSelectedBadge={true}
+            />
             
-            <div className="mt-6 bg-slate-800/30 p-4 rounded-lg">
-              <h4 className="text-white font-medium mb-2">Required CSV Columns:</h4>
-              <div className="grid md:grid-cols-2 gap-2 text-sm text-slate-300">
-                <div>• product_name (required)</div>
-                <div>• category (optional)</div>
-                <div>• current_description (optional)</div>
-                <div>• price (optional)</div>
-                <div>• features (optional)</div>
-                <div>• target_audience (optional)</div>
-              </div>
+            {selectedProducts.length > 0 && (
+              <Button
+                onClick={handleCreateJob}
+                disabled={createJobMutation.isPending}
+                className="w-full"
+                data-testid="button-create-job"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Create Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''}
+              </Button>
+            )}
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
+          title="Your Bulk Optimization Jobs"
+          description="View and manage your bulk optimization jobs"
+          testId="card-jobs-list"
+        >
+          {jobsLoading ? (
+            <div className="text-center py-8 text-slate-400">Loading jobs...</div>
+          ) : jobs.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              No bulk optimization jobs yet. Create one above to get started!
             </div>
-            </DashboardCard>
-          </>
-        )}
-
-        {currentJob && (
-          <Card className="border-0 gradient-card rounded-xl sm:rounded-2xl">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl text-white flex items-center space-x-2">
-                    {currentJob.status === 'uploading' && <Clock className="w-6 h-6 text-blue-400 animate-spin" />}
-                    {currentJob.status === 'processing' && <Zap className="w-6 h-6 text-yellow-400 animate-pulse" />}
-                    {currentJob.status === 'completed' && <CheckCircle className="w-6 h-6 text-green-400" />}
-                    {currentJob.status === 'error' && <AlertCircle className="w-6 h-6 text-red-400" />}
-                    <span>
-                      {currentJob.status === 'uploading' && 'Uploading...'}
-                      {currentJob.status === 'processing' && 'Processing...'}
-                      {currentJob.status === 'completed' && 'Completed!'}
-                      {currentJob.status === 'error' && 'Error'}
-                    </span>
-                  </CardTitle>
-                  <CardDescription className="text-slate-300">
-                    File: {currentJob.fileName} ({currentJob.totalProducts} products)
-                  </CardDescription>
-                </div>
-                {currentJob.status === 'completed' && (
-                  <Button onClick={resetJob} variant="outline" className="text-white border-slate-600" data-testid="button-process-another">
-                    Process Another File
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {(currentJob.status === 'uploading' || currentJob.status === 'processing') && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-300">
-                      {currentJob.status === 'uploading' ? 'Uploading and analyzing...' : 'Optimizing products...'}
-                    </span>
-                    <span className="text-white">
-                      {currentJob.processedProducts} / {currentJob.totalProducts}
-                    </span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-                </div>
-              )}
-
-              {currentJob.status === 'completed' && currentJob.results && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                    <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-green-900/20 border-green-400/30">
-                      <CardContent className="p-3 sm:p-4 md:p-6 text-center">
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-400 mx-auto mb-2 flex-shrink-0" />
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">{currentJob.results.optimized}</div>
-                        <div className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate">Products Optimized</div>
-                      </CardContent>
-                    </Card>
-                    
-                    {currentJob.results.errors > 0 && (
-                      <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-red-900/20 border-red-400/30">
-                        <CardContent className="p-3 sm:p-4 md:p-6 text-center">
-                          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-red-400 mx-auto mb-2 flex-shrink-0" />
-                          <div className="text-base sm:text-lg md:text-xl font-bold text-white">{currentJob.results.errors}</div>
-                          <div className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate">Errors</div>
-                        </CardContent>
-                      </Card>
+          ) : (
+            <div className="space-y-3">
+              {jobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30 hover-elevate cursor-pointer"
+                  onClick={() => setViewingJobId(job.id)}
+                  data-testid={`job-${job.id}`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-white">{job.totalItems} Products</span>
+                      {getStatusBadge(job.status)}
+                    </div>
+                    <div className="text-sm text-slate-400 mt-1">
+                      Created: {new Date(job.createdAt).toLocaleString()}
+                    </div>
+                    {job.status === 'processing' && (
+                      <Progress value={job.progressPercentage} className="h-1 mt-2" />
                     )}
-
-                    <Card className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl bg-blue-900/20 border-blue-400/30">
-                      <CardContent className="p-3 sm:p-4 md:p-6 text-center">
-                        <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-blue-400 mx-auto mb-2 flex-shrink-0" />
-                        <div className="text-base sm:text-lg md:text-xl font-bold text-white">
-                          {Math.round((currentJob.results.optimized / currentJob.totalProducts) * 100)}%
-                        </div>
-                        <div className="text-[10px] sm:text-xs md:text-sm text-slate-300 truncate">Success Rate</div>
-                      </CardContent>
-                    </Card>
                   </div>
-
-                  <Button 
-                    onClick={downloadResults}
-                    className="w-full gradient-button"
-                    data-testid="button-download"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Optimized CSV
-                  </Button>
-                </div>
-              )}
-
-              {currentJob.status === 'error' && (
-                <div className="text-center space-y-4">
-                  <AlertCircle className="w-16 h-16 text-red-400 mx-auto" />
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Processing Failed</h3>
-                    <p className="text-slate-300">Please check your CSV format and try again.</p>
+                  <div className="text-right space-y-1">
+                    <div className="text-sm">
+                      <span className="text-green-400">{job.optimizedItems} optimized</span>
+                      {job.failedItems > 0 && (
+                        <span className="text-red-400 ml-2">{job.failedItems} failed</span>
+                      )}
+                    </div>
+                    {job.status === 'completed' && (
+                      <div className="text-xs text-slate-400">
+                        ${parseFloat(job.estimatedCost).toFixed(4)} • {job.totalTokensUsed.toLocaleString()} tokens
+                      </div>
+                    )}
                   </div>
-                  <Button onClick={resetJob} className="gradient-button" data-testid="button-try-again">
-                    Try Again
-                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+              ))}
+            </div>
+          )}
+        </DashboardCard>
 
         <DashboardCard
           title="What Gets Optimized"
           description="AI-powered enhancements for your entire product catalog"
           testId="card-features"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            <div className="flex items-start space-x-2 sm:space-x-3 min-w-0">
-              <FileText className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary mt-1 flex-shrink-0" />
-              <div className="min-w-0">
-                <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Product Descriptions</h4>
-                <p className="text-slate-300 text-[10px] sm:text-xs md:text-sm">AI rewrites descriptions for better engagement and SEO</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex items-start space-x-3">
+              <FileText className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+              <div>
+                <h4 className="text-white font-medium text-lg">Product Descriptions</h4>
+                <p className="text-slate-300 text-sm">AI rewrites descriptions for better engagement and SEO</p>
               </div>
             </div>
-            <div className="flex items-start space-x-2 sm:space-x-3 min-w-0">
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary mt-1 flex-shrink-0" />
-              <div className="min-w-0">
-                <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">SEO Titles</h4>
-                <p className="text-slate-300 text-[10px] sm:text-xs md:text-sm">Keyword-rich titles optimized for search rankings</p>
+            <div className="flex items-start space-x-3">
+              <Zap className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+              <div>
+                <h4 className="text-white font-medium text-lg">SEO Titles</h4>
+                <p className="text-slate-300 text-sm">Keyword-rich titles optimized for search rankings</p>
               </div>
             </div>
-            <div className="flex items-start space-x-2 sm:space-x-3 min-w-0">
-              <Package className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary mt-1 flex-shrink-0" />
-              <div className="min-w-0">
-                <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Product Tags</h4>
-                <p className="text-slate-300 text-[10px] sm:text-xs md:text-sm">Auto-generated tags for better categorization</p>
+            <div className="flex items-start space-x-3">
+              <Package className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+              <div>
+                <h4 className="text-white font-medium text-lg">Keywords</h4>
+                <p className="text-slate-300 text-sm">Auto-generated keywords for better categorization</p>
               </div>
             </div>
-            <div className="flex items-start space-x-2 sm:space-x-3 min-w-0">
-              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary mt-1 flex-shrink-0" />
-              <div className="min-w-0">
-                <h4 className="text-white font-medium text-base sm:text-lg md:text-xl truncate">Meta Descriptions</h4>
-                <p className="text-slate-300 text-[10px] sm:text-xs md:text-sm">Search-optimized meta descriptions for each product</p>
+            <div className="flex items-start space-x-3">
+              <BarChart3 className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+              <div>
+                <h4 className="text-white font-medium text-lg">Meta Descriptions</h4>
+                <p className="text-slate-300 text-sm">Search-optimized meta descriptions for each product</p>
               </div>
             </div>
           </div>

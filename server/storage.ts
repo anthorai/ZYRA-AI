@@ -57,6 +57,10 @@ import {
   type InsertLearningPattern,
   type ContentQualityScore,
   type InsertContentQualityScore,
+  type BulkOptimizationJob,
+  type InsertBulkOptimizationJob,
+  type BulkOptimizationItem,
+  type InsertBulkOptimizationItem,
   users, 
   products, 
   seoMeta, 
@@ -83,7 +87,10 @@ import {
   sessions,
   contentPerformance,
   learningPatterns,
-  contentQualityScores
+  contentQualityScores,
+  bulkOptimizationJobs,
+  bulkOptimizationItems,
+  productSeoHistory
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 // Using Supabase for authentication - no local password handling needed
@@ -270,6 +277,19 @@ export interface IStorage {
   deleteSession(sessionId: string): Promise<void>;
   deleteUserSessions(userId: string, excludeSessionId?: string): Promise<void>;
   cleanupExpiredSessions(): Promise<void>;
+
+  // Bulk Optimization methods
+  getBulkOptimizationJobs(userId: string): Promise<BulkOptimizationJob[]>;
+  getBulkOptimizationJob(jobId: string): Promise<BulkOptimizationJob | undefined>;
+  createBulkOptimizationJob(data: InsertBulkOptimizationJob): Promise<BulkOptimizationJob>;
+  updateBulkOptimizationJob(jobId: string, updates: Partial<BulkOptimizationJob>): Promise<BulkOptimizationJob>;
+  deleteBulkOptimizationJob(jobId: string): Promise<void>;
+  
+  getBulkOptimizationItems(jobId: string): Promise<BulkOptimizationItem[]>;
+  getBulkOptimizationItem(itemId: string): Promise<BulkOptimizationItem | undefined>;
+  createBulkOptimizationItem(data: InsertBulkOptimizationItem): Promise<BulkOptimizationItem>;
+  updateBulkOptimizationItem(itemId: string, updates: Partial<BulkOptimizationItem>): Promise<BulkOptimizationItem>;
+  deleteBulkOptimizationItem(itemId: string): Promise<void>;
 }
 
 export class DatabaseStorage {
@@ -910,6 +930,76 @@ export class DatabaseStorage {
       sql`${sessions.expiresAt} < NOW()`
     );
     console.log("[DB] Operation completed successfully: cleanupExpiredSessions");
+  }
+
+  // Bulk Optimization Job methods
+  async getBulkOptimizationJobs(userId: string): Promise<BulkOptimizationJob[]> {
+    if (!db) throw new Error("Database not configured");
+    return await db.select().from(bulkOptimizationJobs)
+      .where(eq(bulkOptimizationJobs.userId, userId))
+      .orderBy(desc(bulkOptimizationJobs.createdAt));
+  }
+
+  async getBulkOptimizationJob(jobId: string): Promise<BulkOptimizationJob | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(bulkOptimizationJobs)
+      .where(eq(bulkOptimizationJobs.id, jobId));
+    return result[0];
+  }
+
+  async createBulkOptimizationJob(data: InsertBulkOptimizationJob): Promise<BulkOptimizationJob> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(bulkOptimizationJobs).values(data).returning();
+    return result[0];
+  }
+
+  async updateBulkOptimizationJob(jobId: string, updates: Partial<BulkOptimizationJob>): Promise<BulkOptimizationJob> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(bulkOptimizationJobs)
+      .set(updates)
+      .where(eq(bulkOptimizationJobs.id, jobId))
+      .returning();
+    return result[0];
+  }
+
+  async deleteBulkOptimizationJob(jobId: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    await db.delete(bulkOptimizationJobs).where(eq(bulkOptimizationJobs.id, jobId));
+  }
+
+  // Bulk Optimization Item methods
+  async getBulkOptimizationItems(jobId: string): Promise<BulkOptimizationItem[]> {
+    if (!db) throw new Error("Database not configured");
+    return await db.select().from(bulkOptimizationItems)
+      .where(eq(bulkOptimizationItems.jobId, jobId))
+      .orderBy(bulkOptimizationItems.createdAt);
+  }
+
+  async getBulkOptimizationItem(itemId: string): Promise<BulkOptimizationItem | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(bulkOptimizationItems)
+      .where(eq(bulkOptimizationItems.id, itemId));
+    return result[0];
+  }
+
+  async createBulkOptimizationItem(data: InsertBulkOptimizationItem): Promise<BulkOptimizationItem> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(bulkOptimizationItems).values(data).returning();
+    return result[0];
+  }
+
+  async updateBulkOptimizationItem(itemId: string, updates: Partial<BulkOptimizationItem>): Promise<BulkOptimizationItem> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(bulkOptimizationItems)
+      .set(updates)
+      .where(eq(bulkOptimizationItems.id, itemId))
+      .returning();
+    return result[0];
+  }
+
+  async deleteBulkOptimizationItem(itemId: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    await db.delete(bulkOptimizationItems).where(eq(bulkOptimizationItems.id, itemId));
   }
 }
 
@@ -2150,6 +2240,47 @@ export class MemStorage {
 
   async cleanupExpiredSessions(): Promise<void> {
     // No-op in memory storage
+  }
+
+  // Bulk Optimization stub methods
+  async getBulkOptimizationJobs(userId: string): Promise<BulkOptimizationJob[]> {
+    return [];
+  }
+
+  async getBulkOptimizationJob(jobId: string): Promise<BulkOptimizationJob | undefined> {
+    return undefined;
+  }
+
+  async createBulkOptimizationJob(data: InsertBulkOptimizationJob): Promise<BulkOptimizationJob> {
+    throw new Error("Bulk optimization not supported in memory storage");
+  }
+
+  async updateBulkOptimizationJob(jobId: string, updates: Partial<BulkOptimizationJob>): Promise<BulkOptimizationJob> {
+    throw new Error("Bulk optimization not supported in memory storage");
+  }
+
+  async deleteBulkOptimizationJob(jobId: string): Promise<void> {
+    // No-op
+  }
+
+  async getBulkOptimizationItems(jobId: string): Promise<BulkOptimizationItem[]> {
+    return [];
+  }
+
+  async getBulkOptimizationItem(itemId: string): Promise<BulkOptimizationItem | undefined> {
+    return undefined;
+  }
+
+  async createBulkOptimizationItem(data: InsertBulkOptimizationItem): Promise<BulkOptimizationItem> {
+    throw new Error("Bulk optimization not supported in memory storage");
+  }
+
+  async updateBulkOptimizationItem(itemId: string, updates: Partial<BulkOptimizationItem>): Promise<BulkOptimizationItem> {
+    throw new Error("Bulk optimization not supported in memory storage");
+  }
+
+  async deleteBulkOptimizationItem(itemId: string): Promise<void> {
+    // No-op
   }
 }
 
