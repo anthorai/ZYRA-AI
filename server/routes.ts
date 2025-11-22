@@ -12,6 +12,7 @@ import {
   insertLoginLogSchema,
   insertSupportTicketSchema,
   insertAiGenerationHistorySchema,
+  insertProductSeoHistorySchema,
   insertCampaignSchema,
   insertCampaignTemplateSchema,
   insertAbandonedCartSchema,
@@ -2291,31 +2292,27 @@ Respond with JSON in this exact format:
   // Save Product SEO to History
   app.post("/api/save-product-seo", requireAuth, sanitizeBody, async (req, res) => {
     try {
-      const { productId, productName, seoTitle, seoDescription, metaTitle, metaDescription, keywords, seoScore, searchIntent, suggestedKeywords } = req.body;
       const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Validate the request body using Zod schema
+      const validation = insertProductSeoHistorySchema.safeParse({
+        ...req.body,
+        userId
+      });
 
-      if (!productName || !seoTitle || !metaDescription) {
-        return res.status(400).json({ message: "Required fields missing" });
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid data", 
+          errors: validation.error.errors 
+        });
       }
 
-      const saved = await storage.saveProductSEOHistory({
-        userId,
-        productId: productId || null,
-        productName,
-        seoTitle,
-        seoDescription,
-        metaTitle,
-        metaDescription,
-        keywords,
-        seoScore,
-        searchIntent,
-        suggestedKeywords
-      });
+      const saved = await storage.saveProductSEOHistory(validation.data);
 
       res.json({ success: true, message: "SEO content saved to history", data: saved });
     } catch (error: any) {
       console.error("Save product SEO error:", error);
-      res.status(500).json({ message: "Failed to save SEO content" });
+      res.status(500).json({ message: "Failed to save SEO content", error: error.message });
     }
   });
 

@@ -205,7 +205,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
       </div>
 
       <GradientPageHeader
-        icon={<Zap className="w-8 h-8 text-primary" />}
+        icon={<Zap className="w-8 h-8 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />}
         title="Ultimate Product SEO Engine"
         subtitle="AI-powered SEO Titles, Descriptions & Meta Optimization — All in one place"
       />
@@ -214,10 +214,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
         {/* Left Column: Product Loader + AI Insights */}
         <div className="lg:col-span-1 space-y-6">
           {/* Section 1: Product Loader Panel */}
-          <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm" data-testid="card-product-loader">
+          <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10" data-testid="card-product-loader">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-cyan-400">
-                <Target className="w-5 h-5" />
+                <Target className="w-5 h-5 drop-shadow-[0_0_6px_rgba(0,240,255,0.5)]" />
                 Product Loader
               </CardTitle>
               <CardDescription className="text-slate-400">
@@ -268,10 +268,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
           {/* Section 2: AI Ranking Insights Panel */}
           {generatedSEO && (
-            <Card className="border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-slate-800/80 backdrop-blur-sm" data-testid="card-ai-insights">
+            <Card className="border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-purple-500/10 animate-in fade-in-50 slide-in-from-bottom-4 duration-500" data-testid="card-ai-insights">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-purple-400">
-                  <BarChart3 className="w-5 h-5" />
+                  <BarChart3 className="w-5 h-5 drop-shadow-[0_0_6px_rgba(168,85,247,0.5)]" />
                   AI Ranking Insights
                 </CardTitle>
               </CardHeader>
@@ -329,12 +329,12 @@ Keywords: ${generatedSEO.keywords.join(", ")}
         {/* Right Column: Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Section 3: Optimize Button */}
-          <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm">
+          <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10">
             <CardContent className="pt-6">
               <Button
                 onClick={handleOptimize}
                 disabled={!selectedProduct || generateSEOMutation.isPending}
-                className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300"
+                className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:shadow-2xl hover:shadow-cyan-500/60 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 data-testid="button-optimize"
               >
                 {generateSEOMutation.isPending ? (
@@ -354,10 +354,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
           {/* Section 4: Output Tabs */}
           {generatedSEO && (
-            <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm" data-testid="card-output">
+            <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10 animate-in fade-in-50 slide-in-from-bottom-4 duration-500" data-testid="card-output">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-cyan-400">
-                  <Eye className="w-5 h-5" />
+                  <Eye className="w-5 h-5 drop-shadow-[0_0_6px_rgba(0,240,255,0.5)]" />
                   Generated SEO Content
                 </CardTitle>
               </CardHeader>
@@ -517,7 +517,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
           {/* Section 5: Action Buttons */}
           {generatedSEO && (
-            <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm">
+            <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
               <CardContent className="pt-6">
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -571,9 +571,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
       {/* Empty State */}
       {!generatedSEO && !generateSEOMutation.isPending && (
-        <Card className="border-slate-700/50 bg-slate-800/30">
+        <Card className="border-cyan-500/20 bg-gradient-to-br from-slate-900/40 to-slate-800/40 backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Sparkles className="w-16 h-16 text-cyan-500/50 mb-4" />
+            <Sparkles className="w-16 h-16 text-cyan-500/50 mb-4 animate-pulse drop-shadow-[0_0_12px_rgba(0,240,255,0.4)]" />
             <h3 className="text-xl font-semibold text-white mb-2">
               Ready to Optimize Your Product SEO
             </h3>
