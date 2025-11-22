@@ -16,6 +16,8 @@ export const recoveryChannelEnum = pgEnum('recovery_channel', ['email', 'sms', '
 export const marketingTriggerTypeEnum = pgEnum('marketing_trigger_type', ['cart_abandoned', 'inactive_customer', 'purchase_anniversary', 'product_view', 'low_stock', 'price_drop', 'new_arrival', 'custom']);
 export const customerSegmentEnum = pgEnum('customer_segment', ['hot', 'warm', 'cold', 'inactive']);
 export const cartRecoveryStageEnum = pgEnum('cart_recovery_stage', ['initial_reminder', 'first_discount', 'second_discount', 'final_offer']);
+export const bulkOptimizationJobStatusEnum = pgEnum('bulk_optimization_job_status', ['pending', 'processing', 'completed', 'failed', 'cancelled']);
+export const bulkOptimizationItemStatusEnum = pgEnum('bulk_optimization_item_status', ['pending', 'processing', 'optimized', 'failed', 'retrying', 'skipped']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1643,6 +1645,72 @@ export const cartRecoverySequences = pgTable("cart_recovery_sequences", {
   index('cart_sequences_stage_idx').on(table.stage),
 ]);
 
+// Bulk Optimization Jobs - Track batch SEO optimization jobs
+export const bulkOptimizationJobs = pgTable("bulk_optimization_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(), // User-friendly name for the batch
+  status: bulkOptimizationJobStatusEnum("status").notNull().default("pending"),
+  totalItems: integer("total_items").notNull().default(0),
+  processedItems: integer("processed_items").notNull().default(0),
+  optimizedItems: integer("optimized_items").notNull().default(0),
+  failedItems: integer("failed_items").notNull().default(0),
+  skippedItems: integer("skipped_items").notNull().default(0),
+  progressPercentage: integer("progress_percentage").notNull().default(0),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  estimatedCompletionTime: timestamp("estimated_completion_time"),
+  aiModel: text("ai_model").default("gpt-4o-mini"), // Track which model was used
+  totalTokensUsed: integer("total_tokens_used").default(0),
+  estimatedCost: numeric("estimated_cost", { precision: 10, scale: 4 }).default("0"),
+  metadata: jsonb("metadata"), // Additional job configuration
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('bulk_jobs_user_id_idx').on(table.userId),
+  index('bulk_jobs_status_idx').on(table.status),
+  index('bulk_jobs_created_at_idx').on(table.createdAt),
+]);
+
+// Bulk Optimization Items - Individual products within a batch job
+export const bulkOptimizationItems = pgTable("bulk_optimization_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").references(() => bulkOptimizationJobs.id, { onDelete: 'cascade' }).notNull(),
+  productId: varchar("product_id").references(() => products.id),
+  productName: text("product_name").notNull(),
+  category: text("category"),
+  keyFeatures: text("key_features"),
+  targetAudience: text("target_audience"),
+  status: bulkOptimizationItemStatusEnum("status").notNull().default("pending"),
+  retryCount: integer("retry_count").notNull().default(0),
+  maxRetries: integer("max_retries").notNull().default(3),
+  errorMessage: text("error_message"),
+  
+  // Generated SEO content
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  keywords: jsonb("keywords"), // Array of keywords
+  seoScore: integer("seo_score"),
+  searchIntent: text("search_intent"),
+  suggestedKeywords: jsonb("suggested_keywords"),
+  
+  // Tracking
+  tokensUsed: integer("tokens_used").default(0),
+  processingTimeMs: integer("processing_time_ms"),
+  publishedToShopify: boolean("published_to_shopify").default(false),
+  publishedAt: timestamp("published_at"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('bulk_items_job_id_idx').on(table.jobId),
+  index('bulk_items_status_idx').on(table.status),
+  index('bulk_items_product_id_idx').on(table.productId),
+]);
+
 // Insert schemas for advanced notification preferences
 export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
   id: true,
@@ -1702,6 +1770,18 @@ export const insertCartRecoverySequenceSchema = createInsertSchema(cartRecoveryS
   updatedAt: true,
 });
 
+export const insertBulkOptimizationJobSchema = createInsertSchema(bulkOptimizationJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBulkOptimizationItemSchema = createInsertSchema(bulkOptimizationItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types for advanced notification preferences
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
@@ -1749,3 +1829,9 @@ export type SendTimePreferences = typeof sendTimePreferences.$inferSelect;
 export type InsertSendTimePreferences = z.infer<typeof insertSendTimePreferencesSchema>;
 export type CartRecoverySequence = typeof cartRecoverySequences.$inferSelect;
 export type InsertCartRecoverySequence = z.infer<typeof insertCartRecoverySequenceSchema>;
+
+// Bulk Optimization Types
+export type BulkOptimizationJob = typeof bulkOptimizationJobs.$inferSelect;
+export type InsertBulkOptimizationJob = z.infer<typeof insertBulkOptimizationJobSchema>;
+export type BulkOptimizationItem = typeof bulkOptimizationItems.$inferSelect;
+export type InsertBulkOptimizationItem = z.infer<typeof insertBulkOptimizationItemSchema>;
