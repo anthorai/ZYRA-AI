@@ -217,24 +217,21 @@ export function ProductSelector({
               </div>
             )}
             {products.length > 0 && (
-              <div className="max-h-60 overflow-y-auto p-2">
-                {products.map((product, index) => (
+              <div className="max-h-60 overflow-y-auto p-2 space-y-2">
+                {products.map((product) => (
                   <div
                     key={product.id}
-                    className={cn(
-                      "flex items-start gap-3 p-3 rounded-md hover-elevate cursor-pointer transition-all",
-                      index !== products.length - 1 && "mb-1"
-                    )}
+                    className="flex items-start gap-3 p-3 rounded-md border border-border/50 hover-elevate cursor-pointer transition-all bg-background/50"
                     onClick={() => handleMultiToggle(product.id)}
                     data-testid={`checkbox-product-${product.id}`}
                   >
                     <Checkbox
                       checked={controlledValue.includes(product.id)}
                       onCheckedChange={() => handleMultiToggle(product.id)}
-                      className="mt-0.5"
+                      className="mt-0.5 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-snug mb-1">{product.name}</p>
+                      <p className="text-sm font-medium leading-tight mb-1.5">{product.name}</p>
                       <p className="text-xs text-muted-foreground">{product.category || 'Uncategorized'}</p>
                     </div>
                   </div>
