@@ -210,29 +210,31 @@ export function ProductSelector({
         </Button>
 
         {isOpen && (
-          <div className="absolute z-50 w-full mt-2 p-2 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          <div className="absolute z-50 w-full mt-2 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
             {products.length === 0 && !isLoading && (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 No products found. Add products first.
               </div>
             )}
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="flex items-center gap-3 p-2 rounded-md hover-elevate cursor-pointer"
-                onClick={() => handleMultiToggle(product.id)}
-                data-testid={`checkbox-product-${product.id}`}
-              >
-                <Checkbox
-                  checked={controlledValue.includes(product.id)}
-                  onCheckedChange={() => handleMultiToggle(product.id)}
-                />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-muted-foreground">{product.category}</p>
+            <div className="p-1 space-y-1">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-3 p-3 rounded-md hover-elevate cursor-pointer transition-colors"
+                  onClick={() => handleMultiToggle(product.id)}
+                  data-testid={`checkbox-product-${product.id}`}
+                >
+                  <Checkbox
+                    checked={controlledValue.includes(product.id)}
+                    onCheckedChange={() => handleMultiToggle(product.id)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">{product.category || 'Uncategorized'}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
