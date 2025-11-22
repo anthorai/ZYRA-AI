@@ -70,6 +70,30 @@ export const seoMeta = pgTable("seo_meta", {
   index('seo_meta_product_id_idx').on(table.productId),
 ]);
 
+// Product SEO History - Version control for SEO optimizations
+export const productSeoHistory = pgTable("product_seo_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id), // Optional - can generate without existing product
+  productName: text("product_name").notNull(),
+  seoTitle: text("seo_title").notNull(),
+  seoDescription: text("seo_description").notNull(),
+  metaTitle: text("meta_title").notNull(),
+  metaDescription: text("meta_description").notNull(),
+  keywords: jsonb("keywords").notNull(), // Array of keywords
+  seoScore: integer("seo_score"), // Predicted SEO score
+  searchIntent: text("search_intent"), // Primary search intent
+  suggestedKeywords: jsonb("suggested_keywords"), // AI-suggested keywords
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('product_seo_history_user_id_idx').on(table.userId),
+  index('product_seo_history_product_id_idx').on(table.productId),
+  index('product_seo_history_created_at_idx').on(table.createdAt),
+]);
+
+export type ProductSeoHistory = typeof productSeoHistory.$inferSelect;
+export type InsertProductSeoHistory = typeof productSeoHistory.$inferInsert;
+
 // Autonomous system tables
 export const autonomousActions = pgTable("autonomous_actions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

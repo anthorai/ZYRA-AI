@@ -12,6 +12,8 @@ import {
   type InsertProduct,
   type SeoMeta,
   type InsertSeoMeta,
+  type ProductSeoHistory,
+  type InsertProductSeoHistory,
   type Campaign,
   type InsertCampaign,
   type CampaignTemplate,
@@ -100,6 +102,8 @@ export interface ISupabaseStorage {
   getSeoMeta(productId: string): Promise<SeoMeta | undefined>;
   createSeoMeta(seoMeta: InsertSeoMeta): Promise<SeoMeta>;
   updateSeoMeta(id: string, updates: Partial<SeoMeta>): Promise<SeoMeta>;
+  saveProductSEOHistory(data: InsertProductSeoHistory): Promise<ProductSeoHistory>;
+  getProductSEOHistory(userId: string): Promise<ProductSeoHistory[]>;
 
   // Campaign methods
   getCampaigns(userId: string): Promise<Campaign[]>;
@@ -738,6 +742,41 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to update SEO meta: ${error.message}`);
     return data;
+  }
+
+  async saveProductSEOHistory(data: InsertProductSeoHistory): Promise<ProductSeoHistory> {
+    const { data: result, error } = await supabase
+      .from('product_seo_history')
+      .insert({
+        user_id: data.userId,
+        product_id: data.productId || null,
+        product_name: data.productName,
+        seo_title: data.seoTitle,
+        seo_description: data.seoDescription,
+        meta_title: data.metaTitle,
+        meta_description: data.metaDescription,
+        keywords: data.keywords,
+        seo_score: data.seoScore || null,
+        search_intent: data.searchIntent || null,
+        suggested_keywords: data.suggestedKeywords || null,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to save product SEO history: ${error.message}`);
+    return result;
+  }
+
+  async getProductSEOHistory(userId: string): Promise<ProductSeoHistory[]> {
+    const { data, error } = await supabase
+      .from('product_seo_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw new Error(`Failed to get product SEO history: ${error.message}`);
+    return data || [];
   }
 
   // Campaign methods

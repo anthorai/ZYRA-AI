@@ -75,10 +75,8 @@ const CampaignListPage = lazy(() => import("@/pages/campaigns/list"));
 const TemplatesPage = lazy(() => import("@/pages/templates"));
 
 // AI Tools pages
-const ProfessionalCopywriting = lazy(() => import("@/pages/ai-tools/professional-copywriting"));
-const SmartProductDescriptions = lazy(() => import("@/pages/ai-tools/smart-product-descriptions"));
+const ProductSeoEngine = lazy(() => import("@/pages/ai-tools/product-seo-engine"));
 const BulkOptimization = lazy(() => import("@/pages/ai-tools/bulk-optimization"));
-const SeoTitlesMeta = lazy(() => import("@/pages/ai-tools/seo-titles-meta"));
 const AIImageAltText = lazy(() => import("@/pages/ai-tools/ai-image-alt-text"));
 const DynamicTemplates = lazy(() => import("@/pages/ai-tools/dynamic-templates"));
 const BrandVoiceMemory = lazy(() => import("@/pages/ai-tools/brand-voice-memory"));
@@ -453,17 +451,10 @@ function Router() {
       )} />
       
       {/* AI Tools routes */}
-      <Route path="/ai-tools/professional-copywriting" component={() => (
+      <Route path="/ai-tools/product-seo-engine" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
-            <ProfessionalCopywriting />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/ai-tools/smart-product-descriptions" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <SmartProductDescriptions />
+            <ProductSeoEngine />
           </Suspense>
         </ProtectedRoute>
       )} />
@@ -471,13 +462,6 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <BulkOptimization />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/ai-tools/seo-titles-meta" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <SeoTitlesMeta />
           </Suspense>
         </ProtectedRoute>
       )} />

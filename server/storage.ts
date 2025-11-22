@@ -8,6 +8,8 @@ import {
   type InsertProduct,
   type SeoMeta,
   type InsertSeoMeta,
+  type ProductSeoHistory,
+  type InsertProductSeoHistory,
   type Campaign,
   type InsertCampaign,
   type CampaignTemplate,
@@ -126,6 +128,8 @@ export interface IStorage {
   getSeoMeta(productId: string): Promise<SeoMeta | undefined>;
   createSeoMeta(seoMeta: InsertSeoMeta): Promise<SeoMeta>;
   updateSeoMeta(productId: string, updates: Partial<SeoMeta>): Promise<SeoMeta>;
+  saveProductSEOHistory(data: InsertProductSeoHistory): Promise<ProductSeoHistory>;
+  getProductSEOHistory(userId: string): Promise<ProductSeoHistory[]>;
 
   // Campaign methods
   getCampaigns(userId: string): Promise<Campaign[]>;
@@ -913,6 +917,7 @@ export class MemStorage {
   private users: Map<string, User> = new Map();
   private products: Map<string, Product> = new Map();
   private seoMetas: Map<string, SeoMeta> = new Map();
+  private productSeoHistoryData: Map<string, ProductSeoHistory> = new Map();
   private campaigns: Map<string, Campaign> = new Map();
   private analyticsData: Map<string, Analytics> = new Map();
   private notificationsData: Map<string, Notification> = new Map();
@@ -1134,6 +1139,34 @@ export class MemStorage {
     const updated = { ...existing, ...updates };
     this.seoMetas.set(existing.id, updated);
     return updated;
+  }
+
+  async saveProductSEOHistory(data: InsertProductSeoHistory): Promise<ProductSeoHistory> {
+    const id = randomUUID();
+    const historyRecord: ProductSeoHistory = {
+      id,
+      userId: data.userId,
+      productId: data.productId || null,
+      productName: data.productName,
+      seoTitle: data.seoTitle,
+      seoDescription: data.seoDescription,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      keywords: JSON.parse(JSON.stringify(data.keywords)), // Deep clone array
+      seoScore: data.seoScore || null,
+      searchIntent: data.searchIntent || null,
+      suggestedKeywords: data.suggestedKeywords ? JSON.parse(JSON.stringify(data.suggestedKeywords)) : null, // Deep clone array
+      createdAt: new Date()
+    };
+    this.productSeoHistoryData.set(id, historyRecord);
+    return JSON.parse(JSON.stringify(historyRecord)); // Return deep clone
+  }
+
+  async getProductSEOHistory(userId: string): Promise<ProductSeoHistory[]> {
+    const history = Array.from(this.productSeoHistoryData.values())
+      .filter(record => record.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    return JSON.parse(JSON.stringify(history)); // Return deep clone
   }
 
   async getCampaigns(userId: string): Promise<Campaign[]> {

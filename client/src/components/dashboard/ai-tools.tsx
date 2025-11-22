@@ -110,25 +110,15 @@ export default function AITools() {
 
   const aiTools = [
     {
-      id: 'professional-copywriting',
-      title: 'Copywriting AI',
-      description: 'Multi-agent pipeline · AIDA/PAS/BAB frameworks · A/B variants · Quality scoring · Beat competitors',
-      icon: <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
+      id: 'product-seo-engine',
+      title: 'Ultimate Product SEO Engine',
+      description: 'AI-powered SEO Titles, Descriptions & Meta Optimization — All-in-one SEO powerhouse',
+      icon: <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
       category: 'new',
-      gradient: 'from-yellow-500 via-purple-500 to-blue-500',
-      actionText: 'Generate Pro Copy',
+      gradient: 'from-cyan-500 via-blue-500 to-purple-600',
+      actionText: 'Open SEO Engine',
       comingSoon: false,
       featured: true
-    },
-    {
-      id: 'product-descriptions',
-      title: 'AI Descriptions',
-      description: 'AI generates compelling descriptions in 3 styles: Sales, SEO, and Casual',
-      icon: <FileText className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-      category: 'existing',
-      gradient: 'from-blue-500 to-cyan-400',
-      actionText: 'Generate Descriptions',
-      comingSoon: false
     },
     {
       id: 'bulk-optimization',
@@ -138,16 +128,6 @@ export default function AITools() {
       category: 'existing', 
       gradient: 'from-green-500 to-emerald-400',
       actionText: 'Start Bulk Process',
-      comingSoon: false
-    },
-    {
-      id: 'seo-titles',
-      title: 'SEO Titles & Meta Tags',
-      description: 'Keyword-rich, AI-crafted titles and meta descriptions for better search rankings',
-      icon: <Search className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-      category: 'existing',
-      gradient: 'from-purple-500 to-violet-400', 
-      actionText: 'Generate SEO',
       comingSoon: false
     },
     {
@@ -232,17 +212,11 @@ export default function AITools() {
 
     // Navigate to dedicated AI tool pages
     switch (toolId) {
-      case 'professional-copywriting':
-        setLocation('/ai-tools/professional-copywriting');
-        break;
-      case 'product-descriptions':
-        setLocation('/ai-tools/smart-product-descriptions');
+      case 'product-seo-engine':
+        setLocation('/ai-tools/product-seo-engine');
         break;
       case 'bulk-optimization':
         setLocation('/ai-tools/bulk-optimization');
-        break;
-      case 'seo-titles':
-        setLocation('/ai-tools/seo-titles-meta');
         break;
       case 'image-alt-text':
         setLocation('/ai-tools/ai-image-alt-text');
