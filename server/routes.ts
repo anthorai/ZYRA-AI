@@ -7485,6 +7485,224 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== IMAGE OPTIMIZATION ROUTES =====
+  
+  // Create new bulk image optimization job
+  app.post('/api/image-optimization/jobs', requireAuth, aiLimiter, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productIds } = req.body;
+
+      if (!Array.isArray(productIds) || productIds.length === 0) {
+        return res.status(400).json({ error: 'Product IDs are required' });
+      }
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Initialize services
+      const { ImageOptimizationService } = await import('./lib/image-optimization-service');
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
+      const shopifyClient = await getShopifyClient(shopDomain, shopifyConnection.accessToken);
+      
+      const imageService = new ImageOptimizationService(supabaseStorage);
+
+      // Fetch product images from Shopify
+      const productImages = await imageService.fetchProductImages(userId, productIds, shopifyClient);
+
+      // Create job
+      const job = await imageService.createJob(userId, productImages);
+
+      res.json({
+        success: true,
+        job,
+        productImages
+      });
+
+    } catch (error: any) {
+      console.error('Create image optimization job error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create image optimization job',
+        details: error.message 
+      });
+    }
+  });
+
+  // Get all image optimization jobs for user
+  app.get('/api/image-optimization/jobs', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { ImageOptimizationService } = await import('./lib/image-optimization-service');
+      const imageService = new ImageOptimizationService(supabaseStorage);
+
+      const jobs = await imageService.getJobs(userId);
+      res.json(jobs);
+
+    } catch (error: any) {
+      console.error('Get image optimization jobs error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get image optimization jobs',
+        details: error.message 
+      });
+    }
+  });
+
+  // Get specific job with details
+  app.get('/api/image-optimization/jobs/:jobId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { jobId } = req.params;
+      const { ImageOptimizationService } = await import('./lib/image-optimization-service');
+      const imageService = new ImageOptimizationService(supabaseStorage);
+
+      const job = await imageService.getJob(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+
+      // Verify ownership
+      if (job.userId !== userId) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      res.json(job);
+
+    } catch (error: any) {
+      console.error('Get image optimization job error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get image optimization job',
+        details: error.message 
+      });
+    }
+  });
+
+  // Process an image optimization job
+  app.post('/api/image-optimization/jobs/:jobId/process', requireAuth, aiLimiter, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { jobId } = req.params;
+      
+      const { ImageOptimizationService } = await import('./lib/image-optimization-service');
+      const imageService = new ImageOptimizationService(supabaseStorage);
+
+      // Get job and verify ownership
+      const job = await imageService.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+      if (job.userId !== userId) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
+      const shopifyClient = await getShopifyClient(shopDomain, shopifyConnection.accessToken);
+
+      // Process job asynchronously
+      res.json({
+        success: true,
+        message: 'Job processing started',
+        jobId
+      });
+
+      // Process in background (don't await)
+      imageService.processJob(jobId, shopifyClient).catch(error => {
+        console.error('Background job processing error:', error);
+      });
+
+    } catch (error: any) {
+      console.error('Process image optimization job error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process image optimization job',
+        details: error.message 
+      });
+    }
+  });
+
+  // Get optimization history
+  app.get('/api/image-optimization/history', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId, jobId } = req.query;
+      
+      const { ImageOptimizationService } = await import('./lib/image-optimization-service');
+      const imageService = new ImageOptimizationService(supabaseStorage);
+
+      const filters: any = {};
+      if (productId) filters.productId = productId as string;
+      if (jobId) filters.jobId = jobId as string;
+
+      const history = await imageService.getHistory(userId, filters);
+      res.json(history);
+
+    } catch (error: any) {
+      console.error('Get optimization history error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get optimization history',
+        details: error.message 
+      });
+    }
+  });
+
+  // Apply optimized alt-text to Shopify
+  app.post('/api/image-optimization/apply-to-shopify', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { historyIds } = req.body;
+
+      if (!Array.isArray(historyIds) || historyIds.length === 0) {
+        return res.status(400).json({ error: 'History IDs are required' });
+      }
+
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      const { ImageOptimizationService } = await import('./lib/image-optimization-service');
+      const { getShopifyClient } = await import('./lib/shopify-client');
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
+      const shopifyClient = await getShopifyClient(shopDomain, shopifyConnection.accessToken);
+      
+      const imageService = new ImageOptimizationService(supabaseStorage);
+
+      // Apply to Shopify
+      const result = await imageService.applyToShopify(historyIds, shopifyClient);
+
+      res.json({
+        success: true,
+        applied: result.success,
+        failed: result.failed,
+        message: `Successfully applied ${result.success} alt-texts to Shopify`
+      });
+
+    } catch (error: any) {
+      console.error('Apply to Shopify error:', error);
+      res.status(500).json({ 
+        error: 'Failed to apply alt-text to Shopify',
+        details: error.message 
+      });
+    }
+  });
+
   // ===== CAMPAIGN ROUTES =====
   
   // Get all campaigns

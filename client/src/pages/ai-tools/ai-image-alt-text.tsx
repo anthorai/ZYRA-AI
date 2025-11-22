@@ -1,420 +1,524 @@
-import { useState, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Image as ImageIcon,
-  Upload,
-  Copy,
+  Sparkles,
   CheckCircle,
+  AlertCircle,
   Clock,
-  Zap,
-  Eye,
   X,
-  Sparkles
+  ExternalLink,
+  RefreshCw,
+  Zap
 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Card } from "@/components/ui/card";
 
-interface GeneratedAltText {
-  short: string;
-  medium: string;
-  long: string;
-  seoOptimized: string;
+interface Product {
+  id: string;
+  name: string;
+  shopifyId?: string;
+}
+
+interface BulkImageJob {
+  id: string;
+  name: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  totalProducts: number;
+  totalImages: number;
+  processedImages: number;
+  optimizedImages: number;
+  failedImages: number;
+  missingImageProducts: number;
+  progressPercentage: number;
+  totalTokensUsed: number;
+  estimatedCost: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+interface ProductImageInfo {
+  productId: string;
+  productName: string;
+  shopifyProductId?: string;
+  images: Array<{
+    id: string;
+    url: string;
+    alt?: string;
+    position: number;
+  }>;
+  hasImages: boolean;
+  imageCount: number;
+}
+
+interface ImageOptimizationHistory {
+  id: string;
+  productName: string;
+  imageUrl: string;
+  oldAltText: string | null;
+  newAltText: string;
+  appliedToShopify: boolean;
+  createdAt: string;
+  aiAnalysis: {
+    objects: string[];
+    colors: string[];
+    style: string;
+    useCase: string;
+    keywords: string[];
+  };
 }
 
 export default function AIImageAltText() {
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
-  const [generatedAltTexts, setGeneratedAltTexts] = useState<GeneratedAltText | null>(null);
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [currentJob, setCurrentJob] = useState<BulkImageJob | null>(null);
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<string[]>([]);
 
-  const generateAltTextMutation = useMutation({
-    mutationFn: async (image: File) => {
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const fileName = image.name.toLowerCase();
-      
-      let context = "product";
-      let subject = "item";
-      let details = "";
-      
-      if (fileName.includes('headphone') || fileName.includes('audio')) {
-        subject = "wireless headphones";
-        details = "over-ear design with noise cancellation and premium padding";
-      } else if (fileName.includes('shirt') || fileName.includes('clothing')) {
-        subject = "casual shirt";
-        details = "button-front design with modern fit";
-      } else if (fileName.includes('phone') || fileName.includes('mobile')) {
-        subject = "smartphone";
-        details = "edge-to-edge display with advanced camera system";
-      } else if (fileName.includes('shoe') || fileName.includes('sneaker')) {
-        subject = "athletic shoes";
-        details = "comfortable running design with breathable material";
-      }
-      
-      return {
-        short: `${subject} on display`,
-        medium: `Professional product photo of ${subject} showcasing key features`,
-        long: `High-quality product image featuring ${subject} with ${details}, shot in professional lighting against a clean background`,
-        seoOptimized: `Buy ${subject} - ${details} | Free shipping available | Premium quality ${subject} for sale`
-      };
-    },
-    onSuccess: (result) => {
-      setGeneratedAltTexts(result);
-      toast({
-        title: "✨ Alt Texts Generated!",
-        description: "AI has analyzed your image and created SEO-optimized descriptions.",
+  // Fetch user's products
+  const { data: products = [], isLoading: loadingProducts } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  // Fetch image optimization jobs
+  const { data: jobs = [], refetch: refetchJobs } = useQuery<BulkImageJob[]>({
+    queryKey: ['/api/image-optimization/jobs'],
+  });
+
+  // Fetch optimization history
+  const { data: history = [], refetch: refetchHistory } = useQuery<ImageOptimizationHistory[]>({
+    queryKey: ['/api/image-optimization/history'],
+  });
+
+  // Create job mutation
+  const createJobMutation = useMutation({
+    mutationFn: async (productIds: string[]) => {
+      const response = await fetch('/api/image-optimization/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ productIds }),
       });
+      if (!response.ok) throw new Error('Failed to create job');
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Job Created!",
+        description: `Processing ${data.job.totalImages} images from ${data.job.totalProducts} products`,
+      });
+      setCurrentJob(data.job);
+      setShowProductSelector(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/image-optimization/jobs'] });
     },
     onError: (error: any) => {
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate alt texts",
+        title: "Failed to create job",
+        description: error.message || "Unable to create optimization job",
         variant: "destructive",
       });
     },
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
+  // Process job mutation
+  const processJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const response = await fetch(`/api/image-optimization/jobs/${jobId}/process`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to process job');
+      return response.json();
+    },
+    onSuccess: () => {
       toast({
-        title: "Invalid file",
-        description: "Please upload an image file",
+        title: "Processing Started!",
+        description: "AI is now analyzing your product images",
+      });
+      // Poll for updates
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/image-optimization/jobs'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/image-optimization/history'] });
+      }, 5000);
+      
+      setTimeout(() => clearInterval(interval), 60000); // Stop after 1 minute
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to process job",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Apply to Shopify mutation
+  const applyToShopifyMutation = useMutation({
+    mutationFn: async (historyIds: string[]) => {
+      const response = await fetch('/api/image-optimization/apply-to-shopify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ historyIds }),
+      });
+      if (!response.ok) throw new Error('Failed to apply changes');
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Applied to Shopify!",
+        description: `Successfully updated ${data.applied} image alt-texts`,
+      });
+      setSelectedHistoryIds([]);
+      refetchHistory();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to apply changes",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateJob = () => {
+    if (selectedProducts.length === 0) {
+      toast({
+        title: "No products selected",
+        description: "Please select at least one product",
         variant: "destructive",
       });
       return;
     }
-
-    setUploadedImage(file);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    createJobMutation.mutate(selectedProducts);
   };
 
-  const handleGenerate = () => {
-    if (!uploadedImage) {
-      toast({
-        title: "No image",
-        description: "Please upload an image first",
-        variant: "destructive",
-      });
-      return;
-    }
-    generateAltTextMutation.mutate(uploadedImage);
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
   };
 
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copied!",
-        description: `${type} alt text copied to clipboard.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Copy failed",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
-    }
+  const toggleHistorySelection = (historyId: string) => {
+    setSelectedHistoryIds(prev => 
+      prev.includes(historyId) 
+        ? prev.filter(id => id !== historyId)
+        : [...prev, historyId]
+    );
   };
 
-  const clearImage = () => {
-    setUploadedImage(null);
-    setImagePreview("");
-    setGeneratedAltTexts(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+  const latestJob = jobs[0];
+  const pendingOptimizations = history.filter((h: ImageOptimizationHistory) => !h.appliedToShopify);
 
   return (
     <PageShell
-      title="AI Image Alt Text Generator"
-      subtitle="Generate SEO-optimized alt text descriptions for your product images using AI vision analysis"
-      
+      title="AI Image Alt-Text Optimization"
+      subtitle="Automatically generate SEO-optimized alt-text for all your product images using AI Vision"
     >
+      {/* Overview Cards */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <DashboardCard
+          title="Total Images Optimized"
+          description="Across all jobs"
+          testId="card-total-optimized"
+        >
+          <div className="flex items-center justify-between">
+            <div className="text-3xl font-bold text-white">
+              {jobs.reduce((sum: number, job: BulkImageJob) => sum + job.optimizedImages, 0)}
+            </div>
+            <ImageIcon className="w-10 h-10 text-primary" />
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
+          title="Pending Optimizations"
+          description="Ready to apply to Shopify"
+          testId="card-pending"
+        >
+          <div className="flex items-center justify-between">
+            <div className="text-3xl font-bold text-white">
+              {pendingOptimizations.length}
+            </div>
+            <Clock className="w-10 h-10 text-yellow-400" />
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
+          title="Active Jobs"
+          description="Currently processing"
+          testId="card-active-jobs"
+        >
+          <div className="flex items-center justify-between">
+            <div className="text-3xl font-bold text-white">
+              {jobs.filter((j: BulkImageJob) => j.status === 'processing').length}
+            </div>
+            <Sparkles className="w-10 h-10 text-primary" />
+          </div>
+        </DashboardCard>
+      </div>
+
+      {/* Create New Job */}
       <DashboardCard
-        title="How It Works"
-        description="AI vision analyzes your images to create accessible and SEO-friendly alt text"
+        title="Create Optimization Job"
+        description="Select products to optimize their image alt-texts"
       >
-        <div className="grid md:grid-cols-4 gap-4 text-sm">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
-            <span className="text-slate-300">Upload product image</span>
+        <div className="space-y-4">
+          <div className="grid md:grid-cols-4 gap-4 text-sm">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">1</div>
+              <span className="text-slate-300">Select products</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">2</div>
+              <span className="text-slate-300">AI analyzes images</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">3</div>
+              <span className="text-slate-300">Generate alt-texts</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">4</div>
+              <span className="text-slate-300">Apply to Shopify</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">2</div>
-            <span className="text-slate-300">AI analyzes visual content</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">3</div>
-            <span className="text-slate-300">Generate multiple alt text options</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">4</div>
-            <span className="text-slate-300">Copy and use in your store</span>
-          </div>
+
+          <Button
+            onClick={() => setShowProductSelector(true)}
+            className="w-full gradient-button"
+            disabled={loadingProducts}
+            data-testid="button-select-products"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Select Products & Start Optimization
+          </Button>
         </div>
       </DashboardCard>
 
-      <DashboardCard
-        title="Upload Image"
-        description="Upload a product image to generate AI-powered alt text descriptions"
-      >
-        <div className="space-y-6">
-          {!imagePreview ? (
-            <div 
-              className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer bg-slate-800/20"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Upload Product Image</h3>
-              <p className="text-slate-300">Click to browse or drag & drop an image</p>
-              <p className="text-sm text-slate-400 mt-2">JPG, PNG, WebP up to 10MB</p>
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden" 
-                data-testid="input-image"
-              />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="relative rounded-lg overflow-hidden border border-slate-700">
-                <img 
-                  src={imagePreview} 
-                  alt="Uploaded product" 
-                  className="w-full h-64 object-contain bg-slate-900"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={clearImage}
-                  className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white"
-                  data-testid="button-clear-image"
-                >
-                  <X className="w-5 h-5" />
-                </Button>
+      {/* Latest Job Status */}
+      {latestJob && (
+        <DashboardCard
+          title="Latest Job"
+          description={`Created ${new Date(latestJob.createdAt).toLocaleDateString()}`}
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{latestJob.name}</h3>
+                <p className="text-sm text-slate-400">
+                  {latestJob.totalImages} images from {latestJob.totalProducts} products
+                </p>
               </div>
+              <Badge variant={latestJob.status === 'completed' ? 'default' : 'secondary'}>
+                {latestJob.status}
+              </Badge>
+            </div>
 
+            {latestJob.status === 'processing' && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-300">Progress</span>
+                  <span className="text-white">{latestJob.progressPercentage}%</span>
+                </div>
+                <Progress value={latestJob.progressPercentage} />
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-slate-400">Processed</p>
+                <p className="text-white font-semibold">{latestJob.processedImages}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Optimized</p>
+                <p className="text-green-400 font-semibold">{latestJob.optimizedImages}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Failed</p>
+                <p className="text-red-400 font-semibold">{latestJob.failedImages}</p>
+              </div>
+            </div>
+
+            {latestJob.status === 'pending' && (
               <Button
-                onClick={handleGenerate}
-                disabled={generateAltTextMutation.isPending}
-                className="w-full gradient-button"
-                data-testid="button-generate"
+                onClick={() => processJobMutation.mutate(latestJob.id)}
+                disabled={processJobMutation.isPending}
+                className="w-full"
+                data-testid="button-start-processing"
               >
-                {generateAltTextMutation.isPending ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    AI analyzing image...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Generate Alt Text
-                  </>
-                )}
+                <Zap className="w-4 h-4 mr-2" />
+                Start AI Processing
+              </Button>
+            )}
+          </div>
+        </DashboardCard>
+      )}
+
+      {/* Optimization History */}
+      {history.length > 0 && (
+        <DashboardCard
+          title="Optimization History"
+          description="Recently optimized images"
+        >
+          <div className="space-y-4">
+            {pendingOptimizations.length > 0 && (
+              <Button
+                onClick={() => applyToShopifyMutation.mutate(selectedHistoryIds)}
+                disabled={selectedHistoryIds.length === 0 || applyToShopifyMutation.isPending}
+                className="w-full"
+                data-testid="button-apply-shopify"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Apply {selectedHistoryIds.length} Selected to Shopify
+              </Button>
+            )}
+
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {history.slice(0, 10).map((item) => (
+                <Card key={item.id} className="p-4 hover-elevate">
+                  <div className="flex items-start space-x-4">
+                    <Checkbox
+                      checked={selectedHistoryIds.includes(item.id)}
+                      onCheckedChange={() => toggleHistorySelection(item.id)}
+                      disabled={item.appliedToShopify}
+                      data-testid={`checkbox-history-${item.id}`}
+                    />
+                    
+                    <img
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      className="w-20 h-20 object-cover rounded-md"
+                    />
+                    
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-white">{item.productName}</h4>
+                        {item.appliedToShopify && (
+                          <Badge variant="default">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Applied
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="text-sm space-y-1">
+                        <div>
+                          <span className="text-slate-400">Old:</span>
+                          <span className="text-slate-300 ml-2">
+                            {item.oldAltText || "None"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">New:</span>
+                          <span className="text-white ml-2 font-medium">
+                            {item.newAltText}
+                          </span>
+                        </div>
+                      </div>
+
+                      {item.aiAnalysis && (
+                        <div className="flex flex-wrap gap-1">
+                          {item.aiAnalysis.keywords.slice(0, 3).map((keyword: string, i: number) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </DashboardCard>
+      )}
+
+      {/* Product Selection Dialog */}
+      <Dialog open={showProductSelector} onOpenChange={setShowProductSelector}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select Products</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-slate-400">
+                {selectedProducts.length} of {products.length} products selected
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (selectedProducts.length === products.length) {
+                    setSelectedProducts([]);
+                  } else {
+                    setSelectedProducts(products.map((p: Product) => p.id));
+                  }
+                }}
+                data-testid="button-select-all"
+              >
+                {selectedProducts.length === products.length ? 'Deselect All' : 'Select All'}
               </Button>
             </div>
-          )}
-        </div>
-      </DashboardCard>
 
-      {generatedAltTexts && (
-        <>
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5 text-green-400" />
-            <h2 className="text-2xl font-semibold text-white">Generated Alt Text Options</h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <DashboardCard
-              title="Short Alt Text"
-              description="Concise description for minimal contexts"
-              testId="card-alt-short"
-            >
-              <div className="space-y-3">
-                <div className="bg-slate-800/30 p-4 rounded-lg border border-green-400/20">
-                  <p className="text-slate-100 leading-relaxed">
-                    {generatedAltTexts.short}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Badge className="bg-green-400/20 text-green-300">
-                    {generatedAltTexts.short.length} characters
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedAltTexts.short, "Short")}
-                    className="text-primary hover:text-white"
-                    data-testid="button-copy-short"
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
-                </div>
-              </div>
-            </DashboardCard>
-
-            <DashboardCard
-              title="Medium Alt Text"
-              description="Balanced description with key details"
-              testId="card-alt-medium"
-            >
-              <div className="space-y-3">
-                <div className="bg-slate-800/30 p-4 rounded-lg border border-blue-400/20">
-                  <p className="text-slate-100 leading-relaxed">
-                    {generatedAltTexts.medium}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Badge className="bg-blue-400/20 text-blue-300">
-                    {generatedAltTexts.medium.length} characters
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedAltTexts.medium, "Medium")}
-                    className="text-primary hover:text-white"
-                    data-testid="button-copy-medium"
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
-                </div>
-              </div>
-            </DashboardCard>
-
-            <DashboardCard
-              title="Long Alt Text"
-              description="Detailed description for accessibility"
-              testId="card-alt-long"
-            >
-              <div className="space-y-3">
-                <div className="bg-slate-800/30 p-4 rounded-lg border border-purple-400/20">
-                  <p className="text-slate-100 leading-relaxed">
-                    {generatedAltTexts.long}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Badge className="bg-purple-400/20 text-purple-300">
-                    {generatedAltTexts.long.length} characters
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedAltTexts.long, "Long")}
-                    className="text-primary hover:text-white"
-                    data-testid="button-copy-long"
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
-                </div>
-              </div>
-            </DashboardCard>
-
-            <DashboardCard
-              title="SEO-Optimized Alt Text"
-              description="Search-engine optimized with keywords"
-              testId="card-alt-seo"
-            >
-              <div className="space-y-3">
-                <div className="bg-slate-800/30 p-4 rounded-lg border border-yellow-400/20">
-                  <p className="text-slate-100 leading-relaxed">
-                    {generatedAltTexts.seoOptimized}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Badge className="bg-yellow-400/20 text-yellow-300">
-                    SEO Enhanced
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedAltTexts.seoOptimized, "SEO")}
-                    className="text-primary hover:text-white"
-                    data-testid="button-copy-seo"
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
-                </div>
-              </div>
-            </DashboardCard>
-          </div>
-
-          <DashboardCard
-            title="Alt Text Best Practices"
-            description="Tips for using alt text effectively"
-          >
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-white font-medium mb-3 flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-                  Do's
-                </h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-green-400 mr-2">•</span>
-                    Be descriptive and specific about the product
-                  </li>
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-green-400 mr-2">•</span>
-                    Include relevant keywords naturally
-                  </li>
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-green-400 mr-2">•</span>
-                    Keep it under 125 characters when possible
-                  </li>
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-green-400 mr-2">•</span>
-                    Focus on what's unique about the product
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-white font-medium mb-3 flex items-center">
-                  <X className="w-5 h-5 text-red-400 mr-2" />
-                  Don'ts
-                </h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    Don't start with "Image of" or "Picture of"
-                  </li>
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    Avoid keyword stuffing
-                  </li>
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    Don't use special characters excessively
-                  </li>
-                  <li className="text-slate-300 flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    Don't leave alt text empty
-                  </li>
-                </ul>
-              </div>
+            <div className="space-y-2">
+              {products.map((product: Product) => (
+                <Card
+                  key={product.id}
+                  className="p-3 cursor-pointer hover-elevate"
+                  onClick={() => toggleProductSelection(product.id)}
+                  data-testid={`product-${product.id}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      checked={selectedProducts.includes(product.id)}
+                      onCheckedChange={() => toggleProductSelection(product.id)}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{product.name}</p>
+                      {!product.shopifyId && (
+                        <Badge variant="destructive" className="text-xs mt-1">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Not linked to Shopify
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-          </DashboardCard>
-        </>
-      )}
+
+            <Button
+              onClick={handleCreateJob}
+              disabled={selectedProducts.length === 0 || createJobMutation.isPending}
+              className="w-full gradient-button"
+              data-testid="button-create-job"
+            >
+              {createJobMutation.isPending ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Creating Job...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create Optimization Job
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
