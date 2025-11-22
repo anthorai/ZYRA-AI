@@ -361,7 +361,7 @@ export default function BulkOptimization() {
           description="Select products from your catalog to optimize with AI"
           testId="card-create-job"
         >
-          <div className="space-y-4">
+          <div className="space-y-3">
             <ProductSelector
               mode="multi"
               label="Select Products for Bulk Optimization"
