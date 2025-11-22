@@ -8420,6 +8420,30 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get store currency - returns the user's store currency for multi-currency display
+  app.get('/api/store/currency', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Fetch user's store currency
+      let storeCurrency = 'USD'; // Default fallback
+      try {
+        const connections = await supabaseStorage.getStoreConnections(userId);
+        const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+        if (shopifyConnection?.currency) {
+          storeCurrency = shopifyConnection.currency;
+        }
+      } catch (currencyError) {
+        console.warn('[Currency] Could not fetch store currency, defaulting to USD:', currencyError);
+      }
+      
+      res.json({ currency: storeCurrency });
+    } catch (error) {
+      console.error('[Currency] Get store currency error:', error);
+      res.status(500).json({ error: 'Failed to get store currency' });
+    }
+  });
+
   // Get ROI summary - aggregates revenue from all sources
   app.get('/api/analytics/roi-summary', requireAuth, async (req, res) => {
     try {
