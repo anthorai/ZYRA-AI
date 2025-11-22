@@ -32,6 +32,50 @@ export class BulkOptimizationService {
   constructor(private storage: IStorage) {}
 
   /**
+   * Create a new bulk optimization job
+   */
+  async createJob(userId: string, productIds: string[]): Promise<BulkOptimizationJob> {
+    return await this.storage.createBulkOptimizationJob({
+      userId,
+      totalItems: productIds.length,
+      processedItems: 0,
+      optimizedItems: 0,
+      failedItems: 0,
+      skippedItems: 0,
+      status: 'pending',
+      progressPercentage: 0,
+      totalTokensUsed: 0,
+      estimatedCost: '0',
+      productIds,
+    });
+  }
+
+  /**
+   * Get all jobs for a user
+   */
+  async getJobs(userId: string): Promise<BulkOptimizationJob[]> {
+    return await this.storage.getBulkOptimizationJobs(userId);
+  }
+
+  /**
+   * Get a single job with its items
+   */
+  async getJob(jobId: string): Promise<(BulkOptimizationJob & { items: BulkOptimizationItem[] }) | null> {
+    const job = await this.storage.getBulkOptimizationJob(jobId);
+    if (!job) return null;
+
+    const items = await this.storage.getBulkOptimizationItems(jobId);
+    return { ...job, items };
+  }
+
+  /**
+   * Delete a job and all its items
+   */
+  async deleteJob(jobId: string): Promise<void> {
+    await this.storage.deleteBulkOptimizationJob(jobId);
+  }
+
+  /**
    * Generate comprehensive SEO content using the unified Master Prompt
    * This is the same prompt used in the single-product SEO Engine
    */
