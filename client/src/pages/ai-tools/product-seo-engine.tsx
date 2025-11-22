@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { 
   Zap, 
   Sparkles, 
@@ -203,28 +203,22 @@ Keywords: ${generatedSEO.keywords.join(", ")}
           {/* Left Sidebar: Product Loader + AI Insights */}
           <div className="lg:col-span-1 space-y-6">
             {/* Product Loader Card */}
-            <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10" data-testid="card-product-loader">
-              <CardHeader className="space-y-1">
-                <CardTitle className="flex items-center gap-2 text-cyan-400">
-                  <Target className="w-5 h-5 drop-shadow-[0_0_6px_rgba(0,240,255,0.5)]" />
-                  Product Loader
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  Select a product to optimize
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <DashboardCard 
+              title="Product Loader"
+              description="Select a product to optimize"
+              testId="card-product-loader"
+            >
                 {productsLoading ? (
                   <div className="space-y-3">
-                    <Skeleton className="h-10 w-full bg-slate-700/50" />
-                    <Skeleton className="h-24 w-full bg-slate-700/50" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-24 w-full" />
                   </div>
                 ) : (
                   <>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-300">Choose Product</label>
                       <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                        <SelectTrigger className="border-cyan-500/30 bg-slate-800/50" data-testid="select-product">
+                        <SelectTrigger data-testid="select-product">
                           <SelectValue placeholder="Select a product..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -238,48 +232,44 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </div>
 
                     {selectedProduct && (
-                      <div className="p-4 rounded-lg bg-slate-800/50 border border-cyan-500/20 space-y-3 animate-in fade-in-50 duration-300">
+                      <div className="p-4 rounded-lg border space-y-3 animate-in fade-in-50 duration-300">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-semibold text-white leading-tight">{selectedProduct.name}</h4>
-                          <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 shrink-0">
+                          <Badge className="bg-primary/20 text-primary border-primary/30 shrink-0">
                             {selectedProduct.category}
                           </Badge>
                         </div>
-                        <p className="text-sm text-slate-400 line-clamp-3 leading-relaxed">
+                        <p className="text-sm text-slate-300 line-clamp-3 leading-relaxed">
                           {selectedProduct.description || selectedProduct.features || "No description available"}
                         </p>
                         <div className="pt-2 border-t border-slate-700/50">
-                          <span className="text-lg font-bold text-cyan-400">${selectedProduct.price}</span>
+                          <span className="text-lg font-bold text-primary">${selectedProduct.price}</span>
                         </div>
                       </div>
                     )}
                   </>
                 )}
-              </CardContent>
-            </Card>
+            </DashboardCard>
 
             {/* AI Ranking Insights Card */}
             {generatedSEO && (
-              <Card className="border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-purple-500/10 animate-in fade-in-50 slide-in-from-bottom-4 duration-500" data-testid="card-ai-insights">
-                <CardHeader className="space-y-1">
-                  <CardTitle className="flex items-center gap-2 text-purple-400">
-                    <BarChart3 className="w-5 h-5 drop-shadow-[0_0_6px_rgba(168,85,247,0.5)]" />
-                    AI Ranking Insights
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
+              <DashboardCard 
+                title="AI Ranking Insights"
+                testId="card-ai-insights"
+                className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500"
+              >
                   {/* SEO Score */}
                   {generatedSEO.seoScore && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-300">Predicted SEO Score</span>
-                        <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
+                        <span className="text-3xl font-bold text-primary">
                           {generatedSEO.seoScore}/100
                         </span>
                       </div>
                       <div className="w-full h-3 bg-slate-700/50 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-500 shadow-lg shadow-cyan-500/50"
+                          className="h-full bg-primary transition-all duration-500"
                           style={{ width: `${generatedSEO.seoScore}%` }}
                         />
                       </div>
@@ -291,7 +281,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <div className="space-y-2">
                       <span className="text-sm font-medium text-slate-300">Primary Search Intent</span>
                       <div>
-                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                        <Badge className="bg-primary/20 text-primary border-primary/30">
                           {generatedSEO.searchIntent}
                         </Badge>
                       </div>
@@ -307,7 +297,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                           <Badge 
                             key={idx} 
                             variant="outline" 
-                            className="border-cyan-500/30 text-cyan-300 bg-cyan-500/10"
+                            className="border-primary/30 text-primary bg-primary/10"
                           >
                             {keyword}
                           </Badge>
@@ -315,20 +305,19 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+              </DashboardCard>
             )}
           </div>
 
           {/* Right Main Area: Optimize + Output */}
           <div className="lg:col-span-2 space-y-6">
             {/* Optimize Button Card */}
-            <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10">
-              <CardContent className="p-6">
+            <DashboardCard testId="card-optimize-button">
+              <div>
                 <Button
                   onClick={handleOptimize}
                   disabled={!selectedProduct || generateSEOMutation.isPending}
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  className="w-full h-14 text-lg font-semibold bg-primary hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                   data-testid="button-optimize"
                 >
                   {generateSEOMutation.isPending ? (
@@ -343,41 +332,36 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </>
                   )}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </DashboardCard>
 
             {/* Empty State - Shown when no content */}
             {!generatedSEO && !generateSEOMutation.isPending && (
-              <Card className="border-cyan-500/20 bg-gradient-to-br from-slate-900/40 to-slate-800/40 backdrop-blur-sm">
-                <CardContent className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <DashboardCard testId="card-empty-state">
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                   <div className="relative">
-                    <Sparkles className="w-20 h-20 text-cyan-500/50 mb-6 animate-pulse drop-shadow-[0_0_16px_rgba(0,240,255,0.5)]" />
+                    <Sparkles className="w-20 h-20 text-primary/50 mb-6 animate-pulse" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-3">
                     Ready to Optimize Your Product SEO
                   </h3>
-                  <p className="text-slate-400 max-w-lg text-base leading-relaxed">
+                  <p className="text-slate-300 max-w-lg text-base leading-relaxed">
                     Select a product above and click "Optimize Product SEO" to generate AI-powered SEO content in seconds
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </DashboardCard>
             )}
 
             {/* Generated Content Output */}
             {generatedSEO && (
-              <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10 animate-in fade-in-50 slide-in-from-bottom-4 duration-500" data-testid="card-output">
-                <CardHeader className="space-y-1">
-                  <CardTitle className="flex items-center gap-2 text-cyan-400">
-                    <Eye className="w-5 h-5 drop-shadow-[0_0_6px_rgba(0,240,255,0.5)]" />
-                    Generated SEO Content
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Review and copy your optimized content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              <DashboardCard 
+                title="Generated SEO Content"
+                description="Review and copy your optimized content"
+                testId="card-output"
+                className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500"
+              >
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-2 bg-slate-800/50 p-1">
+                    <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-2 p-1">
                       <TabsTrigger value="seo-title" data-testid="tab-seo-title" className="text-xs sm:text-sm">
                         SEO Title
                       </TabsTrigger>
@@ -396,9 +380,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </TabsList>
 
                     <TabsContent value="seo-title" className="space-y-4 mt-6">
-                      <div className="p-5 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                      <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-cyan-400">SEO Title</h3>
+                          <h3 className="text-sm font-semibold text-primary">SEO Title</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -429,9 +413,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </TabsContent>
 
                     <TabsContent value="description" className="space-y-4 mt-6">
-                      <div className="p-5 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                      <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-cyan-400">Product Description (Full)</h3>
+                          <h3 className="text-sm font-semibold text-primary">Product Description (Full)</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -451,9 +435,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </TabsContent>
 
                     <TabsContent value="meta-title" className="space-y-4 mt-6">
-                      <div className="p-5 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                      <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-cyan-400">Meta Title</h3>
+                          <h3 className="text-sm font-semibold text-primary">Meta Title</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -484,9 +468,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </TabsContent>
 
                     <TabsContent value="meta-desc" className="space-y-4 mt-6">
-                      <div className="p-5 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                      <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-cyan-400">Meta Description</h3>
+                          <h3 className="text-sm font-semibold text-primary">Meta Description</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -517,9 +501,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </TabsContent>
 
                     <TabsContent value="keywords" className="space-y-4 mt-6">
-                      <div className="p-5 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                      <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-4">
-                          <h3 className="text-sm font-semibold text-cyan-400">SEO Keywords</h3>
+                          <h3 className="text-sm font-semibold text-primary">SEO Keywords</h3>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -533,7 +517,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                           {generatedSEO.keywords.map((keyword, idx) => (
                             <Badge 
                               key={idx} 
-                              className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 px-3 py-1.5 text-sm"
+                              className="bg-primary/20 text-primary border-primary/30 px-3 py-1.5 text-sm"
                             >
                               <Hash className="w-3 h-3 mr-1" />
                               {keyword}
@@ -543,19 +527,19 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       </div>
                     </TabsContent>
                   </Tabs>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             )}
 
             {/* Action Buttons */}
             {generatedSEO && (
-              <Card className="border-cyan-500/30 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm shadow-lg shadow-cyan-500/10 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-                <CardContent className="p-6">
+              <DashboardCard 
+                testId="card-actions"
+                className="animate-in fade-in-50 slide-in-from-bottom-4 duration-700"
+              >
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <Button
                       variant="outline"
                       onClick={handleCopyAll}
-                      className="border-cyan-500/30 hover:bg-cyan-500/10"
                       data-testid="button-copy-all"
                     >
                       <Copy className="w-4 h-4 mr-2" />
@@ -565,7 +549,6 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       variant="outline"
                       onClick={() => saveSEOMutation.mutate()}
                       disabled={saveSEOMutation.isPending}
-                      className="border-purple-500/30 hover:bg-purple-500/10"
                       data-testid="button-save"
                     >
                       {saveSEOMutation.isPending ? (
@@ -579,7 +562,6 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       variant="outline"
                       onClick={handleOptimize}
                       disabled={generateSEOMutation.isPending}
-                      className="border-cyan-500/30 hover:bg-cyan-500/10"
                       data-testid="button-regenerate"
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
@@ -588,15 +570,13 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <Button
                       variant="outline"
                       onClick={handleExport}
-                      className="border-cyan-500/30 hover:bg-cyan-500/10"
                       data-testid="button-export"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Export
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+              </DashboardCard>
             )}
           </div>
         </div>
