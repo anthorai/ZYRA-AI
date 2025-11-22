@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { formatCurrency } from "@/lib/utils";
 import { 
   Zap, 
   Sparkles, 
@@ -61,6 +62,12 @@ export default function ProductSeoEngine() {
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
+
+  // Fetch store currency
+  const { data: storeData } = useQuery<{ currency: string }>({
+    queryKey: ['/api/store/currency'],
+  });
+  const currency = storeData?.currency || 'USD';
 
   // Get selected product
   const selectedProduct = products?.find(p => p.id === selectedProductId);
@@ -243,7 +250,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                           {selectedProduct.description || selectedProduct.features || "No description available"}
                         </p>
                         <div className="pt-3 border-t border-slate-700/50">
-                          <span className="text-lg font-bold text-primary">${selectedProduct.price}</span>
+                          <span className="text-lg font-bold text-primary">
+                            {formatCurrency(parseFloat(selectedProduct.price), currency)}
+                          </span>
                         </div>
                       </div>
                     )}
