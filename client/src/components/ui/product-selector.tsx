@@ -217,25 +217,27 @@ export function ProductSelector({
               </div>
             )}
             {products.length > 0 && (
-              <div className="max-h-60 overflow-y-auto p-2 space-y-2">
-                {products.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-start gap-3 p-3 rounded-md border border-border/50 hover-elevate cursor-pointer transition-all bg-background/50"
-                    onClick={() => handleMultiToggle(product.id)}
-                    data-testid={`checkbox-product-${product.id}`}
-                  >
-                    <Checkbox
-                      checked={controlledValue.includes(product.id)}
-                      onCheckedChange={() => handleMultiToggle(product.id)}
-                      className="mt-0.5 flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-tight mb-1.5">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.category || 'Uncategorized'}</p>
+              <div className="max-h-60 overflow-y-auto px-2 py-2">
+                <div className="space-y-2">
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-start gap-3 p-3 rounded-md border border-border/50 hover-elevate cursor-pointer transition-all bg-background/50"
+                      onClick={() => handleMultiToggle(product.id)}
+                      data-testid={`checkbox-product-${product.id}`}
+                    >
+                      <Checkbox
+                        checked={controlledValue.includes(product.id)}
+                        onCheckedChange={() => handleMultiToggle(product.id)}
+                        className="mt-0.5 flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight mb-1.5">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.category || 'Uncategorized'}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
