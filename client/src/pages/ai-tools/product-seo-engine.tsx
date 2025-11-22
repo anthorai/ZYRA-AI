@@ -209,13 +209,13 @@ Keywords: ${generatedSEO.keywords.join(", ")}
               testId="card-product-loader"
             >
                 {productsLoading ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-28 w-full" />
                   </div>
                 ) : (
-                  <>
-                    <div className="space-y-2">
+                  <div className="space-y-4">
+                    <div className="space-y-3">
                       <label className="text-sm font-medium text-slate-300">Choose Product</label>
                       <Select value={selectedProductId} onValueChange={setSelectedProductId}>
                         <SelectTrigger data-testid="select-product">
@@ -232,8 +232,8 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     </div>
 
                     {selectedProduct && (
-                      <div className="p-4 rounded-lg border space-y-3 animate-in fade-in-50 duration-300">
-                        <div className="flex items-start justify-between gap-2">
+                      <div className="p-5 rounded-lg border space-y-4 animate-in fade-in-50 duration-300">
+                        <div className="flex items-start justify-between gap-3">
                           <h4 className="font-semibold text-white leading-tight">{selectedProduct.name}</h4>
                           <Badge className="bg-primary/20 text-primary border-primary/30 shrink-0">
                             {selectedProduct.category}
@@ -242,12 +242,12 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                         <p className="text-sm text-slate-300 line-clamp-3 leading-relaxed">
                           {selectedProduct.description || selectedProduct.features || "No description available"}
                         </p>
-                        <div className="pt-2 border-t border-slate-700/50">
+                        <div className="pt-3 border-t border-slate-700/50">
                           <span className="text-lg font-bold text-primary">${selectedProduct.price}</span>
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
             </DashboardCard>
 
@@ -258,6 +258,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                 testId="card-ai-insights"
                 className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500"
               >
+                <div className="space-y-6">
                   {/* SEO Score */}
                   {generatedSEO.seoScore && (
                     <div className="space-y-3">
@@ -278,7 +279,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
                   {/* Search Intent */}
                   {generatedSEO.searchIntent && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <span className="text-sm font-medium text-slate-300">Primary Search Intent</span>
                       <div>
                         <Badge className="bg-primary/20 text-primary border-primary/30">
@@ -290,7 +291,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
                   {/* Suggested Keywords */}
                   {generatedSEO.suggestedKeywords && generatedSEO.suggestedKeywords.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <span className="text-sm font-medium text-slate-300">Suggested Keywords</span>
                       <div className="flex flex-wrap gap-2">
                         {generatedSEO.suggestedKeywords.map((keyword, idx) => (
@@ -305,6 +306,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       </div>
                     </div>
                   )}
+                </div>
               </DashboardCard>
             )}
           </div>
