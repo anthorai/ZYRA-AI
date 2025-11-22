@@ -62,7 +62,8 @@ export function DashboardCard({
       )}
       <CardContent className={cn(
         sizeClasses[size],
-        (title || description || headerAction) && "pt-0"
+        (title || description || headerAction) && "pt-0",
+        "overflow-visible"
       )}>
         {children}
       </CardContent>
