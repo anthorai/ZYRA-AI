@@ -32,7 +32,7 @@ export function DashboardCard({
       className={cn(
         "gradient-card rounded-xl sm:rounded-2xl shadow-lg border border-slate-700/50",
         "hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10",
-        "transition-all duration-300",
+        "transition-all duration-300 overflow-visible",
         className
       )}
       data-testid={testId}

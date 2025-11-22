@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,23 @@ export function ProductSelector({
   
   const [isOpen, setIsOpen] = useState(false);
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isOpen]);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -193,7 +210,7 @@ export function ProductSelector({
         )}
       </div>
 
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <Button
           variant="outline"
           onClick={() => setIsOpen(!isOpen)}
@@ -210,7 +227,7 @@ export function ProductSelector({
         </Button>
 
         {isOpen && (
-          <div className="absolute z-50 w-full mt-2 bg-popover border rounded-md shadow-lg overflow-hidden">
+          <div className="absolute z-[100] w-full mt-2 bg-popover border rounded-md shadow-lg overflow-hidden">
             {products.length === 0 && !isLoading && (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 No products found. Add products first.
