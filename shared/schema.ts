@@ -94,6 +94,23 @@ export const productSeoHistory = pgTable("product_seo_history", {
 export type ProductSeoHistory = typeof productSeoHistory.$inferSelect;
 export type InsertProductSeoHistory = typeof productSeoHistory.$inferInsert;
 
+// Helper transform to coerce nullable arrays into safe string arrays
+const stringArrayFromNullable = z
+  .array(z.string())
+  .or(z.null())
+  .or(z.undefined())
+  .transform((val) => (Array.isArray(val) ? val : []));
+
+export const insertProductSeoHistorySchema = createInsertSchema(productSeoHistory)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    productId: z.string().nullish(),
+    keywords: stringArrayFromNullable,
+    seoScore: z.coerce.number().nullish(),  // Coerce string to number (handles "92" -> 92)
+    searchIntent: z.string().nullish(),
+    suggestedKeywords: stringArrayFromNullable,
+  });
+
 // Autonomous system tables
 export const autonomousActions = pgTable("autonomous_actions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
