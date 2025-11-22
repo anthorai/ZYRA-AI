@@ -1,0 +1,235 @@
+Zyra SEO Engine — Build Plan (One Card + One Page)
+Replace
+
+❌ Copywriting AI
+❌ AI Descriptions
+❌ SEO Titles & Meta Tags
+
+With
+✨ Ultimate Product SEO Engine (One card + dedicated page)
+
+🚀 Phase 1 — Remove Old Tools
+1. Delete the tool cards from the AI Tools screen
+
+Remove 3 cards from components/ai-tools-grid
+
+Remove routes/buttons pointing to old pages
+
+Clean sidebar links
+
+2. Remove old page routes
+
+Delete these folders/pages:
+
+/app/tools/copywriting-ai
+/app/tools/descriptions
+/app/tools/seo-titles-meta
+
+3. Remove old backend prompt files
+
+Delete old prompts:
+
+/lib/prompts/copywriting.js  
+/lib/prompts/description.js  
+/lib/prompts/seo.js  
+
+
+Now Zyra is clean and ready for the new unified engine.
+
+⚡ Phase 2 — Create New Unified Tool (One Card + One Page)
+1. Add New Tool Card on AI Tools Page
+
+Card Name:
+🔥 Ultimate Product SEO Engine
+
+Card Items:
+
+Neon icon (SEO spark)
+
+Subtitle: “AI-powered SEO Titles, Descriptions & Meta Optimization”
+
+CTA button: Open SEO Engine
+
+Add in /app/tools/page.tsx:
+
+<SeoEngineCard />
+
+⚡ Phase 3 — Create New SEO Engine Page
+
+Route:
+
+/app/tools/product-seo-engine/page.tsx
+
+
+This page has 5 sections:
+
+🟦 Section 1 — Product Loader Panel
+
+Skeleton UI
+
+Auto-load Shopify product (name, key features, audience, category)
+
+Components:
+
+<ProductSnapshot />
+
+🟩 Section 2 — AI Ranking Insights Panel
+
+Shows:
+
+Predicted ranking score
+
+Suggested keywords
+
+Search intent
+
+Competitor-style modifiers
+(Use mock data or AI inference)
+
+Component:
+
+<SeoInsights />
+
+🟨 Section 3 — Optimize Button
+
+One main action:
+
+⚡ Optimize Product SEO
+
+Triggers the backend API.
+
+Component:
+
+<OptimizeButton />
+
+🟪 Section 4 — Output Tabs
+
+Tabs:
+
+SEO Title
+
+Product Description (full structured format)
+
+Meta Title
+
+Meta Description
+
+SEO Keywords
+
+Component:
+
+<SeoOutputTabs />
+
+🟥 Section 5 — Save, Copy, Re-Generate
+
+Buttons:
+
+Copy All
+
+Copy Selected
+
+Save to Supabase
+
+Regenerate
+
+Export
+
+Component:
+
+<SeoActions />
+
+⚡ Phase 4 — Backend API Route
+
+Create a single backend API route:
+
+/app/api/generate-seo/route.ts
+
+
+This route will:
+
+1. Take Inputs
+
+productName
+
+keyFeatures
+
+targetAudience
+
+2. Run SERP Pattern Inference Prompt
+
+(one mega prompt — I will give you)
+
+3. Generate Outputs
+
+SEO Title
+
+Full Description (multi-section)
+
+Meta Title
+
+Meta Description
+
+SEO Keywords
+
+4. Save results to Supabase
+
+(for history + exporting)
+
+⚡ Phase 5 — Database Updates (Supabase)
+
+Create table:
+
+product_seo_history
+
+
+Columns:
+
+id
+
+user_id
+
+product_name
+
+seo_title
+
+seo_description
+
+meta_title
+
+meta_description
+
+keywords
+
+created_at
+
+Used for:
+✔ Version history
+✔ Revisions
+✔ Analytics
+
+⚡ Phase 6 — Smooth Zyra UI Experience
+
+Using Cyberwave theme:
+
+Neon #00F0FF glows
+
+Dark background #0D0D1F
+
+Hover transitions
+
+Live animation when AI generates
+
+Skeleton loader while fetching product data
+
+Tab switching animation
+
+Glass panels with magenta borders
+
+⚡ Final Phase — Optional Upgrades
+
+Later you can add:
+
+✔ SERP API integration
+✔ Competitor URL preview
+✔ Keyword difficulty score
+✔ Shopify “Publish Changes” button
