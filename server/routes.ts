@@ -77,6 +77,7 @@ import { initializeUserCredits } from "./lib/credits";
 import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
 import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./lib/ai-cache";
 import { extractProductFeatures } from "./lib/shopify-features-extractor";
+import { BulkOptimizationService } from "./lib/bulk-optimization-service";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -10540,8 +10541,7 @@ Output format: Markdown with clear section headings.`;
   // BULK OPTIMIZATION ROUTES
   // ========================
 
-  // Import bulk optimization service
-  const { BulkOptimizationService } = await import('./lib/bulk-optimization-service');
+  // Initialize bulk optimization service
   const bulkOptService = new BulkOptimizationService(storage);
 
   // Create a new bulk optimization job
