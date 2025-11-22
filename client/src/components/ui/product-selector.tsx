@@ -217,7 +217,7 @@ export function ProductSelector({
               </div>
             )}
             {products.length > 0 && (
-              <div className="max-h-60 overflow-y-auto p-3">
+              <div className="max-h-60 overflow-y-auto px-3 pt-3 pb-4">
                 <div className="space-y-2">
                   {products.map((product) => (
                     <div
