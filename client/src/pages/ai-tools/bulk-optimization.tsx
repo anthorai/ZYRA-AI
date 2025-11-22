@@ -455,34 +455,34 @@ export default function BulkOptimization() {
           description="AI-powered enhancements for your entire product catalog"
           testId="card-features"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex items-start space-x-3">
-              <FileText className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="text-white font-medium text-lg">Product Descriptions</h4>
-                <p className="text-slate-300 text-sm">AI rewrites descriptions for better engagement and SEO</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="flex flex-col items-center text-center p-4 rounded-lg bg-slate-800/30 hover-elevate transition-all">
+              <div className="p-3 rounded-full bg-primary/10 mb-3">
+                <FileText className="w-6 h-6 text-primary flex-shrink-0" />
               </div>
+              <h4 className="text-white font-semibold text-base mb-2">Product Descriptions</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">AI rewrites descriptions for better engagement and SEO</p>
             </div>
-            <div className="flex items-start space-x-3">
-              <Zap className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="text-white font-medium text-lg">SEO Titles</h4>
-                <p className="text-slate-300 text-sm">Keyword-rich titles optimized for search rankings</p>
+            <div className="flex flex-col items-center text-center p-4 rounded-lg bg-slate-800/30 hover-elevate transition-all">
+              <div className="p-3 rounded-full bg-primary/10 mb-3">
+                <Zap className="w-6 h-6 text-primary flex-shrink-0" />
               </div>
+              <h4 className="text-white font-semibold text-base mb-2">SEO Titles</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Keyword-rich titles optimized for search rankings</p>
             </div>
-            <div className="flex items-start space-x-3">
-              <Package className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="text-white font-medium text-lg">Keywords</h4>
-                <p className="text-slate-300 text-sm">Auto-generated keywords for better categorization</p>
+            <div className="flex flex-col items-center text-center p-4 rounded-lg bg-slate-800/30 hover-elevate transition-all">
+              <div className="p-3 rounded-full bg-primary/10 mb-3">
+                <Package className="w-6 h-6 text-primary flex-shrink-0" />
               </div>
+              <h4 className="text-white font-semibold text-base mb-2">Keywords</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Auto-generated keywords for better categorization</p>
             </div>
-            <div className="flex items-start space-x-3">
-              <BarChart3 className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="text-white font-medium text-lg">Meta Descriptions</h4>
-                <p className="text-slate-300 text-sm">Search-optimized meta descriptions for each product</p>
+            <div className="flex flex-col items-center text-center p-4 rounded-lg bg-slate-800/30 hover-elevate transition-all">
+              <div className="p-3 rounded-full bg-primary/10 mb-3">
+                <BarChart3 className="w-6 h-6 text-primary flex-shrink-0" />
               </div>
+              <h4 className="text-white font-semibold text-base mb-2">Meta Descriptions</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Search-optimized meta descriptions for each product</p>
             </div>
           </div>
         </DashboardCard>

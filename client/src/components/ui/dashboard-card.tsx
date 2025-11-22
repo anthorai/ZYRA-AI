@@ -60,7 +60,10 @@ export function DashboardCard({
           </div>
         </CardHeader>
       )}
-      <CardContent className="p-3 sm:p-4 md:p-6 pt-0 ml-[13px] mr-[13px] mt-[53px] mb-[53px]">
+      <CardContent className={cn(
+        sizeClasses[size],
+        (title || description || headerAction) && "pt-0"
+      )}>
         {children}
       </CardContent>
     </Card>
