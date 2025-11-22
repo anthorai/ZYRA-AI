@@ -18,6 +18,7 @@ export const customerSegmentEnum = pgEnum('customer_segment', ['hot', 'warm', 'c
 export const cartRecoveryStageEnum = pgEnum('cart_recovery_stage', ['initial_reminder', 'first_discount', 'second_discount', 'final_offer']);
 export const bulkOptimizationJobStatusEnum = pgEnum('bulk_optimization_job_status', ['pending', 'processing', 'completed', 'failed', 'cancelled']);
 export const bulkOptimizationItemStatusEnum = pgEnum('bulk_optimization_item_status', ['pending', 'processing', 'optimized', 'failed', 'retrying', 'skipped']);
+export const imageOptimizationStatusEnum = pgEnum('image_optimization_status', ['pending', 'processing', 'completed', 'failed', 'missing_image']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1711,6 +1712,82 @@ export const bulkOptimizationItems = pgTable("bulk_optimization_items", {
   index('bulk_items_product_id_idx').on(table.productId),
 ]);
 
+// Bulk Image Optimization Jobs - Track batch image alt-text optimization jobs
+export const bulkImageJobs = pgTable("bulk_image_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  status: bulkOptimizationJobStatusEnum("status").notNull().default("pending"),
+  totalProducts: integer("total_products").notNull().default(0),
+  totalImages: integer("total_images").notNull().default(0),
+  processedImages: integer("processed_images").notNull().default(0),
+  optimizedImages: integer("optimized_images").notNull().default(0),
+  failedImages: integer("failed_images").notNull().default(0),
+  missingImageProducts: integer("missing_image_products").notNull().default(0),
+  progressPercentage: integer("progress_percentage").notNull().default(0),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  estimatedCompletionTime: timestamp("estimated_completion_time"),
+  aiModel: text("ai_model").default("gpt-4o-mini"),
+  totalTokensUsed: integer("total_tokens_used").default(0),
+  estimatedCost: numeric("estimated_cost", { precision: 10, scale: 4 }).default("0"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('bulk_image_jobs_user_id_idx').on(table.userId),
+  index('bulk_image_jobs_status_idx').on(table.status),
+  index('bulk_image_jobs_created_at_idx').on(table.createdAt),
+]);
+
+// Bulk Image Job Items - Individual product image optimization within a job
+export const bulkImageJobItems = pgTable("bulk_image_job_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").references(() => bulkImageJobs.id, { onDelete: 'cascade' }).notNull(),
+  productId: varchar("product_id").references(() => products.id),
+  productName: text("product_name").notNull(),
+  shopifyProductId: text("shopify_product_id"),
+  imageCount: integer("image_count").notNull().default(0),
+  imageList: jsonb("image_list"),
+  status: imageOptimizationStatusEnum("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").notNull().default(0),
+  maxRetries: integer("max_retries").notNull().default(3),
+  tokensUsed: integer("tokens_used").default(0),
+  processingTimeMs: integer("processing_time_ms"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('bulk_image_items_job_id_idx').on(table.jobId),
+  index('bulk_image_items_status_idx').on(table.status),
+  index('bulk_image_items_product_id_idx').on(table.productId),
+]);
+
+// Image Optimization History - Store all alt-text optimizations for audit trail
+export const imageOptimizationHistory = pgTable("image_optimization_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id),
+  productName: text("product_name").notNull(),
+  shopifyProductId: text("shopify_product_id"),
+  shopifyImageId: text("shopify_image_id"),
+  imageUrl: text("image_url").notNull(),
+  oldAltText: text("old_alt_text"),
+  newAltText: text("new_alt_text").notNull(),
+  aiAnalysis: jsonb("ai_analysis"),
+  appliedToShopify: boolean("applied_to_shopify").default(false),
+  appliedAt: timestamp("applied_at"),
+  jobId: varchar("job_id").references(() => bulkImageJobs.id),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('image_history_user_id_idx').on(table.userId),
+  index('image_history_product_id_idx').on(table.productId),
+  index('image_history_job_id_idx').on(table.jobId),
+  index('image_history_created_at_idx').on(table.createdAt),
+  index('image_history_user_job_idx').on(table.userId, table.jobId),
+]);
+
 // Insert schemas for advanced notification preferences
 export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
   id: true,
@@ -1782,6 +1859,23 @@ export const insertBulkOptimizationItemSchema = createInsertSchema(bulkOptimizat
   updatedAt: true,
 });
 
+export const insertBulkImageJobSchema = createInsertSchema(bulkImageJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBulkImageJobItemSchema = createInsertSchema(bulkImageJobItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertImageOptimizationHistorySchema = createInsertSchema(imageOptimizationHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for advanced notification preferences
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
@@ -1835,3 +1929,11 @@ export type BulkOptimizationJob = typeof bulkOptimizationJobs.$inferSelect;
 export type InsertBulkOptimizationJob = z.infer<typeof insertBulkOptimizationJobSchema>;
 export type BulkOptimizationItem = typeof bulkOptimizationItems.$inferSelect;
 export type InsertBulkOptimizationItem = z.infer<typeof insertBulkOptimizationItemSchema>;
+
+// Bulk Image Optimization Types
+export type BulkImageJob = typeof bulkImageJobs.$inferSelect;
+export type InsertBulkImageJob = z.infer<typeof insertBulkImageJobSchema>;
+export type BulkImageJobItem = typeof bulkImageJobItems.$inferSelect;
+export type InsertBulkImageJobItem = z.infer<typeof insertBulkImageJobItemSchema>;
+export type ImageOptimizationHistory = typeof imageOptimizationHistory.$inferSelect;
+export type InsertImageOptimizationHistory = z.infer<typeof insertImageOptimizationHistorySchema>;

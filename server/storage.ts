@@ -61,6 +61,12 @@ import {
   type InsertBulkOptimizationJob,
   type BulkOptimizationItem,
   type InsertBulkOptimizationItem,
+  type BulkImageJob,
+  type InsertBulkImageJob,
+  type BulkImageJobItem,
+  type InsertBulkImageJobItem,
+  type ImageOptimizationHistory,
+  type InsertImageOptimizationHistory,
   users, 
   products, 
   seoMeta, 
@@ -90,6 +96,9 @@ import {
   contentQualityScores,
   bulkOptimizationJobs,
   bulkOptimizationItems,
+  bulkImageJobs,
+  bulkImageJobItems,
+  imageOptimizationHistory,
   productSeoHistory
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -290,6 +299,24 @@ export interface IStorage {
   createBulkOptimizationItem(data: InsertBulkOptimizationItem): Promise<BulkOptimizationItem>;
   updateBulkOptimizationItem(itemId: string, updates: Partial<BulkOptimizationItem>): Promise<BulkOptimizationItem>;
   deleteBulkOptimizationItem(itemId: string): Promise<void>;
+
+  // Bulk Image Optimization methods
+  getBulkImageJobs(userId: string): Promise<BulkImageJob[]>;
+  getBulkImageJob(jobId: string): Promise<BulkImageJob | undefined>;
+  createBulkImageJob(data: InsertBulkImageJob): Promise<BulkImageJob>;
+  updateBulkImageJob(jobId: string, updates: Partial<BulkImageJob>): Promise<BulkImageJob>;
+  deleteBulkImageJob(jobId: string): Promise<void>;
+  
+  getBulkImageJobItems(jobId: string): Promise<BulkImageJobItem[]>;
+  getBulkImageJobItem(itemId: string): Promise<BulkImageJobItem | undefined>;
+  createBulkImageJobItem(data: InsertBulkImageJobItem): Promise<BulkImageJobItem>;
+  updateBulkImageJobItem(itemId: string, updates: Partial<BulkImageJobItem>): Promise<BulkImageJobItem>;
+  deleteBulkImageJobItem(itemId: string): Promise<void>;
+  
+  getImageOptimizationHistory(userId: string, filters?: { productId?: string, jobId?: string }): Promise<ImageOptimizationHistory[]>;
+  getImageOptimizationHistoryByIds(ids: string[]): Promise<ImageOptimizationHistory[]>;
+  createImageOptimizationHistory(data: InsertImageOptimizationHistory): Promise<ImageOptimizationHistory>;
+  updateImageOptimizationHistory(id: string, updates: Partial<ImageOptimizationHistory>): Promise<ImageOptimizationHistory>;
 }
 
 export class DatabaseStorage {
@@ -1000,6 +1027,116 @@ export class DatabaseStorage {
   async deleteBulkOptimizationItem(itemId: string): Promise<void> {
     if (!db) throw new Error("Database not configured");
     await db.delete(bulkOptimizationItems).where(eq(bulkOptimizationItems.id, itemId));
+  }
+
+  // Bulk Image Optimization Job methods
+  async getBulkImageJobs(userId: string): Promise<BulkImageJob[]> {
+    if (!db) throw new Error("Database not configured");
+    return await db.select().from(bulkImageJobs)
+      .where(eq(bulkImageJobs.userId, userId))
+      .orderBy(desc(bulkImageJobs.createdAt));
+  }
+
+  async getBulkImageJob(jobId: string): Promise<BulkImageJob | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(bulkImageJobs)
+      .where(eq(bulkImageJobs.id, jobId));
+    return result[0];
+  }
+
+  async createBulkImageJob(data: InsertBulkImageJob): Promise<BulkImageJob> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(bulkImageJobs).values(data).returning();
+    return result[0];
+  }
+
+  async updateBulkImageJob(jobId: string, updates: Partial<BulkImageJob>): Promise<BulkImageJob> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(bulkImageJobs)
+      .set(updates)
+      .where(eq(bulkImageJobs.id, jobId))
+      .returning();
+    return result[0];
+  }
+
+  async deleteBulkImageJob(jobId: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    await db.delete(bulkImageJobs).where(eq(bulkImageJobs.id, jobId));
+  }
+
+  // Bulk Image Job Item methods
+  async getBulkImageJobItems(jobId: string): Promise<BulkImageJobItem[]> {
+    if (!db) throw new Error("Database not configured");
+    return await db.select().from(bulkImageJobItems)
+      .where(eq(bulkImageJobItems.jobId, jobId))
+      .orderBy(bulkImageJobItems.createdAt);
+  }
+
+  async getBulkImageJobItem(itemId: string): Promise<BulkImageJobItem | undefined> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.select().from(bulkImageJobItems)
+      .where(eq(bulkImageJobItems.id, itemId));
+    return result[0];
+  }
+
+  async createBulkImageJobItem(data: InsertBulkImageJobItem): Promise<BulkImageJobItem> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(bulkImageJobItems).values(data).returning();
+    return result[0];
+  }
+
+  async updateBulkImageJobItem(itemId: string, updates: Partial<BulkImageJobItem>): Promise<BulkImageJobItem> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(bulkImageJobItems)
+      .set(updates)
+      .where(eq(bulkImageJobItems.id, itemId))
+      .returning();
+    return result[0];
+  }
+
+  async deleteBulkImageJobItem(itemId: string): Promise<void> {
+    if (!db) throw new Error("Database not configured");
+    await db.delete(bulkImageJobItems).where(eq(bulkImageJobItems.id, itemId));
+  }
+
+  // Image Optimization History methods
+  async getImageOptimizationHistory(userId: string, filters?: { productId?: string, jobId?: string }): Promise<ImageOptimizationHistory[]> {
+    if (!db) throw new Error("Database not configured");
+    const conditions = [eq(imageOptimizationHistory.userId, userId)];
+    
+    if (filters?.productId) {
+      conditions.push(eq(imageOptimizationHistory.productId, filters.productId));
+    }
+    if (filters?.jobId) {
+      conditions.push(eq(imageOptimizationHistory.jobId, filters.jobId));
+    }
+    
+    return await db.select().from(imageOptimizationHistory)
+      .where(and(...conditions))
+      .orderBy(desc(imageOptimizationHistory.createdAt));
+  }
+
+  async getImageOptimizationHistoryByIds(ids: string[]): Promise<ImageOptimizationHistory[]> {
+    if (!db) throw new Error("Database not configured");
+    if (ids.length === 0) return [];
+    
+    return await db.select().from(imageOptimizationHistory)
+      .where(sql`${imageOptimizationHistory.id} = ANY(${ids})`);
+  }
+
+  async createImageOptimizationHistory(data: InsertImageOptimizationHistory): Promise<ImageOptimizationHistory> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(imageOptimizationHistory).values(data).returning();
+    return result[0];
+  }
+
+  async updateImageOptimizationHistory(id: string, updates: Partial<ImageOptimizationHistory>): Promise<ImageOptimizationHistory> {
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(imageOptimizationHistory)
+      .set(updates)
+      .where(eq(imageOptimizationHistory.id, id))
+      .returning();
+    return result[0];
   }
 }
 
