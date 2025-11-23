@@ -2558,7 +2558,120 @@ Respond with JSON in this exact format:
   });
 
   // =============================================================================
-  // END WAVE 1 API ENDPOINTS
+  // WAVE 2: A/B TESTING & ADVANCED FEATURES
+  // =============================================================================
+
+  // Generate A/B test variants for SEO content
+  app.post("/api/ab-test/create", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const {
+        productName,
+        productDescription,
+        category,
+        price,
+        tags,
+        targetAudience,
+        numVariants = 3,
+        focusMetric = 'balanced',
+        frameworkIds,
+      } = req.body;
+
+      if (!productName) {
+        return res.status(400).json({ message: "Product name is required" });
+      }
+
+      if (numVariants < 2 || numVariants > 4) {
+        return res.status(400).json({ message: "Number of variants must be between 2 and 4" });
+      }
+
+      // Import A/B testing service
+      const { generateABTestVariants } = await import('./lib/ab-testing-service');
+
+      // Generate variants
+      const results = await generateABTestVariants(
+        {
+          productInput: {
+            productName,
+            productDescription,
+            category,
+            price,
+            tags,
+            targetAudience,
+          },
+          numVariants,
+          focusMetric,
+          frameworkIds,
+        },
+        openai
+      );
+
+      // Track AI usage
+      await trackSEOUsage(userId);
+
+      // Save to generation history
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'ab_test_variants',
+        inputData: { productName, category, numVariants, focusMetric },
+        outputData: { testId: results.testId, variantCount: results.variants.length },
+        brandVoice: 'multiple',
+        tokensUsed: numVariants * 600, // Estimated
+        model: 'gpt-4o-mini'
+      });
+
+      res.json({
+        success: true,
+        ...results,
+      });
+    } catch (error: any) {
+      console.error("[Wave2 API] A/B test generation error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to generate A/B test variants",
+        error: error.message 
+      });
+    }
+  });
+
+  // Calculate A/B test winner from performance data
+  app.post("/api/ab-test/results", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const { performances, minimumSampleSize = 100 } = req.body;
+
+      if (!performances || !Array.isArray(performances)) {
+        return res.status(400).json({ message: "Performance data is required" });
+      }
+
+      // Import A/B testing service
+      const { calculateABTestWinner } = await import('./lib/ab-testing-service');
+
+      const winner = calculateABTestWinner(performances, minimumSampleSize);
+
+      if (!winner) {
+        return res.json({
+          success: true,
+          hasWinner: false,
+          message: "Not enough data to determine a winner. Continue running the test.",
+        });
+      }
+
+      res.json({
+        success: true,
+        hasWinner: true,
+        winner,
+      });
+    } catch (error: any) {
+      console.error("[Wave2 API] A/B test results error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to calculate A/B test results" 
+      });
+    }
+  });
+
+  // =============================================================================
+  // END WAVE 1 + WAVE 2 API ENDPOINTS
   // =============================================================================
 
   // Save Product SEO to History
