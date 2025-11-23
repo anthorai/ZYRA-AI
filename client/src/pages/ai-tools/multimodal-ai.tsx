@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { 
   Camera,
   Upload,
@@ -23,7 +24,8 @@ import {
   FileText,
   Eye,
   X,
-  Plus
+  Plus,
+  Package
 } from "lucide-react";
 
 interface MultimodalForm {
@@ -55,9 +57,11 @@ export default function MultimodalAI() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [shopifyImageUrls, setShopifyImageUrls] = useState<string[]>([]); // Shopify product images
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
-  const categories = [
+  const baseCategories = [
     "Electronics",
     "Fashion & Apparel",
     "Home & Garden",
@@ -76,6 +80,9 @@ export default function MultimodalAI() {
     "Tools & Hardware",
     "Musical Instruments"
   ];
+
+  // Combine base categories with any custom ones from Shopify products
+  const categories = [...baseCategories, ...customCategories];
 
   const form = useForm<MultimodalForm>({
     defaultValues: {
@@ -276,9 +283,73 @@ export default function MultimodalAI() {
         description="Combine visual and text inputs for the most accurate AI-generated content"
       >
         <div className="space-y-6">
+            {/* Product Selector - Auto-fill from Shopify */}
+            <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
+              <div className="flex items-center gap-2 text-primary">
+                <Package className="w-5 h-5" />
+                <Label className="text-sm font-semibold">Quick-Fill from Shopify Product</Label>
+              </div>
+              <ProductSelector
+                onSelect={(product) => {
+                  if (product) {
+                    // Auto-fill product name and category
+                    form.setValue("productName", product.name);
+                    
+                    // Add custom category if needed
+                    if (product.category && !categories.includes(product.category)) {
+                      setCustomCategories(prev => 
+                        prev.includes(product.category) ? prev : [...prev, product.category]
+                      );
+                    }
+                    form.setValue("category", product.category);
+                    
+                    // Fetch Shopify product images
+                    if (product.image) {
+                      setShopifyImageUrls([product.image]);
+                    }
+                    
+                    toast({
+                      title: "Product Loaded!",
+                      description: `Auto-filled from: ${product.name}. ${product.image ? 'Image loaded from Shopify.' : 'You can upload images manually below.'}`,
+                    });
+                  }
+                }}
+                placeholder="Select Shopify product to auto-fill and fetch images..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Or manually enter product details and upload images below
+              </p>
+            </div>
+
+            {/* Shopify Product Images */}
+            {shopifyImageUrls.length > 0 && (
+              <div>
+                <Label className="text-white">Shopify Product Images</Label>
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                  {shopifyImageUrls.map((imageUrl, index) => (
+                    <div key={index} className="relative shadow-lg border border-primary/50 hover:border-primary hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+                      <img 
+                        src={imageUrl} 
+                        alt={`Shopify Product ${index + 1}`}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Badge className="bg-primary/90 text-primary-foreground">
+                          From Shopify
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-2">
+                  These images will be used for AI analysis. You can upload additional images below.
+                </p>
+              </div>
+            )}
+
             {/* Image Upload Section */}
             <div>
-              <Label className="text-white">Product Images (Up to 3)</Label>
+              <Label className="text-white">Additional Product Images (Up to 3 total)</Label>
               <div className="mt-2 space-y-4">
                 {/* Upload Area */}
                 {uploadedImages.length < 3 && (
