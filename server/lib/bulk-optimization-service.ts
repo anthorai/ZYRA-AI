@@ -43,9 +43,10 @@ export class BulkOptimizationService {
   /**
    * Create a new bulk optimization job
    */
-  async createJob(userId: string, productIds: string[]): Promise<BulkOptimizationJob> {
+  async createJob(userId: string, productIds: string[], name: string = 'Bulk Optimization Job'): Promise<BulkOptimizationJob> {
     return await this.storage.createBulkOptimizationJob({
       userId,
+      name,
       totalItems: productIds.length,
       processedItems: 0,
       optimizedItems: 0,
@@ -55,7 +56,6 @@ export class BulkOptimizationService {
       progressPercentage: 0,
       totalTokensUsed: 0,
       estimatedCost: '0',
-      productIds,
     });
   }
 
