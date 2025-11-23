@@ -1788,6 +1788,156 @@ export const imageOptimizationHistory = pgTable("image_optimization_history", {
   index('image_history_user_job_idx').on(table.userId, table.jobId),
 ]);
 
+// Brand DNA - Advanced Brand Voice Learning System
+export const brandDnaProfiles = pgTable("brand_dna_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  
+  // Writing Style Analysis
+  writingStyle: text("writing_style").notNull().default('professional'), // 'formal' | 'casual' | 'professional' | 'playful' | 'luxury' | 'technical'
+  avgSentenceLength: integer("avg_sentence_length").notNull().default(15),
+  avgParagraphLength: integer("avg_paragraph_length").notNull().default(50),
+  complexityLevel: text("complexity_level").notNull().default('moderate'), // 'simple' | 'moderate' | 'complex' | 'expert'
+  
+  // Tone & Voice
+  toneDensity: text("tone_density").notNull().default('balanced'), // 'minimal' | 'balanced' | 'rich' | 'intense'
+  personalityTraits: jsonb("personality_traits").default(sql`'[]'::jsonb`), // Array of strings
+  emotionalRange: text("emotional_range").notNull().default('moderate'), // 'reserved' | 'moderate' | 'expressive' | 'intense'
+  formalityScore: integer("formality_score").notNull().default(60), // 0-100
+  
+  // Language Patterns
+  keyPhrases: jsonb("key_phrases").default(sql`'[]'::jsonb`), // Unique brand phrases
+  powerWords: jsonb("power_words").default(sql`'[]'::jsonb`), // Impactful words used frequently
+  avoidedWords: jsonb("avoided_words").default(sql`'[]'::jsonb`), // Words brand avoids
+  vocabularyLevel: text("vocabulary_level").default('intermediate'),
+  jargonFrequency: text("jargon_frequency").default('moderate'), // 'none' | 'rare' | 'moderate' | 'heavy'
+  
+  // Structural Patterns
+  ctaStyle: text("cta_style").default('action-oriented'), // How brand asks for action
+  ctaFrequency: text("cta_frequency").default('moderate'), // 'rare' | 'moderate' | 'frequent'
+  headlineStyle: text("headline_style").default('statement-based'),
+  listingStyle: text("listing_style").default('bullets'), // 'bullets' | 'numbers' | 'paragraphs' | 'mixed'
+  
+  // Visual & Formatting
+  emojiFrequency: text("emoji_frequency").default('rare'), // 'never' | 'rare' | 'moderate' | 'frequent'
+  punctuationStyle: text("punctuation_style").default('standard'), // 'minimal' | 'standard' | 'expressive'
+  capitalizationStyle: text("capitalization_style").default('standard'), // 'standard' | 'title-case' | 'creative'
+  
+  // Content Strategy
+  benefitFocusRatio: integer("benefit_focus_ratio").default(60), // 0-100 (features vs benefits)
+  socialProofUsage: text("social_proof_usage").default('occasional'), // 'never' | 'occasional' | 'frequent'
+  urgencyTactics: text("urgency_tactics").default('subtle'), // 'none' | 'subtle' | 'moderate' | 'aggressive'
+  storytellingFrequency: text("storytelling_frequency").default('moderate'), // 'rare' | 'moderate' | 'frequent'
+  
+  // SEO Preferences
+  keywordDensity: text("keyword_density").default('moderate'), // 'light' | 'moderate' | 'heavy'
+  seoVsConversion: text("seo_vs_conversion").default('balanced'), // 'seo-focused' | 'balanced' | 'conversion-focused'
+  
+  // Brand Values & Messaging
+  coreValues: jsonb("core_values").default(sql`'[]'::jsonb`), // Array of brand values
+  brandPersonality: text("brand_personality"),
+  uniqueSellingPoints: jsonb("unique_selling_points").default(sql`'[]'::jsonb`),
+  targetAudienceInsights: jsonb("target_audience_insights").default(sql`'[]'::jsonb`),
+  
+  // Technical Preferences
+  preferredModel: text("preferred_model").default('gpt-4o-mini'), // 'gpt-4o-mini' | 'gpt-4o'
+  creativityLevel: integer("creativity_level").default(70), // 0-100
+  
+  // Learning Data
+  sampleTexts: jsonb("sample_texts").default(sql`'[]'::jsonb`), // Training samples
+  confidenceScore: integer("confidence_score").default(50), // How well we understand the brand (0-100)
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('brand_dna_user_id_idx').on(table.userId),
+  index('brand_dna_confidence_idx').on(table.confidenceScore),
+]);
+
+// Brand DNA Edit Patterns - Learn from user edits
+export const brandDnaEditPatterns = pgTable("brand_dna_edit_patterns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  brandDnaId: varchar("brand_dna_id").references(() => brandDnaProfiles.id),
+  
+  originalText: text("original_text").notNull(),
+  editedText: text("edited_text").notNull(),
+  editType: text("edit_type").notNull(), // 'tone' | 'length' | 'structure' | 'keywords' | 'cta' | 'other'
+  learnedInsight: text("learned_insight"), // What was learned from this edit
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('edit_patterns_user_id_idx').on(table.userId),
+  index('edit_patterns_brand_dna_id_idx').on(table.brandDnaId),
+  index('edit_patterns_edit_type_idx').on(table.editType),
+  index('edit_patterns_created_at_idx').on(table.createdAt),
+]);
+
+// Marketing Framework Usage - Track which frameworks users select
+export const marketingFrameworkUsage = pgTable("marketing_framework_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  frameworkId: text("framework_id").notNull(), // ID from MARKETING_FRAMEWORKS
+  frameworkName: text("framework_name").notNull(),
+  
+  // Product Context
+  productName: text("product_name").notNull(),
+  productCategory: text("product_category"),
+  pricePoint: text("price_point"), // 'budget' | 'mid-range' | 'premium' | 'luxury'
+  targetAudience: text("target_audience"),
+  
+  // Usage Data
+  wasRecommended: boolean("was_recommended").default(false), // Was this the AI's recommendation?
+  recommendationConfidence: integer("recommendation_confidence"), // 0-100
+  wasEdited: boolean("was_edited").default(false), // Did user edit the output?
+  editedFields: jsonb("edited_fields"), // Which fields were edited
+  
+  // Performance Tracking
+  wasSuccessful: boolean("was_successful"), // Did user mark it as successful?
+  performanceScore: integer("performance_score"), // 0-100 if available
+  userRating: integer("user_rating"), // 1-5 if user rated it
+  
+  // Generated Content Metadata
+  seoScore: integer("seo_score"),
+  conversionScore: integer("conversion_score"),
+  brandVoiceMatchScore: integer("brand_voice_match_score"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('framework_usage_user_id_idx').on(table.userId),
+  index('framework_usage_framework_id_idx').on(table.frameworkId),
+  index('framework_usage_product_category_idx').on(table.productCategory),
+  index('framework_usage_created_at_idx').on(table.createdAt),
+  index('framework_usage_user_framework_idx').on(table.userId, table.frameworkId),
+]);
+
+// Template Recommendations - Track AI recommendations vs user choices
+export const templateRecommendations = pgTable("template_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Recommendation Data
+  recommendedFrameworkId: text("recommended_framework_id").notNull(),
+  recommendedReason: text("recommended_reason"),
+  recommendationConfidence: integer("recommendation_confidence").notNull(), // 0-100
+  alternativeFrameworks: jsonb("alternative_frameworks"), // Array of alternatives
+  
+  // User Decision
+  selectedFrameworkId: text("selected_framework_id").notNull(),
+  matchedRecommendation: boolean("matched_recommendation").notNull(), // Did user pick what was recommended?
+  
+  // Context
+  productCategory: text("product_category"),
+  pricePoint: text("price_point"),
+  targetAudience: text("target_audience"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('template_recs_user_id_idx').on(table.userId),
+  index('template_recs_matched_idx').on(table.matchedRecommendation),
+  index('template_recs_created_at_idx').on(table.createdAt),
+]);
+
 // Insert schemas for advanced notification preferences
 export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
   id: true,
@@ -1876,6 +2026,28 @@ export const insertImageOptimizationHistorySchema = createInsertSchema(imageOpti
   createdAt: true,
 });
 
+// Brand DNA & Template System Schemas
+export const insertBrandDnaProfileSchema = createInsertSchema(brandDnaProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBrandDnaEditPatternSchema = createInsertSchema(brandDnaEditPatterns).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMarketingFrameworkUsageSchema = createInsertSchema(marketingFrameworkUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTemplateRecommendationSchema = createInsertSchema(templateRecommendations).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for advanced notification preferences
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
@@ -1937,3 +2109,13 @@ export type BulkImageJobItem = typeof bulkImageJobItems.$inferSelect;
 export type InsertBulkImageJobItem = z.infer<typeof insertBulkImageJobItemSchema>;
 export type ImageOptimizationHistory = typeof imageOptimizationHistory.$inferSelect;
 export type InsertImageOptimizationHistory = z.infer<typeof insertImageOptimizationHistorySchema>;
+
+// Brand DNA & Template System Types
+export type BrandDnaProfile = typeof brandDnaProfiles.$inferSelect;
+export type InsertBrandDnaProfile = z.infer<typeof insertBrandDnaProfileSchema>;
+export type BrandDnaEditPattern = typeof brandDnaEditPatterns.$inferSelect;
+export type InsertBrandDnaEditPattern = z.infer<typeof insertBrandDnaEditPatternSchema>;
+export type MarketingFrameworkUsage = typeof marketingFrameworkUsage.$inferSelect;
+export type InsertMarketingFrameworkUsage = z.infer<typeof insertMarketingFrameworkUsageSchema>;
+export type TemplateRecommendation = typeof templateRecommendations.$inferSelect;
+export type InsertTemplateRecommendation = z.infer<typeof insertTemplateRecommendationSchema>;
