@@ -405,14 +405,22 @@ export default function ABTestingCopy() {
 
                 <div>
                   <Label htmlFor="testGoal" className="text-white">Test Goal</Label>
-                  <select 
-                    {...form.register("testGoal")}
-                    className="mt-2 w-full bg-slate-800/50 border border-slate-600 text-white rounded-md px-3 py-2"
-                  >
-                    <option value="conversions">Maximize Conversions</option>
-                    <option value="clicks">Maximize Click-Through Rate</option>
-                    <option value="engagement">Maximize Time on Page</option>
-                  </select>
+                  <Controller
+                    name="testGoal"
+                    control={form.control}
+                    render={({ field: { value, onChange } }) => (
+                      <Select onValueChange={onChange} value={value ?? "conversions"}>
+                        <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-test-goal">
+                          <SelectValue placeholder="Select test goal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="conversions">Maximize Conversions</SelectItem>
+                          <SelectItem value="clicks">Maximize Click-Through Rate</SelectItem>
+                          <SelectItem value="engagement">Maximize Time on Page</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <Button
