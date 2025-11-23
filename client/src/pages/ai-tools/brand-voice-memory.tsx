@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { ProductSelector } from "@/components/product-selector";
+import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { 
   Brain,
   Upload,
@@ -309,8 +309,10 @@ export default function BrandVoiceMemory() {
                 <ProductSelector
                   onSelect={(product) => {
                     if (product) {
-                      const sampleText = product.description || product.features || product.name;
-                      form.setValue("sampleText", sampleText);
+                      // Strip HTML tags from description/features
+                      const rawText = product.description || product.features || product.name;
+                      const cleanText = stripHtmlTags(rawText);
+                      form.setValue("sampleText", cleanText);
                       toast({
                         title: "Sample Text Loaded!",
                         description: `Using text from: ${product.name}`,

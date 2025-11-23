@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { ProductSelector } from "@/components/product-selector";
+import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { formatCurrency } from "@/lib/utils";
 import { 
   Zap, 

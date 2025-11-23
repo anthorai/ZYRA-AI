@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { ProductSelector } from "@/components/product-selector";
+import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { 
   FlaskConical,
   Copy,
@@ -333,7 +333,9 @@ export default function ABTestingCopy() {
                       if (product) {
                         form.setValue("productName", product.name);
                         form.setValue("category", product.category);
-                        form.setValue("originalDescription", product.description || product.features || "");
+                        // Strip HTML tags from description
+                        const cleanDescription = stripHtmlTags(product.description || product.features || "");
+                        form.setValue("originalDescription", cleanDescription);
                         toast({
                           title: "Product Loaded!",
                           description: `Auto-filled from: ${product.name}`,
