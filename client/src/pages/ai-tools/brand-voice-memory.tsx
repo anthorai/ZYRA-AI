@@ -88,67 +88,80 @@ export default function BrandVoiceMemory() {
   });
 
 
-  // Mock brand voice learning mutation
+  // 🎯 WAVE 2: Real Brand DNA Training with AI!
   const learnVoiceMutation = useMutation({
     mutationFn: async (data: BrandVoiceForm) => {
-      // Simulate learning process with progress
+      // Show progress animation
       setLearningProgress(0);
-      
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        setLearningProgress(i);
+      const progressInterval = setInterval(() => {
+        setLearningProgress(prev => Math.min(prev + 5, 90));
+      }, 150);
+
+      try {
+        // 🚀 Call real Wave 2 Brand DNA API
+        const { apiRequest } = await import('@/lib/queryClient');
+        const response = await apiRequest('/api/brand-dna/train', {
+          method: 'POST',
+          body: JSON.stringify({
+            sampleTexts: [data.sampleText], // Use the provided sample text
+          }),
+        });
+
+        clearInterval(progressInterval);
+        setLearningProgress(100);
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Brand DNA training failed');
+        }
+
+        const result = await response.json();
+        
+        // Map Wave 2 Brand DNA output to the UI format
+        const brandDNA = result.brandDNA;
+        
+        return {
+          tone: brandDNA.writingStyle || 'Professional',
+          personality: brandDNA.brandPersonality 
+            ? [brandDNA.brandPersonality] 
+            : ['Reliable', 'Trustworthy'],
+          writingStyle: `${brandDNA.toneDensity} tone with ${brandDNA.avgSentenceLength}-word sentences`,
+          keyPhrases: brandDNA.keyPhrases || data.keywords.split(',').map(k => k.trim()).filter(k => k),
+          confidence: brandDNA.confidenceScore || 85,
+          formality: brandDNA.formalityScore || 70,
+          ctaStyle: brandDNA.ctaStyle || 'professional',
+        };
+      } catch (error) {
+        clearInterval(progressInterval);
+        setLearningProgress(0);
+        throw error;
       }
-      
-      // Mock analysis based on input
-      const brandName = data.brandName.toLowerCase();
-      const sampleText = data.sampleText.toLowerCase();
-      
-      let tone = "Professional";
-      let personality = ["Reliable", "Trustworthy"];
-      let writingStyle = "Clear and informative";
-      
-      // Analyze based on brand name and sample text
-      if (sampleText.includes('love') || sampleText.includes('amazing') || sampleText.includes('awesome')) {
-        tone = "Enthusiastic";
-        personality = ["Passionate", "Energetic", "Friendly"];
-        writingStyle = "Conversational and engaging";
-      } else if (sampleText.includes('premium') || sampleText.includes('luxury') || sampleText.includes('exclusive')) {
-        tone = "Sophisticated";
-        personality = ["Elegant", "Premium", "Exclusive"];
-        writingStyle = "Refined and polished";
-      } else if (sampleText.includes('simple') || sampleText.includes('easy') || sampleText.includes('minimal')) {
-        tone = "Minimalist";
-        personality = ["Simple", "Direct", "Clear"];
-        writingStyle = "Concise and straightforward";
-      }
-      
-      const keyPhrases = data.keywords.split(',').map(k => k.trim()).filter(k => k);
-      
-      return {
-        tone,
-        personality,
-        writingStyle,
-        keyPhrases,
+    },
+    onSuccess: (analysis: any) => {
+      // Map real Brand DNA data to component format
+      setBrandAnalysis({
+        tone: analysis.tone,
+        personality: analysis.personality,
+        writingStyle: analysis.writingStyle,
+        keyPhrases: analysis.keyPhrases || [],
         dosList: [
-          `Use ${tone.toLowerCase()} language`,
-          `Emphasize ${data.brandValues.split(',')[0]?.trim() || 'quality'}`,
-          `Target ${data.targetAudience || 'your audience'} specifically`,
-          "Keep messaging consistent"
+          `Use ${analysis.tone.toLowerCase()} language`,
+          `Maintain ${analysis.formality}% formality level`,
+          `Apply ${analysis.ctaStyle} CTA style`,
+          "Keep messaging consistent with trained voice"
         ],
         dontsList: [
-          "Use overly complex jargon",
-          "Be inconsistent with tone",
-          "Ignore brand values",
-          "Use generic messaging"
+          "Deviate from learned tone and style",
+          "Use inconsistent formality levels",
+          "Ignore brand voice patterns",
+          "Mix different writing styles"
         ],
-        confidence: Math.floor(Math.random() * 20) + 80 // 80-100%
-      };
-    },
-    onSuccess: (result) => {
-      setBrandAnalysis(result);
+        confidence: analysis.confidence
+      });
+      
       toast({
-        title: "🧠 Brand Voice Learned!",
-        description: `Zyra AI has analyzed your brand with ${result.confidence}% confidence.`,
+        title: "🧠 Brand DNA Learned Successfully!",
+        description: `Zyra AI has analyzed your brand with ${analysis.confidence}% confidence using Wave 2 engine.`,
       });
     },
     onError: (error: any) => {

@@ -2206,10 +2206,10 @@ Respond with JSON:
     }
   });
 
-  // Ultimate Product SEO Engine - Unified SEO Generation
+  // Ultimate Product SEO Engine - USING REAL WAVE 1 ORCHESTRATION SERVICE! 🚀
   app.post("/api/generate-product-seo", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
-      const { productName, keyFeatures, targetAudience, category } = req.body;
+      const { productName, keyFeatures, targetAudience, category, price } = req.body;
 
       if (!productName) {
         return res.status(400).json({ message: "Product name is required" });
@@ -2217,76 +2217,74 @@ Respond with JSON:
 
       const userId = (req as AuthenticatedRequest).user.id;
 
-      // Import Zyra Pro Mode prompts
-      const { getSystemPromptForTool } = await import('../shared/ai-system-prompts');
-      const proModePrompt = getSystemPromptForTool('seoTitles');
+      console.log('[Product SEO Engine] Using Wave 1 Orchestration Service for:', productName);
 
-      const comprehensivePrompt = `You are an expert SEO specialist. Generate comprehensive SEO content for this product:
+      // 🎯 WAVE 1: Use the real orchestration service (same as /api/seo/generate)
+      const { generateWithOrchestration } = await import('./lib/seo-orchestration-service');
 
-**Product Name:** ${productName}
-**Category:** ${category || 'General'}
-**Key Features:** ${keyFeatures || 'Premium quality product'}
-**Target Audience:** ${targetAudience || 'General consumers'}
-
-Generate ALL of the following in a single, optimized package:
-
-1. **SEO Title** (under 60 characters): Keyword-rich, click-worthy title for search engines
-2. **Full Product Description** (200-300 words): Structured, persuasive description with:
-   - Compelling opening that highlights main benefit
-   - Feature list with benefits
-   - Use case scenarios
-   - Call to action
-   - Natural keyword integration
-3. **Meta Title** (under 60 characters): Optimized for search result previews
-4. **Meta Description** (under 160 characters): Compelling preview text for search results
-5. **SEO Keywords** (5-7 keywords): Most relevant keywords for this product
-6. **SEO Score** (0-100): Predicted ranking score based on optimization quality
-7. **Search Intent**: Primary search intent (commercial, informational, navigational, or transactional)
-8. **Suggested Keywords** (3-5): Additional high-value keywords to consider
-
-Respond with JSON in this exact format:
-{
-  "seoTitle": "your seo title",
-  "seoDescription": "your full product description with proper structure and formatting",
-  "metaTitle": "your meta title",
-  "metaDescription": "your meta description",
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "seoScore": 85,
-  "searchIntent": "commercial",
-  "suggestedKeywords": ["keyword6", "keyword7", "keyword8"]
-}`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: proModePrompt },
-          { role: "user", content: comprehensivePrompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
+      // Generate SEO with full Wave 1 orchestration
+      const result = await generateWithOrchestration({
+        userId,
+        productInput: {
+          productName,
+          productDescription: keyFeatures || 'Premium quality product',
+          category,
+          price: price ? parseFloat(price) : undefined,
+          targetAudience,
+        },
+        options: {
+          autoDetectFramework: true, // Let AI choose best framework
+          enableBrandDNA: true, // Use brand DNA if available
+          enableSerpPatterns: false,
+          shopifyHtmlFormatting: true,
+          preferredModel: 'gpt-4o-mini',
+          creativityLevel: 70,
+        },
+        openaiClient: openai,
+        db,
       });
-
-      const result = JSON.parse(response.choices[0].message.content || "{}");
 
       // Track SEO usage
       await trackSEOUsage(userId);
 
+      // Save to generation history
       await supabaseStorage.createAiGenerationHistory({
         userId,
         generationType: 'unified_product_seo',
         inputData: { productName, keyFeatures, targetAudience, category },
-        outputData: result,
-        brandVoice: 'seo',
-        tokensUsed: response.usage?.total_tokens || 500,
-        model: 'gpt-4o-mini'
+        outputData: result.seoOutput,
+        brandVoice: result.frameworkUsed || 'auto',
+        tokensUsed: 800, // Estimated
+        model: result.seoOutput.aiModel || 'gpt-4o-mini'
       });
 
-      await NotificationService.notifyPerformanceOptimizationComplete(userId, productName, `SEO Score: ${result.seoScore}/100`);
+      // Send notification
+      await NotificationService.notifyPerformanceOptimizationComplete(
+        userId,
+        productName,
+        `SEO Score: ${result.seoOutput.seoScore}/100 | Framework: ${result.frameworkUsed}`
+      );
 
-      res.json(result);
+      // Return the Wave 1 output (matching the UI's expected format)
+      res.json({
+        seoTitle: result.seoOutput.seoTitle,
+        seoDescription: result.seoOutput.seoDescription,
+        metaTitle: result.seoOutput.metaTitle,
+        metaDescription: result.seoOutput.metaDescription,
+        keywords: result.seoOutput.keywords,
+        seoScore: result.seoOutput.seoScore,
+        searchIntent: result.seoOutput.searchIntent,
+        suggestedKeywords: result.seoOutput.suggestedKeywords,
+        frameworkUsed: result.frameworkUsed,
+        brandVoiceMatchScore: result.seoOutput.brandVoiceMatchScore,
+        conversionScore: result.seoOutput.conversionScore,
+      });
     } catch (error: any) {
-      console.error("Product SEO generation error:", error);
-      res.status(500).json({ message: "Failed to generate product SEO" });
+      console.error("[Product SEO Engine] Error:", error);
+      res.status(500).json({ 
+        message: "Failed to generate product SEO",
+        error: error.message 
+      });
     }
   });
 

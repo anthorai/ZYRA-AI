@@ -94,58 +94,59 @@ export default function ABTestingCopy() {
   });
 
 
-  // Mock A/B test generation and simulation
+  // 🎯 WAVE 2: Real A/B Test Generation with AI!
   const generateABTestMutation = useMutation({
     mutationFn: async (data: ABTestForm) => {
-      // Simulate test generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { productName, originalDescription, testGoal, category } = data;
       
-      const { productName, originalDescription, testGoal } = data;
+      // 🚀 Call real Wave 2 A/B Testing API
+      const { apiRequest } = await import('@/lib/queryClient');
+      const response = await apiRequest('/api/ab-test/create', {
+        method: 'POST',
+        body: JSON.stringify({
+          productName,
+          productDescription: originalDescription,
+          category,
+          numVariants: 3,
+          focusMetric: testGoal, // 'clicks', 'conversions', 'engagement', 'balanced'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'A/B test creation failed');
+      }
+
+      const result = await response.json();
       
-      // Generate 3 variations
-      const variants: ABVariant[] = [
-        {
-          id: 'control',
-          name: 'Control (Original)',
-          content: originalDescription,
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          ctr: 0,
-          conversionRate: 0,
-          confidence: 0
-        },
-        {
-          id: 'variant-a',
-          name: 'Emotional Appeal',
-          content: `Transform your life with ${productName}! This isn't just a product—it's your gateway to a better tomorrow. ${originalDescription.replace(/\b(good|great)\b/gi, 'amazing').replace(/\./, '. Experience the difference that changes everything.')}`,
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          ctr: 0,
-          conversionRate: 0,
-          confidence: 0
-        },
-        {
-          id: 'variant-b',
-          name: 'Urgency & Scarcity',
-          content: `⚡ Limited Time: ${productName} - Only 24 hours left! ${originalDescription.replace(/\./, '. Don\'t miss out - join thousands of satisfied customers today!')} ORDER NOW before stocks run out!`,
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          ctr: 0,
-          conversionRate: 0,
-          confidence: 0
-        }
-      ];
+      // Map Wave 2 API response to UI format
+      const variants: ABVariant[] = result.variants.map((v: any, index: number) => ({
+        id: v.id,
+        name: v.name,
+        content: v.seoOutput.seoDescription,
+        seoTitle: v.seoOutput.seoTitle,
+        keywords: v.seoOutput.keywords,
+        frameworkUsed: v.frameworkName,
+        seoScore: v.seoOutput.seoScore,
+        conversionScore: v.seoOutput.conversionScore,
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        ctr: 0,
+        conversionRate: 0,
+        confidence: 0,
+        isWinner: false
+      }));
       
       return {
-        testName: `${productName} Description Test`,
+        testId: result.testId,
+        testName: `${productName} A/B Test`,
         duration: "7 days",
         totalTraffic: 0,
         variants,
-        recommendation: "Test is starting...",
-        significance: 0
+        recommendation: result.recommendation.reason,
+        recommendedVariant: result.recommendation.variantId,
+        significance: result.recommendation.confidenceScore
       };
     },
     onSuccess: (result) => {
