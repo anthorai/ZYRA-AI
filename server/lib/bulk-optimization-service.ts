@@ -3,9 +3,18 @@ import { eq, and } from 'drizzle-orm';
 import type { IStorage } from '../storage';
 import type { BulkOptimizationJob, BulkOptimizationItem, InsertBulkOptimizationItem } from '../../shared/schema';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openai) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required for bulk optimization. Please set AI_INTEGRATIONS_OPENAI_API_KEY or OPENAI_API_KEY environment variable.');
+    }
+    openai = new OpenAI({ apiKey });
+  }
+  return openai;
+}
 
 interface ProductInput {
   productId?: string;
@@ -118,7 +127,7 @@ Respond with JSON in this exact format:
 }`;
 
     try {
-      const response = await openai.chat.completions.create({
+      const response = await getOpenAI().chat.completions.create({
         model: "gpt-4o-mini", // Cost-optimized for bulk
         messages: [{ role: "user", content: comprehensivePrompt }],
         temperature: 0.7,
