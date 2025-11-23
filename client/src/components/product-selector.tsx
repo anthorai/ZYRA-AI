@@ -29,14 +29,31 @@ interface Product {
   tags: string | null;
 }
 
-interface ProductSelectorProps {
+// Overload signatures for type safety
+interface ProductSelectorSingleProps {
   value?: string;
   onSelect: (product: Product | null) => void;
   placeholder?: string;
   className?: string;
+  multiple?: false;
 }
 
-export function ProductSelector({ value, onSelect, placeholder = "Select Shopify product...", className }: ProductSelectorProps) {
+interface ProductSelectorMultipleProps {
+  value?: string[];
+  onSelect: (productIds: string[]) => void;
+  placeholder?: string;
+  className?: string;
+  multiple: true;
+  maxSelection?: number;
+}
+
+type ProductSelectorProps = ProductSelectorSingleProps | ProductSelectorMultipleProps;
+
+export function ProductSelector(props: ProductSelectorProps) {
+  const { value, onSelect, placeholder = "Select Shopify product...", className } = props;
+  const multiple = props.multiple ?? false;
+  const maxSelection = 'maxSelection' in props ? props.maxSelection ?? 5 : 5;
+  
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -44,7 +61,13 @@ export function ProductSelector({ value, onSelect, placeholder = "Select Shopify
     queryKey: ['/api/products'],
   });
 
-  const selectedProduct = products.find((p) => p.id === value);
+  // Handle both single and multi-select value
+  const selectedIds = multiple 
+    ? (Array.isArray(value) ? value : [])
+    : (value ? [value] : []);
+  
+  const selectedProducts = products.filter(p => selectedIds.includes(p.id));
+  const selectedProduct = selectedProducts[0]; // For single-select display
 
   const filteredProducts = products.filter((product) => {
     const query = searchQuery.toLowerCase();
@@ -70,7 +93,15 @@ export function ProductSelector({ value, onSelect, placeholder = "Select Shopify
           data-testid="button-product-selector"
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {selectedProduct ? (
+            {multiple && selectedProducts.length > 0 ? (
+              <>
+                <Package className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{selectedProducts.length} product{selectedProducts.length !== 1 ? 's' : ''} selected</span>
+                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                  {selectedProducts.length}/{maxSelection}
+                </Badge>
+              </>
+            ) : !multiple && selectedProduct ? (
               <>
                 {selectedProduct.image && (
                   <img 
@@ -118,43 +149,72 @@ export function ProductSelector({ value, onSelect, placeholder = "Select Shopify
               )}
             </CommandEmpty>
             <CommandGroup heading="Your Products">
-              {filteredProducts.map((product) => (
-                <CommandItem
-                  key={product.id}
-                  value={product.id}
-                  onSelect={() => {
-                    onSelect(value === product.id ? null : product);
-                    setOpen(false);
-                  }}
-                  className="flex items-center gap-2 cursor-pointer"
-                  data-testid={`option-product-${product.id}`}
-                >
-                  <Check
+              {filteredProducts.map((product) => {
+                const isSelected = selectedIds.includes(product.id);
+                const isMaxSelected = multiple && selectedIds.length >= maxSelection && !isSelected;
+                
+                return (
+                  <CommandItem
+                    key={product.id}
+                    value={product.id}
+                    onSelect={() => {
+                      if (multiple) {
+                        // Multi-select logic - emit product IDs not Product objects
+                        const currentIds = Array.isArray(value) ? value : [];
+                        if (isSelected) {
+                          // Deselect
+                          const newSelection = currentIds.filter(id => id !== product.id);
+                          (onSelect as (productIds: string[]) => void)(newSelection);
+                        } else if (currentIds.length < maxSelection) {
+                          // Select (if not at max)
+                          const newSelection = [...currentIds, product.id];
+                          (onSelect as (productIds: string[]) => void)(newSelection);
+                        }
+                        // Keep popover open for multi-select
+                      } else {
+                        // Single-select logic - always close popover
+                        const singleValue = typeof value === 'string' ? value : undefined;
+                        (onSelect as (product: Product | null) => void)(singleValue === product.id ? null : product);
+                      }
+                      // Close popover in single-select mode
+                      if (!multiple) {
+                        setOpen(false);
+                      }
+                    }}
                     className={cn(
-                      "w-4 h-4",
-                      value === product.id ? "opacity-100" : "opacity-0"
+                      "flex items-center gap-2 cursor-pointer",
+                      isMaxSelected && "opacity-50 cursor-not-allowed"
                     )}
-                  />
-                  {product.image && (
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-10 h-10 rounded object-cover"
+                    disabled={isMaxSelected}
+                    data-testid={`option-product-${product.id}`}
+                  >
+                    <Check
+                      className={cn(
+                        "w-4 h-4",
+                        isSelected ? "opacity-100" : "opacity-0"
+                      )}
                     />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{product.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {product.category}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        ${product.price}
-                      </span>
+                    {product.image && (
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        className="w-10 h-10 rounded object-cover"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{product.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {product.category}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          ${product.price}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </CommandItem>
-              ))}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

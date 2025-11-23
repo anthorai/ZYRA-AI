@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,18 @@ interface GeneratedContent {
   content: string;
 }
 
+interface Product {
+  id: string;
+  shopifyId: string | null;
+  name: string;
+  description: string | null;
+  price: string;
+  category: string;
+  image: string | null;
+  features: string | null;
+  tags: string | null;
+}
+
 export default function BrandVoiceMemory() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -59,6 +71,14 @@ export default function BrandVoiceMemory() {
   const [brandAnalysis, setBrandAnalysis] = useState<BrandAnalysis | null>(null);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent[]>([]);
   const [learningProgress, setLearningProgress] = useState(0);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [combinedText, setCombinedText] = useState<string>("");
+  const [isImporting, setIsImporting] = useState(false);
+
+  // Fetch products once and use cache
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
 
   const targetAudiences = [
     "Young Adults (18-25)",
@@ -89,6 +109,86 @@ export default function BrandVoiceMemory() {
     },
   });
 
+  // Bulk import handler - fetch all selected products from Shopify
+  const handleBulkImport = async () => {
+    if (selectedProductIds.length < 3) {
+      toast({
+        title: "Not Enough Products",
+        description: "Please select at least 3 products for richer brand voice training.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    setCombinedText("");
+
+    try {
+      const { apiRequest } = await import('@/lib/queryClient');
+      
+      // Get selected products from cache (already fetched by useQuery)
+      const selectedProducts = products.filter((p: Product) => selectedProductIds.includes(p.id));
+      
+      if (selectedProducts.length === 0) {
+        throw new Error('Selected products not found');
+      }
+
+      // Fetch Shopify details for all selected products in parallel
+      const productPromises = selectedProducts.map(async (product: Product) => {
+        if (!product.shopifyId) {
+          return { success: false, text: '', productName: product.name };
+        }
+
+        try {
+          // Fetch full Shopify details
+          const shopifyResponse = await apiRequest('GET', `/api/shopify/products/${product.shopifyId}`);
+          if (!shopifyResponse.ok) {
+            return { success: false, text: '', productName: product.name };
+          }
+
+          const fullProduct = await shopifyResponse.json();
+          const description = stripHtmlTags(fullProduct.description || '');
+          
+          return {
+            success: true,
+            text: description,
+            productName: fullProduct.title || product.name
+          };
+        } catch {
+          return { success: false, text: '', productName: product.name };
+        }
+      });
+
+      const results = await Promise.all(productPromises);
+      const successfulImports = results.filter((r: any) => r.success && r.text);
+      
+      if (successfulImports.length === 0) {
+        throw new Error('No product descriptions could be imported');
+      }
+
+      // Combine all descriptions with separators
+      const combined = successfulImports
+        .map((r: any, i: number) => `[Product ${i + 1}: ${r.productName}]\n${r.text}`)
+        .join('\n\n---\n\n');
+
+      setCombinedText(combined);
+      form.setValue("sampleText", combined);
+
+      toast({
+        title: "Bulk Import Successful!",
+        description: `Imported ${successfulImports.length} product description(s). ${combined.length} characters ready for training.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Import Failed",
+        description: error.message || "Failed to import product descriptions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
 
   // 🎯 WAVE 2: Real Brand DNA Training with AI!
   const learnVoiceMutation = useMutation({
@@ -102,11 +202,8 @@ export default function BrandVoiceMemory() {
       try {
         // 🚀 Call real Wave 2 Brand DNA API
         const { apiRequest } = await import('@/lib/queryClient');
-        const response = await apiRequest('/api/brand-dna/train', {
-          method: 'POST',
-          body: JSON.stringify({
-            sampleTexts: [data.sampleText], // Use the provided sample text
-          }),
+        const response = await apiRequest('POST', '/api/brand-dna/train', {
+          sampleTexts: [data.sampleText], // Use the provided sample text
         });
 
         clearInterval(progressInterval);
@@ -300,31 +397,83 @@ export default function BrandVoiceMemory() {
         description="Provide your brand information and sample content for AI analysis"
       >
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Product Selector - Auto-fill sample text */}
+              {/* Bulk Product Selector - Import multiple product descriptions */}
               <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-                <div className="flex items-center gap-2 text-primary">
-                  <Package className="w-5 h-5" />
-                  <Label className="text-sm font-semibold">Import Sample Text from Product</Label>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Package className="w-5 h-5" />
+                    <Label className="text-sm font-semibold">Bulk Import from Shopify Products</Label>
+                  </div>
+                  {selectedProductIds.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedProductIds.length} selected
+                    </Badge>
+                  )}
                 </div>
+                
                 <ProductSelector
-                  onSelect={(product) => {
-                    if (product) {
-                      // Strip HTML tags from description/features
-                      const rawText = product.description || product.features || product.name;
-                      const cleanText = stripHtmlTags(rawText);
-                      form.setValue("sampleText", cleanText);
-                      toast({
-                        title: "Sample Text Loaded!",
-                        description: `Using text from: ${product.name}`,
-                      });
-                    }
+                  multiple
+                  maxSelection={5}
+                  value={selectedProductIds}
+                  onSelect={(productIds: string[]) => {
+                    setSelectedProductIds(productIds);
                   }}
-                  placeholder="Select product to use as brand voice sample..."
+                  placeholder="Select 3-5 products for richer brand voice training..."
                 />
+                
+                {selectedProductIds.length > 0 && (
+                  <Button
+                    type="button"
+                    onClick={handleBulkImport}
+                    disabled={isImporting || selectedProductIds.length < 3}
+                    className="w-full bg-primary hover:bg-primary/90"
+                    data-testid="button-bulk-import"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Clock className="w-4 h-4 mr-2 animate-spin" />
+                        Importing {selectedProductIds.length} products...
+                      </>
+                    ) : selectedProductIds.length < 3 ? (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Select at least 3 products
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Import {selectedProductIds.length} Product{selectedProductIds.length !== 1 ? 's' : ''}
+                      </>
+                    )}
+                  </Button>
+                )}
+                
                 <p className="text-xs text-muted-foreground">
-                  Or manually enter sample text below
+                  {selectedProductIds.length > 0 && selectedProductIds.length < 3 ? (
+                    <span className="text-yellow-400">⚠️ Select at least 3 products for optimal training</span>
+                  ) : (
+                    "Select 3-5 products to combine their descriptions for richer AI training"
+                  )}
                 </p>
               </div>
+              
+              {/* Combined Text Preview */}
+              {combinedText && (
+                <div className="p-4 rounded-lg border border-green-400/20 bg-green-400/5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold text-green-400">Combined Preview</Label>
+                    <Badge variant="outline" className="text-xs">
+                      {combinedText.length} characters
+                    </Badge>
+                  </div>
+                  <div className="max-h-40 overflow-y-auto bg-slate-900/50 p-3 rounded text-xs text-slate-300">
+                    <pre className="whitespace-pre-wrap font-mono">{combinedText.substring(0, 500)}...</pre>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    ✓ Text auto-filled below. You can edit it before training.
+                  </p>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
