@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { ProductSelector } from "@/components/product-selector";
 import { 
   Brain,
   Upload,
@@ -24,7 +25,8 @@ import {
   MessageSquare,
   Mail,
   X,
-  Copy
+  Copy,
+  Package
 } from "lucide-react";
 
 interface BrandVoiceForm {
@@ -298,6 +300,30 @@ export default function BrandVoiceMemory() {
         description="Provide your brand information and sample content for AI analysis"
       >
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Product Selector - Auto-fill sample text */}
+              <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
+                <div className="flex items-center gap-2 text-primary">
+                  <Package className="w-5 h-5" />
+                  <Label className="text-sm font-semibold">Import Sample Text from Product</Label>
+                </div>
+                <ProductSelector
+                  onSelect={(product) => {
+                    if (product) {
+                      const sampleText = product.description || product.features || product.name;
+                      form.setValue("sampleText", sampleText);
+                      toast({
+                        title: "Sample Text Loaded!",
+                        description: `Using text from: ${product.name}`,
+                      });
+                    }
+                  }}
+                  placeholder="Select product to use as brand voice sample..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Or manually enter sample text below
+                </p>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>

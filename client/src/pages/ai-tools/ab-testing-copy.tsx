@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { ProductSelector } from "@/components/product-selector";
 import { 
   FlaskConical,
   Copy,
@@ -25,7 +26,8 @@ import {
   Eye,
   MousePointer,
   ShoppingCart,
-  Award
+  Award,
+  Package
 } from "lucide-react";
 
 interface ABTestForm {
@@ -320,6 +322,31 @@ export default function ABTestingCopy() {
           description="Set up your A/B test to find the highest-converting product description"
         >
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Product Selector - Auto-fill from Shopify */}
+                <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Package className="w-5 h-5" />
+                    <Label className="text-sm font-semibold">Quick-Fill from Shopify Product</Label>
+                  </div>
+                  <ProductSelector
+                    onSelect={(product) => {
+                      if (product) {
+                        form.setValue("productName", product.name);
+                        form.setValue("category", product.category);
+                        form.setValue("originalDescription", product.description || product.features || "");
+                        toast({
+                          title: "Product Loaded!",
+                          description: `Auto-filled from: ${product.name}`,
+                        });
+                      }
+                    }}
+                    placeholder="Select Shopify product to auto-fill..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Or manually enter product details below
+                  </p>
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="productName" className="text-white">Product Name *</Label>

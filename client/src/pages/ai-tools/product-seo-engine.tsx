@@ -4,12 +4,12 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { ProductSelector } from "@/components/product-selector";
 import { formatCurrency } from "@/lib/utils";
 import { 
   Zap, 
@@ -223,19 +223,12 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                 ) : (
                   <div className="space-y-4">
                     <div className="space-y-3">
-                      <label className="text-sm font-medium text-slate-300">Choose Product</label>
-                      <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                        <SelectTrigger data-testid="select-product">
-                          <SelectValue placeholder="Select a product..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products?.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <label className="text-sm font-medium text-slate-300">Choose Shopify Product</label>
+                      <ProductSelector
+                        value={selectedProductId}
+                        onSelect={(product) => setSelectedProductId(product?.id || "")}
+                        placeholder="Search and select product..."
+                      />
                     </div>
 
                     {selectedProduct && (
