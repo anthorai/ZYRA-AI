@@ -7101,6 +7101,58 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get full Shopify product details by Shopify product ID (with all images)
+  app.get('/api/shopify/products/:shopifyProductId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { shopifyProductId } = req.params;
+      
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+
+      // Fetch single product from Shopify API
+      const productResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products/${shopifyProductId}.json`, {
+        headers: {
+          'X-Shopify-Access-Token': shopifyConnection.accessToken
+        }
+      });
+
+      if (!productResponse.ok) {
+        throw new Error('Failed to fetch Shopify product details');
+      }
+
+      const productData = await productResponse.json();
+      const product = productData.product;
+      
+      // Extract all images (up to 10)
+      const images = (product.images || []).slice(0, 10).map((img: any) => ({
+        id: img.id,
+        src: img.src,
+        alt: img.alt || product.title,
+        position: img.position
+      }));
+      
+      // Return formatted product data
+      res.json({
+        id: product.id,
+        title: product.title,
+        description: product.body_html || '',
+        images: images,
+        variants: product.variants || [],
+        tags: product.tags || '',
+        productType: product.product_type || '',
+        vendor: product.vendor || '',
+      });
+    } catch (error) {
+      console.error('Shopify product details fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch Shopify product details' });
+    }
+  });
+
   // Sync Shopify products to Zyra (with history tracking and delta sync)
   app.post('/api/shopify/sync', requireAuth, async (req, res) => {
     let syncRecord;

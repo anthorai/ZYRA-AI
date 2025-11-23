@@ -19,6 +19,7 @@ export function stripHtmlTags(html: string | null | undefined): string {
 
 interface Product {
   id: string;
+  shopifyId: string | null;
   name: string;
   description: string | null;
   price: string;

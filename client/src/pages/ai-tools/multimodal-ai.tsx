@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ export default function MultimodalAI() {
   const [shopifyImageUrls, setShopifyImageUrls] = useState<string[]>([]); // Shopify product images
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   const baseCategories = [
     "Electronics",
@@ -290,28 +292,100 @@ export default function MultimodalAI() {
                 <Label className="text-sm font-semibold">Quick-Fill from Shopify Product</Label>
               </div>
               <ProductSelector
-                onSelect={(product) => {
+                value={selectedProductId}
+                onSelect={async (product) => {
                   if (product) {
-                    // Auto-fill product name and category
-                    form.setValue("productName", product.name);
+                    // Persist selected product ID
+                    setSelectedProductId(product.id);
                     
-                    // Add custom category if needed
-                    if (product.category && !categories.includes(product.category)) {
-                      setCustomCategories(prev => 
-                        prev.includes(product.category) ? prev : [...prev, product.category]
-                      );
+                    // Clear previous Shopify images
+                    setShopifyImageUrls([]);
+                    
+                    try {
+                      // Guard against missing shopifyId
+                      if (!product.shopifyId) {
+                        throw new Error('Product missing Shopify ID');
+                      }
+                      
+                      // Fetch full product details from Shopify using authenticated request
+                      const response = await apiRequest('GET', `/api/shopify/products/${product.shopifyId}`);
+                      
+                      // Check response status before parsing
+                      if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        throw new Error(errorData.error || `API error: ${response.status}`);
+                      }
+                      
+                      const fullProduct = await response.json();
+                      
+                      // Auto-fill product name and category
+                      form.setValue("productName", fullProduct.title || product.name);
+                      
+                      // Add custom category if needed
+                      const productCategory = fullProduct.productType || product.category;
+                      if (productCategory && !categories.includes(productCategory)) {
+                        setCustomCategories(prev => 
+                          prev.includes(productCategory) ? prev : [...prev, productCategory]
+                        );
+                      }
+                      form.setValue("category", productCategory);
+                      
+                      // Auto-fill description (strip HTML tags, reset to empty if no description)
+                      const cleanDescription = stripHtmlTags(fullProduct.description || '');
+                      form.setValue("attributes", cleanDescription);
+                      
+                      // Auto-fill keywords from tags (reset to empty if no tags)
+                      form.setValue("targetKeywords", fullProduct.tags || "");
+                      
+                      // Fetch and display multiple Shopify product images (up to 3)
+                      const imageCount = fullProduct.images?.length || 0;
+                      if (fullProduct.images && imageCount > 0) {
+                        const imageUrls = fullProduct.images.slice(0, 3).map((img: any) => img.src);
+                        setShopifyImageUrls(imageUrls);
+                      }
+                      
+                      toast({
+                        title: "Product Loaded!",
+                        description: `Auto-filled from: ${fullProduct.title}. ${imageCount} image(s) loaded from Shopify.`,
+                      });
+                    } catch (error: any) {
+                      // Clear stale images on error
+                      setShopifyImageUrls([]);
+                      
+                      // Fallback to basic product data if API call fails
+                      form.setValue("productName", product.name);
+                      if (product.category && !categories.includes(product.category)) {
+                        setCustomCategories(prev => 
+                          prev.includes(product.category) ? prev : [...prev, product.category]
+                        );
+                      }
+                      form.setValue("category", product.category);
+                      
+                      // Auto-fill description from basic product (strip HTML, reset to empty if none)
+                      const cleanDescription = stripHtmlTags(product.description || '');
+                      form.setValue("attributes", cleanDescription);
+                      
+                      // Reset keywords to prevent stale data
+                      form.setValue("targetKeywords", "");
+                      
+                      if (product.image) {
+                        setShopifyImageUrls([product.image]);
+                      }
+                      
+                      toast({
+                        title: "Partial Load",
+                        description: error.message || `Auto-filled from: ${product.name}. Some details may be missing.`,
+                        variant: "destructive",
+                      });
                     }
-                    form.setValue("category", product.category);
-                    
-                    // Fetch Shopify product images
-                    if (product.image) {
-                      setShopifyImageUrls([product.image]);
-                    }
-                    
-                    toast({
-                      title: "Product Loaded!",
-                      description: `Auto-filled from: ${product.name}. ${product.image ? 'Image loaded from Shopify.' : 'You can upload images manually below.'}`,
-                    });
+                  } else {
+                    // Handle null product (user deselected)
+                    setSelectedProductId("");
+                    setShopifyImageUrls([]);
+                    form.setValue("productName", "");
+                    form.setValue("category", "");
+                    form.setValue("attributes", "");
+                    form.setValue("targetKeywords", "");
                   }
                 }}
                 placeholder="Select Shopify product to auto-fill and fetch images..."
