@@ -170,7 +170,7 @@ export async function generateUnifiedSEO(
       throw new Error('Empty response from OpenAI');
     }
     
-    // Parse and validate JSON response
+    // Parse and validate JSON response with Zod
     let rawOutput: any;
     try {
       rawOutput = JSON.parse(rawContent);
@@ -179,18 +179,29 @@ export async function generateUnifiedSEO(
       throw new Error('Invalid JSON response from OpenAI');
     }
     
-    // Validate required fields
-    if (!rawOutput.seoTitle || !rawOutput.seoDescription) {
-      console.warn('OpenAI response missing required fields, using defaults');
-    }
+    // Import validator
+    const { validateSEOOutput, validatePostFormatting } = await import('./seo-output-validator');
     
-    // Step 7: Post-process and validate with quality scores
-    const enhancedOutput = await enhanceWithQualityScores(rawOutput, enhancedInput);
+    // Validate with Zod schema (includes fallbacks for missing fields)
+    const validatedOutput = validateSEOOutput(rawOutput, {
+      productName: input.productName,
+      category: input.category,
+    });
+    
+    // Step 7: Post-process and add quality scores
+    const enhancedOutput = await enhanceWithQualityScores(validatedOutput, enhancedInput);
     
     // Step 8: Apply Shopify HTML formatting if requested
     if (input.shopifyHtmlFormatting) {
       enhancedOutput.seoDescription = ensureShopifyFormatting(enhancedOutput.seoDescription);
       enhancedOutput.shopifyDescription = enhancedOutput.seoDescription; // Sync both fields
+      
+      // Validate formatting didn't break anything
+      const { validatePostFormatting } = await import('./seo-output-validator');
+      const isValid = validatePostFormatting(enhancedOutput);
+      if (!isValid) {
+        console.warn('[SEO Engine] Post-formatting validation failed - some fields may be incomplete');
+      }
     }
     
     // Step 9: Attach metadata

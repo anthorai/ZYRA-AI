@@ -188,10 +188,8 @@ export async function orchestrateSEOGeneration(
  */
 async function loadBrandDNA(userId: string, db: any): Promise<BrandDNA | undefined> {
   try {
-    // TODO: Implement actual database query
-    // For now, return undefined to use defaults
-    console.log('[Orchestrator] Brand DNA loading not yet implemented');
-    return undefined;
+    const { getBrandDNAProfile } = await import('../services/wave1-persistence');
+    return await getBrandDNAProfile(userId);
   } catch (error) {
     console.error('[Orchestrator] Failed to load brand DNA:', error);
     return undefined;
@@ -218,19 +216,27 @@ async function trackFrameworkUsage(
   db: any
 ): Promise<void> {
   try {
-    // TODO: Implement actual database insert
-    // For now, just log
-    console.log('[Orchestrator] Framework usage tracked:', {
-      framework: usage.frameworkName,
-      product: usage.productName,
-      scores: {
-        seo: usage.seoScore,
-        conversion: usage.conversionScore,
-        brandVoice: usage.brandVoiceMatchScore,
-      }
-    });
+    const { trackFrameworkUsage: persistUsage } = await import('../services/wave1-persistence');
+    
+    // Convert to proper insert format
+    const usageData = {
+      userId: usage.userId,
+      frameworkId: usage.frameworkId,
+      frameworkName: usage.frameworkName,
+      productName: usage.productName,
+      productCategory: usage.productCategory,
+      pricePoint: usage.pricePoint as 'budget' | 'mid-range' | 'premium' | 'luxury' | undefined,
+      wasRecommended: usage.wasRecommended,
+      recommendationConfidence: usage.recommendationConfidence,
+      seoScore: usage.seoScore,
+      conversionScore: usage.conversionScore,
+      brandVoiceMatchScore: usage.brandVoiceMatchScore,
+    };
+    
+    await persistUsage(usageData);
   } catch (error) {
     console.error('[Orchestrator] Failed to track usage:', error);
+    // Don't throw - tracking failures shouldn't break generation
   }
 }
 
@@ -253,8 +259,11 @@ export async function trainBrandDNA(
   };
   const brandDNA = await analyzeBrandDNA(trainingInput, userId, openaiClient);
   
-  // TODO: Save to database
-  console.log('[Orchestrator] Brand DNA analysis complete:', {
+  // Save to database
+  const { saveBrandDNAProfile } = await import('../services/wave1-persistence');
+  await saveBrandDNAProfile(userId, brandDNA);
+  
+  console.log('[Orchestrator] Brand DNA analysis complete and saved:', {
     writingStyle: brandDNA.writingStyle,
     toneDensity: brandDNA.toneDensity,
     avgSentenceLength: brandDNA.avgSentenceLength,
