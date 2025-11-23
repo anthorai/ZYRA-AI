@@ -2383,6 +2383,102 @@ Respond with JSON:
     }
   });
 
+  // =============================================================================
+  // SERP COMPETITIVE INTELLIGENCE API
+  // =============================================================================
+
+  // Analyze Google SERP for real-time competitor intelligence
+  app.post("/api/serp/analyze", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { keyword, location = 'United States' } = req.body;
+
+      if (!keyword || typeof keyword !== 'string' || keyword.trim().length === 0) {
+        return res.status(400).json({ 
+          message: "Keyword is required for SERP analysis" 
+        });
+      }
+
+      // Check SERP credit cost (10 credits per analysis)
+      const SERP_CREDIT_COST = 10;
+      
+      // Get user's current credits (from subscription plan)
+      const userProfile = await supabaseStorage.getUserById(userId);
+      if (!userProfile) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Import SERP analyzer
+      const { analyzeSERP, getSERPCost } = await import('./services/serp-analyzer');
+
+      console.log(`[SERP API] Starting analysis for "${keyword}" (location: ${location})`);
+
+      // Perform SERP analysis
+      const analysis = await analyzeSERP(keyword.trim(), location);
+
+      // Calculate actual API cost
+      const apiCost = getSERPCost();
+
+      console.log(`[SERP API] Analysis complete:`, {
+        keyword,
+        topResults: analysis.topResults.length,
+        cached: !!analysis.cachedAt,
+        apiCost: analysis.cachedAt ? '$0.00 (cached)' : `$${apiCost.perSearch.toFixed(4)}`,
+      });
+
+      // Track usage for value dashboard
+      // In a real implementation, you would deduct credits here
+      // For now, we'll just log the usage
+
+      res.json({
+        success: true,
+        analysis,
+        credits: {
+          cost: SERP_CREDIT_COST,
+          remaining: 1000, // TODO: Calculate actual remaining credits
+        },
+        apiCost: analysis.cachedAt ? 0 : apiCost.perSearch,
+        cached: !!analysis.cachedAt,
+      });
+    } catch (error: any) {
+      console.error("[SERP API] Analysis error:", error);
+      
+      // Handle specific errors
+      if (error.message.includes('credentials not configured')) {
+        return res.status(503).json({
+          success: false,
+          message: "SERP analysis service temporarily unavailable",
+          error: "Service configuration pending",
+        });
+      }
+
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to analyze SERP data",
+        error: error.message 
+      });
+    }
+  });
+
+  // Get SERP analysis health status
+  app.get("/api/serp/health", requireAuth, async (req, res) => {
+    try {
+      const { checkSERPHealth } = await import('./services/serp-analyzer');
+      const health = await checkSERPHealth();
+      
+      res.json({
+        success: true,
+        ...health,
+      });
+    } catch (error: any) {
+      res.json({
+        success: false,
+        available: false,
+        message: error.message,
+      });
+    }
+  });
+
   // Train Brand DNA from sample content
   app.post("/api/brand-dna/train", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, async (req, res) => {
     try {
