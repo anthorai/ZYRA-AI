@@ -2290,6 +2290,277 @@ Respond with JSON in this exact format:
     }
   });
 
+  // =============================================================================
+  // WAVE 1: UNIFIED SEO ENGINE WITH ADVANCED FEATURES
+  // =============================================================================
+
+  // Main Wave 1 SEO Generation - Unified engine with all advanced features
+  app.post("/api/seo/generate", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const {
+        productName,
+        productDescription,
+        category,
+        price,
+        tags,
+        currentKeywords,
+        targetAudience,
+        uniqueSellingPoints,
+        // Wave 1 features
+        autoDetectFramework = true,
+        frameworkId,
+        enableBrandDNA = true,
+        enableSerpPatterns = false,
+        shopifyHtmlFormatting = true,
+        preferredModel,
+        creativityLevel,
+      } = req.body;
+
+      if (!productName) {
+        return res.status(400).json({ message: "Product name is required" });
+      }
+
+      // Import orchestration service
+      const { generateWithOrchestration } = await import('./lib/seo-orchestration-service');
+
+      // Generate SEO with full orchestration
+      const result = await generateWithOrchestration({
+        userId,
+        productInput: {
+          productName,
+          productDescription,
+          category,
+          price,
+          tags,
+          currentKeywords,
+          targetAudience,
+          uniqueSellingPoints,
+        },
+        options: {
+          autoDetectFramework,
+          frameworkId,
+          enableBrandDNA,
+          enableSerpPatterns,
+          shopifyHtmlFormatting,
+          preferredModel,
+          creativityLevel,
+        },
+        openaiClient: openai,
+        db,
+      });
+
+      // Track SEO usage
+      await trackSEOUsage(userId);
+
+      // Save to generation history
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'wave1_unified_seo',
+        inputData: { productName, category, frameworkUsed: result.frameworkUsed },
+        outputData: result.seoOutput,
+        brandVoice: result.frameworkUsed || 'auto',
+        tokensUsed: 800, // Estimated
+        model: result.seoOutput.aiModel || 'gpt-4o-mini'
+      });
+
+      // Send notification
+      await NotificationService.notifyPerformanceOptimizationComplete(
+        userId,
+        productName,
+        `SEO Score: ${result.seoOutput.seoScore}/100 | Framework: ${result.frameworkUsed}`
+      );
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error: any) {
+      console.error("[Wave1 API] SEO generation error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to generate SEO content",
+        error: error.message 
+      });
+    }
+  });
+
+  // Train Brand DNA from sample content
+  app.post("/api/brand-dna/train", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { sampleTexts } = req.body;
+
+      if (!sampleTexts || !Array.isArray(sampleTexts) || sampleTexts.length === 0) {
+        return res.status(400).json({ 
+          message: "At least one sample text is required for training" 
+        });
+      }
+
+      if (sampleTexts.length > 10) {
+        return res.status(400).json({ 
+          message: "Maximum 10 sample texts allowed per training session" 
+        });
+      }
+
+      // Import orchestration service
+      const { trainBrandDNAIfNeeded } = await import('./lib/seo-orchestration-service');
+
+      // Train brand DNA
+      const brandDNA = await trainBrandDNAIfNeeded(userId, sampleTexts, openai, db);
+
+      res.json({
+        success: true,
+        brandDNA: {
+          writingStyle: brandDNA.writingStyle,
+          toneDensity: brandDNA.toneDensity,
+          avgSentenceLength: brandDNA.avgSentenceLength,
+          formalityScore: brandDNA.formalityScore,
+          emojiFrequency: brandDNA.emojiFrequency,
+          ctaStyle: brandDNA.ctaStyle,
+          brandPersonality: brandDNA.brandPersonality,
+          confidenceScore: brandDNA.confidenceScore,
+          keyPhrases: brandDNA.keyPhrases.slice(0, 5), // Top 5 only
+          powerWords: brandDNA.powerWords?.slice(0, 5), // Top 5 only
+        },
+        message: "Brand DNA trained successfully",
+      });
+    } catch (error: any) {
+      console.error("[Wave1 API] Brand DNA training error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to train brand DNA",
+        error: error.message 
+      });
+    }
+  });
+
+  // Get Brand DNA profile
+  app.get("/api/brand-dna/profile", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { getBrandDNAProfile } = await import('./services/wave1-persistence');
+      
+      const brandDNA = await getBrandDNAProfile(userId);
+      
+      if (!brandDNA) {
+        return res.json({
+          success: true,
+          hasBrandDNA: false,
+          message: "No brand DNA profile found. Train one to personalize your SEO content.",
+        });
+      }
+
+      res.json({
+        success: true,
+        hasBrandDNA: true,
+        brandDNA: {
+          writingStyle: brandDNA.writingStyle,
+          toneDensity: brandDNA.toneDensity,
+          avgSentenceLength: brandDNA.avgSentenceLength,
+          formalityScore: brandDNA.formalityScore,
+          emojiFrequency: brandDNA.emojiFrequency,
+          ctaStyle: brandDNA.ctaStyle,
+          brandPersonality: brandDNA.brandPersonality,
+          confidenceScore: brandDNA.confidenceScore,
+        },
+      });
+    } catch (error: any) {
+      console.error("[Wave1 API] Get brand DNA error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to fetch brand DNA profile" 
+      });
+    }
+  });
+
+  // Get marketing framework recommendations
+  app.post("/api/templates/recommend", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const {
+        productName,
+        productDescription,
+        category,
+        price,
+        tags,
+        targetAudience,
+      } = req.body;
+
+      if (!productName) {
+        return res.status(400).json({ message: "Product name is required" });
+      }
+
+      // Import orchestration service
+      const { getFrameworkRecommendation } = await import('./lib/seo-orchestration-service');
+
+      const recommendation = await getFrameworkRecommendation(
+        {
+          productName,
+          productDescription,
+          category,
+          price,
+          tags,
+          targetAudience,
+        },
+        userId,
+        db
+      );
+
+      res.json({
+        success: true,
+        recommendation: {
+          primary: {
+            id: recommendation.primaryFramework.id,
+            name: recommendation.primaryFramework.name,
+            description: recommendation.primaryFramework.description,
+            bestFor: recommendation.primaryFramework.bestFor,
+            confidence: recommendation.confidence,
+            reason: recommendation.reason,
+          },
+          alternatives: recommendation.alternatives.map(alt => ({
+            id: alt.framework.id,
+            name: alt.framework.name,
+            description: alt.framework.description,
+            confidence: alt.confidence,
+            reason: alt.reason,
+          })),
+        },
+      });
+    } catch (error: any) {
+      console.error("[Wave1 API] Template recommendation error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to get template recommendations" 
+      });
+    }
+  });
+
+  // Get framework usage statistics
+  app.get("/api/templates/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { getFrameworkStats } = await import('./services/wave1-persistence');
+      
+      const stats = await getFrameworkStats(userId);
+
+      res.json({
+        success: true,
+        stats,
+      });
+    } catch (error: any) {
+      console.error("[Wave1 API] Framework stats error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to fetch framework statistics" 
+      });
+    }
+  });
+
+  // =============================================================================
+  // END WAVE 1 API ENDPOINTS
+  // =============================================================================
+
   // Save Product SEO to History
   app.post("/api/save-product-seo", requireAuth, sanitizeBody, async (req, res) => {
     try {
