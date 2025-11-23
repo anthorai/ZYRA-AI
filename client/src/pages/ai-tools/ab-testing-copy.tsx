@@ -65,8 +65,9 @@ export default function ABTestingCopy() {
   const [testResults, setTestResults] = useState<ABTestResults | null>(null);
   const [testProgress, setTestProgress] = useState(0);
   const [testActive, setTestActive] = useState(false);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
-  const categories = [
+  const baseCategories = [
     "Electronics",
     "Fashion & Apparel",
     "Home & Garden",
@@ -85,6 +86,9 @@ export default function ABTestingCopy() {
     "Tools & Hardware",
     "Musical Instruments"
   ];
+
+  // Combine base categories with any custom ones from Shopify products
+  const categories = [...baseCategories, ...customCategories];
 
   const form = useForm<ABTestForm>({
     defaultValues: {
@@ -332,7 +336,15 @@ export default function ABTestingCopy() {
                     onSelect={(product) => {
                       if (product) {
                         form.setValue("productName", product.name);
+                        
+                        // Add Shopify category to dropdown if it doesn't exist
+                        if (product.category && !categories.includes(product.category)) {
+                          setCustomCategories(prev => 
+                            prev.includes(product.category) ? prev : [...prev, product.category]
+                          );
+                        }
                         form.setValue("category", product.category);
+                        
                         // Strip HTML tags from description
                         const cleanDescription = stripHtmlTags(product.description || product.features || "");
                         form.setValue("originalDescription", cleanDescription);
