@@ -202,13 +202,23 @@ export default function ProductSeoEngine() {
     setGeneratedSEO(null);
     setSerpAnalysis(null);
 
-    // If competitive mode, fetch SERP data first
+    // If competitive mode, try to fetch SERP data first
     if (optimizationMode === 'competitive') {
-      const keyword = selectedProduct.name;
-      await serpAnalysisMutation.mutateAsync(keyword);
+      try {
+        const keyword = selectedProduct.name;
+        await serpAnalysisMutation.mutateAsync(keyword);
+      } catch (error) {
+        // SERP analysis failed - fall back to fast mode
+        console.error('SERP analysis failed, falling back to fast mode:', error);
+        setOptimizationMode('fast');
+        toast({
+          title: "Switched to Fast Mode",
+          description: "Competitor analysis unavailable. Using fast AI-only optimization.",
+        });
+      }
     }
 
-    // Then generate SEO (will use SERP data if available)
+    // Generate SEO (will use SERP data if available from successful competitive mode)
     generateSEOMutation.mutate({
       productName: selectedProduct.name,
       keyFeatures: selectedProduct.features || selectedProduct.description || "Premium quality product",
