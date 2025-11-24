@@ -22,7 +22,7 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
     })
   : null;
 
-interface SERPResult {
+export interface SERPResult {
   position: number;
   title: string;
   description: string;
@@ -30,14 +30,14 @@ interface SERPResult {
   domain: string;
 }
 
-interface KeywordCluster {
+export interface KeywordCluster {
   primary: string;
   secondary: string[];
   longTail: string[];
   lsi: string[]; // Latent Semantic Indexing keywords
 }
 
-interface SERPAnalysis {
+export interface SERPAnalysis {
   query: string;
   topResults: SERPResult[];
   keywordClusters: KeywordCluster;
