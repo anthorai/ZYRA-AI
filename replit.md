@@ -16,16 +16,25 @@ The backend is built with Express.js and TypeScript, providing RESTful API endpo
 ### AI Integration
 Zyra AI utilizes a multi-model AI system (GPT-4o, GPT-4o-mini) with a centralized prompt library for professional copywriting, product description generation, SEO optimization, image alt-text generation, and bulk product optimization, maintaining brand voice memory. It includes premium Strategy AI (GPT-4o) with token accounting, rate limiting, and Redis-backed caching. A "Fast Mode" for copywriting uses GPT-4o-mini and SSE streaming for real-time content generation, significantly reducing generation time compared to the "Quality Mode" which uses a multi-agent pipeline with GPT-4o.
 
-### SERP Competitive Intelligence (NEW)
-Real-time Google search analysis powered by DataForSEO API provides competitive intelligence for SEO optimization. Features include:
-- **Live SERP Data**: Fetches top 10 Google organic results for any keyword
+### SERP Competitive Intelligence (COMPLETE - Backend + Frontend)
+Real-time Google search analysis powered by DataForSEO API provides competitive intelligence for SEO optimization. The system is fully integrated into the Product SEO Engine with dual-mode optimization:
+
+**Backend Features:**
+- **Live SERP Data**: Fetches top 10 Google organic results for any keyword via DataForSEO API
 - **Pattern Extraction**: Analyzes title structures, meta descriptions, keyword clusters, and emotional triggers from top-ranking competitors
 - **ZYRA GOOGLE ECOMMERCE RANKING ANALYZER**: Enhanced AI prompt system that generates content designed to outrank competitors using real SERP patterns
 - **Redis Caching**: 7-day TTL reduces API costs by 60% (cached results are free, fresh searches cost $0.005)
 - **Keyword Clustering**: Extracts primary, secondary, long-tail, and LSI keywords from competitor pages
 - **Value Tracking**: Calculates dollar value delivered to merchants ($500-$2,000/month in equivalent SEO tools)
-- **Credit System**: SERP analysis costs 10 credits per search, with tiered plans (Starter: 1,000 credits, Growth: 5,000, Pro: 20,000)
 - **ROI Optimization**: 99.7% profit margin for SaaS owner (costs $0.005 per search, charges 10 credits worth ~$0.50)
+
+**Frontend UI Features:**
+- **Dual-Mode Selector**: Interactive toggle between Fast Mode (10 credits, 2-3 sec) and Competitive Intelligence (30 credits, 5-8 sec)
+- **Competitor Insights Card**: Real-time display of top 5 competitor domains, winning title patterns, keyword opportunities, and common product features
+- **Loading States**: Separate loading indicators for SERP analysis and AI generation
+- **Error Handling**: Automatic graceful fallback from competitive mode to fast mode if SERP analysis fails
+- **Responsive Design**: Mode selector cards and insights display adapt to desktop and mobile viewports
+- **Credit System**: Fast Mode (10 credits, AI-only), Competitive Intelligence (30 credits including 10 for SERP + 20 for enhanced AI)
 
 ### Authentication & Authorization
 Supabase Auth provides email/password, password reset, JWT-based session management, Row Level Security (RLS), RBAC for admin endpoints, and TOTP-based Two-Factor Authentication.
