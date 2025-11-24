@@ -28,7 +28,10 @@ import {
   FileText,
   Hash,
   Eye,
-  BarChart3
+  BarChart3,
+  Rocket,
+  Trophy,
+  Users
 } from "lucide-react";
 
 interface Product {
@@ -51,12 +54,50 @@ interface SEOOutput {
   suggestedKeywords?: string[];
 }
 
+interface SERPResult {
+  position: number;
+  title: string;
+  description: string;
+  url: string;
+  domain: string;
+}
+
+interface SERPAnalysis {
+  query: string;
+  topResults: SERPResult[];
+  keywordClusters: {
+    primary: string;
+    secondary: string[];
+    longTail: string[];
+    lsi: string[];
+  };
+  titlePatterns: {
+    averageLength: number;
+    commonStructure: string;
+    topModifiers: string[];
+  };
+  metaPatterns: {
+    averageLength: number;
+    emotionalTriggers: string[];
+  };
+  competitorInsights: {
+    totalAnalyzed: number;
+    topDomains: string[];
+    commonFeatures: string[];
+  };
+  cached?: boolean;
+}
+
+type OptimizationMode = 'fast' | 'competitive';
+
 export default function ProductSeoEngine() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [generatedSEO, setGeneratedSEO] = useState<SEOOutput | null>(null);
   const [activeTab, setActiveTab] = useState("seo-title");
+  const [optimizationMode, setOptimizationMode] = useState<OptimizationMode>('fast');
+  const [serpAnalysis, setSerpAnalysis] = useState<SERPAnalysis | null>(null);
 
   // Fetch user's products
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
@@ -94,6 +135,32 @@ export default function ProductSeoEngine() {
     },
   });
 
+  // SERP Analysis mutation
+  const serpAnalysisMutation = useMutation({
+    mutationFn: async (keyword: string) => {
+      const response = await apiRequest("POST", "/api/serp/analyze", { keyword });
+      return await response.json();
+    },
+    onSuccess: (data: { success: boolean; analysis: SERPAnalysis }) => {
+      if (data.success) {
+        setSerpAnalysis(data.analysis);
+        toast({
+          title: "Competitor Analysis Complete!",
+          description: `Analyzed top ${data.analysis.topResults.length} Google rankings${data.analysis.cached ? ' (cached)' : ''}`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "SERP Analysis Failed",
+        description: error.message || "Failed to fetch competitor data",
+        variant: "destructive",
+      });
+      // Fallback to fast mode
+      setOptimizationMode('fast');
+    },
+  });
+
   // Save SEO mutation
   const saveSEOMutation = useMutation({
     mutationFn: async () => {
@@ -121,7 +188,7 @@ export default function ProductSeoEngine() {
     },
   });
 
-  const handleOptimize = () => {
+  const handleOptimize = async () => {
     if (!selectedProduct) {
       toast({
         title: "No Product Selected",
@@ -131,6 +198,17 @@ export default function ProductSeoEngine() {
       return;
     }
 
+    // Clear previous results
+    setGeneratedSEO(null);
+    setSerpAnalysis(null);
+
+    // If competitive mode, fetch SERP data first
+    if (optimizationMode === 'competitive') {
+      const keyword = selectedProduct.name;
+      await serpAnalysisMutation.mutateAsync(keyword);
+    }
+
+    // Then generate SEO (will use SERP data if available)
     generateSEOMutation.mutate({
       productName: selectedProduct.name,
       keyFeatures: selectedProduct.features || selectedProduct.description || "Premium quality product",
@@ -253,6 +331,105 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                 )}
             </DashboardCard>
 
+            {/* SERP Competitor Insights Card */}
+            {serpAnalysis && (
+              <DashboardCard 
+                title="Competitor Intelligence"
+                description={`Analyzing ${serpAnalysis.topResults.length} top Google rankings${serpAnalysis.cached ? ' (cached)' : ''}`}
+                testId="card-serp-insights"
+                className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500"
+              >
+                <div className="space-y-6">
+                  {/* Top Competitor Domains */}
+                  <div className="space-y-3">
+                    <span className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Top Competitors
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {serpAnalysis.competitorInsights.topDomains.slice(0, 5).map((domain, idx) => (
+                        <Badge 
+                          key={idx} 
+                          variant="outline" 
+                          className="border-slate-600 text-slate-300 bg-slate-800/50"
+                        >
+                          #{idx + 1} {domain}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Title Pattern Insights */}
+                  <div className="space-y-3">
+                    <span className="text-sm font-medium text-slate-300">Winning Title Pattern</span>
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+                      <p className="text-sm text-primary font-medium">
+                        {serpAnalysis.titlePatterns.commonStructure}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Avg length: {serpAnalysis.titlePatterns.averageLength} chars
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Top Modifiers */}
+                  {serpAnalysis.titlePatterns.topModifiers.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="text-sm font-medium text-slate-300">Winning Modifiers</span>
+                      <div className="flex flex-wrap gap-2">
+                        {serpAnalysis.titlePatterns.topModifiers.slice(0, 6).map((modifier, idx) => (
+                          <Badge 
+                            key={idx} 
+                            className="bg-primary/20 text-primary border-primary/30"
+                          >
+                            {modifier}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Keyword Clusters */}
+                  <div className="space-y-3">
+                    <span className="text-sm font-medium text-slate-300">Keyword Opportunities</span>
+                    <div className="space-y-2">
+                      {serpAnalysis.keywordClusters.secondary.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {serpAnalysis.keywordClusters.secondary.slice(0, 8).map((keyword, idx) => (
+                            <Badge 
+                              key={idx} 
+                              variant="outline" 
+                              className="border-primary/30 text-primary bg-primary/10 text-xs"
+                            >
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Common Features */}
+                  {serpAnalysis.competitorInsights.commonFeatures.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="text-sm font-medium text-slate-300">Common Features Mentioned</span>
+                      <div className="flex flex-wrap gap-2">
+                        {serpAnalysis.competitorInsights.commonFeatures.slice(0, 6).map((feature, idx) => (
+                          <Badge 
+                            key={idx} 
+                            variant="outline" 
+                            className="border-slate-600 text-slate-300 bg-slate-800/50 text-xs"
+                          >
+                            {feature}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </DashboardCard>
+            )}
+
             {/* AI Ranking Insights Card */}
             {generatedSEO && (
               <DashboardCard 
@@ -315,23 +492,107 @@ Keywords: ${generatedSEO.keywords.join(", ")}
 
           {/* Right Main Area: Optimize + Output */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Mode Selector Card */}
+            <DashboardCard 
+              title="Optimization Mode"
+              description="Choose your SEO generation strategy"
+              testId="card-mode-selector"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Fast Mode */}
+                <button
+                  onClick={() => setOptimizationMode('fast')}
+                  disabled={generateSEOMutation.isPending || serpAnalysisMutation.isPending}
+                  className={`relative p-5 rounded-lg border-2 transition-all duration-200 text-left hover-elevate active-elevate-2 disabled:opacity-50 ${
+                    optimizationMode === 'fast'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-slate-700 bg-slate-800/30'
+                  }`}
+                  data-testid="button-mode-fast"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <Zap className={`w-6 h-6 shrink-0 ${optimizationMode === 'fast' ? 'text-primary' : 'text-slate-400'}`} />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white mb-1">Fast Mode</h4>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        AI-powered SEO using proven patterns
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700/50">
+                    <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
+                      10 credits
+                    </Badge>
+                    <span className="text-xs text-slate-400">2-3 sec</span>
+                  </div>
+                  {optimizationMode === 'fast' && (
+                    <div className="absolute -top-2 -right-2">
+                      <CheckCircle2 className="w-6 h-6 text-primary" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Competitive Intelligence Mode */}
+                <button
+                  onClick={() => setOptimizationMode('competitive')}
+                  disabled={generateSEOMutation.isPending || serpAnalysisMutation.isPending}
+                  className={`relative p-5 rounded-lg border-2 transition-all duration-200 text-left hover-elevate active-elevate-2 disabled:opacity-50 ${
+                    optimizationMode === 'competitive'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-slate-700 bg-slate-800/30'
+                  }`}
+                  data-testid="button-mode-competitive"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <Trophy className={`w-6 h-6 shrink-0 ${optimizationMode === 'competitive' ? 'text-primary' : 'text-slate-400'}`} />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white mb-1">Competitive Intelligence</h4>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        Real-time Google SERP analysis + AI
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700/50">
+                    <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
+                      30 credits
+                    </Badge>
+                    <span className="text-xs text-slate-400">5-8 sec</span>
+                  </div>
+                  {optimizationMode === 'competitive' && (
+                    <div className="absolute -top-2 -right-2">
+                      <CheckCircle2 className="w-6 h-6 text-primary" />
+                    </div>
+                  )}
+                </button>
+              </div>
+            </DashboardCard>
+
             {/* Optimize Button Card */}
             <DashboardCard testId="card-optimize-button">
               <div>
                 <Button
                   onClick={handleOptimize}
-                  disabled={!selectedProduct || generateSEOMutation.isPending}
+                  disabled={!selectedProduct || generateSEOMutation.isPending || serpAnalysisMutation.isPending}
                   className="w-full h-14 text-lg font-semibold bg-primary hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                   data-testid="button-optimize"
                 >
-                  {generateSEOMutation.isPending ? (
+                  {serpAnalysisMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Analyzing Competitors...
+                    </>
+                  ) : generateSEOMutation.isPending ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       Optimizing with AI...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5 mr-2" />
+                      {optimizationMode === 'competitive' ? (
+                        <Trophy className="w-5 h-5 mr-2" />
+                      ) : (
+                        <Sparkles className="w-5 h-5 mr-2" />
+                      )}
                       Optimize Product SEO
                     </>
                   )}
