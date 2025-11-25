@@ -3338,6 +3338,49 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Product History endpoints (must be before /:id routes to avoid "history" being treated as an ID)
+  app.get("/api/products/history", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const history = await supabaseStorage.getProductHistory(userId);
+      res.json(history);
+    } catch (error: any) {
+      console.error("Get product history error:", error);
+      res.status(500).json({ message: "Failed to fetch product history" });
+    }
+  });
+
+  app.post("/api/products/history/rollback/:id", requireAuth, apiLimiter, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const historyId = req.params.id;
+
+      // Verify the history entry belongs to the user
+      const history = await supabaseStorage.getProductHistory(userId);
+      const historyEntry = history.find(h => h.id === historyId);
+      
+      if (!historyEntry) {
+        return res.status(404).json({ message: "History entry not found" });
+      }
+
+      if (!historyEntry.canRollback) {
+        return res.status(400).json({ message: "This change cannot be rolled back" });
+      }
+
+      await supabaseStorage.rollbackProductChange(historyId);
+      
+      res.json({ 
+        message: "Product successfully rolled back to previous version",
+        productName: historyEntry.productName
+      });
+    } catch (error: any) {
+      console.error("Rollback product error:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to rollback product changes" 
+      });
+    }
+  });
+
   app.get("/api/products/:id", requireAuth, async (req, res) => {
     try {
       const product = await supabaseStorage.getProduct(req.params.id);
@@ -3650,49 +3693,6 @@ Output format: Markdown with clear section headings.`;
     } catch (error: any) {
       console.error("Delete product error:", error);
       res.status(500).json({ message: "Failed to delete product" });
-    }
-  });
-
-  // Product History endpoints
-  app.get("/api/products/history", requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const history = await supabaseStorage.getProductHistory(userId);
-      res.json(history);
-    } catch (error: any) {
-      console.error("Get product history error:", error);
-      res.status(500).json({ message: "Failed to fetch product history" });
-    }
-  });
-
-  app.post("/api/products/history/rollback/:id", requireAuth, apiLimiter, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const historyId = req.params.id;
-
-      // Verify the history entry belongs to the user
-      const history = await supabaseStorage.getProductHistory(userId);
-      const historyEntry = history.find(h => h.id === historyId);
-      
-      if (!historyEntry) {
-        return res.status(404).json({ message: "History entry not found" });
-      }
-
-      if (!historyEntry.canRollback) {
-        return res.status(400).json({ message: "This change cannot be rolled back" });
-      }
-
-      await supabaseStorage.rollbackProductChange(historyId);
-      
-      res.json({ 
-        message: "Product successfully rolled back to previous version",
-        productName: historyEntry.productName
-      });
-    } catch (error: any) {
-      console.error("Rollback product error:", error);
-      res.status(500).json({ 
-        message: error.message || "Failed to rollback product changes" 
-      });
     }
   });
 
