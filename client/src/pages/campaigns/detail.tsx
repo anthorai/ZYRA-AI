@@ -147,9 +147,18 @@ export default function CampaignDetailPage() {
       subtitle={`${campaign.type === 'email' ? 'Email' : 'SMS'} Campaign`}
       backTo="/campaigns"
       rightActions={
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {campaign.status === 'draft' && (
             <>
+              <Button
+                variant="outline"
+                className="text-red-400 hover:text-red-300 border-red-500/30 hover:border-red-500/50 hover:bg-red-500/10"
+                onClick={() => setShowDeleteDialog(true)}
+                data-testid="button-delete-header"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setLocation(`/campaigns/${campaign.id}/edit`)}
