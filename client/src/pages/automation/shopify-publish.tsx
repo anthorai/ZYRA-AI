@@ -21,6 +21,14 @@ import {
   RefreshCw
 } from "lucide-react";
 
+function stripHtml(html: string | undefined | null): string {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 interface Product {
   id: string;
   name: string;
@@ -471,7 +479,7 @@ export default function ShopifyPublish() {
                       <div>
                         <span className="text-slate-400 text-sm font-medium">Description:</span>
                         <p className="text-slate-300 text-sm mt-1 line-clamp-3">
-                          {product.originalDescription || product.description || 'No description'}
+                          {stripHtml(product.originalDescription || product.description) || 'No description'}
                         </p>
                       </div>
                       {originalTags.length > 0 && (
@@ -501,7 +509,7 @@ export default function ShopifyPublish() {
                       </div>
                       <div>
                         <span className="text-slate-400 text-sm font-medium">Description:</span>
-                        <p className="text-slate-100 text-sm mt-1 line-clamp-3">{optimizedDesc}</p>
+                        <p className="text-slate-100 text-sm mt-1 line-clamp-3">{stripHtml(optimizedDesc)}</p>
                       </div>
                       {optimizedMeta && (
                         <div>

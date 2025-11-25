@@ -38,6 +38,14 @@ import {
   Eye
 } from "lucide-react";
 
+function stripHtml(html: string | undefined | null): string {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 interface ProductAudit {
   productId: string;
   productName: string;
@@ -752,7 +760,7 @@ export default function SmartBulkSuggestions() {
                             <div>
                               <span className="text-xs text-slate-500">Description:</span>
                               <p className="text-slate-400 text-sm line-clamp-3">
-                                {fix.original.description || 'No description'}
+                                {stripHtml(fix.original.description) || 'No description'}
                               </p>
                             </div>
                           </div>
