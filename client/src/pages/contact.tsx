@@ -125,8 +125,8 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">Email Us</p>
-                      <a href="mailto:support@zyra-ai.com" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                        support@zyra-ai.com
+                      <a href="mailto:team@zzyraai.com" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                        team@zzyraai.com
                       </a>
                     </div>
                   </div>

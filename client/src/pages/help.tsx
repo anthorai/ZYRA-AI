@@ -365,8 +365,8 @@ export default function Help() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" data-testid="button-email-direct">
-                  <a href="mailto:support@zyra-ai.com">
-                    support@zyra-ai.com
+                  <a href="mailto:team@zzyraai.com">
+                    team@zzyraai.com
                     <ExternalLink className="w-4 h-4 ml-2" />
                   </a>
                 </Button>
