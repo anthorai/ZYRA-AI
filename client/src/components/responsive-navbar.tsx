@@ -112,10 +112,10 @@ export default function ResponsiveNavbar({
 
   const renderNavItem = (item: NavItem, index: number, isMobile: boolean = false) => {
     const baseClassName = cn(
-      "transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md",
+      "transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md font-medium",
       isMobile
-        ? "block w-full text-left px-4 py-3 text-lg font-medium text-foreground hover:text-primary hover:bg-muted"
-        : "text-muted-foreground hover:text-foreground px-2 py-1",
+        ? "block w-full text-left px-4 py-3 text-base text-foreground hover:text-primary hover:bg-muted"
+        : "text-sm lg:text-base text-muted-foreground hover:text-foreground px-3 py-2 whitespace-nowrap",
       item.disabled ? "opacity-50 cursor-not-allowed" : ""
     );
 
@@ -158,8 +158,8 @@ export default function ResponsiveNavbar({
         <Button
           asChild
           className={cn(
-            "gradient-button",
-            isMobile ? "w-full text-base sm:text-lg py-3" : ""
+            "gradient-button font-medium whitespace-nowrap",
+            isMobile ? "w-full text-base py-6" : "text-sm lg:text-base px-4 lg:px-6"
           )}
           data-testid={`action-button-${actionButton.label.toLowerCase().replace(/\s+/g, '-')}`}
         >
@@ -176,8 +176,8 @@ export default function ResponsiveNavbar({
     return (
       <Button
         className={cn(
-          "gradient-button",
-          isMobile ? "w-full text-base sm:text-lg py-3" : ""
+          "gradient-button font-medium whitespace-nowrap",
+          isMobile ? "w-full text-base py-6" : "text-sm lg:text-base px-4 lg:px-6"
         )}
         onClick={() => {
           if (actionButton.onClick) {
@@ -199,10 +199,10 @@ export default function ResponsiveNavbar({
       "fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-border",
       className
     )}>
-      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="grid grid-cols-3 items-center gap-4">
+          {/* Logo - Left */}
+          <div className="flex items-center space-x-2 sm:space-x-3 justify-start">
             {logo.href ? (
               <Link
                 href={logo.href}
@@ -210,46 +210,52 @@ export default function ResponsiveNavbar({
                 data-testid="nav-logo"
               >
                 {logo.icon && (
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
                     {logo.icon}
                   </div>
                 )}
-                <span className="text-xl sm:text-2xl font-bold text-foreground">{logo.text}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
               </Link>
             ) : (
               <div className="flex items-center space-x-2 sm:space-x-3">
                 {logo.icon && (
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
                     {logo.icon}
                   </div>
                 )}
-                <span className="text-xl sm:text-2xl font-bold text-foreground">{logo.text}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
               </div>
             )}
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+          {/* Desktop Navigation - Center */}
+          <div className="hidden lg:flex items-center justify-center gap-1 xl:gap-2">
             {navItems.map((item, index) => renderNavItem(item, index, false))}
-            {renderActionButton(false)}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            ref={buttonRef}
-            onClick={toggleMenu}
-            className="md:hidden text-foreground p-2 hover:bg-muted rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isOpen}
-            aria-controls="mobile-menu"
-            data-testid="button-mobile-menu"
-          >
-            {isOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
+          {/* Action Button - Right */}
+          <div className="flex items-center justify-end gap-2">
+            <div className="hidden lg:block">
+              {renderActionButton(false)}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              ref={buttonRef}
+              onClick={toggleMenu}
+              className="lg:hidden text-foreground p-2 hover:bg-muted rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
+              aria-controls="mobile-menu"
+              data-testid="button-mobile-menu"
+            >
+              {isOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -257,7 +263,7 @@ export default function ResponsiveNavbar({
           ref={menuRef}
           id="mobile-menu"
           className={cn(
-            "md:hidden fixed left-0 right-0 top-full bg-background/95 dark:bg-background/95 backdrop-blur-md border-b border-border transition-all duration-300 ease-in-out",
+            "lg:hidden fixed left-0 right-0 top-full bg-background/98 dark:bg-background/98 backdrop-blur-lg border-b border-border shadow-lg transition-all duration-300 ease-in-out",
             isOpen
               ? "opacity-100 visible translate-y-0"
               : "opacity-0 invisible -translate-y-2"
@@ -265,14 +271,14 @@ export default function ResponsiveNavbar({
           role="menu"
           aria-labelledby="mobile-menu"
         >
-          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-2 bg-card rounded-md">
+          <div className="container mx-auto px-4 sm:px-6 py-6 space-y-1">
             {navItems.map((item, index) => (
               <div key={index} role="menuitem">
                 {renderNavItem(item, index, true)}
               </div>
             ))}
             {actionButton && (
-              <div className="pt-4 border-t border-border">
+              <div className="pt-4 mt-2 border-t border-border">
                 {renderActionButton(true)}
               </div>
             )}
@@ -283,7 +289,7 @@ export default function ResponsiveNavbar({
       {/* Mobile Menu Overlay */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
+          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
           onClick={closeMenu}
           aria-hidden="true"
         />
