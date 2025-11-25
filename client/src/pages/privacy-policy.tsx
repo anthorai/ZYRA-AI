@@ -220,7 +220,7 @@ export default function PrivacyPolicyPage() {
         "If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us using the information below. We are committed to resolving any privacy-related issues promptly and transparently.",
       ],
       contactInfo: {
-        email: "privacy@zyra.ai",
+        email: "team@zzyraai.com",
         support: "For general support inquiries, visit our Help Center in the dashboard",
       },
     },
