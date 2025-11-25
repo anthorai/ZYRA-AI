@@ -106,9 +106,17 @@ Comprehensive bulk SEO optimization tools for efficient store management:
 - Marks products as optimized
 - Records AI-generated seoScore for analytics
 
+**One-Click Shopify Publish (client/src/pages/automation/shopify-publish.tsx):**
+- **Real Product Data**: Fetches actual optimized products from /api/products (replaces mock data)
+- **Shopify Integration**: Uses /api/shopify/publish/:productId and /api/shopify/publish/bulk endpoints
+- **Connection Checks**: Verifies Shopify store connection before displaying products
+- **Bulk Publish**: Publish all optimized products at once with progress tracking
+- **Individual Publish**: Publish single products with per-product status indicators
+- **Before/After Preview**: Shows original vs optimized content side-by-side
+- **Error Handling**: Partial success reporting, retry options, and auth error guidance
+
 **Other Automation Tools:**
 - CSV Import/Export for bulk data operations
-- One-Click Shopify Publish for live store updates
 - Per-product Rollback to revert changes
 
 ### Autonomous AI Store Manager
