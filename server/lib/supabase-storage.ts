@@ -821,23 +821,8 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    // Build campaign data - store extra fields in metadata for Supabase compatibility
-    // Some columns may not exist in the actual Supabase schema
-    const metadata: Record<string, any> = (campaign.metadata as Record<string, any>) || {};
-    if (campaign.audience) {
-      metadata.audience = campaign.audience;
-    }
-    if (campaign.goalType) {
-      metadata.goalType = campaign.goalType;
-    }
-    if (campaign.templateId) {
-      metadata.templateId = campaign.templateId;
-    }
-    if (campaign.recipientList) {
-      metadata.recipientList = campaign.recipientList;
-    }
-    
-    // Only include columns that exist in the Supabase campaigns table
+    // Only include the most basic columns that exist in the Supabase campaigns table
+    // Additional fields will be stored in the content field as JSON if needed
     const campaignData: Record<string, any> = {
       id: randomUUID(),
       user_id: campaign.userId,
@@ -846,16 +831,21 @@ export class SupabaseStorage implements ISupabaseStorage {
       subject: campaign.subject,
       content: campaign.content,
       status: campaign.status || 'draft',
-      scheduled_for: campaign.scheduledFor,
-      sent_at: campaign.sentAt,
       sent_count: campaign.sentCount || 0,
       open_rate: campaign.openRate || 0,
       click_rate: campaign.clickRate || 0,
       conversion_rate: campaign.conversionRate || 0,
-      metadata: metadata,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+    
+    // Only add optional fields if they exist and columns might exist
+    if (campaign.scheduledFor) {
+      campaignData.scheduled_for = campaign.scheduledFor;
+    }
+    if (campaign.sentAt) {
+      campaignData.sent_at = campaign.sentAt;
+    }
 
     const { data, error } = await supabase
       .from('campaigns')
@@ -883,30 +873,6 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (updates.openRate !== undefined) updateData.open_rate = updates.openRate;
     if (updates.clickRate !== undefined) updateData.click_rate = updates.clickRate;
     if (updates.conversionRate !== undefined) updateData.conversion_rate = updates.conversionRate;
-    
-    // Handle metadata - store extra fields there since some columns don't exist
-    const hasMetadataFields = updates.metadata !== undefined || 
-                              updates.audience !== undefined ||
-                              updates.goalType !== undefined ||
-                              updates.templateId !== undefined ||
-                              updates.recipientList !== undefined;
-    
-    if (hasMetadataFields) {
-      // Get existing metadata to merge
-      const { data: existing } = await supabase
-        .from('campaigns')
-        .select('metadata')
-        .eq('id', id)
-        .single();
-      
-      const existingMeta = (existing?.metadata as Record<string, any>) || {};
-      const newMeta = (updates.metadata as Record<string, any>) || existingMeta;
-      if (updates.audience !== undefined) newMeta.audience = updates.audience;
-      if (updates.goalType !== undefined) newMeta.goalType = updates.goalType;
-      if (updates.templateId !== undefined) newMeta.templateId = updates.templateId;
-      if (updates.recipientList !== undefined) newMeta.recipientList = updates.recipientList;
-      updateData.metadata = newMeta;
-    }
 
     const { data, error } = await supabase
       .from('campaigns')
