@@ -1919,6 +1919,79 @@ Respond with JSON:
     }
   });
 
+  // Multi-Channel Content Repurposing - Generate content for all marketing channels
+  app.post("/api/ai/multi-channel-content", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const { productDescription } = req.body;
+      const userId = (req as AuthenticatedRequest).user.id;
+
+      if (!productDescription) {
+        return res.status(400).json({ message: "Product description is required" });
+      }
+
+      const prompt = `You are an expert multi-channel marketing copywriter. Based on the following product description, generate optimized marketing content for multiple channels.
+
+Product Description:
+"${productDescription}"
+
+Generate content in JSON format with these exact fields:
+{
+  "email": {
+    "subject": "Compelling email subject line (under 50 characters)",
+    "body": "Email body copy (2-3 paragraphs, persuasive, includes call-to-action)"
+  },
+  "sms": "SMS marketing message (under 160 characters, includes urgency and CTA)",
+  "social": "Social media post (engaging caption with hashtags, under 280 characters)",
+  "seo": "SEO meta description (under 160 characters, includes keywords)",
+  "adCopy": "Google/Facebook ad copy (headline + short description, compelling and action-oriented)"
+}
+
+Important guidelines:
+- Each channel should have a unique voice appropriate for that platform
+- Email should be professional but engaging
+- SMS should be urgent and concise
+- Social should be casual and use hashtags
+- SEO should be keyword-rich but natural
+- Ad copy should focus on benefits and include a clear CTA`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are Zyra AI, an expert marketing copywriter specializing in multi-channel content creation for e-commerce. You create compelling, conversion-focused content tailored for each marketing channel." 
+          },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.8
+      });
+
+      const content = JSON.parse(response.choices[0].message.content || "{}");
+
+      // Track usage
+      const estimatedTokens = 600;
+      await trackAIUsage(userId, estimatedTokens);
+
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'multi_channel_content',
+        inputData: { productDescription },
+        outputData: content,
+        tokensUsed: estimatedTokens,
+        model: 'gpt-4o-mini'
+      });
+
+      res.json({
+        success: true,
+        content
+      });
+    } catch (error: any) {
+      console.error("Multi-channel content generation error:", error);
+      res.status(500).json({ message: "Failed to generate multi-channel content" });
+    }
+  });
+
   // SEO Optimization
   app.post("/api/optimize-seo", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
