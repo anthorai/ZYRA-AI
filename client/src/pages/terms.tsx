@@ -94,9 +94,9 @@ const termsSections: TermsSection[] = [
           <h4 className="font-semibold mb-2">Subscription Plans</h4>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Free Trial:</strong> 7-day access with limited features, no credit card required</li>
-            <li><strong>Starter:</strong> $29/month - For small stores getting started</li>
-            <li><strong>Growth:</strong> $79/month - For growing businesses</li>
-            <li><strong>Pro:</strong> $199/month - For established stores needing advanced features</li>
+            <li><strong>Starter:</strong> $49/month - For small stores getting started</li>
+            <li><strong>Growth:</strong> $299/month - For growing businesses</li>
+            <li><strong>Pro:</strong> $999/month - For established stores needing advanced features</li>
           </ul>
         </div>
         <div>
