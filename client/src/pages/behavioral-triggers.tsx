@@ -153,10 +153,7 @@ export default function BehavioralTriggersPage() {
   // Create trigger mutation
   const createTriggerMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/behavioral-triggers', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return apiRequest('POST', '/api/behavioral-triggers', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/behavioral-triggers'] });
@@ -178,9 +175,7 @@ export default function BehavioralTriggersPage() {
   // Toggle trigger status mutation
   const toggleTriggerMutation = useMutation({
     mutationFn: async (triggerId: string) => {
-      return apiRequest(`/api/behavioral-triggers/${triggerId}/toggle`, {
-        method: 'POST'
-      });
+      return apiRequest('POST', `/api/behavioral-triggers/${triggerId}/toggle`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/behavioral-triggers'] });
@@ -194,9 +189,7 @@ export default function BehavioralTriggersPage() {
   // Delete trigger mutation
   const deleteTriggerMutation = useMutation({
     mutationFn: async (triggerId: string) => {
-      return apiRequest(`/api/behavioral-triggers/${triggerId}`, {
-        method: 'DELETE'
-      });
+      return apiRequest('DELETE', `/api/behavioral-triggers/${triggerId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/behavioral-triggers'] });
@@ -210,10 +203,7 @@ export default function BehavioralTriggersPage() {
   // Apply AI recommendation mutation
   const applyRecommendationMutation = useMutation({
     mutationFn: async (recommendation: AIRecommendation) => {
-      return apiRequest('/api/behavioral-triggers/ai/apply', {
-        method: 'POST',
-        body: JSON.stringify(recommendation)
-      });
+      return apiRequest('POST', '/api/behavioral-triggers/ai/apply', recommendation);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/behavioral-triggers'] });
@@ -369,8 +359,8 @@ export default function BehavioralTriggersPage() {
                   <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="count_gte">Count >= Value</SelectItem>
-                  <SelectItem value="value_gte">Amount >= Value</SelectItem>
+                  <SelectItem value="count_gte">Count at least Value</SelectItem>
+                  <SelectItem value="value_gte">Amount at least Value</SelectItem>
                   <SelectItem value="time_elapsed">Hours After Event</SelectItem>
                   <SelectItem value="is_first">First Occurrence</SelectItem>
                   <SelectItem value="is_return">Return Customer</SelectItem>
