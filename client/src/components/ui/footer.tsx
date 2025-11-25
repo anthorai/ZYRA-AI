@@ -27,11 +27,11 @@ export default function Footer({ className = "" }: FooterProps) {
 
   return (
     <footer 
-      className={`bg-[#0B0B17] border-t border-[#00F0FF] mt-auto rounded-2xl ${className}`}
+      className={`bg-[#0e0e1e] border-t border-[#00F0FF]/20 mt-auto ${className}`}
       data-testid="footer-global"
       role="contentinfo"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#0e0e1e] rounded-2xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Desktop Layout */}
         <div className="hidden md:flex items-center justify-between py-6">
           {/* Logo & Zyra AI Text - Left Side */}
