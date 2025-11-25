@@ -1198,15 +1198,56 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   async updateUserPreferences(userId: string, updates: Partial<UserPreferences>): Promise<UserPreferences> {
-    const { data, error } = await supabase
-      .from('user_preferences')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .select()
-      .single();
+    // First check if preferences exist
+    const existing = await this.getUserPreferences(userId);
     
-    if (error) throw new Error(`Failed to update user preferences: ${error.message}`);
-    return data;
+    if (existing) {
+      // Update existing preferences
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to update user preferences: ${error.message}`);
+      return data;
+    } else {
+      // Create new preferences with defaults
+      const newPrefs = {
+        id: randomUUID(),
+        user_id: userId,
+        email_notifications: true,
+        sms_notifications: false,
+        push_notifications: true,
+        in_app_notifications: true,
+        weekly_digest: true,
+        marketing_emails: false,
+        notification_frequency: 'instant',
+        language: 'en',
+        timezone: 'UTC',
+        date_format: 'MM/DD/YYYY',
+        currency: 'USD',
+        dark_mode: true,
+        auto_save: true,
+        compact_view: false,
+        show_ai_suggestions: true,
+        ai_confidence_threshold: 70,
+        default_generation_mode: 'fast',
+        ...updates,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .insert(newPrefs)
+        .select()
+        .single();
+      
+      if (error) throw new Error(`Failed to create user preferences: ${error.message}`);
+      return data;
+    }
   }
 
   // For brevity, I'll implement the key remaining methods. The pattern is consistent.
