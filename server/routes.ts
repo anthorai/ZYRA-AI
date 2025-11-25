@@ -21,6 +21,9 @@ import {
   insertNotificationChannelSchema,
   insertNotificationAnalyticsSchema,
   insertAbTestSchema,
+  insertBehavioralTriggerSchema,
+  insertBehaviorEventSchema,
+  insertTriggerExecutionSchema,
   errorLogs,
   campaigns,
   campaignEvents,
@@ -30,7 +33,11 @@ import {
   storeConnections,
   oauthStates,
   abandonedCarts,
-  revenueAttribution
+  revenueAttribution,
+  behavioralTriggers,
+  behaviorEvents,
+  triggerExecutions,
+  triggerAnalytics
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -11849,6 +11856,691 @@ Output format: Markdown with clear section headings.`;
     } catch (error: any) {
       console.error("Error generating preview recommendations:", error);
       res.status(500).json({ error: "Failed to generate preview" });
+    }
+  });
+
+  // =============================================
+  // BEHAVIORAL TRIGGERS API ROUTES
+  // =============================================
+
+  // Get all behavioral triggers for user
+  app.get("/api/behavioral-triggers", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const status = req.query.status as string | undefined;
+      
+      let query = db.select().from(behavioralTriggers)
+        .where(eq(behavioralTriggers.userId, userId))
+        .orderBy(desc(behavioralTriggers.createdAt));
+      
+      const triggers = await query;
+      
+      // Filter by status if provided
+      const filteredTriggers = status 
+        ? triggers.filter(t => t.status === status)
+        : triggers;
+      
+      res.json(filteredTriggers);
+    } catch (error: any) {
+      console.error("Error fetching behavioral triggers:", error);
+      res.status(500).json({ error: "Failed to fetch triggers" });
+    }
+  });
+
+  // Get single trigger by ID
+  app.get("/api/behavioral-triggers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      const [trigger] = await db.select().from(behavioralTriggers)
+        .where(and(
+          eq(behavioralTriggers.id, id),
+          eq(behavioralTriggers.userId, userId)
+        ));
+      
+      if (!trigger) {
+        return res.status(404).json({ error: "Trigger not found" });
+      }
+      
+      res.json(trigger);
+    } catch (error: any) {
+      console.error("Error fetching trigger:", error);
+      res.status(500).json({ error: "Failed to fetch trigger" });
+    }
+  });
+
+  // Create new behavioral trigger
+  app.post("/api/behavioral-triggers", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const triggerData = insertBehavioralTriggerSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const [trigger] = await db.insert(behavioralTriggers)
+        .values(triggerData)
+        .returning();
+      
+      res.status(201).json(trigger);
+    } catch (error: any) {
+      console.error("Error creating trigger:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid trigger data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create trigger" });
+    }
+  });
+
+  // Update behavioral trigger
+  app.patch("/api/behavioral-triggers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      // Verify ownership
+      const [existing] = await db.select().from(behavioralTriggers)
+        .where(and(
+          eq(behavioralTriggers.id, id),
+          eq(behavioralTriggers.userId, userId)
+        ));
+      
+      if (!existing) {
+        return res.status(404).json({ error: "Trigger not found" });
+      }
+      
+      const [trigger] = await db.update(behavioralTriggers)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(behavioralTriggers.id, id))
+        .returning();
+      
+      res.json(trigger);
+    } catch (error: any) {
+      console.error("Error updating trigger:", error);
+      res.status(500).json({ error: "Failed to update trigger" });
+    }
+  });
+
+  // Delete behavioral trigger
+  app.delete("/api/behavioral-triggers/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      // Verify ownership
+      const [existing] = await db.select().from(behavioralTriggers)
+        .where(and(
+          eq(behavioralTriggers.id, id),
+          eq(behavioralTriggers.userId, userId)
+        ));
+      
+      if (!existing) {
+        return res.status(404).json({ error: "Trigger not found" });
+      }
+      
+      await db.delete(behavioralTriggers)
+        .where(eq(behavioralTriggers.id, id));
+      
+      res.json({ success: true, message: "Trigger deleted" });
+    } catch (error: any) {
+      console.error("Error deleting trigger:", error);
+      res.status(500).json({ error: "Failed to delete trigger" });
+    }
+  });
+
+  // Toggle trigger status (active/paused)
+  app.post("/api/behavioral-triggers/:id/toggle", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      const [existing] = await db.select().from(behavioralTriggers)
+        .where(and(
+          eq(behavioralTriggers.id, id),
+          eq(behavioralTriggers.userId, userId)
+        ));
+      
+      if (!existing) {
+        return res.status(404).json({ error: "Trigger not found" });
+      }
+      
+      const newStatus = existing.status === 'active' ? 'paused' : 'active';
+      
+      const [trigger] = await db.update(behavioralTriggers)
+        .set({ status: newStatus, updatedAt: new Date() })
+        .where(eq(behavioralTriggers.id, id))
+        .returning();
+      
+      res.json(trigger);
+    } catch (error: any) {
+      console.error("Error toggling trigger:", error);
+      res.status(500).json({ error: "Failed to toggle trigger" });
+    }
+  });
+
+  // Get AI-powered trigger recommendations
+  app.get("/api/behavioral-triggers/ai/recommendations", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get user's existing triggers to avoid duplicates
+      const existingTriggers = await db.select().from(behavioralTriggers)
+        .where(eq(behavioralTriggers.userId, userId));
+      
+      // Get user's store performance data for context
+      const [recentEvents] = await db.select({
+        totalEvents: sql<number>`COUNT(*)::int`,
+        productViews: sql<number>`COUNT(*) FILTER (WHERE event_type = 'product_view')::int`,
+        cartAdds: sql<number>`COUNT(*) FILTER (WHERE event_type = 'cart_add')::int`,
+        cartAbandons: sql<number>`COUNT(*) FILTER (WHERE event_type = 'cart_abandon')::int`,
+        orders: sql<number>`COUNT(*) FILTER (WHERE event_type = 'order_placed')::int`,
+      }).from(behaviorEvents)
+        .where(and(
+          eq(behaviorEvents.userId, userId),
+          gte(behaviorEvents.createdAt, sql`NOW() - INTERVAL '30 days'`)
+        ));
+      
+      // Build context for AI
+      const storeContext = {
+        existingTriggerCount: existingTriggers.length,
+        existingTriggerTypes: existingTriggers.map(t => `${t.eventType}:${t.conditionType}:${t.actionType}`),
+        recentMetrics: recentEvents || { totalEvents: 0, productViews: 0, cartAdds: 0, cartAbandons: 0, orders: 0 }
+      };
+
+      // Generate AI recommendations
+      const aiResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an e-commerce marketing automation expert. Generate smart behavioral trigger recommendations based on store performance data.
+            
+Available event types: product_view, cart_add, cart_abandon, checkout_start, order_placed, order_fulfilled, page_visit, time_on_site, return_visit, first_purchase, repeat_purchase, high_value_cart, browse_without_buy, wishlist_add, search_query
+
+Available condition types: count_gte (count >= value), count_lte, value_gte (amount >= value), value_lte, time_elapsed (hours after event), time_on_site_gte (minutes), is_first, is_return, no_action, segment_match
+
+Available action types: send_email, send_sms, show_popup, offer_discount, assign_tag, add_to_segment, send_push, trigger_webhook
+
+Return a JSON array of 5 trigger recommendations. Each should have:
+- name: Short descriptive name
+- description: Why this trigger is valuable
+- eventType: One of the available event types
+- conditionType: One of the available condition types
+- conditionValue: The threshold value (number as string, e.g., "3", "200", "2")
+- actionType: One of the available action types
+- confidenceScore: 0-100 based on likely effectiveness
+- reasoning: Why you recommend this specific trigger`
+          },
+          {
+            role: "user",
+            content: `Generate behavioral trigger recommendations for this store:
+            
+Store metrics (last 30 days):
+- Total events tracked: ${storeContext.recentMetrics.totalEvents}
+- Product views: ${storeContext.recentMetrics.productViews}
+- Cart additions: ${storeContext.recentMetrics.cartAdds}
+- Cart abandonments: ${storeContext.recentMetrics.cartAbandons}
+- Orders placed: ${storeContext.recentMetrics.orders}
+
+Existing triggers (avoid duplicates): ${storeContext.existingTriggerTypes.join(', ') || 'None'}
+
+Generate 5 high-impact trigger recommendations that would benefit this store.`
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+        max_tokens: 2000
+      });
+
+      const content = aiResponse.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("No AI response content");
+      }
+
+      const parsed = JSON.parse(content);
+      const recommendations = parsed.recommendations || parsed.triggers || [];
+      
+      // Mark as AI recommended
+      const formattedRecommendations = recommendations.map((rec: any) => ({
+        ...rec,
+        isAiRecommended: true,
+        aiConfidenceScore: rec.confidenceScore,
+        aiReasoning: rec.reasoning
+      }));
+
+      res.json(formattedRecommendations);
+    } catch (error: any) {
+      console.error("Error generating AI recommendations:", error);
+      res.status(500).json({ error: "Failed to generate recommendations" });
+    }
+  });
+
+  // Apply AI recommendation (create trigger from recommendation)
+  app.post("/api/behavioral-triggers/ai/apply", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const recommendation = req.body;
+      
+      const triggerData = {
+        userId,
+        name: recommendation.name,
+        description: recommendation.description,
+        eventType: recommendation.eventType,
+        conditionType: recommendation.conditionType,
+        conditionValue: recommendation.conditionValue,
+        actionType: recommendation.actionType,
+        isAiRecommended: true,
+        aiConfidenceScore: recommendation.confidenceScore?.toString(),
+        aiReasoning: recommendation.reasoning,
+        status: 'draft' as const
+      };
+      
+      const [trigger] = await db.insert(behavioralTriggers)
+        .values(triggerData)
+        .returning();
+      
+      res.status(201).json(trigger);
+    } catch (error: any) {
+      console.error("Error applying AI recommendation:", error);
+      res.status(500).json({ error: "Failed to apply recommendation" });
+    }
+  });
+
+  // Get trigger analytics/performance
+  app.get("/api/behavioral-triggers/analytics/summary", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const days = parseInt(req.query.days as string) || 30;
+      
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      
+      // Get execution stats
+      const [execStats] = await db.select({
+        totalExecutions: sql<number>`COUNT(*)::int`,
+        successfulSends: sql<number>`COUNT(*) FILTER (WHERE status = 'sent' OR status = 'delivered')::int`,
+        clicks: sql<number>`COUNT(*) FILTER (WHERE clicked = true)::int`,
+        conversions: sql<number>`COUNT(*) FILTER (WHERE converted = true)::int`,
+        totalRevenue: sql<string>`COALESCE(SUM(conversion_value), 0)`,
+      }).from(triggerExecutions)
+        .where(and(
+          eq(triggerExecutions.userId, userId),
+          gte(triggerExecutions.createdAt, startDate)
+        ));
+      
+      // Get active triggers count
+      const [triggerStats] = await db.select({
+        total: sql<number>`COUNT(*)::int`,
+        active: sql<number>`COUNT(*) FILTER (WHERE status = 'active')::int`,
+        paused: sql<number>`COUNT(*) FILTER (WHERE status = 'paused')::int`,
+        draft: sql<number>`COUNT(*) FILTER (WHERE status = 'draft')::int`,
+      }).from(behavioralTriggers)
+        .where(eq(behavioralTriggers.userId, userId));
+      
+      // Calculate rates
+      const executions = execStats?.totalExecutions || 0;
+      const clicks = execStats?.clicks || 0;
+      const conversions = execStats?.conversions || 0;
+      const revenue = parseFloat(execStats?.totalRevenue || '0');
+      
+      const clickRate = executions > 0 ? (clicks / executions * 100).toFixed(2) : '0.00';
+      const conversionRate = executions > 0 ? (conversions / executions * 100).toFixed(2) : '0.00';
+      const roi = executions > 0 ? (revenue / executions).toFixed(2) : '0.00';
+      
+      res.json({
+        period: `${days} days`,
+        triggers: triggerStats,
+        executions: {
+          total: executions,
+          sent: execStats?.successfulSends || 0,
+          clicks,
+          conversions,
+        },
+        performance: {
+          clickRate: parseFloat(clickRate),
+          conversionRate: parseFloat(conversionRate),
+          revenue,
+          avgRevenuePerTrigger: parseFloat(roi),
+        }
+      });
+    } catch (error: any) {
+      console.error("Error fetching trigger analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Get execution history for a trigger
+  app.get("/api/behavioral-triggers/:id/executions", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const executions = await db.select().from(triggerExecutions)
+        .where(and(
+          eq(triggerExecutions.triggerId, id),
+          eq(triggerExecutions.userId, userId)
+        ))
+        .orderBy(desc(triggerExecutions.createdAt))
+        .limit(limit);
+      
+      res.json(executions);
+    } catch (error: any) {
+      console.error("Error fetching executions:", error);
+      res.status(500).json({ error: "Failed to fetch executions" });
+    }
+  });
+
+  // Shopify webhook for behavior events (product view, cart, order, etc.)
+  app.post("/api/webhooks/shopify/behavior", async (req, res) => {
+    try {
+      const { shop, topic, data } = req.body;
+      
+      // Find user by shop URL/domain
+      const [connection] = await db.select().from(storeConnections)
+        .where(eq(storeConnections.storeUrl, shop));
+      
+      if (!connection) {
+        return res.status(404).json({ error: "Store not connected" });
+      }
+      
+      // Map Shopify webhook topics to our event types
+      const topicToEventType: Record<string, string> = {
+        'products/view': 'product_view',
+        'carts/create': 'cart_add',
+        'carts/update': 'cart_add',
+        'checkouts/create': 'checkout_start',
+        'orders/create': 'order_placed',
+        'orders/fulfilled': 'order_fulfilled',
+      };
+      
+      const eventType = topicToEventType[topic];
+      if (!eventType) {
+        return res.json({ success: true, message: "Event type not tracked" });
+      }
+      
+      // Create behavior event
+      const eventData = {
+        userId: connection.userId,
+        customerId: data.customer?.id?.toString(),
+        customerEmail: data.customer?.email || data.email,
+        eventType: eventType as any,
+        eventData: data,
+        shopifyShopId: shop,
+        productId: data.line_items?.[0]?.product_id?.toString() || data.product_id?.toString(),
+        orderId: data.id?.toString(),
+        cartToken: data.token,
+        eventValue: data.total_price || data.subtotal_price,
+        processed: false
+      };
+      
+      const [event] = await db.insert(behaviorEvents)
+        .values(eventData)
+        .returning();
+      
+      // Process triggers asynchronously
+      processBehaviorEvent(event.id, connection.userId).catch(console.error);
+      
+      res.json({ success: true, eventId: event.id });
+    } catch (error: any) {
+      console.error("Error processing behavior webhook:", error);
+      res.status(500).json({ error: "Failed to process event" });
+    }
+  });
+
+  // Manual event tracking (for frontend/JS SDK integration)
+  app.post("/api/behavioral-triggers/events", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const eventData = insertBehaviorEventSchema.parse({
+        ...req.body,
+        userId,
+        processed: false
+      });
+      
+      const [event] = await db.insert(behaviorEvents)
+        .values(eventData)
+        .returning();
+      
+      // Process triggers asynchronously
+      processBehaviorEvent(event.id, userId).catch(console.error);
+      
+      res.status(201).json(event);
+    } catch (error: any) {
+      console.error("Error tracking event:", error);
+      res.status(500).json({ error: "Failed to track event" });
+    }
+  });
+
+  // Get recent behavior events for debugging
+  app.get("/api/behavioral-triggers/events", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const limit = parseInt(req.query.limit as string) || 100;
+      
+      const events = await db.select().from(behaviorEvents)
+        .where(eq(behaviorEvents.userId, userId))
+        .orderBy(desc(behaviorEvents.createdAt))
+        .limit(limit);
+      
+      res.json(events);
+    } catch (error: any) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+
+  // Trigger execution helper function
+  async function processBehaviorEvent(eventId: string, userId: string) {
+    try {
+      // Get the event
+      const [event] = await db.select().from(behaviorEvents)
+        .where(eq(behaviorEvents.id, eventId));
+      
+      if (!event || event.processed) return;
+      
+      // Get active triggers for this event type
+      const activeTriggers = await db.select().from(behavioralTriggers)
+        .where(and(
+          eq(behavioralTriggers.userId, userId),
+          eq(behavioralTriggers.status, 'active'),
+          eq(behavioralTriggers.eventType, event.eventType)
+        ))
+        .orderBy(desc(behavioralTriggers.priority));
+      
+      const matchedTriggerIds: string[] = [];
+      
+      for (const trigger of activeTriggers) {
+        // Check condition
+        const conditionMet = checkTriggerCondition(trigger, event);
+        
+        if (conditionMet) {
+          matchedTriggerIds.push(trigger.id);
+          
+          // Check cooldown
+          const canFire = await checkTriggerCooldown(trigger, event.customerEmail || event.customerId);
+          
+          if (canFire) {
+            // Execute the trigger action
+            await executeTriggerAction(trigger, event);
+          }
+        }
+      }
+      
+      // Mark event as processed
+      await db.update(behaviorEvents)
+        .set({ 
+          processed: true,
+          triggersMatched: matchedTriggerIds
+        })
+        .where(eq(behaviorEvents.id, eventId));
+      
+    } catch (error) {
+      console.error("Error processing behavior event:", error);
+    }
+  }
+
+  // Check if trigger condition is met
+  function checkTriggerCondition(trigger: any, event: any): boolean {
+    const value = parseFloat(trigger.conditionValue || '0');
+    const eventValue = parseFloat(event.eventValue || '0');
+    
+    switch (trigger.conditionType) {
+      case 'count_gte':
+        // Would need to count previous events - simplified for now
+        return true;
+      case 'value_gte':
+        return eventValue >= value;
+      case 'value_lte':
+        return eventValue <= value;
+      case 'is_first':
+        // Would need to check if first event for customer
+        return true;
+      case 'is_return':
+        // Would need to check customer history
+        return true;
+      case 'time_elapsed':
+        // Handled by scheduler, not real-time
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  // Check cooldown period
+  async function checkTriggerCooldown(trigger: any, customerIdentifier: string | null | undefined): Promise<boolean> {
+    if (!customerIdentifier) return true;
+    
+    const cooldownHours = trigger.cooldownHours || 24;
+    const cooldownDate = new Date();
+    cooldownDate.setHours(cooldownDate.getHours() - cooldownHours);
+    
+    const [recentExecution] = await db.select().from(triggerExecutions)
+      .where(and(
+        eq(triggerExecutions.triggerId, trigger.id),
+        sql`(customer_email = ${customerIdentifier} OR customer_id = ${customerIdentifier})`,
+        gte(triggerExecutions.createdAt, cooldownDate)
+      ))
+      .limit(1);
+    
+    return !recentExecution;
+  }
+
+  // Execute trigger action
+  async function executeTriggerAction(trigger: any, event: any) {
+    try {
+      const executionData = {
+        triggerId: trigger.id,
+        behaviorEventId: event.id,
+        userId: trigger.userId,
+        customerId: event.customerId,
+        customerEmail: event.customerEmail,
+        actionType: trigger.actionType,
+        actionPayload: {
+          triggerName: trigger.name,
+          eventType: event.eventType,
+          eventData: event.eventData,
+          actionConfig: trigger.actionConfig
+        },
+        status: 'pending'
+      };
+      
+      const [execution] = await db.insert(triggerExecutions)
+        .values(executionData)
+        .returning();
+      
+      // Execute based on action type
+      let success = false;
+      
+      switch (trigger.actionType) {
+        case 'send_email':
+          if (event.customerEmail) {
+            const emailConfig = trigger.actionConfig || {};
+            await sendEmail({
+              to: event.customerEmail,
+              subject: emailConfig.subject || `Special offer for you!`,
+              text: emailConfig.text || 'We noticed you were interested in our products...',
+              html: emailConfig.html
+            });
+            success = true;
+          }
+          break;
+        case 'send_sms':
+          // SMS sending logic
+          success = true;
+          break;
+        case 'offer_discount':
+          // Create discount code logic
+          success = true;
+          break;
+        default:
+          success = true;
+      }
+      
+      // Update execution status
+      await db.update(triggerExecutions)
+        .set({ 
+          status: success ? 'sent' : 'failed',
+          sentAt: success ? new Date() : undefined
+        })
+        .where(eq(triggerExecutions.id, execution.id));
+      
+      // Update trigger last fired timestamp
+      await db.update(behavioralTriggers)
+        .set({ lastFiredAt: new Date() })
+        .where(eq(behavioralTriggers.id, trigger.id));
+      
+    } catch (error) {
+      console.error("Error executing trigger action:", error);
+    }
+  }
+
+  // Track click on triggered action (email link, etc.)
+  app.get("/api/behavioral-triggers/track/click/:executionId", async (req, res) => {
+    try {
+      const { executionId } = req.params;
+      const redirect = req.query.redirect as string;
+      
+      await db.update(triggerExecutions)
+        .set({ 
+          clicked: true,
+          clickedAt: new Date(),
+          status: 'clicked'
+        })
+        .where(eq(triggerExecutions.id, executionId));
+      
+      if (redirect) {
+        res.redirect(redirect);
+      } else {
+        res.json({ success: true });
+      }
+    } catch (error: any) {
+      console.error("Error tracking click:", error);
+      res.status(500).json({ error: "Failed to track click" });
+    }
+  });
+
+  // Track conversion from triggered action
+  app.post("/api/behavioral-triggers/track/conversion/:executionId", async (req, res) => {
+    try {
+      const { executionId } = req.params;
+      const { orderId, value } = req.body;
+      
+      await db.update(triggerExecutions)
+        .set({ 
+          converted: true,
+          convertedAt: new Date(),
+          conversionValue: value?.toString(),
+          conversionOrderId: orderId,
+          status: 'converted'
+        })
+        .where(eq(triggerExecutions.id, executionId));
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error tracking conversion:", error);
+      res.status(500).json({ error: "Failed to track conversion" });
     }
   });
 
