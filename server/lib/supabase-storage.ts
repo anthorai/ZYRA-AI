@@ -1201,29 +1201,45 @@ export class SupabaseStorage implements ISupabaseStorage {
     // First check if preferences exist
     const existing = await this.getUserPreferences(userId);
     
-    // Filter updates to only include valid database columns
-    const validColumns = [
-      'email_notifications', 'sms_notifications', 'push_notifications', 
-      'in_app_notifications', 'weekly_digest', 'marketing_emails',
-      'notification_frequency', 'language', 'timezone', 'date_format',
-      'currency', 'dark_mode', 'auto_save', 'compact_view', 'show_ai_suggestions',
-      'default_generation_mode', 'brand_voice', 'content_style', 'creativity_level'
-    ];
+    // Map incoming fields to the JSONB column structure
+    // Database uses: ai_settings, notification_settings, ui_preferences, privacy_settings (all JSONB)
+    const notificationFields = ['emailNotifications', 'smsNotifications', 'pushNotifications', 
+      'inAppNotifications', 'weeklyDigest', 'marketingEmails', 'notificationFrequency'];
+    const aiFields = ['brandVoice', 'contentStyle', 'creativityLevel', 'defaultGenerationMode', 'showAiSuggestions', 'autoSave'];
+    const uiFields = ['darkMode', 'compactView', 'language', 'timezone', 'dateFormat', 'currency'];
     
-    const filteredUpdates: Record<string, any> = {};
+    // Build the JSONB objects
+    const notificationSettings: Record<string, any> = existing?.notification_settings || {};
+    const aiSettings: Record<string, any> = existing?.ai_settings || {};
+    const uiPreferences: Record<string, any> = existing?.ui_preferences || {};
+    
     for (const [key, value] of Object.entries(updates)) {
-      // Convert camelCase to snake_case
-      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-      if (validColumns.includes(snakeKey) && value !== undefined) {
-        filteredUpdates[snakeKey] = value;
+      if (value === undefined) continue;
+      
+      if (notificationFields.includes(key)) {
+        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        notificationSettings[snakeKey] = value;
+      } else if (aiFields.includes(key)) {
+        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        aiSettings[snakeKey] = value;
+      } else if (uiFields.includes(key)) {
+        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        uiPreferences[snakeKey] = value;
       }
     }
+    
+    const updatePayload = {
+      notification_settings: notificationSettings,
+      ai_settings: aiSettings,
+      ui_preferences: uiPreferences,
+      updated_at: new Date().toISOString()
+    };
     
     if (existing) {
       // Update existing preferences
       const { data, error } = await supabase
         .from('user_preferences')
-        .update({ ...filteredUpdates, updated_at: new Date().toISOString() })
+        .update(updatePayload)
         .eq('user_id', userId)
         .select()
         .single();
@@ -1231,27 +1247,39 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (error) throw new Error(`Failed to update user preferences: ${error.message}`);
       return data;
     } else {
-      // Create new preferences with defaults - only include columns that exist
-      const newPrefs: Record<string, any> = {
+      // Create new preferences with defaults
+      const newPrefs = {
         id: randomUUID(),
         user_id: userId,
-        email_notifications: true,
-        sms_notifications: false,
-        push_notifications: true,
-        in_app_notifications: true,
-        weekly_digest: true,
-        marketing_emails: false,
-        notification_frequency: 'instant',
-        language: 'en',
-        timezone: 'UTC',
-        date_format: 'MM/DD/YYYY',
-        currency: 'USD',
-        dark_mode: true,
-        auto_save: true,
-        compact_view: false,
-        show_ai_suggestions: true,
-        default_generation_mode: 'fast',
-        ...filteredUpdates,
+        notification_settings: {
+          email_notifications: true,
+          sms_notifications: false,
+          push_notifications: true,
+          in_app_notifications: true,
+          weekly_digest: true,
+          marketing_emails: false,
+          notification_frequency: 'instant',
+          ...notificationSettings
+        },
+        ai_settings: {
+          brand_voice: 'professional',
+          content_style: 'balanced',
+          creativity_level: 70,
+          default_generation_mode: 'fast',
+          show_ai_suggestions: true,
+          auto_save: true,
+          ...aiSettings
+        },
+        ui_preferences: {
+          dark_mode: true,
+          compact_view: false,
+          language: 'en',
+          timezone: 'UTC',
+          date_format: 'MM/DD/YYYY',
+          currency: 'USD',
+          ...uiPreferences
+        },
+        privacy_settings: {},
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
