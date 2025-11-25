@@ -1205,7 +1205,7 @@ export default function Landing() {
         </section>
 
         {/* ROI Calculator Section */}
-        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background" id="roi-calculator">
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#0f0f23]" id="roi-calculator">
           <div className="container mx-auto max-w-5xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">
