@@ -125,18 +125,10 @@ export default function Campaigns() {
 
 
   const handleToolAction = (toolId: string) => {
-    const wizardPresets: Record<string, string> = {
-      'custom-templates': 'custom'
-    };
-
-    // Map tool IDs to campaign types for draft detection
-    const toolToCampaignType: Record<string, string> = {
-      'custom-templates': 'email'
-    };
-
     const legacyRoutes: Record<string, string> = {
       'upsell-receipts': '/upsell-email-receipts',
       'abandoned-cart-sms': '/abandoned-cart-sms',
+      'custom-templates': '/custom-templates',
       'ai-upsell-suggestions': '/ai-upsell-suggestions',
       'dynamic-segmentation': '/dynamic-segmentation',
       'multi-channel-repurposing': '/multi-channel-repurposing',
@@ -145,30 +137,7 @@ export default function Campaigns() {
 
     sessionStorage.setItem('navigationSource', 'campaigns');
 
-    // Check for existing draft campaigns for this tool type
-    if (wizardPresets[toolId]) {
-      const expectedType = toolToCampaignType[toolId];
-      
-      // Find any existing draft matching the campaign type (email or sms)
-      const existingDraft = campaigns.find((campaign: Campaign) => {
-        const isDraft = campaign.status === 'draft';
-        const matchesType = !expectedType || campaign.type === expectedType;
-        return isDraft && matchesType;
-      });
-
-      if (existingDraft) {
-        // Navigate to existing draft
-        toast({
-          title: "Existing Draft Found",
-          description: `Continuing with your "${existingDraft.name}" draft`,
-        });
-        setLocation(`/campaigns/${existingDraft.id}`);
-        return;
-      }
-
-      // No existing draft, create new
-      setLocation(`/campaigns/create?preset=${wizardPresets[toolId]}`);
-    } else if (legacyRoutes[toolId]) {
+    if (legacyRoutes[toolId]) {
       setLocation(legacyRoutes[toolId]);
     } else {
       toast({
