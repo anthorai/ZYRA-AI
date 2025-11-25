@@ -1,14 +1,19 @@
 import { Link, useLocation } from "wouter";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
   Zap, Star, TrendingUp, ShoppingCart, Mail, Search, BarChart3, Cog, ArrowRight, Play, Check, Gift, Crown, Award, 
   Settings, FileText, Network, Activity, Shield, Palette, LogOut, CheckCircle2, Sparkles, Lock, Clock,
-  Users, DollarSign, Target, Rocket, ChevronDown, ChevronUp, Quote, ExternalLink, Timer, Pause, Volume2, VolumeX,
-  BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart
+  Users, DollarSign, Target, Rocket, ChevronDown, ChevronUp, Quote, ExternalLink, Timer,
+  BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart, Calculator, X, AlertTriangle,
+  Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,76 +28,180 @@ export default function Landing() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [isAnnual, setIsAnnual] = useState(false);
   
-  // Video player state
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const userPausedRef = useRef(false);
 
-  // Auto-play video when scrolled into view using Intersection Observer
+  // ROI Calculator state
+  const [monthlyRevenue, setMonthlyRevenue] = useState(10000);
+  const [conversionRate, setConversionRate] = useState(2);
+  const [abandonedCarts, setAbandonedCarts] = useState(50);
+
+  // Exit intent popup state
+  const [showExitPopup, setShowExitPopup] = useState(false);
+  const exitIntentTriggered = useRef(false);
+
+  // Social proof notification state
+  const [showNotification, setShowNotification] = useState(false);
+  const [currentNotification, setCurrentNotification] = useState(0);
+  
+  // Sticky header state
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  // Urgency countdown
+  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 32 });
+
+  // ROI Calculator logic
+  const calculateROI = useCallback(() => {
+    // Assume typical ecommerce metrics if not provided
+    const monthlyVisitors = Math.round(monthlyRevenue / 50); // Avg $50 per visitor
+    const currentOrders = Math.round(monthlyVisitors * (conversionRate / 100));
+    const avgOrderValue = currentOrders > 0 ? monthlyRevenue / currentOrders : 75;
+    
+    // With Zyra AI improvements
+    const improvedConversion = conversionRate * 1.34; // 34% avg improvement from optimized descriptions
+    const newOrders = Math.round(monthlyVisitors * (improvedConversion / 100));
+    const conversionRevenue = (newOrders - currentOrders) * avgOrderValue;
+    
+    // Cart recovery calculation
+    const avgCartValue = avgOrderValue * 1.2; // Abandoned carts tend to be higher value
+    const recoveredCarts = Math.round(abandonedCarts * 0.35); // 35% recovery rate
+    const cartRecoveryRevenue = recoveredCarts * avgCartValue;
+    
+    // SEO improvement (10% traffic increase over time)
+    const seoBonus = monthlyRevenue * 0.08;
+    
+    const additionalRevenue = conversionRevenue + cartRecoveryRevenue + seoBonus;
+    const projectedRevenue = monthlyRevenue + additionalRevenue;
+    const percentIncrease = ((projectedRevenue - monthlyRevenue) / monthlyRevenue) * 100;
+    
+    // ROI based on Growth plan ($299/mo) for most realistic calculation
+    const monthlyPlanCost = 299;
+    const roi = additionalRevenue > 0 ? ((additionalRevenue - monthlyPlanCost) / monthlyPlanCost * 100) : 0;
+    
+    return {
+      currentRevenue: monthlyRevenue,
+      projectedRevenue: Math.round(projectedRevenue),
+      additionalRevenue: Math.round(additionalRevenue),
+      percentIncrease: Math.round(percentIncrease),
+      roi: Math.max(0, Math.round(roi))
+    };
+  }, [monthlyRevenue, conversionRate, abandonedCarts]);
+
+  const roiResults = calculateROI();
+
+  // Social proof notifications
+  const socialProofMessages = [
+    { name: "Sarah M.", location: "New York", action: "just started their free trial", time: "2 minutes ago" },
+    { name: "James K.", location: "London", action: "upgraded to Growth plan", time: "5 minutes ago" },
+    { name: "Maria G.", location: "Sydney", action: "recovered $847 in abandoned carts", time: "8 minutes ago" },
+    { name: "David L.", location: "Toronto", action: "optimized 156 products", time: "12 minutes ago" },
+    { name: "Lisa T.", location: "Berlin", action: "just started their free trial", time: "15 minutes ago" },
+    { name: "Chen W.", location: "Singapore", action: "upgraded to Pro plan", time: "18 minutes ago" }
+  ];
+
+  // Exit intent detection (desktop + mobile)
   useEffect(() => {
-    const video = videoRef.current;
-    const container = videoContainerRef.current;
-
-    if (!video || !container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        
-        if (entry.isIntersecting) {
-          // Only auto-play if user hasn't manually paused
-          if (!userPausedRef.current) {
-            video.play().catch((err) => {
-              console.log('Autoplay prevented:', err);
-              setIsPlaying(false);
-            });
-            setIsPlaying(true);
-          }
-        } else {
-          // Reset user pause flag when video scrolls out of view
-          video.pause();
-          setIsPlaying(false);
-          userPausedRef.current = false;
-        }
-      },
-      {
-        threshold: 0.5, // Play when 50% visible
-        rootMargin: '0px'
+    let idleTimer: NodeJS.Timeout | null = null;
+    let lastScrollY = window.scrollY;
+    let scrollBackCount = 0;
+    
+    // Desktop: detect mouse leaving page
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0 && !exitIntentTriggered.current && !isAuthenticated) {
+        exitIntentTriggered.current = true;
+        setShowExitPopup(true);
       }
-    );
+    };
 
-    observer.observe(container);
+    // Mobile: detect rapid scroll back to top (exit intent signal)
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDiff = lastScrollY - currentScrollY;
+      
+      // Reset idle timer on any scroll
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        // User has been idle for 30 seconds on mobile, show exit popup
+        if ('ontouchstart' in window && !exitIntentTriggered.current && !isAuthenticated && window.scrollY > 300) {
+          exitIntentTriggered.current = true;
+          setShowExitPopup(true);
+        }
+      }, 30000);
+      
+      // If user rapidly scrolls up more than 300px, increment scroll back count
+      if (scrollDiff > 100 && currentScrollY > 200) {
+        scrollBackCount++;
+        if (scrollBackCount >= 3 && !exitIntentTriggered.current && !isAuthenticated) {
+          exitIntentTriggered.current = true;
+          setShowExitPopup(true);
+        }
+      } else {
+        scrollBackCount = 0;
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    document.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('scroll', handleScroll);
+      if (idleTimer) clearTimeout(idleTimer);
+    };
+  }, [isAuthenticated]);
+
+  // Countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return { hours: 23, minutes: 59, seconds: 59 }; // Reset
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Social proof notifications rotation
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    const showNotificationCycle = () => {
+      setShowNotification(true);
+      setTimeout(() => {
+        setShowNotification(false);
+        setTimeout(() => {
+          setCurrentNotification(prev => (prev + 1) % socialProofMessages.length);
+        }, 500);
+      }, 4000);
+    };
+
+    // Initial delay before first notification
+    const initialDelay = setTimeout(() => {
+      showNotificationCycle();
+      intervalId = setInterval(showNotificationCycle, 12000);
+    }, 5000);
 
     return () => {
-      observer.disconnect();
+      clearTimeout(initialDelay);
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-        userPausedRef.current = true; // Track manual pause
-      } else {
-        videoRef.current.play().catch((err) => {
-          console.error('Play failed:', err);
-          setIsPlaying(false);
-        });
-        setIsPlaying(true);
-        userPausedRef.current = false; // Allow auto-play again
-      }
-    }
-  };
+  // Sticky bar on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyBar(window.scrollY > 600);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
 
   // Handle logout functionality
   const handleLogout = async () => {
@@ -491,6 +600,143 @@ export default function Landing() {
         </script>
       </Helmet>
 
+      {/* Urgency Banner - Limited Time Offer */}
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-[#FF00F5] via-[#00F0FF] to-[#FF00F5] bg-[length:200%_auto] animate-gradient py-2 px-4">
+        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-white text-sm">
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 animate-pulse" />
+            <span className="font-semibold">LIMITED TIME: Get 20% OFF your first 3 months</span>
+          </div>
+          <div className="flex items-center gap-1 font-mono bg-black/20 rounded px-2 py-1">
+            <Timer className="w-3 h-3" />
+            <span>{String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
+          </div>
+          <Badge className="bg-white/20 text-white border-white/30 text-xs">
+            Only 17 spots left today
+          </Badge>
+        </div>
+      </div>
+
+      {/* Social Proof Notification Toast */}
+      <div 
+        className={`fixed bottom-20 lg:bottom-6 left-4 z-50 transition-all duration-500 transform ${
+          showNotification ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+        }`}
+        data-testid="social-proof-notification"
+      >
+        <Card className="bg-card/95 backdrop-blur-sm border shadow-lg max-w-sm">
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00F0FF] to-[#FF00F5] flex items-center justify-center text-white font-bold flex-shrink-0">
+              {socialProofMessages[currentNotification]?.name.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">
+                <span className="font-semibold">{socialProofMessages[currentNotification]?.name}</span>
+                {' from '}
+                <span className="text-muted-foreground">{socialProofMessages[currentNotification]?.location}</span>
+              </p>
+              <p className="text-sm text-primary font-medium">
+                {socialProofMessages[currentNotification]?.action}
+              </p>
+              <p className="text-xs text-muted-foreground">{socialProofMessages[currentNotification]?.time}</p>
+            </div>
+            <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Exit Intent Popup */}
+      <Dialog open={showExitPopup} onOpenChange={setShowExitPopup}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-center">
+              <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF00F5] bg-clip-text text-transparent">
+                Wait! Don't Leave Empty-Handed
+              </span>
+            </DialogTitle>
+            <DialogDescription className="text-center text-base">
+              We have a special offer just for you
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-6 text-center">
+              <p className="text-lg font-semibold mb-2">Get Your First Month FREE</p>
+              <p className="text-4xl font-bold text-primary mb-2">$0</p>
+              <p className="text-sm text-muted-foreground line-through">Usually $49/month</p>
+              <p className="text-sm text-muted-foreground mt-2">Plus 20% off for the next 3 months</p>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span>Full access to all AI features</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span>1,000 AI optimization credits</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span>No credit card required</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button asChild className="gradient-button w-full" size="lg">
+                <Link href="/auth">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Claim My Free Month
+                </Link>
+              </Button>
+              <button 
+                onClick={() => setShowExitPopup(false)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                No thanks, I'll pay full price later
+              </button>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">
+              <Timer className="w-3 h-3 inline mr-1" />
+              Offer expires in {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sticky Desktop CTA Bar */}
+      <div 
+        className={`fixed top-10 left-0 right-0 z-[90] bg-background/95 backdrop-blur-lg border-b border-border py-3 px-4 transition-all duration-300 hidden lg:block ${
+          showStickyBar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        }`}
+        data-testid="sticky-cta-bar"
+      >
+        <div className="container mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <img src={zyraLogoUrl} alt="Zyra AI" className="w-8 h-8 object-contain" />
+            <span className="font-semibold">Zyra AI</span>
+            <div className="hidden xl:flex items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                4.9/5 rating
+              </span>
+              <span className="flex items-center gap-1">
+                <Users className="w-4 h-4 text-primary" />
+                50,000+ merchants
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground hidden md:block">
+              <Shield className="w-4 h-4 inline mr-1" />
+              60-Day Money-Back Guarantee
+            </span>
+            <Button asChild className="gradient-button">
+              <Link href="/auth">
+                Start Free Trial
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Navigation */}
       <ResponsiveNavbar
         navItems={[
@@ -517,7 +763,7 @@ export default function Landing() {
       />
 
       {/* Main Content */}
-      <main id="main-content">
+      <main id="main-content" className="pt-10">
         {/* Optimized Hero Section */}
         <section className="relative pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6 overflow-hidden">
           {/* Animated gradient background */}
@@ -714,6 +960,526 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Problem-Agitation Section */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-red-500 border-red-500/30">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                The Hard Truth
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                Your Store Is <span className="text-red-500">Bleeding Money</span> Right Now
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Every day you wait, you're losing customers to competitors with better product pages and smarter marketing. Here's what's happening while you sleep:
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              <Card className="border-red-500/20 bg-red-500/5">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
+                    <ShoppingCart className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">78% of Carts</h3>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Are abandoned without any follow-up
+                  </p>
+                  <div className="text-2xl font-bold text-red-500">-$2,400/mo</div>
+                  <p className="text-xs text-muted-foreground">Average lost revenue</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-red-500/20 bg-red-500/5">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
+                    <Search className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">91% of Stores</h3>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Never appear on Google's first page
+                  </p>
+                  <div className="text-2xl font-bold text-red-500">-5,000+</div>
+                  <p className="text-xs text-muted-foreground">Monthly visitors missed</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-red-500/20 bg-red-500/5">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
+                    <FileText className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">2.3% Conversion</h3>
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Poor descriptions kill conversions
+                  </p>
+                  <div className="text-2xl font-bold text-red-500">-67%</div>
+                  <p className="text-xs text-muted-foreground">Below optimized stores</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="text-center">
+              <p className="text-lg mb-6">
+                <span className="font-bold">The good news?</span> Zyra AI fixes all of this in under 5 minutes.
+              </p>
+              <Button asChild size="lg" className="gradient-button">
+                <Link href="/auth">
+                  <Rocket className="w-5 h-5 mr-2" />
+                  Fix My Store Now—Free Trial
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-muted/30">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">
+                Simple 3-Step Process
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                Start Growing in <span className="text-primary">5 Minutes</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                No coding, no training, no hiring. Just results.
+              </p>
+            </div>
+
+            <div className="relative">
+              {/* Connection line */}
+              <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -translate-y-1/2" />
+              
+              <div className="grid md:grid-cols-3 gap-8 relative">
+                <div className="text-center relative">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#00F0FF] to-[#00FFE5] rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/30 relative z-10">
+                    1
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Connect Your Store</h3>
+                  <p className="text-muted-foreground">
+                    One-click Shopify integration. Zyra automatically imports your products and learns your brand voice.
+                  </p>
+                  <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
+                    <Clock className="w-4 h-4" />
+                    <span>Takes 30 seconds</span>
+                  </div>
+                </div>
+
+                <div className="text-center relative">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#00FFE5] to-[#FF00F5] rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/30 relative z-10">
+                    2
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">AI Optimizes Everything</h3>
+                  <p className="text-muted-foreground">
+                    Zyra rewrites descriptions, fixes SEO, and sets up abandoned cart recovery automatically.
+                  </p>
+                  <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
+                    <Bot className="w-4 h-4" />
+                    <span>100% hands-free</span>
+                  </div>
+                </div>
+
+                <div className="text-center relative">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#FF00F5] to-[#00F0FF] rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/30 relative z-10">
+                    3
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Watch Sales Grow</h3>
+                  <p className="text-muted-foreground">
+                    Track real-time revenue increases, recovered carts, and SEO rankings from your dashboard.
+                  </p>
+                  <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Results in 24 hours</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center mt-12">
+              <Button asChild size="lg" className="gradient-button">
+                <Link href="/auth">
+                  <Zap className="w-5 h-5 mr-2" />
+                  Start My Free Trial
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Before/After Product Showcase */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Real AI Transformation
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                See the <span className="text-primary">AI Difference</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Here's how Zyra transforms boring product pages into conversion machines
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Before */}
+              <Card className="border-red-500/20">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-red-500" />
+                    <span className="font-semibold text-red-500">Before Zyra</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-muted/50 rounded-lg p-4 mb-4">
+                    <h4 className="font-medium mb-2 text-muted-foreground">Premium Wireless Headphones</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Good headphones. Wireless. Battery lasts long. Good sound quality. Comfortable to wear. Black color available.
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-red-500">
+                      <X className="w-4 h-4" />
+                      <span>No emotional appeal</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-red-500">
+                      <X className="w-4 h-4" />
+                      <span>Missing keywords for SEO</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-red-500">
+                      <X className="w-4 h-4" />
+                      <span>No benefits highlighted</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-red-500">
+                      <X className="w-4 h-4" />
+                      <span>2.1% conversion rate</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* After */}
+              <Card className="border-primary/30 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-primary" />
+                    <span className="font-semibold text-primary">After Zyra AI</span>
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-xs ml-auto">
+                      AI Optimized
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-background rounded-lg p-4 mb-4 border border-primary/20">
+                    <h4 className="font-medium mb-2">Premium Wireless Noise-Canceling Headphones - 40H Battery</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Experience pure audio bliss with our studio-quality wireless headphones. Active noise cancellation lets you escape into your music, while 40-hour battery life keeps the soundtrack going all week. Memory foam ear cushions deliver cloud-like comfort for extended listening sessions.
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Check className="w-4 h-4" />
+                      <span>Emotional, benefit-driven copy</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-primary">
+                      <Check className="w-4 h-4" />
+                      <span>SEO-optimized keywords</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-primary">
+                      <Check className="w-4 h-4" />
+                      <span>Clear value proposition</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-primary">
+                      <Check className="w-4 h-4" />
+                      <span>7.8% conversion rate (+271%)</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="text-center mt-8">
+              <p className="text-muted-foreground mb-4">
+                This transformation takes Zyra AI less than 10 seconds per product
+              </p>
+              <Button asChild size="lg" className="gradient-button">
+                <Link href="/auth">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Transform My Products
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Competitor Comparison Table */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-muted/30">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">
+                Why Zyra Wins
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                Compare Your <span className="text-primary">Options</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                See how Zyra AI stacks up against traditional methods
+              </p>
+            </div>
+
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4 font-semibold"></th>
+                      <th className="p-4 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <Pen className="w-5 h-5 text-muted-foreground" />
+                          <span className="font-semibold">Do It Yourself</span>
+                        </div>
+                      </th>
+                      <th className="p-4 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <Users className="w-5 h-5 text-muted-foreground" />
+                          <span className="font-semibold">Hire Freelancer</span>
+                        </div>
+                      </th>
+                      <th className="p-4 text-center bg-primary/5 border-2 border-primary/20">
+                        <div className="flex flex-col items-center gap-2">
+                          <Bot className="w-5 h-5 text-primary" />
+                          <span className="font-semibold text-primary">Zyra AI</span>
+                          <Badge className="bg-primary text-primary-foreground text-xs">Best Value</Badge>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Monthly Cost</td>
+                      <td className="p-4 text-center text-muted-foreground">$0 (but time)</td>
+                      <td className="p-4 text-center text-muted-foreground">$2,000-5,000</td>
+                      <td className="p-4 text-center font-semibold text-primary bg-primary/5">$49-299</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Time per Product</td>
+                      <td className="p-4 text-center text-muted-foreground">30-60 min</td>
+                      <td className="p-4 text-center text-muted-foreground">24-48 hours</td>
+                      <td className="p-4 text-center font-semibold text-primary bg-primary/5">10 seconds</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">SEO Optimization</td>
+                      <td className="p-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                      <td className="p-4 text-center"><Minus className="w-5 h-5 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center bg-primary/5"><CheckCircle className="w-5 h-5 text-primary mx-auto" /></td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Abandoned Cart Recovery</td>
+                      <td className="p-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                      <td className="p-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                      <td className="p-4 text-center bg-primary/5"><CheckCircle className="w-5 h-5 text-primary mx-auto" /></td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">24/7 Availability</td>
+                      <td className="p-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                      <td className="p-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                      <td className="p-4 text-center bg-primary/5"><CheckCircle className="w-5 h-5 text-primary mx-auto" /></td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Bulk Optimization</td>
+                      <td className="p-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                      <td className="p-4 text-center"><Minus className="w-5 h-5 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center bg-primary/5"><CheckCircle className="w-5 h-5 text-primary mx-auto" /></td>
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-medium">Avg. ROI</td>
+                      <td className="p-4 text-center text-muted-foreground">Low</td>
+                      <td className="p-4 text-center text-muted-foreground">Moderate</td>
+                      <td className="p-4 text-center font-bold text-primary bg-primary/5">5,700%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <div className="text-center mt-8">
+              <Button asChild size="lg" className="gradient-button">
+                <Link href="/auth">
+                  Choose the Smart Option
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* ROI Calculator Section */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background" id="roi-calculator">
+          <div className="container mx-auto max-w-5xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">
+                <Calculator className="w-3 h-3 mr-1" />
+                Free ROI Calculator
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                Calculate Your <span className="text-primary">Potential Revenue</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Enter your current metrics and see how much more you could be making with Zyra AI
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Input Side */}
+              <Card className="gradient-card border-0">
+                <CardContent className="p-6 space-y-6">
+                  <h3 className="text-lg font-semibold">Your Current Metrics</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Monthly Revenue: <span className="text-primary font-bold">${monthlyRevenue.toLocaleString()}</span>
+                      </Label>
+                      <Slider
+                        value={[monthlyRevenue]}
+                        onValueChange={(val) => setMonthlyRevenue(val[0])}
+                        min={1000}
+                        max={100000}
+                        step={1000}
+                        className="my-4"
+                        data-testid="slider-monthly-revenue"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>$1K</span>
+                        <span>$100K</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Current Conversion Rate: <span className="text-primary font-bold">{conversionRate}%</span>
+                      </Label>
+                      <Slider
+                        value={[conversionRate]}
+                        onValueChange={(val) => setConversionRate(val[0])}
+                        min={0.5}
+                        max={10}
+                        step={0.1}
+                        className="my-4"
+                        data-testid="slider-conversion-rate"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>0.5%</span>
+                        <span>10%</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Monthly Abandoned Carts: <span className="text-primary font-bold">{abandonedCarts}</span>
+                      </Label>
+                      <Slider
+                        value={[abandonedCarts]}
+                        onValueChange={(val) => setAbandonedCarts(val[0])}
+                        min={10}
+                        max={500}
+                        step={5}
+                        className="my-4"
+                        data-testid="slider-abandoned-carts"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>10</span>
+                        <span>500</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Results Side */}
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-6">Your Potential with Zyra AI</h3>
+                  
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-background rounded-lg">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Current Monthly Revenue</p>
+                        <p className="text-2xl font-bold">${roiResults.currentRevenue.toLocaleString()}</p>
+                      </div>
+                      <ArrowRight className="w-6 h-6 text-muted-foreground" />
+                      <div className="text-right">
+                        <p className="text-sm text-primary font-medium">Projected Revenue</p>
+                        <p className="text-2xl font-bold text-primary">${roiResults.projectedRevenue.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-background rounded-lg text-center">
+                        <p className="text-sm text-muted-foreground mb-1">Extra Revenue</p>
+                        <p className="text-2xl font-bold text-primary">+${roiResults.additionalRevenue.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">per month</p>
+                      </div>
+                      <div className="p-4 bg-background rounded-lg text-center">
+                        <p className="text-sm text-muted-foreground mb-1">Revenue Increase</p>
+                        <p className="text-2xl font-bold text-primary">+{roiResults.percentIncrease}%</p>
+                        <p className="text-xs text-muted-foreground">growth</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg text-center">
+                      <p className="text-sm font-medium mb-2">Your ROI with Zyra AI</p>
+                      <p className="text-4xl font-bold text-primary">{roiResults.roi.toLocaleString()}%</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        For every $1 spent, you get ${Math.round(roiResults.roi / 100)} back
+                      </p>
+                    </div>
+
+                    <Button asChild className="gradient-button w-full" size="lg">
+                      <Link href="/auth">
+                        <Rocket className="w-5 h-5 mr-2" />
+                        Unlock This Revenue—Start Free
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* As Featured In Section */}
+        <section className="py-12 px-4 sm:px-6 bg-muted/30 border-y border-border/50">
+          <div className="container mx-auto">
+            <p className="text-center text-sm text-muted-foreground mb-8">As Featured In</p>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60">
+              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-forbes">
+                <Newspaper className="w-6 h-6" />
+                <span className="text-lg font-bold tracking-tight">Forbes</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-techcrunch">
+                <Globe className="w-6 h-6" />
+                <span className="text-lg font-bold tracking-tight">TechCrunch</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-entrepreneur">
+                <Newspaper className="w-6 h-6" />
+                <span className="text-lg font-bold tracking-tight">Entrepreneur</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-shopify">
+                <ShoppingCart className="w-6 h-6" />
+                <span className="text-lg font-bold tracking-tight">Shopify Blog</span>
+              </div>
+              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-producthunt">
+                <Rocket className="w-6 h-6" />
+                <span className="text-lg font-bold tracking-tight">Product Hunt</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Product Demo Video Section */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background">
           <div className="container mx-auto">
@@ -729,60 +1495,67 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Video Player */}
+            {/* Demo Preview Card */}
             <div 
-              ref={videoContainerRef} 
               className="relative max-w-5xl mx-auto rounded-xl overflow-hidden shadow-2xl"
               data-testid="container-demo-video"
             >
-              {/* Video Element */}
-              <video
-                ref={videoRef}
-                className="w-full aspect-video object-cover"
-                muted={isMuted}
-                loop
-                playsInline
-                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300F0FF;stop-opacity:0.3' /%3E%3Cstop offset='100%25' style='stop-color:%23FF00F5;stop-opacity:0.3' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='675' fill='%23111827'/%3E%3Crect width='1200' height='675' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial,sans-serif' font-size='48' fill='%2300F0FF' text-anchor='middle'%3EZyra AI Demo%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial,sans-serif' font-size='24' fill='%23ffffff' opacity='0.7' text-anchor='middle'%3EProduct Optimization in Action%3C/text%3E%3C/svg%3E"
-                data-testid="video-demo-player"
-              >
-                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-
-              {/* Video Controls Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none">
-                {/* Play/Pause Button */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="w-16 h-16 rounded-full bg-background/90 backdrop-blur-sm border-2 border-primary/50 hover:border-primary pointer-events-auto"
-                    onClick={togglePlay}
-                    data-testid="button-video-toggle-play"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-8 h-8 text-primary" />
-                    ) : (
-                      <Play className="w-8 h-8 text-primary ml-1" />
-                    )}
-                  </Button>
+              {/* Gradient Background with Animated Elements */}
+              <div className="w-full aspect-video bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative">
+                {/* Animated gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#00F0FF]/10 via-[#FF00F5]/10 to-[#00F0FF]/10 bg-[length:200%_100%] animate-gradient" />
+                
+                {/* Demo UI Mockup */}
+                <div className="absolute inset-4 sm:inset-8 flex gap-4">
+                  {/* Left Panel - Product List */}
+                  <div className="w-1/3 bg-white/5 backdrop-blur-sm rounded-lg p-3 hidden sm:block">
+                    <div className="h-4 w-3/4 bg-white/20 rounded mb-3" />
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex gap-2 p-2 rounded bg-white/10">
+                          <div className="w-8 h-8 bg-gradient-to-br from-[#00F0FF]/30 to-[#FF00F5]/30 rounded" />
+                          <div className="flex-1 space-y-1">
+                            <div className="h-2 w-3/4 bg-white/20 rounded" />
+                            <div className="h-2 w-1/2 bg-white/10 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Right Panel - AI Optimization */}
+                  <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-lg p-3 sm:p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Bot className="w-5 h-5 text-primary" />
+                      <div className="h-3 w-32 bg-primary/30 rounded" />
+                    </div>
+                    <div className="space-y-3">
+                      <div className="p-3 rounded bg-gradient-to-r from-[#00F0FF]/20 to-transparent border border-[#00F0FF]/30">
+                        <div className="h-3 w-full bg-white/20 rounded mb-2" />
+                        <div className="h-3 w-4/5 bg-white/15 rounded mb-2" />
+                        <div className="h-3 w-3/4 bg-white/10 rounded" />
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <CheckCircle className="w-4 h-4 text-primary" />
+                        <span className="text-primary/70">SEO Optimized</span>
+                        <CheckCircle className="w-4 h-4 text-primary ml-2" />
+                        <span className="text-primary/70">+34% Conversion</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Bottom Controls */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2 pointer-events-auto">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-                    onClick={toggleMute}
-                    data-testid="button-video-toggle-mute"
-                  >
-                    {isMuted ? (
-                      <VolumeX className="w-5 h-5" />
-                    ) : (
-                      <Volume2 className="w-5 h-5" />
-                    )}
-                  </Button>
+                
+                {/* CTA Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <div className="text-center">
+                    <Button asChild size="lg" className="gradient-button mb-3">
+                      <Link href="/auth">
+                        <Play className="w-5 h-5 mr-2" />
+                        Start Free Demo
+                      </Link>
+                    </Button>
+                    <p className="text-sm text-white/70">See it work on your products</p>
+                  </div>
                 </div>
               </div>
 
