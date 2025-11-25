@@ -37,7 +37,13 @@ import {
   behavioralTriggers,
   behaviorEvents,
   triggerExecutions,
-  triggerAnalytics
+  triggerAnalytics,
+  customerSegments,
+  customerSegmentMembers,
+  customerProfiles,
+  segmentAnalytics,
+  revenueAttribution,
+  abandonedCarts
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -12541,6 +12547,732 @@ Generate 5 high-impact trigger recommendations that would benefit this store.`
     } catch (error: any) {
       console.error("Error tracking conversion:", error);
       res.status(500).json({ error: "Failed to track conversion" });
+    }
+  });
+
+  // ============================================
+  // DYNAMIC CUSTOMER SEGMENTATION API
+  // ============================================
+
+  // Get all segments for user
+  app.get("/api/segments", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      const segments = await db.select().from(customerSegments)
+        .where(eq(customerSegments.userId, userId))
+        .orderBy(desc(customerSegments.createdAt));
+      
+      res.json(segments);
+    } catch (error: any) {
+      console.error("Error fetching segments:", error);
+      res.status(500).json({ error: "Failed to fetch segments" });
+    }
+  });
+
+  // Create a new segment
+  app.post("/api/segments", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { name, description, segmentType, rules, color, icon } = req.body;
+      
+      if (!name || !segmentType || !rules) {
+        return res.status(400).json({ error: "Name, segmentType, and rules are required" });
+      }
+      
+      const [segment] = await db.insert(customerSegments)
+        .values({
+          userId,
+          name,
+          description,
+          segmentType,
+          rules,
+          color: color || "#3b82f6",
+          icon: icon || "users",
+          isActive: true,
+          isAiGenerated: false
+        })
+        .returning();
+      
+      res.json(segment);
+    } catch (error: any) {
+      console.error("Error creating segment:", error);
+      res.status(500).json({ error: "Failed to create segment" });
+    }
+  });
+
+  // Update a segment
+  app.patch("/api/segments/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const [segment] = await db.update(customerSegments)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(customerSegments.id, id),
+          eq(customerSegments.userId, userId)
+        ))
+        .returning();
+      
+      if (!segment) {
+        return res.status(404).json({ error: "Segment not found" });
+      }
+      
+      res.json(segment);
+    } catch (error: any) {
+      console.error("Error updating segment:", error);
+      res.status(500).json({ error: "Failed to update segment" });
+    }
+  });
+
+  // Delete a segment
+  app.delete("/api/segments/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      // Check if it's a system segment
+      const [existing] = await db.select().from(customerSegments)
+        .where(and(
+          eq(customerSegments.id, id),
+          eq(customerSegments.userId, userId)
+        ));
+      
+      if (!existing) {
+        return res.status(404).json({ error: "Segment not found" });
+      }
+      
+      if (existing.isSystem) {
+        return res.status(403).json({ error: "Cannot delete system segments" });
+      }
+      
+      await db.delete(customerSegments)
+        .where(and(
+          eq(customerSegments.id, id),
+          eq(customerSegments.userId, userId)
+        ));
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting segment:", error);
+      res.status(500).json({ error: "Failed to delete segment" });
+    }
+  });
+
+  // Get segment members
+  app.get("/api/segments/:id/members", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const members = await db.select().from(customerSegmentMembers)
+        .where(and(
+          eq(customerSegmentMembers.segmentId, id),
+          eq(customerSegmentMembers.userId, userId)
+        ))
+        .orderBy(desc(customerSegmentMembers.totalSpent))
+        .limit(limit)
+        .offset(offset);
+      
+      res.json(members);
+    } catch (error: any) {
+      console.error("Error fetching segment members:", error);
+      res.status(500).json({ error: "Failed to fetch segment members" });
+    }
+  });
+
+  // Get customer profiles
+  app.get("/api/customers/profiles", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const profiles = await db.select().from(customerProfiles)
+        .where(eq(customerProfiles.userId, userId))
+        .orderBy(desc(customerProfiles.totalSpent))
+        .limit(limit)
+        .offset(offset);
+      
+      res.json(profiles);
+    } catch (error: any) {
+      console.error("Error fetching customer profiles:", error);
+      res.status(500).json({ error: "Failed to fetch customer profiles" });
+    }
+  });
+
+  // Run AI segmentation analysis
+  app.post("/api/segments/ai/analyze", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get customer data for analysis
+      const profiles = await db.select().from(customerProfiles)
+        .where(eq(customerProfiles.userId, userId))
+        .limit(100);
+      
+      // If no customer data, try to build from revenue attribution data
+      let customerData = profiles;
+      
+      if (profiles.length === 0) {
+        // Build profiles from revenue attribution history
+        const attributions = await db.select().from(revenueAttribution)
+          .where(eq(revenueAttribution.userId, userId))
+          .orderBy(desc(revenueAttribution.attributedAt))
+          .limit(500);
+        
+        // Also get abandoned carts data
+        const carts = await db.select().from(abandonedCarts)
+          .where(eq(abandonedCarts.userId, userId))
+          .orderBy(desc(abandonedCarts.createdAt))
+          .limit(500);
+        
+        // Aggregate data by customer email
+        const customerMap = new Map<string, any>();
+        
+        // Process revenue attributions
+        for (const attr of attributions) {
+          const email = attr.customerEmail;
+          if (!email) continue;
+          
+          if (!customerMap.has(email)) {
+            customerMap.set(email, {
+              customerEmail: email,
+              customerName: null,
+              totalOrders: 0,
+              totalSpent: 0,
+              discountOrders: 0,
+              firstOrderDate: attr.attributedAt,
+              lastOrderDate: attr.attributedAt
+            });
+          }
+          
+          const customer = customerMap.get(email)!;
+          customer.totalOrders += 1;
+          customer.totalSpent += parseFloat(attr.revenueAmount || '0');
+          if (attr.attributedAt && (!customer.firstOrderDate || attr.attributedAt < customer.firstOrderDate)) {
+            customer.firstOrderDate = attr.attributedAt;
+          }
+          if (attr.attributedAt && (!customer.lastOrderDate || attr.attributedAt > customer.lastOrderDate)) {
+            customer.lastOrderDate = attr.attributedAt;
+          }
+        }
+        
+        // Process abandoned carts to identify cart abandoners
+        for (const cart of carts) {
+          const email = cart.customerEmail;
+          if (!email) continue;
+          
+          if (!customerMap.has(email)) {
+            customerMap.set(email, {
+              customerEmail: email,
+              customerName: cart.customerName,
+              totalOrders: 0,
+              totalSpent: 0,
+              discountOrders: 0,
+              abandonedCarts: 1,
+              firstOrderDate: cart.createdAt,
+              lastOrderDate: cart.createdAt
+            });
+          } else {
+            const customer = customerMap.get(email)!;
+            customer.abandonedCarts = (customer.abandonedCarts || 0) + 1;
+            if (cart.customerName && !customer.customerName) {
+              customer.customerName = cart.customerName;
+            }
+          }
+        }
+        
+        customerData = Array.from(customerMap.values()).map(c => ({
+          ...c,
+          avgOrderValue: c.totalOrders > 0 ? c.totalSpent / c.totalOrders : 0,
+          discountUsagePercent: c.totalOrders > 0 ? (c.discountOrders / c.totalOrders) * 100 : 0,
+          daysSinceLastOrder: c.lastOrderDate ? Math.floor((Date.now() - new Date(c.lastOrderDate).getTime()) / (1000 * 60 * 60 * 24)) : 999
+        }));
+      }
+      
+      if (customerData.length === 0) {
+        return res.json({
+          segments: [],
+          message: "No customer data available for analysis. Connect your Shopify store and sync orders first."
+        });
+      }
+      
+      // Use AI to analyze customer data and suggest segments
+      const openai = new OpenAI();
+      
+      const analysisPrompt = `Analyze this e-commerce customer data and suggest smart customer segments.
+
+Customer Data Summary:
+- Total Customers: ${customerData.length}
+- Sample customers (first 20):
+${JSON.stringify(customerData.slice(0, 20).map(c => ({
+  email: c.customerEmail,
+  orders: c.totalOrders,
+  spent: c.totalSpent,
+  avgOrder: c.avgOrderValue || (c.totalSpent / Math.max(c.totalOrders, 1)),
+  discountUsage: c.discountUsagePercent || (c.discountOrders / Math.max(c.totalOrders, 1) * 100),
+  daysSinceLastOrder: c.daysSinceLastOrder
+})), null, 2)}
+
+Based on this data, suggest 4-6 customer segments. For each segment provide:
+1. name: A clear segment name (e.g., "High Spenders", "First-Time Buyers", "Discount Seekers")
+2. segmentType: One of: high_spenders, first_timers, loyal_buyers, discount_seekers, dormant, cart_abandoners, vip, at_risk, custom
+3. description: 1-2 sentence description
+4. rules: Object with segmentation criteria like: { field: "totalSpent", operator: "gte", value: 500 }
+   - Available fields: totalOrders, totalSpent, avgOrderValue, discountUsagePercent, daysSinceLastOrder
+   - Operators: gte (>=), lte (<=), eq (=), gt (>), lt (<)
+5. estimatedCount: Estimated number of customers that would match
+6. color: A hex color code for display
+7. icon: A Lucide icon name (users, crown, shopping-cart, percent, clock, heart, star, alert-triangle)
+
+Return JSON array of segments only, no explanation text.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are an e-commerce customer segmentation expert. Analyze customer data and suggest smart segments based on purchasing behavior. Return only valid JSON."
+          },
+          { role: "user", content: analysisPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      });
+      
+      let suggestedSegments = [];
+      try {
+        const responseText = completion.choices[0].message.content || "[]";
+        const cleanedResponse = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        suggestedSegments = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error("Failed to parse AI response:", parseError);
+        // Return default segments
+        suggestedSegments = [
+          {
+            name: "High Spenders",
+            segmentType: "high_spenders",
+            description: "Customers who have spent over $500 total",
+            rules: { field: "totalSpent", operator: "gte", value: 500 },
+            estimatedCount: customerData.filter((c: any) => (c.totalSpent || 0) >= 500).length,
+            color: "#10b981",
+            icon: "crown"
+          },
+          {
+            name: "First-Time Buyers",
+            segmentType: "first_timers",
+            description: "Customers with only one purchase",
+            rules: { field: "totalOrders", operator: "eq", value: 1 },
+            estimatedCount: customerData.filter((c: any) => (c.totalOrders || 0) === 1).length,
+            color: "#3b82f6",
+            icon: "shopping-cart"
+          },
+          {
+            name: "Loyal Customers",
+            segmentType: "loyal_buyers",
+            description: "Customers with 3 or more orders",
+            rules: { field: "totalOrders", operator: "gte", value: 3 },
+            estimatedCount: customerData.filter((c: any) => (c.totalOrders || 0) >= 3).length,
+            color: "#8b5cf6",
+            icon: "heart"
+          },
+          {
+            name: "Dormant Customers",
+            segmentType: "dormant",
+            description: "Customers inactive for 30+ days",
+            rules: { field: "daysSinceLastOrder", operator: "gte", value: 30 },
+            estimatedCount: customerData.filter((c: any) => (c.daysSinceLastOrder || 0) >= 30).length,
+            color: "#f59e0b",
+            icon: "clock"
+          }
+        ];
+      }
+      
+      res.json({
+        segments: suggestedSegments,
+        customerCount: customerData.length,
+        message: "AI analysis complete"
+      });
+    } catch (error: any) {
+      console.error("Error in AI segmentation:", error);
+      res.status(500).json({ error: "Failed to analyze customers" });
+    }
+  });
+
+  // Apply AI-suggested segment
+  app.post("/api/segments/ai/apply", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { name, segmentType, description, rules, color, icon } = req.body;
+      
+      // Create the segment
+      const [segment] = await db.insert(customerSegments)
+        .values({
+          userId,
+          name,
+          description,
+          segmentType: segmentType || 'custom',
+          rules,
+          color: color || "#3b82f6",
+          icon: icon || "users",
+          isActive: true,
+          isAiGenerated: true,
+          aiConfidence: "85"
+        })
+        .returning();
+      
+      // Now populate the segment with matching customers
+      await populateSegment(userId, segment.id, rules);
+      
+      // Update member count
+      const [countResult] = await db.select({ count: sql<number>`count(*)` })
+        .from(customerSegmentMembers)
+        .where(eq(customerSegmentMembers.segmentId, segment.id));
+      
+      await db.update(customerSegments)
+        .set({ 
+          memberCount: countResult.count,
+          lastCalculatedAt: new Date()
+        })
+        .where(eq(customerSegments.id, segment.id));
+      
+      res.json({ 
+        ...segment, 
+        memberCount: countResult.count 
+      });
+    } catch (error: any) {
+      console.error("Error applying segment:", error);
+      res.status(500).json({ error: "Failed to apply segment" });
+    }
+  });
+
+  // Helper function to populate segment members
+  async function populateSegment(userId: string, segmentId: string, rules: any) {
+    try {
+      // Build customer profiles from revenue attribution data
+      const attributions = await db.select().from(revenueAttribution)
+        .where(eq(revenueAttribution.userId, userId))
+        .orderBy(desc(revenueAttribution.attributedAt));
+      
+      // Also get abandoned carts data
+      const carts = await db.select().from(abandonedCarts)
+        .where(eq(abandonedCarts.userId, userId))
+        .orderBy(desc(abandonedCarts.createdAt));
+      
+      // Aggregate by customer
+      const customerMap = new Map<string, any>();
+      
+      // Process revenue attributions
+      for (const attr of attributions) {
+        const email = attr.customerEmail;
+        if (!email) continue;
+        
+        if (!customerMap.has(email)) {
+          customerMap.set(email, {
+            customerEmail: email,
+            customerName: null,
+            customerId: null,
+            totalOrders: 0,
+            totalSpent: 0,
+            discountOrders: 0,
+            abandonedCarts: 0,
+            firstOrderDate: attr.attributedAt,
+            lastOrderDate: attr.attributedAt
+          });
+        }
+        
+        const customer = customerMap.get(email)!;
+        customer.totalOrders += 1;
+        customer.totalSpent += parseFloat(attr.revenueAmount || '0');
+        if (attr.attributedAt && (!customer.firstOrderDate || attr.attributedAt < customer.firstOrderDate)) {
+          customer.firstOrderDate = attr.attributedAt;
+        }
+        if (attr.attributedAt && (!customer.lastOrderDate || attr.attributedAt > customer.lastOrderDate)) {
+          customer.lastOrderDate = attr.attributedAt;
+        }
+      }
+      
+      // Process abandoned carts
+      for (const cart of carts) {
+        const email = cart.customerEmail;
+        if (!email) continue;
+        
+        if (!customerMap.has(email)) {
+          customerMap.set(email, {
+            customerEmail: email,
+            customerName: cart.customerName,
+            customerId: null,
+            totalOrders: 0,
+            totalSpent: 0,
+            discountOrders: 0,
+            abandonedCarts: 1,
+            firstOrderDate: cart.createdAt,
+            lastOrderDate: cart.createdAt
+          });
+        } else {
+          const customer = customerMap.get(email)!;
+          customer.abandonedCarts = (customer.abandonedCarts || 0) + 1;
+          if (cart.customerName && !customer.customerName) {
+            customer.customerName = cart.customerName;
+          }
+        }
+      }
+      
+      // Filter customers matching the rules
+      const matchingCustomers: any[] = [];
+      
+      for (const [email, customer] of customerMap) {
+        customer.avgOrderValue = customer.totalOrders > 0 ? customer.totalSpent / customer.totalOrders : 0;
+        customer.discountUsagePercent = customer.totalOrders > 0 ? (customer.discountOrders / customer.totalOrders) * 100 : 0;
+        customer.daysSinceLastOrder = customer.lastOrderDate 
+          ? Math.floor((Date.now() - new Date(customer.lastOrderDate).getTime()) / (1000 * 60 * 60 * 24)) 
+          : 999;
+        
+        // Check if customer matches rules
+        if (matchesRules(customer, rules)) {
+          matchingCustomers.push(customer);
+        }
+      }
+      
+      // Insert matching customers into segment
+      for (const customer of matchingCustomers) {
+        try {
+          await db.insert(customerSegmentMembers)
+            .values({
+              userId,
+              segmentId,
+              customerEmail: customer.customerEmail,
+              customerId: customer.customerId,
+              customerName: customer.customerName,
+              totalOrders: customer.totalOrders,
+              totalSpent: customer.totalSpent.toString(),
+              avgOrderValue: customer.avgOrderValue.toString(),
+              lastOrderDate: customer.lastOrderDate,
+              firstOrderDate: customer.firstOrderDate,
+              discountUsageCount: customer.discountOrders,
+              daysInactive: customer.daysSinceLastOrder,
+              addedBy: 'ai'
+            })
+            .onConflictDoNothing();
+        } catch (e) {
+          // Ignore duplicate entries
+        }
+      }
+      
+      return matchingCustomers.length;
+    } catch (error) {
+      console.error("Error populating segment:", error);
+      return 0;
+    }
+  }
+
+  // Helper function to check if customer matches segment rules
+  function matchesRules(customer: any, rules: any): boolean {
+    if (!rules || !rules.field) return true;
+    
+    const value = customer[rules.field];
+    const targetValue = parseFloat(rules.value);
+    
+    switch (rules.operator) {
+      case 'gte': return value >= targetValue;
+      case 'lte': return value <= targetValue;
+      case 'gt': return value > targetValue;
+      case 'lt': return value < targetValue;
+      case 'eq': return value === targetValue;
+      default: return true;
+    }
+  }
+
+  // Recalculate segment members
+  app.post("/api/segments/:id/recalculate", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      // Get the segment
+      const [segment] = await db.select().from(customerSegments)
+        .where(and(
+          eq(customerSegments.id, id),
+          eq(customerSegments.userId, userId)
+        ));
+      
+      if (!segment) {
+        return res.status(404).json({ error: "Segment not found" });
+      }
+      
+      // Clear existing members
+      await db.delete(customerSegmentMembers)
+        .where(eq(customerSegmentMembers.segmentId, id));
+      
+      // Repopulate
+      const count = await populateSegment(userId, id, segment.rules);
+      
+      // Update segment
+      await db.update(customerSegments)
+        .set({ 
+          memberCount: count,
+          lastCalculatedAt: new Date()
+        })
+        .where(eq(customerSegments.id, id));
+      
+      res.json({ success: true, memberCount: count });
+    } catch (error: any) {
+      console.error("Error recalculating segment:", error);
+      res.status(500).json({ error: "Failed to recalculate segment" });
+    }
+  });
+
+  // Get segmentation analytics summary
+  app.get("/api/segments/analytics/summary", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get all segments with member counts
+      const segments = await db.select().from(customerSegments)
+        .where(and(
+          eq(customerSegments.userId, userId),
+          eq(customerSegments.isActive, true)
+        ));
+      
+      // Get total customer count from revenue attributions and abandoned carts
+      const attributions = await db.select({ email: revenueAttribution.customerEmail })
+        .from(revenueAttribution)
+        .where(eq(revenueAttribution.userId, userId));
+      
+      const carts = await db.select({ email: abandonedCarts.customerEmail })
+        .from(abandonedCarts)
+        .where(eq(abandonedCarts.userId, userId));
+      
+      const uniqueCustomers = new Set([
+        ...attributions.map(o => o.email).filter(Boolean),
+        ...carts.map(c => c.email).filter(Boolean)
+      ]);
+      
+      // Calculate segment coverage
+      const totalSegmentedCount = segments.reduce((sum, s) => sum + (s.memberCount || 0), 0);
+      
+      res.json({
+        totalCustomers: uniqueCustomers.size,
+        totalSegments: segments.length,
+        segmentedCustomers: totalSegmentedCount,
+        coveragePercent: uniqueCustomers.size > 0 
+          ? Math.round((totalSegmentedCount / uniqueCustomers.size) * 100) 
+          : 0,
+        segments: segments.map(s => ({
+          id: s.id,
+          name: s.name,
+          memberCount: s.memberCount || 0,
+          segmentType: s.segmentType,
+          color: s.color
+        }))
+      });
+    } catch (error: any) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // Seed default system segments for new users
+  app.post("/api/segments/seed-defaults", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Check if user already has segments
+      const existing = await db.select().from(customerSegments)
+        .where(eq(customerSegments.userId, userId))
+        .limit(1);
+      
+      if (existing.length > 0) {
+        return res.json({ message: "Segments already exist" });
+      }
+      
+      // Create default segments
+      const defaultSegments = [
+        {
+          name: "High Spenders",
+          description: "Customers who have spent over $500 total",
+          segmentType: "high_spenders" as const,
+          rules: { field: "totalSpent", operator: "gte", value: 500 },
+          color: "#10b981",
+          icon: "crown",
+          isSystem: true
+        },
+        {
+          name: "First-Time Buyers",
+          description: "Customers with only one purchase",
+          segmentType: "first_timers" as const,
+          rules: { field: "totalOrders", operator: "eq", value: 1 },
+          color: "#3b82f6",
+          icon: "shopping-cart",
+          isSystem: true
+        },
+        {
+          name: "Loyal Customers",
+          description: "Customers with 3 or more orders",
+          segmentType: "loyal_buyers" as const,
+          rules: { field: "totalOrders", operator: "gte", value: 3 },
+          color: "#8b5cf6",
+          icon: "heart",
+          isSystem: true
+        },
+        {
+          name: "Discount Seekers",
+          description: "Customers who use discounts on 50%+ of orders",
+          segmentType: "discount_seekers" as const,
+          rules: { field: "discountUsagePercent", operator: "gte", value: 50 },
+          color: "#f59e0b",
+          icon: "percent",
+          isSystem: true
+        },
+        {
+          name: "Dormant Customers",
+          description: "Customers inactive for 30+ days",
+          segmentType: "dormant" as const,
+          rules: { field: "daysSinceLastOrder", operator: "gte", value: 30 },
+          color: "#ef4444",
+          icon: "clock",
+          isSystem: true
+        }
+      ];
+      
+      for (const seg of defaultSegments) {
+        const [created] = await db.insert(customerSegments)
+          .values({
+            userId,
+            ...seg,
+            isActive: true,
+            isAiGenerated: false
+          })
+          .returning();
+        
+        // Populate segment
+        await populateSegment(userId, created.id, seg.rules);
+        
+        // Update count
+        const [countResult] = await db.select({ count: sql<number>`count(*)` })
+          .from(customerSegmentMembers)
+          .where(eq(customerSegmentMembers.segmentId, created.id));
+        
+        await db.update(customerSegments)
+          .set({ 
+            memberCount: countResult.count,
+            lastCalculatedAt: new Date()
+          })
+          .where(eq(customerSegments.id, created.id));
+      }
+      
+      res.json({ success: true, message: "Default segments created" });
+    } catch (error: any) {
+      console.error("Error seeding segments:", error);
+      res.status(500).json({ error: "Failed to seed segments" });
     }
   });
 

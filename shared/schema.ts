@@ -2487,6 +2487,211 @@ export const insertTemplateRecommendationSchema = createInsertSchema(templateRec
   createdAt: true,
 });
 
+// ============================================
+// DYNAMIC CUSTOMER SEGMENTATION SYSTEM
+// ============================================
+
+// Segment types enum
+export const segmentTypeEnum = pgEnum('segment_type', [
+  'high_spenders',      // Customers who spend above threshold
+  'first_timers',       // Customers with only one purchase
+  'loyal_buyers',       // Customers with 3+ purchases
+  'discount_seekers',   // Customers who frequently use discounts
+  'dormant',            // Customers inactive for X days
+  'cart_abandoners',    // Customers who abandon carts frequently
+  'vip',                // Top spending customers
+  'at_risk',            // Previously active, now declining
+  'new_subscribers',    // Recently subscribed to marketing
+  'custom'              // User-defined custom segment
+]);
+
+// Customer Segments - Define segment rules
+export const customerSegments = pgTable("customer_segments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Segment Definition
+  name: text("name").notNull(),
+  description: text("description"),
+  segmentType: segmentTypeEnum("segment_type").notNull(),
+  color: text("color").default("#3b82f6"), // For UI display
+  icon: text("icon").default("users"), // Lucide icon name
+  
+  // Segment Rules (JSON for flexibility)
+  rules: jsonb("rules").notNull(), // { field: 'totalSpent', operator: 'gte', value: 500 }
+  
+  // AI-generated or manual
+  isAiGenerated: boolean("is_ai_generated").default(false),
+  aiConfidence: numeric("ai_confidence", { precision: 5, scale: 2 }), // 0-100
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  isSystem: boolean("is_system").default(false), // System segments can't be deleted
+  
+  // Stats (updated periodically)
+  memberCount: integer("member_count").default(0),
+  lastCalculatedAt: timestamp("last_calculated_at"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('segments_user_id_idx').on(table.userId),
+  index('segments_type_idx').on(table.segmentType),
+  index('segments_active_idx').on(table.isActive),
+]);
+
+// Customer Segment Members - Track which customers are in which segments
+export const customerSegmentMembers = pgTable("customer_segment_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  segmentId: varchar("segment_id").references(() => customerSegments.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Customer Info
+  customerEmail: text("customer_email").notNull(),
+  customerId: text("customer_id"), // Shopify customer ID
+  customerName: text("customer_name"),
+  
+  // Customer Metrics (cached for quick access)
+  totalOrders: integer("total_orders").default(0),
+  totalSpent: numeric("total_spent", { precision: 12, scale: 2 }).default("0"),
+  avgOrderValue: numeric("avg_order_value", { precision: 10, scale: 2 }).default("0"),
+  lastOrderDate: timestamp("last_order_date"),
+  firstOrderDate: timestamp("first_order_date"),
+  discountUsageCount: integer("discount_usage_count").default(0),
+  cartAbandonCount: integer("cart_abandon_count").default(0),
+  daysInactive: integer("days_inactive").default(0),
+  
+  // Segment membership
+  addedAt: timestamp("added_at").default(sql`NOW()`),
+  addedBy: text("added_by").default("system"), // 'system', 'ai', 'manual'
+  removedAt: timestamp("removed_at"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('segment_members_user_id_idx').on(table.userId),
+  index('segment_members_segment_id_idx').on(table.segmentId),
+  index('segment_members_email_idx').on(table.customerEmail),
+  index('segment_members_customer_id_idx').on(table.customerId),
+  uniqueIndex('segment_member_unique').on(table.segmentId, table.customerEmail),
+]);
+
+// Customer Profiles - Aggregated customer data for segmentation
+export const customerProfiles = pgTable("customer_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Customer Identity
+  customerEmail: text("customer_email").notNull(),
+  customerId: text("customer_id"), // Shopify customer ID
+  customerName: text("customer_name"),
+  phone: text("phone"),
+  
+  // Purchase Metrics
+  totalOrders: integer("total_orders").default(0),
+  totalSpent: numeric("total_spent", { precision: 12, scale: 2 }).default("0"),
+  avgOrderValue: numeric("avg_order_value", { precision: 10, scale: 2 }).default("0"),
+  maxOrderValue: numeric("max_order_value", { precision: 10, scale: 2 }).default("0"),
+  minOrderValue: numeric("min_order_value", { precision: 10, scale: 2 }).default("0"),
+  
+  // Time-based Metrics
+  firstOrderDate: timestamp("first_order_date"),
+  lastOrderDate: timestamp("last_order_date"),
+  daysSinceLastOrder: integer("days_since_last_order").default(0),
+  avgDaysBetweenOrders: integer("avg_days_between_orders"),
+  
+  // Behavior Metrics
+  discountOrderCount: integer("discount_order_count").default(0),
+  discountUsagePercent: numeric("discount_usage_percent", { precision: 5, scale: 2 }).default("0"),
+  cartAbandonCount: integer("cart_abandon_count").default(0),
+  cartAbandonRate: numeric("cart_abandon_rate", { precision: 5, scale: 2 }).default("0"),
+  emailOpenRate: numeric("email_open_rate", { precision: 5, scale: 2 }).default("0"),
+  emailClickRate: numeric("email_click_rate", { precision: 5, scale: 2 }).default("0"),
+  
+  // Product Preferences
+  favoriteCategories: jsonb("favorite_categories"), // ['Electronics', 'Clothing']
+  favoriteProducts: jsonb("favorite_products"), // Product IDs
+  
+  // Customer Lifecycle
+  lifecycleStage: text("lifecycle_stage").default("new"), // new, active, at_risk, churned, vip
+  churnRiskScore: numeric("churn_risk_score", { precision: 5, scale: 2 }).default("0"), // 0-100
+  lifetimeValue: numeric("lifetime_value", { precision: 12, scale: 2 }).default("0"),
+  predictedNextOrderDate: timestamp("predicted_next_order_date"),
+  
+  // AI Insights
+  aiSegmentSuggestions: jsonb("ai_segment_suggestions"), // AI-recommended segments
+  lastAiAnalysis: timestamp("last_ai_analysis"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('profiles_user_id_idx').on(table.userId),
+  index('profiles_email_idx').on(table.customerEmail),
+  index('profiles_customer_id_idx').on(table.customerId),
+  index('profiles_lifecycle_idx').on(table.lifecycleStage),
+  uniqueIndex('profile_unique').on(table.userId, table.customerEmail),
+]);
+
+// Segment Analytics - Track segment performance
+export const segmentAnalytics = pgTable("segment_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  segmentId: varchar("segment_id").references(() => customerSegments.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Time Period
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  periodType: text("period_type").notNull(), // 'daily', 'weekly', 'monthly'
+  
+  // Segment Size
+  memberCount: integer("member_count").default(0),
+  newMembers: integer("new_members").default(0),
+  removedMembers: integer("removed_members").default(0),
+  
+  // Revenue Metrics
+  totalRevenue: numeric("total_revenue", { precision: 12, scale: 2 }).default("0"),
+  avgOrderValue: numeric("avg_order_value", { precision: 10, scale: 2 }).default("0"),
+  orderCount: integer("order_count").default(0),
+  
+  // Engagement Metrics
+  emailsSent: integer("emails_sent").default(0),
+  emailOpens: integer("email_opens").default(0),
+  emailClicks: integer("email_clicks").default(0),
+  conversions: integer("conversions").default(0),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('segment_analytics_user_id_idx').on(table.userId),
+  index('segment_analytics_segment_id_idx').on(table.segmentId),
+  index('segment_analytics_period_idx').on(table.periodStart, table.periodEnd),
+]);
+
+// Insert schemas for Dynamic Segmentation
+export const insertCustomerSegmentSchema = createInsertSchema(customerSegments).omit({
+  id: true,
+  memberCount: true,
+  lastCalculatedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCustomerSegmentMemberSchema = createInsertSchema(customerSegmentMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCustomerProfileSchema = createInsertSchema(customerProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSegmentAnalyticsSchema = createInsertSchema(segmentAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for advanced notification preferences
 export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
@@ -2558,3 +2763,13 @@ export type MarketingFrameworkUsage = typeof marketingFrameworkUsage.$inferSelec
 export type InsertMarketingFrameworkUsage = z.infer<typeof insertMarketingFrameworkUsageSchema>;
 export type TemplateRecommendation = typeof templateRecommendations.$inferSelect;
 export type InsertTemplateRecommendation = z.infer<typeof insertTemplateRecommendationSchema>;
+
+// Dynamic Customer Segmentation Types
+export type CustomerSegment = typeof customerSegments.$inferSelect;
+export type InsertCustomerSegment = z.infer<typeof insertCustomerSegmentSchema>;
+export type CustomerSegmentMember = typeof customerSegmentMembers.$inferSelect;
+export type InsertCustomerSegmentMember = z.infer<typeof insertCustomerSegmentMemberSchema>;
+export type CustomerProfile = typeof customerProfiles.$inferSelect;
+export type InsertCustomerProfile = z.infer<typeof insertCustomerProfileSchema>;
+export type SegmentAnalytics = typeof segmentAnalytics.$inferSelect;
+export type InsertSegmentAnalytics = z.infer<typeof insertSegmentAnalyticsSchema>;
