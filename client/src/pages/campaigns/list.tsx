@@ -38,7 +38,7 @@ interface Campaign {
   subject?: string;
   message?: string;
   content?: string;
-  status: "draft" | "scheduled" | "sent" | "failed";
+  status: "draft" | "scheduled" | "sent" | "failed" | "sending";
   scheduledFor?: string;
   sentAt?: string;
   audience?: string;
@@ -80,6 +80,7 @@ export default function CampaignListPage() {
   const getStatusBadge = (status: Campaign['status']) => {
     const variants: Record<Campaign['status'], { variant: any; label: string }> = {
       draft: { variant: "secondary", label: "Draft" },
+      sending: { variant: "default", label: "Sending" },
       scheduled: { variant: "default", label: "Scheduled" },
       sent: { variant: "outline", label: "Sent" },
       failed: { variant: "destructive", label: "Failed" },
@@ -264,7 +265,7 @@ export default function CampaignListPage() {
                     <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     <span className="truncate">View Details</span>
                   </Button>
-                  {campaign.status === "draft" && (
+                  {(campaign.status === "draft" || campaign.status === "sending") && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -278,7 +279,7 @@ export default function CampaignListPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Draft Campaign?</AlertDialogTitle>
+                          <AlertDialogTitle>Delete Campaign?</AlertDialogTitle>
                           <AlertDialogDescription>
                             Are you sure you want to delete "{campaign.name}"? This action cannot be undone.
                           </AlertDialogDescription>
