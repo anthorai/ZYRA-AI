@@ -55,6 +55,9 @@ An AI-powered post-purchase upsell system that sends personalized product recomm
 ### Autonomous AI Store Manager
 This system transforms manual optimization into autonomous, AI-driven processes. It includes Autonomous SEO (daily audits, AI-powered action processing, product snapshots), Dynamic Pricing AI (automates pricing based on market conditions, competitor monitoring), and Autonomous Marketing (multi-channel automation, A/B testing orchestration, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system for manual review.
 
+### Behavioral Triggers System
+Real AI-powered behavioral automation that tracks customer actions and triggers marketing responses. Database schema includes 4 tables: `behavioral_triggers` (trigger configurations), `behavior_events` (customer event logs), `trigger_executions` (action history), and `trigger_analytics` (performance metrics). Supports 8 event types (product_view, cart_add, cart_abandon, checkout_start, order_placed, first_purchase, repeat_purchase, page_visit), 5 condition types (min_count, time_elapsed, cart_value, no_action, segment_match), and 8 action types (send_email, send_sms, show_popup, offer_discount, assign_tag, add_to_segment, send_push, trigger_webhook). Features AI-powered trigger recommendations using GPT-4o-mini via Replit AI Integrations, Shopify webhook handlers for real-time event tracking, cooldown management to prevent spam, and comprehensive analytics dashboard.
+
 ## System Design Choices
 The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend. It supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup. Performance is optimized with extensive database indexes, Upstash Redis caching for AI responses, and frontend optimizations.
 
