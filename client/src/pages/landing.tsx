@@ -628,62 +628,6 @@ export default function Landing() {
         </Card>
       </div>
 
-      {/* Exit Intent Popup */}
-      <Dialog open={showExitPopup} onOpenChange={setShowExitPopup}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-center">
-              <span className="bg-gradient-to-r from-[#00F0FF] to-[#FF00F5] bg-clip-text text-transparent">
-                Wait! Don't Leave Empty-Handed
-              </span>
-            </DialogTitle>
-            <DialogDescription className="text-center text-base">
-              We have a special offer just for you
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-6 text-center">
-              <p className="text-lg font-semibold mb-2">Get Your First Month FREE</p>
-              <p className="text-4xl font-bold text-primary mb-2">$0</p>
-              <p className="text-sm text-muted-foreground line-through">Usually $49/month</p>
-              <p className="text-sm text-muted-foreground mt-2">Plus 20% off for the next 3 months</p>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-primary" />
-                <span>Full access to all AI features</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-primary" />
-                <span>1,000 AI optimization credits</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-primary" />
-                <span>No credit card required</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Button asChild className="gradient-button w-full" size="lg">
-                <Link href="/auth">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Claim My Free Month
-                </Link>
-              </Button>
-              <button 
-                onClick={() => setShowExitPopup(false)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                No thanks, I'll pay full price later
-              </button>
-            </div>
-            <p className="text-xs text-center text-muted-foreground">
-              <Timer className="w-3 h-3 inline mr-1" />
-              Offer expires in {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Sticky Desktop CTA Bar */}
       <div 
         className={`fixed top-10 left-0 right-0 z-[90] bg-background/95 backdrop-blur-lg border-b border-border py-3 px-4 transition-all duration-300 hidden lg:block ${
