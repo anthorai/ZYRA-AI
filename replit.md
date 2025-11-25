@@ -16,6 +16,35 @@ The backend is built with Express.js and TypeScript, providing RESTful API endpo
 ### AI Integration
 Zyra AI utilizes a multi-model AI system (GPT-4o, GPT-4o-mini) with a centralized prompt library for professional copywriting, product description generation, SEO optimization, image alt-text generation, and bulk product optimization, maintaining brand voice memory. It includes premium Strategy AI (GPT-4o) with token accounting, rate limiting, and Redis-backed caching. A "Fast Mode" for copywriting uses GPT-4o-mini and SSE streaming for real-time content generation, significantly reducing generation time compared to the "Quality Mode" which uses a multi-agent pipeline with GPT-4o.
 
+### SEO Health Dashboard & Google Ranking (COMPLETE)
+Comprehensive SEO health monitoring and ranking improvement system for Shopify merchants:
+
+**Backend Features (server/lib/seo-health-service.ts):**
+- **Store Health Score**: Aggregates SEO metrics across all products (meta, content, technical, schema categories)
+- **Issue Detection**: Identifies critical issues (missing meta titles/descriptions), warnings (short content, missing alt text), and suggestions
+- **Product SEO Audit**: Per-product scoring with detailed issue breakdown and field-level recommendations
+- **Keyword Rankings**: Tracks keyword positions extracted from SEO history with trend analysis
+- **Schema Markup Generation**: Creates Product schema (JSON-LD) for rich snippets in Google search
+- **Recommendations Engine**: Prioritized quick wins, improvements, and advanced optimization suggestions
+
+**API Endpoints (7 new routes in server/routes.ts):**
+- `GET /api/seo-health/score` - Overall store SEO health score with category breakdown
+- `GET /api/seo-health/issues` - Prioritized list of SEO issues to fix
+- `GET /api/seo-health/audit` - All products SEO audit results
+- `GET /api/seo-health/audit/:productId` - Single product detailed audit
+- `GET /api/seo-health/keywords` - Keyword ranking tracking
+- `GET /api/seo-health/schema` - Product schema markup generation
+- `GET /api/seo-health/recommendations` - AI-generated improvement suggestions
+
+**Frontend UI (client/src/pages/seo-health-dashboard.tsx):**
+- **Overview Tab**: Health score gauge, category scores, quick wins, top issues
+- **Issues Tab**: Full issue list with severity badges, impact descriptions, fix suggestions
+- **Product Audit Tab**: Per-product scores with SEO status badges and optimize buttons
+- **Keywords Tab**: Keyword ranking table with position changes, search volume, difficulty
+- **Schema Tab**: JSON-LD preview with validation status and missing field indicators
+
+**Route**: `/seo-health` (protected, requires authentication)
+
 ### SERP Competitive Intelligence (COMPLETE - Backend + Frontend)
 Real-time Google search analysis powered by DataForSEO API provides competitive intelligence for SEO optimization. The system is fully integrated into the Product SEO Engine with dual-mode optimization:
 

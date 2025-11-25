@@ -2807,6 +2807,109 @@ Respond with JSON:
     }
   });
 
+  // =============================================================================
+  // SEO HEALTH DASHBOARD & GOOGLE RANKING APIs
+  // =============================================================================
+
+  // Get Store SEO Health Score
+  app.get("/api/seo-health/score", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const score = await SEOHealthService.getStoreHealthScore(userId);
+      res.json(score);
+    } catch (error: any) {
+      console.error("Get SEO health score error:", error);
+      res.status(500).json({ message: "Failed to get SEO health score" });
+    }
+  });
+
+  // Get SEO Issues
+  app.get("/api/seo-health/issues", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const issues = await SEOHealthService.getSEOIssues(userId);
+      res.json(issues);
+    } catch (error: any) {
+      console.error("Get SEO issues error:", error);
+      res.status(500).json({ message: "Failed to get SEO issues" });
+    }
+  });
+
+  // Audit All Products
+  app.get("/api/seo-health/audit", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const audits = await SEOHealthService.auditAllProducts(userId);
+      res.json(audits);
+    } catch (error: any) {
+      console.error("SEO audit error:", error);
+      res.status(500).json({ message: "Failed to audit products" });
+    }
+  });
+
+  // Audit Single Product
+  app.get("/api/seo-health/audit/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const audit = await SEOHealthService.auditSingleProduct(userId, productId);
+      if (!audit) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(audit);
+    } catch (error: any) {
+      console.error("Single product audit error:", error);
+      res.status(500).json({ message: "Failed to audit product" });
+    }
+  });
+
+  // Get Keyword Rankings
+  app.get("/api/seo-health/keywords", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const rankings = await SEOHealthService.getKeywordRankings(userId);
+      res.json(rankings);
+    } catch (error: any) {
+      console.error("Get keyword rankings error:", error);
+      res.status(500).json({ message: "Failed to get keyword rankings" });
+    }
+  });
+
+  // Get Schema Markups
+  app.get("/api/seo-health/schema", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const schemas = await SEOHealthService.getSchemaMarkups(userId);
+      res.json(schemas);
+    } catch (error: any) {
+      console.error("Get schema markups error:", error);
+      res.status(500).json({ message: "Failed to get schema markups" });
+    }
+  });
+
+  // Get SEO Recommendations
+  app.get("/api/seo-health/recommendations", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { SEOHealthService } = await import('./lib/seo-health-service');
+      const recommendations = await SEOHealthService.getSEORecommendations(userId);
+      res.json(recommendations);
+    } catch (error: any) {
+      console.error("Get SEO recommendations error:", error);
+      res.status(500).json({ message: "Failed to get recommendations" });
+    }
+  });
+
+  // =============================================================================
+  // END SEO HEALTH DASHBOARD APIs
+  // =============================================================================
+
   // Image Alt-Text Generation
   app.post("/api/generate-alt-text", requireAuth, checkRateLimit, checkAIUsageLimit, upload.single('image'), async (req, res) => {
     try {

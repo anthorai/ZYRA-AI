@@ -58,6 +58,7 @@ const SeoKeywordDensity = lazy(() => import("@/pages/seo-keyword-density"));
 const ContentROI = lazy(() => import("@/pages/content-roi"));
 const RevenueImpact = lazy(() => import("@/pages/revenue-impact"));
 const SeoRankingTracker = lazy(() => import("@/pages/seo-ranking-tracker"));
+const SeoHealthDashboard = lazy(() => import("@/pages/seo-health-dashboard"));
 const ABTestResults = lazy(() => import("@/pages/ab-test-results"));
 
 // Feature pages
@@ -365,6 +366,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <SeoRankingTracker />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/seo-health" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <SeoHealthDashboard />
           </Suspense>
         </ProtectedRoute>
       )} />
