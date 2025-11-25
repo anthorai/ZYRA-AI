@@ -19,6 +19,8 @@ import NotFound from "@/pages/not-found";
 
 // Lazy load all other pages for better performance
 const AboutPage = lazy(() => import("@/pages/about"));
+const ContactPage = lazy(() => import("@/pages/contact"));
+const HelpPage = lazy(() => import("@/pages/help"));
 const BlogPage = lazy(() => import("@/pages/blog"));
 const BlogArticlePage = lazy(() => import("@/pages/blog-article"));
 const PrivacyPolicyPage = lazy(() => import("@/pages/privacy-policy"));
@@ -135,6 +137,16 @@ function Router() {
       <Route path="/about" component={() => (
         <Suspense fallback={<PageLoader />}>
           <AboutPage />
+        </Suspense>
+      )} />
+      <Route path="/contact" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <ContactPage />
+        </Suspense>
+      )} />
+      <Route path="/help" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <HelpPage />
         </Suspense>
       )} />
       <Route path="/blog" component={() => (
