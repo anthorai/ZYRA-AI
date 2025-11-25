@@ -443,13 +443,13 @@ export default function PrivacyPolicyPage() {
               If you have any concerns or questions about our privacy practices, our team is here to help
             </p>
             
-            <Link href="/dashboard">
+            <Link href="/">
               <Button
                 size="lg"
                 className="bg-[#00F0FF] hover:bg-[#00F0FF]/90 text-[#0D0D1F] font-bold text-lg px-8 py-6 h-auto"
-                data-testid="button-go-dashboard"
+                data-testid="button-back-landing"
               >
-                Go to Dashboard
+                Back to Landing Page
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
