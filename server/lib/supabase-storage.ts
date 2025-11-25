@@ -1201,11 +1201,29 @@ export class SupabaseStorage implements ISupabaseStorage {
     // First check if preferences exist
     const existing = await this.getUserPreferences(userId);
     
+    // Filter updates to only include valid database columns
+    const validColumns = [
+      'email_notifications', 'sms_notifications', 'push_notifications', 
+      'in_app_notifications', 'weekly_digest', 'marketing_emails',
+      'notification_frequency', 'language', 'timezone', 'date_format',
+      'currency', 'dark_mode', 'auto_save', 'compact_view', 'show_ai_suggestions',
+      'default_generation_mode', 'brand_voice', 'content_style', 'creativity_level'
+    ];
+    
+    const filteredUpdates: Record<string, any> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      // Convert camelCase to snake_case
+      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+      if (validColumns.includes(snakeKey) && value !== undefined) {
+        filteredUpdates[snakeKey] = value;
+      }
+    }
+    
     if (existing) {
       // Update existing preferences
       const { data, error } = await supabase
         .from('user_preferences')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...filteredUpdates, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
         .select()
         .single();
@@ -1213,8 +1231,8 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (error) throw new Error(`Failed to update user preferences: ${error.message}`);
       return data;
     } else {
-      // Create new preferences with defaults
-      const newPrefs = {
+      // Create new preferences with defaults - only include columns that exist
+      const newPrefs: Record<string, any> = {
         id: randomUUID(),
         user_id: userId,
         email_notifications: true,
@@ -1232,9 +1250,8 @@ export class SupabaseStorage implements ISupabaseStorage {
         auto_save: true,
         compact_view: false,
         show_ai_suggestions: true,
-        ai_confidence_threshold: 70,
         default_generation_mode: 'fast',
-        ...updates,
+        ...filteredUpdates,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
