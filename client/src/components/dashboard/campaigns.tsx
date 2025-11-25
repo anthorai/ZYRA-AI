@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,18 @@ import {
   Sparkles
 } from "lucide-react";
 
+interface Campaign {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  subject?: string;
+  content?: string;
+  message?: string;
+  audience?: string;
+  createdAt?: string;
+}
+
 interface CampaignTool {
   id: string;
   title: string;
@@ -31,6 +44,11 @@ interface CampaignTool {
 export default function Campaigns() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Fetch existing campaigns to check for drafts
+  const { data: campaigns = [] } = useQuery<Campaign[]>({
+    queryKey: ['/api/campaigns'],
+  });
 
   const campaignTools: CampaignTool[] = [
     {
@@ -113,6 +131,13 @@ export default function Campaigns() {
       'custom-templates': 'custom'
     };
 
+    // Map tool IDs to campaign types/names for draft detection
+    const toolToCampaignType: Record<string, { type?: string; namePattern?: string }> = {
+      'upsell-receipts': { type: 'email', namePattern: 'upsell' },
+      'abandoned-cart-sms': { type: 'sms', namePattern: 'cart' },
+      'custom-templates': { namePattern: 'custom' }
+    };
+
     const legacyRoutes: Record<string, string> = {
       'ai-upsell-suggestions': '/ai-upsell-suggestions',
       'dynamic-segmentation': '/dynamic-segmentation',
@@ -122,7 +147,30 @@ export default function Campaigns() {
 
     sessionStorage.setItem('navigationSource', 'campaigns');
 
-    if (wizardPresets[toolId]) {
+    // Check for existing draft campaigns for this tool type
+    if (wizardPresets[toolId] && toolToCampaignType[toolId]) {
+      const { type, namePattern } = toolToCampaignType[toolId];
+      
+      // Find an existing draft matching the tool type
+      const existingDraft = campaigns.find((campaign: Campaign) => {
+        const isDraft = campaign.status === 'draft';
+        const matchesType = !type || campaign.type === type;
+        const matchesPattern = !namePattern || 
+          campaign.name?.toLowerCase().includes(namePattern.toLowerCase());
+        return isDraft && matchesType && matchesPattern;
+      });
+
+      if (existingDraft) {
+        // Navigate to existing draft
+        toast({
+          title: "Existing Draft Found",
+          description: `Continuing with your "${existingDraft.name}" draft`,
+        });
+        setLocation(`/campaigns/${existingDraft.id}`);
+        return;
+      }
+
+      // No existing draft, create new
       setLocation(`/campaigns/create?preset=${wizardPresets[toolId]}`);
     } else if (legacyRoutes[toolId]) {
       setLocation(legacyRoutes[toolId]);
