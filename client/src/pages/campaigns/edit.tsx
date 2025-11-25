@@ -393,7 +393,7 @@ export default function EditCampaignPage() {
                   id="scheduledFor"
                   type="datetime-local"
                   {...register("scheduledFor")}
-                  className="bg-slate-800/50 border-slate-700"
+                  className="bg-slate-800/50 border-slate-700 text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
                   data-testid="input-scheduled-for"
                 />
                 {errors.scheduledFor && (
