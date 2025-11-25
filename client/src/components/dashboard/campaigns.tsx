@@ -127,18 +127,17 @@ export default function Campaigns() {
   const handleToolAction = (toolId: string) => {
     const wizardPresets: Record<string, string> = {
       'abandoned-cart-sms': 'cart_recovery_sms',
-      'upsell-receipts': 'promotional',
       'custom-templates': 'custom'
     };
 
     // Map tool IDs to campaign types for draft detection
     const toolToCampaignType: Record<string, string> = {
-      'upsell-receipts': 'email',
       'abandoned-cart-sms': 'sms',
-      'custom-templates': 'email'  // defaults to email for templates
+      'custom-templates': 'email'
     };
 
     const legacyRoutes: Record<string, string> = {
+      'upsell-receipts': '/upsell-email-receipts',
       'ai-upsell-suggestions': '/ai-upsell-suggestions',
       'dynamic-segmentation': '/dynamic-segmentation',
       'multi-channel-repurposing': '/multi-channel-repurposing',
