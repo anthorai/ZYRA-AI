@@ -1369,7 +1369,7 @@ export default function Landing() {
         </section>
 
         {/* Product Demo Video Section */}
-        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background">
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#0f0f23]">
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4" data-testid="badge-video-section">
