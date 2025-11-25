@@ -3471,6 +3471,97 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Update product SEO metadata (for Smart Bulk Suggestions)
+  app.patch("/api/products/:id/seo", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const productId = req.params.id;
+      const { seoTitle, metaDescription, keywords, seoScore } = req.body;
+
+      // Check if the product exists and belongs to the user
+      const existingProduct = await supabaseStorage.getProduct(productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      if (existingProduct.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Normalize keywords to array if it's a string
+      let keywordsArray: string[] = [];
+      if (Array.isArray(keywords)) {
+        keywordsArray = keywords.filter((k: unknown) => typeof k === 'string' && k.trim());
+      } else if (typeof keywords === 'string' && keywords.trim()) {
+        keywordsArray = keywords.split(',').map((k: string) => k.trim()).filter(Boolean);
+      }
+      
+      // Join keywords as comma-separated string for storage
+      const keywordsString = keywordsArray.join(', ');
+
+      // Check if SEO meta exists for this product
+      const existingSeoMeta = await db
+        .select()
+        .from(seoMeta)
+        .where(eq(seoMeta.productId, productId))
+        .limit(1);
+
+      if (existingSeoMeta.length > 0) {
+        // Update existing SEO meta
+        await db
+          .update(seoMeta)
+          .set({
+            seoTitle: seoTitle || existingSeoMeta[0].seoTitle,
+            optimizedTitle: seoTitle || existingSeoMeta[0].optimizedTitle,
+            metaDescription: metaDescription || existingSeoMeta[0].metaDescription,
+            optimizedMeta: metaDescription || existingSeoMeta[0].optimizedMeta,
+            keywords: keywordsString || existingSeoMeta[0].keywords,
+            updatedAt: sql`NOW()`
+          })
+          .where(eq(seoMeta.productId, productId));
+      } else {
+        // Create new SEO meta record
+        await db.insert(seoMeta).values({
+          productId,
+          seoTitle: seoTitle || null,
+          optimizedTitle: seoTitle || null,
+          metaDescription: metaDescription || null,
+          optimizedMeta: metaDescription || null,
+          keywords: keywordsString || null
+        });
+      }
+
+      // Mark product as optimized
+      await supabaseStorage.updateProduct(productId, {
+        isOptimized: true,
+        updatedAt: new Date()
+      });
+
+      // Track in SEO history with actual score from AI
+      try {
+        await db.insert(productSeoHistory).values({
+          userId,
+          productId,
+          productName: existingProduct.name,
+          seoTitle: seoTitle || null,
+          metaDescription: metaDescription || null,
+          keywords: keywordsArray,
+          seoScore: seoScore || 75
+        });
+      } catch (historyError) {
+        console.error("SEO history insert error (non-critical):", historyError);
+      }
+
+      res.json({
+        success: true,
+        message: "SEO metadata updated successfully",
+        appliedScore: seoScore || 75
+      });
+    } catch (error: any) {
+      console.error("Update SEO error:", error);
+      res.status(500).json({ message: "Failed to update SEO metadata" });
+    }
+  });
+
   // Apply AI-generated content to multiple products (bulk)
   app.post("/api/products/apply-content-bulk", requireAuth, sanitizeBody, async (req, res) => {
     try {
