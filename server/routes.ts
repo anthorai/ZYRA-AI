@@ -78,6 +78,8 @@ import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
 import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./lib/ai-cache";
 import { extractProductFeatures } from "./lib/shopify-features-extractor";
 import { BulkOptimizationService } from "./lib/bulk-optimization-service";
+import { upsellRecommendationEngine } from "./lib/upsell-recommendation-engine";
+import { upsellRecommendationRules } from "@shared/schema";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -11640,6 +11642,213 @@ Output format: Markdown with clear section headings.`;
     } catch (error: any) {
       console.error("Error deleting bulk optimization job:", error);
       res.status(500).json({ error: "Failed to delete bulk optimization job" });
+    }
+  });
+
+  // ===== UPSELL EMAIL RECEIPTS ROUTES =====
+  
+  // Get upsell receipt settings
+  app.get("/api/upsell/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const settings = await upsellRecommendationEngine.getOrCreateSettings(userId);
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Error fetching upsell settings:", error);
+      res.status(500).json({ error: "Failed to fetch upsell settings" });
+    }
+  });
+
+  // Update upsell receipt settings
+  app.patch("/api/upsell/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const updated = await upsellRecommendationEngine.updateSettings(userId, req.body);
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating upsell settings:", error);
+      res.status(500).json({ error: "Failed to update upsell settings" });
+    }
+  });
+
+  // Get recommendation rules
+  app.get("/api/upsell/rules", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const rules = await upsellRecommendationEngine.getActiveRules(userId);
+      res.json(rules);
+    } catch (error: any) {
+      console.error("Error fetching upsell rules:", error);
+      res.status(500).json({ error: "Failed to fetch upsell rules" });
+    }
+  });
+
+  // Create recommendation rule
+  app.post("/api/upsell/rules", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const database = db;
+      if (!database) {
+        return res.status(500).json({ error: "Database not available" });
+      }
+      const [rule] = await database.insert(upsellRecommendationRules)
+        .values({ ...req.body, userId })
+        .returning();
+      res.status(201).json(rule);
+    } catch (error: any) {
+      console.error("Error creating upsell rule:", error);
+      res.status(500).json({ error: "Failed to create upsell rule" });
+    }
+  });
+
+  // Update recommendation rule
+  app.patch("/api/upsell/rules/:ruleId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { ruleId } = req.params;
+      const database = db;
+      if (!database) {
+        return res.status(500).json({ error: "Database not available" });
+      }
+      const [updated] = await database.update(upsellRecommendationRules)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(and(
+          eq(upsellRecommendationRules.id, ruleId),
+          eq(upsellRecommendationRules.userId, userId)
+        ))
+        .returning();
+      if (!updated) {
+        return res.status(404).json({ error: "Rule not found" });
+      }
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating upsell rule:", error);
+      res.status(500).json({ error: "Failed to update upsell rule" });
+    }
+  });
+
+  // Delete recommendation rule
+  app.delete("/api/upsell/rules/:ruleId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { ruleId } = req.params;
+      const database = db;
+      if (!database) {
+        return res.status(500).json({ error: "Database not available" });
+      }
+      await database.delete(upsellRecommendationRules)
+        .where(and(
+          eq(upsellRecommendationRules.id, ruleId),
+          eq(upsellRecommendationRules.userId, userId)
+        ));
+      res.json({ message: "Rule deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting upsell rule:", error);
+      res.status(500).json({ error: "Failed to delete upsell rule" });
+    }
+  });
+
+  // Get upsell analytics
+  app.get("/api/upsell/analytics", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const days = parseInt(req.query.days as string) || 30;
+      const analytics = await upsellRecommendationEngine.getAnalytics(userId, days);
+      res.json(analytics);
+    } catch (error: any) {
+      console.error("Error fetching upsell analytics:", error);
+      res.status(500).json({ error: "Failed to fetch upsell analytics" });
+    }
+  });
+
+  // Track upsell click (public endpoint - no auth required)
+  app.get("/api/upsell/click/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const productId = req.query.product as string;
+      
+      if (!productId) {
+        return res.status(400).json({ error: "Product ID required" });
+      }
+
+      await upsellRecommendationEngine.trackClick(token, productId);
+      
+      // Redirect to Shopify product page (or custom redirect)
+      const redirectUrl = req.query.redirect as string;
+      if (redirectUrl) {
+        res.redirect(redirectUrl);
+      } else {
+        res.json({ success: true, message: "Click tracked" });
+      }
+    } catch (error: any) {
+      console.error("Error tracking upsell click:", error);
+      res.status(500).json({ error: "Failed to track click" });
+    }
+  });
+
+  // Get A/B test results
+  app.get("/api/upsell/ab-tests", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const testId = req.query.testId as string;
+      const results = await upsellRecommendationEngine.getAbTestResults(userId, testId);
+      res.json(results);
+    } catch (error: any) {
+      console.error("Error fetching A/B test results:", error);
+      res.status(500).json({ error: "Failed to fetch A/B test results" });
+    }
+  });
+
+  // Create new A/B test
+  app.post("/api/upsell/ab-tests", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const test = await upsellRecommendationEngine.createAbTest(userId, req.body);
+      res.status(201).json(test);
+    } catch (error: any) {
+      console.error("Error creating A/B test:", error);
+      res.status(500).json({ error: "Failed to create A/B test" });
+    }
+  });
+
+  // End A/B test
+  app.post("/api/upsell/ab-tests/:testId/end", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { testId } = req.params;
+      const { winnerId } = req.body;
+      const result = await upsellRecommendationEngine.endAbTest(userId, testId, winnerId);
+      if (!result) {
+        return res.status(404).json({ error: "Test not found" });
+      }
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error ending A/B test:", error);
+      res.status(500).json({ error: "Failed to end A/B test" });
+    }
+  });
+
+  // Preview upsell recommendations (for testing)
+  app.post("/api/upsell/preview", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { order } = req.body;
+      
+      if (!order || !order.items || order.items.length === 0) {
+        return res.status(400).json({ error: "Order with items required" });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const recommendations = await upsellRecommendationEngine.getRecommendations(
+        userId,
+        { ...order, id: 'preview-' + Date.now() },
+        baseUrl
+      );
+      
+      res.json(recommendations);
+    } catch (error: any) {
+      console.error("Error generating preview recommendations:", error);
+      res.status(500).json({ error: "Failed to generate preview" });
     }
   });
 

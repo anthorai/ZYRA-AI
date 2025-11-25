@@ -1938,6 +1938,213 @@ export const templateRecommendations = pgTable("template_recommendations", {
   index('template_recs_created_at_idx').on(table.createdAt),
 ]);
 
+// ===== UPSELL EMAIL RECEIPTS SYSTEM =====
+
+// Upsell Receipt Settings - Template customization and branding
+export const upsellReceiptSettings = pgTable("upsell_receipt_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  
+  // Enable/Disable
+  isEnabled: boolean("is_enabled").default(false),
+  
+  // Branding
+  logoUrl: text("logo_url"),
+  primaryColor: text("primary_color").default("#6366f1"), // Indigo
+  secondaryColor: text("secondary_color").default("#22c55e"), // Green for discounts
+  backgroundColor: text("background_color").default("#1e293b"), // Slate dark
+  textColor: text("text_color").default("#f8fafc"), // White
+  
+  // Template Content
+  headerText: text("header_text").default("Thank you for your order!"),
+  upsellSectionTitle: text("upsell_section_title").default("Complete Your Setup:"),
+  footerText: text("footer_text"),
+  showDiscountBadge: boolean("show_discount_badge").default(true),
+  defaultDiscountPercent: integer("default_discount_percent").default(15),
+  
+  // Recommendation Settings
+  maxRecommendations: integer("max_recommendations").default(3),
+  recommendationStrategy: text("recommendation_strategy").default("category_match"), // category_match | price_range | frequently_bought | ai_personalized
+  priceRangePercent: integer("price_range_percent").default(50), // Show products within X% of purchased price
+  excludeCategories: jsonb("exclude_categories"), // Categories to never recommend
+  
+  // A/B Testing
+  abTestEnabled: boolean("ab_test_enabled").default(false),
+  currentAbTestId: varchar("current_ab_test_id"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('upsell_settings_user_id_idx').on(table.userId),
+]);
+
+// Upsell Recommendation Rules - Define which products to recommend based on purchase
+export const upsellRecommendationRules = pgTable("upsell_recommendation_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Rule Definition
+  ruleName: text("rule_name").notNull(),
+  ruleType: text("rule_type").notNull(), // 'category_match' | 'price_range' | 'frequently_bought' | 'manual' | 'cross_sell'
+  isActive: boolean("is_active").default(true),
+  priority: integer("priority").default(1), // Higher = applied first
+  
+  // Trigger Conditions
+  triggerCategory: text("trigger_category"), // When product from this category is purchased
+  triggerProductIds: jsonb("trigger_product_ids"), // Specific product IDs that trigger this rule
+  triggerMinPrice: numeric("trigger_min_price", { precision: 10, scale: 2 }),
+  triggerMaxPrice: numeric("trigger_max_price", { precision: 10, scale: 2 }),
+  
+  // Recommendation Target
+  recommendCategory: text("recommend_category"), // Recommend from this category
+  recommendProductIds: jsonb("recommend_product_ids"), // Specific products to recommend
+  recommendPriceRange: jsonb("recommend_price_range"), // { min: number, max: number } or { percentOfPurchase: number }
+  
+  // Discount Settings
+  discountType: text("discount_type").default("percent"), // 'percent' | 'fixed' | 'none'
+  discountValue: numeric("discount_value", { precision: 10, scale: 2 }).default("10"),
+  
+  // Metadata
+  description: text("description"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('upsell_rules_user_id_idx').on(table.userId),
+  index('upsell_rules_type_idx').on(table.ruleType),
+  index('upsell_rules_category_idx').on(table.triggerCategory),
+]);
+
+// Upsell Receipt Analytics - Track clicks and conversions
+export const upsellReceiptAnalytics = pgTable("upsell_receipt_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Receipt Context
+  orderId: text("order_id").notNull(), // Shopify order ID
+  customerEmail: text("customer_email"),
+  originalOrderAmount: numeric("original_order_amount", { precision: 10, scale: 2 }),
+  
+  // Recommended Products
+  recommendedProductIds: jsonb("recommended_product_ids").notNull(), // Array of product IDs shown
+  recommendedProducts: jsonb("recommended_products"), // Full product details for analytics
+  ruleIdUsed: varchar("rule_id_used").references(() => upsellRecommendationRules.id),
+  
+  // Tracking
+  emailSentAt: timestamp("email_sent_at"),
+  emailOpenedAt: timestamp("email_opened_at"),
+  
+  // Click Tracking
+  clickedProductId: varchar("clicked_product_id"),
+  clickedAt: timestamp("clicked_at"),
+  clickTrackingToken: text("click_tracking_token").unique(),
+  
+  // Conversion Tracking
+  converted: boolean("converted").default(false),
+  conversionOrderId: text("conversion_order_id"),
+  conversionAmount: numeric("conversion_amount", { precision: 10, scale: 2 }),
+  convertedAt: timestamp("converted_at"),
+  
+  // A/B Test Variant
+  abTestId: varchar("ab_test_id"),
+  abTestVariant: text("ab_test_variant"), // 'control' | 'variantA' | 'variantB'
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('upsell_analytics_user_id_idx').on(table.userId),
+  index('upsell_analytics_order_id_idx').on(table.orderId),
+  index('upsell_analytics_customer_idx').on(table.customerEmail),
+  index('upsell_analytics_token_idx').on(table.clickTrackingToken),
+  index('upsell_analytics_converted_idx').on(table.converted),
+  index('upsell_analytics_ab_test_idx').on(table.abTestId),
+]);
+
+// Upsell Receipt A/B Tests - Compare different recommendation strategies
+export const upsellReceiptAbTests = pgTable("upsell_receipt_ab_tests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Test Configuration
+  testName: text("test_name").notNull(),
+  status: text("status").default("active"), // 'active' | 'paused' | 'completed'
+  
+  // Variants
+  controlStrategy: text("control_strategy").notNull(), // e.g., 'category_match'
+  controlRuleId: varchar("control_rule_id"),
+  variantAStrategy: text("variant_a_strategy").notNull(),
+  variantARuleId: varchar("variant_a_rule_id"),
+  variantBStrategy: text("variant_b_strategy"),
+  variantBRuleId: varchar("variant_b_rule_id"),
+  
+  // Traffic Split (percentages)
+  controlTrafficPercent: integer("control_traffic_percent").default(34),
+  variantATrafficPercent: integer("variant_a_traffic_percent").default(33),
+  variantBTrafficPercent: integer("variant_b_traffic_percent").default(33),
+  
+  // Decision Criteria
+  decisionMetric: text("decision_metric").default("conversion_rate"), // 'click_rate' | 'conversion_rate' | 'revenue'
+  minSampleSize: integer("min_sample_size").default(100),
+  
+  // Results
+  controlSent: integer("control_sent").default(0),
+  controlClicks: integer("control_clicks").default(0),
+  controlConversions: integer("control_conversions").default(0),
+  controlRevenue: numeric("control_revenue", { precision: 10, scale: 2 }).default("0"),
+  
+  variantASent: integer("variant_a_sent").default(0),
+  variantAClicks: integer("variant_a_clicks").default(0),
+  variantAConversions: integer("variant_a_conversions").default(0),
+  variantARevenue: numeric("variant_a_revenue", { precision: 10, scale: 2 }).default("0"),
+  
+  variantBSent: integer("variant_b_sent").default(0),
+  variantBClicks: integer("variant_b_clicks").default(0),
+  variantBConversions: integer("variant_b_conversions").default(0),
+  variantBRevenue: numeric("variant_b_revenue", { precision: 10, scale: 2 }).default("0"),
+  
+  // Winner
+  winnerId: text("winner_id"), // 'control' | 'variantA' | 'variantB'
+  winnerConfidence: numeric("winner_confidence", { precision: 5, scale: 2 }),
+  
+  startedAt: timestamp("started_at").default(sql`NOW()`),
+  endedAt: timestamp("ended_at"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('upsell_ab_tests_user_id_idx').on(table.userId),
+  index('upsell_ab_tests_status_idx').on(table.status),
+]);
+
+// Insert schemas for upsell receipt system
+export const insertUpsellReceiptSettingsSchema = createInsertSchema(upsellReceiptSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUpsellRecommendationRuleSchema = createInsertSchema(upsellRecommendationRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUpsellReceiptAnalyticsSchema = createInsertSchema(upsellReceiptAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUpsellReceiptAbTestSchema = createInsertSchema(upsellReceiptAbTests).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for upsell receipt system
+export type UpsellReceiptSettings = typeof upsellReceiptSettings.$inferSelect;
+export type InsertUpsellReceiptSettings = z.infer<typeof insertUpsellReceiptSettingsSchema>;
+export type UpsellRecommendationRule = typeof upsellRecommendationRules.$inferSelect;
+export type InsertUpsellRecommendationRule = z.infer<typeof insertUpsellRecommendationRuleSchema>;
+export type UpsellReceiptAnalytics = typeof upsellReceiptAnalytics.$inferSelect;
+export type InsertUpsellReceiptAnalytics = z.infer<typeof insertUpsellReceiptAnalyticsSchema>;
+export type UpsellReceiptAbTest = typeof upsellReceiptAbTests.$inferSelect;
+export type InsertUpsellReceiptAbTest = z.infer<typeof insertUpsellReceiptAbTestSchema>;
+
 // Insert schemas for advanced notification preferences
 export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
   id: true,
