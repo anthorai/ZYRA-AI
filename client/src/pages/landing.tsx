@@ -13,7 +13,7 @@ import {
   Settings, FileText, Network, Activity, Shield, Palette, LogOut, CheckCircle2, Sparkles, Lock, Clock,
   Users, DollarSign, Target, Rocket, ChevronDown, ChevronUp, Quote, ExternalLink, Timer,
   BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart, Calculator, X, AlertTriangle,
-  Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame
+  Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame, Lightbulb
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -1997,6 +1997,135 @@ export default function Landing() {
                 <p className="font-semibold mb-1">Daily Backups</p>
                 <p className="text-xs text-muted-foreground">Never lose data</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Zyra AI Blog Section */}
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-gradient-to-b from-background to-primary/5">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">
+                <Lightbulb className="w-3 h-3 mr-1" />
+                Latest Insights
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                <span className="bg-gradient-to-r from-[#00F0FF] via-[#00FFE5] to-[#FF00F5] bg-clip-text text-transparent">
+                  Zyra AI Insights
+                </span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Stay ahead with expert tips, automation strategies, and ecommerce trends
+              </p>
+            </div>
+
+            {/* Blog Cards Grid */}
+            <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+              {/* Blog Card 1 */}
+              <div className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#00F0FF]/10 via-transparent to-[#FF00F5]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Image Placeholder */}
+                <div className="relative w-full h-48 bg-gradient-to-br from-[#00F0FF]/20 to-[#FF00F5]/20 border-b border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Zap className="w-16 h-16 text-primary/30 group-hover:text-primary/60 transition-colors duration-300" />
+                  </div>
+                </div>
+
+                <div className="relative p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded-full">AI GROWTH</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
+                    How Zyra AI Automates Your Dropshipping Growth
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    A breakdown of how AI-driven optimization boosts product ranking, SEO strength, and store conversions automatically.
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-primary hover:text-transparent hover:bg-gradient-to-r hover:from-[#00F0FF] hover:to-[#FF00F5] group/btn"
+                  >
+                    <span>Read More</span>
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Blog Card 2 */}
+              <div className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#00FFE5]/10 via-transparent to-[#00F0FF]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Image Placeholder */}
+                <div className="relative w-full h-48 bg-gradient-to-br from-[#00FFE5]/20 to-[#00F0FF]/20 border-b border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Sparkles className="w-16 h-16 text-primary/30 group-hover:text-primary/60 transition-colors duration-300" />
+                  </div>
+                </div>
+
+                <div className="relative p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded-full">TOOLS & TIPS</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
+                    Top 5 AI Tools Every Ecommerce Owner Must Use in 2025
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Quick guide to automation tools that save time, increase sales, and streamline your entire workflow.
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-primary hover:text-transparent hover:bg-gradient-to-r hover:from-[#00F0FF] hover:to-[#FF00F5] group/btn"
+                  >
+                    <span>Read More</span>
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Blog Card 3 */}
+              <div className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FF00F5]/10 via-transparent to-[#00FFE5]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Image Placeholder */}
+                <div className="relative w-full h-48 bg-gradient-to-br from-[#FF00F5]/20 to-[#00FFE5]/20 border-b border-primary/20 overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Rocket className="w-16 h-16 text-primary/30 group-hover:text-primary/60 transition-colors duration-300" />
+                  </div>
+                </div>
+
+                <div className="relative p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded-full">FUTURE TRENDS</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
+                    The Future of Ecommerce: Why Smart Automation Wins
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Why self-learning AI systems like Zyra are replacing manual marketing and product optimization forever.
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-primary hover:text-transparent hover:bg-gradient-to-r hover:from-[#00F0FF] hover:to-[#FF00F5] group/btn"
+                  >
+                    <span>Read More</span>
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* View All Blog CTA */}
+            <div className="text-center mt-12">
+              <Button asChild variant="outline" size="lg" className="border-primary/50 hover:border-primary">
+                <Link href="/blog">
+                  View All Articles
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
