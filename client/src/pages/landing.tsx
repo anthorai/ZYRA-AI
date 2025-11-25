@@ -1293,7 +1293,7 @@ export default function Landing() {
                   <h3 className="text-lg font-semibold mb-6">Your Potential with Zyra AI</h3>
                   
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-[#16162c]">
                       <div>
                         <p className="text-sm text-muted-foreground">Current Monthly Revenue</p>
                         <p className="text-2xl font-bold">${roiResults.currentRevenue.toLocaleString()}</p>
