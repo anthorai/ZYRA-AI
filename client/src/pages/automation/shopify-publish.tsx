@@ -230,7 +230,7 @@ export default function ShopifyPublish() {
     bulkPublishMutation.mutate(unpublishedIds);
   };
 
-  const isConnected = shopifyStatus && (shopifyStatus as any).connected;
+  const isConnected = shopifyStatus && (shopifyStatus as any).isConnected;
   const isPublishing = publishingIds.size > 0 || bulkPublishMutation.isPending;
   const publishedCount = publishedIds.size;
   const remainingCount = optimizedProducts.length - publishedCount;
