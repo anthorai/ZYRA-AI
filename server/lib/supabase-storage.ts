@@ -620,7 +620,14 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('user_id', userId)
       .order('change_date', { ascending: false });
     
-    if (error) throw new Error(`Failed to get product history: ${error.message}`);
+    // Handle missing table gracefully - return empty array instead of throwing
+    if (error) {
+      if (error.message.includes('schema cache') || error.message.includes('does not exist')) {
+        console.log('[ProductHistory] Table not found in schema cache, returning empty array');
+        return [];
+      }
+      throw new Error(`Failed to get product history: ${error.message}`);
+    }
     return data || [];
   }
 
