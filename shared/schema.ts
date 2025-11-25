@@ -2112,6 +2112,238 @@ export const upsellReceiptAbTests = pgTable("upsell_receipt_ab_tests", {
   index('upsell_ab_tests_status_idx').on(table.status),
 ]);
 
+// =============================================
+// BEHAVIORAL TRIGGERS SYSTEM
+// =============================================
+
+// Enums for behavioral triggers
+export const behavioralTriggerEventEnum = pgEnum('behavioral_trigger_event', [
+  'product_view',
+  'cart_add',
+  'cart_abandon',
+  'checkout_start',
+  'order_placed',
+  'order_fulfilled',
+  'page_visit',
+  'time_on_site',
+  'return_visit',
+  'first_purchase',
+  'repeat_purchase',
+  'high_value_cart',
+  'browse_without_buy',
+  'wishlist_add',
+  'search_query'
+]);
+
+export const behavioralTriggerConditionEnum = pgEnum('behavioral_trigger_condition', [
+  'count_gte',        // Greater than or equal (e.g., 3+ views)
+  'count_lte',        // Less than or equal
+  'value_gte',        // Value >= threshold (e.g., cart > $200)
+  'value_lte',        // Value <= threshold
+  'time_elapsed',     // Time since event (e.g., 2 hours after)
+  'time_on_site_gte', // Time on site >= X minutes
+  'is_first',         // First occurrence (e.g., first purchase)
+  'is_return',        // Return customer
+  'no_action',        // No follow-up action taken (e.g., viewed but didn't buy)
+  'segment_match'     // Customer segment matches
+]);
+
+export const behavioralTriggerActionEnum = pgEnum('behavioral_trigger_action', [
+  'send_email',
+  'send_sms',
+  'show_popup',
+  'offer_discount',
+  'assign_tag',
+  'add_to_segment',
+  'send_push',
+  'trigger_webhook'
+]);
+
+export const behavioralTriggerStatusEnum = pgEnum('behavioral_trigger_status', [
+  'active',
+  'paused',
+  'draft',
+  'archived'
+]);
+
+// Main behavioral triggers table
+export const behavioralTriggers = pgTable("behavioral_triggers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  name: text("name").notNull(),
+  description: text("description"),
+  
+  // Trigger configuration
+  eventType: behavioralTriggerEventEnum("event_type").notNull(),
+  conditionType: behavioralTriggerConditionEnum("condition_type").notNull(),
+  conditionValue: text("condition_value"), // Threshold value (e.g., "3", "200", "2h")
+  
+  // Action configuration
+  actionType: behavioralTriggerActionEnum("action_type").notNull(),
+  actionConfig: jsonb("action_config"), // Email template ID, discount code, etc.
+  
+  // AI-related fields
+  isAiRecommended: boolean("is_ai_recommended").default(false),
+  aiConfidenceScore: numeric("ai_confidence_score", { precision: 5, scale: 2 }),
+  aiReasoning: text("ai_reasoning"),
+  
+  // Status and priority
+  status: behavioralTriggerStatusEnum("status").default("draft"),
+  priority: integer("priority").default(0), // Higher = processes first
+  
+  // Cooldown settings (prevent spamming same customer)
+  cooldownHours: integer("cooldown_hours").default(24),
+  maxTriggersPerCustomer: integer("max_triggers_per_customer").default(3),
+  
+  // Timestamps
+  lastFiredAt: timestamp("last_fired_at"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('behavioral_triggers_user_id_idx').on(table.userId),
+  index('behavioral_triggers_status_idx').on(table.status),
+  index('behavioral_triggers_event_type_idx').on(table.eventType),
+]);
+
+// Customer behavior events tracked from Shopify
+export const behaviorEvents = pgTable("behavior_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Customer identification
+  customerId: text("customer_id"), // Shopify customer ID
+  customerEmail: text("customer_email"),
+  sessionId: text("session_id"), // For anonymous tracking
+  
+  // Event details
+  eventType: behavioralTriggerEventEnum("event_type").notNull(),
+  eventData: jsonb("event_data"), // Product ID, cart value, page URL, etc.
+  
+  // Shopify context
+  shopifyShopId: text("shopify_shop_id"),
+  productId: text("product_id"),
+  orderId: text("order_id"),
+  cartToken: text("cart_token"),
+  
+  // Value tracking
+  eventValue: numeric("event_value", { precision: 10, scale: 2 }),
+  
+  // Processing status
+  processed: boolean("processed").default(false),
+  triggersMatched: jsonb("triggers_matched"), // Array of trigger IDs that matched
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('behavior_events_user_id_idx').on(table.userId),
+  index('behavior_events_customer_id_idx').on(table.customerId),
+  index('behavior_events_event_type_idx').on(table.eventType),
+  index('behavior_events_processed_idx').on(table.processed),
+  index('behavior_events_created_at_idx').on(table.createdAt),
+]);
+
+// Trigger execution log
+export const triggerExecutions = pgTable("trigger_executions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  triggerId: varchar("trigger_id").references(() => behavioralTriggers.id).notNull(),
+  behaviorEventId: varchar("behavior_event_id").references(() => behaviorEvents.id),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Customer targeted
+  customerId: text("customer_id"),
+  customerEmail: text("customer_email"),
+  
+  // Execution details
+  actionType: behavioralTriggerActionEnum("action_type").notNull(),
+  actionPayload: jsonb("action_payload"), // Email content, discount details, etc.
+  
+  // Status tracking
+  status: text("status").notNull().default("pending"), // pending, sent, delivered, clicked, converted, failed
+  errorMessage: text("error_message"),
+  
+  // Conversion tracking
+  clicked: boolean("clicked").default(false),
+  clickedAt: timestamp("clicked_at"),
+  converted: boolean("converted").default(false),
+  convertedAt: timestamp("converted_at"),
+  conversionValue: numeric("conversion_value", { precision: 10, scale: 2 }),
+  conversionOrderId: text("conversion_order_id"),
+  
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('trigger_executions_trigger_id_idx').on(table.triggerId),
+  index('trigger_executions_user_id_idx').on(table.userId),
+  index('trigger_executions_customer_id_idx').on(table.customerId),
+  index('trigger_executions_status_idx').on(table.status),
+  index('trigger_executions_created_at_idx').on(table.createdAt),
+]);
+
+// Aggregated analytics for trigger performance
+export const triggerAnalytics = pgTable("trigger_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  triggerId: varchar("trigger_id").references(() => behavioralTriggers.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Time period (for daily aggregation)
+  periodDate: timestamp("period_date").notNull(),
+  
+  // Counts
+  eventsFired: integer("events_fired").default(0),
+  actionsSent: integer("actions_sent").default(0),
+  actionsDelivered: integer("actions_delivered").default(0),
+  clicks: integer("clicks").default(0),
+  conversions: integer("conversions").default(0),
+  
+  // Revenue
+  revenueGenerated: numeric("revenue_generated", { precision: 12, scale: 2 }).default("0"),
+  
+  // Rates
+  clickRate: numeric("click_rate", { precision: 5, scale: 2 }),
+  conversionRate: numeric("conversion_rate", { precision: 5, scale: 2 }),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('trigger_analytics_trigger_id_idx').on(table.triggerId),
+  index('trigger_analytics_user_id_idx').on(table.userId),
+  index('trigger_analytics_period_date_idx').on(table.periodDate),
+]);
+
+// Insert schemas for behavioral triggers
+export const insertBehavioralTriggerSchema = createInsertSchema(behavioralTriggers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastFiredAt: true,
+});
+
+export const insertBehaviorEventSchema = createInsertSchema(behaviorEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTriggerExecutionSchema = createInsertSchema(triggerExecutions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTriggerAnalyticsSchema = createInsertSchema(triggerAnalytics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for behavioral triggers
+export type BehavioralTrigger = typeof behavioralTriggers.$inferSelect;
+export type InsertBehavioralTrigger = z.infer<typeof insertBehavioralTriggerSchema>;
+export type BehaviorEvent = typeof behaviorEvents.$inferSelect;
+export type InsertBehaviorEvent = z.infer<typeof insertBehaviorEventSchema>;
+export type TriggerExecution = typeof triggerExecutions.$inferSelect;
+export type InsertTriggerExecution = z.infer<typeof insertTriggerExecutionSchema>;
+export type TriggerAnalytics = typeof triggerAnalytics.$inferSelect;
+export type InsertTriggerAnalytics = z.infer<typeof insertTriggerAnalyticsSchema>;
+
 // Insert schemas for upsell receipt system
 export const insertUpsellReceiptSettingsSchema = createInsertSchema(upsellReceiptSettings).omit({
   id: true,
