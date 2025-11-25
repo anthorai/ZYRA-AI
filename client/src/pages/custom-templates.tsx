@@ -164,7 +164,7 @@ Use variables like:
         description="Available variables you can use in your templates"
         testId="card-template-variables"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             { var: "{customerName}", desc: "Customer's full name" },
             { var: "{firstName}", desc: "Customer's first name" },
@@ -176,9 +176,12 @@ Use variables like:
             { var: "{storeName}", desc: "Your store name" },
             { var: "{date}", desc: "Current date" }
           ].map((item, index) => (
-            <div key={index} className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 bg-slate-800/30">
-              <div className="text-primary font-mono text-[10px] sm:text-xs md:text-sm truncate">{item.var}</div>
-              <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm mt-1 truncate">{item.desc}</div>
+            <div 
+              key={index} 
+              className="flex flex-col p-3 sm:p-4 rounded-lg bg-slate-800/50 border border-slate-600 hover:border-primary/50 transition-colors"
+            >
+              <code className="text-primary font-mono text-sm font-semibold">{item.var}</code>
+              <span className="text-slate-400 text-xs mt-1">{item.desc}</span>
             </div>
           ))}
         </div>
