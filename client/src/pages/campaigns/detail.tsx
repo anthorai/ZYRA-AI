@@ -1,9 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageShell } from "@/components/ui/page-shell";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   Mail, 
   MessageSquare, 
@@ -16,7 +29,8 @@ import {
   Send,
   Edit,
   Trash2,
-  MousePointerClick
+  MousePointerClick,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -43,10 +57,33 @@ export default function CampaignDetailPage() {
   const [, setLocation] = useLocation();
   const [match, params] = useRoute("/campaigns/:id");
   const campaignId = params?.id;
+  const { toast } = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: campaign, isLoading, error } = useQuery<Campaign>({
     queryKey: ['/api/campaigns', campaignId],
     enabled: !!campaignId,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/campaigns/${campaignId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+      toast({
+        title: "Campaign Deleted",
+        description: "The campaign has been permanently deleted.",
+      });
+      setLocation("/campaigns");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete campaign",
+        variant: "destructive",
+      });
+    },
   });
 
   const getStatusBadge = (status: Campaign['status']) => {
@@ -300,6 +337,7 @@ export default function CampaignDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  onClick={() => setShowDeleteDialog(true)}
                   data-testid="button-delete-campaign"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -310,6 +348,36 @@ export default function CampaignDetailPage() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="bg-slate-900 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Are you sure you want to delete "{campaign.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageShell>
   );
 }
