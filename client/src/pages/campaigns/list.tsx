@@ -1,10 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Mail, 
   MessageSquare, 
@@ -13,9 +24,12 @@ import {
   Eye,
   BarChart,
   Plus,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Campaign {
   id: string;
@@ -37,9 +51,30 @@ interface Campaign {
 
 export default function CampaignListPage() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const { data: campaigns, isLoading, error } = useQuery<Campaign[]>({
     queryKey: ['/api/campaigns'],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      await apiRequest("DELETE", `/api/campaigns/${campaignId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+      toast({
+        title: "Campaign Deleted",
+        description: "The draft campaign has been deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the campaign. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const getStatusBadge = (status: Campaign['status']) => {
@@ -223,12 +258,43 @@ export default function CampaignListPage() {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => setLocation(`/campaigns/${campaign.id}`)}
-                    className="gradient-button w-full h-9 sm:h-10 text-xs sm:text-sm font-semibold"
+                    className="gradient-button flex-1 h-9 sm:h-10 text-xs sm:text-sm font-semibold"
                     data-testid={`button-view-${campaign.id}`}
                   >
                     <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     <span className="truncate">View Details</span>
                   </Button>
+                  {campaign.status === "draft" && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-9 sm:h-10 flex-shrink-0"
+                          data-testid={`button-delete-${campaign.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Draft Campaign?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{campaign.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteMutation.mutate(campaign.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </div>
             </Card>
