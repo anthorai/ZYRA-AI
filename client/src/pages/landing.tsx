@@ -599,7 +599,6 @@ export default function Landing() {
           })}
         </script>
       </Helmet>
-
       {/* Social Proof Notification Toast */}
       <div 
         className={`fixed bottom-20 lg:bottom-6 left-4 z-50 transition-all duration-500 transform ${
@@ -627,7 +626,6 @@ export default function Landing() {
           </CardContent>
         </Card>
       </div>
-
       {/* Navigation */}
       <ResponsiveNavbar
         navItems={[
@@ -652,7 +650,6 @@ export default function Landing() {
           href: "/auth"
         }}
       />
-
       {/* Main Content */}
       <main id="main-content" className="pt-10">
         {/* Optimized Hero Section */}
@@ -852,7 +849,7 @@ export default function Landing() {
         </section>
 
         {/* Problem-Agitation Section */}
-        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-background">
+        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#0e0e20]">
           <div className="container mx-auto max-w-5xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4 text-red-500 border-red-500/30">
@@ -2043,7 +2040,6 @@ export default function Landing() {
           </div>
         </section>
       </main>
-
       {/* Sticky Mobile CTA Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-lg border-t border-border lg:hidden z-50">
         <Button asChild className="w-full gradient-button" size="lg">
@@ -2052,7 +2048,6 @@ export default function Landing() {
           </Link>
         </Button>
       </div>
-
       {/* Footer */}
       <footer className="border-t border-border py-12 px-4 sm:px-6">
         <div className="container mx-auto">
