@@ -131,11 +131,11 @@ export default function Campaigns() {
       'custom-templates': 'custom'
     };
 
-    // Map tool IDs to campaign types/names for draft detection
-    const toolToCampaignType: Record<string, { type?: string; namePattern?: string }> = {
-      'upsell-receipts': { type: 'email', namePattern: 'upsell' },
-      'abandoned-cart-sms': { type: 'sms', namePattern: 'cart' },
-      'custom-templates': { namePattern: 'custom' }
+    // Map tool IDs to campaign types for draft detection
+    const toolToCampaignType: Record<string, string> = {
+      'upsell-receipts': 'email',
+      'abandoned-cart-sms': 'sms',
+      'custom-templates': 'email'  // defaults to email for templates
     };
 
     const legacyRoutes: Record<string, string> = {
@@ -148,16 +148,14 @@ export default function Campaigns() {
     sessionStorage.setItem('navigationSource', 'campaigns');
 
     // Check for existing draft campaigns for this tool type
-    if (wizardPresets[toolId] && toolToCampaignType[toolId]) {
-      const { type, namePattern } = toolToCampaignType[toolId];
+    if (wizardPresets[toolId]) {
+      const expectedType = toolToCampaignType[toolId];
       
-      // Find an existing draft matching the tool type
+      // Find any existing draft matching the campaign type (email or sms)
       const existingDraft = campaigns.find((campaign: Campaign) => {
         const isDraft = campaign.status === 'draft';
-        const matchesType = !type || campaign.type === type;
-        const matchesPattern = !namePattern || 
-          campaign.name?.toLowerCase().includes(namePattern.toLowerCase());
-        return isDraft && matchesType && matchesPattern;
+        const matchesType = !expectedType || campaign.type === expectedType;
+        return isDraft && matchesType;
       });
 
       if (existingDraft) {
