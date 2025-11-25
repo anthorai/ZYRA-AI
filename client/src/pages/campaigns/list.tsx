@@ -22,16 +22,17 @@ interface Campaign {
   name: string;
   type: "email" | "sms";
   subject?: string;
-  message: string;
+  message?: string;
+  content?: string;
   status: "draft" | "scheduled" | "sent" | "failed";
   scheduledFor?: string;
   sentAt?: string;
-  audience: string;
+  audience?: string;
   totalSent?: number;
   openRate?: number;
   clickRate?: number;
   conversionRate?: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export default function CampaignListPage() {
@@ -156,9 +157,10 @@ export default function CampaignListPage() {
                     </CardDescription>
                   )}
                   <CardDescription className="text-slate-300 text-xs sm:text-sm leading-relaxed line-clamp-3">
-                    {campaign.message.length > 80 
-                      ? `${campaign.message.substring(0, 80)}...` 
-                      : campaign.message}
+                    {(() => {
+                      const text = campaign.message || campaign.content || '';
+                      return text.length > 80 ? `${text.substring(0, 80)}...` : text;
+                    })()}
                   </CardDescription>
                 </CardHeader>
 
