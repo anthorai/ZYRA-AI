@@ -600,23 +600,6 @@ export default function Landing() {
         </script>
       </Helmet>
 
-      {/* Urgency Banner - Limited Time Offer */}
-      <div className="fixed top-0 left-0 right-0 z-[100] bg-gradient-to-r from-[#FF00F5] via-[#00F0FF] to-[#FF00F5] bg-[length:200%_auto] animate-gradient py-2 px-4">
-        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-white text-sm">
-          <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 animate-pulse" />
-            <span className="font-semibold">LIMITED TIME: Get 20% OFF your first 3 months</span>
-          </div>
-          <div className="flex items-center gap-1 font-mono bg-black/20 rounded px-2 py-1">
-            <Timer className="w-3 h-3" />
-            <span>{String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
-          </div>
-          <Badge className="bg-white/20 text-white border-white/30 text-xs">
-            Only 17 spots left today
-          </Badge>
-        </div>
-      </div>
-
       {/* Social Proof Notification Toast */}
       <div 
         className={`fixed bottom-20 lg:bottom-6 left-4 z-50 transition-all duration-500 transform ${
