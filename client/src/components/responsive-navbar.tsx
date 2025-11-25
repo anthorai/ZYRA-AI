@@ -228,22 +228,22 @@ export default function ResponsiveNavbar({
             )}
           </div>
 
-          {/* Desktop Navigation - Center */}
-          <div className="hidden lg:flex items-center justify-center gap-1 xl:gap-2">
+          {/* Desktop & Tablet Navigation - Center */}
+          <div className="hidden md:flex items-center justify-center gap-1 xl:gap-2">
             {navItems.map((item, index) => renderNavItem(item, index, false))}
           </div>
 
           {/* Action Button - Right */}
           <div className="flex items-center justify-end gap-2">
-            <div className="hidden lg:block">
+            <div className="hidden md:block">
               {renderActionButton(false)}
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - Only on small screens */}
             <button
               ref={buttonRef}
               onClick={toggleMenu}
-              className="lg:hidden text-foreground p-2 hover:bg-muted rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="md:hidden text-foreground p-2 hover:bg-muted rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               aria-label={isOpen ? "Close menu" : "Open menu"}
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
@@ -258,12 +258,12 @@ export default function ResponsiveNavbar({
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Only on small screens */}
         <div
           ref={menuRef}
           id="mobile-menu"
           className={cn(
-            "lg:hidden fixed left-0 right-0 top-full bg-background/98 dark:bg-background/98 backdrop-blur-lg border-b border-border shadow-lg transition-all duration-300 ease-in-out",
+            "md:hidden fixed left-0 right-0 top-full bg-background/98 dark:bg-background/98 backdrop-blur-lg border-b border-border shadow-lg transition-all duration-300 ease-in-out",
             isOpen
               ? "opacity-100 visible translate-y-0"
               : "opacity-0 invisible -translate-y-2"
@@ -286,10 +286,10 @@ export default function ResponsiveNavbar({
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - Only on small screens */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
           onClick={closeMenu}
           aria-hidden="true"
         />
