@@ -89,6 +89,28 @@ Advanced multi-channel notification preferences (Email, SMS, In-App, Push) offer
 ### Shopify Integration
 Full OAuth 2.0 integration enables bidirectional product sync and store management, covering comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing.
 
+### Automation Tools (COMPLETE)
+Comprehensive bulk SEO optimization tools for efficient store management:
+
+**Smart Bulk Suggestions (client/src/pages/automation/smart-bulk-suggestions.tsx):**
+- **Product Analysis**: Fetches products via /api/seo-health/audit with SEO scores, issue counts, and improvement potential
+- **AI Suggestion Generator**: Uses /api/generate-product-seo to create actionable fixes for selected low-performing products
+- **Before/After Preview**: Side-by-side comparison of current vs AI-suggested SEO fields (title, description, keywords, score)
+- **Apply/Apply All**: Individual or batch application of fixes via PATCH /api/products/:id/seo
+- **Tab-Based Workflow**: Analyze (select products) → Suggestions (review AI fixes) → Applied (track completed optimizations)
+- **Data Persistence**: Updates seoMeta table (seoTitle, optimizedTitle, metaDescription, optimizedMeta, keywords) and productSeoHistory for tracking
+
+**API Endpoint (PATCH /api/products/:id/seo):**
+- Normalizes keywords (accepts array or comma-separated string)
+- Updates both seoMeta and productSeoHistory tables
+- Marks products as optimized
+- Records AI-generated seoScore for analytics
+
+**Other Automation Tools:**
+- CSV Import/Export for bulk data operations
+- One-Click Shopify Publish for live store updates
+- Per-product Rollback to revert changes
+
 ### Autonomous AI Store Manager
 This system transforms manual optimization into autonomous, AI-driven processes across multiple domains, offering both autonomous and manual approval modes.
 
