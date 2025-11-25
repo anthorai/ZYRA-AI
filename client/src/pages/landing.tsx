@@ -19,6 +19,9 @@ import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
+import blogImage1 from "@assets/generated_images/ai_dropshipping_growth_dashboard.png";
+import blogImage2 from "@assets/generated_images/ai_ecommerce_tools_concept.png";
+import blogImage3 from "@assets/generated_images/future_ecommerce_automation.png";
 import { Helmet } from "react-helmet";
 
 export default function Landing() {
@@ -2022,14 +2025,21 @@ export default function Landing() {
             {/* Blog Cards Grid */}
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
               {/* Blog Card 1 */}
-              <div className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300">
+              <Link 
+                href="/blog/how-zyra-ai-automates-dropshipping-growth"
+                className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300 block"
+                data-testid="blog-card-1"
+              >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#00F0FF]/10 via-transparent to-[#FF00F5]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                {/* Image Placeholder */}
-                <div className="relative w-full h-48 bg-gradient-to-br from-[#00F0FF]/20 to-[#FF00F5]/20 border-b border-primary/20 overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Zap className="w-16 h-16 text-primary/30 group-hover:text-primary/60 transition-colors duration-300" />
-                  </div>
+                {/* Featured Image */}
+                <div className="relative w-full h-48 overflow-hidden">
+                  <img 
+                    src={blogImage1} 
+                    alt="How Zyra AI Automates Your Dropshipping Growth"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
                 </div>
 
                 <div className="relative p-6">
@@ -2042,26 +2052,29 @@ export default function Landing() {
                   <p className="text-sm text-muted-foreground mb-4">
                     A breakdown of how AI-driven optimization boosts product ranking, SEO strength, and store conversions automatically.
                   </p>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-primary hover:text-transparent hover:bg-gradient-to-r hover:from-[#00F0FF] hover:to-[#FF00F5] group/btn"
-                  >
+                  <div className="flex items-center text-primary group/btn">
                     <span>Read More</span>
                     <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
+              </Link>
 
               {/* Blog Card 2 */}
-              <div className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300">
+              <Link 
+                href="/blog/top-5-ai-tools-ecommerce-2025"
+                className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300 block"
+                data-testid="blog-card-2"
+              >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#00FFE5]/10 via-transparent to-[#00F0FF]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                {/* Image Placeholder */}
-                <div className="relative w-full h-48 bg-gradient-to-br from-[#00FFE5]/20 to-[#00F0FF]/20 border-b border-primary/20 overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="w-16 h-16 text-primary/30 group-hover:text-primary/60 transition-colors duration-300" />
-                  </div>
+                {/* Featured Image */}
+                <div className="relative w-full h-48 overflow-hidden">
+                  <img 
+                    src={blogImage2} 
+                    alt="Top 5 AI Tools Every Ecommerce Owner Must Use in 2025"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
                 </div>
 
                 <div className="relative p-6">
@@ -2074,26 +2087,29 @@ export default function Landing() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Quick guide to automation tools that save time, increase sales, and streamline your entire workflow.
                   </p>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-primary hover:text-transparent hover:bg-gradient-to-r hover:from-[#00F0FF] hover:to-[#FF00F5] group/btn"
-                  >
+                  <div className="flex items-center text-primary group/btn">
                     <span>Read More</span>
                     <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
+              </Link>
 
               {/* Blog Card 3 */}
-              <div className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300">
+              <Link 
+                href="/blog/future-of-ecommerce-smart-automation"
+                className="group relative bg-background/40 backdrop-blur-sm border border-primary/20 rounded-lg overflow-hidden hover:border-primary/60 transition-all duration-300 block"
+                data-testid="blog-card-3"
+              >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#FF00F5]/10 via-transparent to-[#00FFE5]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                {/* Image Placeholder */}
-                <div className="relative w-full h-48 bg-gradient-to-br from-[#FF00F5]/20 to-[#00FFE5]/20 border-b border-primary/20 overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Rocket className="w-16 h-16 text-primary/30 group-hover:text-primary/60 transition-colors duration-300" />
-                  </div>
+                {/* Featured Image */}
+                <div className="relative w-full h-48 overflow-hidden">
+                  <img 
+                    src={blogImage3} 
+                    alt="The Future of Ecommerce: Why Smart Automation Wins"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
                 </div>
 
                 <div className="relative p-6">
@@ -2106,16 +2122,12 @@ export default function Landing() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Why self-learning AI systems like Zyra are replacing manual marketing and product optimization forever.
                   </p>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-primary hover:text-transparent hover:bg-gradient-to-r hover:from-[#00F0FF] hover:to-[#FF00F5] group/btn"
-                  >
+                  <div className="flex items-center text-primary group/btn">
                     <span>Read More</span>
                     <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
+              </Link>
             </div>
 
             {/* View All Blog CTA */}
