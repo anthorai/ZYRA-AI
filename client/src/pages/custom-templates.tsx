@@ -136,7 +136,7 @@ The {storeName} Team`);
                   placeholder="Search templates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white placeholder:text-muted-foreground h-10 w-full pl-[33px] pr-[33px]"
+                  className="bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white placeholder:text-muted-foreground h-10 w-full pl-[35px] pr-[35px]"
                   data-testid="input-search-templates"
                 />
               </div>
