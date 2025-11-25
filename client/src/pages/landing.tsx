@@ -628,42 +628,6 @@ export default function Landing() {
         </Card>
       </div>
 
-      {/* Sticky Desktop CTA Bar */}
-      <div 
-        className={`fixed top-10 left-0 right-0 z-[90] bg-background/95 backdrop-blur-lg border-b border-border py-3 px-4 transition-all duration-300 hidden lg:block ${
-          showStickyBar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-        }`}
-        data-testid="sticky-cta-bar"
-      >
-        <div className="container mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <img src={zyraLogoUrl} alt="Zyra AI" className="w-8 h-8 object-contain" />
-            <span className="font-semibold">Zyra AI</span>
-            <div className="hidden xl:flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                4.9/5 rating
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="w-4 h-4 text-primary" />
-                50,000+ merchants
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden md:block">
-              <Shield className="w-4 h-4 inline mr-1" />
-              60-Day Money-Back Guarantee
-            </span>
-            <Button asChild className="gradient-button">
-              <Link href="/auth">
-                Start Free Trial
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation */}
       <ResponsiveNavbar
         navItems={[
