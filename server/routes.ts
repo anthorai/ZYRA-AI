@@ -8550,7 +8550,9 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
       
-      if (!campaign || campaign.userId !== userId) {
+      // Handle both snake_case (from DB) and camelCase field names
+      const campaignUserId = (campaign as any)?.user_id || campaign?.userId;
+      if (!campaign || campaignUserId !== userId) {
         return res.status(404).json({ error: 'Campaign not found' });
       }
       
@@ -8572,7 +8574,9 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
       
-      if (!campaign || campaign.userId !== userId) {
+      // Handle both snake_case (from DB) and camelCase field names
+      const campaignUserId = (campaign as any)?.user_id || campaign?.userId;
+      if (!campaign || campaignUserId !== userId) {
         return res.status(404).json({ error: 'Campaign not found' });
       }
       
@@ -8594,7 +8598,9 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
       
-      if (!campaign || campaign.userId !== userId) {
+      // Handle both snake_case (from DB) and camelCase field names
+      const campaignUserId = (campaign as any)?.user_id || campaign?.userId;
+      if (!campaign || campaignUserId !== userId) {
         return res.status(404).json({ error: 'Campaign not found' });
       }
 
@@ -8678,7 +8684,9 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
       
-      if (!campaign || campaign.userId !== userId) {
+      // Handle both snake_case (from DB) and camelCase field names
+      const campaignUserId = (campaign as any)?.user_id || campaign?.userId;
+      if (!campaign || campaignUserId !== userId) {
         return res.status(404).json({ error: 'Campaign not found' });
       }
 
@@ -8710,7 +8718,9 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const campaign = await supabaseStorage.getCampaign(req.params.id);
       
-      if (!campaign || campaign.userId !== userId) {
+      // Handle both snake_case (from DB) and camelCase field names
+      const campaignUserId = (campaign as any)?.user_id || campaign?.userId;
+      if (!campaign || campaignUserId !== userId) {
         return res.status(404).json({ error: 'Campaign not found' });
       }
 
@@ -9647,7 +9657,9 @@ Output format: Markdown with clear section headings.`;
       }
 
       const campaign = await supabaseStorage.getCampaign(campaignId);
-      if (!campaign || campaign.userId !== userId) {
+      // Handle both snake_case (from DB) and camelCase field names
+      const campaignUserId = (campaign as any)?.user_id || campaign?.userId;
+      if (!campaign || campaignUserId !== userId) {
         return res.status(404).json({ error: 'Campaign not found' });
       }
 
