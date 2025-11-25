@@ -1062,7 +1062,7 @@ export default function Landing() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-background rounded-lg p-4 mb-4 border border-primary/20">
+                  <div className="rounded-lg p-4 mb-4 border border-primary/20 bg-[#16162c]">
                     <h4 className="font-medium mb-2">Premium Wireless Noise-Canceling Headphones - 40H Battery</h4>
                     <p className="text-sm text-muted-foreground">
                       Experience pure audio bliss with our studio-quality wireless headphones. Active noise cancellation lets you escape into your music, while 40-hour battery life keeps the soundtrack going all week. Memory foam ear cushions deliver cloud-like comfort for extended listening sessions.
