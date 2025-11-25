@@ -1306,7 +1306,7 @@ export default function Landing() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-background rounded-lg text-center">
+                      <div className="p-4 rounded-lg text-center bg-[#16162c]">
                         <p className="text-sm text-muted-foreground mb-1">Extra Revenue</p>
                         <p className="text-2xl font-bold text-primary">+${roiResults.additionalRevenue.toLocaleString()}</p>
                         <p className="text-xs text-muted-foreground">per month</p>
