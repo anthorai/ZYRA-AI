@@ -128,13 +128,13 @@ The {storeName} Team`);
         <div className="xl:col-span-3 space-y-6">
           <Card className="gradient-card overflow-hidden">
             <div className="p-4 border-b border-[rgba(0,240,255,0.15)]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <div className="relative flex items-center">
+                <Search className="absolute left-3 w-4 h-4 text-primary/70 pointer-events-none z-10" />
                 <Input 
                   placeholder="Search templates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white placeholder:text-muted-foreground"
+                  className="pl-10 bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white placeholder:text-muted-foreground h-10"
                   data-testid="input-search-templates"
                 />
               </div>
