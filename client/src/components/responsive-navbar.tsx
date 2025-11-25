@@ -231,7 +231,7 @@ export default function ResponsiveNavbar({
             </div>
 
             {/* Desktop & Tablet Navigation */}
-            <div className="hidden md:flex items-center gap-1 xl:gap-2">
+            <div className="hidden md:flex items-center gap-1 xl:gap-2 pl-[81px] pr-[81px]">
               {navItems.map((item, index) => renderNavItem(item, index, false))}
             </div>
           </div>
@@ -288,7 +288,6 @@ export default function ResponsiveNavbar({
           </div>
         </div>
       </div>
-
       {/* Mobile Menu Overlay - Only on small screens */}
       {isOpen && (
         <div
