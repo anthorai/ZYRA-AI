@@ -200,44 +200,41 @@ export default function ResponsiveNavbar({
       className
     )}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo & Navigation - Left Side */}
-          <div className="flex items-center gap-6 lg:gap-8">
-            {/* Logo */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              {logo.href ? (
-                <Link
-                  href={logo.href}
-                  className="flex items-center space-x-2 sm:space-x-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md"
-                  data-testid="nav-logo"
-                >
-                  {logo.icon && (
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
-                      {logo.icon}
-                    </div>
-                  )}
-                  <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
-                </Link>
-              ) : (
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  {logo.icon && (
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
-                      {logo.icon}
-                    </div>
-                  )}
-                  <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
-                </div>
-              )}
-            </div>
+        <div className="flex items-center justify-between gap-4 relative">
+          {/* Logo - Left */}
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+            {logo.href ? (
+              <Link
+                href={logo.href}
+                className="flex items-center space-x-2 sm:space-x-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md"
+                data-testid="nav-logo"
+              >
+                {logo.icon && (
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+                    {logo.icon}
+                  </div>
+                )}
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
+              </Link>
+            ) : (
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                {logo.icon && (
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+                    {logo.icon}
+                  </div>
+                )}
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
+              </div>
+            )}
+          </div>
 
-            {/* Desktop & Tablet Navigation */}
-            <div className="hidden md:flex items-center gap-1 xl:gap-2 pl-[81px] pr-[81px]">
-              {navItems.map((item, index) => renderNavItem(item, index, false))}
-            </div>
+          {/* Desktop & Tablet Navigation - Centered */}
+          <div className="hidden md:flex items-center gap-1 xl:gap-2 absolute left-1/2 transform -translate-x-1/2">
+            {navItems.map((item, index) => renderNavItem(item, index, false))}
           </div>
 
           {/* Action Button & Mobile Menu - Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="hidden md:block">
               {renderActionButton(false)}
             </div>
