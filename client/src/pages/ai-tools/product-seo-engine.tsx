@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -93,6 +93,7 @@ type OptimizationMode = 'fast' | 'competitive';
 export default function ProductSeoEngine() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [generatedSEO, setGeneratedSEO] = useState<SEOOutput | null>(null);
   const [activeTab, setActiveTab] = useState("seo-title");
@@ -103,6 +104,15 @@ export default function ProductSeoEngine() {
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
+
+  // Auto-select product from URL query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const productId = params.get('productId');
+    if (productId && products?.some(p => p.id === productId)) {
+      setSelectedProductId(productId);
+    }
+  }, [searchString, products]);
 
   // Fetch store currency
   const { data: storeData } = useQuery<{ currency: string }>({

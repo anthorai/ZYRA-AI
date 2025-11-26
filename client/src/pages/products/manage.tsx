@@ -142,7 +142,7 @@ function ProductCard({
             </Button>
           ) : product.shopifyId ? (
             <Button 
-              onClick={() => window.location.href = `/ai-tools/professional-copywriting?productId=${product.id}`}
+              onClick={() => window.location.href = `/ai-tools/product-seo-engine?productId=${product.id}`}
               className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95"
             >
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
