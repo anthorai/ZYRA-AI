@@ -292,7 +292,7 @@ export default function SupportPage() {
             <div className="flex-1">
               <h3 className="text-white font-semibold mb-2">Need urgent help?</h3>
               <p className="text-slate-400 text-sm mb-4">
-                For critical issues or urgent support needs, you can reach our priority support team via live chat or email us directly at support@zyra.ai
+                For critical issues or urgent support needs, you can reach our priority support team via live chat or email us directly at team@zzyraai.com
               </p>
               <div className="flex items-center space-x-3">
                 <Button
