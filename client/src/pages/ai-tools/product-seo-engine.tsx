@@ -215,6 +215,7 @@ export default function ProductSeoEngine() {
       description?: string; 
       seoTitle?: string; 
       metaDescription?: string;
+      tags?: string[];
       fieldName?: string;
     }) => {
       if (!selectedProduct?.id) throw new Error("No product selected");
@@ -224,6 +225,7 @@ export default function ProductSeoEngine() {
           description: content.description,
           seoTitle: content.seoTitle,
           metaDescription: content.metaDescription,
+          tags: content.tags,
         }
       });
       return { ...(await response.json()), fieldName: content.fieldName };
