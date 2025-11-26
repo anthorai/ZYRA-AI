@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, FileText, Shield, CreditCard, AlertTriangle, 
-  Scale, Globe, Mail, CheckCircle, XCircle, Sparkles
+  Scale, Globe, Mail, CheckCircle, XCircle, Sparkles, LayoutDashboard
 } from "lucide-react";
 import { Helmet } from "react-helmet";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TermsSection {
   id: string;
@@ -319,6 +320,12 @@ const termsSections: TermsSection[] = [
 ];
 
 export default function Terms() {
+  const { isAuthenticated } = useAuth();
+  
+  // Smart navigation: redirect to dashboard if authenticated, otherwise to landing page
+  const backHref = isAuthenticated ? "/dashboard" : "/";
+  const backLabel = isAuthenticated ? "Back to Dashboard" : "Back to Home";
+
   return (
     <div className="min-h-screen bg-background relative">
       <Helmet>
@@ -343,9 +350,9 @@ export default function Terms() {
       <header className="border-b border-primary/10 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors group" data-testid="link-back-home">
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="font-medium">Back to Home</span>
+            <Link href={backHref} className="flex items-center gap-2 text-foreground hover:text-primary transition-colors group" data-testid="link-back-navigation">
+              {isAuthenticated ? <LayoutDashboard className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />}
+              <span className="font-medium">{backLabel}</span>
             </Link>
             <Button asChild className="gradient-button shadow-lg shadow-primary/20" data-testid="button-start-trial">
               <Link href="/auth">

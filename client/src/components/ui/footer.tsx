@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Shield, Lock } from "lucide-react";
 import { SiLinkedin, SiInstagram, SiX } from "react-icons/si";
 import zyraLogo from "@assets/zyra logo_1759205684268.png";
+import { useAuth } from "@/hooks/useAuth";
 
 interface FooterProps {
   className?: string;
@@ -9,6 +10,10 @@ interface FooterProps {
 
 export default function Footer({ className = "" }: FooterProps) {
   const [location, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
+  
+  // Smart navigation: redirect to dashboard if authenticated, otherwise to landing page
+  const homeHref = isAuthenticated ? "/dashboard" : "/";
   
   const companyLinks = [
     { label: "About", href: "/about", testId: "link-footer-about" },
@@ -27,10 +32,10 @@ export default function Footer({ className = "" }: FooterProps) {
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (location === '/dashboard') {
+    if (location === homeHref) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setLocation('/dashboard');
+      setLocation(homeHref);
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);

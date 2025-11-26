@@ -17,13 +17,20 @@ import {
   ArrowUp,
   FileText,
   ChevronRight,
-  Baby
+  Baby,
+  LayoutDashboard
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Footer from "@/components/ui/footer";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function PrivacyPolicyPage() {
+  const { isAuthenticated } = useAuth();
   const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // Smart navigation: redirect to dashboard if authenticated, otherwise to landing page
+  const backHref = isAuthenticated ? "/dashboard" : "/";
+  const backLabel = isAuthenticated ? "Back to Dashboard" : "Back to Landing Page";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -443,13 +450,14 @@ export default function PrivacyPolicyPage() {
               If you have any concerns or questions about our privacy practices, our team is here to help
             </p>
             
-            <Link href="/">
+            <Link href={backHref}>
               <Button
                 size="lg"
                 className="bg-[#00F0FF] hover:bg-[#00F0FF]/90 text-[#0D0D1F] font-bold text-lg px-8 py-6 h-auto"
-                data-testid="button-back-landing"
+                data-testid="button-back-navigation"
               >
-                Back to Landing Page
+                {isAuthenticated ? <LayoutDashboard className="mr-2 w-5 h-5" /> : null}
+                {backLabel}
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

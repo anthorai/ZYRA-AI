@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, Search, ChevronDown, ChevronRight, HelpCircle, 
   Sparkles, Zap, CreditCard, Settings, ShoppingBag, BarChart3,
-  Mail, Shield, Rocket, BookOpen, MessageSquare, ExternalLink
+  Mail, Shield, Rocket, BookOpen, MessageSquare, ExternalLink, LayoutDashboard
 } from "lucide-react";
 import { Helmet } from "react-helmet";
+import { useAuth } from "@/hooks/useAuth";
 
 interface FAQItem {
   question: string;
@@ -151,9 +152,14 @@ const faqCategories: FAQCategory[] = [
 ];
 
 export default function Help() {
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>("getting-started");
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
+  
+  // Smart navigation: redirect to dashboard if authenticated, otherwise to landing page
+  const backHref = isAuthenticated ? "/dashboard" : "/";
+  const backLabel = isAuthenticated ? "Back to Dashboard" : "Back to Home";
 
   const filteredCategories = faqCategories.map(category => ({
     ...category,
@@ -191,9 +197,9 @@ export default function Help() {
       <header className="border-b border-primary/10 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors group" data-testid="link-back-home">
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="font-medium">Back to Home</span>
+            <Link href={backHref} className="flex items-center gap-2 text-foreground hover:text-primary transition-colors group" data-testid="link-back-navigation">
+              {isAuthenticated ? <LayoutDashboard className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />}
+              <span className="font-medium">{backLabel}</span>
             </Link>
             <Button asChild className="gradient-button shadow-lg shadow-primary/20" data-testid="button-start-trial">
               <Link href="/auth">
