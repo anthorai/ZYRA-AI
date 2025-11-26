@@ -31,7 +31,7 @@ import {
 type Product = typeof products.$inferSelect;
 
 interface AISuggestion {
-  type: 'description' | 'title' | 'pricing' | 'meta';
+  type: 'description' | 'title' | 'pricing' | 'tags';
   severity: 'info' | 'warning' | 'success';
   message: string;
   reason: string;
@@ -108,32 +108,31 @@ function analyzeProduct(product: any): AISuggestion[] {
     });
   }
   
-  // Meta Tags Analysis
-  const hasMetaTags = optimizedCopy?.metaTitle || optimizedCopy?.metaDescription;
-  if (!hasMetaTags) {
+  // Tags Analysis
+  const productTags = optimizedCopy?.keywords || product.tags || '';
+  const tagCount = productTags ? productTags.split(',').filter((t: string) => t.trim()).length : 0;
+  
+  if (tagCount === 0) {
     suggestions.push({
-      type: 'meta',
+      type: 'tags',
       severity: 'warning',
-      message: 'Missing SEO meta tags',
-      reason: 'Meta title and description are crucial for search engine rankings and click-through rates.'
+      message: 'No product tags found',
+      reason: 'Product tags help with search visibility, categorization, and customer discovery.'
     });
-  } else {
-    const metaDesc = optimizedCopy?.metaDescription || '';
-    if (metaDesc.length > 0 && metaDesc.length < 120) {
-      suggestions.push({
-        type: 'meta',
-        severity: 'info',
-        message: 'Meta description is short',
-        reason: 'Optimal meta descriptions are 150-160 characters for best search result display.'
-      });
-    } else if (metaDesc.length >= 150) {
-      suggestions.push({
-        type: 'meta',
-        severity: 'success',
-        message: 'Meta tags well optimized',
-        reason: 'SEO meta tags are properly configured for search engines.'
-      });
-    }
+  } else if (tagCount < 5) {
+    suggestions.push({
+      type: 'tags',
+      severity: 'info',
+      message: 'Consider adding more tags',
+      reason: `Currently have ${tagCount} tags. Optimal is 5-10 tags for better discoverability.`
+    });
+  } else if (tagCount >= 5) {
+    suggestions.push({
+      type: 'tags',
+      severity: 'success',
+      message: 'Tags well optimized',
+      reason: `Product has ${tagCount} tags for excellent search visibility and categorization.`
+    });
   }
   
   return suggestions;
@@ -269,10 +268,10 @@ function ProductCard({ product, currency }: { product: Product, currency: string
               <span className="hidden sm:inline">Pricing</span>
               <span className="sm:hidden">Price</span>
             </TabsTrigger>
-            <TabsTrigger value="meta" className="text-xs sm:text-sm" data-testid={`tab-meta-${product.id}`}>
+            <TabsTrigger value="tags" className="text-xs sm:text-sm" data-testid={`tab-tags-${product.id}`}>
               <Tag className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Meta Tags</span>
-              <span className="sm:hidden">Meta</span>
+              <span className="hidden sm:inline">Tags</span>
+              <span className="sm:hidden">Tags</span>
             </TabsTrigger>
           </TabsList>
 
@@ -413,56 +412,62 @@ function ProductCard({ product, currency }: { product: Product, currency: string
             )}
           </TabsContent>
 
-          {/* Meta Tags Tab */}
-          <TabsContent value="meta" className="space-y-4" data-testid={`content-meta-${product.id}`}>
-            <SuggestionCard suggestions={suggestions} activeTab="meta" />
+          {/* Tags Tab */}
+          <TabsContent value="tags" className="space-y-4" data-testid={`content-tags-${product.id}`}>
+            <SuggestionCard suggestions={suggestions} activeTab="tags" />
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-slate-300 font-medium text-sm">Meta Title</h4>
-                  {metaTitle && <Sparkles className="w-3 h-3 text-primary" />}
-                </div>
-                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20">
-                  <p className="text-slate-200 text-sm">
-                    {metaTitle || originalTitle || 'No meta title set'}
-                  </p>
-                  <p className="text-slate-500 text-xs mt-2">
-                    {(metaTitle || originalTitle).length}/60 characters (optimal: 50-60)
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-slate-300 font-medium text-sm">Meta Description</h4>
-                  {metaDescription && <Sparkles className="w-3 h-3 text-primary" />}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-slate-300 font-medium text-sm">Product Tags</h4>
+                    {keywords && <Sparkles className="w-3 h-3 text-primary" />}
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {keywords ? keywords.split(',').filter((t: string) => t.trim()).length : 0} tags
+                  </Badge>
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[100px]">
-                  <p className="text-slate-200 text-sm leading-relaxed">
-                    {metaDescription || optimizedDesc.substring(0, 160) || 'No meta description set'}
-                  </p>
-                  <p className="text-slate-500 text-xs mt-2">
-                    {(metaDescription || optimizedDesc.substring(0, 160)).length}/160 characters (optimal: 150-160)
-                  </p>
+                  {keywords ? (
+                    <div className="flex flex-wrap gap-2">
+                      {keywords.split(',').map((tag: string, idx: number) => (
+                        <Badge 
+                          key={idx} 
+                          variant="secondary" 
+                          className="bg-primary/20 text-primary border-primary/30"
+                        >
+                          {tag.trim()}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-sm">No tags generated yet</p>
+                  )}
                 </div>
+                <p className="text-slate-500 text-xs">
+                  Optimal: 5-10 tags for better search visibility and categorization
+                </p>
               </div>
               
-              {keywords && (
+              {product.tags && product.tags !== keywords && (
                 <div className="space-y-2">
-                  <h4 className="text-slate-300 font-medium text-sm">SEO Keywords</h4>
-                  <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20">
-                    <p className="text-slate-200 text-sm">
-                      {keywords}
-                    </p>
+                  <h4 className="text-slate-300 font-medium text-sm">Original Shopify Tags</h4>
+                  <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
+                    <div className="flex flex-wrap gap-2">
+                      {product.tags.split(',').map((tag: string, idx: number) => (
+                        <Badge key={idx} variant="outline" className="bg-slate-800/50 border-slate-600">
+                          {tag.trim()}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
               
-              {(metaTitle || metaDescription) && (
+              {keywords && keywords.split(',').filter((t: string) => t.trim()).length >= 5 && (
                 <div className="flex items-center gap-2 text-green-400 text-sm">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>SEO meta tags configured for search engines</span>
+                  <span>Tags optimized for search visibility and Shopify integration</span>
                 </div>
               )}
             </div>
