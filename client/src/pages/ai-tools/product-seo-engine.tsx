@@ -32,7 +32,9 @@ import {
   BarChart3,
   Rocket,
   Trophy,
-  Users
+  Users,
+  CheckCheck,
+  ClipboardCheck
 } from "lucide-react";
 
 interface Product {
@@ -294,6 +296,57 @@ Keywords: ${generatedSEO.keywords.join(", ")}
       title: "Exported!",
       description: "SEO content exported successfully",
     });
+  };
+
+  const handleApplyToShopify = async () => {
+    if (!generatedSEO) return;
+    
+    const shopifyReadyContent = `====================================================
+PRODUCT SEO CONTENT - READY FOR SHOPIFY
+====================================================
+
+1️⃣ PRODUCT TITLE:
+${generatedSEO.seoTitle}
+
+====================================================
+
+2️⃣ META TITLE:
+${generatedSEO.metaTitle}
+
+====================================================
+
+3️⃣ META DESCRIPTION:
+${generatedSEO.metaDescription}
+
+====================================================
+
+4️⃣ SEO KEYWORDS:
+${generatedSEO.keywords.map((kw, idx) => `- ${kw}`).join('\n')}
+
+====================================================
+
+5️⃣ PRODUCT DESCRIPTION:
+${generatedSEO.seoDescription.replace(/<[^>]*>/g, '')}
+
+====================================================
+
+APPLY TO ALL SHOPIFY FIELDS
+`;
+
+    try {
+      await navigator.clipboard.writeText(shopifyReadyContent);
+      toast({
+        title: "Ready for Shopify!",
+        description: "All SEO content copied in Shopify-ready format. Paste directly into your Shopify product fields.",
+        duration: 5000,
+      });
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy to clipboard",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -720,7 +773,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div>
                             <h3 className="text-sm font-semibold text-primary">Product Description</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 150-300 words</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 150-300 words, Title bolded 3-4x</p>
                           </div>
                           <Button
                             variant="ghost"
@@ -736,7 +789,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                           data-testid="text-description"
                           dangerouslySetInnerHTML={{ 
                             __html: DOMPurify.sanitize(generatedSEO.seoDescription, {
-                              ALLOWED_TAGS: ['strong', 'b', 'br', 'p'],
+                              ALLOWED_TAGS: ['strong', 'b', 'br', 'p', 'ul', 'li'],
                               ALLOWED_ATTR: []
                             })
                           }}
@@ -766,6 +819,32 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                                 <div className="flex items-center gap-1 text-yellow-400">
                                   <AlertCircle className="w-4 h-4" />
                                   <span>Too long (need 150-300 words)</span>
+                                </div>
+                              );
+                            }
+                          })()}
+                          {(() => {
+                            const strongMatches = generatedSEO.seoDescription.match(/<strong>.*?<\/strong>/gi) || [];
+                            const boldCount = strongMatches.length;
+                            if (boldCount >= 3 && boldCount <= 4) {
+                              return (
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Title bolded {boldCount}x</span>
+                                </div>
+                              );
+                            } else if (boldCount < 3) {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Title bolded {boldCount}x (need 3-4x)</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Title bolded {boldCount}x (need 3-4x)</span>
                                 </div>
                               );
                             }
@@ -932,6 +1011,26 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       </div>
                     </TabsContent>
                   </Tabs>
+              </DashboardCard>
+            )}
+
+            {/* Apply to All Shopify Fields Button */}
+            {generatedSEO && (
+              <DashboardCard 
+                testId="card-apply-all"
+                className="animate-in fade-in-50 slide-in-from-bottom-4 duration-600"
+              >
+                <Button
+                  onClick={handleApplyToShopify}
+                  className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 hover:shadow-2xl hover:shadow-green-600/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  data-testid="button-apply-shopify"
+                >
+                  <ClipboardCheck className="w-5 h-5 mr-2" />
+                  Apply to All Shopify Fields
+                </Button>
+                <p className="text-center text-xs text-slate-400 mt-3">
+                  Copies all generated content to clipboard in Shopify-ready format
+                </p>
               </DashboardCard>
             )}
 

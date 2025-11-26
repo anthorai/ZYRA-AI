@@ -198,7 +198,7 @@ export async function generateUnifiedSEO(
       
       // Validate formatting didn't break anything
       const { validatePostFormatting } = await import('./seo-output-validator');
-      const isValid = validatePostFormatting(enhancedOutput);
+      const isValid = validatePostFormatting(enhancedOutput as unknown as Parameters<typeof validatePostFormatting>[0]);
       if (!isValid) {
         console.warn('[SEO Engine] Post-formatting validation failed - some fields may be incomplete');
       }
@@ -251,10 +251,10 @@ export async function generateSEOVariants(
 }
 
 /**
- * Build the comprehensive SEO generation prompt
+ * Build the comprehensive SEO generation prompt with STRICT STRUCTURE
  */
 function buildUnifiedSEOPrompt(input: SEOGenerationInput): string {
-  let prompt = `Generate comprehensive, high-quality SEO content for this product:
+  let prompt = `Generate comprehensive, high-quality SEO content for this Shopify product using the EXACT STRICT STRUCTURE below:
 
 **PRODUCT INFORMATION**
 Product Name: ${input.productName}
@@ -295,70 +295,71 @@ Use Case: ${input.imageAnalysis.useCase}
 `;
   }
 
-  prompt += `\n**GOLDEN SEO FORMULA - GENERATE ALL OF THE FOLLOWING:**
+  prompt += `
 
-1. **SEO Title** (8-12 words): Keyword-rich, click-worthy title optimized for search engines
-   - Must be exactly 8-12 words
-   - Front-load primary keyword
-   - Include power words
-   - Create curiosity or urgency
+====================================================
+🔷 STRICT SEO GENERATION FORMAT - FOLLOW EXACTLY
+====================================================
 
-2. **Full Product Description** (150-300 words): Structured, persuasive description with:
-   - **IMPORTANT: Bold the product name using <strong>Product Name</strong> tags in the opening sentence**
-   - Compelling opening that highlights main benefit (include bold product name here)
-   - Feature list with benefits (not just features)
-   - Use case scenarios and transformations
-   - Natural keyword integration (avoid keyword stuffing)
-   - Clear call to action
-   - Scannable format with short paragraphs
+1️⃣ PRODUCT TITLE (seoTitle field)
+- Length: EXACTLY 8-12 WORDS (count carefully!)
+- Include main keyword at the BEGINNING
+- Human-friendly, not keyword-stuffed
+- Create curiosity or highlight key benefit
 
-3. **Meta Title** (50-60 characters): Optimized for search result previews
-   - Exactly 50-60 characters
-   - Include brand differentiator
-   - Action-oriented language
+2️⃣ META TITLE (metaTitle field)
+- Length: EXACTLY 50-60 CHARACTERS (count precisely!)
+- Must contain main keyword
+- Include brand differentiator if space allows
+- Action-oriented language
 
-4. **Meta Description** (130-150 characters): Compelling preview text for search results
-   - Exactly 130-150 characters
-   - Focus on unique value proposition
-   - Include primary keyword naturally
-   - Create urgency or curiosity
-   - End with soft CTA
+3️⃣ META DESCRIPTION (metaDescription field)
+- Length: EXACTLY 130-150 CHARACTERS (count precisely!)
+- Include emotional hook + keyword + benefit
+- Create urgency or curiosity
+- End with soft CTA
 
-5. **SEO Keywords** (5-10 keywords): Most relevant, high-value keywords
-   - Exactly 5-10 keywords
-   - Mix of short-tail and long-tail
-   - Include buyer intent keywords
-   - Consider search volume and competition
+4️⃣ SEO KEYWORDS (keywords field)
+- Total: 5-10 keywords
+- Mix of primary, secondary, and long-tail keywords
+- Include buyer intent keywords (buy, best, review, shop)
 
-6. **Shopify Tags** (10-15 tags): Practical tags for Shopify categorization
-   - Product type, use case, features
-   - Season, occasion if relevant
+5️⃣ PRODUCT DESCRIPTION (seoDescription field)
+- Length: EXACTLY 150-300 WORDS (count precisely!)
+- **CRITICAL: Include the EXACT Product Title 3-4 TIMES throughout**
+- **Every time the product title appears → wrap it in <strong>Product Title</strong> tags**
+- Insert SEO keywords naturally throughout
+- **Insert Google ranking tags related to the product category**
+- MUST follow this EXACT structure:
+  
+  STRUCTURE:
+  • 1 intro paragraph (2-3 sentences, include <strong>Product Name</strong> here)
+  • 3-5 bullet points of features/benefits (use • character, include <strong>Product Name</strong> in 1-2 bullets)
+  • 1 closing paragraph (2-3 sentences, include <strong>Product Name</strong> here, end with CTA)
 
-7. **Search Intent**: Primary intent (commercial, informational, navigational, or transactional)
-
-8. **Suggested Keywords** (5-7): Additional high-value keywords to consider for future optimization
-
-9. **Competitor Gaps** (3-5): Opportunities competitors are missing
+6️⃣ SHOPIFY TAGS (shopifyTags field)
+- 10-15 tags for Shopify categorization
+- Include: product type, category, key features, use cases
+- Include Google-ranking related tags for the product category
 
 **QUALITY REQUIREMENTS:**
 - Natural, conversational tone (no robotic AI language)
 - Clear value propositions
 - Benefit-focused (not just feature lists)
-- Scannable format
 - SEO-optimized but human-readable
 - Action-oriented CTAs
 - No keyword stuffing
 - Professional yet engaging
-- **CRITICAL: The product name must appear in <strong> tags in the description opening**
+- **MANDATORY: Product title must appear EXACTLY 3-4 times in description, always in <strong> tags**
 
 Respond with JSON in this exact format:
 {
-  "seoTitle": "your seo title (8-12 words)",
-  "seoDescription": "your full product description with <strong>Product Name</strong> bolded in opening (150-300 words)",
-  "metaTitle": "your meta title (50-60 chars)",
-  "metaDescription": "your meta description (130-150 chars)",
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "shopifyTags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "seoTitle": "your seo title (EXACTLY 8-12 words)",
+  "seoDescription": "your full product description with <strong>Product Name</strong> appearing 3-4 times (EXACTLY 150-300 words, structured as intro paragraph + 3-5 bullets + closing paragraph)",
+  "metaTitle": "your meta title (EXACTLY 50-60 chars)",
+  "metaDescription": "your meta description (EXACTLY 130-150 chars)",
+  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7"],
+  "shopifyTags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10"],
   "searchIntent": "commercial",
   "suggestedKeywords": ["keyword8", "keyword9", "keyword10"],
   "competitorGaps": ["gap1", "gap2", "gap3"]
@@ -650,7 +651,7 @@ function ensureShopifyFormatting(description: string): string {
   formatted = formatted.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
   
   // Wrap consecutive <li> tags in <ul>
-  formatted = formatted.replace(/(<li>.*?<\/li>\s*)+/gs, (match) => {
+  formatted = formatted.replace(/(<li>[\s\S]*?<\/li>\s*)+/g, (match) => {
     return `<ul>\n${match}</ul>\n`;
   });
   

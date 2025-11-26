@@ -12,9 +12,9 @@ import { z } from 'zod';
  */
 export const seoOutputSchema = z.object({
   // Core SEO Fields (required with defaults)
-  seoTitle: z.string().min(1).max(65).default('Premium Product'),
-  seoDescription: z.string().min(50).max(500).default('High-quality product description'),
-  metaTitle: z.string().min(1).max(65).default(''),
+  seoTitle: z.string().min(1).max(100).default('Premium Product'),
+  seoDescription: z.string().min(50).max(3000).default('High-quality product description'),
+  metaTitle: z.string().min(1).max(70).default(''),
   metaDescription: z.string().min(50).max(165).default(''),
   
   // Keywords (array with minimum requirements)
