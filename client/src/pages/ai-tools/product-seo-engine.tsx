@@ -34,11 +34,14 @@ import {
   Trophy,
   Users,
   CheckCheck,
-  ClipboardCheck
+  ClipboardCheck,
+  Upload,
+  Check
 } from "lucide-react";
 
 interface Product {
   id: string;
+  shopifyId?: string;
   name: string;
   description?: string;
   features?: string;
@@ -201,6 +204,94 @@ export default function ProductSeoEngine() {
     },
   });
 
+  // State to track which field is being applied
+  const [applyingField, setApplyingField] = useState<string | null>(null);
+  const [appliedFields, setAppliedFields] = useState<Set<string>>(new Set());
+
+  // Apply SEO to Shopify mutation
+  const applyToShopifyMutation = useMutation({
+    mutationFn: async (content: { 
+      description?: string; 
+      seoTitle?: string; 
+      metaDescription?: string;
+      fieldName?: string;
+    }) => {
+      if (!selectedProduct?.id) throw new Error("No product selected");
+      
+      const response = await apiRequest("POST", `/api/shopify/publish/${selectedProduct.id}`, {
+        content: {
+          description: content.description,
+          seoTitle: content.seoTitle,
+          metaDescription: content.metaDescription,
+        }
+      });
+      return { ...(await response.json()), fieldName: content.fieldName };
+    },
+    onSuccess: (data) => {
+      if (data.fieldName) {
+        setAppliedFields(prev => new Set(prev).add(data.fieldName));
+      }
+      toast({
+        title: "Applied to Shopify!",
+        description: data.fieldName 
+          ? `${data.fieldName} has been updated on your Shopify store.`
+          : "All SEO content has been published to your Shopify store.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Apply Failed",
+        description: error.message || "Failed to apply content to Shopify. Make sure your store is connected.",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setApplyingField(null);
+    },
+  });
+
+  // Handle applying individual fields to Shopify
+  const handleApplyField = async (fieldName: string, content: { 
+    description?: string; 
+    seoTitle?: string; 
+    metaDescription?: string 
+  }) => {
+    if (!selectedProduct?.shopifyId) {
+      toast({
+        title: "Not Connected to Shopify",
+        description: "This product is not linked to a Shopify store.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setApplyingField(fieldName);
+    applyToShopifyMutation.mutate({ ...content, fieldName });
+  };
+
+  // Handle applying all fields to Shopify
+  const handleApplyAllToShopify = async () => {
+    if (!generatedSEO || !selectedProduct?.shopifyId) {
+      toast({
+        title: "Cannot Apply",
+        description: selectedProduct?.shopifyId 
+          ? "No SEO content generated yet." 
+          : "This product is not linked to a Shopify store.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setApplyingField('all');
+    applyToShopifyMutation.mutate({
+      description: generatedSEO.seoDescription,
+      seoTitle: generatedSEO.metaTitle,
+      metaDescription: generatedSEO.metaDescription,
+      fieldName: 'All Fields',
+    });
+  };
+
   const handleOptimize = async () => {
     if (!selectedProduct) {
       toast({
@@ -211,9 +302,10 @@ export default function ProductSeoEngine() {
       return;
     }
 
-    // Clear previous results
+    // Clear previous results and reset applied fields
     setGeneratedSEO(null);
     setSerpAnalysis(null);
+    setAppliedFields(new Set());
 
     // If competitive mode, try to fetch SERP data first
     if (optimizationMode === 'competitive') {
@@ -298,56 +390,6 @@ Keywords: ${generatedSEO.keywords.join(", ")}
     });
   };
 
-  const handleApplyToShopify = async () => {
-    if (!generatedSEO) return;
-    
-    const shopifyReadyContent = `====================================================
-PRODUCT SEO CONTENT - READY FOR SHOPIFY
-====================================================
-
-1️⃣ PRODUCT TITLE:
-${generatedSEO.seoTitle}
-
-====================================================
-
-2️⃣ META TITLE:
-${generatedSEO.metaTitle}
-
-====================================================
-
-3️⃣ META DESCRIPTION:
-${generatedSEO.metaDescription}
-
-====================================================
-
-4️⃣ SEO KEYWORDS:
-${generatedSEO.keywords.map((kw, idx) => `- ${kw}`).join('\n')}
-
-====================================================
-
-5️⃣ PRODUCT DESCRIPTION:
-${generatedSEO.seoDescription.replace(/<[^>]*>/g, '')}
-
-====================================================
-
-APPLY TO ALL SHOPIFY FIELDS
-`;
-
-    try {
-      await navigator.clipboard.writeText(shopifyReadyContent);
-      toast({
-        title: "Ready for Shopify!",
-        description: "All SEO content copied in Shopify-ready format. Paste directly into your Shopify product fields.",
-        duration: 5000,
-      });
-    } catch (error) {
-      toast({
-        title: "Copy Failed",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <PageShell
@@ -725,14 +767,32 @@ APPLY TO ALL SHOPIFY FIELDS
                             <h3 className="text-sm font-semibold text-primary">SEO Title</h3>
                             <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 8-12 words</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopy(generatedSEO.seoTitle, "SEO Title")}
-                            data-testid="button-copy-seo-title"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(generatedSEO.seoTitle, "SEO Title")}
+                              data-testid="button-copy-seo-title"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant={appliedFields.has('SEO Title') ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleApplyField('SEO Title', { seoTitle: generatedSEO.metaTitle })}
+                              disabled={applyingField === 'SEO Title' || !selectedProduct?.shopifyId}
+                              data-testid="button-apply-seo-title"
+                              className={appliedFields.has('SEO Title') ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {applyingField === 'SEO Title' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : appliedFields.has('SEO Title') ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-white text-lg leading-relaxed font-medium" data-testid="text-seo-title">
                           {generatedSEO.seoTitle}
@@ -775,14 +835,32 @@ APPLY TO ALL SHOPIFY FIELDS
                             <h3 className="text-sm font-semibold text-primary">Product Description</h3>
                             <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 150-300 words, Title bolded 3-4x</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopy(generatedSEO.seoDescription.replace(/<[^>]*>/g, ''), "Description")}
-                            data-testid="button-copy-description"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(generatedSEO.seoDescription.replace(/<[^>]*>/g, ''), "Description")}
+                              data-testid="button-copy-description"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant={appliedFields.has('Description') ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleApplyField('Description', { description: generatedSEO.seoDescription })}
+                              disabled={applyingField === 'Description' || !selectedProduct?.shopifyId}
+                              data-testid="button-apply-description"
+                              className={appliedFields.has('Description') ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {applyingField === 'Description' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : appliedFields.has('Description') ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                         <div 
                           className="text-slate-200 leading-relaxed prose prose-invert prose-sm max-w-none [&_strong]:text-primary [&_strong]:font-bold" 
@@ -860,14 +938,32 @@ APPLY TO ALL SHOPIFY FIELDS
                             <h3 className="text-sm font-semibold text-primary">Meta Title</h3>
                             <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 50-60 characters</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopy(generatedSEO.metaTitle, "Meta Title")}
-                            data-testid="button-copy-meta-title"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(generatedSEO.metaTitle, "Meta Title")}
+                              data-testid="button-copy-meta-title"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant={appliedFields.has('Meta Title') ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleApplyField('Meta Title', { seoTitle: generatedSEO.metaTitle })}
+                              disabled={applyingField === 'Meta Title' || !selectedProduct?.shopifyId}
+                              data-testid="button-apply-meta-title"
+                              className={appliedFields.has('Meta Title') ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {applyingField === 'Meta Title' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : appliedFields.has('Meta Title') ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-white text-lg leading-relaxed font-medium" data-testid="text-meta-title">
                           {generatedSEO.metaTitle}
@@ -910,14 +1006,32 @@ APPLY TO ALL SHOPIFY FIELDS
                             <h3 className="text-sm font-semibold text-primary">Meta Description</h3>
                             <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 130-150 characters</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopy(generatedSEO.metaDescription, "Meta Description")}
-                            data-testid="button-copy-meta-desc"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(generatedSEO.metaDescription, "Meta Description")}
+                              data-testid="button-copy-meta-desc"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant={appliedFields.has('Meta Description') ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleApplyField('Meta Description', { metaDescription: generatedSEO.metaDescription })}
+                              disabled={applyingField === 'Meta Description' || !selectedProduct?.shopifyId}
+                              data-testid="button-apply-meta-desc"
+                              className={appliedFields.has('Meta Description') ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {applyingField === 'Meta Description' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : appliedFields.has('Meta Description') ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-slate-200 leading-relaxed" data-testid="text-meta-desc">
                           {generatedSEO.metaDescription}
@@ -1021,15 +1135,33 @@ APPLY TO ALL SHOPIFY FIELDS
                 className="animate-in fade-in-50 slide-in-from-bottom-4 duration-600"
               >
                 <Button
-                  onClick={handleApplyToShopify}
-                  className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 hover:shadow-2xl hover:shadow-green-600/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  onClick={handleApplyAllToShopify}
+                  disabled={applyingField === 'all' || !selectedProduct?.shopifyId}
+                  className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 hover:shadow-2xl hover:shadow-green-600/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="button-apply-shopify"
                 >
-                  <ClipboardCheck className="w-5 h-5 mr-2" />
-                  Apply to All Shopify Fields
+                  {applyingField === 'all' ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Applying to Shopify...
+                    </>
+                  ) : appliedFields.has('All Fields') ? (
+                    <>
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Applied to Shopify
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 mr-2" />
+                      Apply All to Shopify Product
+                    </>
+                  )}
                 </Button>
                 <p className="text-center text-xs text-slate-400 mt-3">
-                  Copies all generated content to clipboard in Shopify-ready format
+                  {!selectedProduct?.shopifyId 
+                    ? "This product is not linked to Shopify. Import products from your Shopify store first."
+                    : "Directly updates your Shopify product with all generated SEO content"
+                  }
                 </p>
               </DashboardCard>
             )}
