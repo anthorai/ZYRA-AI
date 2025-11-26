@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Shield, Lock } from "lucide-react";
+import { SiLinkedin, SiInstagram, SiX } from "react-icons/si";
 import zyraLogo from "@assets/zyra logo_1759205684268.png";
 
 interface FooterProps {
@@ -66,6 +67,36 @@ export default function Footer({ className = "" }: FooterProps) {
                     AI-powered optimization
                   </span>
                 </div>
+              </div>
+              {/* Social Media Icons */}
+              <div className="flex items-center gap-3 mt-4 pl-2">
+                <a 
+                  href="https://linkedin.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
+                  data-testid="link-social-linkedin"
+                >
+                  <SiLinkedin className="w-4 h-4" />
+                </a>
+                <a 
+                  href="https://instagram.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
+                  data-testid="link-social-instagram"
+                >
+                  <SiInstagram className="w-4 h-4" />
+                </a>
+                <a 
+                  href="https://x.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
+                  data-testid="link-social-x"
+                >
+                  <SiX className="w-4 h-4" />
+                </a>
               </div>
             </div>
 
