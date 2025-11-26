@@ -2408,30 +2408,24 @@ Respond with JSON:
 
       console.log('[Product SEO Engine] Using Wave 1 Orchestration Service for:', productName);
 
-      // 🎯 WAVE 1: Use the real orchestration service (same as /api/seo/generate)
-      const { generateWithOrchestration } = await import('./lib/seo-orchestration-service');
+      // 🎯 WAVE 1: Use the real orchestration service
+      const { orchestrateSEOGeneration } = await import('./lib/seo-orchestration-service');
 
       // Generate SEO with full Wave 1 orchestration
-      const result = await generateWithOrchestration({
+      const result = await orchestrateSEOGeneration({
         userId,
-        productInput: {
-          productName,
-          productDescription: keyFeatures || 'Premium quality product',
-          category,
-          price: price ? parseFloat(price) : undefined,
-          targetAudience,
-        },
+        productName,
+        keyFeatures: keyFeatures || 'Premium quality product',
+        category,
+        price: price ? parseFloat(price) : undefined,
+        targetAudience,
         options: {
-          autoDetectFramework: true, // Let AI choose best framework
-          enableBrandDNA: true, // Use brand DNA if available
-          enableSerpPatterns: false,
-          shopifyHtmlFormatting: true,
-          preferredModel: 'gpt-4o-mini',
-          creativityLevel: 70,
+          enableFrameworkAutoSelection: true,
+          enableBrandDNA: true,
+          enableSERPAnalysis: false,
+          shopifyFormatting: true,
         },
-        openaiClient: openai,
-        db,
-      });
+      }, openai, db);
 
       // Track SEO usage
       await trackSEOUsage(userId);
@@ -2441,32 +2435,32 @@ Respond with JSON:
         userId,
         generationType: 'unified_product_seo',
         inputData: { productName, keyFeatures, targetAudience, category },
-        outputData: result.seoOutput,
-        brandVoice: result.frameworkUsed || 'auto',
+        outputData: result,
+        brandVoice: result.recommendedFramework?.name || 'auto',
         tokensUsed: 800, // Estimated
-        model: result.seoOutput.aiModel || 'gpt-4o-mini'
+        model: (result as any).aiModel || 'gpt-4o-mini'
       });
 
       // Send notification
       await NotificationService.notifyPerformanceOptimizationComplete(
         userId,
         productName,
-        `SEO Score: ${result.seoOutput.seoScore}/100 | Framework: ${result.frameworkUsed}`
+        `SEO Score: ${result.seoScore}/100 | Framework: ${result.recommendedFramework?.name || 'auto'}`
       );
 
       // Return the Wave 1 output (matching the UI's expected format)
       res.json({
-        seoTitle: result.seoOutput.seoTitle,
-        seoDescription: result.seoOutput.seoDescription,
-        metaTitle: result.seoOutput.metaTitle,
-        metaDescription: result.seoOutput.metaDescription,
-        keywords: result.seoOutput.keywords,
-        seoScore: result.seoOutput.seoScore,
-        searchIntent: result.seoOutput.searchIntent,
-        suggestedKeywords: result.seoOutput.suggestedKeywords,
-        frameworkUsed: result.frameworkUsed,
-        brandVoiceMatchScore: result.seoOutput.brandVoiceMatchScore,
-        conversionScore: result.seoOutput.conversionScore,
+        seoTitle: result.seoTitle,
+        seoDescription: result.seoDescription,
+        metaTitle: result.metaTitle,
+        metaDescription: result.metaDescription,
+        keywords: result.keywords,
+        seoScore: result.seoScore,
+        searchIntent: result.searchIntent,
+        suggestedKeywords: result.suggestedKeywords,
+        frameworkUsed: result.recommendedFramework?.name,
+        brandVoiceMatchScore: (result as any).brandVoiceMatchScore,
+        conversionScore: (result as any).conversionScore,
       });
     } catch (error: any) {
       console.error("[Product SEO Engine] Error:", error);
