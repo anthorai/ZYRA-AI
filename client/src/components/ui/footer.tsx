@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { Shield, Lock } from "lucide-react";
 import zyraLogo from "@assets/zyra logo_1759205684268.png";
 
 interface FooterProps {
@@ -8,9 +9,19 @@ interface FooterProps {
 export default function Footer({ className = "" }: FooterProps) {
   const [location, setLocation] = useLocation();
   
-  const navigationLinks = [
-    { label: "About", href: "/about", testId: "link-footer-about", id: "about" },
-    { label: "Privacy Policy", href: "/privacy-policy", testId: "link-footer-privacy", id: "privacy" },
+  const companyLinks = [
+    { label: "About", href: "/about", testId: "link-footer-about" },
+    { label: "Contact", href: "/contact", testId: "link-footer-contact" },
+  ];
+
+  const resourceLinks = [
+    { label: "Blog", href: "/blog", testId: "link-footer-blog" },
+    { label: "Help Center", href: "/help", testId: "link-footer-help" },
+  ];
+
+  const legalLinks = [
+    { label: "Privacy Policy", href: "/privacy-policy", testId: "link-footer-privacy" },
+    { label: "Terms of Service", href: "/terms", testId: "link-footer-terms" },
   ];
 
   const handleLogoClick = (e: React.MouseEvent) => {
@@ -33,64 +44,107 @@ export default function Footer({ className = "" }: FooterProps) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Desktop Layout */}
-        <div className="hidden md:flex items-center justify-between py-6">
-          {/* Logo & Zyra AI Text - Left Side */}
-          <div className="flex-shrink-0">
-            <div
-              onClick={handleLogoClick}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group"
-              data-testid="link-footer-logo"
-            >
-              <img 
-                src={zyraLogo} 
-                alt="Zyra AI Logo" 
-                className="w-8 h-8 rounded-lg"
-              />
-              <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300">
-                Zyra AI
-              </span>
+        <div className="hidden md:block py-8">
+          <div className="grid grid-cols-4 gap-8 mb-8">
+            {/* Logo & Brand */}
+            <div>
+              <div
+                onClick={handleLogoClick}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group w-fit"
+                data-testid="link-footer-logo"
+              >
+                <img 
+                  src={zyraLogo} 
+                  alt="Zyra AI Logo" 
+                  className="w-8 h-8 rounded-lg"
+                />
+                <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300">
+                  Zyra AI
+                </span>
+              </div>
+              <p className="text-[#EAEAEA]/60 text-sm mt-3 pl-3">
+                AI-powered Shopify optimization platform
+              </p>
+            </div>
+
+            {/* Company Links */}
+            <div>
+              <h3 className="text-[#EAEAEA] font-semibold mb-4">Company</h3>
+              <ul className="space-y-2">
+                {companyLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>
+                      <span
+                        className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-sm font-medium transition-colors duration-300 cursor-pointer"
+                        data-testid={link.testId}
+                      >
+                        {link.label}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Resources Links */}
+            <div>
+              <h3 className="text-[#EAEAEA] font-semibold mb-4">Resources</h3>
+              <ul className="space-y-2">
+                {resourceLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>
+                      <span
+                        className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-sm font-medium transition-colors duration-300 cursor-pointer"
+                        data-testid={link.testId}
+                      >
+                        {link.label}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal Links */}
+            <div>
+              <h3 className="text-[#EAEAEA] font-semibold mb-4">Legal</h3>
+              <ul className="space-y-2">
+                {legalLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>
+                      <span
+                        className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-sm font-medium transition-colors duration-300 cursor-pointer"
+                        data-testid={link.testId}
+                      >
+                        {link.label}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          {/* Center Links */}
-          <div className="flex items-center gap-4">
-            {/* About Link */}
-            <Link href={navigationLinks[0].href}>
-              <span
-                className="text-[#EAEAEA] hover:text-[#00F0FF] text-sm font-medium font-sans px-3 py-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer"
-                data-testid={navigationLinks[0].testId}
-              >
-                {navigationLinks[0].label}
-              </span>
-            </Link>
-
-            {/* Privacy Policy Link */}
-            <Link href={navigationLinks[1].href}>
-              <span
-                className="text-[#EAEAEA] hover:text-[#00F0FF] text-sm font-medium font-sans px-3 py-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer"
-                data-testid={navigationLinks[1].testId}
-              >
-                {navigationLinks[1].label}
-              </span>
-            </Link>
-          </div>
-
-          {/* Right Side */}
-          <div className="flex items-center gap-4">
-            {/* Powered by */}
-            <div className="flex-shrink-0">
-              <span
-                className="text-[#EAEAEA] text-sm font-medium font-sans flex items-center gap-2"
-                data-testid="text-powered-by"
-              >
-                Powered by Zyra AI
-              </span>
+          {/* Bottom Section with Copyright and Trust Badges */}
+          <div className="border-t border-[#00F0FF]/20 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[#EAEAEA]/60 text-sm" data-testid="text-copyright">
+              © 2025 Zyra AI. All rights reserved.
+            </p>
+            <div className="flex items-center gap-6 text-sm text-[#EAEAEA]/60">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[#00F0FF]" />
+                <span>SOC 2 Certified</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#00F0FF]" />
+                <span>GDPR Compliant</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Layout - Horizontal Compact */}
-        <div className="md:hidden py-3 space-y-2">
+        {/* Mobile Layout */}
+        <div className="md:hidden py-6 space-y-6">
           {/* Logo & Zyra AI Text */}
           <div className="text-center">
             <div
@@ -109,47 +163,70 @@ export default function Footer({ className = "" }: FooterProps) {
             </div>
           </div>
 
-          {/* All Footer Items - Single Row */}
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
-            {/* About Link */}
-            <Link href={navigationLinks[0].href}>
-              <span
-                className="text-[#EAEAEA] hover:text-[#00F0FF] font-medium font-sans px-2 py-1 rounded transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer"
-                data-testid={`${navigationLinks[0].testId}-mobile`}
-              >
-                {navigationLinks[0].label}
-              </span>
-            </Link>
-
-            <span className="text-[#00F0FF]/30">•</span>
-
-            {/* Privacy Policy Link */}
-            <Link href={navigationLinks[1].href}>
-              <span
-                className="text-[#EAEAEA] hover:text-[#00F0FF] font-medium font-sans px-2 py-1 rounded transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer"
-                data-testid={`${navigationLinks[1].testId}-mobile`}
-              >
-                {navigationLinks[1].label}
-              </span>
-            </Link>
-
-            <span className="text-[#00F0FF]/30">•</span>
-
-            {/* Powered by */}
-            <span
-              className="text-[#EAEAEA] font-medium font-sans inline-flex items-center gap-1"
-              data-testid="text-powered-by-mobile"
-            >
-              Powered by Zyra AI
-            </span>
+          {/* Links Grid - 2 columns on mobile */}
+          <div className="grid grid-cols-2 gap-6 text-center">
+            <div>
+              <h3 className="text-[#EAEAEA] font-semibold text-sm mb-3">Company</h3>
+              <ul className="space-y-2">
+                {companyLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>
+                      <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-xs transition-colors" data-testid={`${link.testId}-mobile`}>
+                        {link.label}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-[#EAEAEA] font-semibold text-sm mb-3">Resources</h3>
+              <ul className="space-y-2">
+                {resourceLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>
+                      <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-xs transition-colors" data-testid={`${link.testId}-mobile`}>
+                        {link.label}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
 
-        {/* Copyright - Bottom Center */}
-        <div className="border-t border-[#00F0FF]/20 py-4">
-          <p className="text-center text-[#EAEAEA]/60 text-sm font-sans" data-testid="text-copyright">
-            © 2024 Zyra AI. All rights reserved.
-          </p>
+          {/* Legal Links - horizontal on mobile */}
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+            {legalLinks.map((link, index) => (
+              <span key={link.href} className="flex items-center gap-4">
+                <Link href={link.href}>
+                  <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] transition-colors" data-testid={`${link.testId}-mobile`}>
+                    {link.label}
+                  </span>
+                </Link>
+                {index < legalLinks.length - 1 && <span className="text-[#00F0FF]/30">•</span>}
+              </span>
+            ))}
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex items-center justify-center gap-4 text-xs text-[#EAEAEA]/60">
+            <div className="flex items-center gap-1">
+              <Shield className="w-3 h-3 text-[#00F0FF]" />
+              <span>SOC 2</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Lock className="w-3 h-3 text-[#00F0FF]" />
+              <span>GDPR</span>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="border-t border-[#00F0FF]/20 pt-4">
+            <p className="text-center text-[#EAEAEA]/60 text-xs" data-testid="text-copyright-mobile">
+              © 2025 Zyra AI. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
