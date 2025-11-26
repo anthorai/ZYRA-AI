@@ -68,36 +68,6 @@ export default function Footer({ className = "" }: FooterProps) {
                   </span>
                 </div>
               </div>
-              {/* Social Media Icons */}
-              <div className="flex items-center gap-3 mt-4 pl-2">
-                <a 
-                  href="https://linkedin.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
-                  data-testid="link-social-linkedin"
-                >
-                  <SiLinkedin className="w-4 h-4" />
-                </a>
-                <a 
-                  href="https://instagram.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
-                  data-testid="link-social-instagram"
-                >
-                  <SiInstagram className="w-4 h-4" />
-                </a>
-                <a 
-                  href="https://x.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
-                  data-testid="link-social-x"
-                >
-                  <SiX className="w-4 h-4" />
-                </a>
-              </div>
             </div>
 
             {/* Company Links */}
@@ -158,11 +128,42 @@ export default function Footer({ className = "" }: FooterProps) {
             </div>
           </div>
 
-          {/* Bottom Section with Copyright and Trust Badges */}
+          {/* Bottom Section with Copyright, Social Media, and Trust Badges */}
           <div className="border-t border-[#00F0FF]/20 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-[#EAEAEA]/60 text-sm" data-testid="text-copyright">
               © 2025 Zyra AI. All rights reserved.
             </p>
+            {/* Social Media Icons - Center */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
+                data-testid="link-social-linkedin"
+              >
+                <SiLinkedin className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
+                data-testid="link-social-instagram"
+              >
+                <SiInstagram className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://x.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#EAEAEA]/60 hover:text-[#00F0FF] transition-colors duration-300"
+                data-testid="link-social-x"
+              >
+                <SiX className="w-5 h-5" />
+              </a>
+            </div>
+            {/* Trust Badges - Right */}
             <div className="flex items-center gap-6 text-sm text-[#EAEAEA]/60">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-[#00F0FF]" />
