@@ -295,16 +295,17 @@ Use Case: ${input.imageAnalysis.useCase}
 `;
   }
 
-  prompt += `\n**GENERATE ALL OF THE FOLLOWING:**
+  prompt += `\n**GOLDEN SEO FORMULA - GENERATE ALL OF THE FOLLOWING:**
 
-1. **SEO Title** (55-60 characters): Keyword-rich, click-worthy title optimized for search engines
+1. **SEO Title** (8-12 words): Keyword-rich, click-worthy title optimized for search engines
+   - Must be exactly 8-12 words
    - Front-load primary keyword
    - Include power words
    - Create curiosity or urgency
-   - Stay within character limit
 
-2. **Full Product Description** (250-350 words): Structured, persuasive description with:
-   - Compelling opening that highlights main benefit
+2. **Full Product Description** (150-300 words): Structured, persuasive description with:
+   - **IMPORTANT: Bold the product name using <strong>Product Name</strong> tags in the opening sentence**
+   - Compelling opening that highlights main benefit (include bold product name here)
    - Feature list with benefits (not just features)
    - Use case scenarios and transformations
    - Natural keyword integration (avoid keyword stuffing)
@@ -312,16 +313,19 @@ Use Case: ${input.imageAnalysis.useCase}
    - Scannable format with short paragraphs
 
 3. **Meta Title** (50-60 characters): Optimized for search result previews
+   - Exactly 50-60 characters
    - Include brand differentiator
    - Action-oriented language
 
-4. **Meta Description** (150-160 characters): Compelling preview text for search results
+4. **Meta Description** (130-150 characters): Compelling preview text for search results
+   - Exactly 130-150 characters
    - Focus on unique value proposition
    - Include primary keyword naturally
    - Create urgency or curiosity
    - End with soft CTA
 
-5. **SEO Keywords** (7-10 keywords): Most relevant, high-value keywords
+5. **SEO Keywords** (5-10 keywords): Most relevant, high-value keywords
+   - Exactly 5-10 keywords
    - Mix of short-tail and long-tail
    - Include buyer intent keywords
    - Consider search volume and competition
@@ -345,14 +349,15 @@ Use Case: ${input.imageAnalysis.useCase}
 - Action-oriented CTAs
 - No keyword stuffing
 - Professional yet engaging
+- **CRITICAL: The product name must appear in <strong> tags in the description opening**
 
 Respond with JSON in this exact format:
 {
-  "seoTitle": "your seo title",
-  "seoDescription": "your full product description with proper structure and formatting",
-  "metaTitle": "your meta title",
-  "metaDescription": "your meta description",
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7"],
+  "seoTitle": "your seo title (8-12 words)",
+  "seoDescription": "your full product description with <strong>Product Name</strong> bolded in opening (150-300 words)",
+  "metaTitle": "your meta title (50-60 chars)",
+  "metaDescription": "your meta description (130-150 chars)",
+  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
   "shopifyTags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "searchIntent": "commercial",
   "suggestedKeywords": ["keyword8", "keyword9", "keyword10"],

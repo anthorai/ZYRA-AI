@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
+import DOMPurify from "dompurify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -667,7 +668,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <TabsContent value="seo-title" className="space-y-4 mt-6">
                       <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-primary">SEO Title</h3>
+                          <div>
+                            <h3 className="text-sm font-semibold text-primary">SEO Title</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 8-12 words</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -680,19 +684,33 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                         <p className="text-white text-lg leading-relaxed font-medium" data-testid="text-seo-title">
                           {generatedSEO.seoTitle}
                         </p>
-                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2 text-xs text-slate-400">
-                          <span className="font-medium">{generatedSEO.seoTitle.length} characters</span>
-                          {generatedSEO.seoTitle.length <= 60 ? (
-                            <div className="flex items-center gap-1 text-green-400">
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>Optimal length</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 text-yellow-400">
-                              <AlertCircle className="w-4 h-4" />
-                              <span>Too long</span>
-                            </div>
-                          )}
+                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                          <span className="font-medium">{generatedSEO.seoTitle.split(/\s+/).filter(Boolean).length} words</span>
+                          {(() => {
+                            const wordCount = generatedSEO.seoTitle.split(/\s+/).filter(Boolean).length;
+                            if (wordCount >= 8 && wordCount <= 12) {
+                              return (
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Optimal (8-12 words)</span>
+                                </div>
+                              );
+                            } else if (wordCount < 8) {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too short (need 8-12 words)</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too long (need 8-12 words)</span>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                     </TabsContent>
@@ -700,21 +718,58 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <TabsContent value="description" className="space-y-4 mt-6">
                       <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-primary">Product Description (Full)</h3>
+                          <div>
+                            <h3 className="text-sm font-semibold text-primary">Product Description</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 150-300 words</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleCopy(generatedSEO.seoDescription, "Description")}
+                            onClick={() => handleCopy(generatedSEO.seoDescription.replace(/<[^>]*>/g, ''), "Description")}
                             data-testid="button-copy-description"
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
                         </div>
                         <div 
-                          className="text-slate-200 leading-relaxed whitespace-pre-line" 
+                          className="text-slate-200 leading-relaxed prose prose-invert prose-sm max-w-none [&_strong]:text-primary [&_strong]:font-bold" 
                           data-testid="text-description"
-                        >
-                          {generatedSEO.seoDescription}
+                          dangerouslySetInnerHTML={{ 
+                            __html: DOMPurify.sanitize(generatedSEO.seoDescription, {
+                              ALLOWED_TAGS: ['strong', 'b', 'br', 'p'],
+                              ALLOWED_ATTR: []
+                            })
+                          }}
+                        />
+                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                          <span className="font-medium">
+                            {generatedSEO.seoDescription.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length} words
+                          </span>
+                          {(() => {
+                            const wordCount = generatedSEO.seoDescription.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
+                            if (wordCount >= 150 && wordCount <= 300) {
+                              return (
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Optimal (150-300 words)</span>
+                                </div>
+                              );
+                            } else if (wordCount < 150) {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too short (need 150-300 words)</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too long (need 150-300 words)</span>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                     </TabsContent>
@@ -722,7 +777,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <TabsContent value="meta-title" className="space-y-4 mt-6">
                       <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-primary">Meta Title</h3>
+                          <div>
+                            <h3 className="text-sm font-semibold text-primary">Meta Title</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 50-60 characters</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -735,19 +793,33 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                         <p className="text-white text-lg leading-relaxed font-medium" data-testid="text-meta-title">
                           {generatedSEO.metaTitle}
                         </p>
-                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2 text-xs text-slate-400">
+                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                           <span className="font-medium">{generatedSEO.metaTitle.length} characters</span>
-                          {generatedSEO.metaTitle.length <= 60 ? (
-                            <div className="flex items-center gap-1 text-green-400">
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>Optimal length</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 text-yellow-400">
-                              <AlertCircle className="w-4 h-4" />
-                              <span>Too long</span>
-                            </div>
-                          )}
+                          {(() => {
+                            const charCount = generatedSEO.metaTitle.length;
+                            if (charCount >= 50 && charCount <= 60) {
+                              return (
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Optimal (50-60 chars)</span>
+                                </div>
+                              );
+                            } else if (charCount < 50) {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too short (need 50-60 chars)</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too long (need 50-60 chars)</span>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                     </TabsContent>
@@ -755,7 +827,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <TabsContent value="meta-desc" className="space-y-4 mt-6">
                       <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-3">
-                          <h3 className="text-sm font-semibold text-primary">Meta Description</h3>
+                          <div>
+                            <h3 className="text-sm font-semibold text-primary">Meta Description</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 130-150 characters</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -768,19 +843,33 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                         <p className="text-slate-200 leading-relaxed" data-testid="text-meta-desc">
                           {generatedSEO.metaDescription}
                         </p>
-                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-2 text-xs text-slate-400">
+                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                           <span className="font-medium">{generatedSEO.metaDescription.length} characters</span>
-                          {generatedSEO.metaDescription.length <= 160 ? (
-                            <div className="flex items-center gap-1 text-green-400">
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>Optimal length</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 text-yellow-400">
-                              <AlertCircle className="w-4 h-4" />
-                              <span>Too long</span>
-                            </div>
-                          )}
+                          {(() => {
+                            const charCount = generatedSEO.metaDescription.length;
+                            if (charCount >= 130 && charCount <= 150) {
+                              return (
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Optimal (130-150 chars)</span>
+                                </div>
+                              );
+                            } else if (charCount < 130) {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too short (need 130-150 chars)</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too long (need 130-150 chars)</span>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                     </TabsContent>
@@ -788,7 +877,10 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                     <TabsContent value="keywords" className="space-y-4 mt-6">
                       <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-4">
-                          <h3 className="text-sm font-semibold text-primary">SEO Keywords</h3>
+                          <div>
+                            <h3 className="text-sm font-semibold text-primary">SEO Keywords</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 5-10 keywords</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -808,6 +900,34 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                               {keyword}
                             </Badge>
                           ))}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                          <span className="font-medium">{generatedSEO.keywords.length} keywords</span>
+                          {(() => {
+                            const keywordCount = generatedSEO.keywords.length;
+                            if (keywordCount >= 5 && keywordCount <= 10) {
+                              return (
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  <span>Optimal (5-10 keywords)</span>
+                                </div>
+                              );
+                            } else if (keywordCount < 5) {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too few (need 5-10 keywords)</span>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-1 text-yellow-400">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span>Too many (need 5-10 keywords)</span>
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                     </TabsContent>
