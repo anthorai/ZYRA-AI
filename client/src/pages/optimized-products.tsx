@@ -188,15 +188,15 @@ function ProductCard({ product, currency }: { product: Product, currency: string
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('description');
   const optimizedCopy = product.optimizedCopy as any;
+  const originalCopy = product.originalCopy as any;
   
-  // Extract data
-  const originalDesc = stripHtmlTags(product.originalDescription || product.description || '');
-  const optimizedDesc = stripHtmlTags(optimizedCopy?.description || product.description || '');
-  const originalTitle = product.name || '';
-  const optimizedTitle = optimizedCopy?.title || optimizedCopy?.productName || originalTitle;
-  const metaTitle = optimizedCopy?.metaTitle || '';
-  const metaDescription = optimizedCopy?.metaDescription || '';
-  const keywords = optimizedCopy?.keywords || product.tags || '';
+  // Extract data - use originalCopy for pre-optimization content, optimizedCopy for AI-enhanced content
+  // originalCopy is saved when content is first published to Shopify (contains the original state)
+  const originalDesc = stripHtmlTags(originalCopy?.description || product.originalDescription || '');
+  const optimizedDesc = stripHtmlTags(optimizedCopy?.description || '');
+  const originalTitle = originalCopy?.seoTitle || product.name || '';
+  const optimizedTitle = optimizedCopy?.title || optimizedCopy?.productName || '';
+  const keywords = optimizedCopy?.keywords || '';
   
   // Get AI suggestions
   const suggestions = analyzeProduct(product);
@@ -287,7 +287,7 @@ function ProductCard({ product, currency }: { product: Product, currency: string
                 </div>
                 <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50 min-h-[120px]">
                   <p className="text-slate-400 text-sm leading-relaxed">
-                    {originalDesc || 'No original description'}
+                    {originalDesc || 'Original description not captured (product was optimized before backup was implemented)'}
                   </p>
                 </div>
               </div>
@@ -302,13 +302,13 @@ function ProductCard({ product, currency }: { product: Product, currency: string
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[120px]">
                   <p className="text-slate-200 text-sm leading-relaxed">
-                    {optimizedDesc || 'No optimized description'}
+                    {optimizedDesc || 'No AI-optimized description generated yet'}
                   </p>
                 </div>
               </div>
             </div>
             
-            {optimizedDesc.length > originalDesc.length && (
+            {optimizedDesc && originalDesc && optimizedDesc.length > originalDesc.length && (
               <div className="flex items-center gap-2 text-green-400 text-sm">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>+{optimizedDesc.length - originalDesc.length} characters added by AI</span>
@@ -325,29 +325,27 @@ function ProductCard({ product, currency }: { product: Product, currency: string
                 <h4 className="text-slate-300 font-medium text-sm">Original Title</h4>
                 <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
                   <p className="text-slate-400 text-base font-medium">
-                    {originalTitle}
+                    {originalTitle || product.name || 'No original title'}
                   </p>
-                  <p className="text-slate-500 text-xs mt-2">{originalTitle.length} characters</p>
+                  <p className="text-slate-500 text-xs mt-2">{(originalTitle || product.name || '').length} characters</p>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <h4 className="text-slate-300 font-medium text-sm">AI-Optimized Title</h4>
-                  {optimizedTitle && optimizedTitle !== originalTitle && (
-                    <Sparkles className="w-3 h-3 text-primary" />
-                  )}
+                  {optimizedTitle && <Sparkles className="w-3 h-3 text-primary" />}
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20">
                   <p className="text-slate-200 text-base font-medium">
-                    {optimizedTitle || originalTitle}
+                    {optimizedTitle || 'No AI-optimized title generated yet'}
                   </p>
-                  <p className="text-slate-400 text-xs mt-2">{(optimizedTitle || originalTitle).length} characters</p>
+                  <p className="text-slate-400 text-xs mt-2">{optimizedTitle ? optimizedTitle.length : 0} characters</p>
                 </div>
               </div>
             </div>
             
-            {optimizedTitle && optimizedTitle !== originalTitle && (
+            {optimizedTitle && originalTitle && optimizedTitle !== originalTitle && (
               <div className="flex items-center gap-2 text-green-400 text-sm">
                 <ArrowRight className="w-4 h-4" />
                 <span>Title enhanced for better SEO and clarity</span>
