@@ -338,7 +338,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                           </Badge>
                         </div>
                         <p className="text-sm text-slate-300 line-clamp-3 leading-relaxed">
-                          {selectedProduct.description || selectedProduct.features || "No description available"}
+                          {stripHtmlTags(selectedProduct.description || selectedProduct.features || "No description available")}
                         </p>
                         <div className="pt-3 border-t border-slate-700/50">
                           <span className="text-lg font-bold text-primary">
