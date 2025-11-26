@@ -14,7 +14,6 @@ import {
   ShoppingBag, 
   TrendingUp, 
   Calendar,
-  Eye,
   Edit,
   AlertCircle,
   RefreshCw,
@@ -229,22 +228,13 @@ function ProductCard({ product, currency }: { product: Product, currency: string
           <div className="flex gap-2 flex-shrink-0">
             <Button 
               size="sm" 
-              variant="outline" 
-              className="border-slate-600 text-slate-300"
-              onClick={() => setLocation(`/products/${product.id}`)}
-              data-testid={`button-view-${product.id}`}
-            >
-              <Eye className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">View</span>
-            </Button>
-            <Button 
-              size="sm" 
               className="bg-primary text-primary-foreground"
-              onClick={() => setLocation(`/products/${product.id}`)}
+              onClick={() => setLocation(`/ai-tools/product-seo-engine?productId=${product.id}`)}
               data-testid={`button-edit-${product.id}`}
             >
               <Edit className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Edit</span>
+              <span className="hidden sm:inline">Edit SEO</span>
+              <span className="sm:hidden">Edit</span>
             </Button>
           </div>
         </div>
