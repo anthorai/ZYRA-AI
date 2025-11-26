@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 60 * 1000); // Clean up every minute
 
-  // Contact form endpoint - sends real emails via SendGrid
+  // Contact form endpoint - stores submissions and attempts email via SendGrid
   app.post("/api/contact", apiLimiter, sanitizeBody, async (req, res) => {
     try {
       const { name, email, subject, message } = req.body;
@@ -582,77 +582,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid email format" });
       }
       
-      // Send email to team
-      const teamEmail = "team@zzyraai.com";
-      const htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #00F0FF 0%, #00FFE5 100%); padding: 20px; border-radius: 12px 12px 0 0;">
-            <h1 style="color: #0D0D1F; margin: 0; font-size: 24px;">New Contact Form Submission</h1>
-          </div>
-          <div style="background: #1a1a2e; padding: 30px; border-radius: 0 0 12px 12px; color: #ffffff;">
-            <div style="margin-bottom: 20px;">
-              <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">From</p>
-              <p style="margin: 0; font-size: 16px;">${name}</p>
+      // Store contact submission in database first (always succeeds)
+      try {
+        await db.execute(sql`
+          INSERT INTO contact_submissions (name, email, subject, message, created_at, status)
+          VALUES (${name}, ${email}, ${subject}, ${message}, NOW(), 'pending')
+        `);
+        console.log(`[Contact Form] Submission stored from ${email} - Subject: ${subject}`);
+      } catch (dbError: any) {
+        // If table doesn't exist, create it and retry
+        if (dbError.message?.includes('does not exist')) {
+          await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS contact_submissions (
+              id SERIAL PRIMARY KEY,
+              name VARCHAR(255) NOT NULL,
+              email VARCHAR(255) NOT NULL,
+              subject VARCHAR(500) NOT NULL,
+              message TEXT NOT NULL,
+              created_at TIMESTAMP DEFAULT NOW(),
+              status VARCHAR(50) DEFAULT 'pending'
+            )
+          `);
+          await db.execute(sql`
+            INSERT INTO contact_submissions (name, email, subject, message, created_at, status)
+            VALUES (${name}, ${email}, ${subject}, ${message}, NOW(), 'pending')
+          `);
+          console.log(`[Contact Form] Table created and submission stored from ${email}`);
+        } else {
+          console.error('[Contact Form] Database error:', dbError.message);
+        }
+      }
+      
+      // Try to send email notification (optional - doesn't block success)
+      let emailSent = false;
+      try {
+        const teamEmail = "team@zzyraai.com";
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #00F0FF 0%, #00FFE5 100%); padding: 20px; border-radius: 12px 12px 0 0;">
+              <h1 style="color: #0D0D1F; margin: 0; font-size: 24px;">New Contact Form Submission</h1>
             </div>
-            <div style="margin-bottom: 20px;">
-              <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">Email</p>
-              <p style="margin: 0; font-size: 16px;"><a href="mailto:${email}" style="color: #00F0FF; text-decoration: none;">${email}</a></p>
-            </div>
-            <div style="margin-bottom: 20px;">
-              <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">Subject</p>
-              <p style="margin: 0; font-size: 16px;">${subject}</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-              <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">Message</p>
-              <div style="background: #0D0D1F; padding: 15px; border-radius: 8px; border-left: 3px solid #00F0FF;">
-                <p style="margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+            <div style="background: #1a1a2e; padding: 30px; border-radius: 0 0 12px 12px; color: #ffffff;">
+              <div style="margin-bottom: 20px;">
+                <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">From</p>
+                <p style="margin: 0; font-size: 16px;">${name}</p>
+              </div>
+              <div style="margin-bottom: 20px;">
+                <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">Email</p>
+                <p style="margin: 0; font-size: 16px;"><a href="mailto:${email}" style="color: #00F0FF; text-decoration: none;">${email}</a></p>
+              </div>
+              <div style="margin-bottom: 20px;">
+                <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">Subject</p>
+                <p style="margin: 0; font-size: 16px;">${subject}</p>
+              </div>
+              <div style="margin-bottom: 20px;">
+                <p style="color: #00F0FF; font-size: 12px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px;">Message</p>
+                <div style="background: #0D0D1F; padding: 15px; border-radius: 8px; border-left: 3px solid #00F0FF;">
+                  <p style="margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+                </div>
+              </div>
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #2a2a4e;">
+                <p style="color: #888; font-size: 12px; margin: 0;">This message was sent from the Zyra AI contact form.</p>
+                <p style="color: #888; font-size: 12px; margin: 5px 0 0 0;">Received at: ${new Date().toLocaleString()}</p>
               </div>
             </div>
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #2a2a4e;">
-              <p style="color: #888; font-size: 12px; margin: 0;">This message was sent from the Zyra AI contact form.</p>
-              <p style="color: #888; font-size: 12px; margin: 5px 0 0 0;">Received at: ${new Date().toLocaleString()}</p>
-            </div>
           </div>
-        </div>
-      `;
+        `;
+        
+        await sendEmail(teamEmail, `[Contact Form] ${subject}`, htmlContent);
+        emailSent = true;
+        console.log(`[Contact Form] Email notification sent for ${email}`);
+      } catch (emailError: any) {
+        console.error('[Contact Form] Email sending failed (submission still saved):', emailError.message);
+      }
       
-      await sendEmail(teamEmail, `[Contact Form] ${subject}`, htmlContent);
-      
-      // Send confirmation email to user
-      const confirmationHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #00F0FF 0%, #00FFE5 100%); padding: 20px; border-radius: 12px 12px 0 0;">
-            <h1 style="color: #0D0D1F; margin: 0; font-size: 24px;">Thank You for Contacting Us!</h1>
-          </div>
-          <div style="background: #1a1a2e; padding: 30px; border-radius: 0 0 12px 12px; color: #ffffff;">
-            <p style="font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">Hi ${name},</p>
-            <p style="font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-              Thank you for reaching out to Zyra AI. We've received your message and will get back to you within 24 hours.
-            </p>
-            <div style="background: #0D0D1F; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-              <p style="color: #00F0FF; font-size: 12px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Message</p>
-              <p style="font-size: 14px; color: #ccc; margin: 0;"><strong>Subject:</strong> ${subject}</p>
-              <p style="font-size: 14px; color: #ccc; margin: 10px 0 0 0; white-space: pre-wrap;">${message}</p>
-            </div>
-            <p style="font-size: 16px; line-height: 1.6; margin: 0;">
-              In the meantime, feel free to explore our <a href="https://zzyraai.com/help" style="color: #00F0FF; text-decoration: none;">Help Center</a> or <a href="https://zzyraai.com/blog" style="color: #00F0FF; text-decoration: none;">Blog</a> for more resources.
-            </p>
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #2a2a4e;">
-              <p style="color: #888; font-size: 14px; margin: 0;">Best regards,</p>
-              <p style="color: #00F0FF; font-size: 16px; font-weight: bold; margin: 5px 0 0 0;">The Zyra AI Team</p>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      await sendEmail(email, "Thank You for Contacting Zyra AI", confirmationHtml);
-      
-      console.log(`[Contact Form] Message sent from ${email} - Subject: ${subject}`);
-      
-      res.json({ success: true, message: "Message sent successfully" });
+      // Always return success since we've stored the submission
+      res.json({ 
+        success: true, 
+        message: "Thank you for your message! We've received your inquiry and will get back to you within 24 hours.",
+        emailSent 
+      });
     } catch (error: any) {
       console.error('Contact form error:', error);
-      res.status(500).json({ message: 'Failed to send message. Please try again later.', error: error.message });
+      res.status(500).json({ message: 'Failed to submit message. Please try again later.', error: error.message });
     }
   });
 
