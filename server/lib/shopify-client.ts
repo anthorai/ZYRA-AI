@@ -302,12 +302,18 @@ export class ShopifyClient {
     description?: string;
     seoTitle?: string;
     metaDescription?: string;
+    tags?: string[];
     imageAltTexts?: Array<{ imageId: string; altText: string }>;
   }): Promise<ShopifyProduct> {
     const updates: ShopifyProductUpdate = {};
 
     if (content.description) {
       updates.body_html = content.description;
+    }
+
+    // Add tags if provided - Shopify expects tags as comma-separated string
+    if (content.tags && content.tags.length > 0) {
+      updates.tags = content.tags.join(', ');
     }
 
     // Only update product if there are actual changes to make

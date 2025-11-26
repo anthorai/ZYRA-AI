@@ -36,7 +36,8 @@ import {
   CheckCheck,
   ClipboardCheck,
   Upload,
-  Check
+  Check,
+  Tag
 } from "lucide-react";
 
 interface Product {
@@ -255,7 +256,8 @@ export default function ProductSeoEngine() {
   const handleApplyField = async (fieldName: string, content: { 
     description?: string; 
     seoTitle?: string; 
-    metaDescription?: string 
+    metaDescription?: string;
+    tags?: string[];
   }) => {
     if (!selectedProduct?.shopifyId) {
       toast({
@@ -288,6 +290,7 @@ export default function ProductSeoEngine() {
       description: generatedSEO.seoDescription,
       seoTitle: generatedSEO.metaTitle,
       metaDescription: generatedSEO.metaDescription,
+      tags: generatedSEO.keywords, // Push tags to Shopify
       fieldName: 'All Fields',
     });
   };
@@ -755,8 +758,8 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       <TabsTrigger value="meta-desc" data-testid="tab-meta-desc" className="text-xs sm:text-sm">
                         Meta Desc
                       </TabsTrigger>
-                      <TabsTrigger value="keywords" data-testid="tab-keywords" className="text-xs sm:text-sm">
-                        Keywords
+                      <TabsTrigger value="tags" data-testid="tab-tags" className="text-xs sm:text-sm">
+                        Tags
                       </TabsTrigger>
                     </TabsList>
 
@@ -1067,56 +1070,74 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="keywords" className="space-y-4 mt-6">
+                    <TabsContent value="tags" className="space-y-4 mt-6">
                       <div className="p-5 rounded-lg border">
                         <div className="flex items-start justify-between gap-3 mb-4">
                           <div>
-                            <h3 className="text-sm font-semibold text-primary">SEO Keywords</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 5-10 keywords</p>
+                            <h3 className="text-sm font-semibold text-primary">Product Tags</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Golden Formula: 5-10 tags for Shopify</p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopy(generatedSEO.keywords.join(", "), "Keywords")}
-                            data-testid="button-copy-keywords"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(generatedSEO.keywords.join(", "), "Tags")}
+                              data-testid="button-copy-tags"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant={appliedFields.has('Tags') ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleApplyField('Tags', { tags: generatedSEO.keywords })}
+                              disabled={applyingField === 'Tags' || !selectedProduct?.shopifyId}
+                              data-testid="button-apply-tags"
+                              className={appliedFields.has('Tags') ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {applyingField === 'Tags' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : appliedFields.has('Tags') ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2" data-testid="list-keywords">
-                          {generatedSEO.keywords.map((keyword, idx) => (
+                        <div className="flex flex-wrap gap-2" data-testid="list-tags">
+                          {generatedSEO.keywords.map((tag, idx) => (
                             <Badge 
                               key={idx} 
                               className="bg-primary/20 text-primary border-primary/30 px-3 py-1.5 text-sm"
                             >
-                              <Hash className="w-3 h-3 mr-1" />
-                              {keyword}
+                              <Tag className="w-3 h-3 mr-1" />
+                              {tag}
                             </Badge>
                           ))}
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-700/50 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                          <span className="font-medium">{generatedSEO.keywords.length} keywords</span>
+                          <span className="font-medium">{generatedSEO.keywords.length} tags</span>
                           {(() => {
-                            const keywordCount = generatedSEO.keywords.length;
-                            if (keywordCount >= 5 && keywordCount <= 10) {
+                            const tagCount = generatedSEO.keywords.length;
+                            if (tagCount >= 5 && tagCount <= 10) {
                               return (
                                 <div className="flex items-center gap-1 text-green-400">
                                   <CheckCircle2 className="w-4 h-4" />
-                                  <span>Optimal (5-10 keywords)</span>
+                                  <span>Optimal (5-10 tags)</span>
                                 </div>
                               );
-                            } else if (keywordCount < 5) {
+                            } else if (tagCount < 5) {
                               return (
                                 <div className="flex items-center gap-1 text-yellow-400">
                                   <AlertCircle className="w-4 h-4" />
-                                  <span>Too few (need 5-10 keywords)</span>
+                                  <span>Too few (need 5-10 tags)</span>
                                 </div>
                               );
                             } else {
                               return (
                                 <div className="flex items-center gap-1 text-yellow-400">
                                   <AlertCircle className="w-4 h-4" />
-                                  <span>Too many (need 5-10 keywords)</span>
+                                  <span>Too many (need 5-10 tags)</span>
                                 </div>
                               );
                             }
