@@ -15,6 +15,7 @@ import {
   BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart, Calculator, X, AlertTriangle,
   Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame, Lightbulb
 } from "lucide-react";
+import { SiLinkedin, SiInstagram, SiX } from "react-icons/si";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -2226,6 +2227,37 @@ export default function Landing() {
           
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">© 2025 Zyra AI. All rights reserved.</p>
+            {/* Social Media Icons - Center */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors duration-300"
+                data-testid="link-social-linkedin"
+              >
+                <SiLinkedin className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors duration-300"
+                data-testid="link-social-instagram"
+              >
+                <SiInstagram className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://x.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors duration-300"
+                data-testid="link-social-x"
+              >
+                <SiX className="w-5 h-5" />
+              </a>
+            </div>
+            {/* Trust Badges - Right */}
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-primary" />
