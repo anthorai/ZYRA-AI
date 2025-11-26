@@ -50,21 +50,23 @@ export default function Footer({ className = "" }: FooterProps) {
             <div>
               <div
                 onClick={handleLogoClick}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group w-fit"
+                className="flex items-start gap-3 p-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group w-fit"
                 data-testid="link-footer-logo"
               >
                 <img 
                   src={zyraLogo} 
                   alt="Zyra AI Logo" 
-                  className="w-8 h-8 rounded-lg"
+                  className="w-10 h-10 rounded-lg flex-shrink-0"
                 />
-                <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300">
-                  Zyra AI
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-lg font-bold font-sans transition-colors duration-300">
+                    Zyra AI
+                  </span>
+                  <span className="text-[#EAEAEA]/60 text-xs mt-0.5">
+                    AI-powered Shopify optimization
+                  </span>
+                </div>
               </div>
-              <p className="text-[#EAEAEA]/60 text-sm mt-3 pl-3">
-                AI-powered Shopify optimization platform
-              </p>
             </div>
 
             {/* Company Links */}
