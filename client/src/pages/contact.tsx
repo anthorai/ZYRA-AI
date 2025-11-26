@@ -276,7 +276,7 @@ export default function Contact() {
                             value={formData.name}
                             onChange={handleChange}
                             required
-                            className="bg-background/50 border-primary/20 focus:border-primary/50"
+                            className="bg-[#1a1a2e] border-primary/20 focus:border-primary/50 text-foreground placeholder:text-muted-foreground/60"
                             data-testid="input-name"
                           />
                         </div>
@@ -290,7 +290,7 @@ export default function Contact() {
                             value={formData.email}
                             onChange={handleChange}
                             required
-                            className="bg-background/50 border-primary/20 focus:border-primary/50"
+                            className="bg-[#1a1a2e] border-primary/20 focus:border-primary/50 text-foreground placeholder:text-muted-foreground/60"
                             data-testid="input-email"
                           />
                         </div>
@@ -305,7 +305,7 @@ export default function Contact() {
                           value={formData.subject}
                           onChange={handleChange}
                           required
-                          className="bg-background/50 border-primary/20 focus:border-primary/50"
+                          className="bg-[#1a1a2e] border-primary/20 focus:border-primary/50 text-foreground placeholder:text-muted-foreground/60"
                           data-testid="input-subject"
                         />
                       </div>
@@ -320,7 +320,7 @@ export default function Contact() {
                           onChange={handleChange}
                           required
                           rows={5}
-                          className="bg-background/50 border-primary/20 focus:border-primary/50 resize-none"
+                          className="bg-[#1a1a2e] border-primary/20 focus:border-primary/50 text-foreground placeholder:text-muted-foreground/60 resize-none"
                           data-testid="input-message"
                         />
                       </div>
