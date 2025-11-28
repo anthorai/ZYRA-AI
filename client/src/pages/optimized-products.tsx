@@ -404,18 +404,42 @@ function ProductCard({ product, currency }: { product: Product, currency: string
           <TabsContent value="tags" className="space-y-4" data-testid={`content-tags-${product.id}`}>
             <SuggestionCard suggestions={suggestions} activeTab="tags" />
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Original Shopify Tags */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-slate-300 font-medium text-sm">Original Shopify Tags</h4>
+                  <Badge variant="outline" className="text-xs">
+                    {product.tags ? product.tags.split(',').filter((t: string) => t.trim()).length : 0} tags
+                  </Badge>
+                </div>
+                <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50 min-h-[120px]">
+                  {product.tags ? (
+                    <div className="flex flex-wrap gap-2">
+                      {product.tags.split(',').map((tag: string, idx: number) => (
+                        <Badge key={idx} variant="outline" className="bg-slate-800/50 border-slate-600">
+                          {tag.trim()}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-sm">No original tags from Shopify</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* AI-Optimized Tags */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-slate-300 font-medium text-sm">Product Tags</h4>
+                    <h4 className="text-slate-300 font-medium text-sm">AI-Optimized Tags</h4>
                     {keywords && <Sparkles className="w-3 h-3 text-primary" />}
                   </div>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary">
                     {keywords ? keywords.split(',').filter((t: string) => t.trim()).length : 0} tags
                   </Badge>
                 </div>
-                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[100px]">
+                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[120px]">
                   {keywords ? (
                     <div className="flex flex-wrap gap-2">
                       {keywords.split(',').map((tag: string, idx: number) => (
@@ -429,36 +453,22 @@ function ProductCard({ product, currency }: { product: Product, currency: string
                       ))}
                     </div>
                   ) : (
-                    <p className="text-slate-400 text-sm">No tags generated yet</p>
+                    <p className="text-slate-400 text-sm">No AI-optimized tags generated yet</p>
                   )}
                 </div>
-                <p className="text-slate-500 text-xs">
-                  Optimal: 5-10 tags for better search visibility and categorization
-                </p>
               </div>
-              
-              {product.tags && product.tags !== keywords && (
-                <div className="space-y-2">
-                  <h4 className="text-slate-300 font-medium text-sm">Original Shopify Tags</h4>
-                  <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
-                    <div className="flex flex-wrap gap-2">
-                      {product.tags.split(',').map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="outline" className="bg-slate-800/50 border-slate-600">
-                          {tag.trim()}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {keywords && keywords.split(',').filter((t: string) => t.trim()).length >= 5 && (
-                <div className="flex items-center gap-2 text-green-400 text-sm">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Tags optimized for search visibility and Shopify integration</span>
-                </div>
-              )}
             </div>
+            
+            <p className="text-slate-500 text-xs">
+              Optimal: 5-10 tags for better search visibility and categorization
+            </p>
+            
+            {keywords && keywords.split(',').filter((t: string) => t.trim()).length >= 5 && (
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Tags optimized for search visibility and Shopify integration</span>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
