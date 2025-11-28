@@ -84,8 +84,9 @@ export async function grantFreeTrial(userId: string): Promise<{
           userId,
           creditsUsed: 0,
           creditsRemaining: trialCredits,
-          optimizationsCount: 0,
-          aiCallsThisMonth: 0,
+          productsOptimized: 0,
+          aiGenerationsUsed: 0,
+          seoOptimizationsUsed: 0,
           lastResetDate: now,
         });
       }
