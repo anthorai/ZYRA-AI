@@ -235,63 +235,63 @@ export default function AdminSubscriptions() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Pro Users</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col flex-1 justify-between">
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-yellow-500" />
                 <span className="text-2xl font-bold" data-testid="stat-pro-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'pro').length || 0}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">(on current page)</p>
+              <p className="text-xs text-muted-foreground mt-2">(on current page)</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Growth Users</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col flex-1 justify-between">
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-blue-500" />
                 <span className="text-2xl font-bold" data-testid="stat-growth-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'growth').length || 0}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">(on current page)</p>
+              <p className="text-xs text-muted-foreground mt-2">(on current page)</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Starter Users</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col flex-1 justify-between">
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-green-500" />
                 <span className="text-2xl font-bold" data-testid="stat-starter-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'starter').length || 0}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">(on current page)</p>
+              <p className="text-xs text-muted-foreground mt-2">(on current page)</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Trial Users</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col flex-1 justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-slate-400" />
                 <span className="text-2xl font-bold" data-testid="stat-trial-users">
                   {users?.filter(u => u.plan?.toLowerCase().includes('trial') || u.plan?.toLowerCase() === 'free').length || 0}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">(on current page)</p>
+              <p className="text-xs text-muted-foreground mt-2">(on current page)</p>
             </CardContent>
           </Card>
         </div>
