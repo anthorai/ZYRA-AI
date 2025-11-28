@@ -377,7 +377,7 @@ export default function AdminSubscriptions() {
                           <div className="flex items-center gap-1.5">
                             <Coins className="w-4 h-4 text-yellow-500" />
                             <span className="text-sm">
-                              {user.credits?.remaining ?? 0} / {user.credits?.limit ?? 0}
+                              {user.credits?.remaining ?? 0}/{user.credits?.limit ?? 0}
                             </span>
                           </div>
                         </TableCell>
