@@ -8,7 +8,6 @@ import { PageShell } from "@/components/ui/page-shell";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { formatCurrency } from "@/lib/utils";
 import type { products } from "@shared/schema";
 import { 
   ShoppingBag, 
@@ -18,9 +17,6 @@ import {
   AlertCircle,
   RefreshCw,
   Sparkles,
-  FileText,
-  Heading,
-  DollarSign,
   Tag,
   AlertTriangle,
   CheckCircle2,
@@ -183,9 +179,9 @@ function SuggestionCard({ suggestions, activeTab }: { suggestions: AISuggestion[
   );
 }
 
-function ProductCard({ product, currency }: { product: Product, currency: string }) {
+function ProductCard({ product }: { product: Product }) {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState('description');
+  const [activeTab, setActiveTab] = useState('seo-title');
   const optimizedCopy = product.optimizedCopy as any;
   const originalCopy = product.originalCopy as any;
   
@@ -195,6 +191,8 @@ function ProductCard({ product, currency }: { product: Product, currency: string
   const optimizedDesc = stripHtmlTags(optimizedCopy?.description || '');
   const originalTitle = originalCopy?.seoTitle || product.name || '';
   const optimizedTitle = optimizedCopy?.title || optimizedCopy?.productName || '';
+  const originalMetaDesc = originalCopy?.metaDescription || '';
+  const optimizedMetaDesc = optimizedCopy?.metaDescription || '';
   const keywords = optimizedCopy?.keywords || '';
   
   // Get AI suggestions
@@ -242,26 +240,21 @@ function ProductCard({ product, currency }: { product: Product, currency: string
 
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 mb-4">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-2 p-1 bg-slate-800/50 mb-4">
+            <TabsTrigger value="seo-title" className="text-xs sm:text-sm" data-testid={`tab-seo-title-${product.id}`}>
+              SEO Title
+            </TabsTrigger>
             <TabsTrigger value="description" className="text-xs sm:text-sm" data-testid={`tab-description-${product.id}`}>
-              <FileText className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Description</span>
-              <span className="sm:hidden">Desc</span>
+              Description
             </TabsTrigger>
-            <TabsTrigger value="title" className="text-xs sm:text-sm" data-testid={`tab-title-${product.id}`}>
-              <Heading className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Title</span>
-              <span className="sm:hidden">Title</span>
+            <TabsTrigger value="meta-title" className="text-xs sm:text-sm" data-testid={`tab-meta-title-${product.id}`}>
+              Meta Title
             </TabsTrigger>
-            <TabsTrigger value="pricing" className="text-xs sm:text-sm" data-testid={`tab-pricing-${product.id}`}>
-              <DollarSign className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Pricing</span>
-              <span className="sm:hidden">Price</span>
+            <TabsTrigger value="meta-desc" className="text-xs sm:text-sm" data-testid={`tab-meta-desc-${product.id}`}>
+              Meta Desc
             </TabsTrigger>
             <TabsTrigger value="tags" className="text-xs sm:text-sm" data-testid={`tab-tags-${product.id}`}>
-              <Tag className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Tags</span>
-              <span className="sm:hidden">Tags</span>
+              Tags
             </TabsTrigger>
           </TabsList>
 
@@ -306,96 +299,133 @@ function ProductCard({ product, currency }: { product: Product, currency: string
             )}
           </TabsContent>
 
-          {/* Title Tab */}
-          <TabsContent value="title" className="space-y-4" data-testid={`content-title-${product.id}`}>
+          {/* SEO Title Tab */}
+          <TabsContent value="seo-title" className="space-y-4" data-testid={`content-seo-title-${product.id}`}>
             <SuggestionCard suggestions={suggestions} activeTab="title" />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <h4 className="text-slate-300 font-medium text-sm">Original Title</h4>
-                <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-slate-300 font-medium text-sm">Original SEO Title</h4>
+                  <Badge variant="outline" className="text-xs">{(originalTitle || product.name || '').length} chars</Badge>
+                </div>
+                <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50 min-h-[80px]">
                   <p className="text-slate-400 text-base font-medium">
                     {originalTitle || product.name || 'No original title'}
                   </p>
-                  <p className="text-slate-500 text-xs mt-2">{(originalTitle || product.name || '').length} characters</p>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-slate-300 font-medium text-sm">AI-Optimized Title</h4>
-                  {optimizedTitle && <Sparkles className="w-3 h-3 text-primary" />}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-slate-300 font-medium text-sm">AI-Optimized SEO Title</h4>
+                    {optimizedTitle && <Sparkles className="w-3 h-3 text-primary" />}
+                  </div>
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary">{optimizedTitle ? optimizedTitle.length : 0} chars</Badge>
                 </div>
-                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20">
+                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[80px]">
                   <p className="text-slate-200 text-base font-medium">
-                    {optimizedTitle || 'No AI-optimized title generated yet'}
+                    {optimizedTitle || 'No AI-optimized SEO title generated yet'}
                   </p>
-                  <p className="text-slate-400 text-xs mt-2">{optimizedTitle ? optimizedTitle.length : 0} characters</p>
                 </div>
               </div>
             </div>
             
-            {optimizedTitle && originalTitle && optimizedTitle !== originalTitle && (
+            <p className="text-slate-500 text-xs">
+              Golden Formula: 8-12 words for optimal SEO visibility
+            </p>
+            
+            {optimizedTitle && optimizedTitle.split(' ').length >= 8 && optimizedTitle.split(' ').length <= 12 && (
               <div className="flex items-center gap-2 text-green-400 text-sm">
-                <ArrowRight className="w-4 h-4" />
-                <span>Title enhanced for better SEO and clarity</span>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>SEO Title optimized with {optimizedTitle.split(' ').length} words</span>
               </div>
             )}
           </TabsContent>
 
-          {/* Pricing Tab */}
-          <TabsContent value="pricing" className="space-y-4" data-testid={`content-pricing-${product.id}`}>
-            <SuggestionCard suggestions={suggestions} activeTab="pricing" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-slate-900/50 border-slate-700/50">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-slate-400 text-xs">Current Price</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-white text-2xl font-bold">
-                    {formatCurrency(parseFloat(product.price?.toString() || '0'), currency)}
+          {/* Meta Title Tab */}
+          <TabsContent value="meta-title" className="space-y-4" data-testid={`content-meta-title-${product.id}`}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-slate-300 font-medium text-sm">Original Meta Title</h4>
+                  <Badge variant="outline" className="text-xs">{(originalTitle || product.name || '').length} chars</Badge>
+                </div>
+                <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50 min-h-[80px]">
+                  <p className="text-slate-400 text-base font-medium">
+                    {originalTitle || product.name || 'No original meta title'}
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
               
-              <Card className="bg-slate-900/50 border-slate-700/50">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-slate-400 text-xs">Stock Level</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className={`text-2xl font-bold ${
-                    (product.stock || 0) > 10 ? 'text-green-400' : 
-                    (product.stock || 0) > 0 ? 'text-yellow-400' : 
-                    'text-red-400'
-                  }`}>
-                    {product.stock || 0}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-slate-300 font-medium text-sm">AI-Optimized Meta Title</h4>
+                    {optimizedTitle && <Sparkles className="w-3 h-3 text-primary" />}
+                  </div>
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary">{optimizedTitle ? optimizedTitle.length : 0} chars</Badge>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[80px]">
+                  <p className="text-slate-200 text-base font-medium">
+                    {optimizedTitle || 'No AI-optimized meta title generated yet'}
                   </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-slate-900/50 border-slate-700/50">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-slate-400 text-xs">Category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-white text-base font-medium truncate">
-                    {product.category || 'Uncategorized'}
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
             
-            {product.tags && (
+            <p className="text-slate-500 text-xs">
+              Optimal length: 50-60 characters for Google search results
+            </p>
+            
+            {optimizedTitle && optimizedTitle.length >= 50 && optimizedTitle.length <= 60 && (
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Meta title is optimal length for search results</span>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Meta Description Tab */}
+          <TabsContent value="meta-desc" className="space-y-4" data-testid={`content-meta-desc-${product.id}`}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <h4 className="text-slate-300 font-medium text-sm">Product Tags</h4>
-                <div className="flex flex-wrap gap-2">
-                  {product.tags.split(',').map((tag: string, idx: number) => (
-                    <Badge key={idx} variant="outline" className="bg-slate-800/50 border-slate-600">
-                      {tag.trim()}
-                    </Badge>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <h4 className="text-slate-300 font-medium text-sm">Original Meta Description</h4>
+                  <Badge variant="outline" className="text-xs">{originalMetaDesc.length} chars</Badge>
                 </div>
+                <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50 min-h-[100px]">
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    {originalMetaDesc || 'No original meta description'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-slate-300 font-medium text-sm">AI-Optimized Meta Description</h4>
+                    {optimizedMetaDesc && <Sparkles className="w-3 h-3 text-primary" />}
+                  </div>
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary">{optimizedMetaDesc.length} chars</Badge>
+                </div>
+                <div className="bg-slate-800/50 p-4 rounded-lg border border-primary/20 min-h-[100px]">
+                  <p className="text-slate-200 text-sm leading-relaxed">
+                    {optimizedMetaDesc || 'No AI-optimized meta description generated yet'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-slate-500 text-xs">
+              Optimal length: 150-160 characters for Google search snippets
+            </p>
+            
+            {optimizedMetaDesc && optimizedMetaDesc.length >= 150 && optimizedMetaDesc.length <= 160 && (
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Meta description is optimal length for search snippets</span>
               </div>
             )}
           </TabsContent>
@@ -480,12 +510,6 @@ export default function OptimizedProducts() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Fetch store currency
-  const { data: storeData } = useQuery<{ currency: string }>({
-    queryKey: ['/api/store/currency'],
-    enabled: !!user,
-  });
-  const currency = storeData?.currency || 'USD';
 
   // Fetch optimized products from API
   const { data: products = [], isLoading, error, isError, refetch } = useQuery<Product[]>({
@@ -627,7 +651,7 @@ export default function OptimizedProducts() {
           </Card>
         ) : (
           optimizedProducts.map((product) => (
-            <ProductCard key={product.id} product={product} currency={currency} />
+            <ProductCard key={product.id} product={product} />
           ))
         )}
       </div>
