@@ -86,7 +86,7 @@ import {
 } from "./middleware/sanitization";
 import { NotificationService } from "./lib/notification-service";
 import { TwoFactorAuthService } from "./lib/2fa-service";
-import { initializeUserCredits, getCreditBalance, checkAIToolCredits, consumeAIToolCredits } from "./lib/credits";
+import { initializeUserCredits, getCreditBalance, checkAIToolCredits, consumeAIToolCredits, resetMonthlyCredits } from "./lib/credits";
 import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
 import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./lib/ai-cache";
 import { extractProductFeatures } from "./lib/shopify-features-extractor";
@@ -254,6 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // CRITICAL FIX: Ensure user exists in Neon database for foreign key constraints
       // oauth_states table (and others) in Neon require users to exist there
       // Use retry logic for transient database failures
+      // Also sync admin role from Neon (source of truth for admin status)
       const syncUserToNeon = async (maxRetries = 3) => {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
@@ -269,8 +270,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               console.log(`✅ [AUTH SYNC] User ${userProfile.id} synced to Neon successfully`);
             } else {
-              // User already exists in Neon
-              console.log(`✓ [AUTH SYNC] User ${userProfile.id} already exists in Neon`);
+              // User already exists in Neon - check for admin role
+              // Neon database is source of truth for admin role
+              if (neonUser.role === 'admin' && userProfile.role !== 'admin') {
+                console.log(`👑 [AUTH SYNC] User ${userProfile.id} has admin role in Neon, upgrading session`);
+                userProfile.role = 'admin';
+              }
+              console.log(`✓ [AUTH SYNC] User ${userProfile.id} already exists in Neon (role: ${neonUser.role})`);
             }
             return true; // Success
           } catch (error: any) {
@@ -404,6 +410,206 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error resolving error log:", error);
       res.status(500).json({ message: "Failed to resolve error" });
+    }
+  });
+
+  // Authorized admin emails (hardcoded for security - source of truth)
+  const AUTHORIZED_ADMIN_EMAILS = [
+    'anthoraiofficial@gmail.com',
+    'zyrahelp.io@gmail.com',
+    'aniketar111@gmail.com',
+    'theelitezoneofficial@gmail.com'
+  ];
+
+  // Admin: Get all users with their subscription details
+  app.get("/api/admin/users-with-subscriptions", requireAuth, apiLimiter, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Double check: role must be admin AND email must be in authorized list
+      if (user.role !== 'admin' || !AUTHORIZED_ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+        console.warn(`[SECURITY] Unauthorized admin access attempt by ${user.email}`);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Pagination params
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100); // Max 100 per page
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const [{ count: totalCount }] = await db.select({ count: sql<number>`count(*)` }).from(users);
+      
+      // Get paginated users from database
+      const allUsers = await db.select().from(users).orderBy(desc(users.createdAt)).limit(limit).offset(offset);
+      
+      // Get subscription and credit details for each user
+      const usersWithDetails = await Promise.all(allUsers.map(async (u) => {
+        // Get subscription
+        const [subscription] = await db.select({
+          planId: subscriptions.planId,
+          status: subscriptions.status,
+        }).from(subscriptions).where(eq(subscriptions.userId, u.id));
+        
+        // Get plan name if subscription exists
+        let planName = u.plan;
+        if (subscription?.planId) {
+          const [plan] = await db.select({ planName: subscriptionPlans.planName })
+            .from(subscriptionPlans)
+            .where(eq(subscriptionPlans.id, subscription.planId));
+          planName = plan?.planName || u.plan;
+        }
+        
+        // Get credits info
+        const stats = await supabaseStorage.getUserUsageStats(u.id);
+        const creditsUsed = stats?.creditsUsed || 0;
+        const creditsRemaining = stats?.creditsRemaining || 0;
+        const creditLimit = creditsUsed + creditsRemaining;
+        
+        return {
+          id: u.id,
+          email: u.email,
+          fullName: u.fullName,
+          role: u.role,
+          plan: u.plan,
+          createdAt: u.createdAt,
+          subscription: subscription ? {
+            planId: subscription.planId,
+            planName,
+            status: subscription.status,
+          } : null,
+          credits: {
+            used: creditsUsed,
+            remaining: creditsRemaining,
+            limit: creditLimit,
+          },
+        };
+      }));
+
+      // Return paginated response
+      res.json({
+        users: usersWithDetails,
+        pagination: {
+          page,
+          limit,
+          total: Number(totalCount),
+          totalPages: Math.ceil(Number(totalCount) / limit),
+        }
+      });
+    } catch (error: any) {
+      console.error("Error fetching users with subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Admin: Assign a subscription plan to a user (without payment)
+  app.post("/api/admin/assign-plan", requireAuth, apiLimiter, async (req, res) => {
+    try {
+      const adminUser = (req as AuthenticatedRequest).user;
+      
+      // Double check: role must be admin AND email must be in authorized list
+      if (adminUser.role !== 'admin' || !AUTHORIZED_ADMIN_EMAILS.includes(adminUser.email.toLowerCase())) {
+        console.warn(`[SECURITY] Unauthorized admin access attempt by ${adminUser.email}`);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId, planId } = req.body;
+      
+      if (!userId || !planId) {
+        return res.status(400).json({ message: "userId and planId are required" });
+      }
+
+      // Get the plan details
+      const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      // Get user
+      const [targetUser] = await db.select().from(users).where(eq(users.id, userId));
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update user's plan in users table
+      await db.update(users)
+        .set({ plan: plan.planName })
+        .where(eq(users.id, userId));
+
+      // Check if subscription exists
+      const [existingSubscription] = await db.select().from(subscriptions)
+        .where(eq(subscriptions.userId, userId));
+
+      if (existingSubscription) {
+        // Update existing subscription
+        await db.update(subscriptions)
+          .set({ planId, status: "active" })
+          .where(eq(subscriptions.userId, userId));
+      } else {
+        // Create new subscription
+        await db.insert(subscriptions).values({
+          userId,
+          planId,
+          status: "active",
+        });
+      }
+
+      // Initialize/reset credits for the new plan
+      await initializeUserCredits(userId, planId);
+
+      console.log(`[ADMIN] User ${targetUser.email} assigned to ${plan.planName} by admin ${adminUser.email}`);
+
+      res.json({ 
+        success: true,
+        message: "Plan assigned successfully",
+        userId,
+        planId,
+        planName: plan.planName,
+        userEmail: targetUser.email,
+      });
+    } catch (error: any) {
+      console.error("Error assigning plan:", error);
+      res.status(500).json({ message: "Failed to assign plan" });
+    }
+  });
+
+  // Admin: Reset user's credits to plan limit
+  app.post("/api/admin/reset-credits", requireAuth, apiLimiter, async (req, res) => {
+    try {
+      const adminUser = (req as AuthenticatedRequest).user;
+      
+      // Double check: role must be admin AND email must be in authorized list
+      if (adminUser.role !== 'admin' || !AUTHORIZED_ADMIN_EMAILS.includes(adminUser.email.toLowerCase())) {
+        console.warn(`[SECURITY] Unauthorized admin access attempt by ${adminUser.email}`);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required" });
+      }
+
+      // Get user's subscription
+      const [subscription] = await db.select().from(subscriptions)
+        .where(eq(subscriptions.userId, userId));
+
+      if (!subscription) {
+        return res.status(404).json({ message: "No subscription found for user" });
+      }
+
+      // Reset credits for the plan
+      await resetMonthlyCredits(userId);
+
+      console.log(`[ADMIN] Credits reset for user ${userId} by admin ${adminUser.email}`);
+
+      res.json({ 
+        success: true,
+        message: "Credits reset successfully",
+      });
+    } catch (error: any) {
+      console.error("Error resetting credits:", error);
+      res.status(500).json({ message: "Failed to reset credits" });
     }
   });
 

@@ -20,7 +20,8 @@ import {
   User,
   X,
   Cog,
-  Coins
+  Coins,
+  Shield
 } from "lucide-react";
 
 interface SidebarProps {
@@ -117,6 +118,9 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     handleLogout("/"); // Redirect to landing page on logout
   };
 
+  // Check if user is admin
+  const isAdmin = appUser?.role === 'admin';
+
   // Build navigation items based on user role
   const navItems = [
     { id: "overview", label: "Dashboard", icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
@@ -125,6 +129,10 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     { id: "campaigns", label: "Campaigns", icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "campaigns" },
     { id: "products", label: "Products", icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
     { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
+    // Admin-only items
+    ...(isAdmin ? [
+      { id: "admin", label: "Admin Panel", icon: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />, onClick: () => setLocation("/admin/subscriptions") },
+    ] : []),
   ];
 
   return (
