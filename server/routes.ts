@@ -8283,12 +8283,23 @@ Output format: Markdown with clear section headings.`;
           // Publish to Shopify
           const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, update.content);
 
+          // Transform content to match what frontend expects in optimizedCopy
+          const optimizedCopyData = {
+            description: update.content.description || '',
+            title: update.content.seoTitle || '',
+            productName: update.content.seoTitle || '',
+            metaDescription: update.content.metaDescription || '',
+            keywords: Array.isArray(update.content.tags) ? update.content.tags.join(', ') : (update.content.tags || ''),
+          };
+
           // Update in database
           await db.update(products)
             .set({
               isOptimized: true,
-              optimizedCopy: update.content,
+              optimizedCopy: optimizedCopyData,
               description: update.content.description || product.description,
+              seoTitle: update.content.seoTitle || product.seoTitle,
+              seoKeywords: Array.isArray(update.content.tags) ? update.content.tags.join(', ') : (update.content.tags || ''),
               updatedAt: sql`NOW()`
             })
             .where(eq(products.id, update.productId));
@@ -8400,11 +8411,22 @@ Output format: Markdown with clear section headings.`;
       const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
 
       // Update product in Zyra database
+      // Transform content to match what frontend expects in optimizedCopy
+      const optimizedCopyData = {
+        description: content.description || '',
+        title: content.seoTitle || '',
+        productName: content.seoTitle || '',
+        metaDescription: content.metaDescription || '',
+        keywords: Array.isArray(content.tags) ? content.tags.join(', ') : (content.tags || ''),
+      };
+      
       await db.update(products)
         .set({
           isOptimized: true,
-          optimizedCopy: content,
+          optimizedCopy: optimizedCopyData,
           description: content.description || product.description,
+          seoTitle: content.seoTitle || product.seoTitle,
+          seoKeywords: Array.isArray(content.tags) ? content.tags.join(', ') : (content.tags || ''),
           updatedAt: sql`NOW()`
         })
         .where(eq(products.id, productId));
