@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Bot, TrendingUp, Mail, ShoppingCart, DollarSign, AlertCircle, Sparkles, Info } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Check, X, Bot, TrendingUp, Mail, ShoppingCart, DollarSign, AlertCircle, Sparkles, Info, Sun, Shield, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 
 type PendingApproval = {
   id: string;
@@ -77,10 +77,7 @@ export default function PendingApprovals() {
   // Approve mutation
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/pending-approvals/${id}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("POST", `/api/pending-approvals/${id}/approve`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
@@ -102,10 +99,7 @@ export default function PendingApprovals() {
   // Reject mutation
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/pending-approvals/${id}/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("POST", `/api/pending-approvals/${id}/reject`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
@@ -129,6 +123,91 @@ export default function PendingApprovals() {
     if (activeTab === "all") return approval.status === "pending";
     return approval.status === "pending" && approval.actionType === activeTab;
   }) || [];
+
+  // Calculate summary statistics
+  const pendingApprovals = approvals?.filter(a => a.status === "pending") || [];
+  const summaryStats = {
+    total: pendingApprovals.length,
+    seo: pendingApprovals.filter(a => a.actionType === "optimize_seo").length,
+    marketing: pendingApprovals.filter(a => a.actionType === "send_campaign").length,
+    cartRecovery: pendingApprovals.filter(a => a.actionType === "send_cart_recovery").length,
+    pricing: pendingApprovals.filter(a => a.actionType === "adjust_price").length,
+    urgent: pendingApprovals.filter(a => a.priority === "urgent").length,
+    high: pendingApprovals.filter(a => a.priority === "high").length,
+  };
+
+  // Get time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  // Bulk approve mutation
+  const bulkApproveMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = await Promise.all(
+        ids.map(id => 
+          apiRequest("POST", `/api/pending-approvals/${id}/approve`)
+            .catch(err => ({ error: true, id }))
+        )
+      );
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/autonomous-actions"] });
+      toast({
+        title: "All Actions Approved",
+        description: `${filteredApprovals.length} recommendations have been approved and will be executed.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Some actions failed to approve. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk reject mutation
+  const bulkRejectMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = await Promise.all(
+        ids.map(id => 
+          apiRequest("POST", `/api/pending-approvals/${id}/reject`)
+            .catch(err => ({ error: true, id }))
+        )
+      );
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      toast({
+        title: "All Actions Rejected",
+        description: `${filteredApprovals.length} recommendations have been rejected.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Some actions failed to reject. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBulkApprove = () => {
+    const ids = filteredApprovals.map(a => a.id);
+    bulkApproveMutation.mutate(ids);
+  };
+
+  const handleBulkReject = () => {
+    const ids = filteredApprovals.map(a => a.id);
+    bulkRejectMutation.mutate(ids);
+  };
 
   // Handle approve/reject with confirmation
   const handleAction = (type: "approve" | "reject", approvalId: string, actionType: string) => {
@@ -165,29 +244,199 @@ export default function PendingApprovals() {
     return ACTION_TYPE_LABELS[actionType]?.label || actionType;
   };
 
+  // Morning Summary Component
+  const MorningSummary = () => (
+    <div className="mb-6 space-y-4">
+      {/* Greeting and Safety Banner */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-4 sm:p-6 border border-primary/20">
+        <div className="flex items-start gap-4 flex-wrap">
+          <div className="p-3 bg-primary/20 rounded-full">
+            <Sun className="w-6 h-6 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold mb-1" data-testid="text-greeting">
+              {getGreeting()}! Here's Your AI Report
+            </h2>
+            <p className="text-muted-foreground text-sm" data-testid="text-report-date">
+              {format(new Date(), "EEEE, MMMM d, yyyy")}
+            </p>
+          </div>
+        </div>
+
+        {/* Safety Assurance */}
+        <div className="mt-4 flex items-center gap-2 bg-emerald-500/10 rounded-md p-3 border border-emerald-500/20">
+          <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+          <p className="text-sm text-emerald-400" data-testid="text-safety-message">
+            <strong>Protected Mode:</strong> Nothing is pushed to your Shopify store without your explicit approval below.
+          </p>
+        </div>
+      </div>
+
+      {/* Summary Stats Grid */}
+      {summaryStats.total > 0 && (
+        <div className="space-y-3">
+          {/* Action Types Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <Card className="bg-card/50">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="text-xl sm:text-2xl font-bold text-primary" data-testid="stat-total">
+                  {summaryStats.total}
+                </div>
+                <p className="text-xs text-muted-foreground">Total Pending</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <TrendingUp className="w-4 h-4 text-chart-2" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-chart-2" data-testid="stat-seo">
+                  {summaryStats.seo}
+                </div>
+                <p className="text-xs text-muted-foreground">SEO Fixes</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Mail className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-blue-400" data-testid="stat-marketing">
+                  {summaryStats.marketing}
+                </div>
+                <p className="text-xs text-muted-foreground">Marketing</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <ShoppingCart className="w-4 h-4 text-purple-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-purple-400" data-testid="stat-cart">
+                  {summaryStats.cartRecovery}
+                </div>
+                <p className="text-xs text-muted-foreground">Cart Recovery</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-400" data-testid="stat-pricing">
+                  {summaryStats.pricing}
+                </div>
+                <p className="text-xs text-muted-foreground">Price Changes</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Priority Row (only show if there are urgent/high priority items) */}
+          {(summaryStats.urgent > 0 || summaryStats.high > 0) && (
+            <div className="flex flex-wrap gap-3 justify-center">
+              {summaryStats.urgent > 0 && (
+                <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/30 px-3 py-1">
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                  {summaryStats.urgent} Urgent
+                </Badge>
+              )}
+              {summaryStats.high > 0 && (
+                <Badge variant="outline" className="bg-orange-500/10 text-orange-400 border-orange-500/30 px-3 py-1">
+                  {summaryStats.high} High Priority
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bulk Actions */}
+      {filteredApprovals.length > 1 && (
+        <Card className="bg-muted/30 border-dashed">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-medium text-sm">Quick Actions</p>
+                  <p className="text-xs text-muted-foreground">
+                    Review all {filteredApprovals.length} {activeTab === "all" ? "" : getActionLabel(activeTab)} recommendations at once
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={handleBulkApprove}
+                  disabled={bulkApproveMutation.isPending || bulkRejectMutation.isPending}
+                  className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
+                  data-testid="button-bulk-approve"
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Approve All ({filteredApprovals.length})
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleBulkReject}
+                  disabled={bulkApproveMutation.isPending || bulkRejectMutation.isPending}
+                  className="flex-1 sm:flex-none"
+                  data-testid="button-bulk-reject"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reject All
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
   // Empty state
-  if (!isLoading && filteredApprovals.length === 0) {
+  if (!isLoading && summaryStats.total === 0) {
     return (
       <div className="min-h-screen flex flex-col">
         <UnifiedHeader
-          title="Pending Approvals"
+          title="AI Morning Report"
           subtitle="Review and approve AI recommendations"
           backTo="/dashboard"
         />
-        <div className="flex-1 p-4 sm:p-6 flex items-center justify-center">
-          <Card className="max-w-md w-full">
-            <CardContent className="pt-6 text-center">
-              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2" data-testid="text-empty-title">
-                No Pending Approvals
-              </h3>
-              <p className="text-muted-foreground text-sm" data-testid="text-empty-description">
-                {activeTab === "all"
-                  ? "All AI recommendations have been reviewed. New recommendations will appear here when created."
-                  : `No pending ${getActionLabel(activeTab)} recommendations at this time.`}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="flex-1 p-4 sm:p-6">
+          {/* Show greeting even when empty */}
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-4 sm:p-6 border border-primary/20 mb-6">
+            <div className="flex items-start gap-4 flex-wrap">
+              <div className="p-3 bg-primary/20 rounded-full">
+                <Sun className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold mb-1" data-testid="text-greeting-empty">
+                  {getGreeting()}! All Clear
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  {format(new Date(), "EEEE, MMMM d, yyyy")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center">
+            <Card className="max-w-md w-full">
+              <CardContent className="pt-6 text-center">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2" data-testid="text-empty-title">
+                  No Pending Approvals
+                </h3>
+                <p className="text-muted-foreground text-sm" data-testid="text-empty-description">
+                  Your AI has been working! All recommendations have been reviewed. 
+                  New findings will appear here after the next scan.
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Next scan: Daily at 2 AM</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );
@@ -196,38 +445,31 @@ export default function PendingApprovals() {
   return (
     <div className="min-h-screen flex flex-col">
       <UnifiedHeader
-        title="Pending Approvals"
+        title="AI Morning Report"
         subtitle="Review and approve AI recommendations"
         backTo="/dashboard"
       />
 
       <div className="flex-1 p-4 sm:p-6">
-        {/* Manual Mode Disclaimer */}
-        <Alert className="mb-6 border-blue-500/30 bg-blue-500/10" data-testid="alert-manual-mode-disclaimer">
-          <Info className="h-4 w-4 text-blue-400" />
-          <AlertDescription className="text-sm text-muted-foreground" data-testid="text-disclaimer-message">
-            <strong className="text-foreground">Manual Mode:</strong> Approved actions execute immediately.
-            Marketing and cart recovery messages may be sent outside quiet hours (9 AM - 9 PM).
-            For fully autonomous operation with all safety guardrails, switch to Autonomous Mode in settings.
-          </AlertDescription>
-        </Alert>
+        {/* Morning Summary */}
+        <MorningSummary />
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ActionTypeFilter)} className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="all" data-testid="tab-all">
-              All
+              All ({summaryStats.total})
             </TabsTrigger>
             <TabsTrigger value="optimize_seo" data-testid="tab-seo">
-              SEO
+              SEO ({summaryStats.seo})
             </TabsTrigger>
             <TabsTrigger value="send_campaign" data-testid="tab-marketing">
-              Marketing
+              Marketing ({summaryStats.marketing})
             </TabsTrigger>
             <TabsTrigger value="send_cart_recovery" data-testid="tab-cart">
-              Cart Recovery
+              Cart ({summaryStats.cartRecovery})
             </TabsTrigger>
             <TabsTrigger value="adjust_price" data-testid="tab-pricing">
-              Pricing
+              Pricing ({summaryStats.pricing})
             </TabsTrigger>
           </TabsList>
 
