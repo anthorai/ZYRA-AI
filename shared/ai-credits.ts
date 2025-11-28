@@ -15,10 +15,16 @@ export const AI_TOOL_CREDITS = {
     description: 'Real-time Google SERP analysis + AI',
   },
   'bulk-optimization': {
-    name: 'Bulk Optimization',
+    name: 'Bulk Optimization (Fast)',
     creditsPerProduct: 2,
     credits: 2,
     description: 'Batch SEO processing per product',
+  },
+  'bulk-optimization-competitive': {
+    name: 'Bulk Optimization (Competitive)',
+    creditsPerProduct: 8,
+    credits: 8,
+    description: 'SERP analysis + AI per product',
   },
   'image-alt-text': {
     name: 'AI Image Alt-Text',

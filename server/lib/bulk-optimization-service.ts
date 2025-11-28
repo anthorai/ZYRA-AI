@@ -43,10 +43,14 @@ export class BulkOptimizationService {
   /**
    * Create a new bulk optimization job
    */
-  async createJob(userId: string, productIds: string[], name: string = 'Bulk Optimization Job'): Promise<BulkOptimizationJob> {
+  async createJob(userId: string, productIds: string[], name: string = 'Bulk Optimization Job', optimizationMode: 'fast' | 'competitive' = 'fast'): Promise<BulkOptimizationJob> {
+    const jobName = optimizationMode === 'competitive' 
+      ? `${name} (Competitive Intelligence)` 
+      : `${name} (Fast Mode)`;
+    
     return await this.storage.createBulkOptimizationJob({
       userId,
-      name,
+      name: jobName,
       totalItems: productIds.length,
       processedItems: 0,
       optimizedItems: 0,
@@ -56,6 +60,7 @@ export class BulkOptimizationService {
       progressPercentage: 0,
       totalTokensUsed: 0,
       estimatedCost: '0',
+      metadata: { optimizationMode }, // Store the mode for later processing
     });
   }
 

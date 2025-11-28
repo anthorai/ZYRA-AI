@@ -20,7 +20,9 @@ import {
   BarChart3,
   RefreshCw,
   Trash2,
-  Play
+  Play,
+  Target,
+  Search
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -62,11 +64,14 @@ interface BulkOptimizationItem {
   updatedAt: string;
 }
 
+type OptimizationMode = 'fast' | 'competitive';
+
 export default function BulkOptimization() {
   const { toast } = useToast();
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [viewingJobId, setViewingJobId] = useState<string | null>(null);
+  const [optimizationMode, setOptimizationMode] = useState<OptimizationMode>('fast');
 
   // Fetch all jobs
   const { data: jobs = [], isLoading: jobsLoading } = useQuery<BulkOptimizationJob[]>({
@@ -90,8 +95,8 @@ export default function BulkOptimization() {
 
   // Create job mutation
   const createJobMutation = useMutation({
-    mutationFn: async (productIds: string[]) => {
-      return await apiRequest('POST', '/api/bulk-optimization', { productIds });
+    mutationFn: async ({ productIds, mode }: { productIds: string[]; mode: OptimizationMode }) => {
+      return await apiRequest('POST', '/api/bulk-optimization', { productIds, optimizationMode: mode });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/bulk-optimization'] });
@@ -185,7 +190,14 @@ export default function BulkOptimization() {
       });
       return;
     }
-    createJobMutation.mutate(selectedProductIds);
+    createJobMutation.mutate({ productIds: selectedProductIds, mode: optimizationMode });
+  };
+
+  // Calculate credit cost based on mode
+  const getCreditsPerProduct = () => {
+    return optimizationMode === 'competitive' 
+      ? getToolCreditsPerProduct('bulk-optimization-competitive')
+      : getToolCreditsPerProduct('bulk-optimization');
   };
 
   const getStatusBadge = (status: string) => {
@@ -357,6 +369,81 @@ export default function BulkOptimization() {
           </div>
         </DashboardCard>
 
+        {/* Optimization Mode Selector */}
+        <DashboardCard
+          title="Optimization Mode"
+          description="Choose your SEO generation strategy"
+          testId="card-optimization-mode"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Fast Mode */}
+            <div
+              className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                optimizationMode === 'fast'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-slate-700 hover:border-slate-500'
+              }`}
+              onClick={() => setOptimizationMode('fast')}
+              data-testid="mode-fast"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${optimizationMode === 'fast' ? 'bg-primary/20' : 'bg-slate-800'}`}>
+                  <Zap className={`w-5 h-5 ${optimizationMode === 'fast' ? 'text-primary' : 'text-slate-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-white">Fast Mode</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {getToolCreditsPerProduct('bulk-optimization')} credits/product
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-1">
+                    AI-powered SEO using proven patterns
+                  </p>
+                </div>
+              </div>
+              {optimizationMode === 'fast' && (
+                <div className="absolute top-2 right-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                </div>
+              )}
+            </div>
+
+            {/* Competitive Intelligence Mode */}
+            <div
+              className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                optimizationMode === 'competitive'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-slate-700 hover:border-slate-500'
+              }`}
+              onClick={() => setOptimizationMode('competitive')}
+              data-testid="mode-competitive"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg ${optimizationMode === 'competitive' ? 'bg-primary/20' : 'bg-slate-800'}`}>
+                  <Target className={`w-5 h-5 ${optimizationMode === 'competitive' ? 'text-primary' : 'text-slate-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-white">Competitive Intelligence</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {getToolCreditsPerProduct('bulk-optimization-competitive')} credits/product
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Real-time Google SERP analysis + AI
+                  </p>
+                </div>
+              </div>
+              {optimizationMode === 'competitive' && (
+                <div className="absolute top-2 right-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                </div>
+              )}
+            </div>
+          </div>
+        </DashboardCard>
+
         <DashboardCard
           title="Create New Bulk Optimization Job"
           description="Select products from your catalog to optimize with AI"
@@ -393,8 +480,12 @@ export default function BulkOptimization() {
                 className="w-full"
                 data-testid="button-create-job"
               >
-                <Zap className="w-4 h-4 mr-2" />
-                Create Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''} - {selectedProducts.length * getToolCreditsPerProduct('bulk-optimization')} credits
+                {optimizationMode === 'competitive' ? (
+                  <Target className="w-4 h-4 mr-2" />
+                ) : (
+                  <Zap className="w-4 h-4 mr-2" />
+                )}
+                Create {optimizationMode === 'competitive' ? 'Competitive' : 'Fast'} Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''} - {selectedProducts.length * getCreditsPerProduct()} credits
               </Button>
             )}
           </div>

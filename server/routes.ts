@@ -11809,13 +11809,18 @@ Output format: Markdown with clear section headings.`;
   app.post("/api/bulk-optimization", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const { productIds } = req.body;
+      const { productIds, optimizationMode = 'fast' } = req.body;
 
       if (!Array.isArray(productIds) || productIds.length === 0) {
         return res.status(400).json({ error: "Product IDs array is required" });
       }
 
-      const job = await bulkOptService.createJob(userId, productIds);
+      // Validate optimization mode
+      if (!['fast', 'competitive'].includes(optimizationMode)) {
+        return res.status(400).json({ error: "Invalid optimization mode. Must be 'fast' or 'competitive'" });
+      }
+
+      const job = await bulkOptService.createJob(userId, productIds, 'Bulk Optimization Job', optimizationMode);
       res.json(job);
     } catch (error: any) {
       console.error("Error creating bulk optimization job:", error);
