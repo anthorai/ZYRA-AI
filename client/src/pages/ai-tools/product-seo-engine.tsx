@@ -12,7 +12,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { formatCurrency } from "@/lib/utils";
-import { getToolCredits } from "@shared/ai-credits";
+import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
 import { 
   Zap, 
   Sparkles, 
@@ -643,7 +643,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                   </div>
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700/50">
                     <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
-                      10 credits
+                      {formatCreditsDisplay(getToolCredits('product-seo-fast'))}
                     </Badge>
                     <span className="text-xs text-slate-400">2-3 sec</span>
                   </div>
@@ -676,7 +676,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                   </div>
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700/50">
                     <Badge variant="outline" className="border-primary/30 text-primary bg-primary/10">
-                      30 credits
+                      {formatCreditsDisplay(getToolCredits('product-seo-competitive'))}
                     </Badge>
                     <span className="text-xs text-slate-400">5-8 sec</span>
                   </div>
