@@ -223,15 +223,16 @@ export default function AdminSubscriptions() {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col flex-1 justify-between">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
                 <span className="text-2xl font-bold" data-testid="stat-total-users">{pagination?.total || users?.length || 0}</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">(all pages)</p>
             </CardContent>
           </Card>
           
