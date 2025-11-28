@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
+import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
 import { 
   FlaskConical,
   Copy,
@@ -427,6 +428,7 @@ export default function ABTestingCopy() {
                   type="submit"
                   disabled={generateABTestMutation.isPending}
                   className="w-full gradient-button"
+                  data-testid="button-start-ab-test"
                 >
                   {generateABTestMutation.isPending ? (
                     <>
@@ -436,7 +438,7 @@ export default function ABTestingCopy() {
                   ) : (
                     <>
                       <Zap className="w-4 h-4 mr-2" />
-                      Start A/B Test
+                      Start A/B Test - {formatCreditsDisplay(getToolCredits('ab-testing'))}
                     </>
                   )}
                 </Button>

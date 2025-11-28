@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
+import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
 import { 
   Brain,
   Upload,
@@ -574,6 +575,7 @@ export default function BrandVoiceMemory() {
                 type="submit"
                 disabled={learnVoiceMutation.isPending}
                 className="w-full gradient-button"
+                data-testid="button-learn-brand-voice"
               >
                 {learnVoiceMutation.isPending ? (
                   <>
@@ -583,7 +585,7 @@ export default function BrandVoiceMemory() {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 mr-2" />
-                    Learn My Brand Voice
+                    Learn My Brand Voice - {formatCreditsDisplay(getToolCredits('brand-voice'))}
                   </>
                 )}
               </Button>

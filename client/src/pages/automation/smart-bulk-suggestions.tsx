@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { getToolCreditsPerProduct } from "@shared/ai-credits";
 import { 
   Brain, 
   AlertTriangle,
@@ -562,7 +563,7 @@ export default function SmartBulkSuggestions() {
                         data-testid="button-generate-suggestions"
                       >
                         <Sparkles className="w-4 h-4 mr-2" />
-                        Generate AI Suggestions ({selectedProducts.size})
+                        Generate AI Suggestions ({selectedProducts.size}) - {selectedProducts.size * getToolCreditsPerProduct('smart-bulk-suggestions')} credits
                       </Button>
                     </div>
                   )}

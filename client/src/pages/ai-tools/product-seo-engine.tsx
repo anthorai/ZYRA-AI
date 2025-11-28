@@ -12,6 +12,7 @@ import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { formatCurrency } from "@/lib/utils";
+import { getToolCredits } from "@shared/ai-credits";
 import { 
   Zap, 
   Sparkles, 
@@ -714,7 +715,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                       ) : (
                         <Sparkles className="w-5 h-5 mr-2" />
                       )}
-                      Optimize Product SEO
+                      Optimize Product SEO - {getToolCredits(optimizationMode === 'competitive' ? 'product-seo-competitive' : 'product-seo-fast')} credits
                     </>
                   )}
                 </Button>

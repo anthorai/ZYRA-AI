@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { getToolCredits } from "@shared/ai-credits";
 import { 
   Image as ImageIcon,
   Sparkles,
@@ -299,7 +300,7 @@ export default function AIImageAltText() {
             data-testid="button-select-products"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Select Products & Start Optimization
+            Select Products & Start Optimization - {getToolCredits('image-alt-text')} credit/image
           </Button>
         </div>
       </DashboardCard>

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
+import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
 import { 
   Camera,
   Upload,
@@ -543,6 +544,7 @@ export default function MultimodalAI() {
                 type="submit"
                 disabled={generateMultimodalMutation.isPending || uploadedImages.length === 0}
                 className="w-full gradient-button transition-all duration-200 font-medium"
+                data-testid="button-generate-multimodal"
               >
                 {generateMultimodalMutation.isPending ? (
                   <>
@@ -552,7 +554,7 @@ export default function MultimodalAI() {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 mr-2" />
-                    Generate Multimodal Content
+                    Generate Multimodal Content - {formatCreditsDisplay(getToolCredits('multimodal-ai'))}
                   </>
                 )}
               </Button>

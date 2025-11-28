@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
 import { 
   Palette,
   Copy,
@@ -286,6 +287,7 @@ export default function DynamicTemplates() {
                 type="submit"
                 disabled={transformMutation.isPending || !selectedTemplate}
                 className="w-full gradient-button transition-all duration-200 font-medium"
+                data-testid="button-transform"
               >
                 {transformMutation.isPending ? (
                   <>
@@ -295,7 +297,7 @@ export default function DynamicTemplates() {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 mr-2" />
-                    Transform Content
+                    Transform Content - {formatCreditsDisplay(getToolCredits('dynamic-templates'))}
                   </>
                 )}
               </Button>

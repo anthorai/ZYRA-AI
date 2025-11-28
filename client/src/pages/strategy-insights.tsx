@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { apiRequest } from '@/lib/queryClient';
+import { getToolCredits, formatCreditsDisplay } from '@shared/ai-credits';
 
 export default function StrategyInsights() {
   const { toast } = useToast();
@@ -216,6 +217,7 @@ export default function StrategyInsights() {
               onClick={generateStrategy}
               disabled={isGenerating || !brandOverview.trim() || !goal.trim()}
               className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+              data-testid="button-generate-strategy"
             >
               {isGenerating ? (
                 <>
@@ -225,7 +227,7 @@ export default function StrategyInsights() {
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Strategy
+                  Generate Strategy - {formatCreditsDisplay(getToolCredits('strategy-insights'))}
                 </>
               )}
             </Button>

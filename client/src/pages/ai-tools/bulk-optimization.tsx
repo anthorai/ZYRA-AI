@@ -9,6 +9,7 @@ import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector } from "@/components/ui/product-selector";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { getToolCreditsPerProduct } from "@shared/ai-credits";
 import { 
   Package,
   CheckCircle,
@@ -393,7 +394,7 @@ export default function BulkOptimization() {
                 data-testid="button-create-job"
               >
                 <Zap className="w-4 h-4 mr-2" />
-                Create Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''}
+                Create Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''} - {selectedProducts.length * getToolCreditsPerProduct('bulk-optimization')} credits
               </Button>
             )}
           </div>
