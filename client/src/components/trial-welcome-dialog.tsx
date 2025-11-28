@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTrialStatus } from "@/hooks/use-trial-status";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -14,16 +16,28 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Clock, Zap, Target } from "lucide-react";
 import { Link } from "wouter";
 
+// Public pages where trial dialog should NOT show
+const PUBLIC_PAGES = ['/', '/auth', '/about', '/contact', '/help', '/terms', '/blog', '/privacy-policy', '/terms-of-service', '/forgot-password', '/reset-password', '/auth/callback', '/shopify/install'];
+
 export function TrialWelcomeDialog() {
+  const { user, loading: authLoading } = useAuth();
+  const [location] = useLocation();
   const { isOnTrial, daysRemaining, shouldShowWelcome, markWelcomeShown, trialEndDate, isLoading, isMarkingShown } = useTrialStatus();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Check if current page is a public page (should not show dialog)
+  const isPublicPage = PUBLIC_PAGES.some(page => {
+    if (page === '/') return location === '/';
+    return location.startsWith(page);
+  });
+
   useEffect(() => {
-    if (!isLoading && shouldShowWelcome && isOnTrial && daysRemaining > 0) {
+    // Only show dialog on authenticated dashboard pages
+    if (!authLoading && user && !isPublicPage && !isLoading && shouldShowWelcome && isOnTrial && daysRemaining > 0) {
       setIsOpen(true);
     }
-  }, [isLoading, shouldShowWelcome, isOnTrial, daysRemaining]);
+  }, [authLoading, user, isPublicPage, isLoading, shouldShowWelcome, isOnTrial, daysRemaining]);
 
   const handleClose = async () => {
     const success = await markWelcomeShown();
@@ -43,7 +57,8 @@ export function TrialWelcomeDialog() {
     await handleClose();
   };
 
-  if (!isOnTrial || daysRemaining <= 0) {
+  // Don't render on public pages or when user is not authenticated
+  if (!user || isPublicPage || !isOnTrial || daysRemaining <= 0) {
     return null;
   }
 
