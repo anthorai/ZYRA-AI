@@ -46,7 +46,8 @@ import {
   customerProfiles,
   segmentAnalytics,
   revenueAttribution,
-  abandonedCarts
+  abandonedCarts,
+  usageStats
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -480,11 +481,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planName = plan?.planName || u.plan;
         }
         
-        // Get credits info
-        const stats = await supabaseStorage.getUserUsageStats(u.id);
+        // Get credits info from Neon database (where trial grants are stored)
+        const [stats] = await db.select({
+          creditsUsed: usageStats.creditsUsed,
+          creditsRemaining: usageStats.creditsRemaining,
+        }).from(usageStats).where(eq(usageStats.userId, u.id));
+        
         const creditsUsed = stats?.creditsUsed || 0;
         const creditsRemaining = stats?.creditsRemaining || 0;
-        const creditLimit = creditsUsed + creditsRemaining;
+        
+        // Get credit limit from plan
+        let creditLimit = creditsUsed + creditsRemaining;
+        if (subscription?.planId) {
+          const [planData] = await db.select({ limits: subscriptionPlans.limits })
+            .from(subscriptionPlans)
+            .where(eq(subscriptionPlans.id, subscription.planId));
+          if (planData?.limits && typeof planData.limits === 'object' && 'credits' in planData.limits) {
+            creditLimit = (planData.limits as { credits?: number }).credits || creditLimit;
+          }
+        }
         
         return {
           id: u.id,
