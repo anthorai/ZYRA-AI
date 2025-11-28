@@ -28,6 +28,7 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"),
   plan: text("plan").notNull().default("trial"),
   trialEndDate: timestamp("trial_end_date").default(sql`NOW() + INTERVAL '7 days'`),
+  lastTrialWelcomeAt: timestamp("last_trial_welcome_at"), // Track when daily trial welcome was last shown
   imageUrl: text("image_url"),
   preferredLanguage: text("preferred_language").default("en"),
   createdAt: timestamp("created_at").default(sql`NOW()`),

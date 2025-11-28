@@ -1,6 +1,124 @@
 import { db } from "../db";
-import { users, subscriptions, subscriptionPlans, notifications, notificationAnalytics } from "../../shared/schema";
+import { users, subscriptions, subscriptionPlans, notifications, notificationAnalytics, usageStats } from "../../shared/schema";
 import { eq, and, lt, gte, lte, sql } from "drizzle-orm";
+
+/**
+ * Grants a 7-day free trial to a new user
+ * This is called automatically when a user creates an account
+ * @param userId - The user's ID
+ * @returns Object with success status and trial end date
+ */
+export async function grantFreeTrial(userId: string): Promise<{
+  success: boolean;
+  trialEndDate?: Date;
+  message: string;
+}> {
+  try {
+    // Check if user already has an active subscription
+    const existingSubscription = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .limit(1);
+
+    if (existingSubscription.length > 0) {
+      console.log(`[Trial Grant] User ${userId} already has a subscription, skipping trial grant`);
+      return { 
+        success: true, 
+        message: "User already has a subscription",
+        trialEndDate: existingSubscription[0].trialEnd || undefined
+      };
+    }
+
+    // Get the 7-Day Free Trial plan
+    const [trialPlan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.planName, "7-Day Free Trial"))
+      .limit(1);
+
+    if (!trialPlan) {
+      console.error("[Trial Grant] 7-Day Free Trial plan not found in database");
+      return { success: false, message: "Trial plan not found" };
+    }
+
+    const now = new Date();
+    const trialEndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
+    // Create subscription record
+    await db.insert(subscriptions).values({
+      userId,
+      planId: trialPlan.id,
+      status: "trialing",
+      trialStart: now,
+      trialEnd: trialEndDate,
+      currentPeriodStart: now,
+      currentPeriodEnd: trialEndDate,
+      cancelAtPeriodEnd: false,
+    });
+
+    // Update user's plan and trial end date
+    await db
+      .update(users)
+      .set({ 
+        plan: "trial",
+        trialEndDate: trialEndDate,
+      })
+      .where(eq(users.id, userId));
+
+    // Initialize usage stats with trial credits
+    const trialCredits = trialPlan.limits && typeof trialPlan.limits === 'object' && 'credits' in trialPlan.limits 
+      ? (trialPlan.limits as { credits?: number }).credits || 100 
+      : 100;
+
+    try {
+      // Check if usage stats already exist
+      const existingStats = await db
+        .select()
+        .from(usageStats)
+        .where(eq(usageStats.userId, userId))
+        .limit(1);
+
+      if (existingStats.length === 0) {
+        await db.insert(usageStats).values({
+          userId,
+          creditsUsed: 0,
+          creditsRemaining: trialCredits,
+          optimizationsCount: 0,
+          aiCallsThisMonth: 0,
+          lastResetDate: now,
+        });
+      }
+    } catch (statsError) {
+      console.warn("[Trial Grant] Could not initialize usage stats:", statsError);
+    }
+
+    // Send welcome notification
+    try {
+      await db.insert(notifications).values({
+        userId,
+        title: 'Welcome to Zyra AI! 🎉',
+        message: `Your 7-day free trial has started! Explore AI-powered product descriptions, SEO optimization, and smart marketing automation. Your trial ends on ${trialEndDate.toLocaleDateString()}.`,
+        type: 'info',
+        link: '/dashboard',
+        isRead: false,
+      });
+    } catch (notifError) {
+      console.warn("[Trial Grant] Could not send welcome notification:", notifError);
+    }
+
+    console.log(`[Trial Grant] ✅ Successfully granted 7-day trial to user ${userId}, ends ${trialEndDate.toISOString()}`);
+    
+    return { 
+      success: true, 
+      trialEndDate,
+      message: "7-day free trial activated successfully"
+    };
+  } catch (error: any) {
+    console.error(`[Trial Grant] Failed to grant trial to user ${userId}:`, error);
+    return { success: false, message: error.message || "Failed to grant trial" };
+  }
+}
 
 /**
  * Checks for users with expired trials and handles subscription updates

@@ -96,6 +96,7 @@ import { extractProductFeatures } from "./lib/shopify-features-extractor";
 import { BulkOptimizationService } from "./lib/bulk-optimization-service";
 import { upsellRecommendationEngine } from "./lib/upsell-recommendation-engine";
 import { upsellRecommendationRules } from "@shared/schema";
+import { grantFreeTrial } from "./lib/trial-expiration-service";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -247,6 +248,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               fullName: user.user_metadata?.full_name || user.user_metadata?.name || 'User'
             });
             console.log(`Auto-provisioned profile for user: ${user.email}`);
+            
+            // Automatically grant 7-day free trial to new users
+            const trialResult = await grantFreeTrial(user.id);
+            if (trialResult.success) {
+              console.log(`🎉 [AUTO TRIAL] Granted 7-day free trial to new user ${user.email}`);
+              // Refresh user profile to get updated trial info
+              userProfile = await supabaseStorage.getUser(user.id) || userProfile;
+            } else {
+              console.warn(`⚠️ [AUTO TRIAL] Failed to grant trial: ${trialResult.message}`);
+            }
           } catch (error) {
             console.error('Failed to auto-provision user profile:', error);
             return res.status(500).json({ message: "Failed to create user profile" });
@@ -272,6 +283,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // plan and role will use database defaults: 'trial' and 'user'
               });
               console.log(`✅ [AUTH SYNC] User ${userProfile.id} synced to Neon successfully`);
+              
+              // Grant free trial to new Neon user (idempotent - won't duplicate if already granted)
+              const trialResult = await grantFreeTrial(userProfile.id);
+              if (trialResult.success && trialResult.trialEndDate) {
+                console.log(`🎉 [AUTH SYNC] Trial activated for ${userProfile.email}, ends ${trialResult.trialEndDate.toISOString()}`);
+              }
             } else {
               // User already exists in Neon - check for admin role
               // Neon database is source of truth for admin role
@@ -4695,6 +4712,101 @@ Output format: Markdown with clear section headings.`;
       console.error("Error fetching user subscription:", error);
       res.status(500).json({ 
         error: "Failed to fetch subscription",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get trial status for current user
+  app.get("/api/trial/status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get user from database
+      const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const isOnTrial = user.plan === 'trial';
+      const trialEndDate = user.trialEndDate ? new Date(user.trialEndDate) : null;
+      
+      // Calculate days remaining using UTC date-only math to avoid timezone issues
+      let daysRemaining = 0;
+      if (trialEndDate) {
+        const nowUTC = new Date();
+        nowUTC.setUTCHours(0, 0, 0, 0);
+        const endUTC = new Date(trialEndDate);
+        endUTC.setUTCHours(0, 0, 0, 0);
+        
+        const diffMs = endUTC.getTime() - nowUTC.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        
+        // If trial end date is in the future, ensure at least 1 day remaining
+        if (trialEndDate > new Date()) {
+          daysRemaining = Math.max(1, diffDays);
+        } else {
+          daysRemaining = Math.max(0, diffDays);
+        }
+      }
+
+      // Check if we should show the daily welcome message (using UTC dates)
+      const lastWelcome = user.lastTrialWelcomeAt ? new Date(user.lastTrialWelcomeAt) : null;
+      const todayUTC = new Date();
+      todayUTC.setUTCHours(0, 0, 0, 0);
+      
+      let shouldShowWelcome = false;
+      if (isOnTrial && daysRemaining > 0) {
+        if (!lastWelcome) {
+          shouldShowWelcome = true;
+        } else {
+          const lastWelcomeUTC = new Date(lastWelcome);
+          lastWelcomeUTC.setUTCHours(0, 0, 0, 0);
+          shouldShowWelcome = lastWelcomeUTC.getTime() < todayUTC.getTime();
+        }
+      }
+
+      res.json({
+        isOnTrial,
+        trialEndDate: trialEndDate?.toISOString() || null,
+        daysRemaining,
+        shouldShowWelcome,
+        lastWelcomeAt: user.lastTrialWelcomeAt?.toISOString() || null,
+        plan: user.plan
+      });
+    } catch (error: any) {
+      console.error("Error fetching trial status:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch trial status",
+        message: error.message 
+      });
+    }
+  });
+
+  // Mark trial welcome as shown for today (only for trial users)
+  app.patch("/api/trial/status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const userPlan = (req as AuthenticatedRequest).user.plan;
+      
+      // Only allow trial users to mark welcome as shown
+      if (userPlan !== 'trial') {
+        return res.status(403).json({ 
+          error: "Forbidden", 
+          message: "Only trial users can mark trial welcome as shown" 
+        });
+      }
+      
+      await db.update(users)
+        .set({ lastTrialWelcomeAt: new Date() })
+        .where(eq(users.id, userId));
+
+      res.json({ success: true, message: "Trial welcome marked as shown" });
+    } catch (error: any) {
+      console.error("Error updating trial status:", error);
+      res.status(500).json({ 
+        error: "Failed to update trial status",
         message: error.message 
       });
     }

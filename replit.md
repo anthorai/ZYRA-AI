@@ -28,6 +28,15 @@ Uses Supabase Auth for email/password authentication, password reset, JWT-based 
 ### Payment System
 Supports PayPal-only payment processing (USD globally) with secure webhook handlers for subscription payments, including free trial auto-activation and paid plan checkout.
 
+### Trial Welcome System
+Automatic 7-day free trial activation on user signup with daily welcome dialog reminders. The system includes:
+- `grantFreeTrial()` function that automatically activates trials for new users during account creation
+- `/api/trial/status` GET endpoint returning trial days remaining and whether to show daily welcome message
+- `/api/trial/status` PATCH endpoint to mark welcome as shown for the current day
+- `useTrialStatus` React hook for managing trial state in frontend
+- `TrialWelcomeDialog` component displaying contextual messages based on days remaining (7 days, 4+ days, 2-3 days, last day)
+- `lastTrialWelcomeAt` field in users table tracks daily welcome display status
+
 ### Marketing Automation System
 Enables real email/SMS delivery via SendGrid and Twilio for campaign scheduling, abandoned cart recovery, and performance tracking.
 
