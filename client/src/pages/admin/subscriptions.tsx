@@ -192,7 +192,7 @@ export default function AdminSubscriptions() {
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky Header - matches application header style */}
-      <header className="backdrop-blur-sm border border-border rounded-2xl mx-4 sm:mx-6 px-4 sm:px-6 py-3 sm:py-4 mt-[2px] mb-[2px] bg-[#16162c] ml-[2px] mr-[2px]">
+      <header className="backdrop-blur-sm border border-border rounded-2xl px-4 sm:px-6 py-3 sm:py-4 m-2 bg-[#16162c]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <Link href="/dashboard">
