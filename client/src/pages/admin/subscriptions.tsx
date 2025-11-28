@@ -191,41 +191,34 @@ export default function AdminSubscriptions() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-50 pt-4 px-4">
-        <div className="container mx-auto max-w-7xl">
-          <div className="flex items-center justify-between h-14 px-4 bg-card/90 backdrop-blur-xl rounded-xl border border-border/50">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground" data-testid="button-back-dashboard">
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-              <div className="h-6 w-px bg-border" />
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <Shield className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-foreground" data-testid="heading-admin-subscriptions">
-                    Admin Panel
-                  </h1>
-                </div>
+      {/* Sticky Header - matches application header style */}
+      <header className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl mx-4 sm:mx-6 px-4 sm:px-6 py-3 sm:py-4 mt-[3px] mb-[3px] ml-[2px] mr-[2px]">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="icon" className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0" data-testid="button-back-dashboard">
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/20">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl" data-testid="heading-admin-subscriptions">
+                  Admin Panel
+                </h1>
+                <p className="text-slate-300 text-xs sm:text-sm hidden sm:block">Manage merchant subscriptions and credits</p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-              Administrator Access
-            </Badge>
           </div>
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 flex-shrink-0">
+            Administrator Access
+          </Badge>
         </div>
       </header>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex items-center gap-3 mb-8">
-          <div>
-            <p className="text-muted-foreground">Manage merchant subscriptions, credits, and billing</p>
-          </div>
-        </div>
+      
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
