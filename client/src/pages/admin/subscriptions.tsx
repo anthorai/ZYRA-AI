@@ -312,7 +312,7 @@ export default function AdminSubscriptions() {
                     placeholder="Search by email or name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pr-[33px]"
+                    className="w-64 pr-[33px] bg-background text-foreground placeholder:text-muted-foreground"
                     data-testid="input-search-users"
                   />
                 </div>
