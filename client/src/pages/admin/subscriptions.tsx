@@ -54,6 +54,7 @@ interface UserWithSubscription {
     planId: string;
     planName: string;
     status: string;
+    expiresAt?: string | null;
   };
   credits?: {
     used: number;
@@ -340,6 +341,7 @@ export default function AdminSubscriptions() {
                       <TableHead>Current Plan</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Credits</TableHead>
+                      <TableHead>Expires</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -375,6 +377,22 @@ export default function AdminSubscriptions() {
                               {user.credits?.remaining ?? 0} / {user.credits?.limit ?? 0}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {user.subscription?.expiresAt ? (
+                            <div className="flex flex-col">
+                              <span className="text-sm">
+                                {new Date(user.subscription.expiresAt).toLocaleDateString()}
+                              </span>
+                              {new Date(user.subscription.expiresAt) < new Date() && (
+                                <Badge variant="destructive" className="w-fit mt-1 text-xs">
+                                  Expired
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">N/A</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">

@@ -466,10 +466,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get subscription and credit details for each user
       const usersWithDetails = await Promise.all(allUsers.map(async (u) => {
-        // Get subscription
+        // Get subscription with expiration dates
         const [subscription] = await db.select({
           planId: subscriptions.planId,
           status: subscriptions.status,
+          trialEnd: subscriptions.trialEnd,
+          currentPeriodEnd: subscriptions.currentPeriodEnd,
         }).from(subscriptions).where(eq(subscriptions.userId, u.id));
         
         // Get plan name if subscription exists
@@ -501,6 +503,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
+        // Determine expiration date (trial end for trialing, period end for active)
+        const expiresAt = subscription?.status === 'trialing' 
+          ? subscription.trialEnd 
+          : subscription?.currentPeriodEnd;
+        
         return {
           id: u.id,
           email: u.email,
@@ -512,6 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             planId: subscription.planId,
             planName,
             status: subscription.status,
+            expiresAt: expiresAt || null,
           } : null,
           credits: {
             used: creditsUsed,
