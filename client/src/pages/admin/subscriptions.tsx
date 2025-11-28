@@ -225,11 +225,11 @@ export default function AdminSubscriptions() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">Total</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
+                <Users className="w-5 h-5 text-primary flex-shrink-0" />
                 <span className="text-2xl font-bold" data-testid="stat-total-users">{pagination?.total || users?.length || 0}</span>
               </div>
               <p className="text-xs text-muted-foreground">(all pages)</p>
@@ -238,11 +238,11 @@ export default function AdminSubscriptions() {
           
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Pro Users</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">Pro</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
-                <Crown className="w-5 h-5 text-yellow-500" />
+                <Crown className="w-5 h-5 text-yellow-500 flex-shrink-0" />
                 <span className="text-2xl font-bold" data-testid="stat-pro-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'pro').length || 0}
                 </span>
@@ -253,11 +253,11 @@ export default function AdminSubscriptions() {
 
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Growth Users</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">Growth</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
-                <Crown className="w-5 h-5 text-blue-500" />
+                <Crown className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <span className="text-2xl font-bold" data-testid="stat-growth-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'growth').length || 0}
                 </span>
@@ -268,11 +268,11 @@ export default function AdminSubscriptions() {
 
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Starter Users</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">Starter</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
-                <Crown className="w-5 h-5 text-green-500" />
+                <Crown className="w-5 h-5 text-green-500 flex-shrink-0" />
                 <span className="text-2xl font-bold" data-testid="stat-starter-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'starter').length || 0}
                 </span>
@@ -283,11 +283,11 @@ export default function AdminSubscriptions() {
 
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Trial Users</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">Trial</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-slate-400" />
+                <Users className="w-5 h-5 text-slate-400 flex-shrink-0" />
                 <span className="text-2xl font-bold" data-testid="stat-trial-users">
                   {users?.filter(u => u.plan?.toLowerCase().includes('trial') || u.plan?.toLowerCase() === 'free').length || 0}
                 </span>
