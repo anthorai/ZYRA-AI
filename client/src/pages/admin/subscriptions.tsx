@@ -194,7 +194,7 @@ export default function AdminSubscriptions() {
       {/* Sticky Header */}
       <header className="border-b border-primary/10 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 bg-[#16162c]">
             <div className="flex items-center gap-4">
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground" data-testid="button-back-dashboard">
@@ -220,7 +220,6 @@ export default function AdminSubscriptions() {
           </div>
         </div>
       </header>
-
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex items-center gap-3 mb-8">
           <div>
