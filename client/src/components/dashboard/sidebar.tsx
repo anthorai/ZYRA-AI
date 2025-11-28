@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import zyraLogo from "@assets/zyra logo_1758518826550.png";
@@ -6,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Zap, 
   Home, 
@@ -17,7 +19,8 @@ import {
   LogOut,
   User,
   X,
-  Cog
+  Cog,
+  Coins
 } from "lucide-react";
 
 interface SidebarProps {
@@ -46,6 +49,13 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   const displayName = getDisplayName();
   const initials = displayName.charAt(0).toUpperCase();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch credits balance
+  const { data: creditsData } = useQuery<{ balance: number; used: number }>({
+    queryKey: ['/api/credits/balance'],
+    enabled: !!supabaseUser,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
@@ -190,9 +200,19 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
                 <h1 className="text-sm font-bold text-white tracking-tight truncate" data-testid="text-user-name">
                   {displayName}
                 </h1>
-                <p className="text-slate-300 text-xs capitalize truncate" data-testid="text-user-plan">
-                  {appUser?.plan || "trial"} Plan
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Badge 
+                    variant="outline" 
+                    className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 border-primary/30 text-primary capitalize"
+                    data-testid="badge-user-plan"
+                  >
+                    {appUser?.plan || "trial"}
+                  </Badge>
+                  <span className="text-slate-400 text-[10px] flex items-center gap-0.5" data-testid="text-credits-remaining">
+                    <Coins className="w-2.5 h-2.5" />
+                    {creditsData?.balance ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
             
