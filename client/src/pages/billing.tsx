@@ -25,7 +25,17 @@ import {
   Settings,
   Rocket,
   BarChart,
-  Wand2
+  Wand2,
+  Clock,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  Sparkles,
+  Image,
+  Mail,
+  MessageSquare,
+  Search
 } from "lucide-react";
 
 interface SubscriptionPlan {
@@ -273,6 +283,7 @@ export default function BillingPage() {
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("plans");
 
   // Fetch real subscription plans from API
   const { 
@@ -414,6 +425,39 @@ export default function BillingPage() {
     });
   };
 
+  const formatShortDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const getDaysRemaining = (endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  };
+
+  const getUsageColor = (percentage: number) => {
+    if (percentage >= 90) return 'text-red-400';
+    if (percentage >= 70) return 'text-yellow-400';
+    return 'text-emerald-400';
+  };
+
+  const getProgressColor = (percentage: number) => {
+    if (percentage >= 90) return '[&>div]:bg-red-500';
+    if (percentage >= 70) return '[&>div]:bg-yellow-500';
+    return '[&>div]:bg-emerald-500';
+  };
+
+  const sortedInvoices = [...invoices].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  const latestInvoice = sortedInvoices.length > 0 ? sortedInvoices[0] : null;
+
   if (plansLoading || subscriptionLoading || usageLoading) {
     return (
       <PageShell
@@ -442,57 +486,209 @@ export default function BillingPage() {
       spacing="normal"
     >
       {currentPlan && (
-        <DashboardCard testId="card-current-plan">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              {currentPlan.planName && planIcons[currentPlan.planName]}
-              <div>
-                <h2 className="text-white text-2xl font-semibold" data-testid="text-current-plan">
-                  {currentPlan.planName || 'Current Plan'}
-                </h2>
-                <p className="text-slate-300">
-                  {currentPlan.description}
-                </p>
+        <DashboardCard testId="card-my-subscription">
+          <div className="space-y-6">
+            {/* Header: Plan Info + Status */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                  {currentPlan.planName && planIcons[currentPlan.planName]}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-white text-xl sm:text-2xl font-bold" data-testid="text-current-plan">
+                      {currentPlan.planName || 'Current Plan'}
+                    </h2>
+                    {currentSubscription?.status && (
+                      <Badge 
+                        variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
+                        className="capitalize"
+                        data-testid="badge-subscription-status"
+                      >
+                        {currentSubscription.status === 'active' ? (
+                          <><CheckCircle2 className="w-3 h-3 mr-1" /> Active</>
+                        ) : currentSubscription.status}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-slate-400 text-sm mt-0.5">
+                    {currentPlan.description}
+                  </p>
+                </div>
+              </div>
+              <div className="text-left sm:text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-white" data-testid="text-current-price">
+                  {formatPrice(currentPlan.price)}
+                  <span className="text-base sm:text-lg text-slate-400 font-normal">/{currentPlan.interval}</span>
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-white" data-testid="text-current-price">
-                {formatPrice(currentPlan.price)}
-                <span className="text-lg text-slate-300">/{currentPlan.interval}</span>
+
+            {/* Subscription Timeline */}
+            {currentSubscription && currentSubscription.currentPeriodStart && currentSubscription.currentPeriodEnd && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                {/* Started Date */}
+                <div className="flex items-center gap-3 p-3 sm:p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 text-xs uppercase tracking-wide">Started</p>
+                    <p className="text-white font-semibold text-sm truncate" data-testid="text-subscription-start">
+                      {formatShortDate(currentSubscription.currentPeriodStart)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Renewal Date */}
+                <div className="flex items-center gap-3 p-3 sm:p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 text-xs uppercase tracking-wide">Renews On</p>
+                    <p className="text-white font-semibold text-sm truncate" data-testid="text-renewal-date">
+                      {formatShortDate(currentSubscription.currentPeriodEnd)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Days Remaining */}
+                <div className="flex items-center gap-3 p-3 sm:p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 text-xs uppercase tracking-wide">Days Left</p>
+                    <p className="text-white font-semibold text-sm" data-testid="text-days-remaining">
+                      {getDaysRemaining(currentSubscription.currentPeriodEnd)} days
+                    </p>
+                  </div>
+                </div>
               </div>
-              {currentSubscription?.status && (
-                <Badge 
-                  variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
-                  className="capitalize mt-2"
-                  data-testid="badge-subscription-status"
-                >
-                  {currentSubscription.status}
-                </Badge>
-              )}
-            </div>
-          </div>
+            )}
+
+            {/* Credits Usage Section */}
             {usageStats && (
               <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Credit Usage
+                  </h3>
+                  <span className={`text-sm font-medium ${getUsageColor(getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits))}`} data-testid="text-usage-percentage">
+                    {Math.round(getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits))}% used
+                  </span>
+                </div>
+                
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-300">Credits Used</span>
+                    <span className="text-slate-400">Credits Used</span>
                     <span className="text-white font-medium" data-testid="text-credits-usage">
-                      {usageStats.creditsUsed || 0} / {currentPlan.limits.credits}
+                      {(usageStats.creditsUsed || 0).toLocaleString()} / {currentPlan.limits.credits.toLocaleString()}
                     </span>
                   </div>
                   <Progress 
                     value={getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits)} 
-                    className="h-3"
+                    className={`h-3 ${getProgressColor(getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits))}`}
                   />
-                  <p className="text-xs text-slate-400 mt-1">
-                    {usageStats.creditsRemaining || currentPlan.limits.credits} credits remaining this {currentPlan.interval}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-slate-400">
+                      {(usageStats.creditsRemaining || currentPlan.limits.credits).toLocaleString()} credits remaining this {currentPlan.interval}
+                    </p>
+                    {getUsagePercentage(usageStats.creditsUsed || 0, currentPlan.limits.credits) >= 80 && (
+                      <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-400">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Running Low
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Credit Usage Breakdown */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-2">
+                  <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Search className="w-3.5 h-3.5 text-blue-400" />
+                      <span className="text-xs text-slate-400">SEO</span>
+                    </div>
+                    <p className="text-white font-semibold text-sm" data-testid="text-seo-usage">
+                      {usageStats.seoOptimizationsUsed || 0}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                      <span className="text-xs text-slate-400">AI Gen</span>
+                    </div>
+                    <p className="text-white font-semibold text-sm" data-testid="text-ai-usage">
+                      {usageStats.aiGenerationsUsed || 0}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-xs text-slate-400">Emails</span>
+                    </div>
+                    <p className="text-white font-semibold text-sm" data-testid="text-email-usage">
+                      {usageStats.emailsSent || 0}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MessageSquare className="w-3.5 h-3.5 text-orange-400" />
+                      <span className="text-xs text-slate-400">SMS</span>
+                    </div>
+                    <p className="text-white font-semibold text-sm" data-testid="text-sms-usage">
+                      {usageStats.smsSent || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-700/50">
+              {latestInvoice && latestInvoice.pdfUrl && (
+                <Button
+                  variant="outline"
+                  className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-800"
+                  onClick={() => window.open(latestInvoice.pdfUrl, '_blank')}
+                  data-testid="button-download-latest-invoice"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Download Latest Invoice
+                </Button>
+              )}
+              {currentPlan.planName !== 'Pro' && (
+                <Button
+                  className="flex-1 gradient-button"
+                  onClick={() => setActiveTab("plans")}
+                  data-testid="button-upgrade-plan"
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Upgrade Plan
+                </Button>
+              )}
+            </div>
+
+            {/* Cancel Warning */}
+            {currentSubscription?.cancelAtPeriodEnd && currentSubscription.currentPeriodEnd && (
+              <div className="flex items-center gap-3 p-4 bg-red-500/10 rounded-xl border border-red-500/30">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <div>
+                  <p className="text-red-400 font-medium text-sm">Subscription Ending</p>
+                  <p className="text-red-300/80 text-xs">
+                    Your subscription will end on {formatShortDate(currentSubscription.currentPeriodEnd)}. 
+                    You won't be charged again.
                   </p>
                 </div>
               </div>
             )}
+          </div>
         </DashboardCard>
       )}
-      <Tabs defaultValue="plans" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="inline-flex flex-nowrap w-full sm:grid sm:grid-cols-4 gradient-surface overflow-x-auto gap-2">
           <TabsTrigger value="plans" data-testid="tab-plans" className="flex-none min-w-max sm:flex-auto">Plans</TabsTrigger>
           <TabsTrigger value="billing" data-testid="tab-billing" className="flex-none min-w-max sm:flex-auto">Billing History</TabsTrigger>
