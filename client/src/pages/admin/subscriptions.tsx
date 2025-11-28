@@ -190,26 +190,41 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-6">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="gap-2" data-testid="button-back-dashboard">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 rounded-lg bg-primary/10">
-            <Shield className="w-8 h-8 text-primary" />
+    <div className="min-h-screen bg-slate-950">
+      {/* Sticky Header */}
+      <header className="border-b border-primary/10 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm" className="gap-2 text-slate-300 hover:text-white hover:bg-white/10" data-testid="button-back-dashboard">
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+              <div className="h-6 w-px bg-slate-700" />
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary/20">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-white" data-testid="heading-admin-subscriptions">
+                    Admin Panel
+                  </h1>
+                </div>
+              </div>
+            </div>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              Administrator Access
+            </Badge>
           </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex items-center gap-3 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground" data-testid="heading-admin-subscriptions">
-              Admin Panel
-            </h1>
-            <p className="text-muted-foreground">Manage merchant subscriptions and credits</p>
+            <p className="text-slate-400">Manage merchant subscriptions, credits, and billing</p>
           </div>
         </div>
 
