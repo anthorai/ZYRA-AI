@@ -13,8 +13,9 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
   const hasRedirected = useRef(false);
 
   // Handle case where auth context might be temporarily unavailable (development hot reloads)
-  const { user, isLoading, isAuthenticated } = auth || { 
-    user: null, 
+  // Use appUser for role checks (contains admin role from backend API)
+  const { appUser, isLoading, isAuthenticated } = auth || { 
+    appUser: null, 
     isLoading: true, 
     isAuthenticated: false 
   };
@@ -27,7 +28,8 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
     }
     
     // Redirect to dashboard if admin access is required but user is not admin
-    if (!isLoading && isAuthenticated && requireAdmin && user?.role !== 'admin') {
+    // Use appUser.role which contains the Neon database admin role
+    if (!isLoading && isAuthenticated && requireAdmin && appUser?.role !== 'admin') {
       hasRedirected.current = true;
       setLocation("/dashboard");
     }
@@ -36,7 +38,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
     if (isAuthenticated) {
       hasRedirected.current = false;
     }
-  }, [isLoading, isAuthenticated, setLocation, auth, requireAdmin, user]);
+  }, [isLoading, isAuthenticated, setLocation, auth, requireAdmin, appUser]);
 
   if (isLoading) {
     return (
@@ -53,8 +55,8 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
     return null; // Will redirect via useEffect
   }
 
-  // Check admin requirement
-  if (requireAdmin && user?.role !== 'admin') {
+  // Check admin requirement using appUser.role (from backend API with Neon admin role)
+  if (requireAdmin && appUser?.role !== 'admin') {
     return null; // Will redirect via useEffect
   }
 
