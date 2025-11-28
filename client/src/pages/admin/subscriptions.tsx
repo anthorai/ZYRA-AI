@@ -192,9 +192,9 @@ export default function AdminSubscriptions() {
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky Header */}
-      <header className="border-b border-primary/10 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex items-center justify-between h-16 bg-[#16162c]">
+      <header className="sticky top-0 z-50 pt-4 px-4">
+        <div className="container mx-auto max-w-7xl">
+          <div className="flex items-center justify-between h-14 px-4 bg-card/90 backdrop-blur-xl rounded-xl border border-border/50">
             <div className="flex items-center gap-4">
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground" data-testid="button-back-dashboard">
