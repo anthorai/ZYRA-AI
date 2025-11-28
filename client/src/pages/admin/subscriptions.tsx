@@ -362,7 +362,10 @@ export default function AdminSubscriptions() {
                         </TableCell>
                         <TableCell>
                           <Badge variant={getPlanBadgeVariant(user.plan)}>
-                            {user.subscription?.planName || user.plan || 'No Plan'}
+                            {(() => {
+                              const planName = user.subscription?.planName || user.plan || 'No Plan';
+                              return planName === '7-Day Free Trial' ? 'Trial' : planName;
+                            })()}
                           </Badge>
                         </TableCell>
                         <TableCell>
