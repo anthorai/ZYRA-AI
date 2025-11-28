@@ -13,6 +13,8 @@ import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
 import { formatCurrency } from "@/lib/utils";
 import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
+import { useCredits } from "@/hooks/use-credits";
+import { CreditBalanceDisplay, LowCreditWarning } from "@/components/credit-balance-display";
 import { 
   Zap, 
   Sparkles, 
@@ -100,6 +102,7 @@ type OptimizationMode = 'fast' | 'competitive';
 
 export default function ProductSeoEngine() {
   const { toast } = useToast();
+  const { checkCredits, consumeCredits, hasEnoughCredits, showLowCreditWarning, refetch: refetchCredits } = useCredits();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const [selectedProductId, setSelectedProductId] = useState<string>("");
@@ -131,14 +134,25 @@ export default function ProductSeoEngine() {
   // Get selected product
   const selectedProduct = products?.find(p => p.id === selectedProductId);
 
+  // Track the pre-checked toolId for credit consumption (persists through SERP fallback)
+  const [checkedToolId, setCheckedToolId] = useState<string>('product-seo-fast');
+  
   // Generate SEO mutation
   const generateSEOMutation = useMutation({
     mutationFn: async (productData: { productName: string; keyFeatures: string; targetAudience: string; category: string }) => {
       const response = await apiRequest("POST", "/api/generate-product-seo", productData);
       return await response.json();
     },
-    onSuccess: (data: SEOOutput) => {
+    onSuccess: async (data: SEOOutput) => {
       setGeneratedSEO(data);
+      
+      // Consume credits using the pre-checked toolId (persists even if SERP failed and fell back)
+      await consumeCredits(checkedToolId);
+      refetchCredits();
+      
+      // Check and show low credit warning
+      showLowCreditWarning();
+      
       toast({
         title: "SEO Generated Successfully!",
         description: "Your product SEO has been optimized with AI.",
@@ -308,6 +322,22 @@ export default function ProductSeoEngine() {
       return;
     }
 
+    // Determine the tool ID based on optimization mode and store it for consumption
+    // This persists even if SERP fails and mode falls back to fast
+    const toolId = optimizationMode === 'competitive' ? 'product-seo-competitive' : 'product-seo-fast';
+    setCheckedToolId(toolId);
+    
+    // Check credits before proceeding
+    const creditCheck = await checkCredits(toolId);
+    if (!creditCheck.hasEnoughCredits) {
+      toast({
+        title: "Insufficient Credits",
+        description: creditCheck.message || `This operation requires ${creditCheck.creditCost} credits, but you only have ${creditCheck.creditsRemaining} remaining.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Clear previous results and reset applied fields
     setGeneratedSEO(null);
     setSerpAnalysis(null);
@@ -319,7 +349,8 @@ export default function ProductSeoEngine() {
         const keyword = selectedProduct.name;
         await serpAnalysisMutation.mutateAsync(keyword);
       } catch (error) {
-        // SERP analysis failed - fall back to fast mode
+        // SERP analysis failed - fall back to fast mode for UI display
+        // Note: Credit consumption still uses the originally checked toolId
         console.error('SERP analysis failed, falling back to fast mode:', error);
         setOptimizationMode('fast');
         toast({
@@ -405,6 +436,9 @@ Keywords: ${generatedSEO.keywords.join(", ")}
       maxWidth="xl"
       spacing="normal"
     >
+      {/* Low Credit Warning */}
+      <LowCreditWarning />
+      
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar: Product Loader + AI Insights */}

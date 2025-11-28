@@ -27,6 +27,18 @@ export const FEATURE_CREDIT_COST = {
   // General AI Operations
   AI_GENERATION: 10,
   AI_OPTIMIZATION: 15,
+  
+  // AI Tool-specific credits (aligned with shared/ai-credits.ts)
+  PRODUCT_SEO_FAST: 5,
+  PRODUCT_SEO_COMPETITIVE: 15,
+  BULK_OPTIMIZATION_PER_PRODUCT: 2,
+  IMAGE_ALT_TEXT_PER_IMAGE: 1,
+  DYNAMIC_TEMPLATES_TOOL: 3,
+  BRAND_VOICE_TRAINING: 10,
+  MULTIMODAL_AI_TOOL: 8,
+  AB_TESTING_TOOL: 6,
+  STRATEGY_INSIGHTS: 15,
+  SMART_BULK_SUGGESTIONS_PER_PRODUCT: 2,
 } as const;
 
 export type FeatureType = keyof typeof FEATURE_CREDIT_COST;

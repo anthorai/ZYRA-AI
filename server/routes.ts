@@ -86,7 +86,7 @@ import {
 } from "./middleware/sanitization";
 import { NotificationService } from "./lib/notification-service";
 import { TwoFactorAuthService } from "./lib/2fa-service";
-import { initializeUserCredits } from "./lib/credits";
+import { initializeUserCredits, getCreditBalance, checkAIToolCredits, consumeAIToolCredits } from "./lib/credits";
 import { cacheOrFetch, deleteCached, CacheConfig } from "./lib/cache";
 import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./lib/ai-cache";
 import { extractProductFeatures } from "./lib/shopify-features-extractor";
@@ -4508,6 +4508,71 @@ Output format: Markdown with clear section headings.`;
       console.error("Error fetching usage stats:", error);
       res.status(500).json({ 
         error: "Failed to fetch usage stats",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get credit balance for AI tools
+  app.get("/api/credits/balance", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const balance = await getCreditBalance(userId);
+      res.json(balance);
+    } catch (error: any) {
+      console.error("Error fetching credit balance:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch credit balance",
+        message: error.message 
+      });
+    }
+  });
+
+  // Check credits for an AI tool operation
+  app.post("/api/credits/check", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { toolId, quantity = 1 } = req.body;
+      
+      if (!toolId) {
+        return res.status(400).json({ error: "toolId is required" });
+      }
+      
+      const result = await checkAIToolCredits(userId, toolId, quantity);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error checking credits:", error);
+      res.status(500).json({ 
+        error: "Failed to check credits",
+        message: error.message 
+      });
+    }
+  });
+
+  // Consume credits for an AI tool operation (called after successful generation)
+  app.post("/api/credits/consume", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { toolId, quantity = 1 } = req.body;
+      
+      if (!toolId) {
+        return res.status(400).json({ error: "toolId is required" });
+      }
+      
+      const result = await consumeAIToolCredits(userId, toolId, quantity);
+      
+      if (!result.success) {
+        return res.status(402).json({ 
+          error: "Insufficient credits",
+          message: result.message 
+        });
+      }
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error consuming credits:", error);
+      res.status(500).json({ 
+        error: "Failed to consume credits",
         message: error.message 
       });
     }
