@@ -4429,8 +4429,59 @@ Output format: Markdown with clear section headings.`;
   // Get current user subscription
   app.get("/api/subscription/current", requireAuth, async (req, res) => {
     try {
-      const subscription = await supabaseStorage.getUserSubscription((req as AuthenticatedRequest).user.id);
-      res.json(subscription || {});
+      const userId = (req as AuthenticatedRequest).user.id;
+      const subscription = await supabaseStorage.getUserSubscription(userId);
+      
+      // If user has an active subscription, return it
+      if (subscription) {
+        res.json(subscription);
+        return;
+      }
+      
+      // If no subscription, check if user is on trial and create virtual subscription
+      const userProfile = (req as AuthenticatedRequest).user;
+      const user = await supabaseStorage.getUser(userId);
+      
+      if (user?.plan === 'trial' || userProfile?.plan === 'trial') {
+        // Get trial plan details
+        const plans = await getSubscriptionPlans();
+        const trialPlan = plans.find(p => p.planName === '7-Day Free Trial');
+        
+        // Calculate trial period dates
+        const trialEndDate = user?.trialEndDate;
+        const trialStartDate = trialEndDate 
+          ? new Date(new Date(trialEndDate).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          : new Date().toISOString();
+        const trialEnd = trialEndDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        
+        // Create a virtual trial subscription response
+        const trialSubscription = {
+          id: `trial_${userId}`,
+          userId: userId,
+          planId: trialPlan?.id || 'trial',
+          planName: '7-Day Free Trial',
+          status: 'trial',
+          currentPeriodStart: trialStartDate,
+          currentPeriodEnd: trialEnd,
+          cancelAtPeriodEnd: false,
+          isTrial: true,
+          creditsIncluded: 100,
+          creditsUsed: 0,
+          price: '0',
+          features: trialPlan?.features || [
+            "100 credits for 7 days",
+            "Full access to all features",
+            "Product optimization",
+            "AI-powered growth tools"
+          ]
+        };
+        
+        res.json(trialSubscription);
+        return;
+      }
+      
+      // No subscription and not on trial - return empty
+      res.json({});
     } catch (error: any) {
       console.error("Error fetching user subscription:", error);
       res.status(500).json({ 
@@ -4470,6 +4521,12 @@ Output format: Markdown with clear section headings.`;
       const invoices = await supabaseStorage.getPaymentTransactions(userId);
       res.json(invoices || []);
     } catch (error: any) {
+      // If payment_transactions table doesn't exist, return empty array instead of error
+      if (error.message?.includes('payment_transactions') || error.message?.includes('schema cache')) {
+        console.log("[API] Payment transactions table not found, returning empty invoices");
+        res.json([]);
+        return;
+      }
       console.error("Error fetching invoices:", error);
       res.status(500).json({ 
         error: "Failed to fetch invoices",

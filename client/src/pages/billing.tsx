@@ -501,12 +501,14 @@ export default function BillingPage() {
                     </h2>
                     {currentSubscription?.status && (
                       <Badge 
-                        variant={currentSubscription.status === 'active' ? 'default' : 'secondary'}
+                        variant={currentSubscription.status === 'active' || currentSubscription.status === 'trial' ? 'default' : 'secondary'}
                         className="capitalize"
                         data-testid="badge-subscription-status"
                       >
                         {currentSubscription.status === 'active' ? (
                           <><CheckCircle2 className="w-3 h-3 mr-1" /> Active</>
+                        ) : currentSubscription.status === 'trial' ? (
+                          <><Sparkles className="w-3 h-3 mr-1" /> Trial</>
                         ) : currentSubscription.status}
                       </Badge>
                     )}
@@ -540,13 +542,15 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Renewal Date */}
+                {/* Renewal/Trial End Date */}
                 <div className="flex items-center gap-3 p-3 sm:p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                     <Clock className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-slate-400 text-xs uppercase tracking-wide">Renews On</p>
+                    <p className="text-slate-400 text-xs uppercase tracking-wide">
+                      {currentSubscription.status === 'trial' ? 'Trial Ends' : 'Renews On'}
+                    </p>
                     <p className="text-white font-semibold text-sm truncate" data-testid="text-renewal-date">
                       {formatShortDate(currentSubscription.currentPeriodEnd)}
                     </p>
