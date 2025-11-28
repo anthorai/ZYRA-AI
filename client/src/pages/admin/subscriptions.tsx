@@ -292,7 +292,7 @@ export default function AdminSubscriptions() {
                     placeholder="Search by email or name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pl-[33px]"
+                    className="w-64 pl-[33px] pr-[33px]"
                     data-testid="input-search-users"
                   />
                 </div>
