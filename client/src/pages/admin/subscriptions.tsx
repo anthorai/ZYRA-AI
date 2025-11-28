@@ -192,7 +192,7 @@ export default function AdminSubscriptions() {
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky Header - matches application header style */}
-      <header className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl mx-4 sm:mx-6 px-4 sm:px-6 py-3 sm:py-4 mt-[3px] mb-[3px] ml-[2px] mr-[2px]">
+      <header className="backdrop-blur-sm border border-border rounded-2xl mx-4 sm:mx-6 px-4 sm:px-6 py-3 sm:py-4 mt-[2px] mb-[2px] ml-[2px] mr-[2px] bg-[#16162c]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <Link href="/dashboard">
@@ -217,7 +217,6 @@ export default function AdminSubscriptions() {
           </Badge>
         </div>
       </header>
-      
       <div className="container mx-auto px-4 py-6 max-w-7xl">
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
