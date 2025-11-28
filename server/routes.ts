@@ -8283,13 +8283,14 @@ Output format: Markdown with clear section headings.`;
           // Publish to Shopify
           const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, update.content);
 
-          // Transform content to match what frontend expects in optimizedCopy
+          // MERGE content with existing optimizedCopy (don't replace entirely)
+          const existingOptimizedCopy = (product.optimizedCopy || {}) as any;
           const optimizedCopyData = {
-            description: update.content.description || '',
-            title: update.content.seoTitle || '',
-            productName: update.content.seoTitle || '',
-            metaDescription: update.content.metaDescription || '',
-            keywords: Array.isArray(update.content.tags) ? update.content.tags.join(', ') : (update.content.tags || ''),
+            ...existingOptimizedCopy,
+            ...(update.content.description ? { description: update.content.description } : {}),
+            ...(update.content.seoTitle ? { title: update.content.seoTitle, productName: update.content.seoTitle } : {}),
+            ...(update.content.metaDescription ? { metaDescription: update.content.metaDescription } : {}),
+            ...(update.content.tags ? { keywords: Array.isArray(update.content.tags) ? update.content.tags.join(', ') : update.content.tags } : {}),
           };
 
           // Update in database
@@ -8297,9 +8298,7 @@ Output format: Markdown with clear section headings.`;
             .set({
               isOptimized: true,
               optimizedCopy: optimizedCopyData,
-              description: update.content.description || product.description,
-              seoTitle: update.content.seoTitle || product.seoTitle,
-              seoKeywords: Array.isArray(update.content.tags) ? update.content.tags.join(', ') : (update.content.tags || ''),
+              ...(update.content.description ? { description: update.content.description } : {}),
               updatedAt: sql`NOW()`
             })
             .where(eq(products.id, update.productId));
@@ -8411,22 +8410,23 @@ Output format: Markdown with clear section headings.`;
       const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
 
       // Update product in Zyra database
-      // Transform content to match what frontend expects in optimizedCopy
+      // MERGE new content with existing optimizedCopy (don't replace entirely)
+      const existingOptimizedCopy = (product.optimizedCopy || {}) as any;
       const optimizedCopyData = {
-        description: content.description || '',
-        title: content.seoTitle || '',
-        productName: content.seoTitle || '',
-        metaDescription: content.metaDescription || '',
-        keywords: Array.isArray(content.tags) ? content.tags.join(', ') : (content.tags || ''),
+        ...existingOptimizedCopy,
+        // Only update fields that have content
+        ...(content.description ? { description: content.description } : {}),
+        ...(content.seoTitle ? { title: content.seoTitle, productName: content.seoTitle } : {}),
+        ...(content.metaDescription ? { metaDescription: content.metaDescription } : {}),
+        ...(content.tags ? { keywords: Array.isArray(content.tags) ? content.tags.join(', ') : content.tags } : {}),
       };
       
       await db.update(products)
         .set({
           isOptimized: true,
           optimizedCopy: optimizedCopyData,
-          description: content.description || product.description,
-          seoTitle: content.seoTitle || product.seoTitle,
-          seoKeywords: Array.isArray(content.tags) ? content.tags.join(', ') : (content.tags || ''),
+          // Only update description if provided
+          ...(content.description ? { description: content.description } : {}),
           updatedAt: sql`NOW()`
         })
         .where(eq(products.id, productId));
