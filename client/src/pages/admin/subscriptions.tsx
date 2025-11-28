@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,10 +92,12 @@ export default function AdminSubscriptions() {
   const { data: usersResponse, isLoading: usersLoading, refetch: refetchUsers } = useQuery<PaginatedResponse>({
     queryKey: ['/api/admin/users-with-subscriptions', currentPage],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(`/api/admin/users-with-subscriptions?page=${currentPage}&limit=50`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
         },
       });
       if (!res.ok) throw new Error('Failed to fetch users');
