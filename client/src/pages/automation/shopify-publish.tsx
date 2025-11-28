@@ -414,8 +414,21 @@ export default function ShopifyPublish() {
           const optimizedTitle = seoMeta?.optimizedTitle || seoMeta?.seoTitle || product.name;
           const optimizedDesc = product.optimizedDescription || product.description;
           const optimizedMeta = seoMeta?.optimizedMeta || seoMeta?.metaDescription || '';
-          const keywords = seoMeta?.keywords?.split(',').map(k => k.trim()).filter(Boolean) || product.tags || [];
-          const originalTags = product.originalTags || [];
+          
+          // Safely parse keywords - handle string, array, or undefined cases
+          let keywords: string[] = [];
+          if (seoMeta?.keywords) {
+            if (typeof seoMeta.keywords === 'string' && seoMeta.keywords.trim()) {
+              keywords = seoMeta.keywords.split(',').map(k => k.trim()).filter(Boolean);
+            } else if (Array.isArray(seoMeta.keywords)) {
+              keywords = seoMeta.keywords.filter(k => typeof k === 'string' && k.trim());
+            }
+          }
+          if (keywords.length === 0 && Array.isArray(product.tags)) {
+            keywords = product.tags.filter(k => typeof k === 'string' && k.trim());
+          }
+          
+          const originalTags = Array.isArray(product.originalTags) ? product.originalTags : [];
 
           return (
             <DashboardCard
