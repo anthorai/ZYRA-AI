@@ -222,7 +222,7 @@ export default function AdminSubscriptions() {
       </header>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -259,6 +259,21 @@ export default function AdminSubscriptions() {
                 <Crown className="w-5 h-5 text-blue-500" />
                 <span className="text-2xl font-bold" data-testid="stat-growth-users">
                   {users?.filter(u => u.plan?.toLowerCase() === 'growth').length || 0}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">(on current page)</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Starter Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-green-500" />
+                <span className="text-2xl font-bold" data-testid="stat-starter-users">
+                  {users?.filter(u => u.plan?.toLowerCase() === 'starter').length || 0}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">(on current page)</p>
