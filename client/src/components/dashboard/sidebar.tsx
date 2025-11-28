@@ -50,8 +50,13 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   const initials = displayName.charAt(0).toUpperCase();
   const sidebarRef = useRef<HTMLDivElement>(null);
   
-  // Fetch credits balance
-  const { data: creditsData } = useQuery<{ balance: number; used: number }>({
+  // Fetch credits balance - maps to CreditBalance interface from server
+  const { data: creditsData } = useQuery<{ 
+    creditsRemaining: number; 
+    creditsUsed: number; 
+    creditLimit: number;
+    isLow: boolean;
+  }>({
     queryKey: ['/api/credits/balance'],
     enabled: !!supabaseUser,
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -208,9 +213,22 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
                   >
                     {appUser?.plan || "trial"}
                   </Badge>
-                  <span className="text-slate-400 text-[10px] flex items-center gap-0.5" data-testid="text-credits-remaining">
+                  <span 
+                    className={`text-[10px] flex items-center gap-0.5 ${
+                      (creditsData?.creditsRemaining ?? 0) === 0 
+                        ? 'text-red-400' 
+                        : creditsData?.isLow 
+                          ? 'text-yellow-400' 
+                          : 'text-slate-400'
+                    }`}
+                    data-testid="text-credits-remaining"
+                    title={`${creditsData?.creditsRemaining ?? 0} credits remaining${creditsData?.isLow ? ' (Low credits!)' : ''}`}
+                  >
                     <Coins className="w-2.5 h-2.5" />
-                    {creditsData?.balance ?? 0}
+                    {creditsData?.creditsRemaining ?? 0}
+                    {(creditsData?.creditsRemaining ?? 0) === 0 && (
+                      <span className="text-[8px] ml-0.5">(empty)</span>
+                    )}
                   </span>
                 </div>
               </div>
