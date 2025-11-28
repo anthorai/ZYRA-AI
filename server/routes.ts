@@ -8516,12 +8516,23 @@ Output format: Markdown with clear section headings.`;
           });
 
         } catch (error: any) {
+          console.error('❌ [BULK PUBLISH] Error publishing product:', {
+            productId: update.productId,
+            error: error.message,
+            stack: error.stack?.split('\n').slice(0, 3)
+          });
           errors.push({
             productId: update.productId,
             error: error.message
           });
         }
       }
+
+      console.log('📊 [BULK PUBLISH] Summary:', {
+        successful: results.length,
+        failed: errors.length,
+        errors: errors.map(e => ({ productId: e.productId, error: e.error }))
+      });
 
       res.json({
         success: true,
