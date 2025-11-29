@@ -10624,55 +10624,67 @@ Output format: Markdown with clear section headings.`;
 
   // Unified Compliance Webhook Endpoint (for Shopify CLI)
   // This single endpoint handles all 3 mandatory GDPR webhooks
+  // CRITICAL: Must respond within 5 seconds to avoid Shopify timeout
   app.post('/api/webhooks/compliance', verifyShopifyWebhook, async (req, res) => {
     try {
       const topic = req.headers['x-shopify-topic'] as string;
       const { shop_domain, shop_id, customer, orders_requested } = req.body;
 
-      console.log('📡 Unified compliance webhook received:', { topic, shop_domain });
+      // Respond immediately - process asynchronously
+      res.status(200).json({ success: true, acknowledged: true });
 
-      switch (topic) {
-        case 'customers/data_request':
-          console.log('📋 GDPR data request:', { shop_domain, customer_email: customer?.email, orders_requested });
-          console.log('⚠️ Manual action required: Customer data request needs to be fulfilled');
-          console.log('Customer details:', JSON.stringify(customer, null, 2));
-          break;
+      // Process request asynchronously after responding
+      setImmediate(async () => {
+        try {
+          console.log('📡 Unified compliance webhook received:', { topic, shop_domain });
 
-        case 'customers/redact':
-          console.log('🗑️ GDPR customer redaction:', { shop_domain, customer_email: customer?.email, customer_id: customer?.id });
-          console.log('⚠️ Manual action required: Customer data redaction needs to be processed');
-          console.log('Customer to redact:', JSON.stringify(customer, null, 2));
-          break;
+          switch (topic) {
+            case 'customers/data_request':
+              console.log('📋 GDPR data request:', { shop_domain, customer_email: customer?.email, orders_requested });
+              console.log('⚠️ Manual action required: Customer data request needs to be fulfilled');
+              console.log('Customer details:', JSON.stringify(customer, null, 2));
+              break;
 
-        case 'shop/redact':
-          console.log('🗑️ GDPR shop redaction:', { shop_domain, shop_id });
-          
-          // Find and delete all shop data
-          const connections = await supabaseStorage.getStoreConnections('');
-          const shopConnections = connections.filter(conn => 
-            conn.platform === 'shopify' && 
-            conn.storeUrl?.includes(shop_domain)
-          );
+            case 'customers/redact':
+              console.log('🗑️ GDPR customer redaction:', { shop_domain, customer_email: customer?.email, customer_id: customer?.id });
+              console.log('⚠️ Manual action required: Customer data redaction needs to be processed');
+              console.log('Customer to redact:', JSON.stringify(customer, null, 2));
+              break;
 
-          for (const connection of shopConnections) {
-            await supabaseStorage.deleteStoreConnection(connection.id);
-            console.log('✅ Deleted store connection:', connection.id);
+            case 'shop/redact':
+              console.log('🗑️ GDPR shop redaction:', { shop_domain, shop_id });
+              
+              // Find and delete all shop data (non-blocking)
+              try {
+                const connections = await supabaseStorage.getStoreConnections('');
+                const shopConnections = connections.filter(conn => 
+                  conn.platform === 'shopify' && 
+                  conn.storeUrl?.includes(shop_domain)
+                );
+
+                for (const connection of shopConnections) {
+                  await supabaseStorage.deleteStoreConnection(connection.id);
+                  console.log('✅ Deleted store connection:', connection.id);
+                }
+                
+                console.log('✅ Shop data redaction completed for:', shop_domain);
+              } catch (dbError) {
+                console.error('Error processing shop redaction:', dbError);
+              }
+              break;
+
+            default:
+              console.log('⚠️ Unknown webhook topic:', topic);
+              break;
           }
-          
-          console.log('✅ Shop data redaction completed for:', shop_domain);
-          break;
-
-        default:
-          console.log('⚠️ Unknown webhook topic:', topic);
-          break;
-      }
-
-      // Always respond with 200 OK to acknowledge receipt
-      res.status(200).json({ success: true });
+        } catch (asyncError: any) {
+          console.error('Error processing compliance webhook asynchronously:', asyncError);
+        }
+      });
     } catch (error: any) {
-      console.error('Error handling compliance webhook:', error);
-      // Still return 200 to prevent Shopify retries - data was received
-      res.status(200).json({ success: false, error: error.message });
+      console.error('Error in compliance webhook handler:', error);
+      // Return 200 even on errors to prevent Shopify retries
+      res.status(200).json({ success: false });
     }
   });
 
