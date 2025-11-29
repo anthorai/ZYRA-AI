@@ -1,0 +1,155 @@
+To set up the mandatory Shopify compliance webhooks for GDPR/CPRA (customers redact, customers data request, and shop redact) to the URL https://zzyraai.com/api/webhooks/compliance, you should configure your app to subscribe to these topics. This is typically done in your app configuration file (e.g., shopify.app.toml), not via a GraphQL mutation, because these are compliance topics and must be handled at the app level.
+
+1. App Configuration (Recommended for Public Apps)
+Add the following to your app configuration file:
+
+toml
+Copy
+1
+2
+3
+4
+5
+6
+[webhooks]
+api_version = "2024-07"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://zzyraai.com/api/webhooks/compliance"
+This will ensure all three compliance webhooks are sent to your endpoint. Shopify will automatically send the correct payload for each topic. You do not need to create these subscriptions via the GraphQL API; they are handled by the app configuration and enforced for public apps.
+
+2. If You Need to Use the GraphQL API (Not Typical for Compliance Webhooks)
+If you must use the GraphQL API (for example, for private apps or custom setups), you would use the webhookSubscriptionCreate mutation for each topic:
+
+customers/data_request
+Operation
+Open in GraphiQL
+Copy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+mutation {
+  webhookSubscriptionCreate(
+    topic: CUSTOMERS_DATA_REQUEST
+    webhookSubscription: {
+      format: JSON
+      uri: "https://zzyraai.com/api/webhooks/compliance"
+    }
+  ) {
+    userErrors {
+      field
+      message
+    }
+    webhookSubscription {
+      id
+      topic
+      uri
+    }
+  }
+}
+customers/redact
+Operation
+Open in GraphiQL
+Copy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+mutation {
+  webhookSubscriptionCreate(
+    topic: CUSTOMERS_REDACT
+    webhookSubscription: {
+      format: JSON
+      uri: "https://zzyraai.com/api/webhooks/compliance"
+    }
+  ) {
+    userErrors {
+      field
+      message
+    }
+    webhookSubscription {
+      id
+      topic
+      uri
+    }
+  }
+}
+shop/redact
+Operation
+Open in GraphiQL
+Copy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+mutation {
+  webhookSubscriptionCreate(
+    topic: SHOP_REDACT
+    webhookSubscription: {
+      format: JSON
+      uri: "https://zzyraai.com/api/webhooks/compliance"
+    }
+  ) {
+    userErrors {
+      field
+      message
+    }
+    webhookSubscription {
+      id
+      topic
+      uri
+    }
+  }
+}
+3. Webhook Payloads
+customers/data_request: Sent when a customer requests their data.
+customers/redact: Sent when a customer requests deletion of their data.
+shop/redact: Sent when a shop uninstalls your app and you must delete all shop data.
+Your endpoint must respond with a 200-series status code and process the request as required by Shopify's compliance rules.

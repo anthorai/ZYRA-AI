@@ -1,0 +1,30 @@
+scopes = "write_products,read_products,write_orders,read_orders,write_customers,read_customers,write_fulfillments,read_fulfillments,write_inventory,read_inventory,write_locations,read_locations,read_apps,write_apps,read_themes,write_themes,read_script_tags,write_script_tags,read_shipping,write_shipping,read_analytics,read_checkouts,write_checkouts,read_draft_orders,write_draft_orders,read_marketing_events,write_marketing_events,read_price_rules,write_price_rules,read_discounts,write_discounts,read_returns,write_returns,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders,read_assigned_fulfillment_orders,write_assigned_fulfillment_orders,read_third_party_fulfillment_orders,write_third_party_fulfillment_orders,read_product_listings,read_customer_payment_methods,read_audit_logs,write_audit_logs"
+
+api_version = "2024-07"
+
+[webhooks]
+api_version = "2024-07"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "https://zzyraai.com/api/webhooks/shopify/app_uninstalled"
+
+[[webhooks.subscriptions]]
+topics = ["orders/create", "orders/updated", "orders/fulfilled"]
+uri = "https://zzyraai.com/api/webhooks/shopify/orders"
+
+[[webhooks.subscriptions]]
+topics = ["carts/create", "carts/update"]
+uri = "https://zzyraai.com/api/webhooks/shopify/carts"
+
+[[webhooks.subscriptions]]
+topics = ["customers/create", "customers/update", "customers/delete"]
+uri = "https://zzyraai.com/api/webhooks/shopify/customers"
+
+[[webhooks.subscriptions]]
+topics = ["products/create", "products/update", "products/delete"]
+uri = "https://zzyraai.com/api/webhooks/shopify/products"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://zzyraai.com/api/webhooks/compliance"
