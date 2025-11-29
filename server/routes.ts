@@ -12911,7 +12911,7 @@ Generate 5 high-impact trigger recommendations that would benefit this store.`
   });
 
   // Shopify webhook for behavior events (product view, cart, order, etc.)
-  app.post("/api/webhooks/shopify/behavior", async (req, res) => {
+  app.post("/api/webhooks/shopify/behavior", verifyShopifyWebhook, async (req, res) => {
     try {
       const { shop, topic, data } = req.body;
       
