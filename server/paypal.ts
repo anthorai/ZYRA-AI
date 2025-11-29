@@ -273,9 +273,11 @@ export async function handlePaypalWebhook(req: Request, res: Response) {
     }
 
     // Process webhook and update database
-    const { db } = await import('./db');
+    const { db: dbInstance } = await import('./db');
     const { paymentTransactions } = await import('../shared/schema');
     const { eq, and } = await import('drizzle-orm');
+
+    const db = dbInstance!;
 
     // Extract resource from event
     const resource = event.resource;
