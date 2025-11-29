@@ -517,6 +517,9 @@ export class SupabaseStorage implements ISupabaseStorage {
   // Product methods
   async getProducts(userId: string): Promise<Product[]> {
     try {
+      if (!db) {
+        throw new Error('Database connection not available');
+      }
       const results = await db.query.products.findMany({
         where: eq(products.userId, userId),
         orderBy: [desc(products.createdAt)]
@@ -529,6 +532,9 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async getProduct(id: string): Promise<Product | undefined> {
     try {
+      if (!db) {
+        throw new Error('Database connection not available');
+      }
       const result = await db.query.products.findFirst({
         where: eq(products.id, id)
       });
@@ -588,6 +594,10 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (updates.optimizedCopy !== undefined) updateData.optimizedCopy = updates.optimizedCopy;
       if (updates.isOptimized !== undefined) updateData.isOptimized = updates.isOptimized;
 
+      if (!db) {
+        throw new Error('Database connection not available');
+      }
+      
       const result = await db.update(products)
         .set(updateData)
         .where(eq(products.id, id))
@@ -847,19 +857,30 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to create campaign: ${error.message}`);
     
-    // Map the response to expected format
-    return {
-      ...data,
+    // Map the response to expected format with all required Campaign fields
+    const mappedCampaign: Campaign = {
+      id: data.id,
       userId: data.user_id,
+      type: data.type,
+      name: data.name,
+      subject: data.subject,
+      content: data.content,
+      status: data.status,
       sentCount: data.sent_count,
       openRate: data.open_rate,
       clickRate: data.click_rate,
       conversionRate: data.conversion_rate,
+      templateId: null,
+      goalType: null,
+      audience: null,
       scheduledFor: null,
       sentAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    } as Campaign;
+      recipientList: null,
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    return mappedCampaign;
   }
 
   async updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign> {
@@ -1008,9 +1029,10 @@ export class SupabaseStorage implements ISupabaseStorage {
       customer_phone: cart.customerPhone,
       cart_items: cart.cartItems,
       cart_value: cart.cartValue,
-      recovery_campaign_sent: cart.recoveryCampaignSent || false,
+      status: cart.status || 'abandoned',
+      recovery_attempts: cart.recoveryAttempts || 0,
       recovered_at: cart.recoveredAt,
-      is_recovered: cart.isRecovered || false,
+      abandoned_at: cart.abandonedAt || new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -1033,9 +1055,10 @@ export class SupabaseStorage implements ISupabaseStorage {
     if (updates.customerPhone !== undefined) updateData.customer_phone = updates.customerPhone;
     if (updates.cartItems !== undefined) updateData.cart_items = updates.cartItems;
     if (updates.cartValue !== undefined) updateData.cart_value = updates.cartValue;
-    if (updates.recoveryCampaignSent !== undefined) updateData.recovery_campaign_sent = updates.recoveryCampaignSent;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.recoveryAttempts !== undefined) updateData.recovery_attempts = updates.recoveryAttempts;
     if (updates.recoveredAt !== undefined) updateData.recovered_at = updates.recoveredAt;
-    if (updates.isRecovered !== undefined) updateData.is_recovered = updates.isRecovered;
+    if (updates.lastContactedAt !== undefined) updateData.last_contacted_at = updates.lastContactedAt;
 
     const { data, error } = await supabase
       .from('abandoned_carts')
@@ -1208,10 +1231,10 @@ export class SupabaseStorage implements ISupabaseStorage {
     const aiFields = ['brandVoice', 'contentStyle', 'creativityLevel', 'defaultGenerationMode', 'showAiSuggestions', 'autoSave'];
     const uiFields = ['darkMode', 'compactView', 'language', 'timezone', 'dateFormat', 'currency'];
     
-    // Build the JSONB objects
-    const notificationSettings: Record<string, any> = existing?.notification_settings || {};
-    const aiSettings: Record<string, any> = existing?.ai_settings || {};
-    const uiPreferences: Record<string, any> = existing?.ui_preferences || {};
+    // Build the JSONB objects - use camelCase as defined in schema
+    const notificationSettings: Record<string, any> = (existing?.notificationSettings as Record<string, any>) || {};
+    const aiSettings: Record<string, any> = (existing?.aiSettings as Record<string, any>) || {};
+    const uiPreferences: Record<string, any> = (existing?.uiPreferences as Record<string, any>) || {};
     
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) continue;
