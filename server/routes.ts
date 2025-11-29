@@ -10624,16 +10624,7 @@ Output format: Markdown with clear section headings.`;
 
   // Unified Compliance Webhook Endpoint (for Shopify CLI)
   // This single endpoint handles all 3 mandatory GDPR webhooks
-  app.post('/api/webhooks/compliance', (req, res, next) => {
-    // First verify HMAC signature - returns 401 on invalid
-    verifyShopifyWebhook(req, res, () => {
-      // If we get here, HMAC is valid - proceed with handling
-      handleComplianceWebhook(req, res);
-    });
-  });
-
-  // Helper function to handle compliance webhook after HMAC verification
-  async function handleComplianceWebhook(req: any, res: any) {
+  app.post('/api/webhooks/compliance', verifyShopifyWebhook, async (req, res) => {
     try {
       const topic = req.headers['x-shopify-topic'] as string;
       const { shop_domain, shop_id, customer, orders_requested } = req.body;
@@ -10683,7 +10674,7 @@ Output format: Markdown with clear section headings.`;
       // Still return 200 to prevent Shopify retries - data was received
       res.status(200).json({ success: false, error: error.message });
     }
-  }
+  });
 
   // 1. App Uninstalled Webhook
   // Triggered when merchant uninstalls the app
