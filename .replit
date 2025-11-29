@@ -4,12 +4,16 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["chromium", "imagemagick", "shopify-cli"]
+packages = ["chromium", "imagemagick", "shopify-cli", "haskellPackages.daemons"]
 
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 run = ["npm", "start"]
+
+[[ports]]
+localPort = 4370
+externalPort = 6800
 
 [[ports]]
 localPort = 5000
