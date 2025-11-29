@@ -201,16 +201,39 @@ app.use(cors(corsOptions));
 
 // Capture raw body for webhook signature verification (before JSON parsing)
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, next) => {
-  if (req.body) {
-    // Store raw buffer for signature verification
+  console.log('📥 [WEBHOOK] Incoming request to:', req.path);
+  console.log('📥 [WEBHOOK] Headers:', {
+    hmac: req.get('X-Shopify-Hmac-Sha256')?.substring(0, 10) + '...',
+    topic: req.get('X-Shopify-Topic'),
+    shop: req.get('X-Shopify-Shop-Domain'),
+    contentType: req.get('Content-Type')
+  });
+  
+  // Store raw buffer for HMAC verification
+  if (Buffer.isBuffer(req.body)) {
     (req as any).rawBody = req.body.toString('utf8');
+    console.log('📥 [WEBHOOK] Raw body captured, length:', (req as any).rawBody?.length);
     // Parse JSON for route handler
     try {
       req.body = JSON.parse((req as any).rawBody);
     } catch (e) {
-      console.error('Failed to parse webhook JSON:', e);
+      console.error('❌ [WEBHOOK] Failed to parse webhook JSON:', e);
       return res.status(400).json({ error: 'Invalid JSON' });
     }
+  } else if (typeof req.body === 'string') {
+    (req as any).rawBody = req.body;
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (e) {
+      console.error('❌ [WEBHOOK] Failed to parse string body:', e);
+      return res.status(400).json({ error: 'Invalid JSON' });
+    }
+  } else if (req.body && Object.keys(req.body).length === 0) {
+    // Empty body - likely a test request
+    (req as any).rawBody = '{}';
+    console.log('📥 [WEBHOOK] Empty body received');
+  } else {
+    console.log('📥 [WEBHOOK] Body type:', typeof req.body);
   }
   next();
 });
