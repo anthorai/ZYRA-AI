@@ -1,0 +1,21 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "18ec49b8c4fb72fa603af487ee0e1692"
+name = "ZYRA AI"
+application_url = "https://zzyraai.com"
+embedded = false
+
+[webhooks]
+api_version = "2025-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_analytics,read_checkouts,read_customers,write_customers,read_inventory,read_locales,write_marketing_events,read_marketing_events,read_orders,read_products,write_products,read_reports"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://zzyraai.com/api/shopify/callback",
+  "https://zzyraai.com/auth/callback"
+]

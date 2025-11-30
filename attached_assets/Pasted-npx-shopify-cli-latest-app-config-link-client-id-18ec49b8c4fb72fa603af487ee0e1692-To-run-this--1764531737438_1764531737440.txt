@@ -1,0 +1,66 @@
+npx @shopify/cli@latest app config link --client-id 18ec49b8c4fb72fa603af487ee0e1692
+
+To run this command, log in to Shopify.
+User verification code: KBWS-VHGG
+👉 Press any key to open the login page on your browser
+Opened link to start the auth process: https://accounts.shopify.com/activate-with-code?device_code%5Buser_code%5D=KBWS-VHGG
+✔ Logged in.
+╭─ success ─────────────────────────────────────────────────────────────────────────╮
+│                                                                                   │
+│  shopify.app.zyra-ai.toml is now linked to "ZYRA AI" on Shopify                   │
+│                                                                                   │
+│  Using shopify.app.zyra-ai.toml as your default config.                           │
+│                                                                                   │
+│  Next steps                                                                       │
+│    • Make updates to shopify.app.zyra-ai.toml in your local project               │
+│    • To upload your config, run `shopify app deploy`                              │
+│                                                                                   │
+│  Reference                                                                        │
+│    • App configuration [1]                                                        │
+│                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────╯
+[1] https://shopify.dev/docs/apps/tools/cli/configuration
+
+~/workspace$ shopify app deploy
+
+To run this command, log in to Shopify.
+User verification code: PSBW-MFNW
+👉 Press any key to open the login page on your browser
+Opened link to start the auth process: https://accounts.shopify.com/activate-with-code?device_code%5Buser_code%5D=PSBW-MFNW
+✔ Logged in.
+╭─ error ───────────────────────────────────────────────────────────────────────────╮
+│                                                                                   │
+│                                                                                   │
+│  The Partners GraphQL API responded unsuccessfully with the HTTP status 422 and   │
+│  errors:                                                                          │
+│                                                                                   │
+│  [                                                                                │
+│    {                                                                              │
+│      "message": "CLI version 3.81.2 is no longer supported. Please upgrade to a   │
+│  version equal or greater than 3.84.1"                                            │
+│    }                                                                              │
+│  ]                                                                                │
+│                                                                                   │
+│  Request ID: b6c4cd76-d35a-4ffa-8e56-d194843473c5-1764531694                      │
+│                                                                                   │
+│                                                                                   │
+│  To investigate the issue, examine this stack trace:                              │
+│    at makeRequest (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib  │
+│    /node_modules/shopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27347)  │
+│    at processTicksAndRejections (node:internal/process/task_queues:105)           │
+│    at rawGraphQLRequest [as request]                                              │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-QWR45GZB.js:136561)                │
+│    at async runRequestWithNetworkLevelRetry                                       │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27402)                 │
+│    at async makeVerboseRequest                                                    │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27413)                 │
+│    at async retryAwareRequest                                                     │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27500)                 │
+│    at (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_module  │
+│    s/shopify/node_modules/@shopify/cli/dist/chunk-QWR45GZB.js:136579)             │
+│    at (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_module  │
+│    s/shopify/node_modules/@shopify/cli/dist/chunk-2KWYWUB3.js:29566)        
