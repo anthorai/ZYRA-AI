@@ -766,7 +766,7 @@ export default function Landing() {
         </section>
 
         {/* Trust Bar Section */}
-        <section className="py-8 px-4 sm:px-6 border-y border/50 bg-muted/30">
+        <section className="py-8 px-4 sm:px-6 border-y border-border/50 bg-muted/30">
           <div className="container mx-auto">
             {/* Client Logos Strip */}
             <div className="mb-8">
@@ -1344,7 +1344,7 @@ export default function Landing() {
         </section>
 
         {/* As Featured In Section */}
-        <section className="py-12 px-4 sm:px-6 bg-muted/30 border-y border/50">
+        <section className="py-12 px-4 sm:px-6 bg-muted/30 border-y border-border/50">
           <div className="container mx-auto">
             <p className="text-center text-sm text-muted-foreground mb-8">As Featured In</p>
             <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60">
@@ -1566,7 +1566,7 @@ export default function Landing() {
                     </div>
                     
                     {/* Badge and Result */}
-                    <div className="flex items-center justify-between pt-4 border-t border/50">
+                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
                       <Badge variant="outline" className="text-xs flex items-center gap-1" data-testid={`badge-testimonial-${index}`}>
                         <CheckCircle2 className="w-3 h-3" />
                         {testimonial.badge}
@@ -1629,7 +1629,7 @@ export default function Landing() {
                         <p className="text-sm font-semibold text-muted-foreground mb-1">Solution:</p>
                         <p className="text-sm">{study.solution}</p>
                       </div>
-                      <div className="border-t border pt-4">
+                      <div className="border-t border-border pt-4">
                         <p className="text-sm font-semibold mb-3">Results (90 days):</p>
                         {study.results.map((result, i) => (
                           <div key={i} className="flex items-center justify-between mb-2">
@@ -1642,7 +1642,7 @@ export default function Landing() {
                           </div>
                         ))}
                       </div>
-                      <div className="border-t border pt-4">
+                      <div className="border-t border-border pt-4">
                         <Quote className="w-6 h-6 text-primary/20 mb-2" />
                         <p className="text-sm italic mb-2">"{study.quote}"</p>
                         <p className="text-xs text-muted-foreground">— {study.author}</p>
@@ -1719,7 +1719,7 @@ export default function Landing() {
               </Card>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border rounded-xl p-8 mb-12">
+            <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-8 mb-12">
               <h3 className="text-2xl font-bold mb-8 text-center">
                 <Rocket className="w-6 h-6 inline mr-2 text-primary" />
                 What the AI Does Autonomously
@@ -1805,7 +1805,7 @@ export default function Landing() {
               <p className="text-lg text-muted-foreground mb-6">Start with a 7-day free trial, upgrade anytime</p>
               
               {/* Annual/Monthly Toggle */}
-              <div className="inline-flex items-center gap-3 bg-card border border rounded-lg p-1 mb-8">
+              <div className="inline-flex items-center gap-3 bg-card border border-border rounded-lg p-1 mb-8">
                 <button
                   onClick={() => setIsAnnual(false)}
                   className={`px-4 py-2 rounded-md transition-all ${!isAnnual ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
@@ -1872,7 +1872,7 @@ export default function Landing() {
                     </div>
                     <Button 
                       asChild
-                      className={`w-full ${plan.popular ? 'gradient-button' : 'border border hover:bg-muted'}`}
+                      className={`w-full ${plan.popular ? 'gradient-button' : 'border border-border hover:bg-muted'}`}
                       variant={plan.popular ? "default" : "outline"}
                       data-testid={`button-choose-plan-${index}`}
                     >
@@ -2183,7 +2183,7 @@ export default function Landing() {
         </section>
       </main>
       {/* Sticky Mobile CTA Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-lg border-t border lg:hidden z-50">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-lg border-t border-border lg:hidden z-50">
         <Button asChild className="w-full gradient-button" size="lg">
           <Link href="/auth">
             Start Free Trial—No CC Required
@@ -2191,7 +2191,7 @@ export default function Landing() {
         </Button>
       </div>
       {/* Footer */}
-      <footer className="border-t border py-12 px-4 sm:px-6">
+      <footer className="border-t border-border py-12 px-4 sm:px-6">
         <div className="container mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
@@ -2225,7 +2225,7 @@ export default function Landing() {
             </div>
           </div>
           
-          <div className="border-t border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">© 2025 Zyra AI. All rights reserved.</p>
             {/* Social Media Icons - Center */}
             <div className="flex items-center gap-4">
