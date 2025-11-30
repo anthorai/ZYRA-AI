@@ -10644,6 +10644,18 @@ Output format: Markdown with clear section headings.`;
   // Import webhook verification middleware
   const { verifyShopifyWebhook } = await import('./middleware/shopifyWebhookAuth');
 
+  // GET handler for compliance endpoint - for verification/testing
+  // Shopify may check if the endpoint is reachable before sending webhooks
+  app.get('/api/webhooks/compliance', (req, res) => {
+    res.status(200).json({ 
+      status: 'active',
+      message: 'Zyra AI GDPR Compliance Webhook Endpoint',
+      topics: ['customers/data_request', 'customers/redact', 'shop/redact'],
+      method_required: 'POST',
+      note: 'This endpoint accepts POST requests from Shopify with HMAC verification'
+    });
+  });
+
   // Unified Compliance Webhook Endpoint
   // Handles all 3 mandatory GDPR webhooks configured in shopify.app.toml:
   // - customers/data_request, customers/redact, shop/redact
