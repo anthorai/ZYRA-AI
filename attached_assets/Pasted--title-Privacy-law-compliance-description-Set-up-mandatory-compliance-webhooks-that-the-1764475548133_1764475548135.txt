@@ -1,0 +1,201 @@
+---
+title: Privacy law compliance
+description: >-
+  Set up mandatory compliance webhooks that the Shopify platform requires for
+  public apps.
+source_url:
+  html: 'https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance'
+  md: 'https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md'
+---
+
+ExpandOn this page
+
+* [Mandatory compliance webhooks](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#mandatory-compliance-webhooks)
+* [customers/data\_​request](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#customers-data_request)
+* [customers/redact](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#customers-redact)
+* [shop/redact](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#shop-redact)
+* [Next steps](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#next-steps)
+
+# Privacy law compliance
+
+Data privacy rules and regulations, such as the General Data Protection Regulation (GDPR) and California Privacy Rights Act (CPRA), set requirements for parties that collect, store, or process personal data of individuals. However, Shopify takes a standardized approach and requires public apps to provide the same privacy rights for all personal data, regardless of where an individual is located.
+
+***
+
+## Mandatory compliance webhooks
+
+Mandatory compliance webhooks are callback methods that Shopify requires for apps listed on the Shopify App Store. Shopify requires mandatory compliance webhooks as a way to manage the personal data that an app collects.
+
+Any app that you distribute through the Shopify App Store must respond to data subject requests, regardless of whether the app collects personal data. Shopify provides mandatory compliance webhooks to help.
+
+[Webhooks\
+\
+](https://shopify.dev/docs/apps/build/webhooks)
+
+[Use webhooks to stay in sync with Shopify or execute code after a specific event occurs in a store.](https://shopify.dev/docs/apps/build/webhooks)
+
+[Checklist of requirements\
+\
+](https://shopify.dev/docs/apps/launch/app-requirements-checklist)
+
+[Follow requirements to make sure your app provides a high-quality experience to merchants. This is the same checklist that the Shopify App Review team uses to review apps.](https://shopify.dev/docs/apps/launch/app-requirements-checklist)
+
+### How it works
+
+You must ensure that your app is subscribed to and verifies all mandatory compliance webhooks before you submit your app to be reviewed by Shopify.
+
+Apps must meet the following webhook requirements:
+
+* The app must implement the mandatory compliance webhooks.
+* The app must handle `POST` requests with a JSON body and `Content-Type` header set to `application/json` sent to mandatory compliance webhooks.
+* If a mandatory compliance webhook sends a request with an invalid Shopify `HMAC` header, then the app must return a `401 Unauthorized` HTTP status.
+
+Note
+
+Follow [this guide](https://shopify.dev/docs/apps/build/webhooks/subscribe/https) to learn how to verify webhooks.
+
+If you don't provide URLs for the mandatory compliance webhooks, or your app doesn't [respond to these webhooks](#respond-to-compliance-webhooks) as required, then your app will be rejected and you'll need to fix the identified problem before submitting your app for another review.
+
+Caution
+
+This page isn't intended to provide you with legal advice. It sets out Shopify's privacy requirements for app developers and items that you need to consider if you're handling personal data.
+
+### Compliance webhook topics
+
+Every app that's distributed through the Shopify App Store must subscribe to the following compliance webhook topics:
+
+| Topic | Event |
+| - | - |
+| `customers/data_request` | Requests to view stored customer data |
+| `customers/redact` | Requests to delete customer data |
+| `shop/redact` | Requests to delete shop data |
+
+### Subscribe to compliance webhooks
+
+You must subscribe to compliance webhooks before publishing your app. To subscribe to compliance webhooks, you need to register endpoints and then configure them in your [app config TOML](https://shopify.dev/docs/apps/structure/configuration#app-configuration-file-example%5D).
+
+1. Register an endpoint for each compliance webhook. For HTTPS urls, this will require a valid SSL certificate that can correctly process webhook event notifications. For more information, refer to [register an endpoint](https://shopify.dev/docs/apps/build/webhooks/subscribe/https) for HTTPS, [set up an event source](https://shopify.dev/docs/apps/build/webhooks/subscribe/get-started) for AWS EventBridge, or [retrieve your Shopify service account address](https://shopify.dev/docs/apps/build/webhooks/subscribe/get-started) for Google Pub/Sub.
+
+2. You can subscribe to the compliance webhook topics by making the following changes to your app's `shopify.app.toml` file in the app's root folder. Learn more about [configuring your app with the TOML file](https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration).
+
+   ## shopify.app.toml
+
+   ```toml
+   [webhooks]
+   api_version = "2024-07"
+
+
+   [[webhooks.subscriptions]]
+   compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+   uri = "https://app.example.com/webhooks"
+   ```
+
+Info
+
+The following is the structure of the URL you should use for the URI when working with **Google Cloud Pub/Sub**:
+
+`pubsub://{project-id}:{topic-id}`
+
+Where `{project-id}` is the ID of your Google Cloud Platform project, and `{topic-id}` is the ID of the topic that you set up in Google Cloud Pub/Sub.
+
+For **Amazon EventBridge**, your URL will be similar to the following example:
+
+`arn:aws:events:<aws_region>::event-source/aws.partner/shopify.com/<app_id>/<event_source_name>`
+
+### Respond to compliance webhooks
+
+When you receive one of the compliance webhooks, you need to take the following actions:
+
+* Confirm that you've received the request by responding with a `200` series status code.
+
+* Complete the action within 30 days of receiving the request. However, if you're unable to comply with a redaction request because you're legally required to retain data, then you shouldn't complete the action.
+
+  Learn more about how to [receive and respond](https://shopify.dev/docs/apps/build/webhooks/subscribe/subscribe-using-api) to webhooks.
+
+***
+
+## customers/data\_​request
+
+Customers can request their data from a store owner. When this happens, Shopify sends a [payload](#customers-data_request-payload) on the `customers/data_request` topic to the apps that are installed on that store.
+
+If your app has been granted access to [customer or order data](https://shopify.dev/docs/api/usage/access-scopes#authenticated-access-scopes), then it will receive a data request webhook. The webhook contains the resource IDs of the customer data that you need to provide to the store owner directly. In some cases, a customer record contains only the customer's email address.
+
+### `customers/data_request` payload
+
+```json
+{
+  "shop_id": 954889,
+  "shop_domain": "{shop}.myshopify.com",
+  "orders_requested": [299938, 280263, 220458],
+  "customer": {
+    "id": 191167,
+    "email": "john@example.com",
+    "phone":  "555-625-1199"
+  },
+  "data_request": {
+    "id": 9999
+  }
+}
+```
+
+***
+
+## customers/redact
+
+Store owners can request that data is deleted on behalf of a customer. When this happens, Shopify sends a [payload](#customers-redact-payload) on the `customers/redact` topic to the apps installed on that store.
+
+If your app has been granted access to the store's customer or order data, then it will receive a redaction request webhook with the resource IDs that you need to redact or delete. In some cases, a customer record contains only the customer's email address.
+
+If a customer hasn't placed an order in the past six months, then Shopify sends the payload 10 days after the deletion request. Otherwise, the request is withheld until six months have passed.
+
+### `customers/redact` payload
+
+```json
+{
+  "shop_id": 954889,
+  "shop_domain": "{shop}.myshopify.com",
+  "customer": {
+    "id": 191167,
+    "email": "john@example.com",
+    "phone": "555-625-1199"
+  },
+  "orders_to_redact": [299938, 280263, 220458]
+}
+```
+
+***
+
+## shop/redact
+
+48 hours after a store owner uninstalls your app, Shopify sends a [payload](#shop-redact-payload) on the `shop/redact` topic. This webhook provides the store's `shop_id` and `shop_domain` so that you can erase data for that store from your database.
+
+### `shop/redact` payload
+
+```json
+{
+  "shop_id": 954889,
+  "shop_domain": "{shop}.myshopify.com"
+}
+```
+
+***
+
+## Next steps
+
+* Test your configuration by manually triggering a webhook delivery using the Shopify CLI [`webhook trigger`](https://shopify.dev/docs/api/shopify-cli/app/app-webhook-trigger) command. Manually triggering webhooks doesn't test your webhook subscriptions.
+
+* Learn how to [manage webhooks for different API versions](https://shopify.dev/docs/apps/build/webhooks/subscribe/use-newer-api-version).
+
+* Learn about the available topics for [REST Admin API webhooks](https://shopify.dev/docs/api/admin-rest/latest/resources/webhook).
+
+* Learn about the available topics for [GraphQL Admin API webhooks](https://shopify.dev/docs/api/admin-graphql/latest/enums/WebhookSubscriptionTopic).
+
+- Familiarize yourself with [data privacy concepts](https://shopify.dev/docs/apps/launch/privacy-requirements) for apps including privacy policies, data rights, and consent for marketing services.
+
+***
+
+* [Mandatory compliance webhooks](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#mandatory-compliance-webhooks)
+* [customers/data\_​request](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#customers-data_request)
+* [customers/redact](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#customers-redact)
+* [shop/redact](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#shop-redact)
+* [Next steps](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance.md#next-steps)

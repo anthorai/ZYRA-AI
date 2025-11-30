@@ -1,0 +1,53 @@
+shopify app deploy
+╭─ info ────────────────────────────────────────────────────────────────────────────╮
+│                                                                                   │
+│  🔜 The Next-gen Dev Platform is coming soon                                      │
+│                                                                                   │
+│  To keep building and updating after your apps are migrated to the new platform,  │
+│   you’ll need to `deploy` with Shopify CLI version 3.84 or higher.                │
+│                                                                                   │
+│  Upgrade your CLI now to stay ready:                                              │
+│                                                                                   │
+│  `npm install -g  @shopify/cli@latest`                                            │
+│                                                                                   │
+│  Find out what's coming in the Next-gen Dev Platform [1]                          │
+│                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────╯
+[1] https://shopify.dev/docs/beta/next-gen-dev-platform
+
+╭─ error ───────────────────────────────────────────────────────────────────────────╮
+│                                                                                   │
+│                                                                                   │
+│  The Partners GraphQL API responded unsuccessfully with the HTTP status 422 and   │
+│  errors:                                                                          │
+│                                                                                   │
+│  [                                                                                │
+│    {                                                                              │
+│      "message": "CLI version 3.81.2 is no longer supported. Please upgrade to a   │
+│  version equal or greater than 3.84.1"                                            │
+│    }                                                                              │
+│  ]                                                                                │
+│                                                                                   │
+│  Request ID: b857118b-878a-4ef8-a93d-0644d8037d85-1764476571                      │
+│                                                                                   │
+│                                                                                   │
+│  To investigate the issue, examine this stack trace:                              │
+│    at makeRequest (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib  │
+│    /node_modules/shopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27347)  │
+│    at processTicksAndRejections (node:internal/process/task_queues:105)           │
+│    at rawGraphQLRequest [as request]                                              │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-QWR45GZB.js:136561)                │
+│    at async runRequestWithNetworkLevelRetry                                       │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27402)                 │
+│    at async makeVerboseRequest                                                    │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27413)                 │
+│    at async retryAwareRequest                                                     │
+│    (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_modules/s  │
+│    hopify/node_modules/@shopify/cli/dist/chunk-V7M7AO2M.js:27500)                 │
+│    at (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_module  │
+│    s/shopify/node_modules/@shopify/cli/dist/chunk-QWR45GZB.js:136579)             │
+│    at (nix/store/2p0ipxx17vqi8wjcc1idv4vmkhzqv0gi-shopify-3.81.2/lib/node_module  │
+│    s/shopify/node_modules/@shopify/cli/dist/chunk-2KWYWUB3.js:29566)   
