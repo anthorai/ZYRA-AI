@@ -1,0 +1,49 @@
+ npx @shopify/cli@latest app deploy --force
+╭─ info ────────────────────────────────────────────────────────────────────────────╮
+│                                                                                   │
+│  Using shopify.app.toml for default values:                                       │
+│                                                                                   │
+│    • Org:             ANTHOR AI                                                   │
+│    • App:             ZYRA AI                                                     │
+│                                                                                   │
+│   You can pass `--reset` to your command to reset your app configuration.         │
+│                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────╯
+
+
+Releasing a new app version as part of ZYRA AI
+
+
+╭─ error ───────────────────────────────────────────────────────────────────────────╮
+│                                                                                   │
+│  Version couldn't be created.                                                     │
+│                                                                                   │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│    • This app is not approved to subscribe to webhook topics containing           │
+│      protected customer data. See                                                 │
+│      https://shopify.dev/docs/apps/launch/protected-customer-data for more        │
+│      details.                                                                     │
+│                      
