@@ -68,7 +68,7 @@ export default function PriorityFilter() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="p-4 rounded-lg bg-slate-800/30 border border-border/20">
+        <div className="p-4 rounded-lg bg-slate-800/30 border border/20">
           <Label className="text-white font-medium mb-3 block">Minimum Priority Level</Label>
           <div className="flex items-center gap-3">
             <Icon className={`w-5 h-5 ${selectedPriority.color}`} />
@@ -77,7 +77,7 @@ export default function PriorityFilter() {
               onValueChange={handlePriorityChange}
             >
               <SelectTrigger 
-                className="flex-1 bg-slate-800/50 border-border/40"
+                className="flex-1 bg-slate-800/50 border/40"
                 data-testid="select-priority"
               >
                 <SelectValue />
@@ -115,7 +115,7 @@ export default function PriorityFilter() {
                 className={`p-3 rounded-lg border transition-all ${
                   isActive 
                     ? 'bg-slate-800/50 border-primary/40' 
-                    : 'bg-slate-800/20 border-border/20 opacity-50'
+                    : 'bg-slate-800/20 border/20 opacity-50'
                 }`}
                 data-testid={`indicator-${priority.value}`}
               >
@@ -126,7 +126,7 @@ export default function PriorityFilter() {
           })}
         </div>
 
-        <div className="text-sm text-slate-300 bg-slate-800/30 p-3 rounded-lg border border-border/20">
+        <div className="text-sm text-slate-300 bg-slate-800/30 p-3 rounded-lg border border/20">
           <span className="font-medium text-white">Current Setting: </span>
           {selectedPriority.description}
         </div>

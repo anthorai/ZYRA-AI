@@ -239,7 +239,7 @@ export function ProductSelector({
                   {products.map((product) => (
                     <div
                       key={product.id}
-                      className="flex items-start gap-3 p-3 rounded-md border border-border/50 hover-elevate cursor-pointer transition-all bg-background/50"
+                      className="flex items-start gap-3 p-3 rounded-md border border/50 hover-elevate cursor-pointer transition-all bg-background/50"
                       onClick={() => handleMultiToggle(product.id)}
                       data-testid={`checkbox-product-${product.id}`}
                     >

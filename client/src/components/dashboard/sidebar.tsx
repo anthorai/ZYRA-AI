@@ -149,7 +149,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed left-0 top-0 w-64 h-full bg-black/20 backdrop-blur-md border border-border rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0",
+          "fixed left-0 top-0 w-64 h-full bg-black/20 backdrop-blur-md border border rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -200,7 +200,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
         </div>
 
         {/* Navigation Header Style User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border">
           <div className="flex items-center justify-between space-x-3" data-testid="user-profile">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <Avatar className="h-10 w-10 flex-shrink-0">

@@ -240,7 +240,7 @@ export default function BlogArticle() {
         </Helmet>
         
         {/* Header */}
-        <header className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-50">
+        <header className="border-b border bg-background/95 backdrop-blur-md sticky top-0 z-50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <Link href="/blog" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors" data-testid="link-back-blog-404">
@@ -281,7 +281,7 @@ export default function BlogArticle() {
         </div>
         
         {/* Footer */}
-        <footer className="border-t border-border py-8 px-4 sm:px-6 mt-auto">
+        <footer className="border-t border py-8 px-4 sm:px-6 mt-auto">
           <div className="container mx-auto text-center text-sm text-muted-foreground">
             <p>© 2025 Zyra AI. All rights reserved.</p>
           </div>
@@ -300,7 +300,7 @@ export default function BlogArticle() {
       </Helmet>
 
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border bg-background/95 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link href="/blog" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors" data-testid="link-back-blog">
@@ -330,7 +330,7 @@ export default function BlogArticle() {
       <article className="relative -mt-20 z-10">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6">
           {/* Article Header */}
-          <div className="bg-background rounded-lg border border-border p-6 sm:p-8 mb-8">
+          <div className="bg-background rounded-lg border border p-6 sm:p-8 mb-8">
             <Badge variant="outline" className="mb-4" data-testid="badge-category">
               <article.icon className="w-3 h-3 mr-1" />
               {article.category}
@@ -393,7 +393,7 @@ export default function BlogArticle() {
             ))}
 
             {/* Conclusion */}
-            <div className="border-t border-border pt-8 mt-8">
+            <div className="border-t border pt-8 mt-8">
               <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-3">
                 <Target className="w-6 h-6 text-primary" />
                 Key Takeaway
@@ -423,7 +423,7 @@ export default function BlogArticle() {
           </div>
 
           {/* Related Articles */}
-          <div className="border-t border-border pt-12 pb-16">
+          <div className="border-t border pt-12 pb-16">
             <h3 className="text-2xl font-bold mb-8">Related Articles</h3>
             <div className="grid md:grid-cols-2 gap-6">
               {otherArticles.map((post) => (
@@ -454,7 +454,7 @@ export default function BlogArticle() {
       </article>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-4 sm:px-6">
+      <footer className="border-t border py-8 px-4 sm:px-6">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
           <p>© 2025 Zyra AI. All rights reserved.</p>
         </div>

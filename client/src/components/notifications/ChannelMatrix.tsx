@@ -125,7 +125,7 @@ export default function ChannelMatrix() {
       <CardContent>
         <div className="space-y-6">
           {/* Channel Legend */}
-          <div className="flex flex-wrap gap-3 pb-4 border-b border-border/30">
+          <div className="flex flex-wrap gap-3 pb-4 border-b border/30">
             {channels.map((channel) => {
               const Icon = channel.icon;
               return (
@@ -147,7 +147,7 @@ export default function ChannelMatrix() {
               return (
                 <div 
                   key={category.id}
-                  className="p-4 rounded-lg bg-slate-800/30 border border-border/20 hover:border-border/40 transition-colors"
+                  className="p-4 rounded-lg bg-slate-800/30 border border/20 hover:border/40 transition-colors"
                   data-testid={`category-${category.id}`}
                 >
                   <div className="flex items-start justify-between gap-4">

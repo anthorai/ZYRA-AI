@@ -136,11 +136,11 @@ export default function QuietHoursBuilder() {
       </CardHeader>
       <CardContent className={`space-y-6 ${!enabled ? 'opacity-50' : ''}`}>
         {/* Visual Timeline */}
-        <div className="relative h-16 rounded-lg bg-slate-800/50 border border-border/20 overflow-hidden">
+        <div className="relative h-16 rounded-lg bg-slate-800/50 border border/20 overflow-hidden">
           {/* 24 Hour Markers */}
           <div className="absolute inset-0 flex">
             {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} className="flex-1 border-r border-border/10 last:border-r-0" />
+              <div key={i} className="flex-1 border-r border/10 last:border-r-0" />
             ))}
           </div>
 
@@ -217,7 +217,7 @@ export default function QuietHoursBuilder() {
         </div>
 
         {/* Duration Info */}
-        <div className="p-3 rounded-lg bg-slate-800/30 border border-border/20">
+        <div className="p-3 rounded-lg bg-slate-800/30 border border/20">
           <div className="text-sm text-slate-300">
             <span className="font-medium text-white">Quiet Period: </span>
             {getQuietDuration()} hours ({formatTime(startHour)} - {formatTime(endHour)})
@@ -225,7 +225,7 @@ export default function QuietHoursBuilder() {
         </div>
 
         {/* Allow Urgent Notifications */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-border/20">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border/20">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-orange-400" />
             <div>

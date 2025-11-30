@@ -69,7 +69,7 @@ export function AvatarMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-56 gradient-card border-border/50 text-white" 
+        className="w-56 gradient-card border/50 text-white" 
         align="end" 
         forceMount
       >

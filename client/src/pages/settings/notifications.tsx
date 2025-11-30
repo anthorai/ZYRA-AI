@@ -273,7 +273,7 @@ export default function NotificationsPage() {
                       relative p-6 rounded-lg border-2 transition-all text-left
                       ${isActive 
                         ? 'border-primary bg-primary/10' 
-                        : 'border-border/30 bg-slate-800/30 hover:border-border/60'
+                        : 'border/30 bg-slate-800/30 hover:border/60'
                       }
                       ${applyPresetMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     `}

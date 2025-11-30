@@ -313,7 +313,7 @@ export default function Dashboard() {
         sidebarOpen ? 'lg:ml-64' : 'ml-0'
       }`}>
         {/* Top Bar */}
-        <header className="gradient-surface border-b border-border px-4 sm:px-6 py-3 sm:py-4">
+        <header className="gradient-surface border-b border px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center">
             {/* Left Section - Hamburger + Title */}
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
@@ -353,7 +353,7 @@ export default function Dashboard() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 gradient-surface border-border/50 text-white" align="end" forceMount>
+                <DropdownMenuContent className="w-56 gradient-surface border/50 text-white" align="end" forceMount>
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
                       <p className="font-bold text-white text-sm" data-testid="text-user-name">{displayName}</p>
@@ -408,7 +408,7 @@ export default function Dashboard() {
       
       {/* Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <AlertDialogContent className="gradient-surface border-border/50 text-white">
+        <AlertDialogContent className="gradient-surface border/50 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Confirm Logout</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-300">
@@ -418,7 +418,7 @@ export default function Dashboard() {
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={handleLogoutCancel}
-              className="bg-transparent border-border/50 text-slate-300 hover:bg-white/10 hover:text-white"
+              className="bg-transparent border/50 text-slate-300 hover:bg-white/10 hover:text-white"
               disabled={isLoggingOut}
             >
               Cancel

@@ -107,7 +107,7 @@ export default function FrequencyManager() {
       <CardContent>
         <div className="space-y-4">
           {/* Frequency Legend */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-4 border-b border-border/30">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-4 border-b border/30">
             {frequencies.map((freq) => {
               const Icon = freq.icon;
               return (
@@ -133,7 +133,7 @@ export default function FrequencyManager() {
               return (
                 <div 
                   key={category.id}
-                  className="p-4 rounded-lg bg-slate-800/30 border border-border/20"
+                  className="p-4 rounded-lg bg-slate-800/30 border border/20"
                   data-testid={`frequency-${category.id}`}
                 >
                   <Label className="text-white font-medium mb-2 block">{category.name}</Label>
@@ -144,7 +144,7 @@ export default function FrequencyManager() {
                       onValueChange={(value) => handleFrequencyChange(category.id, value)}
                     >
                       <SelectTrigger 
-                        className="flex-1 bg-slate-800/50 border-border/40"
+                        className="flex-1 bg-slate-800/50 border/40"
                         data-testid={`select-frequency-${category.id}`}
                       >
                         <SelectValue />

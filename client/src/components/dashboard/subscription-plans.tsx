@@ -135,7 +135,7 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
                     ? 'bg-muted text-muted-foreground cursor-not-allowed'
                     : plan.popular 
                       ? 'gradient-button' 
-                      : 'border border-border hover:bg-muted'
+                      : 'border border hover:bg-muted'
                 }`}
                 variant={plan.popular ? "default" : "outline"}
                 disabled={currentPlan === plan.name.toLowerCase().replace(/\s+/g, '-')}

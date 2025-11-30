@@ -148,7 +148,7 @@ export function ProductSyncStatus({
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 gradient-card rounded-lg border border-border/50">
+    <div className="flex items-center gap-4 p-4 gradient-card rounded-lg border border/50">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-2">
           {getStatusBadge()}

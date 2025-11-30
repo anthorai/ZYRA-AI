@@ -393,7 +393,7 @@ export default function ProductsPage() {
         sidebarOpen ? 'lg:ml-64' : 'ml-0'
       }`}>
         {/* Top Bar */}
-        <header className="gradient-surface border-b border-border px-4 sm:px-6 py-3 sm:py-4">
+        <header className="gradient-surface border-b border px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
               <Button

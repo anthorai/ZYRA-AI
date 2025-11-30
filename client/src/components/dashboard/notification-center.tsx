@@ -134,7 +134,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
             data-testid="dropdown-notifications"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border/30">
+            <div className="flex items-center justify-between p-4 border-b border/30">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Bell className="w-5 h-5" />
                 Notifications
@@ -164,7 +164,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
                     <div
                       key={notification.id}
                       className={cn(
-                        "p-4 border-b border-border/20 hover:bg-white/5 transition-colors",
+                        "p-4 border-b border/20 hover:bg-white/5 transition-colors",
                         !notification.isRead && "bg-primary/10",
                         index === notifications.length - 1 && "border-b-0"
                       )}
@@ -231,7 +231,7 @@ export default function NotificationCenter({ className }: NotificationCenterProp
 
             {/* Footer Actions */}
             {notifications.length > 0 && (
-              <div className="p-4 border-t border-border/30">
+              <div className="p-4 border-t border/30">
                 <Button
                   variant="ghost"
                   size="sm"
