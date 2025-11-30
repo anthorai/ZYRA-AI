@@ -236,29 +236,6 @@ app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, n
     console.log('📥 [WEBHOOK] Body type:', typeof req.body);
   }
   
-  // HMAC Signature Verification for Shopify webhooks
-  const hmacHeader = req.get('X-Shopify-Hmac-Sha256');
-  if (hmacHeader && process.env.SHOPIFY_API_SECRET) {
-    try {
-      const crypto = require('crypto');
-      const rawBody = (req as any).rawBody || '';
-      const hmac = crypto.createHmac('sha256', process.env.SHOPIFY_API_SECRET);
-      hmac.update(rawBody, 'utf8');
-      const digest = hmac.digest('base64');
-      
-      if (digest !== hmacHeader) {
-        console.error('❌ [WEBHOOK] HMAC verification failed');
-        console.error('   Expected:', digest);
-        console.error('   Got:', hmacHeader);
-        return res.status(401).json({ error: 'Unauthorized: HMAC verification failed' });
-      }
-      console.log('✅ [WEBHOOK] HMAC signature verified');
-    } catch (error) {
-      console.error('❌ [WEBHOOK] HMAC verification error:', error);
-      return res.status(400).json({ error: 'HMAC verification error' });
-    }
-  }
-  
   next();
 });
 
