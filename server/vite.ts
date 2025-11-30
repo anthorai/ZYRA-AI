@@ -13,9 +13,19 @@ const viteLogger = createLogger();
 export const log = logUtil;
 
 export async function setupVite(app: Express, server: Server) {
+  // Configure HMR for Replit environment
+  const hmrConfig: any = { server };
+  
+  // For Replit, use the dev domain if available, otherwise let Vite auto-detect
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    hmrConfig.host = process.env.REPLIT_DEV_DOMAIN;
+    hmrConfig.protocol = 'wss';
+    hmrConfig.port = 443;
+  }
+
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    hmr: hmrConfig,
     allowedHosts: true as const,
   };
 
