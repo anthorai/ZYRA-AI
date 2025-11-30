@@ -1,0 +1,114 @@
+Your shopify.app.toml configuration for webhooks and compliance topics looks correct. However, if you are still seeing errors during App Store review such as:
+
+"Provides mandatory compliance webhooks"
+"Verifies webhooks with HMAC signatures"
+here are the most common causes and solutions:
+
+1. Provides mandatory compliance webhooks
+What Shopify checks:
+
+Your app must have endpoints for all three GDPR compliance topics:
+customers/data_request
+customers/redact
+shop/redact
+These must be declared in your TOML file under compliance_topics and must be reachable HTTPS endpoints.
+Your TOML block:
+
+toml
+Copy
+1
+2
+3
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://zzyraai.com/api/webhooks/compliance"
+Checklist:
+
+Make sure the endpoint (https://zzyraai.com/api/webhooks/compliance) is live, responds with a 2xx status code, and is not protected by authentication that would block Shopify.
+The endpoint must respond within 5 seconds.
+The endpoint must not redirect.
+2. Verifies webhooks with HMAC signatures
+What Shopify checks:
+
+Your webhook handler must verify the X-Shopify-Hmac-SHA256 header using your app's client secret and the raw request body.
+If the HMAC does not match, you must reject the request (e.g., with a 401 status).
+Checklist:
+
+Ensure you are using the raw request body (not a parsed JSON body) for HMAC calculation.
+Use your app's client secret (not the API key).
+Respond with a 401 or 403 if the HMAC does not match.
+Example (Node.js/Express):
+
+javascript
+Copy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+const crypto = require('crypto');
+const appClientSecret = 'YOUR_APP_CLIENT_SECRET';
+
+app.use(express.raw({ type: '*/*' }));
+
+app.post('/api/webhooks/compliance', (req, res) => {
+  const hmacHeader = req.headers['x-shopify-hmac-sha256'];
+  const digest = crypto.createHmac('sha256', appClientSecret)
+    .update(req.body)
+    .digest('base64');
+  if (digest === hmacHeader) {
+    res.status(200).send('OK');
+    // process webhook
+  } else {
+    res.status(401).send('Unauthorized');
+  }
+});
+3. How to verify your webhook subscriptions
+You can use the webhookSubscriptions query to check which webhooks are active for your app on a store:
+
+Operation
+Open in GraphiQL
+Copy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+query {
+  webhookSubscriptions(first: 10) {
+    edges {
+      node {
+        id
+        topic
+        uri
+      }
+    }
+  }
+}
+This will show you the topics and URIs for all active webhooks. Note: TOML-based (app-scoped) webhooks may not appear here, but this is useful for debugging shop-scoped webhooks.
+
+4. Final checklist
+Your TOML config is correct.
+Your endpoints must be live, public, and respond with 2xx.
+You must verify HMAC signatures for all webhooks.
+Test your endpoints using the Shopify CLI or curl to ensure they respond as expected.
+Review the Shopify compliance webhook documentation for more details.
+If you follow these steps and your endpoints are implemented correctly, the automated checks should pass. If you still see errors, double-check your endpoint's availability and HMAC logic.
