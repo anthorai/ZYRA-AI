@@ -200,6 +200,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Capture raw body for webhook signature verification (before JSON parsing)
+// CRITICAL: Preserve exact raw body for HMAC verification - do NOT modify empty bodies
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, next) => {
   console.log('📥 [WEBHOOK] Incoming request to:', req.path);
   console.log('📥 [WEBHOOK] Headers:', {
@@ -209,31 +210,45 @@ app.use('/api/webhooks', express.raw({ type: 'application/json' }), (req, res, n
     contentType: req.get('Content-Type')
   });
   
-  // Store raw buffer for HMAC verification
+  // Store raw buffer for HMAC verification - preserve EXACTLY as received
   if (Buffer.isBuffer(req.body)) {
+    // Convert buffer to string, preserving empty bodies as empty strings
     (req as any).rawBody = req.body.toString('utf8');
     console.log('📥 [WEBHOOK] Raw body captured, length:', (req as any).rawBody?.length);
-    // Parse JSON for route handler
-    try {
-      req.body = JSON.parse((req as any).rawBody);
-    } catch (e) {
-      console.error('❌ [WEBHOOK] Failed to parse webhook JSON:', e);
-      return res.status(400).json({ error: 'Invalid JSON' });
+    
+    // Only parse JSON if there's content
+    if ((req as any).rawBody.length > 0) {
+      try {
+        req.body = JSON.parse((req as any).rawBody);
+      } catch (e) {
+        console.error('❌ [WEBHOOK] Failed to parse webhook JSON:', e);
+        return res.status(400).json({ error: 'Invalid JSON' });
+      }
+    } else {
+      // Empty body - keep rawBody as empty string, set body to empty object for handlers
+      req.body = {};
+      console.log('📥 [WEBHOOK] Empty body received (preserved as empty string for HMAC)');
     }
   } else if (typeof req.body === 'string') {
     (req as any).rawBody = req.body;
-    try {
-      req.body = JSON.parse(req.body);
-    } catch (e) {
-      console.error('❌ [WEBHOOK] Failed to parse string body:', e);
-      return res.status(400).json({ error: 'Invalid JSON' });
+    if (req.body.length > 0) {
+      try {
+        req.body = JSON.parse(req.body);
+      } catch (e) {
+        console.error('❌ [WEBHOOK] Failed to parse string body:', e);
+        return res.status(400).json({ error: 'Invalid JSON' });
+      }
+    } else {
+      req.body = {};
     }
-  } else if (req.body && Object.keys(req.body).length === 0) {
-    // Empty body - likely a test request
-    (req as any).rawBody = '{}';
-    console.log('📥 [WEBHOOK] Empty body received');
+  } else if (!req.body || (typeof req.body === 'object' && Object.keys(req.body).length === 0)) {
+    // No body or empty object - set rawBody to empty string (NOT '{}')
+    (req as any).rawBody = '';
+    req.body = {};
+    console.log('📥 [WEBHOOK] Empty/missing body received (rawBody set to empty string)');
   } else {
     console.log('📥 [WEBHOOK] Body type:', typeof req.body);
+    (req as any).rawBody = '';
   }
   
   next();

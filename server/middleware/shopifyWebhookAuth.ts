@@ -22,12 +22,17 @@ export function verifyShopifyWebhook(req: Request, res: Response, next: NextFunc
     }
 
     // Get raw body - must be set by webhook middleware
+    // IMPORTANT: rawBody can be an empty string for test webhooks - that's valid!
     const rawBody = (req as any).rawBody;
-    if (!rawBody) {
+    if (rawBody === undefined || rawBody === null) {
+      console.log('❌ [HMAC] rawBody is undefined/null - middleware not applied');
       return res.status(401).json({ error: 'Invalid webhook request' });
     }
 
+    console.log('🔐 [HMAC] Verifying webhook, rawBody length:', rawBody.length);
+
     // Calculate HMAC - this is fast even for large bodies
+    // Works correctly with empty string (for Shopify test webhooks)
     const calculatedHmac = crypto
       .createHmac('sha256', apiSecret)
       .update(rawBody, 'utf8')
