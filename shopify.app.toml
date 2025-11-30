@@ -17,18 +17,6 @@ topics = ["app/uninstalled"]
 uri = "https://zzyraai.com/api/webhooks/shopify/app_uninstalled"
 
 [[webhooks.subscriptions]]
-topics = ["orders/create", "orders/updated", "orders/fulfilled"]
-uri = "https://zzyraai.com/api/webhooks/shopify/orders"
-
-[[webhooks.subscriptions]]
-topics = ["carts/create", "carts/update"]
-uri = "https://zzyraai.com/api/webhooks/shopify/carts"
-
-[[webhooks.subscriptions]]
-topics = ["customers/create", "customers/update", "customers/delete"]
-uri = "https://zzyraai.com/api/webhooks/shopify/customers"
-
-[[webhooks.subscriptions]]
 topics = ["products/create", "products/update", "products/delete"]
 uri = "https://zzyraai.com/api/webhooks/shopify/products"
 
