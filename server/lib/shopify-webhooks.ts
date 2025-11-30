@@ -1,7 +1,10 @@
 /**
  * Shopify Webhook Registration Utility
- * Automatically registers mandatory compliance webhooks with Shopify
- * Uses both REST and GraphQL APIs for maximum compatibility
+ * Registers app-specific webhooks with Shopify via GraphQL/REST APIs
+ * 
+ * NOTE: GDPR compliance webhooks (customers/data_request, customers/redact, shop/redact)
+ * are configured in shopify.app.toml and handled by Shopify automatically during app deployment.
+ * They should NOT be registered via API - only declared in the TOML config file.
  */
 
 interface WebhookRegistration {
@@ -222,26 +225,13 @@ export async function registerShopifyWebhooks(
   console.log('📡 Registering Shopify webhooks for shop:', shop);
   console.log('📡 Using webhook base URL:', webhookBaseUrl);
 
-  // Define all mandatory webhooks - compliance webhooks MUST use production URLs
-  const mandatoryWebhooks: WebhookRegistration[] = [
+  // Define app-specific webhooks to register via API
+  // NOTE: GDPR compliance webhooks (customers/data_request, customers/redact, shop/redact)
+  // are configured in shopify.app.toml and NOT registered here - Shopify handles them automatically
+  const appWebhooks: WebhookRegistration[] = [
     {
       topic: 'app/uninstalled',
       address: `${webhookBaseUrl}/api/webhooks/shopify/app_uninstalled`,
-      format: 'json'
-    },
-    {
-      topic: 'customers/data_request',
-      address: `${webhookBaseUrl}/api/webhooks/shopify/customers/data_request`,
-      format: 'json'
-    },
-    {
-      topic: 'customers/redact',
-      address: `${webhookBaseUrl}/api/webhooks/shopify/customers/redact`,
-      format: 'json'
-    },
-    {
-      topic: 'shop/redact',
-      address: `${webhookBaseUrl}/api/webhooks/shopify/shop/redact`,
       format: 'json'
     },
     {
@@ -256,7 +246,7 @@ export async function registerShopifyWebhooks(
   const existingWebhooks = await getExistingWebhooksViaGraphQL(shop, accessToken);
   console.log(`📋 Found ${existingWebhooks.length} existing webhooks`);
 
-  for (const webhook of mandatoryWebhooks) {
+  for (const webhook of appWebhooks) {
     try {
       // Check if webhook already exists with correct URL
       const existingMatch = existingWebhooks.find(
@@ -363,7 +353,8 @@ export async function registerShopifyWebhooks(
 }
 
 /**
- * Verify that all mandatory webhooks are registered with correct URLs
+ * Verify that app-specific webhooks are registered with correct URLs
+ * NOTE: GDPR compliance webhooks are configured in shopify.app.toml and verified by Shopify during app review
  * @param shop - The shop domain
  * @param accessToken - The Shopify access token
  */
@@ -371,11 +362,11 @@ export async function verifyWebhooksRegistered(
   shop: string,
   accessToken: string
 ): Promise<{ allRegistered: boolean; missing: string[]; webhooks: Array<{ topic: string; url: string }> }> {
+  // Only check app-specific webhooks registered via API
+  // GDPR compliance webhooks (CUSTOMERS_DATA_REQUEST, CUSTOMERS_REDACT, SHOP_REDACT) 
+  // are configured in shopify.app.toml and managed by Shopify
   const requiredTopics = [
     'APP_UNINSTALLED',
-    'CUSTOMERS_DATA_REQUEST',
-    'CUSTOMERS_REDACT',
-    'SHOP_REDACT',
     'ORDERS_PAID'
   ];
 
