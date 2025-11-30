@@ -1,6 +1,7 @@
 /**
  * Shopify Webhook Registration Utility
  * Automatically registers mandatory compliance webhooks with Shopify
+ * Uses both REST and GraphQL APIs for maximum compatibility
  */
 
 interface WebhookRegistration {
@@ -10,54 +11,295 @@ interface WebhookRegistration {
 }
 
 /**
+ * Get the production base URL for webhooks
+ * CRITICAL: Always uses PRODUCTION_DOMAIN to ensure Shopify compliance
+ * No fallback is allowed for compliance webhooks
+ */
+function getProductionBaseUrl(): string {
+  // CRITICAL: Production domain is REQUIRED for Shopify GDPR compliance
+  const productionDomain = process.env.PRODUCTION_DOMAIN;
+  if (!productionDomain) {
+    console.error('❌ CRITICAL: PRODUCTION_DOMAIN environment variable is not set!');
+    console.error('❌ Shopify compliance webhooks will NOT work without a production domain.');
+    console.error('❌ Set PRODUCTION_DOMAIN=https://yourdomain.com in your environment.');
+    throw new Error('PRODUCTION_DOMAIN is required for Shopify compliance webhooks');
+  }
+  
+  // Ensure proper format
+  const url = productionDomain.startsWith('http') ? productionDomain : `https://${productionDomain}`;
+  console.log('📍 Using production domain for webhooks:', url);
+  return url;
+}
+
+/**
+ * Register webhooks using GraphQL Admin API
+ * This is the preferred method for 2024+
+ */
+async function registerWebhookViaGraphQL(
+  shop: string,
+  accessToken: string,
+  topic: string,
+  callbackUrl: string
+): Promise<{ success: boolean; error?: string }> {
+  // Convert REST topic format to GraphQL enum format
+  // e.g., "customers/data_request" -> "CUSTOMERS_DATA_REQUEST"
+  const graphqlTopic = topic.toUpperCase().replace(/\//g, '_');
+  
+  const mutation = `
+    mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
+      webhookSubscriptionCreate(topic: $topic, webhookSubscription: $webhookSubscription) {
+        webhookSubscription {
+          id
+          topic
+          endpoint {
+            __typename
+            ... on WebhookHttpEndpoint {
+              callbackUrl
+            }
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: {
+          topic: graphqlTopic,
+          webhookSubscription: {
+            callbackUrl,
+            format: 'JSON'
+          }
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return { success: false, error: `HTTP ${response.status}: ${text}` };
+    }
+
+    const data = await response.json();
+    
+    if (data.errors) {
+      return { success: false, error: data.errors.map((e: any) => e.message).join(', ') };
+    }
+    
+    const result = data.data?.webhookSubscriptionCreate;
+    if (result?.userErrors?.length > 0) {
+      return { success: false, error: result.userErrors.map((e: any) => e.message).join(', ') };
+    }
+    
+    if (result?.webhookSubscription?.id) {
+      return { success: true };
+    }
+    
+    return { success: false, error: 'Unknown error - no webhook ID returned' };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Delete existing webhook via GraphQL
+ */
+async function deleteWebhookViaGraphQL(
+  shop: string,
+  accessToken: string,
+  webhookId: string
+): Promise<boolean> {
+  const mutation = `
+    mutation webhookSubscriptionDelete($id: ID!) {
+      webhookSubscriptionDelete(id: $id) {
+        deletedWebhookSubscriptionId
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: { id: webhookId }
+      })
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get existing webhooks via GraphQL
+ */
+async function getExistingWebhooksViaGraphQL(
+  shop: string,
+  accessToken: string
+): Promise<Array<{ id: string; topic: string; callbackUrl: string }>> {
+  const query = `
+    query {
+      webhookSubscriptions(first: 50) {
+        edges {
+          node {
+            id
+            topic
+            endpoint {
+              __typename
+              ... on WebhookHttpEndpoint {
+                callbackUrl
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query })
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    const edges = data.data?.webhookSubscriptions?.edges || [];
+    
+    return edges.map((edge: any) => ({
+      id: edge.node.id,
+      topic: edge.node.topic,
+      callbackUrl: edge.node.endpoint?.callbackUrl || ''
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Register all mandatory Shopify webhooks for compliance
+ * Uses production domain and tries GraphQL first, then REST as fallback
  * @param shop - The shop domain (e.g., mystore.myshopify.com)
  * @param accessToken - The Shopify access token
- * @param baseUrl - The base URL of your app (e.g., https://yourapp.com)
+ * @param baseUrl - Optional override for base URL (defaults to PRODUCTION_DOMAIN)
  */
 export async function registerShopifyWebhooks(
   shop: string,
   accessToken: string,
-  baseUrl: string
+  baseUrl?: string
 ): Promise<{ success: boolean; registered: string[]; errors: string[] }> {
   const registered: string[] = [];
   const errors: string[] = [];
 
-  // Define all mandatory webhooks
+  // Always use production domain for webhooks
+  const webhookBaseUrl = baseUrl || getProductionBaseUrl();
+  
+  console.log('📡 Registering Shopify webhooks for shop:', shop);
+  console.log('📡 Using webhook base URL:', webhookBaseUrl);
+
+  // Define all mandatory webhooks - compliance webhooks MUST use production URLs
   const mandatoryWebhooks: WebhookRegistration[] = [
     {
       topic: 'app/uninstalled',
-      address: `${baseUrl}/api/webhooks/shopify/app_uninstalled`,
+      address: `${webhookBaseUrl}/api/webhooks/shopify/app_uninstalled`,
       format: 'json'
     },
     {
       topic: 'customers/data_request',
-      address: `${baseUrl}/api/webhooks/shopify/customers/data_request`,
+      address: `${webhookBaseUrl}/api/webhooks/shopify/customers/data_request`,
       format: 'json'
     },
     {
       topic: 'customers/redact',
-      address: `${baseUrl}/api/webhooks/shopify/customers/redact`,
+      address: `${webhookBaseUrl}/api/webhooks/shopify/customers/redact`,
       format: 'json'
     },
     {
       topic: 'shop/redact',
-      address: `${baseUrl}/api/webhooks/shopify/shop/redact`,
+      address: `${webhookBaseUrl}/api/webhooks/shopify/shop/redact`,
       format: 'json'
     },
     {
       topic: 'orders/paid',
-      address: `${baseUrl}/api/webhooks/shopify/orders/paid`,
+      address: `${webhookBaseUrl}/api/webhooks/shopify/orders/paid`,
       format: 'json'
     }
   ];
 
-  console.log('📡 Registering Shopify webhooks for shop:', shop);
+  // First, get existing webhooks via GraphQL
+  console.log('📋 Fetching existing webhooks...');
+  const existingWebhooks = await getExistingWebhooksViaGraphQL(shop, accessToken);
+  console.log(`📋 Found ${existingWebhooks.length} existing webhooks`);
 
   for (const webhook of mandatoryWebhooks) {
     try {
-      // Check if webhook already exists
-      const existingWebhooksUrl = `https://${shop}/admin/api/2025-10/webhooks.json?topic=${webhook.topic}`;
+      // Check if webhook already exists with correct URL
+      const existingMatch = existingWebhooks.find(
+        w => w.topic === webhook.topic.toUpperCase().replace(/\//g, '_') && 
+             w.callbackUrl === webhook.address
+      );
+      
+      if (existingMatch) {
+        console.log(`✅ Webhook already registered: ${webhook.topic} -> ${webhook.address}`);
+        registered.push(webhook.topic);
+        continue;
+      }
+
+      // Delete any existing webhooks with same topic but different URL
+      const existingWithTopic = existingWebhooks.filter(
+        w => w.topic === webhook.topic.toUpperCase().replace(/\//g, '_')
+      );
+      
+      for (const existing of existingWithTopic) {
+        console.log(`🗑️ Deleting outdated webhook: ${webhook.topic} (old URL: ${existing.callbackUrl})`);
+        await deleteWebhookViaGraphQL(shop, accessToken, existing.id);
+      }
+
+      // Try GraphQL first
+      console.log(`📝 Registering webhook via GraphQL: ${webhook.topic}`);
+      const graphqlResult = await registerWebhookViaGraphQL(
+        shop,
+        accessToken,
+        webhook.topic,
+        webhook.address
+      );
+
+      if (graphqlResult.success) {
+        console.log(`✅ Registered webhook via GraphQL: ${webhook.topic} -> ${webhook.address}`);
+        registered.push(webhook.topic);
+        continue;
+      }
+
+      // If GraphQL fails, try REST API as fallback
+      console.log(`⚠️ GraphQL failed (${graphqlResult.error}), trying REST API...`);
+      
+      // First delete existing via REST
+      const existingWebhooksUrl = `https://${shop}/admin/api/2025-01/webhooks.json?topic=${webhook.topic}`;
       const existingResponse = await fetch(existingWebhooksUrl, {
         headers: {
           'X-Shopify-Access-Token': accessToken,
@@ -67,23 +309,22 @@ export async function registerShopifyWebhooks(
 
       if (existingResponse.ok) {
         const existingData = await existingResponse.json();
-        const existingWebhooks = existingData.webhooks || [];
+        const existingRestWebhooks = existingData.webhooks || [];
 
-        // Delete existing webhooks with the same topic to avoid duplicates
-        for (const existing of existingWebhooks) {
-          const deleteUrl = `https://${shop}/admin/api/2025-10/webhooks/${existing.id}.json`;
+        for (const existing of existingRestWebhooks) {
+          const deleteUrl = `https://${shop}/admin/api/2025-01/webhooks/${existing.id}.json`;
           await fetch(deleteUrl, {
             method: 'DELETE',
             headers: {
               'X-Shopify-Access-Token': accessToken
             }
           });
-          console.log(`🗑️ Deleted existing webhook: ${webhook.topic}`);
+          console.log(`🗑️ Deleted existing REST webhook: ${webhook.topic}`);
         }
       }
 
-      // Register new webhook
-      const registerUrl = `https://${shop}/admin/api/2025-10/webhooks.json`;
+      // Register via REST API
+      const registerUrl = `https://${shop}/admin/api/2025-01/webhooks.json`;
       const response = await fetch(registerUrl, {
         method: 'POST',
         headers: {
@@ -94,8 +335,7 @@ export async function registerShopifyWebhooks(
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log(`✅ Registered webhook: ${webhook.topic} -> ${webhook.address}`);
+        console.log(`✅ Registered webhook via REST: ${webhook.topic} -> ${webhook.address}`);
         registered.push(webhook.topic);
       } else {
         const errorText = await response.text();
@@ -109,8 +349,10 @@ export async function registerShopifyWebhooks(
   }
 
   console.log('📊 Webhook registration summary:', {
+    baseUrl: webhookBaseUrl,
     registered: registered.length,
-    failed: errors.length
+    failed: errors.length,
+    topics: registered
   });
 
   return {
@@ -121,48 +363,77 @@ export async function registerShopifyWebhooks(
 }
 
 /**
- * Verify that all mandatory webhooks are registered
+ * Verify that all mandatory webhooks are registered with correct URLs
  * @param shop - The shop domain
  * @param accessToken - The Shopify access token
  */
 export async function verifyWebhooksRegistered(
   shop: string,
   accessToken: string
-): Promise<{ allRegistered: boolean; missing: string[] }> {
+): Promise<{ allRegistered: boolean; missing: string[]; webhooks: Array<{ topic: string; url: string }> }> {
   const requiredTopics = [
-    'app/uninstalled',
-    'customers/data_request',
-    'customers/redact',
-    'shop/redact',
-    'orders/paid'
+    'APP_UNINSTALLED',
+    'CUSTOMERS_DATA_REQUEST',
+    'CUSTOMERS_REDACT',
+    'SHOP_REDACT',
+    'ORDERS_PAID'
   ];
 
+  const productionBaseUrl = getProductionBaseUrl();
+
   try {
-    const response = await fetch(`https://${shop}/admin/api/2025-10/webhooks.json`, {
-      headers: {
-        'X-Shopify-Access-Token': accessToken
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch webhooks');
-    }
-
-    const data = await response.json();
-    const webhooks = data.webhooks || [];
-    const registeredTopics = webhooks.map((w: any) => w.topic);
-
+    const webhooks = await getExistingWebhooksViaGraphQL(shop, accessToken);
+    const registeredTopics = webhooks.map(w => w.topic);
+    
     const missing = requiredTopics.filter(topic => !registeredTopics.includes(topic));
+    
+    // Also check if URLs point to production domain
+    const webhooksWithWrongUrl = webhooks.filter(
+      w => requiredTopics.includes(w.topic) && !w.callbackUrl.startsWith(productionBaseUrl)
+    );
+    
+    if (webhooksWithWrongUrl.length > 0) {
+      console.log('⚠️ Webhooks with wrong URLs detected:', webhooksWithWrongUrl);
+      webhooksWithWrongUrl.forEach(w => {
+        if (!missing.includes(w.topic)) {
+          missing.push(w.topic + ' (wrong URL)');
+        }
+      });
+    }
 
     return {
       allRegistered: missing.length === 0,
-      missing
+      missing,
+      webhooks: webhooks.map(w => ({ topic: w.topic, url: w.callbackUrl }))
     };
   } catch (error) {
     console.error('Error verifying webhooks:', error);
     return {
       allRegistered: false,
-      missing: requiredTopics
+      missing: requiredTopics,
+      webhooks: []
     };
   }
+}
+
+/**
+ * Force re-register all webhooks with production URLs
+ * Useful for fixing webhook URL issues
+ */
+export async function forceReregisterWebhooks(
+  shop: string,
+  accessToken: string
+): Promise<{ success: boolean; registered: string[]; errors: string[] }> {
+  console.log('🔄 Force re-registering all webhooks with production URLs...');
+  
+  // Get existing webhooks and delete them all first
+  const existingWebhooks = await getExistingWebhooksViaGraphQL(shop, accessToken);
+  
+  for (const webhook of existingWebhooks) {
+    console.log(`🗑️ Deleting webhook: ${webhook.topic}`);
+    await deleteWebhookViaGraphQL(shop, accessToken, webhook.id);
+  }
+  
+  // Now register fresh
+  return registerShopifyWebhooks(shop, accessToken);
 }

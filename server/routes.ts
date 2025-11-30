@@ -7618,13 +7618,17 @@ Output format: Markdown with clear section headings.`;
       console.log('📋 Step 8: Registering GDPR webhooks...');
       const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
       
-      // Build baseUrl from request (works with custom domains and all environments)
-      const protocol = req.protocol;
-      const host = req.get('host');
-      const baseUrl = `${protocol}://${host}`;
+      // CRITICAL: Production domain is REQUIRED for Shopify GDPR compliance
+      // No fallback is allowed - webhooks MUST use production URLs
+      const webhookBaseUrl = process.env.PRODUCTION_DOMAIN;
+      if (!webhookBaseUrl) {
+        console.error('❌ CRITICAL: PRODUCTION_DOMAIN not configured!');
+        console.error('❌ Shopify compliance webhooks will NOT work without this.');
+        // Continue with OAuth but warn about webhook failure
+      }
       
-      console.log('  Webhook base URL:', baseUrl);
-      const webhookResult = await registerShopifyWebhooks(shop as string, accessToken, baseUrl);
+      console.log('  Webhook base URL:', webhookBaseUrl);
+      const webhookResult = await registerShopifyWebhooks(shop as string, accessToken, webhookBaseUrl);
       
       if (webhookResult.success) {
         console.log('✅ All mandatory webhooks registered successfully');
@@ -7858,27 +7862,39 @@ Output format: Markdown with clear section headings.`;
       // Get shop domain from storeUrl
       const shopDomain = shopifyConnection.storeUrl.replace('https://', '');
       
-      // Register webhooks
-      const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
+      // Register webhooks using production domain
+      const { registerShopifyWebhooks, forceReregisterWebhooks } = await import('./lib/shopify-webhooks');
       
-      // Build baseUrl from request (works with custom domains and all environments)
-      const protocol = req.protocol;
-      const host = req.get('host');
-      const baseUrl = `${protocol}://${host}`;
+      // CRITICAL: Production domain is REQUIRED for Shopify GDPR compliance
+      const webhookBaseUrl = process.env.PRODUCTION_DOMAIN;
+      if (!webhookBaseUrl) {
+        console.error('❌ PRODUCTION_DOMAIN not configured');
+        return res.status(500).json({ 
+          error: 'PRODUCTION_DOMAIN not configured',
+          message: 'Cannot register webhooks without a production domain'
+        });
+      }
+      const forceReregister = req.body?.force === true;
       
-      console.log('📡 Manually registering webhooks with baseUrl:', baseUrl);
-      const result = await registerShopifyWebhooks(shopDomain, shopifyConnection.accessToken, baseUrl);
+      console.log('📡 Manually registering webhooks with baseUrl:', webhookBaseUrl);
+      console.log('📡 Force re-register:', forceReregister);
+      
+      const result = forceReregister 
+        ? await forceReregisterWebhooks(shopDomain, shopifyConnection.accessToken)
+        : await registerShopifyWebhooks(shopDomain, shopifyConnection.accessToken, webhookBaseUrl);
       
       if (result.success) {
         res.json({ 
           success: true, 
           message: 'All webhooks registered successfully',
+          baseUrl: webhookBaseUrl,
           registered: result.registered 
         });
       } else {
         res.status(500).json({ 
           success: false, 
           message: 'Some webhooks failed to register',
+          baseUrl: webhookBaseUrl,
           registered: result.registered,
           errors: result.errors 
         });
@@ -7907,9 +7923,14 @@ Output format: Markdown with clear section headings.`;
       const { verifyWebhooksRegistered } = await import('./lib/shopify-webhooks');
       const result = await verifyWebhooksRegistered(shopDomain, shopifyConnection.accessToken);
       
+      const expectedBaseUrl = process.env.PRODUCTION_DOMAIN || 'Not configured';
+      
       res.json({ 
         allRegistered: result.allRegistered,
-        missing: result.missing 
+        missing: result.missing,
+        webhooks: result.webhooks,
+        expectedBaseUrl,
+        shop: shopDomain
       });
     } catch (error) {
       console.error('Webhook verification error:', error);
