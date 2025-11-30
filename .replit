@@ -9,7 +9,7 @@ packages = ["chromium", "imagemagick", "shopify-cli", "haskellPackages.daemons"]
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "start"]
+run = ["npm", "run", "start"]
 
 [[ports]]
 localPort = 4370
@@ -20,7 +20,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 36597
+localPort = 33983
 externalPort = 3002
 
 [[ports]]

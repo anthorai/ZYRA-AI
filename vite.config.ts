@@ -2,11 +2,9 @@ import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
-import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [
-    tailwindcss(),
     react(),
     // Temporarily disabled - causing crashes on non-Error exceptions
     // runtimeErrorOverlay(),
