@@ -7,6 +7,7 @@ import "./index.css";
 
 // CRITICAL: Intercept password recovery tokens BEFORE React/Supabase initializes
 // This prevents Supabase from consuming the tokens before we can redirect
+// IMPORTANT: Must be very specific to avoid catching Google/OAuth logins
 (function interceptRecoveryTokens() {
   const hash = window.location.hash;
   const search = window.location.search;
@@ -15,6 +16,11 @@ import "./index.css";
   // Already on reset-password page, let it handle the tokens
   if (currentPath.startsWith('/reset-password')) {
     console.log('[Recovery] Already on reset-password page');
+    return;
+  }
+  
+  // Skip if no hash or search params (nothing to intercept)
+  if (!hash && !search) {
     return;
   }
   
@@ -29,16 +35,15 @@ import "./index.css";
   // Check for Supabase auth errors (e.g., expired links)
   if (error) {
     console.log('[Recovery] Auth error detected:', error);
-    // Let the app handle the error
     return;
   }
   
-  // Detect password recovery flow
-  const isRecoveryFlow = type === 'recovery' || 
-    (accessToken && (hash.includes('type=recovery') || search.includes('type=recovery')));
+  // ONLY intercept if type is EXPLICITLY 'recovery' - this distinguishes from Google OAuth
+  // Google OAuth uses type like 'signup', 'magiclink', or no type at all
+  const isPasswordRecovery = type === 'recovery';
   
-  if (isRecoveryFlow) {
-    console.log('[Recovery] PASSWORD RECOVERY DETECTED - Redirecting immediately!');
+  if (isPasswordRecovery && accessToken) {
+    console.log('[Recovery] PASSWORD RECOVERY DETECTED - Redirecting to reset-password page');
     // Redirect to reset-password page with tokens BEFORE Supabase can process them
     const tokenData = hash || search;
     window.location.replace(`/reset-password${tokenData}`);

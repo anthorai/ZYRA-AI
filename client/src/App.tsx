@@ -179,19 +179,15 @@ function PasswordRecoveryHandler({ children }: { children: React.ReactNode }) {
     }
     
     // Check for access_token with recovery type in the hash
-    if (accessToken && (hash.includes('type=recovery') || fullUrl.includes('type=recovery'))) {
+    // IMPORTANT: Only redirect if type is explicitly 'recovery' to avoid catching Google OAuth
+    if (accessToken && type === 'recovery') {
       console.log('Recovery access token detected! Redirecting to reset-password...');
       window.location.href = `/reset-password${hash}`;
       return;
     }
     
-    // Check for just access_token without type (might still be recovery from some Supabase versions)
-    if (accessToken && refreshToken && !type) {
-      console.log('Access token with refresh token found, checking if recovery...');
-      // This could be a recovery token, redirect to reset-password to check
-      window.location.href = `/reset-password${hash}`;
-      return;
-    }
+    // NOTE: We intentionally do NOT redirect tokens without type='recovery'
+    // as those are typically OAuth logins (Google, etc.) not password resets
     
     setIsChecking(false);
   }, []);
