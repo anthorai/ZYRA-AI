@@ -100,6 +100,11 @@ const CompetitorsPage = lazy(() => import("@/pages/ai-tools/competitors"));
 const PricingAnalytics = lazy(() => import("@/pages/ai-tools/pricing-analytics"));
 const StrategyInsights = lazy(() => import("@/pages/strategy-insights"));
 
+// Comparison/SEO marketing pages
+const ShopifySeoToolsComparison = lazy(() => import("@/pages/compare/shopify-seo-tools"));
+const ShopifyAiAppsComparison = lazy(() => import("@/pages/compare/shopify-ai-apps"));
+const CartRecoveryAppsComparison = lazy(() => import("@/pages/compare/cart-recovery-apps"));
+
 // Automation pages
 const CSVImportExport = lazy(() => import("@/pages/automation/csv-import-export"));
 const ShopifyPublish = lazy(() => import("@/pages/automation/shopify-publish"));
@@ -246,6 +251,24 @@ function Router() {
           <BlogArticlePage />
         </Suspense>
       )} />
+      
+      {/* SEO/Marketing comparison pages - public */}
+      <Route path="/compare/shopify-seo-tools" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <ShopifySeoToolsComparison />
+        </Suspense>
+      )} />
+      <Route path="/compare/shopify-ai-apps" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <ShopifyAiAppsComparison />
+        </Suspense>
+      )} />
+      <Route path="/compare/cart-recovery-apps" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <CartRecoveryAppsComparison />
+        </Suspense>
+      )} />
+      
       <Route path="/privacy-policy" component={() => (
         <Suspense fallback={<PageLoader />}>
           <PrivacyPolicyPage />
