@@ -117,7 +117,7 @@ export async function getUserById(userId: string): Promise<User | undefined> {
   }, "getUserById");
 }
 
-export async function updateUserSubscription(userId: string, planId: string, userEmail?: string): Promise<User> {
+export async function updateUserSubscription(userId: string, planId: string, userEmail?: string, billingPeriod: 'monthly' | 'annual' = 'monthly'): Promise<User> {
   return withErrorHandling(async () => {
     // Get the subscription plan details
     const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
@@ -150,6 +150,15 @@ export async function updateUserSubscription(userId: string, planId: string, use
       .where(eq(users.id, userId))
       .returning();
 
+    // Calculate subscription period dates based on billing period
+    const now = new Date();
+    const periodEnd = new Date(now);
+    if (billingPeriod === 'annual') {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1); // 1 year from now
+    } else {
+      periodEnd.setMonth(periodEnd.getMonth() + 1); // 1 month from now
+    }
+
     // Create or update subscription record
     // Check if subscription already exists
     const [existingSubscription] = await db.select().from(subscriptions)
@@ -158,7 +167,13 @@ export async function updateUserSubscription(userId: string, planId: string, use
     if (existingSubscription) {
       // Update existing subscription
       await db.update(subscriptions)
-        .set({ planId, status: "active" })
+        .set({ 
+          planId, 
+          status: "active",
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+          startDate: now,
+        })
         .where(eq(subscriptions.userId, userId));
     } else {
       // Create new subscription
@@ -166,10 +181,13 @@ export async function updateUserSubscription(userId: string, planId: string, use
         userId,
         planId,
         status: "active",
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        startDate: now,
       });
     }
 
-    console.log(`[DB] User ${userId} subscription updated to ${plan.planName}`);
+    console.log(`[DB] User ${userId} subscription updated to ${plan.planName} (${billingPeriod}), expires: ${periodEnd.toISOString()}`);
     return updatedUser;
   }, "updateUserSubscription");
 }

@@ -198,6 +198,7 @@ export default function CheckoutPage() {
                       transactionId={pendingSubscription.transactionId}
                       planId={pendingSubscription.planId}
                       planName={pendingSubscription.planName}
+                      billingPeriod={pendingSubscription.billingPeriod}
                       onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
                     />

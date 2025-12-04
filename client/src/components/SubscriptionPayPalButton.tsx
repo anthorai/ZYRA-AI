@@ -18,6 +18,7 @@ interface SubscriptionPayPalButtonProps {
   transactionId: string;
   planId: string;
   planName: string;
+  billingPeriod?: 'monthly' | 'annual';
   onSuccess: (orderId: string) => void;
   onError: (error: any) => void;
 }
@@ -28,6 +29,7 @@ export default function SubscriptionPayPalButton({
   transactionId,
   planId,
   planName,
+  billingPeriod = 'monthly',
   onSuccess,
   onError,
 }: SubscriptionPayPalButtonProps) {
@@ -35,12 +37,14 @@ export default function SubscriptionPayPalButton({
 
   const createOrder = async () => {
     try {
+      const billingLabel = billingPeriod === 'annual' ? 'Annual Subscription (Save 20%)' : 'Monthly Subscription';
       const orderPayload = {
         amount: amount,
         currency: currency,
         intent: "capture",
-        description: `${planName} Plan - Monthly Subscription`,
+        description: `${planName} Plan - ${billingLabel}`,
         planName: planName,
+        billingPeriod: billingPeriod,
       };
       const response = await fetch("/api/paypal/order", {
         method: "POST",

@@ -5543,6 +5543,12 @@ Output format: Markdown with clear section headings.`;
       const { initializeUserCredits } = await import('./lib/credits');
       const { NotificationService } = await import('./lib/notification-service');
 
+      // Get the transaction to retrieve billing period from metadata
+      const transaction = await storage.getPaymentTransaction(transactionId);
+      const billingPeriod = transaction?.metadata?.billingPeriod || 'monthly';
+      
+      console.log(`[PayPal Verify] Billing period: ${billingPeriod}`);
+
       // Update the transaction status to completed
       await storage.updatePaymentTransaction(transactionId, {
         status: 'completed',
@@ -5550,8 +5556,8 @@ Output format: Markdown with clear section headings.`;
         paidAt: new Date()
       });
 
-      // Update user subscription and activate the plan
-      const updatedUser = await updateUserSubscription(user.id, planId, user.email);
+      // Update user subscription and activate the plan with billing period
+      const updatedUser = await updateUserSubscription(user.id, planId, user.email, billingPeriod);
       
       // Initialize credits for the new plan
       await initializeUserCredits(user.id, planId);
@@ -5559,11 +5565,12 @@ Output format: Markdown with clear section headings.`;
       // Send notification about subscription activation
       await NotificationService.notifySubscriptionChanged(user.id, planId);
 
-      console.log(`[PayPal Verify] Subscription activated successfully for user ${user.id}`);
+      console.log(`[PayPal Verify] Subscription activated successfully for user ${user.id}, billingPeriod: ${billingPeriod}`);
 
       res.json({ 
         success: true,
         message: "Subscription activated successfully",
+        billingPeriod: billingPeriod,
         user: updatedUser
       });
     } catch (error: any) {
