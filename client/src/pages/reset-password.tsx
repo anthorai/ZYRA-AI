@@ -27,7 +27,9 @@ export default function ResetPassword() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
-  const [hasAccessToken, setHasAccessToken] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [hasValidSession, setHasValidSession] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   const form = useForm<ResetPasswordForm>({
     resolver: zodResolver(resetPasswordSchema),
@@ -45,78 +47,111 @@ export default function ResetPassword() {
         const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token') || '';
         const type = hashParams.get('type') || searchParams.get('type');
+        const error = hashParams.get('error') || searchParams.get('error');
+        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
         
-        console.log('Reset password - URL params:', { 
+        console.log('[ResetPassword] URL params:', { 
           hasCode: !!code, 
           hasAccessToken: !!accessToken, 
           type,
-          hash: window.location.hash,
-          search: window.location.search 
+          error,
+          errorDescription,
+          fullHash: window.location.hash,
+          fullSearch: window.location.search 
         });
+        
+        // Check for explicit errors from Supabase (expired link, etc.)
+        if (error) {
+          console.error('[ResetPassword] Supabase error:', error, errorDescription);
+          setVerificationError(errorDescription || 'The password reset link has expired or is invalid.');
+          setIsVerifying(false);
+          return;
+        }
         
         if (code) {
           // Exchange code for session (PKCE flow)
-          console.log('Exchanging code for session...');
-          const { data, error } = await supabase.auth.exchangeCodeForSession({ code });
-          if (error) throw error;
+          console.log('[ResetPassword] Exchanging code for session...');
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            console.error('[ResetPassword] Code exchange error:', exchangeError);
+            throw exchangeError;
+          }
           if (data.session) {
-            console.log('Session established from code exchange');
-            setHasAccessToken(true);
+            console.log('[ResetPassword] Session established from code exchange');
+            setHasValidSession(true);
           }
         } else if (accessToken) {
           // Set session directly if access_token is provided (implicit flow)
-          console.log('Setting session with access token...');
-          const { data, error } = await supabase.auth.setSession({
+          console.log('[ResetPassword] Setting session with access token...');
+          const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
-          if (error) throw error;
+          if (sessionError) {
+            console.error('[ResetPassword] Set session error:', sessionError);
+            throw sessionError;
+          }
           if (data.session) {
-            console.log('Session established from access token');
-            setHasAccessToken(true);
+            console.log('[ResetPassword] Session established from access token');
+            setHasValidSession(true);
           }
         } else if (type === 'recovery') {
-          // Recovery type detected but no token - Supabase might handle this automatically
-          // Try to get the current session that Supabase may have already established
-          console.log('Recovery type detected, checking for existing session...');
+          // Recovery type detected - Supabase processes these automatically via onAuthStateChange
+          console.log('[ResetPassword] Recovery type detected, waiting for Supabase auth event...');
+          
+          // Listen for auth state change from Supabase processing the recovery token
+          const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: unknown) => {
+            console.log('[ResetPassword] Auth state change:', event, !!session);
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+              console.log('[ResetPassword] Recovery session established via auth event');
+              setHasValidSession(true);
+              setIsVerifying(false);
+            }
+          });
+          
+          // Also check for existing session
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            console.log('Session found for recovery');
-            setHasAccessToken(true);
+            console.log('[ResetPassword] Existing session found');
+            setHasValidSession(true);
+            subscription.unsubscribe();
           } else {
-            // Wait a moment for Supabase to process the recovery
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Give Supabase time to process the recovery token
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const { data: { session: retrySession } } = await supabase.auth.getSession();
             if (retrySession) {
-              console.log('Session found after retry');
-              setHasAccessToken(true);
+              console.log('[ResetPassword] Session found after wait');
+              setHasValidSession(true);
+              subscription.unsubscribe();
             } else {
-              throw new Error('No recovery session found');
+              // Keep the form visible - user may still be able to reset
+              console.log('[ResetPassword] No session yet, showing form anyway');
+              setHasValidSession(true); // Allow form submission attempt
+              subscription.unsubscribe();
             }
           }
         } else {
           // Check if session already exists (user might have been redirected with session already set)
-          console.log('No token params found, checking existing session...');
+          console.log('[ResetPassword] No token params, checking existing session...');
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            console.log('Existing session found');
-            setHasAccessToken(true);
+            console.log('[ResetPassword] Existing session found');
+            setHasValidSession(true);
           } else {
-            throw new Error('No reset token found');
+            // No tokens and no session - show error but don't redirect
+            console.log('[ResetPassword] No tokens and no session');
+            setVerificationError('No password reset token found. Please request a new reset link.');
           }
         }
-      } catch (error) {
-        console.error('Password reset verification error:', error);
-        toast({
-          title: "Invalid or expired link",
-          description: "Please request a new password reset link",
-          variant: "destructive",
-        });
-        setTimeout(() => setLocation("/forgot-password"), 2000);
+      } catch (error: any) {
+        console.error('[ResetPassword] Verification error:', error);
+        setVerificationError(error.message || 'Failed to verify reset link. Please try again.');
+      } finally {
+        setIsVerifying(false);
       }
     };
     handlePasswordReset();
-  }, [setLocation, toast]);
+  }, []);
 
   const onSubmit = async (data: ResetPasswordForm) => {
     setIsSubmitting(true);
@@ -146,12 +181,45 @@ export default function ResetPassword() {
     }
   };
 
-  if (!hasAccessToken) {
+  // Show loading state while verifying
+  if (isVerifying) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-slate-300">Verifying reset link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with option to request new link
+  if (verificationError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+        <div className="max-w-sm sm:max-w-md w-full">
+          <Card className="gradient-card border-0">
+            <CardContent className="p-6 sm:p-8">
+              <div className="text-center mb-6 sm:mb-8">
+                <div className="mx-auto mb-3 sm:mb-4">
+                  <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                  Link Expired
+                </h2>
+                <p className="text-slate-400 mt-2">
+                  {verificationError}
+                </p>
+              </div>
+              <Button
+                onClick={() => setLocation("/forgot-password")}
+                className="w-full gradient-button"
+                data-testid="button-request-new-link"
+              >
+                Request New Reset Link
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
