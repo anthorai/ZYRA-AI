@@ -1840,7 +1840,7 @@ export default function Landing() {
                   )}
                   {plan.badge && !plan.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge variant="outline" className="px-4 py-1">{plan.badge}</Badge>
+                      <Badge variant="outline" className="px-4 py-1 ml-[-14px] mr-[-14px]">{plan.badge}</Badge>
                     </div>
                   )}
                   <CardContent className="p-6 h-full flex flex-col">
