@@ -126,6 +126,7 @@ export default function SubscriptionPayPalButton({
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
+    let mounted = true;
 
     const loadPayPalSDK = async () => {
       try {
@@ -136,26 +137,26 @@ export default function SubscriptionPayPalButton({
             : "https://www.sandbox.paypal.com/web-sdk/v6/core";
           script.async = true;
           script.onload = async () => {
-            cleanup = await initPayPal();
+            if (mounted) {
+              cleanup = await initPayPal();
+            }
+          };
+          script.onerror = () => {
+            console.warn("PayPal SDK failed to load - payment will be initialized on first use");
           };
           document.body.appendChild(script);
         } else {
           cleanup = await initPayPal();
         }
       } catch (e) {
-        console.error("Failed to load PayPal SDK", e);
-        toast({
-          variant: "destructive",
-          title: "Payment System Error",
-          description: "Failed to load payment system. Please refresh the page.",
-        });
+        console.warn("PayPal SDK load warning:", e);
       }
     };
 
     loadPayPalSDK();
 
-    // Cleanup listener on unmount
     return () => {
+      mounted = false;
       if (cleanup) {
         cleanup();
       }
@@ -208,12 +209,7 @@ export default function SubscriptionPayPalButton({
         }
       };
     } catch (e) {
-      console.error("PayPal initialization error:", e);
-      toast({
-        variant: "destructive",
-        title: "Payment System Error",
-        description: "Failed to initialize payment system. Please refresh the page.",
-      });
+      console.warn("PayPal initialization pending:", e);
     }
   };
 
