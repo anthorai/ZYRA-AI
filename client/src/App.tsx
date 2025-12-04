@@ -10,7 +10,7 @@ import SettingsLayout from "@/components/layouts/SettingsLayout";
 import { SkipLink } from "@/components/ui/skip-link";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { TrialWelcomeDialog } from "@/components/trial-welcome-dialog";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Immediate imports for critical pages only
@@ -120,6 +120,89 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+// Global password recovery handler - detects recovery tokens in URL and redirects
+function PasswordRecoveryHandler({ children }: { children: React.ReactNode }) {
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    // Check for password recovery tokens in URL hash or search params
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const currentPath = window.location.pathname;
+    const fullUrl = window.location.href;
+    
+    // Already on reset-password page, no need to redirect
+    if (currentPath === '/reset-password' || currentPath.startsWith('/reset-password')) {
+      console.log('Already on reset-password page, skipping redirect');
+      setIsChecking(false);
+      return;
+    }
+    
+    // Parse hash params (Supabase often puts tokens in hash)
+    const hashParams = new URLSearchParams(hash.substring(1));
+    const searchParams = new URLSearchParams(search);
+    
+    const type = hashParams.get('type') || searchParams.get('type');
+    const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+    const code = hashParams.get('code') || searchParams.get('code');
+    const error = hashParams.get('error') || searchParams.get('error');
+    const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
+    
+    console.log('Password Recovery Handler - Full URL check:', {
+      fullUrl: fullUrl.substring(0, 100) + '...',
+      currentPath,
+      hashLength: hash.length,
+      type,
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      hasCode: !!code,
+      error,
+      errorDescription
+    });
+    
+    // Handle errors from Supabase (e.g., expired links)
+    if (error) {
+      console.error('Supabase auth error:', error, errorDescription);
+      // Use window.location for full redirect to preserve any error info
+      window.location.href = '/forgot-password';
+      return;
+    }
+    
+    // Check if this is a password recovery flow
+    if (type === 'recovery') {
+      console.log('PASSWORD RECOVERY DETECTED! Redirecting to reset-password page...');
+      // Use window.location.href to ensure hash is preserved
+      window.location.href = `/reset-password${hash || search}`;
+      return;
+    }
+    
+    // Check for access_token with recovery type in the hash
+    if (accessToken && (hash.includes('type=recovery') || fullUrl.includes('type=recovery'))) {
+      console.log('Recovery access token detected! Redirecting to reset-password...');
+      window.location.href = `/reset-password${hash}`;
+      return;
+    }
+    
+    // Check for just access_token without type (might still be recovery from some Supabase versions)
+    if (accessToken && refreshToken && !type) {
+      console.log('Access token with refresh token found, checking if recovery...');
+      // This could be a recovery token, redirect to reset-password to check
+      window.location.href = `/reset-password${hash}`;
+      return;
+    }
+    
+    setIsChecking(false);
+  }, []);
+
+  // Show loading while checking for recovery tokens
+  if (isChecking) {
+    return <PageLoader />;
+  }
+
+  return <>{children}</>;
+}
 
 function Router() {
   return (
@@ -662,11 +745,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TooltipProvider>
-            <SkipLink />
-            <NetworkStatus />
-            <TrialWelcomeDialog />
-            <Toaster />
-            <Router />
+            <PasswordRecoveryHandler>
+              <SkipLink />
+              <NetworkStatus />
+              <TrialWelcomeDialog />
+              <Toaster />
+              <Router />
+            </PasswordRecoveryHandler>
           </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>
