@@ -656,6 +656,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Delete user account
+  app.delete("/api/admin/delete-user/:userId", requireAuth, apiLimiter, async (req, res) => {
+    try {
+      const adminUser = (req as AuthenticatedRequest).user;
+      
+      // Double check: role must be admin AND email must be in authorized list
+      if (adminUser.role !== 'admin' || !AUTHORIZED_ADMIN_EMAILS.includes(adminUser.email.toLowerCase())) {
+        console.warn(`[SECURITY] Unauthorized admin delete attempt by ${adminUser.email}`);
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required" });
+      }
+
+      // Prevent admin from deleting themselves
+      if (userId === adminUser.id) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+
+      // Get the user to be deleted
+      const [targetUser] = await db.select().from(users).where(eq(users.id, userId));
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Prevent deleting other admins
+      if (targetUser.role === 'admin') {
+        return res.status(400).json({ message: "Cannot delete admin accounts" });
+      }
+
+      console.log(`[ADMIN] Starting account deletion for user ${userId} (${targetUser.email}) by admin ${adminUser.email}`);
+
+      // Step 1: Delete user from Supabase Auth FIRST (most critical)
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) {
+        console.error('Error deleting Supabase auth user:', authError);
+        return res.status(500).json({ 
+          message: `Failed to delete auth account: ${authError.message}. User data preserved - please try again.` 
+        });
+      }
+
+      // Step 2: Delete subscriptions from database
+      try {
+        await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
+      } catch (e) {
+        console.warn('Error deleting subscriptions (continuing):', e);
+      }
+
+      // Step 3: Fetch all user data for deletion
+      const [products, campaigns, templates] = await Promise.all([
+        supabaseStorage.getProducts(userId).catch(() => []),
+        supabaseStorage.getCampaigns(userId).catch(() => []),
+        supabaseStorage.getCampaignTemplates(userId).catch(() => [])
+      ]);
+
+      // Step 4: Delete all user data in parallel
+      const deletionResults = await Promise.allSettled([
+        ...products.map(product => supabaseStorage.deleteProduct(product.id)),
+        ...campaigns.map(campaign => supabaseStorage.deleteCampaign(campaign.id)),
+        ...templates.map(template => supabaseStorage.deleteCampaignTemplate(template.id))
+      ]);
+
+      // Log any deletion failures
+      const failures = deletionResults.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.warn(`[ADMIN] ${failures.length} items failed to delete for user ${userId}`, failures);
+      }
+
+      // Step 5: Delete user from users table (this should cascade delete related records)
+      await db.delete(users).where(eq(users.id, userId));
+
+      console.log(`[ADMIN] Successfully deleted user ${userId} (${targetUser.email}) by admin ${adminUser.email}`);
+
+      res.json({ 
+        success: true,
+        message: `User ${targetUser.email} has been permanently deleted`,
+        deletedUser: {
+          id: userId,
+          email: targetUser.email
+        },
+        details: {
+          productsDeleted: products.length,
+          campaignsDeleted: campaigns.length,
+          templatesDeleted: templates.length,
+          failedDeletions: failures.length
+        }
+      });
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user account" });
+    }
+  });
+
   // Usage limit enforcement middleware for AI operations
   const checkAIUsageLimit = async (req: Request, res: Response, next: NextFunction) => {
     try {

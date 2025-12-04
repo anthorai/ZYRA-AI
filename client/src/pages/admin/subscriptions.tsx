@@ -29,6 +29,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Users, 
@@ -39,7 +49,8 @@ import {
   ArrowLeft,
   Coins,
   Check,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -90,6 +101,8 @@ export default function AdminSubscriptions() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [resettingUserId, setResettingUserId] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserWithSubscription | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: usersResponse, isLoading: usersLoading, refetch: refetchUsers } = useQuery<PaginatedResponse>({
     queryKey: ['/api/admin/users-with-subscriptions', currentPage],
@@ -161,6 +174,52 @@ export default function AdminSubscriptions() {
       setResettingUserId(null);
     },
   });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/admin/delete-user/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to delete user');
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Account Deleted",
+        description: data.message || "User account has been permanently deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users-with-subscriptions'] });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const openDeleteDialog = (user: UserWithSubscription) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteUser = () => {
+    if (userToDelete) {
+      deleteUserMutation.mutate(userToDelete.id);
+    }
+  };
 
   const filteredUsers = users?.filter(user => 
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -426,6 +485,17 @@ export default function AdminSubscriptions() {
                             >
                               <RefreshCw className={`w-4 h-4 ${resettingUserId === user.id ? 'animate-spin' : ''}`} />
                             </Button>
+                            {user.role !== 'admin' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDeleteDialog(user)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                data-testid={`button-delete-user-${user.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -547,6 +617,46 @@ export default function AdminSubscriptions() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                Delete User Account
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>
+                  Are you sure you want to permanently delete the account for <strong>{userToDelete?.email}</strong>?
+                </p>
+                <p className="text-destructive font-medium">
+                  This action cannot be undone. All user data including products, campaigns, and settings will be permanently removed.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                onClick={() => setUserToDelete(null)}
+                data-testid="button-cancel-delete"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteUser}
+                disabled={deleteUserMutation.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                data-testid="button-confirm-delete"
+              >
+                {deleteUserMutation.isPending ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4 mr-2" />
+                )}
+                Delete Account
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
