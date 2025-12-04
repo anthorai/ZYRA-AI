@@ -334,7 +334,8 @@ export default function BillingPage() {
   // Upgrade/downgrade mutation - PayPal USD-only
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'paypal' });
+      const billingPeriod = isAnnual ? 'annual' : 'monthly';
+      const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'paypal', billingPeriod });
       return await response.json();
     },
     onMutate: async (planId: string) => {
@@ -345,16 +346,19 @@ export default function BillingPage() {
       
       if (data.requiresPayment && data.gateway === 'paypal') {
         console.log('💳 PayPal payment required - redirecting to checkout');
+        const billingPeriod = data.billingPeriod || 'monthly';
+        const periodLabel = billingPeriod === 'annual' ? '/year' : '/month';
         toast({
           title: "Payment Required",
-          description: `Complete payment of $${data.amount} USD via PayPal to activate your ${data.plan.planName} plan.`,
+          description: `Complete payment of $${data.amount} USD${periodLabel} via PayPal to activate your ${data.plan.planName} plan.`,
         });
         
         sessionStorage.setItem('pending_subscription', JSON.stringify({
           transactionId: data.transactionId,
           planId: data.plan.id,
           amount: data.amount,
-          planName: data.plan.planName
+          planName: data.plan.planName,
+          billingPeriod: billingPeriod
         }));
         
         setLocation('/checkout');

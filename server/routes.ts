@@ -5131,8 +5131,8 @@ Output format: Markdown with clear section headings.`;
   // Change subscription plan (alternative endpoint for billing page)
   app.post("/api/subscription/change-plan", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
     try {
-      const { planId, gateway = 'razorpay' } = req.body;
-      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "gateway:", gateway);
+      const { planId, gateway = 'razorpay', billingPeriod = 'monthly' } = req.body;
+      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "gateway:", gateway, "billingPeriod:", billingPeriod);
       
       if (!planId) {
         return res.status(400).json({ error: "Plan ID is required" });
@@ -5172,10 +5172,18 @@ Output format: Markdown with clear section headings.`;
       // For paid plans, create a payment order
       console.log("[SUBSCRIPTION] Paid plan selected, creating payment order");
       
+      // Calculate the correct amount based on billing period
+      const monthlyPrice = Number(selectedPlan.price);
+      const finalAmount = billingPeriod === 'annual' 
+        ? Math.round(monthlyPrice * 12 * 0.8)  // 20% discount for annual
+        : monthlyPrice;
+      
+      console.log("[SUBSCRIPTION] Calculated amount:", { monthlyPrice, billingPeriod, finalAmount });
+      
       // Create payment transaction record
       const transaction = await storage.createPaymentTransaction({
         userId,
-        amount: selectedPlan.price.toString(),
+        amount: finalAmount.toString(),
         currency: 'USD',  // All payments are in USD
         gateway,
         purpose: 'subscription',
@@ -5183,7 +5191,8 @@ Output format: Markdown with clear section headings.`;
         metadata: {
           planId,
           planName: selectedPlan.planName,
-          userEmail
+          userEmail,
+          billingPeriod
         }
       });
       
@@ -5227,8 +5236,9 @@ Output format: Markdown with clear section headings.`;
           requiresPayment: true,
           gateway: 'paypal',
           transactionId: transaction.id,
-          amount: selectedPlan.price,
+          amount: finalAmount,
           currency: 'USD',  // All payments are in USD
+          billingPeriod: billingPeriod,
           plan: selectedPlan
         });
       } else {

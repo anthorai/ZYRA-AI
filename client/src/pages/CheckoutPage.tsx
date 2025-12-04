@@ -17,6 +17,7 @@ interface PendingSubscription {
   planId: string;
   amount: string;
   planName: string;
+  billingPeriod?: 'monthly' | 'annual';
 }
 
 export default function CheckoutPage() {
@@ -150,7 +151,9 @@ export default function CheckoutPage() {
                   <div className="text-3xl font-bold text-primary" data-testid="text-plan-price">
                     ${amount}
                   </div>
-                  <div className="text-sm text-muted-foreground">USD/month</div>
+                  <div className="text-sm text-muted-foreground">
+                    USD/{pendingSubscription.billingPeriod === 'annual' ? 'year' : 'month'}
+                  </div>
                 </div>
               </div>
                 <div className="space-y-3">
@@ -222,7 +225,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Billing Cycle</span>
-                    <span className="font-medium">Monthly</span>
+                    <span className="font-medium">
+                      {pendingSubscription.billingPeriod === 'annual' ? 'Annual (Save 20%)' : 'Monthly'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
