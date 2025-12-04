@@ -5,6 +5,48 @@ import "./index.css";
 // Service Worker disabled for development - uncomment when needed
 // import { register as registerServiceWorker, showUpdateNotification } from "./lib/serviceWorkerRegistration";
 
+// CRITICAL: Intercept password recovery tokens BEFORE React/Supabase initializes
+// This prevents Supabase from consuming the tokens before we can redirect
+(function interceptRecoveryTokens() {
+  const hash = window.location.hash;
+  const search = window.location.search;
+  const currentPath = window.location.pathname;
+  
+  // Already on reset-password page, let it handle the tokens
+  if (currentPath.startsWith('/reset-password')) {
+    console.log('[Recovery] Already on reset-password page');
+    return;
+  }
+  
+  // Parse URL parameters
+  const hashParams = new URLSearchParams(hash.substring(1));
+  const searchParams = new URLSearchParams(search);
+  
+  const type = hashParams.get('type') || searchParams.get('type');
+  const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+  const error = hashParams.get('error') || searchParams.get('error');
+  
+  // Check for Supabase auth errors (e.g., expired links)
+  if (error) {
+    console.log('[Recovery] Auth error detected:', error);
+    // Let the app handle the error
+    return;
+  }
+  
+  // Detect password recovery flow
+  const isRecoveryFlow = type === 'recovery' || 
+    (accessToken && (hash.includes('type=recovery') || search.includes('type=recovery')));
+  
+  if (isRecoveryFlow) {
+    console.log('[Recovery] PASSWORD RECOVERY DETECTED - Redirecting immediately!');
+    // Redirect to reset-password page with tokens BEFORE Supabase can process them
+    const tokenData = hash || search;
+    window.location.replace(`/reset-password${tokenData}`);
+    // Stop script execution - the redirect will handle the rest
+    throw new Error('Recovery redirect in progress');
+  }
+})();
+
 // Initialize Sentry for frontend error tracking
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({

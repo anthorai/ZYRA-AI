@@ -74,6 +74,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Guard against component unmount
     if (!isMountedRef.current) return;
     
+    // Don't logout if user is on password reset flow
+    const currentPath = window.location.pathname;
+    const isPasswordResetFlow = currentPath.startsWith('/reset-password') || 
+                                 currentPath.startsWith('/forgot-password');
+    if (isPasswordResetFlow) {
+      console.log('⏰ Skipping inactivity logout - user is on password reset flow');
+      return;
+    }
+    
     console.log('⏰ Session timeout - logging out due to inactivity');
     toast({
       title: "Session Expired",
