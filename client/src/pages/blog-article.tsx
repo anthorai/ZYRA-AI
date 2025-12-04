@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, ArrowLeft, Zap, Sparkles, Rocket, Clock, User, Calendar,
-  CheckCircle, TrendingUp, Target, Shield, Bot
+  CheckCircle, TrendingUp, Target, Shield, Bot, Search, ShoppingCart, FileText
 } from "lucide-react";
 import { Helmet } from "react-helmet";
 
@@ -222,6 +222,221 @@ const articles: Record<string, ArticleContent> = {
         }
       ],
       conclusion: "The future of ecommerce is autonomous. Stores that embrace smart automation will thrive; those that cling to manual processes will struggle to survive. Zyra AI is at the forefront of this revolution, providing the intelligent automation tools that tomorrow's successful stores are using today. Don't wait to be disrupted—be the disruptor. Start your free trial and join the autonomous commerce revolution."
+    }
+  },
+  "complete-guide-shopify-seo-2025": {
+    slug: "complete-guide-shopify-seo-2025",
+    title: "The Complete Guide to Shopify SEO in 2025: Rank Higher, Sell More",
+    description: "Learn proven SEO strategies for Shopify stores. From product optimization to technical SEO, this comprehensive guide covers everything you need.",
+    category: "SEO GUIDE",
+    image: blogImage1,
+    icon: Search,
+    author: "Zyra AI Team",
+    date: "December 1, 2025",
+    readTime: "15 min read",
+    content: {
+      intro: "Shopify SEO is the practice of optimizing your Shopify store to rank higher in search engine results pages (SERPs). In 2025, with over 4 million active Shopify stores competing for visibility, mastering SEO is no longer optional—it's essential for survival. This comprehensive guide covers everything from foundational SEO principles to advanced AI-powered optimization strategies.",
+      sections: [
+        {
+          title: "Understanding Shopify SEO Fundamentals",
+          content: "Shopify SEO involves optimizing your store's structure, content, and technical elements to improve visibility in Google and other search engines. Unlike paid advertising, SEO delivers sustainable organic traffic that compounds over time.",
+          bullets: [
+            "Organic search drives 53% of all website traffic",
+            "SEO leads have a 14.6% close rate vs. 1.7% for outbound leads",
+            "First-page Google results capture 91% of search traffic",
+            "Long-tail keywords account for 70% of all search queries"
+          ]
+        },
+        {
+          title: "Product Page Optimization for Maximum Visibility",
+          content: "Your product pages are the core of your Shopify store's SEO strategy. Each product page is an opportunity to rank for relevant keywords and convert visitors into customers.",
+          bullets: [
+            "Write unique, keyword-rich product titles (60 characters max)",
+            "Create compelling meta descriptions that include target keywords",
+            "Use descriptive, SEO-friendly URLs for all products",
+            "Add alt text to all product images with relevant keywords",
+            "Include long-form product descriptions (300+ words)"
+          ]
+        },
+        {
+          title: "Technical SEO for Shopify Stores",
+          content: "Technical SEO ensures search engines can crawl and index your store effectively. Shopify handles many technical aspects, but there are optimizations you should implement.",
+          bullets: [
+            "Submit your sitemap to Google Search Console",
+            "Implement canonical tags to prevent duplicate content",
+            "Ensure mobile responsiveness (60% of searches are mobile)",
+            "Optimize page load speed (target under 3 seconds)",
+            "Use structured data/schema markup for rich snippets"
+          ]
+        },
+        {
+          title: "Content Strategy for Ecommerce SEO",
+          content: "Beyond product pages, a comprehensive content strategy drives organic traffic and establishes your store as an authority in your niche.",
+          bullets: [
+            "Create buying guides for product categories",
+            "Write comparison articles targeting competitor keywords",
+            "Develop how-to content around product use cases",
+            "Build FAQ pages targeting question-based searches",
+            "Maintain a blog with regular, valuable content"
+          ]
+        },
+        {
+          title: "AI-Powered SEO Optimization with Zyra AI",
+          content: "Manual SEO optimization is time-consuming and requires constant attention. AI-powered tools like Zyra AI automate and optimize your SEO efforts at scale.",
+          bullets: [
+            "Automatic keyword research and integration",
+            "AI-generated product descriptions optimized for SEO",
+            "Bulk optimization of meta tags and alt text",
+            "Competitor keyword analysis and tracking",
+            "Real-time SEO health monitoring and alerts"
+          ]
+        }
+      ],
+      conclusion: "Shopify SEO in 2025 requires a combination of solid fundamentals and intelligent automation. While the basics—keyword research, on-page optimization, and technical SEO—remain essential, AI tools like Zyra AI give you a competitive edge by automating repetitive tasks and continuously optimizing your store. Start implementing these strategies today and watch your organic traffic—and sales—grow."
+    }
+  },
+  "reduce-cart-abandonment-shopify": {
+    slug: "reduce-cart-abandonment-shopify",
+    title: "15 Proven Ways to Reduce Cart Abandonment on Shopify",
+    description: "Discover actionable strategies to recover abandoned carts and boost conversions. Learn why customers leave and how to bring them back.",
+    category: "CONVERSION",
+    image: blogImage2,
+    icon: ShoppingCart,
+    author: "Zyra AI Team",
+    date: "November 28, 2025",
+    readTime: "12 min read",
+    content: {
+      intro: "Cart abandonment is the silent killer of ecommerce profits. With an average abandonment rate of 70%, Shopify stores lose billions in potential revenue annually. But here's the good news: cart abandonment is recoverable. This guide reveals 15 proven strategies to reduce abandonment and recover lost sales.",
+      sections: [
+        {
+          title: "Why Customers Abandon Shopping Carts",
+          content: "Understanding why customers abandon carts is the first step to fixing the problem. Research reveals consistent patterns across industries.",
+          bullets: [
+            "48% leave due to unexpected costs (shipping, taxes, fees)",
+            "24% abandon because the site required account creation",
+            "22% cite a checkout process that was too long or complex",
+            "18% couldn't calculate total order cost upfront",
+            "17% had concerns about payment security"
+          ]
+        },
+        {
+          title: "Optimize Your Checkout Experience",
+          content: "A streamlined checkout process dramatically reduces abandonment. Every additional step or friction point costs you conversions.",
+          bullets: [
+            "Enable guest checkout (don't force account creation)",
+            "Reduce checkout to 3 steps or fewer",
+            "Show progress indicators during checkout",
+            "Auto-fill shipping information when possible",
+            "Offer multiple payment options (cards, PayPal, Apple Pay)"
+          ]
+        },
+        {
+          title: "Transparent Pricing Strategy",
+          content: "Surprise costs are the number one reason for cart abandonment. Transparency builds trust and reduces last-minute exits.",
+          bullets: [
+            "Display shipping costs on product pages",
+            "Offer free shipping thresholds (e.g., 'Free shipping over $50')",
+            "Show estimated taxes before checkout",
+            "Include all fees in product pricing when possible",
+            "Provide shipping calculator in cart"
+          ]
+        },
+        {
+          title: "AI-Powered Cart Recovery Automation",
+          content: "Recovery emails and messages are your second chance to convert. AI-powered tools optimize timing, messaging, and personalization for maximum recovery rates.",
+          bullets: [
+            "Send first recovery email within 1 hour of abandonment",
+            "Use personalized subject lines with product names",
+            "Include product images in recovery emails",
+            "Offer time-sensitive discounts strategically",
+            "Implement multi-channel recovery (email, SMS, push)"
+          ]
+        },
+        {
+          title: "Build Trust and Remove Risk",
+          content: "Security concerns and purchase anxiety cause many abandonments. Trust signals and risk-reduction tactics address these fears.",
+          bullets: [
+            "Display security badges prominently at checkout",
+            "Offer clear return and refund policies",
+            "Show customer reviews and ratings",
+            "Include contact information and live chat option",
+            "Provide money-back guarantee messaging"
+          ]
+        }
+      ],
+      conclusion: "Reducing cart abandonment isn't about any single tactic—it's about creating a frictionless, trustworthy shopping experience while having intelligent recovery systems in place. With Zyra AI's automated cart recovery, you can recover up to 35% of abandoned carts automatically. Combine these strategies with AI-powered automation and watch your revenue soar."
+    }
+  },
+  "ai-product-descriptions-seo": {
+    slug: "ai-product-descriptions-seo",
+    title: "How to Write Product Descriptions That Rank and Convert",
+    description: "Master the art of writing product descriptions that satisfy both search engines and customers. AI-powered tips for maximum impact.",
+    category: "CONTENT",
+    image: blogImage3,
+    icon: FileText,
+    author: "Zyra AI Team",
+    date: "November 25, 2025",
+    readTime: "10 min read",
+    content: {
+      intro: "Product descriptions are where SEO meets sales psychology. A great product description ranks in search results AND persuades visitors to buy. In the age of AI, you can create hundreds of optimized descriptions without sacrificing quality. Here's how to master the art of product description writing.",
+      sections: [
+        {
+          title: "The Anatomy of a High-Converting Product Description",
+          content: "Effective product descriptions combine several key elements that work together to inform, persuade, and convert.",
+          bullets: [
+            "Compelling headline with primary keyword",
+            "Benefit-focused opening that addresses customer pain points",
+            "Features translated into tangible benefits",
+            "Social proof (reviews, ratings, user count)",
+            "Clear call-to-action"
+          ]
+        },
+        {
+          title: "SEO Optimization Without Keyword Stuffing",
+          content: "Search engines have evolved beyond simple keyword matching. Modern SEO requires natural integration of keywords and semantic relevance.",
+          bullets: [
+            "Include primary keyword in first 100 words",
+            "Use related keywords and synonyms naturally",
+            "Write for humans first, search engines second",
+            "Aim for 300-500 words for important products",
+            "Structure with headers (H2, H3) containing keywords"
+          ]
+        },
+        {
+          title: "Writing for Your Target Customer",
+          content: "The most effective product descriptions speak directly to your ideal customer's needs, desires, and pain points.",
+          bullets: [
+            "Define your buyer persona before writing",
+            "Use language and tone your audience relates to",
+            "Address objections before they arise",
+            "Paint a picture of life with the product",
+            "Focus on emotional benefits, not just features"
+          ]
+        },
+        {
+          title: "Scaling Content with AI-Powered Writing",
+          content: "AI tools like Zyra AI can generate hundreds of unique, optimized product descriptions while maintaining quality and brand voice.",
+          bullets: [
+            "AI learns your brand voice from existing content",
+            "Generate descriptions in seconds, not hours",
+            "Automatic SEO keyword integration",
+            "A/B test multiple variations automatically",
+            "Bulk optimize entire product catalogs"
+          ]
+        },
+        {
+          title: "Common Product Description Mistakes to Avoid",
+          content: "Even experienced marketers make these mistakes that hurt both SEO and conversions.",
+          bullets: [
+            "Copying manufacturer descriptions (duplicate content)",
+            "Writing too short (under 100 words lacks SEO value)",
+            "Focusing on features instead of benefits",
+            "Ignoring mobile readability",
+            "Not including a clear call-to-action"
+          ]
+        }
+      ],
+      conclusion: "Great product descriptions are both an art and a science. They require understanding of customer psychology, SEO principles, and your unique brand voice. With AI tools like Zyra AI, you can create optimized, converting descriptions at scale without sacrificing quality. Start transforming your product pages today and watch your organic traffic and conversions grow."
     }
   }
 };

@@ -2,7 +2,8 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowRight, ArrowLeft, Zap, Sparkles, Rocket, Lightbulb, Clock, User, BookOpen
+  ArrowRight, ArrowLeft, Zap, Sparkles, Rocket, Lightbulb, Clock, User, BookOpen,
+  Search, ShoppingCart, FileText, Target, TrendingUp
 } from "lucide-react";
 import { Helmet } from "react-helmet";
 
@@ -54,6 +55,39 @@ const blogPosts: BlogPost[] = [
     icon: Rocket,
     author: "Zyra AI Team",
     date: "November 10, 2025",
+    readTime: "10 min read"
+  },
+  {
+    slug: "complete-guide-shopify-seo-2025",
+    title: "The Complete Guide to Shopify SEO in 2025: Rank Higher, Sell More",
+    description: "Learn proven SEO strategies for Shopify stores. From product optimization to technical SEO, this comprehensive guide covers everything you need.",
+    category: "SEO GUIDE",
+    image: blogImage1,
+    icon: Search,
+    author: "Zyra AI Team",
+    date: "December 1, 2025",
+    readTime: "15 min read"
+  },
+  {
+    slug: "reduce-cart-abandonment-shopify",
+    title: "15 Proven Ways to Reduce Cart Abandonment on Shopify",
+    description: "Discover actionable strategies to recover abandoned carts and boost conversions. Learn why customers leave and how to bring them back.",
+    category: "CONVERSION",
+    image: blogImage2,
+    icon: ShoppingCart,
+    author: "Zyra AI Team",
+    date: "November 28, 2025",
+    readTime: "12 min read"
+  },
+  {
+    slug: "ai-product-descriptions-seo",
+    title: "How to Write Product Descriptions That Rank and Convert",
+    description: "Master the art of writing product descriptions that satisfy both search engines and customers. AI-powered tips for maximum impact.",
+    category: "CONTENT",
+    image: blogImage3,
+    icon: FileText,
+    author: "Zyra AI Team",
+    date: "November 25, 2025",
     readTime: "10 min read"
   }
 ];
