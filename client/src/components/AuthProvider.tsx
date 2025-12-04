@@ -436,7 +436,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return await supabase.auth.signInWithPassword({ email, password });
     },
     signInWithGoogle: async () => {
-      return await supabase.auth.signInWithOAuth({ provider: 'google' });
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      console.log('🔐 Google OAuth redirect URL:', redirectTo);
+      return await supabase.auth.signInWithOAuth({ 
+        provider: 'google',
+        options: {
+          redirectTo,
+        }
+      });
     },
     signOut: async () => {
       setIsLoggingOut(true);
