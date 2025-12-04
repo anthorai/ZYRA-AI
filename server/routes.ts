@@ -60,7 +60,18 @@ import {
   notificationChannels,
   abTests,
   integrationSettings,
-  profiles
+  profiles,
+  automationSettings,
+  autonomousActions,
+  autonomousRules,
+  pendingApprovals,
+  competitorProducts,
+  pricingRules,
+  priceChanges,
+  pricingSettings,
+  sessions,
+  customerSegmentMembers,
+  segmentAnalytics
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -748,6 +759,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { name: 'customerProfiles', table: customerProfiles },
         { name: 'abTests', table: abTests },
         { name: 'integrationSettings', table: integrationSettings },
+        { name: 'automationSettings', table: automationSettings },
+        { name: 'autonomousActions', table: autonomousActions },
+        { name: 'autonomousRules', table: autonomousRules },
+        { name: 'pendingApprovals', table: pendingApprovals },
+        { name: 'competitorProducts', table: competitorProducts },
+        { name: 'pricingRules', table: pricingRules },
+        { name: 'priceChanges', table: priceChanges },
+        { name: 'pricingSettings', table: pricingSettings },
+        { name: 'sessions', table: sessions },
+        { name: 'customerSegmentMembers', table: customerSegmentMembers },
+        { name: 'segmentAnalytics', table: segmentAnalytics },
         { name: 'profiles', table: profiles },
         { name: 'errorLogs', table: errorLogs },
       ];
