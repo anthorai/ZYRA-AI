@@ -7,10 +7,37 @@ export default function AuthCallback() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
+    // Check for password recovery flow - this takes priority
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    const type = hashParams.get('type') || searchParams.get('type');
+    const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+    const code = hashParams.get('code') || searchParams.get('code');
+    
+    // Handle password recovery - redirect to reset password page with tokens
+    if (type === 'recovery') {
+      console.log('Password recovery detected, redirecting to reset-password page');
+      // Preserve the hash/search params so reset-password page can use them
+      const redirectUrl = `/reset-password${window.location.hash || window.location.search}`;
+      setLocation(redirectUrl);
+      return;
+    }
+    
+    // Also check if we have an access_token without explicit type (some Supabase versions)
+    if (accessToken && !type) {
+      // Check if this might be a recovery token by looking at the full URL
+      const fullHash = window.location.hash;
+      if (fullHash.includes('type=recovery') || fullHash.includes('recovery')) {
+        console.log('Recovery token detected in hash, redirecting to reset-password page');
+        setLocation(`/reset-password${fullHash}`);
+        return;
+      }
+    }
+
     // Check for Shopify-specific callback parameters
-    const params = new URLSearchParams(window.location.search);
-    const shopifyConnected = params.get('shopify');
-    const shopifyError = params.get('shopify_error');
+    const shopifyConnected = searchParams.get('shopify');
+    const shopifyError = searchParams.get('shopify_error');
 
     // Handle Shopify OAuth callback
     if (shopifyConnected === 'connected') {

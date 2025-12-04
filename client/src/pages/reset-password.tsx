@@ -37,33 +37,69 @@ export default function ResetPassword() {
   useEffect(() => {
     const handlePasswordReset = async () => {
       try {
-        // Check for code or access_token in URL params
+        // Check for code or access_token in URL params (check both hash and search params)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const searchParams = new URLSearchParams(window.location.search);
+        
         const code = hashParams.get('code') || searchParams.get('code');
         const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token') || '';
+        const type = hashParams.get('type') || searchParams.get('type');
+        
+        console.log('Reset password - URL params:', { 
+          hasCode: !!code, 
+          hasAccessToken: !!accessToken, 
+          type,
+          hash: window.location.hash,
+          search: window.location.search 
+        });
         
         if (code) {
-          // Exchange code for session
+          // Exchange code for session (PKCE flow)
+          console.log('Exchanging code for session...');
           const { data, error } = await supabase.auth.exchangeCodeForSession({ code });
           if (error) throw error;
           if (data.session) {
+            console.log('Session established from code exchange');
             setHasAccessToken(true);
           }
         } else if (accessToken) {
-          // Set session directly if access_token is provided
+          // Set session directly if access_token is provided (implicit flow)
+          console.log('Setting session with access token...');
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: hashParams.get('refresh_token') || searchParams.get('refresh_token') || ''
+            refresh_token: refreshToken
           });
           if (error) throw error;
           if (data.session) {
+            console.log('Session established from access token');
             setHasAccessToken(true);
           }
-        } else {
-          // Check if session already exists
+        } else if (type === 'recovery') {
+          // Recovery type detected but no token - Supabase might handle this automatically
+          // Try to get the current session that Supabase may have already established
+          console.log('Recovery type detected, checking for existing session...');
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
+            console.log('Session found for recovery');
+            setHasAccessToken(true);
+          } else {
+            // Wait a moment for Supabase to process the recovery
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            if (retrySession) {
+              console.log('Session found after retry');
+              setHasAccessToken(true);
+            } else {
+              throw new Error('No recovery session found');
+            }
+          }
+        } else {
+          // Check if session already exists (user might have been redirected with session already set)
+          console.log('No token params found, checking existing session...');
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('Existing session found');
             setHasAccessToken(true);
           } else {
             throw new Error('No reset token found');

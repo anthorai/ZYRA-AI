@@ -245,7 +245,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (event === 'SIGNED_OUT' && mounted) {
             setAppUser(null);
             // Redirect to login page if not already there (handles token refresh failures)
-            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+            // Don't redirect if user is on password reset flow pages
+            const currentPath = window.location.pathname;
+            const isPasswordResetFlow = currentPath.startsWith('/reset-password') || 
+                                         currentPath.startsWith('/forgot-password') ||
+                                         currentPath.startsWith('/auth/callback');
+            if (typeof window !== 'undefined' && !currentPath.startsWith('/auth') && !isPasswordResetFlow) {
               console.log('🔄 Redirecting to login page after sign out...');
               window.location.href = '/auth?redirected=session_expired';
             }
