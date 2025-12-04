@@ -1,36 +1,51 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AuthCallback() {
   const [, setLocation] = useLocation();
   const { user, loading } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Check for password recovery flow - this takes priority
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const searchParams = new URLSearchParams(window.location.search);
+    // Prevent multiple redirects
+    if (isRedirecting) return;
+    
+    // Check for password recovery flow FIRST - this takes priority over everything
+    const fullHash = window.location.hash;
+    const fullSearch = window.location.search;
+    const hashParams = new URLSearchParams(fullHash.substring(1));
+    const searchParams = new URLSearchParams(fullSearch);
     
     const type = hashParams.get('type') || searchParams.get('type');
     const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
-    const code = hashParams.get('code') || searchParams.get('code');
+    const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+    
+    console.log('AuthCallback - URL analysis:', {
+      path: window.location.pathname,
+      hashLength: fullHash.length,
+      type,
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken
+    });
     
     // Handle password recovery - redirect to reset password page with tokens
     if (type === 'recovery') {
-      console.log('Password recovery detected, redirecting to reset-password page');
-      // Preserve the hash/search params so reset-password page can use them
-      const redirectUrl = `/reset-password${window.location.hash || window.location.search}`;
-      setLocation(redirectUrl);
+      console.log('PASSWORD RECOVERY DETECTED in AuthCallback! Redirecting to reset-password...');
+      setIsRedirecting(true);
+      // Use window.location.href to ensure hash fragment is preserved
+      window.location.href = `/reset-password${fullHash || fullSearch}`;
       return;
     }
     
-    // Also check if we have an access_token without explicit type (some Supabase versions)
-    if (accessToken && !type) {
+    // Also check if we have tokens that might be for recovery (check URL for recovery indicators)
+    if (accessToken && refreshToken) {
       // Check if this might be a recovery token by looking at the full URL
-      const fullHash = window.location.hash;
-      if (fullHash.includes('type=recovery') || fullHash.includes('recovery')) {
-        console.log('Recovery token detected in hash, redirecting to reset-password page');
-        setLocation(`/reset-password${fullHash}`);
+      if (fullHash.includes('type=recovery') || fullHash.includes('recovery') ||
+          fullSearch.includes('type=recovery')) {
+        console.log('Recovery tokens detected, redirecting to reset-password page');
+        setIsRedirecting(true);
+        window.location.href = `/reset-password${fullHash || fullSearch}`;
         return;
       }
     }
@@ -61,7 +76,7 @@ export default function AuthCallback() {
         setLocation('/auth');
       }
     }
-  }, [user, loading, setLocation]);
+  }, [user, loading, setLocation, isRedirecting]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
