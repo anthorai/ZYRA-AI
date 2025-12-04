@@ -197,9 +197,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch app user profile if user is authenticated (no delay needed)
-        if (session?.user && mounted) {
-          fetchAppUser().catch(() => {
+        // Fetch app user profile if user is authenticated (pass token directly to avoid state race condition)
+        if (session?.user && session?.access_token && mounted) {
+          fetchAppUser(session.access_token).catch(() => {
             // Silent catch - don't fail auth flow if app user fetch fails
           });
         }
@@ -230,9 +230,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Fetch app user profile after sign in (no delay - session is already established)
-          if (event === 'SIGNED_IN' && session?.user && mounted) {
-            fetchAppUser().catch(() => {
+          // Fetch app user profile after sign in (pass token directly to avoid state race condition)
+          if (event === 'SIGNED_IN' && session?.user && session?.access_token && mounted) {
+            fetchAppUser(session.access_token).catch(() => {
               // Silent catch - don't block auth flow
             });
           }
@@ -264,11 +264,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // Fetch app user profile from backend API with timeout (reduced retries for speed)
-  const fetchAppUser = async (retries = 1) => {
+  // Accept optional token parameter to avoid race condition with React state
+  const fetchAppUser = async (tokenOverride?: string, retries = 1) => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        // Use current session state if available (faster than await)
-        const token = session?.access_token;
+        // Use provided token or fall back to current session state
+        const token = tokenOverride || session?.access_token;
         
         if (!token) {
           setAppUser(null);
