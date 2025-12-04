@@ -669,13 +669,17 @@ export default function Landing() {
               <span className="text-sm font-medium">Trusted by 50,000+ Shopify Merchants</span>
             </div>
 
-            {/* Optimized headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-[#00F0FF] via-[#00FFE5] to-[#FF00F5] bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
-                Turn Your Shopify Store Into a Sales Machine
+            {/* Modern Professional Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
+              <span className="block mb-2">
+                Turn Your Shopify Store
               </span>
-              <br />
-              <span className="text-foreground">While You Sleep</span>
+              <span className="block bg-gradient-to-r from-[#00D4FF] via-[#00E5CC] to-[#7C3AED] bg-clip-text text-transparent bg-[length:150%_auto] animate-[gradient_8s_ease_infinite]">
+                Into a Sales Machine
+              </span>
+              <span className="block mt-3 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-muted-foreground/80 tracking-normal">
+                While You Sleep
+              </span>
             </h1>
 
             {/* Benefit-focused subheadline */}
