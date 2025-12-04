@@ -691,13 +691,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`[ADMIN] Starting account deletion for user ${userId} (${targetUser.email}) by admin ${adminUser.email}`);
 
-      // Step 1: Delete user from Supabase Auth FIRST (most critical)
+      // Step 1: Try to delete user from Supabase Auth (may not exist for orphaned accounts)
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
       if (authError) {
-        console.error('Error deleting Supabase auth user:', authError);
-        return res.status(500).json({ 
-          message: `Failed to delete auth account: ${authError.message}. User data preserved - please try again.` 
-        });
+        // If user not found in Supabase Auth, that's okay - they can't login anyway
+        // Continue with database cleanup
+        if (authError.message?.includes('not found') || authError.message?.includes('User not found')) {
+          console.log(`[ADMIN] User ${userId} not found in Supabase Auth (orphaned account) - proceeding with database cleanup`);
+        } else {
+          // For other auth errors, still log but proceed with deletion
+          console.warn('Warning during Supabase auth deletion:', authError.message);
+        }
       }
 
       // Step 2: Delete subscriptions from database
