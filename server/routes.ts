@@ -45,9 +45,21 @@ import {
   customerSegmentMembers,
   customerProfiles,
   segmentAnalytics,
-  revenueAttribution,
-  abandonedCarts,
-  usageStats
+  usageStats,
+  notificationAnalytics,
+  notifications,
+  userPreferences,
+  securitySettings,
+  loginLogs,
+  supportTickets,
+  aiGenerationHistory,
+  productSeoHistory,
+  campaignTemplates,
+  notificationPreferences,
+  notificationRules,
+  notificationChannels,
+  abTests,
+  integrationSettings
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -704,34 +716,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Step 2: Delete subscriptions from database
-      try {
-        await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
-      } catch (e) {
-        console.warn('Error deleting subscriptions (continuing):', e);
+      // Step 2: Delete all related records from database tables (order matters for foreign keys)
+      const tablesToClean = [
+        { name: 'notificationAnalytics', table: notificationAnalytics },
+        { name: 'notifications', table: notifications },
+        { name: 'notificationPreferences', table: notificationPreferences },
+        { name: 'notificationRules', table: notificationRules },
+        { name: 'notificationChannels', table: notificationChannels },
+        { name: 'subscriptions', table: subscriptions },
+        { name: 'usageStats', table: usageStats },
+        { name: 'userPreferences', table: userPreferences },
+        { name: 'securitySettings', table: securitySettings },
+        { name: 'loginLogs', table: loginLogs },
+        { name: 'supportTickets', table: supportTickets },
+        { name: 'aiGenerationHistory', table: aiGenerationHistory },
+        { name: 'productSeoHistory', table: productSeoHistory },
+        { name: 'campaigns', table: campaigns },
+        { name: 'campaignTemplates', table: campaignTemplates },
+        { name: 'campaignEvents', table: campaignEvents },
+        { name: 'products', table: products },
+        { name: 'seoMeta', table: seoMeta },
+        { name: 'storeConnections', table: storeConnections },
+        { name: 'abandonedCarts', table: abandonedCarts },
+        { name: 'revenueAttribution', table: revenueAttribution },
+        { name: 'behavioralTriggers', table: behavioralTriggers },
+        { name: 'behaviorEvents', table: behaviorEvents },
+        { name: 'triggerExecutions', table: triggerExecutions },
+        { name: 'triggerAnalytics', table: triggerAnalytics },
+        { name: 'customerSegments', table: customerSegments },
+        { name: 'customerProfiles', table: customerProfiles },
+        { name: 'abTests', table: abTests },
+        { name: 'integrationSettings', table: integrationSettings },
+        { name: 'errorLogs', table: errorLogs },
+      ];
+
+      for (const { name, table } of tablesToClean) {
+        try {
+          await db.delete(table).where(eq(table.userId, userId));
+          console.log(`[ADMIN] Deleted ${name} records for user ${userId}`);
+        } catch (e: any) {
+          // Some tables may not have data for this user, that's okay
+          if (!e.message?.includes('column "user_id" does not exist')) {
+            console.warn(`[ADMIN] Error deleting ${name} (continuing):`, e.message);
+          }
+        }
       }
 
-      // Step 3: Fetch all user data for deletion
-      const [products, campaigns, templates] = await Promise.all([
-        supabaseStorage.getProducts(userId).catch(() => []),
-        supabaseStorage.getCampaigns(userId).catch(() => []),
-        supabaseStorage.getCampaignTemplates(userId).catch(() => [])
-      ]);
-
-      // Step 4: Delete all user data in parallel
-      const deletionResults = await Promise.allSettled([
-        ...products.map(product => supabaseStorage.deleteProduct(product.id)),
-        ...campaigns.map(campaign => supabaseStorage.deleteCampaign(campaign.id)),
-        ...templates.map(template => supabaseStorage.deleteCampaignTemplate(template.id))
-      ]);
-
-      // Log any deletion failures
-      const failures = deletionResults.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`[ADMIN] ${failures.length} items failed to delete for user ${userId}`, failures);
-      }
-
-      // Step 5: Delete user from users table (this should cascade delete related records)
+      // Step 3: Delete user from users table
       await db.delete(users).where(eq(users.id, userId));
 
       console.log(`[ADMIN] Successfully deleted user ${userId} (${targetUser.email}) by admin ${adminUser.email}`);
@@ -742,12 +773,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deletedUser: {
           id: userId,
           email: targetUser.email
-        },
-        details: {
-          productsDeleted: products.length,
-          campaignsDeleted: campaigns.length,
-          templatesDeleted: templates.length,
-          failedDeletions: failures.length
         }
       });
     } catch (error: any) {
