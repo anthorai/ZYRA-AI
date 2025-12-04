@@ -44,11 +44,11 @@ export default function Footer({ className = "" }: FooterProps) {
 
   return (
     <footer 
-      className={`bg-[#0e0e1e] border-t border-[#00F0FF]/20 mt-auto ${className}`}
+      className={`bg-[#16162c] border-t border-[#00F0FF]/20 mt-auto ${className}`}
       data-testid="footer-global"
       role="contentinfo"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#16162c]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Desktop Layout */}
         <div className="hidden md:block py-8">
           <div className="grid grid-cols-4 gap-8 mb-8">
