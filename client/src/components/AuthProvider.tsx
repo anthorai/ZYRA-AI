@@ -200,17 +200,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Fetch app user profile if user is authenticated
+        // Fetch app user profile if user is authenticated (no delay needed)
         if (session?.user && mounted) {
-          // Add a small delay to ensure session is fully established
-          setTimeout(async () => {
-            try {
-              await fetchAppUser();
-            } catch (fetchError) {
-              console.error('❌ Error fetching app user:', fetchError);
-              // Don't fail the entire auth flow if app user fetch fails
-            }
-          }, 100);
+          fetchAppUser().catch(() => {
+            // Silent catch - don't fail auth flow if app user fetch fails
+          });
         }
       } catch (error: any) {
         if (mounted) {
@@ -240,16 +234,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Fetch app user profile after sign in
+          // Fetch app user profile after sign in (no delay - session is already established)
           if (event === 'SIGNED_IN' && session?.user && mounted) {
-            // Add a delay to ensure the session is fully established
-            setTimeout(async () => {
-              try {
-                await fetchAppUser();
-              } catch (fetchError) {
-                console.error('❌ Error fetching app user on sign in:', fetchError);
-              }
-            }, 200);
+            fetchAppUser().catch(() => {
+              // Silent catch - don't block auth flow
+            });
           }
           if (event === 'SIGNED_OUT' && mounted) {
             setAppUser(null);
@@ -406,19 +395,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     setIsLoggingOut(true);
     try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      // Get token synchronously from current session state (faster than await)
+      const token = session?.access_token;
       
+      // Fire-and-forget backend logout call (don't wait for it)
       if (token) {
-        await fetch('/api/auth/logout', {
+        fetch('/api/auth/logout', {
           method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${token}`
-          }
-        });
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(() => {}); // Silent catch
       }
       
-      // Clear local Supabase session
+      // Immediately clear local session (don't wait for backend)
       const result = await supabase.auth.signOut();
       return result;
     } catch (error: any) {
