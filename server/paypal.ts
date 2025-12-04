@@ -115,7 +115,7 @@ export async function createPaypalOrder(req: Request, res: Response) {
           {
             amount: {
               currencyCode: currency,
-              value: amount,
+              value: String(amount),
             },
             description: description || `Zyra AI ${planName || 'Subscription'}`,
           },
