@@ -30,8 +30,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function Auth() {
-  const { user, login, register, isLoggingIn, isRegistering } = useAuth();
+  const { user, login, register, signInWithGoogle, isLoggingIn, isRegistering } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   // Use loading states from auth hook
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -99,7 +100,25 @@ export default function Auth() {
     }
   };
 
-  // Google sign-in removed - using session-based auth only
+  // Handle Google sign-in
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.error) {
+        throw result.error;
+      }
+      // OAuth will redirect to callback page automatically
+    } catch (error: any) {
+      console.error("Google sign-in error:", error);
+      toast({
+        title: "Sign in failed",
+        description: error.message || "Failed to sign in with Google",
+        variant: "destructive",
+      });
+      setIsGoogleLoading(false);
+    }
+  };
 
   // Show session expired message if redirected
   useEffect(() => {
@@ -145,7 +164,29 @@ export default function Auth() {
               </p>
             </div>
 
-            {/* Google Sign In Button removed - using session auth only */}
+            {/* Google Sign In */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-sm sm:text-base py-2 sm:py-3"
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading || isLoggingIn || isRegistering}
+              data-testid="button-google-signin"
+            >
+              {isGoogleLoading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2" />
+              ) : (
+                <FcGoogle className="w-5 h-5 mr-2" />
+              )}
+              Continue with Google
+            </Button>
+
+            <div className="relative my-4 sm:my-6">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs sm:text-sm text-muted-foreground">
+                or
+              </span>
+            </div>
 
             {mode === 'login' ? (
               <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 sm:space-y-6">
