@@ -174,16 +174,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set a maximum timeout for initial auth setup to prevent infinite loading
     const initTimeout = setTimeout(() => {
       if (mounted && loading) {
-        console.warn('⚠️ Auth initialization timeout - setting loading to false');
         setLoading(false);
       }
-    }, 15000); // 15 second timeout
+    }, 5000); // 5 second timeout (faster)
 
-    // Get initial session with enhanced error handling
+    // Get initial session
     const initializeAuth = async () => {
       try {
-        console.log('🔐 Initializing authentication...');
-        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
@@ -224,13 +221,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Start initialization
     initializeAuth();
 
-    // Listen for auth changes with better error handling
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
         if (!mounted) return;
 
         try {
-          console.log('🔄 Auth state change:', event, !!session);
           setSession(session);
           setUser(session?.user ?? null);
           
@@ -242,15 +238,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           if (event === 'SIGNED_OUT' && mounted) {
             setAppUser(null);
-            // Redirect to login page if not already there (handles token refresh failures)
-            // Don't redirect if user is on password reset flow pages
+            // Redirect to login page if not on auth-related pages
             const currentPath = window.location.pathname;
-            const isPasswordResetFlow = currentPath.startsWith('/reset-password') || 
-                                         currentPath.startsWith('/forgot-password') ||
-                                         currentPath.startsWith('/auth/callback');
-            if (typeof window !== 'undefined' && !currentPath.startsWith('/auth') && !isPasswordResetFlow) {
-              console.log('🔄 Redirecting to login page after sign out...');
-              window.location.href = '/auth?redirected=session_expired';
+            const isAuthRelated = currentPath.startsWith('/auth') || 
+                                  currentPath.startsWith('/reset-password') || 
+                                  currentPath.startsWith('/forgot-password');
+            if (!isAuthRelated && currentPath !== '/') {
+              window.location.href = '/auth';
             }
           }
         } catch (error: any) {
@@ -269,32 +263,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Fetch app user profile from backend API with timeout and retry logic
-  const fetchAppUser = async (retries = 2) => {
+  // Fetch app user profile from backend API with timeout (reduced retries for speed)
+  const fetchAppUser = async (retries = 1) => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Use current session state if available (faster than await)
+        const token = session?.access_token;
         
-        if (!session?.access_token) {
-          console.warn('⚠️ No access token available for fetching app user');
-          setAppUser(null);
-          return;
-        }
-
-        // Validate token format before making request
-        if (!session.access_token.startsWith('eyJ')) {
-          console.error('❌ Invalid JWT token format');
+        if (!token) {
           setAppUser(null);
           return;
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout (faster)
 
         const response = await fetch('/api/me', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          },
+          headers: { 'Authorization': `Bearer ${token}` },
           signal: controller.signal
         });
 
@@ -302,26 +287,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (response.ok) {
           const data = await response.json();
-          const userProfile = data.user || data;
-          console.log('✅ App user fetched successfully:', userProfile);
-          setAppUser(userProfile);
+          setAppUser(data.user || data);
           return;
         } else if (response.status === 401) {
-          console.warn('⚠️ Unauthorized - user may need to re-authenticate');
           setAppUser(null);
           return;
         } else {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error: any) {
-        console.error(`❌ Attempt ${attempt + 1} - Error fetching app user:`, error.message || error);
-        
         if (attempt === retries) {
-          console.error('❌ All attempts failed - setting app user to null');
           setAppUser(null);
-        } else if (attempt < retries) {
-          // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+        } else {
+          // Quick retry with minimal backoff
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
     }
@@ -331,7 +310,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (credentials: { email: string; password: string }) => {
     setIsLoggingIn(true);
     try {
-      console.log('🔑 Starting login process...');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -339,25 +317,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       const result = await response.json();
-      console.log('📥 Login response received:', { ok: response.ok, hasSession: !!result.data?.session });
       
       if (!response.ok) {
-        console.error('❌ Login failed:', result);
         return { data: null, error: result };
       }
       
-      // Store session in Supabase client for compatibility
+      // Store session in Supabase client - this triggers auth state change
       if (result.data?.session) {
-        console.log('💾 Setting session in Supabase client...');
+        // Set session (Supabase will trigger onAuthStateChange)
         await supabase.auth.setSession(result.data.session);
-        console.log('✅ Session set successfully');
-      } else {
-        console.warn('⚠️ No session in login response');
       }
       
       return result;
     } catch (error: any) {
-      console.error('❌ Login error:', error);
       return { data: null, error: { message: error.message } };
     } finally {
       setIsLoggingIn(false);
@@ -379,7 +351,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { data: null, error: result };
       }
       
-      // Store session in Supabase client for compatibility
+      // Store session - triggers auth state change for fast redirect
       if (result.data?.session) {
         await supabase.auth.setSession(result.data.session);
       }

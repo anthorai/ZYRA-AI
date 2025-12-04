@@ -140,9 +140,7 @@ export default function Auth() {
 
   // Redirect if user is already logged in
   useEffect(() => {
-    console.log('🔍 Auth page - user state:', { hasUser: !!user, userId: user?.id });
     if (user) {
-      console.log('🚀 Redirecting to dashboard...');
       setLocation("/dashboard");
     }
   }, [user, setLocation]);
