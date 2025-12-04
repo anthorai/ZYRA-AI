@@ -89,6 +89,7 @@ export default function AdminSubscriptions() {
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
 
   const { data: usersResponse, isLoading: usersLoading, refetch: refetchUsers } = useQuery<PaginatedResponse>({
     queryKey: ['/api/admin/users-with-subscriptions', currentPage],
@@ -139,6 +140,7 @@ export default function AdminSubscriptions() {
 
   const resetCreditsMutation = useMutation({
     mutationFn: async (userId: string) => {
+      setResettingUserId(userId);
       const response = await apiRequest('POST', '/api/admin/reset-credits', { userId });
       return response.json();
     },
@@ -148,6 +150,7 @@ export default function AdminSubscriptions() {
         description: "User credits have been reset to their plan limit",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users-with-subscriptions'] });
+      setResettingUserId(null);
     },
     onError: (error: any) => {
       toast({
@@ -155,6 +158,7 @@ export default function AdminSubscriptions() {
         description: error.message || "Failed to reset credits",
         variant: "destructive",
       });
+      setResettingUserId(null);
     },
   });
 
@@ -417,10 +421,10 @@ export default function AdminSubscriptions() {
                               variant="ghost"
                               size="sm"
                               onClick={() => resetCreditsMutation.mutate(user.id)}
-                              disabled={resetCreditsMutation.isPending}
+                              disabled={resettingUserId === user.id}
                               data-testid={`button-reset-credits-${user.id}`}
                             >
-                              <RefreshCw className={`w-4 h-4 ${resetCreditsMutation.isPending ? 'animate-spin' : ''}`} />
+                              <RefreshCw className={`w-4 h-4 ${resettingUserId === user.id ? 'animate-spin' : ''}`} />
                             </Button>
                           </div>
                         </TableCell>
