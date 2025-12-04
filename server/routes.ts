@@ -59,7 +59,8 @@ import {
   notificationRules,
   notificationChannels,
   abTests,
-  integrationSettings
+  integrationSettings,
+  profiles
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -747,6 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { name: 'customerProfiles', table: customerProfiles },
         { name: 'abTests', table: abTests },
         { name: 'integrationSettings', table: integrationSettings },
+        { name: 'profiles', table: profiles },
         { name: 'errorLogs', table: errorLogs },
       ];
 
