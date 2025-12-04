@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
@@ -284,6 +285,7 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("plans");
+  const [isAnnual, setIsAnnual] = useState(false);
 
   // Fetch real subscription plans from API
   const { 
@@ -708,6 +710,23 @@ export default function BillingPage() {
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground px-4 sm:px-0">
               Start with a 7-day free trial, upgrade anytime
             </p>
+            
+            <div className="flex items-center justify-center gap-3 mt-6" data-testid="billing-toggle">
+              <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Monthly
+              </span>
+              <Switch
+                checked={isAnnual}
+                onCheckedChange={setIsAnnual}
+                data-testid="switch-billing-period"
+              />
+              <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Annual
+              </span>
+              <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+                Save 20%
+              </Badge>
+            </div>
           </div>
 
           {plansLoading ? (
@@ -752,6 +771,9 @@ export default function BillingPage() {
               const isCurrentPlan = plan.id === currentSubscription?.planId;
               const isPlanPopular = plan.planName === "Growth";
               const details = planDetails[plan.planName];
+              const isTrial = plan.planName?.includes('Trial') || plan.price === 0;
+              const displayPrice = isTrial ? 0 : (isAnnual ? Math.round(plan.price * 12 * 0.8) : plan.price);
+              const annualSavings = isTrial ? 0 : Math.round(plan.price * 12 * 0.2);
               
               return (
                 <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-6 sm:pt-6' : ''}`}>
@@ -781,14 +803,19 @@ export default function BillingPage() {
                       
                       <div className="space-y-1.5 sm:space-y-2">
                         <p className="text-white font-bold text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-3xl">
-                          ${plan.price === 0 ? '0' : Math.floor(plan.price)}
+                          ${displayPrice === 0 ? '0' : displayPrice.toLocaleString()}
                           <span className="text-sm sm:text-base text-slate-400 font-normal ml-1 sm:ml-2">
-                            /{plan.interval === 'day' && plan.planName?.includes('7') ? '7 days' : 'mo'}
+                            /{isTrial ? '7 days' : (isAnnual ? 'year' : 'mo')}
                           </span>
                         </p>
+                        {isAnnual && !isTrial && annualSavings > 0 && (
+                          <p className="text-green-400 text-xs font-medium" data-testid={`text-plan-savings-${index}`}>
+                            Save ${annualSavings.toLocaleString()} per year
+                          </p>
+                        )}
                         {details && (
                           <>
-                            <p className="text-primary text-sm sm:text-base font-semibold">✨ {details.credits}</p>
+                            <p className="text-primary text-sm sm:text-base font-semibold">{details.credits}</p>
                             <p className="text-slate-300 text-xs sm:text-sm px-2 sm:px-4">{details.tagline}</p>
                           </>
                         )}
