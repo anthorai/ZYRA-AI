@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Check, Gift, Zap, Crown, Award } from "lucide-react";
 
 const plans = [
   {
     name: "7-Day Free Trial",
-    price: "$0",
+    monthlyPrice: 0,
     period: "7 days",
     icon: <Gift className="w-8 h-8" />,
     description: "Try ZYRA for 7 Days",
@@ -16,11 +18,12 @@ const plans = [
       "No hidden charges",
       "Cancel anytime before trial ends"
     ],
-    popular: false
+    popular: false,
+    isTrial: true
   },
   {
     name: "Starter",
-    price: "$49",
+    monthlyPrice: 49,
     period: "per month",
     icon: <Zap className="w-8 h-8" />,
     description: "For New Shopify Stores",
@@ -31,11 +34,12 @@ const plans = [
       "Ready-to-use templates for product descriptions",
       "Simple dashboards & bulk editing tools"
     ],
-    popular: false
+    popular: false,
+    isTrial: false
   },
   {
     name: "Growth",
-    price: "$299",
+    monthlyPrice: 299,
     period: "per month",
     icon: <Award className="w-8 h-8" />,
     description: "For Growing Merchants",
@@ -47,11 +51,12 @@ const plans = [
       "Advanced customer segmentation & targeting",
       "Multi-channel content repurposing (email, SMS, ads)"
     ],
-    popular: true
+    popular: true,
+    isTrial: false
   },
   {
     name: "Pro",
-    price: "$999",
+    monthlyPrice: 999,
     period: "per month",
     icon: <Crown className="w-8 h-8" />,
     description: "For High-Revenue Brands",
@@ -64,7 +69,8 @@ const plans = [
       "Enterprise-level dashboards & reporting",
       "Priority support & integrations"
     ],
-    popular: false
+    popular: false,
+    isTrial: false
   }
 ];
 
@@ -73,6 +79,29 @@ interface SubscriptionPlansProps {
 }
 
 export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProps) {
+  const [isAnnual, setIsAnnual] = useState(false);
+
+  const getPrice = (plan: typeof plans[0]) => {
+    if (plan.isTrial) return "$0";
+    if (isAnnual) {
+      const annualPrice = Math.round(plan.monthlyPrice * 12 * 0.8);
+      return `$${annualPrice}`;
+    }
+    return `$${plan.monthlyPrice}`;
+  };
+
+  const getPeriod = (plan: typeof plans[0]) => {
+    if (plan.isTrial) return "7 days";
+    return isAnnual ? "per year" : "per month";
+  };
+
+  const getSavings = (plan: typeof plans[0]) => {
+    if (plan.isTrial || !isAnnual) return null;
+    const monthlyTotal = plan.monthlyPrice * 12;
+    const annualTotal = Math.round(monthlyTotal * 0.8);
+    return monthlyTotal - annualTotal;
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -82,6 +111,23 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
         <p className="text-sm sm:text-base text-muted-foreground">
           Choose the perfect plan for your Shopify store
         </p>
+      </div>
+
+      <div className="flex items-center justify-center gap-3" data-testid="billing-toggle">
+        <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+          Monthly
+        </span>
+        <Switch
+          checked={isAnnual}
+          onCheckedChange={setIsAnnual}
+          data-testid="switch-billing-period"
+        />
+        <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+          Annual
+        </span>
+        <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+          Save 20%
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
@@ -106,11 +152,16 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
               </CardTitle>
               <div className="space-y-1">
                 <div className="text-2xl sm:text-3xl font-bold" data-testid={`text-plan-price-${index}`}>
-                  {plan.price}
+                  {getPrice(plan)}
                   <span className="text-sm sm:text-base font-normal text-muted-foreground">
-                    /{plan.period}
+                    /{getPeriod(plan)}
                   </span>
                 </div>
+                {getSavings(plan) && (
+                  <p className="text-xs text-green-600 dark:text-green-400 font-medium" data-testid={`text-plan-savings-${index}`}>
+                    Save ${getSavings(plan)} per year
+                  </p>
+                )}
                 <p className="text-xs sm:text-sm text-muted-foreground" data-testid={`text-plan-description-${index}`}>
                   {plan.description}
                 </p>
