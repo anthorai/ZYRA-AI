@@ -6633,6 +6633,81 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Twilio Status Check
+  app.get('/api/twilio/status', requireAuth, async (req, res) => {
+    try {
+      const hasTwilioAccountSid = !!process.env.TWILIO_ACCOUNT_SID;
+      const hasTwilioAuthToken = !!process.env.TWILIO_AUTH_TOKEN;
+      const hasTwilioPhoneNumber = !!process.env.TWILIO_PHONE_NUMBER;
+      
+      const isConfigured = hasTwilioAccountSid && hasTwilioAuthToken && hasTwilioPhoneNumber;
+      
+      let isVerified = false;
+      let verificationError = null;
+      
+      // If configured, try to verify the connection
+      if (isConfigured) {
+        try {
+          const twilio = await import('twilio');
+          const client = twilio.default(
+            process.env.TWILIO_ACCOUNT_SID,
+            process.env.TWILIO_AUTH_TOKEN
+          );
+          
+          // Test the connection by fetching account info
+          const account = await client.api.accounts(process.env.TWILIO_ACCOUNT_SID!).fetch();
+          isVerified = account.status === 'active';
+        } catch (verifyError: any) {
+          console.error('Twilio verification error:', verifyError.message);
+          verificationError = verifyError.message;
+        }
+      }
+      
+      res.json({
+        isConnected: isConfigured && isVerified,
+        isConfigured,
+        isVerified,
+        hasAccountSid: hasTwilioAccountSid,
+        hasAuthToken: hasTwilioAuthToken,
+        hasPhoneNumber: hasTwilioPhoneNumber,
+        phoneNumber: hasTwilioPhoneNumber ? process.env.TWILIO_PHONE_NUMBER?.replace(/\d(?=\d{4})/g, '*') : null,
+        error: verificationError
+      });
+    } catch (error: any) {
+      console.error('Twilio status check error:', error);
+      res.status(500).json({ 
+        error: 'Failed to check Twilio status',
+        isConnected: false,
+        isConfigured: false
+      });
+    }
+  });
+
+  // SendGrid Status Check
+  app.get('/api/sendgrid/status', requireAuth, async (req, res) => {
+    try {
+      const hasSendGridApiKey = !!process.env.SENDGRID_API_KEY;
+      const hasSendGridFromEmail = !!process.env.SENDGRID_FROM_EMAIL;
+      
+      const isConfigured = hasSendGridApiKey;
+      
+      res.json({
+        isConnected: isConfigured,
+        isConfigured,
+        hasApiKey: hasSendGridApiKey,
+        hasFromEmail: hasSendGridFromEmail,
+        fromEmail: hasSendGridFromEmail ? process.env.SENDGRID_FROM_EMAIL?.replace(/(.{2})(.*)(@.*)/, '$1***$3') : null
+      });
+    } catch (error: any) {
+      console.error('SendGrid status check error:', error);
+      res.status(500).json({ 
+        error: 'Failed to check SendGrid status',
+        isConnected: false,
+        isConfigured: false
+      });
+    }
+  });
+
   // Security Settings Routes
   app.get('/api/settings/security', requireAuth, async (req, res) => {
     try {
