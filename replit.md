@@ -94,3 +94,5 @@ The application is configured for VM deployment on Replit, with Vite for fronten
 ## Email & SMS Services
 - **SendGrid**: Transactional emails and marketing campaigns.
 - **Twilio**: SMS notifications and cart recovery.
+  - **Merchant Twilio Connection**: Merchants can connect their own Twilio accounts via Settings > Integrations. The system validates credentials against Twilio API before saving, stores them securely in the database (integration_settings table), and uses them for sending SMS campaigns to their customers.
+  - **Note**: The Replit Twilio connector was dismissed by user preference. Merchant Twilio credentials are stored directly in the database with proper validation.

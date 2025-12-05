@@ -6633,45 +6633,134 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Twilio Status Check
+  // Twilio Verify Credentials (for merchant connection)
+  app.post('/api/twilio/verify', requireAuth, async (req, res) => {
+    try {
+      const { accountSid, authToken, phoneNumber } = req.body;
+
+      if (!accountSid || !authToken || !phoneNumber) {
+        return res.status(400).json({
+          valid: false,
+          error: 'Account SID, Auth Token, and Phone Number are required'
+        });
+      }
+
+      // Validate Account SID format
+      if (!accountSid.startsWith('AC') || accountSid.length !== 34) {
+        return res.status(400).json({
+          valid: false,
+          error: 'Invalid Account SID format. It should start with "AC" and be 34 characters long.'
+        });
+      }
+
+      // Validate phone number format
+      if (!phoneNumber.startsWith('+')) {
+        return res.status(400).json({
+          valid: false,
+          error: 'Phone number must include country code (e.g., +1234567890)'
+        });
+      }
+
+      try {
+        // Verify credentials by making a test API call to Twilio
+        const twilio = await import('twilio');
+        const client = twilio.default(accountSid, authToken);
+        
+        // Fetch account info to verify credentials
+        const account = await client.api.accounts(accountSid).fetch();
+        
+        if (account.status !== 'active') {
+          return res.json({
+            valid: false,
+            error: `Twilio account is ${account.status}. Please activate your account.`
+          });
+        }
+
+        // Verify the phone number belongs to this account
+        try {
+          const incomingPhoneNumbers = await client.incomingPhoneNumbers.list({ phoneNumber });
+          if (incomingPhoneNumbers.length === 0) {
+            return res.json({
+              valid: false,
+              error: 'This phone number is not associated with your Twilio account.'
+            });
+          }
+        } catch (phoneError: any) {
+          // Phone number lookup might fail for various reasons, log but don't block
+          console.warn('Twilio phone number verification warning:', phoneError.message);
+        }
+
+        res.json({
+          valid: true,
+          accountName: account.friendlyName,
+          accountStatus: account.status
+        });
+      } catch (twilioError: any) {
+        console.error('Twilio verification failed:', twilioError.message);
+        
+        if (twilioError.code === 20003) {
+          return res.json({
+            valid: false,
+            error: 'Invalid Account SID or Auth Token. Please check your credentials.'
+          });
+        }
+        
+        return res.json({
+          valid: false,
+          error: twilioError.message || 'Failed to verify Twilio credentials'
+        });
+      }
+    } catch (error: any) {
+      console.error('Twilio verify error:', error);
+      res.status(500).json({
+        valid: false,
+        error: 'Failed to verify Twilio credentials'
+      });
+    }
+  });
+
+  // Twilio Status Check (checks merchant's saved credentials in database)
   app.get('/api/twilio/status', requireAuth, async (req, res) => {
     try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Check if merchant has saved Twilio credentials in database
+      const integrations = await supabaseStorage.getIntegrationSettings(userId);
+      const twilioIntegration = integrations.find(i => i.provider === 'twilio' && i.isActive);
+      
+      if (twilioIntegration && twilioIntegration.credentials) {
+        const creds = twilioIntegration.credentials as any;
+        const hasAccountSid = !!creds.accountSid;
+        const hasAuthToken = !!creds.authToken;
+        const hasPhoneNumber = !!creds.phoneNumber;
+        
+        res.json({
+          isConnected: hasAccountSid && hasAuthToken && hasPhoneNumber,
+          isConfigured: true,
+          hasAccountSid,
+          hasAuthToken,
+          hasPhoneNumber,
+          phoneNumber: hasPhoneNumber ? creds.phoneNumber.replace(/\d(?=\d{4})/g, '*') : null,
+          source: 'database'
+        });
+        return;
+      }
+      
+      // Fallback: Check environment variables (platform-level config)
       const hasTwilioAccountSid = !!process.env.TWILIO_ACCOUNT_SID;
       const hasTwilioAuthToken = !!process.env.TWILIO_AUTH_TOKEN;
       const hasTwilioPhoneNumber = !!process.env.TWILIO_PHONE_NUMBER;
       
       const isConfigured = hasTwilioAccountSid && hasTwilioAuthToken && hasTwilioPhoneNumber;
       
-      let isVerified = false;
-      let verificationError = null;
-      
-      // If configured, try to verify the connection
-      if (isConfigured) {
-        try {
-          const twilio = await import('twilio');
-          const client = twilio.default(
-            process.env.TWILIO_ACCOUNT_SID,
-            process.env.TWILIO_AUTH_TOKEN
-          );
-          
-          // Test the connection by fetching account info
-          const account = await client.api.accounts(process.env.TWILIO_ACCOUNT_SID!).fetch();
-          isVerified = account.status === 'active';
-        } catch (verifyError: any) {
-          console.error('Twilio verification error:', verifyError.message);
-          verificationError = verifyError.message;
-        }
-      }
-      
       res.json({
-        isConnected: isConfigured && isVerified,
+        isConnected: isConfigured,
         isConfigured,
-        isVerified,
         hasAccountSid: hasTwilioAccountSid,
         hasAuthToken: hasTwilioAuthToken,
         hasPhoneNumber: hasTwilioPhoneNumber,
         phoneNumber: hasTwilioPhoneNumber ? process.env.TWILIO_PHONE_NUMBER?.replace(/\d(?=\d{4})/g, '*') : null,
-        error: verificationError
+        source: isConfigured ? 'environment' : 'none'
       });
     } catch (error: any) {
       console.error('Twilio status check error:', error);
