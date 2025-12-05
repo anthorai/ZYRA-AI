@@ -1,0 +1,211 @@
+Zyra AI — Master Admin Control Panel Checklist
+
+A complete list of modules you need to manage the entire AI system.
+
+1️⃣ User Management
+
+View all users
+
+Ban / suspend / delete accounts
+
+Reset user passwords
+
+Edit user roles (User, Pro, Admin)
+
+Track login history
+
+Track device sessions
+
+2️⃣ Subscription & Billing Control
+
+Manage plans & pricing
+
+Activate / pause / cancel user subscriptions
+
+Assign free trials
+
+View Stripe payments
+
+Refund actions
+
+Usage limits (API credits, monthly caps)
+
+3️⃣ AI Engine Controls
+
+Toggle AI models (GPT, Claude, Gemini, Local LLMs)
+
+Set priority model for each feature
+
+Control rate limits
+
+Update prompt templates
+
+Manage AI workflows & orchestration rules
+
+4️⃣ Feature Toggles (Kill Switches)
+
+Admin should enable/disable instantly:
+
+Product Optimization
+
+SEO Tools
+
+Hashtag Generator
+
+Shopify Publishing
+
+Image Alt-Text Generator
+
+Auto-Optimization
+
+Scheduled Tasks
+
+Coming Soon modules
+
+5️⃣ Shopify App Controls
+
+Shopify API Keys
+
+Webhook status
+
+Sync issues logs
+
+Store Product Sync
+
+Auto-publish toggle
+
+Error debugging dashboard
+
+6️⃣ Content Moderation
+
+View flagged content
+
+Block unsafe prompts
+
+Add banned keywords
+
+Monitor user generations
+
+7️⃣ Automation Scheduler Console
+
+View all scheduled tasks
+
+Force-run a task
+
+Cancel queued tasks
+
+Debug failed automations
+
+Monitor your worker health (cron, queues)
+
+8️⃣ System Analytics Dashboard
+
+Daily active users
+
+Feature usage analytics
+
+AI token usage
+
+Error logs
+
+Conversion tracking
+
+User churn & retention
+
+9️⃣ Supabase Database Controls
+
+Backup database
+
+Restore snapshots
+
+Update schemas
+
+Manage row-level security
+
+Temporary read/write access
+
+🔟 App Content Management
+
+Update landing pages
+
+Blog/SEO content
+
+In-app announcements
+
+Notification center templates
+
+Email templates (Welcome, Reset Password, Billing)
+
+1️⃣1️⃣ Email & Notification Control
+
+SMTP setup
+
+Your own password reset emails
+
+Campaign emails
+
+Billing emails
+
+System alerts
+
+(You asked earlier about custom password email — this is where you control it.)
+
+1️⃣2️⃣ API Key Management
+
+Add new external APIs (Google, OpenAI, Stripe)
+
+Rotate keys
+
+Disable compromised keys
+
+Limit rate per key
+
+1️⃣3️⃣ File & Media Manager
+
+Manage user uploads
+
+Delete corrupted files
+
+Control CDN settings
+
+1️⃣4️⃣ Security Center
+
+IP ban list
+
+Session expiry rules
+
+Monitor suspicious activity
+
+Root admin log
+
+⚡ FINAL OVERVIEW
+
+Your Zyra AI Admin Panel needs 14 core modules:
+
+User Management
+
+Subscription/Billing
+
+AI Engine Controls
+
+Feature Toggles
+
+Shopify Controls
+
+Moderation
+
+Scheduler Console
+
+System Analytics
+
+Supabase DB
+
+Content Management
+
+Email/Notifications
+
+API Keys
+
+File Manager
+
+Security Center
