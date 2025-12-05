@@ -68,7 +68,7 @@ export default function ProfilePage() {
     <PageShell
       title="Profile Settings"
       subtitle="Manage your personal information and preferences"
-      
+      backTo="/settings"
       maxWidth="xl"
       spacing="normal"
     >
