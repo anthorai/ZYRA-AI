@@ -26,6 +26,9 @@ export function UnifiedHeader({
   const [, setLocation] = useLocation();
 
   const handleBack = () => {
+    // Clear any stale navigation source to prevent dashboard from showing wrong tab
+    sessionStorage.removeItem('navigationSource');
+    
     if (onBack) {
       // Custom onBack handler takes priority
       onBack();

@@ -19,18 +19,22 @@ export default function SettingsPage() {
 
   // Handle sidebar navigation
   const handleTabChange = (tab: string) => {
+    // Clear any stale navigation source when navigating away from settings
+    sessionStorage.removeItem('navigationSource');
+    
     if (tab === "settings") {
       // Stay on settings page
       return;
     } else if (tab === "overview") {
       setLocation("/dashboard");
     } else if (tab === "ai-tools") {
-      setLocation("/dashboard");
       sessionStorage.setItem('navigationSource', 'ai-tools');
-    } else if (tab === "automate") {
       setLocation("/dashboard");
+    } else if (tab === "automate") {
       sessionStorage.setItem('navigationSource', 'automation');
+      setLocation("/dashboard");
     } else if (tab === "campaigns") {
+      sessionStorage.setItem('navigationSource', 'campaigns');
       setLocation("/dashboard");
     } else if (tab === "products") {
       setLocation("/products");
