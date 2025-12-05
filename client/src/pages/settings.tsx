@@ -59,7 +59,7 @@ export default function SettingsPage() {
         sidebarOpen ? 'lg:ml-64' : 'ml-0'
       }`}>
         {/* Top Bar */}
-        <header className="bg-card/50 backdrop-blur-sm border rounded-2xl px-4 sm:px-6 py-3 sm:py-4 mx-4 sm:mx-6 mt-4 sm:mt-6">
+        <header className="bg-card/50 backdrop-blur-sm border rounded-2xl px-4 sm:px-6 py-3 sm:py-4 mx-4 sm:mx-6 sm:mt-6 mt-[3px] mb-[3px] ml-[3px] mr-[3px]">
           <div className="flex items-center">
             {/* Left Section - Hamburger + Title */}
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
