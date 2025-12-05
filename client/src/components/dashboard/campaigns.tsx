@@ -162,7 +162,7 @@ export default function Campaigns() {
         </p>
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-end">
         <Button
           onClick={() => setLocation('/campaigns/create')}
           className="bg-primary text-[#000000]"
