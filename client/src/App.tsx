@@ -47,8 +47,21 @@ const SecurityPage = lazy(() => import("@/pages/settings/security"));
 const SupportPage = lazy(() => import("@/pages/settings/support"));
 
 // Admin pages
+const AdminDashboard = lazy(() => import("@/pages/admin/index"));
 const AdminSupportInboxPage = lazy(() => import("@/pages/admin/support-inbox"));
 const AdminSubscriptions = lazy(() => import("@/pages/admin/subscriptions"));
+const AdminFeatureToggles = lazy(() => import("@/pages/admin/feature-toggles"));
+const AdminAIEngine = lazy(() => import("@/pages/admin/ai-engine"));
+const AdminAnalytics = lazy(() => import("@/pages/admin/analytics"));
+const AdminScheduler = lazy(() => import("@/pages/admin/scheduler"));
+const AdminSecurityCenter = lazy(() => import("@/pages/admin/security"));
+const AdminShopifyControls = lazy(() => import("@/pages/admin/shopify"));
+const AdminAPIKeys = lazy(() => import("@/pages/admin/api-keys"));
+const AdminEmailNotifications = lazy(() => import("@/pages/admin/email"));
+const AdminContentModeration = lazy(() => import("@/pages/admin/moderation"));
+const AdminContentManagement = lazy(() => import("@/pages/admin/content"));
+const AdminFileManager = lazy(() => import("@/pages/admin/files"));
+const AdminDatabaseControls = lazy(() => import("@/pages/admin/database"));
 
 // Help/Documentation pages
 const GettingStartedPage = lazy(() => import("@/pages/help/getting-started"));
@@ -402,6 +415,13 @@ function Router() {
       )} />
 
       {/* Admin routes */}
+      <Route path="/admin" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminDashboard />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
       <Route path="/admin/support-inbox" component={() => (
         <ProtectedRoute requireAdmin>
           <Suspense fallback={<PageLoader />}>
@@ -413,6 +433,90 @@ function Router() {
         <ProtectedRoute requireAdmin>
           <Suspense fallback={<PageLoader />}>
             <AdminSubscriptions />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/feature-toggles" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminFeatureToggles />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/ai-engine" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminAIEngine />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/analytics" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminAnalytics />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/scheduler" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminScheduler />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/security" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminSecurityCenter />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/shopify" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminShopifyControls />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/api-keys" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminAPIKeys />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/email" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminEmailNotifications />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/moderation" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminContentModeration />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/content" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminContentManagement />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/files" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminFileManager />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/database" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminDatabaseControls />
           </Suspense>
         </ProtectedRoute>
       )} />

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { PageShell } from "@/components/ui/page-shell";
-import { DashboardCard } from "@/components/ui/dashboard-card";
+import AdminLayout from "@/components/layouts/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,17 +130,18 @@ export default function SupportInboxPage() {
   };
 
   return (
-    <PageShell
-      title="Support Inbox"
-      subtitle="Manage and respond to support tickets"
-      maxWidth="full"
-      spacing="normal"
-    >
-      {/* Filters */}
-      <DashboardCard size="sm" testId="card-filters">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <Label htmlFor="search" className="text-white mb-2 block">Search</Label>
+    <AdminLayout>
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Support Inbox</h1>
+          <p className="text-muted-foreground">Manage and respond to support tickets</p>
+        </div>
+
+        <Card className="mb-6" data-testid="card-filters">
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <Label htmlFor="search" className="mb-2 block">Search</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
@@ -185,15 +186,16 @@ export default function SupportInboxPage() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </DashboardCard>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Tickets List */}
-      <DashboardCard
-        title="Support Tickets"
-        description={`${tickets?.length || 0} tickets found`}
-        testId="card-tickets-list"
-      >
+        <Card data-testid="card-tickets-list">
+          <CardHeader>
+            <CardTitle>Support Tickets</CardTitle>
+            <p className="text-sm text-muted-foreground">{tickets?.length || 0} tickets found</p>
+          </CardHeader>
+          <CardContent>
         {isLoading ? (
           <div className="text-center py-8 text-slate-400">Loading tickets...</div>
         ) : !tickets || tickets.length === 0 ? (
@@ -243,10 +245,11 @@ export default function SupportInboxPage() {
               </div>
             ))}
           </div>
-        )}
-      </DashboardCard>
+          )}
+          </CardContent>
+        </Card>
 
-      {/* Ticket Detail Dialog */}
+        {/* Ticket Detail Dialog */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
         <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl">
           <DialogHeader>
@@ -342,7 +345,8 @@ export default function SupportInboxPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </PageShell>
+        </Dialog>
+      </div>
+    </AdminLayout>
   );
 }

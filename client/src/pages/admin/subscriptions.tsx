@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabaseClient";
+import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,14 +46,11 @@ import {
   Crown, 
   Search, 
   RefreshCw,
-  Shield,
-  ArrowLeft,
   Coins,
   Check,
   AlertCircle,
   Trash2
 } from "lucide-react";
-import { Link } from "wouter";
 
 interface UserWithSubscription {
   id: string;
@@ -257,34 +255,12 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sticky Header - matches application header style */}
-      <header className="backdrop-blur-sm border border rounded-2xl px-4 sm:px-6 py-3 sm:py-4 m-2 bg-[#16162c]">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="icon" className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0" data-testid="button-back-dashboard">
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/20">
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl" data-testid="heading-admin-subscriptions">
-                  Admin Panel
-                </h1>
-                <p className="text-slate-300 text-xs sm:text-sm hidden sm:block">Manage merchant subscriptions and credits</p>
-              </div>
-            </div>
-          </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 flex-shrink-0">
-            Administrator Access
-          </Badge>
+    <AdminLayout>
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold" data-testid="heading-admin-subscriptions">Users & Subscriptions</h1>
+          <p className="text-muted-foreground">Manage merchant subscriptions and credits</p>
         </div>
-      </header>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card className="h-full">
@@ -658,6 +634,6 @@ export default function AdminSubscriptions() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
