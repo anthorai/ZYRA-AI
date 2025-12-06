@@ -7527,12 +7527,8 @@ Output format: Markdown with clear section headings.`;
         decodedPairs.push({ key, value: decodedValue });
       }
       
-      // Sort by key first, then by value if keys are equal (Shopify canonical format)
-      decodedPairs.sort((a, b) => {
-        const keyCompare = a.key.localeCompare(b.key);
-        if (keyCompare !== 0) return keyCompare;
-        return a.value.localeCompare(b.value);
-      });
+      // Sort by key only (Shopify canonical format - lexicographic by key name)
+      decodedPairs.sort((a, b) => a.key.localeCompare(b.key));
       
       // Rebuild canonical message string with decoded values
       const message = decodedPairs.map(p => `${p.key}=${p.value}`).join('&');
@@ -7865,12 +7861,8 @@ Output format: Markdown with clear section headings.`;
           decodedPairs.push({ key, value: decodedValue });
         }
         
-        // Sort by key first, then by value if keys are equal (Shopify canonical format)
-        decodedPairs.sort((a, b) => {
-          const keyCompare = a.key.localeCompare(b.key);
-          if (keyCompare !== 0) return keyCompare;
-          return a.value.localeCompare(b.value);
-        });
+        // Sort by key only (Shopify canonical format - lexicographic by key name)
+        decodedPairs.sort((a, b) => a.key.localeCompare(b.key));
         
         // Rebuild canonical message string with decoded values
         const message = decodedPairs.map(p => `${p.key}=${p.value}`).join('&');
