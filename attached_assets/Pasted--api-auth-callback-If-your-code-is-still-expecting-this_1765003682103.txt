@@ -1,0 +1,113 @@
+/api/auth/callback
+If your code is still expecting this:
+
+ts
+Copy code
+callbackPath: "/api/auth/callback"
+But Shopify is calling:
+
+bash
+Copy code
+/api/shopify/callback
+Then Shopify API library immediately throws:
+
+nginx
+Copy code
+HMAC verification failed
+Why?
+
+Because the library hashes the callback route internally.
+
+If Shopify hits a different route → the HMAC verification fails.
+
+🔥 So the REAL problem is:
+Your Shopify callback URL and your code callbackPath are mismatched.
+NOT the number of redirect URLs.
+
+Not the presence of both URLs.
+
+🧠 Here’s how to confirm the exact cause
+Check your file:
+
+/lib/shopify.ts or /app/api/shopify/route.ts or /app/api/auth/route.ts
+
+Look for this line:
+
+ts
+Copy code
+callbackPath: "/api/xxxxxx/callback"
+❗ If this value is not exactly:
+bash
+Copy code
+/api/shopify/callback
+your HMAC WILL fail.
+
+Simple as that.
+
+🛠 FIX (Two possible correct options)
+You can fix this in two ways — choose the one that matches your code.
+
+✅ Fix Option 1 — Use Shopify’s callback URL in your code
+If Shopify is already calling:
+
+bash
+Copy code
+/api/shopify/callback
+Then update your code to:
+
+ts
+Copy code
+callbackPath: "/api/shopify/callback"
+And ensure this file exists:
+
+swift
+Copy code
+app/api/shopify/callback/route.ts
+✅ Fix Option 2 — Make Shopify use your code’s callback URL
+If your app is written for:
+
+bash
+Copy code
+/api/auth/callback
+Then change the redirect URL in Partner Dashboard to make FIRST entry:
+
+ruby
+Copy code
+https://zzyraai.com/api/auth/callback
+And remove or move /api/shopify/callback to second entry.
+
+📌 IMPORTANT RULE Shopify doesn’t document clearly
+Shopify always uses the FIRST matching redirect URL in the list.
+
+Your list order is:
+
+arduino
+Copy code
+["https://zzyraai.com/api/shopify/callback",
+ "https://zzyraai.com/auth/callback"]
+So Shopify is ALWAYS calling:
+
+bash
+Copy code
+/api/shopify/callback
+Even if your code expects /api/auth/callback.
+
+That is why HMAC verification is failing.
+
+🧬 To fix this permanently:
+I need to see ONE thing:
+
+👉 Paste your Shopify API initialization code
+Usually in:
+lib/shopify.ts, shopify.server.ts, or app/api/auth/route.ts
+
+Specifically the block that contains:
+
+ts
+Copy code
+callbackPath:
+Once I see that, I will give you the exact fix, matching your folder structure + your existing routes.
+
+🔥 TL;DR (Your fix in one line)
+Your callback route in code ≠ Shopify’s callback route.
+Fix the mismatch → HMAC error disappears instantly.
