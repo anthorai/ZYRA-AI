@@ -7543,14 +7543,31 @@ Output format: Markdown with clear section headings.`;
         .update(message)
         .digest('hex');
       
-      // Debug logging only in development (sensitive OAuth data)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🔐 HMAC Verification (Install):');
-        console.log('  Raw query string:', rawQueryString);
-        console.log('  Canonical message:', message);
-        console.log('  Provided HMAC:', hmac);
-        console.log('  Computed HMAC:', computedHmac);
-        console.log('  Match:', computedHmac === hmac);
+      // Debug logging - ALWAYS log in production when SHOPIFY_HMAC_DEBUG is set
+      const hmacDebugEnabled = process.env.SHOPIFY_HMAC_DEBUG === '1' || process.env.NODE_ENV !== 'production';
+      
+      if (hmacDebugEnabled) {
+        // Production-safe logging: show structure without exposing full values
+        const secretHash = crypto.createHash('sha256').update(apiSecret!).digest('hex').substring(0, 12);
+        const paramSummary = decodedPairs.map(p => `${p.key}(${p.value.length}chars)`).join(', ');
+        
+        console.log('🔐 [HMAC DEBUG - INSTALL] Production-safe diagnostics:');
+        console.log('  Shop:', shopDomain);
+        console.log('  Timestamp:', timestamp, '| Current:', Math.floor(Date.now() / 1000));
+        console.log('  API Secret hash (first 12 chars):', secretHash);
+        console.log('  Parameters:', paramSummary);
+        console.log('  Canonical message length:', message.length);
+        console.log('  Provided HMAC (first 16):', (hmac as string).substring(0, 16) + '...');
+        console.log('  Computed HMAC (first 16):', computedHmac.substring(0, 16) + '...');
+        console.log('  Full match:', computedHmac === hmac);
+        
+        // In development or when debug enabled, show full values for debugging
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('  [DEV ONLY] Raw query string:', rawQueryString);
+          console.log('  [DEV ONLY] Canonical message:', message);
+          console.log('  [DEV ONLY] Full provided HMAC:', hmac);
+          console.log('  [DEV ONLY] Full computed HMAC:', computedHmac);
+        }
       }
       
       // Timing-safe equality check to prevent timing attacks
@@ -7561,9 +7578,9 @@ Output format: Markdown with clear section headings.`;
         if (computedBuffer.length !== providedBuffer.length || 
             !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
           console.error('❌ HMAC verification failed during installation for shop:', shopDomain);
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('  Expected:', computedHmac);
-            console.error('  Received:', hmac);
+          if (hmacDebugEnabled) {
+            console.error('  Expected (first 16):', computedHmac.substring(0, 16) + '...');
+            console.error('  Received (first 16):', (hmac as string).substring(0, 16) + '...');
           }
           return res.status(403).json({ error: 'HMAC verification failed - invalid signature' });
         }
@@ -7864,14 +7881,30 @@ Output format: Markdown with clear section headings.`;
           .update(message)
           .digest('hex');
         
-        // Debug logging only in development (sensitive OAuth data)
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('🔐 HMAC Verification (Callback):');
-          console.log('  Raw query string:', rawQueryString);
-          console.log('  Canonical message:', message);
-          console.log('  Provided HMAC:', hmac);
-          console.log('  Computed HMAC:', computedHmac);
-          console.log('  Match:', computedHmac === hmac);
+        // Debug logging - ALWAYS log in production when SHOPIFY_HMAC_DEBUG is set
+        const hmacDebugEnabled = process.env.SHOPIFY_HMAC_DEBUG === '1' || process.env.NODE_ENV !== 'production';
+        
+        if (hmacDebugEnabled) {
+          // Production-safe logging: show structure without exposing full values
+          const secretHash = crypto.createHash('sha256').update(apiSecret!).digest('hex').substring(0, 12);
+          const paramSummary = decodedPairs.map(p => `${p.key}(${p.value.length}chars)`).join(', ');
+          
+          console.log('🔐 [HMAC DEBUG - CALLBACK] Production-safe diagnostics:');
+          console.log('  Shop:', shopDomain);
+          console.log('  API Secret hash (first 12 chars):', secretHash);
+          console.log('  Parameters:', paramSummary);
+          console.log('  Canonical message length:', message.length);
+          console.log('  Provided HMAC (first 16):', (hmac as string).substring(0, 16) + '...');
+          console.log('  Computed HMAC (first 16):', computedHmac.substring(0, 16) + '...');
+          console.log('  Full match:', computedHmac === hmac);
+          
+          // In development, show full values for debugging
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('  [DEV ONLY] Raw query string:', rawQueryString);
+            console.log('  [DEV ONLY] Canonical message:', message);
+            console.log('  [DEV ONLY] Full provided HMAC:', hmac);
+            console.log('  [DEV ONLY] Full computed HMAC:', computedHmac);
+          }
         }
         
         // Verify HMAC with timing-safe comparison
@@ -7882,9 +7915,9 @@ Output format: Markdown with clear section headings.`;
           if (computedBuffer.length !== providedBuffer.length || 
               !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
             console.error('❌ HMAC verification failed for callback from shop:', shopDomain);
-            if (process.env.NODE_ENV !== 'production') {
-              console.error('  Expected:', computedHmac);
-              console.error('  Received:', hmac);
+            if (hmacDebugEnabled) {
+              console.error('  Expected (first 16):', computedHmac.substring(0, 16) + '...');
+              console.error('  Received (first 16):', (hmac as string).substring(0, 16) + '...');
             }
             await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
             return res.status(403).send('HMAC verification failed');

@@ -107,3 +107,8 @@ outputType = "webview"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+SHOPIFY_HMAC_DEBUG = "1"
