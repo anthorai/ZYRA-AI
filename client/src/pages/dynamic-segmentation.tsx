@@ -284,6 +284,7 @@ export default function DynamicSegmentationPage() {
     <PageShell
       title="Dynamic Segmentation"
       subtitle="AI-powered customer segmentation based on real purchase behavior"
+      backTo="/campaigns"
       rightActions={
         <div className="flex gap-2 flex-wrap">
           <Button

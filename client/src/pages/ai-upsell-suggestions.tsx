@@ -41,7 +41,7 @@ export default function AIUpsellSuggestionsPage() {
     <PageShell
       title="AI Upsell Suggestions"
       subtitle="AI-powered product recommendations to boost your average order value"
-      
+      backTo="/campaigns"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {mockProducts.map((product) => (
