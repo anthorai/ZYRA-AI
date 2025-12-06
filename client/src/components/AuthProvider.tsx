@@ -230,8 +230,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Fetch app user profile after sign in (pass token directly to avoid state race condition)
-          if (event === 'SIGNED_IN' && session?.user && session?.access_token && mounted) {
+          // Fetch app user profile after sign in or initial session restore (pass token directly to avoid state race condition)
+          if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user && session?.access_token && mounted) {
             fetchAppUser(session.access_token).catch(() => {
               // Silent catch - don't block auth flow
             });
