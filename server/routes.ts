@@ -7508,7 +7508,8 @@ Output format: Markdown with clear section headings.`;
       const queryStringStart = rawUrl.indexOf('?');
       const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
       
-      // Parse raw query string into key-value pairs, URL-decode values, and exclude hmac
+      // Parse raw query string into key-value pairs, URL-decode both keys AND values, exclude hmac and signature
+      // Per Shopify docs: both hmac and signature parameters must be excluded from verification
       const queryParts = rawQueryString.split('&');
       const decodedPairs: Array<{ key: string; value: string }> = [];
       
@@ -7516,15 +7517,18 @@ Output format: Markdown with clear section headings.`;
         const eqIndex = part.indexOf('=');
         if (eqIndex === -1) continue;
         
-        const key = part.substring(0, eqIndex);
+        const rawKey = part.substring(0, eqIndex);
         const rawValue = part.substring(eqIndex + 1);
         
-        // Skip the hmac parameter
-        if (key === 'hmac') continue;
+        // URL-decode the key (keys can also be percent-encoded)
+        const decodedKey = decodeURIComponent(rawKey.replace(/\+/g, ' '));
+        
+        // Skip the hmac and signature parameters (both must be excluded per Shopify docs)
+        if (decodedKey === 'hmac' || decodedKey === 'signature') continue;
         
         // URL-decode the value (Shopify requires decoded values for HMAC)
         const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
-        decodedPairs.push({ key, value: decodedValue });
+        decodedPairs.push({ key: decodedKey, value: decodedValue });
       }
       
       // Sort by key only (Shopify canonical format - lexicographic by key name)
@@ -7842,7 +7846,8 @@ Output format: Markdown with clear section headings.`;
         const queryStringStart = rawUrl.indexOf('?');
         const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
         
-        // Parse raw query string into key-value pairs, URL-decode values, and exclude hmac
+        // Parse raw query string into key-value pairs, URL-decode both keys AND values, exclude hmac and signature
+        // Per Shopify docs: both hmac and signature parameters must be excluded from verification
         const queryParts = rawQueryString.split('&');
         const decodedPairs: Array<{ key: string; value: string }> = [];
         
@@ -7850,15 +7855,18 @@ Output format: Markdown with clear section headings.`;
           const eqIndex = part.indexOf('=');
           if (eqIndex === -1) continue;
           
-          const key = part.substring(0, eqIndex);
+          const rawKey = part.substring(0, eqIndex);
           const rawValue = part.substring(eqIndex + 1);
           
-          // Skip the hmac parameter
-          if (key === 'hmac') continue;
+          // URL-decode the key (keys can also be percent-encoded)
+          const decodedKey = decodeURIComponent(rawKey.replace(/\+/g, ' '));
+          
+          // Skip the hmac and signature parameters (both must be excluded per Shopify docs)
+          if (decodedKey === 'hmac' || decodedKey === 'signature') continue;
           
           // URL-decode the value (Shopify requires decoded values for HMAC)
           const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
-          decodedPairs.push({ key, value: decodedValue });
+          decodedPairs.push({ key: decodedKey, value: decodedValue });
         }
         
         // Sort by key only (Shopify canonical format - lexicographic by key name)
