@@ -430,6 +430,7 @@ export default function SmartBulkSuggestions() {
     <PageShell
       title="Smart Bulk Suggestions"
       subtitle="AI-powered store analysis with actionable SEO improvements"
+      backTo="/dashboard?tab=automate"
     >
       {isLoadingProducts ? (
         <DashboardCard>

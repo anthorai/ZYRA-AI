@@ -159,7 +159,7 @@ export default function CSVImportExport() {
     <PageShell
       title="CSV Import & Export"
       subtitle="Upload and optimize your product data with AI-powered batch processing"
-      
+      backTo="/dashboard?tab=automate"
     >
       {/* Upload Section */}
       <DashboardCard

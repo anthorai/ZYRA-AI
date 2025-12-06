@@ -248,6 +248,7 @@ export default function ShopifyPublish() {
       <PageShell
         title="Shopify Publish"
         subtitle="Publish your AI-optimized products directly to your Shopify store"
+        backTo="/dashboard?tab=automate"
       >
         <DashboardCard>
           <div className="text-center py-12">
@@ -275,6 +276,7 @@ export default function ShopifyPublish() {
       <PageShell
         title="Shopify Publish"
         subtitle="Publish your AI-optimized products directly to your Shopify store"
+        backTo="/dashboard?tab=automate"
       >
         <div className="space-y-6">
           <Skeleton className="h-48 w-full" />
@@ -290,6 +292,7 @@ export default function ShopifyPublish() {
       <PageShell
         title="Shopify Publish"
         subtitle="Publish your AI-optimized products directly to your Shopify store"
+        backTo="/dashboard?tab=automate"
       >
         <DashboardCard>
           <div className="text-center py-12">
@@ -317,6 +320,7 @@ export default function ShopifyPublish() {
       <PageShell
         title="Shopify Publish"
         subtitle="Publish your AI-optimized products directly to your Shopify store"
+        backTo="/dashboard?tab=automate"
       >
         <DashboardCard>
           <div className="text-center py-12">
@@ -353,6 +357,7 @@ export default function ShopifyPublish() {
     <PageShell
       title="Shopify Publish"
       subtitle="Publish your AI-optimized products directly to your Shopify store"
+      backTo="/dashboard?tab=automate"
     >
       <DashboardCard
         title="Ready to Publish"

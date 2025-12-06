@@ -131,7 +131,7 @@ export default function CampaignListPage() {
     <PageShell
       title="Campaigns"
       subtitle="Manage your email and SMS marketing campaigns"
-      backTo="/dashboard"
+      backTo="/dashboard?tab=campaigns"
       rightActions={
         <Button
           onClick={() => setLocation("/campaigns/create")}

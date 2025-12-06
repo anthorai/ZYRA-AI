@@ -150,7 +150,7 @@ export default function RollbackChanges() {
       <PageShell
         title="Rollback Changes"
         subtitle="View and restore previous versions of your product data"
-        
+        backTo="/dashboard?tab=automate"
       >
         <DashboardCard testId="error-state">
           <div className="p-8 text-center">
@@ -175,7 +175,7 @@ export default function RollbackChanges() {
     <PageShell
       title="Rollback Changes"
       subtitle="View and restore previous versions of your product data"
-      
+      backTo="/dashboard?tab=automate"
     >
       {/* Summary & Bulk Actions */}
       <DashboardCard
