@@ -108,8 +108,31 @@ export default function Dashboard() {
   
 
 
-  // Handle navigation source from sessionStorage (for back button from AI tools, automation, campaigns, and settings)
+  // Handle navigation source from sessionStorage or URL query params (for back button from AI tools, automation, campaigns, and settings)
   useEffect(() => {
+    // First check URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    if (tabParam) {
+      // Handle tab query parameter
+      if (tabParam === 'ai-tools') {
+        setActiveTab('ai-tools');
+      } else if (tabParam === 'automate' || tabParam === 'automation') {
+        setActiveTab('automate');
+      } else if (tabParam === 'campaigns') {
+        setActiveTab('campaigns');
+      } else if (tabParam === 'settings') {
+        setActiveTab('settings');
+      } else if (tabParam === 'overview') {
+        setActiveTab('overview');
+      }
+      // Clean up the URL by removing the query param
+      window.history.replaceState({}, '', '/dashboard');
+      return;
+    }
+    
+    // Fallback to sessionStorage for backward compatibility
     const navigationSource = sessionStorage.getItem('navigationSource');
     if (navigationSource === 'ai-tools') {
       setActiveTab('ai-tools');
