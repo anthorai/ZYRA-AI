@@ -7502,37 +7502,56 @@ Output format: Markdown with clear section headings.`;
         return res.status(403).json({ error: 'Request timestamp expired' });
       }
       
-      // Build query string from RAW URL to preserve exact encoding (Shopify requirement)
-      // CRITICAL: Must use raw query string, not Express-parsed req.query
+      // Build query string from RAW URL, then URL-decode values for HMAC verification
+      // CRITICAL: Shopify's HMAC algorithm uses DECODED values, not raw percent-encoded
       const rawUrl = req.originalUrl || req.url;
       const queryStringStart = rawUrl.indexOf('?');
       const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
       
-      // Debug logging only in development (sensitive OAuth data)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🔐 HMAC Verification (Install):');
-        console.log('  Raw query string:', rawQueryString);
-      }
-      
-      // Parse raw query string and remove hmac, preserving original encoding
+      // Parse raw query string into key-value pairs, URL-decode values, and exclude hmac
       const queryParts = rawQueryString.split('&');
-      const filteredParts: string[] = [];
+      const decodedPairs: Array<{ key: string; value: string }> = [];
       
       for (const part of queryParts) {
+        const eqIndex = part.indexOf('=');
+        if (eqIndex === -1) continue;
+        
+        const key = part.substring(0, eqIndex);
+        const rawValue = part.substring(eqIndex + 1);
+        
         // Skip the hmac parameter
-        if (!part.startsWith('hmac=')) {
-          filteredParts.push(part);
-        }
+        if (key === 'hmac') continue;
+        
+        // URL-decode the value (Shopify requires decoded values for HMAC)
+        const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
+        decodedPairs.push({ key, value: decodedValue });
       }
       
-      // Sort lexicographically and rejoin (Shopify canonical format)
-      const message = filteredParts.sort().join('&');
+      // Sort by key first, then by value if keys are equal (Shopify canonical format)
+      decodedPairs.sort((a, b) => {
+        const keyCompare = a.key.localeCompare(b.key);
+        if (keyCompare !== 0) return keyCompare;
+        return a.value.localeCompare(b.value);
+      });
+      
+      // Rebuild canonical message string with decoded values
+      const message = decodedPairs.map(p => `${p.key}=${p.value}`).join('&');
       
       // Calculate HMAC
       const computedHmac = crypto
         .createHmac('sha256', apiSecret!)
         .update(message)
         .digest('hex');
+      
+      // Debug logging only in development (sensitive OAuth data)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔐 HMAC Verification (Install):');
+        console.log('  Raw query string:', rawQueryString);
+        console.log('  Canonical message:', message);
+        console.log('  Provided HMAC:', hmac);
+        console.log('  Computed HMAC:', computedHmac);
+        console.log('  Match:', computedHmac === hmac);
+      }
       
       // Timing-safe equality check to prevent timing attacks
       try {
@@ -7542,6 +7561,10 @@ Output format: Markdown with clear section headings.`;
         if (computedBuffer.length !== providedBuffer.length || 
             !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
           console.error('❌ HMAC verification failed during installation for shop:', shopDomain);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('  Expected:', computedHmac);
+            console.error('  Received:', hmac);
+          }
           return res.status(403).json({ error: 'HMAC verification failed - invalid signature' });
         }
       } catch (hmacError) {
@@ -7800,37 +7823,56 @@ Output format: Markdown with clear section headings.`;
         const crypto = await import('crypto');
         const apiSecret = process.env.SHOPIFY_API_SECRET;
         
-        // Build query string from RAW URL to preserve exact encoding (Shopify requirement)
-        // CRITICAL: Must use raw query string, not Express-parsed req.query
+        // Build query string from RAW URL, then URL-decode values for HMAC verification
+        // CRITICAL: Shopify's HMAC algorithm uses DECODED values, not raw percent-encoded
         const rawUrl = req.originalUrl || req.url;
         const queryStringStart = rawUrl.indexOf('?');
         const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
         
-        // Debug logging only in development (sensitive OAuth data)
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('🔐 HMAC Verification (Callback):');
-          console.log('  Raw query string:', rawQueryString);
-        }
-        
-        // Parse raw query string and remove hmac, preserving original encoding
+        // Parse raw query string into key-value pairs, URL-decode values, and exclude hmac
         const queryParts = rawQueryString.split('&');
-        const filteredParts: string[] = [];
+        const decodedPairs: Array<{ key: string; value: string }> = [];
         
         for (const part of queryParts) {
+          const eqIndex = part.indexOf('=');
+          if (eqIndex === -1) continue;
+          
+          const key = part.substring(0, eqIndex);
+          const rawValue = part.substring(eqIndex + 1);
+          
           // Skip the hmac parameter
-          if (!part.startsWith('hmac=')) {
-            filteredParts.push(part);
-          }
+          if (key === 'hmac') continue;
+          
+          // URL-decode the value (Shopify requires decoded values for HMAC)
+          const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
+          decodedPairs.push({ key, value: decodedValue });
         }
         
-        // Sort lexicographically and rejoin (Shopify canonical format)
-        const message = filteredParts.sort().join('&');
+        // Sort by key first, then by value if keys are equal (Shopify canonical format)
+        decodedPairs.sort((a, b) => {
+          const keyCompare = a.key.localeCompare(b.key);
+          if (keyCompare !== 0) return keyCompare;
+          return a.value.localeCompare(b.value);
+        });
+        
+        // Rebuild canonical message string with decoded values
+        const message = decodedPairs.map(p => `${p.key}=${p.value}`).join('&');
         
         // Calculate HMAC
         const computedHmac = crypto
           .createHmac('sha256', apiSecret!)
           .update(message)
           .digest('hex');
+        
+        // Debug logging only in development (sensitive OAuth data)
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔐 HMAC Verification (Callback):');
+          console.log('  Raw query string:', rawQueryString);
+          console.log('  Canonical message:', message);
+          console.log('  Provided HMAC:', hmac);
+          console.log('  Computed HMAC:', computedHmac);
+          console.log('  Match:', computedHmac === hmac);
+        }
         
         // Verify HMAC with timing-safe comparison
         try {
@@ -7840,6 +7882,10 @@ Output format: Markdown with clear section headings.`;
           if (computedBuffer.length !== providedBuffer.length || 
               !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
             console.error('❌ HMAC verification failed for callback from shop:', shopDomain);
+            if (process.env.NODE_ENV !== 'production') {
+              console.error('  Expected:', computedHmac);
+              console.error('  Received:', hmac);
+            }
             await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
             return res.status(403).send('HMAC verification failed');
           }
