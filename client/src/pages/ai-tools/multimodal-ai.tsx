@@ -257,7 +257,7 @@ export default function MultimodalAI() {
     <PageShell
       title="Multimodal AI"
       subtitle="Combine product images with text to generate rich, contextual content"
-      
+      backTo="/dashboard?tab=ai-tools"
     >
       {/* Multimodal AI Overview */}
       <DashboardCard

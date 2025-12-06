@@ -136,7 +136,11 @@ export default function PricingSettings() {
 
   if (isLoading) {
     return (
-      <PageShell>
+      <PageShell
+        title="Pricing Settings"
+        subtitle="Configure your dynamic pricing automation"
+        backTo="/dashboard?tab=ai-tools"
+      >
         <div className="flex items-center justify-center h-full">
           <div className="text-slate-300">Loading settings...</div>
         </div>
@@ -145,18 +149,12 @@ export default function PricingSettings() {
   }
 
   return (
-    <PageShell>
+    <PageShell
+      title="Dynamic Pricing Settings"
+      subtitle="Configure automated pricing strategies to stay competitive and maximize profit margins"
+      backTo="/dashboard?tab=ai-tools"
+    >
       <div className="space-y-6 pb-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3" data-testid="heading-pricing-settings">
-            <Settings className="w-8 h-8 text-blue-400" />
-            Dynamic Pricing Settings
-          </h1>
-          <p className="text-slate-300 mt-2">
-            Configure automated pricing strategies to stay competitive and maximize profit margins
-          </p>
-        </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} onChange={handleFormChange}>
           {/* Master Switch */}

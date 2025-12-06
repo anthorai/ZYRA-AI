@@ -228,6 +228,7 @@ export default function BulkOptimization() {
       <PageShell
         title="Bulk Optimization Job"
         subtitle={`Job ID: ${viewingJobId}`}
+        backTo="/dashboard?tab=ai-tools"
       >
         <div className="space-y-6">
           <div className="flex items-center gap-4">
@@ -346,6 +347,7 @@ export default function BulkOptimization() {
     <PageShell
       title="Bulk Optimization"
       subtitle="Optimize multiple products at once using AI-powered batch processing"
+      backTo="/dashboard?tab=ai-tools"
     >
       <div className="space-y-6">
         <DashboardCard

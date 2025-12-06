@@ -225,6 +225,7 @@ export default function AIImageAltText() {
     <PageShell
       title="AI Image Alt-Text Optimization"
       subtitle="Automatically generate SEO-optimized alt-text for all your product images using AI Vision"
+      backTo="/dashboard?tab=ai-tools"
     >
       {/* Overview Cards */}
       <div className="grid md:grid-cols-3 gap-6">

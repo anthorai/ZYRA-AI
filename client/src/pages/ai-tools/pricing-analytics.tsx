@@ -69,7 +69,8 @@ export default function PricingAnalytics() {
     return (
       <PageShell 
         title="Pricing Analytics" 
-        description="Track your pricing automation performance and revenue impact"
+        subtitle="Track your pricing automation performance and revenue impact"
+        backTo="/dashboard?tab=ai-tools"
       >
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -82,7 +83,8 @@ export default function PricingAnalytics() {
     return (
       <PageShell 
         title="Pricing Analytics" 
-        description="Track your pricing automation performance and revenue impact"
+        subtitle="Track your pricing automation performance and revenue impact"
+        backTo="/dashboard?tab=ai-tools"
       >
         <DashboardCard
           title="No Data Available"
@@ -109,7 +111,8 @@ export default function PricingAnalytics() {
   return (
     <PageShell 
       title="Pricing Analytics" 
-      description="Track your pricing automation performance and revenue impact over the last 30 days"
+      subtitle="Track your pricing automation performance and revenue impact over the last 30 days"
+      backTo="/dashboard?tab=ai-tools"
     >
       <div className="space-y-6">
         {/* Summary Stats Cards */}
