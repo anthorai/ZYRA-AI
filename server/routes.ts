@@ -7502,15 +7502,31 @@ Output format: Markdown with clear section headings.`;
         return res.status(403).json({ error: 'Request timestamp expired' });
       }
       
-      // Build query string without HMAC for verification
-      const queryParams = { ...req.query };
-      delete queryParams.hmac;
+      // Build query string from RAW URL to preserve exact encoding (Shopify requirement)
+      // CRITICAL: Must use raw query string, not Express-parsed req.query
+      const rawUrl = req.originalUrl || req.url;
+      const queryStringStart = rawUrl.indexOf('?');
+      const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
       
-      // Sort and build message (must include ALL parameters from Shopify)
-      const message = Object.keys(queryParams)
-        .sort()
-        .map(key => `${key}=${queryParams[key]}`)
-        .join('&');
+      // Debug logging only in development (sensitive OAuth data)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔐 HMAC Verification (Install):');
+        console.log('  Raw query string:', rawQueryString);
+      }
+      
+      // Parse raw query string and remove hmac, preserving original encoding
+      const queryParts = rawQueryString.split('&');
+      const filteredParts: string[] = [];
+      
+      for (const part of queryParts) {
+        // Skip the hmac parameter
+        if (!part.startsWith('hmac=')) {
+          filteredParts.push(part);
+        }
+      }
+      
+      // Sort lexicographically and rejoin (Shopify canonical format)
+      const message = filteredParts.sort().join('&');
       
       // Calculate HMAC
       const computedHmac = crypto
@@ -7519,14 +7535,18 @@ Output format: Markdown with clear section headings.`;
         .digest('hex');
       
       // Timing-safe equality check to prevent timing attacks
-      const computedBuffer = Buffer.from(computedHmac, 'hex');
-      const providedBuffer = Buffer.from(hmac as string, 'hex');
-      
-      if (computedBuffer.length !== providedBuffer.length || 
-          !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
-        console.error('HMAC verification failed during installation');
-        console.error('Query params:', queryParams);
-        return res.status(403).json({ error: 'HMAC verification failed - invalid signature' });
+      try {
+        const computedBuffer = Buffer.from(computedHmac, 'hex');
+        const providedBuffer = Buffer.from(hmac as string, 'hex');
+        
+        if (computedBuffer.length !== providedBuffer.length || 
+            !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
+          console.error('❌ HMAC verification failed during installation for shop:', shopDomain);
+          return res.status(403).json({ error: 'HMAC verification failed - invalid signature' });
+        }
+      } catch (hmacError) {
+        console.error('❌ HMAC buffer comparison error:', hmacError);
+        return res.status(403).json({ error: 'HMAC verification failed - invalid format' });
       }
       
       console.log('✅ HMAC verified successfully for installation from:', shopDomain);
@@ -7780,15 +7800,31 @@ Output format: Markdown with clear section headings.`;
         const crypto = await import('crypto');
         const apiSecret = process.env.SHOPIFY_API_SECRET;
         
-        // Build query string without HMAC
-        const queryParams = { ...req.query };
-        delete queryParams.hmac;
+        // Build query string from RAW URL to preserve exact encoding (Shopify requirement)
+        // CRITICAL: Must use raw query string, not Express-parsed req.query
+        const rawUrl = req.originalUrl || req.url;
+        const queryStringStart = rawUrl.indexOf('?');
+        const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
         
-        // Sort and build message
-        const message = Object.keys(queryParams)
-          .sort()
-          .map(key => `${key}=${queryParams[key]}`)
-          .join('&');
+        // Debug logging only in development (sensitive OAuth data)
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔐 HMAC Verification (Callback):');
+          console.log('  Raw query string:', rawQueryString);
+        }
+        
+        // Parse raw query string and remove hmac, preserving original encoding
+        const queryParts = rawQueryString.split('&');
+        const filteredParts: string[] = [];
+        
+        for (const part of queryParts) {
+          // Skip the hmac parameter
+          if (!part.startsWith('hmac=')) {
+            filteredParts.push(part);
+          }
+        }
+        
+        // Sort lexicographically and rejoin (Shopify canonical format)
+        const message = filteredParts.sort().join('&');
         
         // Calculate HMAC
         const computedHmac = crypto
@@ -7796,15 +7832,23 @@ Output format: Markdown with clear section headings.`;
           .update(message)
           .digest('hex');
         
-        // Verify HMAC
-        if (computedHmac !== hmac) {
-          console.log('❌ FAILED: HMAC verification mismatch');
-          console.log('  Expected:', computedHmac);
-          console.log('  Got:', hmac);
+        // Verify HMAC with timing-safe comparison
+        try {
+          const computedBuffer = Buffer.from(computedHmac, 'hex');
+          const providedBuffer = Buffer.from(hmac as string, 'hex');
+          
+          if (computedBuffer.length !== providedBuffer.length || 
+              !crypto.timingSafeEqual(computedBuffer, providedBuffer)) {
+            console.error('❌ HMAC verification failed for callback from shop:', shopDomain);
+            await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+            return res.status(403).send('HMAC verification failed');
+          }
+        } catch (hmacError) {
+          console.error('❌ HMAC buffer comparison error:', hmacError);
           await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
-          return res.status(403).send('HMAC verification failed');
+          return res.status(403).send('HMAC verification failed - invalid format');
         }
-        console.log('✅ HMAC verified successfully');
+        console.log('✅ HMAC verified successfully for callback from shop:', shopDomain);
       } else {
         console.log('ℹ️  No HMAC in request (optional)');
       }
