@@ -108,7 +108,7 @@ The {storeName} Team`);
     <PageShell
       title="Template Editor"
       subtitle="Create and manage your marketing templates"
-      backTo="/dashboard"
+      backTo="/dashboard?tab=campaigns"
       rightActions={
         <div className="flex items-center gap-2 sm:gap-3">
           <Button variant="outline" size="sm" className="border-[rgba(0,240,255,0.3)] text-white hidden sm:flex">

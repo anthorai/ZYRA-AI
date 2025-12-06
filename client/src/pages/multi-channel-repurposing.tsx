@@ -168,7 +168,7 @@ export default function MultiChannelRepurposingPage() {
     <PageShell
       title="Multi-Channel Repurposing"
       subtitle="Generate optimized content for all marketing channels with AI"
-      backTo="/dashboard"
+      backTo="/dashboard?tab=campaigns"
     >
       <DashboardCard
         title="Product Description"
