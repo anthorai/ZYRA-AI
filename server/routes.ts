@@ -7531,13 +7531,15 @@ Output format: Markdown with clear section headings.`;
         // METHOD 1 (PRIMARY): Raw query string in ORIGINAL ORDER, just filter hmac/signature
         // This is how Shopify actually signs - exact bytes, original order, no sorting
         // IMPORTANT: Keep ALL parts including empty values (e.g., "scope=") to preserve byte order
+        // ALSO filter out 'path' and 'shopify_verification' which Vercel adds but Shopify doesn't sign
+        const excludeParams = ['hmac', 'signature', 'path', 'shopify_verification'];
         const rawPartsOriginalOrder: string[] = [];
         for (const part of rawQueryString.split('&')) {
           if (!part) continue; // Skip empty parts from double &&
           const eqIndex = part.indexOf('=');
           // Handle both "key=value" and "key" (no equals) forms
           const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
-          if (rawKey === 'hmac' || rawKey === 'signature') continue;
+          if (excludeParams.includes(rawKey)) continue;
           rawPartsOriginalOrder.push(part); // Keep entire part as-is (preserves empty values)
         }
         const message1 = rawPartsOriginalOrder.join('&');
@@ -7551,7 +7553,7 @@ Output format: Markdown with clear section headings.`;
         // METHOD 2: Standard Shopify HMAC (decoded values, sorted alphabetically)
         // Per older Shopify docs: Remove hmac, sort remaining params alphabetically, join with &
         const sortedKeys = Object.keys(queryParams)
-          .filter(key => key !== 'hmac' && key !== 'signature')
+          .filter(key => !excludeParams.includes(key))
           .sort();
         
         const message2 = sortedKeys.map(key => `${key}=${queryParams[key]}`).join('&');
@@ -7569,7 +7571,7 @@ Output format: Markdown with clear section headings.`;
           const eqIndex = part.indexOf('=');
           const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
           const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
-          if (rawKey === 'hmac' || rawKey === 'signature') continue;
+          if (excludeParams.includes(rawKey)) continue;
           rawPairs.push({ key: rawKey, value: rawValue, original: part });
         }
         rawPairs.sort((a, b) => a.key.localeCompare(b.key));
@@ -7590,7 +7592,7 @@ Output format: Markdown with clear section headings.`;
           const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
           const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
           const decodedKey = decodeURIComponent(rawKey);
-          if (decodedKey === 'hmac' || decodedKey === 'signature') continue;
+          if (excludeParams.includes(decodedKey)) continue;
           const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
           decodedOriginalOrder.push(eqIndex !== -1 ? `${decodedKey}=${decodedValue}` : decodedKey);
         }
@@ -7926,13 +7928,15 @@ Output format: Markdown with clear section headings.`;
           // METHOD 1 (PRIMARY): Raw query string in ORIGINAL ORDER, just filter hmac/signature
           // This is how Shopify actually signs - exact bytes, original order, no sorting
           // IMPORTANT: Keep ALL parts including empty values (e.g., "scope=") to preserve byte order
+          // ALSO filter out 'path' and 'shopify_verification' which Vercel adds but Shopify doesn't sign
+          const excludeParams = ['hmac', 'signature', 'path', 'shopify_verification'];
           const rawPartsOriginalOrder: string[] = [];
           for (const part of rawQueryString.split('&')) {
             if (!part) continue; // Skip empty parts from double &&
             const eqIndex = part.indexOf('=');
             // Handle both "key=value" and "key" (no equals) forms
             const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
-            if (rawKey === 'hmac' || rawKey === 'signature') continue;
+            if (excludeParams.includes(rawKey)) continue;
             rawPartsOriginalOrder.push(part); // Keep entire part as-is (preserves empty values)
           }
           const message1 = rawPartsOriginalOrder.join('&');
@@ -7946,7 +7950,7 @@ Output format: Markdown with clear section headings.`;
           // METHOD 2: Standard Shopify HMAC (decoded values, sorted alphabetically)
           // Per older Shopify docs: Remove hmac, sort remaining params alphabetically, join with &
           const sortedKeys = Object.keys(queryParams)
-            .filter(key => key !== 'hmac' && key !== 'signature')
+            .filter(key => !excludeParams.includes(key))
             .sort();
           
           const message2 = sortedKeys.map(key => `${key}=${queryParams[key]}`).join('&');
@@ -7964,7 +7968,7 @@ Output format: Markdown with clear section headings.`;
             const eqIndex = part.indexOf('=');
             const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
             const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
-            if (rawKey === 'hmac' || rawKey === 'signature') continue;
+            if (excludeParams.includes(rawKey)) continue;
             rawPairs.push({ key: rawKey, value: rawValue, original: part });
           }
           rawPairs.sort((a, b) => a.key.localeCompare(b.key));
@@ -7985,7 +7989,7 @@ Output format: Markdown with clear section headings.`;
             const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
             const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
             const decodedKey = decodeURIComponent(rawKey);
-            if (decodedKey === 'hmac' || decodedKey === 'signature') continue;
+            if (excludeParams.includes(decodedKey)) continue;
             const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
             decodedOriginalOrder.push(eqIndex !== -1 ? `${decodedKey}=${decodedValue}` : decodedKey);
           }
