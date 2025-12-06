@@ -7498,8 +7498,6 @@ Output format: Markdown with clear section headings.`;
         return res.status(500).json({ error: 'Server configuration error' });
       }
       
-      console.log('  API Secret (trimmed) length:', apiSecret.length);
-      
       // Validate timestamp freshness (prevent replay attacks)
       const requestTime = parseInt(timestamp as string, 10);
       const currentTime = Math.floor(Date.now() / 1000);
@@ -7510,65 +7508,101 @@ Output format: Markdown with clear section headings.`;
         return res.status(403).json({ error: 'Request timestamp expired' });
       }
       
-      // HMAC Verification Helper - tries multiple methods per Shopify docs
-      const verifyShopifyHmac = (providedHmac: string, queryParams: Record<string, string>, secret: string): { valid: boolean; method: string; computed: string } => {
-        // Method 1: Standard Shopify HMAC (decoded values, sorted alphabetically)
-        // Per docs: Remove hmac, sort remaining params alphabetically, join with &
-        const sortedKeys = Object.keys(queryParams)
-          .filter(key => key !== 'hmac' && key !== 'signature')
-          .sort();
+      // HMAC Verification Helper - Shopify OAuth HMAC verification
+      // CRITICAL: Shopify signs the raw query string in original order, not sorted!
+      const verifyShopifyHmac = (providedHmac: string, queryParams: Record<string, string>, secret: string): { valid: boolean; method: string; computed: string; allAttempts: Array<{method: string; message: string; computed: string}> } => {
+        const allAttempts: Array<{method: string; message: string; computed: string}> = [];
         
-        const message1 = sortedKeys.map(key => `${key}=${queryParams[key]}`).join('&');
-        const computed1 = crypto.createHmac('sha256', secret).update(message1).digest('hex');
+        // Safe comparison using timing-safe equal
+        const safeCompare = (a: string, b: string): boolean => {
+          if (a.length !== b.length) return false;
+          try {
+            return crypto.timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
+          } catch {
+            return a === b;
+          }
+        };
         
-        if (computed1 === providedHmac) {
-          return { valid: true, method: 'standard', computed: computed1 };
-        }
-        
-        // Method 2: Try with raw URL encoding preserved for special chars
+        // Get raw query string from URL
         const rawUrl = req.originalUrl || req.url;
         const queryStringStart = rawUrl.indexOf('?');
         const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
         
-        // Parse and rebuild without decoding values
-        const rawPairs: Array<{ key: string; value: string }> = [];
+        // METHOD 1 (PRIMARY): Raw query string in ORIGINAL ORDER, just filter hmac/signature
+        // This is how Shopify actually signs - exact bytes, original order, no sorting
+        // IMPORTANT: Keep ALL parts including empty values (e.g., "scope=") to preserve byte order
+        const rawPartsOriginalOrder: string[] = [];
         for (const part of rawQueryString.split('&')) {
+          if (!part) continue; // Skip empty parts from double &&
           const eqIndex = part.indexOf('=');
-          if (eqIndex === -1) continue;
-          const rawKey = part.substring(0, eqIndex);
-          const rawValue = part.substring(eqIndex + 1);
+          // Handle both "key=value" and "key" (no equals) forms
+          const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
           if (rawKey === 'hmac' || rawKey === 'signature') continue;
-          rawPairs.push({ key: rawKey, value: rawValue });
+          rawPartsOriginalOrder.push(part); // Keep entire part as-is (preserves empty values)
+        }
+        const message1 = rawPartsOriginalOrder.join('&');
+        const computed1 = crypto.createHmac('sha256', secret).update(message1).digest('hex');
+        allAttempts.push({ method: 'raw-original-order', message: message1, computed: computed1 });
+        
+        if (safeCompare(computed1, providedHmac)) {
+          return { valid: true, method: 'raw-original-order', computed: computed1, allAttempts };
+        }
+        
+        // METHOD 2: Standard Shopify HMAC (decoded values, sorted alphabetically)
+        // Per older Shopify docs: Remove hmac, sort remaining params alphabetically, join with &
+        const sortedKeys = Object.keys(queryParams)
+          .filter(key => key !== 'hmac' && key !== 'signature')
+          .sort();
+        
+        const message2 = sortedKeys.map(key => `${key}=${queryParams[key]}`).join('&');
+        const computed2 = crypto.createHmac('sha256', secret).update(message2).digest('hex');
+        allAttempts.push({ method: 'sorted-decoded', message: message2, computed: computed2 });
+        
+        if (safeCompare(computed2, providedHmac)) {
+          return { valid: true, method: 'sorted-decoded', computed: computed2, allAttempts };
+        }
+        
+        // METHOD 3: Raw query string sorted (encoded values preserved, sorted by raw key)
+        const rawPairs: Array<{ key: string; value: string; original: string }> = [];
+        for (const part of rawQueryString.split('&')) {
+          if (!part) continue;
+          const eqIndex = part.indexOf('=');
+          const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
+          const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
+          if (rawKey === 'hmac' || rawKey === 'signature') continue;
+          rawPairs.push({ key: rawKey, value: rawValue, original: part });
         }
         rawPairs.sort((a, b) => a.key.localeCompare(b.key));
-        const message2 = rawPairs.map(p => `${p.key}=${p.value}`).join('&');
-        const computed2 = crypto.createHmac('sha256', secret).update(message2).digest('hex');
+        // Reconstruct using original format (handles both key=value and key forms)
+        const message3 = rawPairs.map(p => p.original.includes('=') ? `${p.key}=${p.value}` : p.key).join('&');
+        const computed3 = crypto.createHmac('sha256', secret).update(message3).digest('hex');
+        allAttempts.push({ method: 'raw-sorted', message: message3, computed: computed3 });
         
-        if (computed2 === providedHmac) {
-          return { valid: true, method: 'raw-encoded', computed: computed2 };
+        if (safeCompare(computed3, providedHmac)) {
+          return { valid: true, method: 'raw-sorted', computed: computed3, allAttempts };
         }
         
-        // Method 3: Decoded values with + preserved (not converted to space)
-        const decodedPairs: Array<{ key: string; value: string }> = [];
+        // METHOD 4: Fully decoded, original order
+        const decodedOriginalOrder: string[] = [];
         for (const part of rawQueryString.split('&')) {
+          if (!part) continue;
           const eqIndex = part.indexOf('=');
-          if (eqIndex === -1) continue;
-          const rawKey = part.substring(0, eqIndex);
-          const rawValue = part.substring(eqIndex + 1);
+          const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
+          const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
           const decodedKey = decodeURIComponent(rawKey);
           if (decodedKey === 'hmac' || decodedKey === 'signature') continue;
-          const decodedValue = decodeURIComponent(rawValue);
-          decodedPairs.push({ key: decodedKey, value: decodedValue });
+          const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
+          decodedOriginalOrder.push(eqIndex !== -1 ? `${decodedKey}=${decodedValue}` : decodedKey);
         }
-        decodedPairs.sort((a, b) => a.key.localeCompare(b.key));
-        const message3 = decodedPairs.map(p => `${p.key}=${p.value}`).join('&');
-        const computed3 = crypto.createHmac('sha256', secret).update(message3).digest('hex');
+        const message4 = decodedOriginalOrder.join('&');
+        const computed4 = crypto.createHmac('sha256', secret).update(message4).digest('hex');
+        allAttempts.push({ method: 'decoded-original-order', message: message4, computed: computed4 });
         
-        if (computed3 === providedHmac) {
-          return { valid: true, method: 'decoded', computed: computed3 };
+        if (safeCompare(computed4, providedHmac)) {
+          return { valid: true, method: 'decoded-original-order', computed: computed4, allAttempts };
         }
         
-        return { valid: false, method: 'none', computed: computed1 };
+        return { valid: false, method: 'none', computed: computed1, allAttempts };
       };
       
       // Build query params from Express parsed query
@@ -7581,22 +7615,22 @@ Output format: Markdown with clear section headings.`;
       
       const hmacResult = verifyShopifyHmac(hmac as string, queryParams, apiSecret);
       
-      // Debug logging - ALWAYS log for HMAC debugging
-      console.log('🔐 [HMAC DEBUG - INSTALL] Verification attempt:');
-      console.log('  Shop:', shopDomain);
-      console.log('  Timestamp:', timestamp, '| Current:', currentTime);
-      console.log('  API Secret length:', apiSecret.length);
-      console.log('  API Secret preview:', apiSecret.substring(0, 4) + '...' + apiSecret.substring(apiSecret.length - 4));
-      console.log('  Query params:', Object.keys(queryParams).filter(k => k !== 'hmac').join(', '));
-      console.log('  Provided HMAC:', hmac);
-      console.log('  Computed HMAC:', hmacResult.computed);
-      console.log('  Verification result:', hmacResult.valid ? '✅ VALID' : '❌ FAILED');
-      console.log('  Method used:', hmacResult.method);
+      // Debug logging - controlled by SHOPIFY_HMAC_DEBUG env var (set to 'true' for verbose logging)
+      const hmacDebug = process.env.SHOPIFY_HMAC_DEBUG === 'true';
       
-      // Show canonical message for debugging
-      const debugKeys = Object.keys(queryParams).filter(k => k !== 'hmac' && k !== 'signature').sort();
-      const debugMessage = debugKeys.map(k => `${k}=${queryParams[k]}`).join('&');
-      console.log('  Canonical message:', debugMessage);
+      console.log('🔐 [HMAC INSTALL]', hmacResult.valid ? '✅ VALID' : '❌ FAILED', 
+        `shop=${shopDomain} method=${hmacResult.method}`);
+      
+      if (hmacDebug) {
+        console.log('  [DEBUG] Timestamp:', timestamp, '| Current:', currentTime);
+        console.log('  [DEBUG] API Secret length:', apiSecret.length);
+        console.log('  [DEBUG] Query params:', Object.keys(queryParams).filter(k => k !== 'hmac').join(', '));
+        console.log('  [DEBUG] HMAC provided:', (hmac as string).substring(0, 16) + '...');
+        for (const attempt of hmacResult.allAttempts) {
+          const match = attempt.computed === (hmac as string) ? '✅' : '❌';
+          console.log(`  [DEBUG] ${match} ${attempt.method}: computed=${attempt.computed.substring(0, 16)}...`);
+        }
+      }
       
       if (!hmacResult.valid) {
         console.error('❌ HMAC verification failed during installation for shop:', shopDomain);
@@ -7869,66 +7903,101 @@ Output format: Markdown with clear section headings.`;
           return res.status(500).send('Server configuration error');
         }
         
-        console.log('  API Secret (trimmed) length:', apiSecret.length);
-        console.log('  API Secret first 10 chars:', apiSecret.substring(0, 10) + '...');
-        
-        // HMAC Verification Helper - tries multiple methods per Shopify docs
-        const verifyCallbackHmac = (providedHmac: string, queryParams: Record<string, string>, secret: string): { valid: boolean; method: string; computed: string } => {
-          // Method 1: Standard Shopify HMAC (decoded values, sorted alphabetically)
-          const sortedKeys = Object.keys(queryParams)
-            .filter(key => key !== 'hmac' && key !== 'signature')
-            .sort();
+        // HMAC Verification Helper - Shopify OAuth callback HMAC verification
+        // CRITICAL: Shopify signs the raw query string in original order, not sorted!
+        const verifyCallbackHmac = (providedHmac: string, queryParams: Record<string, string>, secret: string): { valid: boolean; method: string; computed: string; allAttempts: Array<{method: string; message: string; computed: string}> } => {
+          const allAttempts: Array<{method: string; message: string; computed: string}> = [];
           
-          const message1 = sortedKeys.map(key => `${key}=${queryParams[key]}`).join('&');
-          const computed1 = crypto.createHmac('sha256', secret).update(message1).digest('hex');
+          // Safe comparison using timing-safe equal
+          const safeCompare = (a: string, b: string): boolean => {
+            if (a.length !== b.length) return false;
+            try {
+              return crypto.timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
+            } catch {
+              return a === b;
+            }
+          };
           
-          if (computed1 === providedHmac) {
-            return { valid: true, method: 'standard', computed: computed1 };
-          }
-          
-          // Method 2: Try with raw URL encoding preserved
+          // Get raw query string from URL
           const rawUrl = req.originalUrl || req.url;
           const queryStringStart = rawUrl.indexOf('?');
           const rawQueryString = queryStringStart !== -1 ? rawUrl.substring(queryStringStart + 1) : '';
           
-          const rawPairs: Array<{ key: string; value: string }> = [];
+          // METHOD 1 (PRIMARY): Raw query string in ORIGINAL ORDER, just filter hmac/signature
+          // This is how Shopify actually signs - exact bytes, original order, no sorting
+          // IMPORTANT: Keep ALL parts including empty values (e.g., "scope=") to preserve byte order
+          const rawPartsOriginalOrder: string[] = [];
           for (const part of rawQueryString.split('&')) {
+            if (!part) continue; // Skip empty parts from double &&
             const eqIndex = part.indexOf('=');
-            if (eqIndex === -1) continue;
-            const rawKey = part.substring(0, eqIndex);
-            const rawValue = part.substring(eqIndex + 1);
+            // Handle both "key=value" and "key" (no equals) forms
+            const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
             if (rawKey === 'hmac' || rawKey === 'signature') continue;
-            rawPairs.push({ key: rawKey, value: rawValue });
+            rawPartsOriginalOrder.push(part); // Keep entire part as-is (preserves empty values)
+          }
+          const message1 = rawPartsOriginalOrder.join('&');
+          const computed1 = crypto.createHmac('sha256', secret).update(message1).digest('hex');
+          allAttempts.push({ method: 'raw-original-order', message: message1, computed: computed1 });
+          
+          if (safeCompare(computed1, providedHmac)) {
+            return { valid: true, method: 'raw-original-order', computed: computed1, allAttempts };
+          }
+          
+          // METHOD 2: Standard Shopify HMAC (decoded values, sorted alphabetically)
+          // Per older Shopify docs: Remove hmac, sort remaining params alphabetically, join with &
+          const sortedKeys = Object.keys(queryParams)
+            .filter(key => key !== 'hmac' && key !== 'signature')
+            .sort();
+          
+          const message2 = sortedKeys.map(key => `${key}=${queryParams[key]}`).join('&');
+          const computed2 = crypto.createHmac('sha256', secret).update(message2).digest('hex');
+          allAttempts.push({ method: 'sorted-decoded', message: message2, computed: computed2 });
+          
+          if (safeCompare(computed2, providedHmac)) {
+            return { valid: true, method: 'sorted-decoded', computed: computed2, allAttempts };
+          }
+          
+          // METHOD 3: Raw query string sorted (encoded values preserved, sorted by raw key)
+          const rawPairs: Array<{ key: string; value: string; original: string }> = [];
+          for (const part of rawQueryString.split('&')) {
+            if (!part) continue;
+            const eqIndex = part.indexOf('=');
+            const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
+            const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
+            if (rawKey === 'hmac' || rawKey === 'signature') continue;
+            rawPairs.push({ key: rawKey, value: rawValue, original: part });
           }
           rawPairs.sort((a, b) => a.key.localeCompare(b.key));
-          const message2 = rawPairs.map(p => `${p.key}=${p.value}`).join('&');
-          const computed2 = crypto.createHmac('sha256', secret).update(message2).digest('hex');
+          // Reconstruct using original format (handles both key=value and key forms)
+          const message3 = rawPairs.map(p => p.original.includes('=') ? `${p.key}=${p.value}` : p.key).join('&');
+          const computed3 = crypto.createHmac('sha256', secret).update(message3).digest('hex');
+          allAttempts.push({ method: 'raw-sorted', message: message3, computed: computed3 });
           
-          if (computed2 === providedHmac) {
-            return { valid: true, method: 'raw-encoded', computed: computed2 };
+          if (safeCompare(computed3, providedHmac)) {
+            return { valid: true, method: 'raw-sorted', computed: computed3, allAttempts };
           }
           
-          // Method 3: Fully decoded values
-          const decodedPairs: Array<{ key: string; value: string }> = [];
+          // METHOD 4: Fully decoded, original order
+          const decodedOriginalOrder: string[] = [];
           for (const part of rawQueryString.split('&')) {
+            if (!part) continue;
             const eqIndex = part.indexOf('=');
-            if (eqIndex === -1) continue;
-            const rawKey = part.substring(0, eqIndex);
-            const rawValue = part.substring(eqIndex + 1);
+            const rawKey = eqIndex !== -1 ? part.substring(0, eqIndex) : part;
+            const rawValue = eqIndex !== -1 ? part.substring(eqIndex + 1) : '';
             const decodedKey = decodeURIComponent(rawKey);
             if (decodedKey === 'hmac' || decodedKey === 'signature') continue;
-            const decodedValue = decodeURIComponent(rawValue);
-            decodedPairs.push({ key: decodedKey, value: decodedValue });
+            const decodedValue = decodeURIComponent(rawValue.replace(/\+/g, ' '));
+            decodedOriginalOrder.push(eqIndex !== -1 ? `${decodedKey}=${decodedValue}` : decodedKey);
           }
-          decodedPairs.sort((a, b) => a.key.localeCompare(b.key));
-          const message3 = decodedPairs.map(p => `${p.key}=${p.value}`).join('&');
-          const computed3 = crypto.createHmac('sha256', secret).update(message3).digest('hex');
+          const message4 = decodedOriginalOrder.join('&');
+          const computed4 = crypto.createHmac('sha256', secret).update(message4).digest('hex');
+          allAttempts.push({ method: 'decoded-original-order', message: message4, computed: computed4 });
           
-          if (computed3 === providedHmac) {
-            return { valid: true, method: 'decoded', computed: computed3 };
+          if (safeCompare(computed4, providedHmac)) {
+            return { valid: true, method: 'decoded-original-order', computed: computed4, allAttempts };
           }
           
-          return { valid: false, method: 'none', computed: computed1 };
+          return { valid: false, method: 'none', computed: computed1, allAttempts };
         };
         
         // Build query params from Express parsed query
@@ -7941,20 +8010,28 @@ Output format: Markdown with clear section headings.`;
         
         const callbackHmacResult = verifyCallbackHmac(hmac as string, callbackQueryParams, apiSecret);
         
-        // Debug logging
-        console.log('🔐 [HMAC DEBUG - CALLBACK] Verification attempt:');
-        console.log('  Shop:', shopDomain);
-        console.log('  API Secret length:', apiSecret.length);
-        console.log('  Query params:', Object.keys(callbackQueryParams).filter(k => k !== 'hmac').join(', '));
-        console.log('  Provided HMAC:', hmac);
-        console.log('  Computed HMAC:', callbackHmacResult.computed);
-        console.log('  Verification result:', callbackHmacResult.valid ? '✅ VALID' : '❌ FAILED');
-        console.log('  Method used:', callbackHmacResult.method);
+        // Debug logging - controlled by SHOPIFY_HMAC_DEBUG env var (set to 'true' for verbose logging)
+        const hmacDebug = process.env.SHOPIFY_HMAC_DEBUG === 'true';
+        
+        console.log('🔐 [HMAC CALLBACK]', callbackHmacResult.valid ? '✅ VALID' : '❌ FAILED', 
+          `shop=${shopDomain} method=${callbackHmacResult.method}`);
+        
+        if (hmacDebug) {
+          console.log('  [DEBUG] API Secret length:', apiSecret.length);
+          console.log('  [DEBUG] Query params:', Object.keys(callbackQueryParams).filter(k => k !== 'hmac').join(', '));
+          console.log('  [DEBUG] HMAC provided:', (hmac as string).substring(0, 16) + '...');
+          for (const attempt of callbackHmacResult.allAttempts) {
+            const match = attempt.computed === (hmac as string) ? '✅' : '❌';
+            console.log(`  [DEBUG] ${match} ${attempt.method}: computed=${attempt.computed.substring(0, 16)}...`);
+          }
+        }
         
         if (!callbackHmacResult.valid) {
           console.error('❌ HMAC verification failed for callback from shop:', shopDomain);
           console.error('  All verification methods failed. Check SHOPIFY_API_SECRET.');
-          await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          console.error('  Provided HMAC (full):', hmac);
+          console.error('  Best computed HMAC (full):', callbackHmacResult.computed);
+          await db!.delete(oauthStates).where(eq(oauthStates.state, state as string));
           return res.status(403).send('HMAC verification failed');
         }
         console.log('✅ HMAC verified successfully for callback (method:', callbackHmacResult.method + ')');
