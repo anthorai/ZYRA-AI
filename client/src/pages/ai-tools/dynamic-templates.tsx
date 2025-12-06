@@ -192,7 +192,7 @@ export default function DynamicTemplates() {
     <PageShell
       title="Dynamic Tone Templates"
       subtitle="Transform your product descriptions to match different brand voices and tones using AI"
-      backTo="/campaigns"
+      backTo="/dashboard"
     >
       {/* Process Overview */}
       <DashboardCard

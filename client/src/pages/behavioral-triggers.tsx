@@ -242,7 +242,7 @@ export default function BehavioralTriggersPage() {
     <PageShell
       title="Behavioral Triggers"
       subtitle="Set up automated marketing actions based on customer behavior"
-      backTo="/campaigns"
+      backTo="/dashboard"
       rightActions={
         <Button
           variant="outline"
