@@ -7490,12 +7490,15 @@ Output format: Markdown with clear section headings.`;
 
       // Import crypto once at the top of this block
       const crypto = await import('crypto');
-      const apiSecret = process.env.SHOPIFY_API_SECRET;
+      // IMPORTANT: Trim whitespace/newlines - Vercel preserves trailing chars in env vars
+      const apiSecret = (process.env.SHOPIFY_API_SECRET || '').trim();
       
       if (!apiSecret) {
         console.error('❌ SHOPIFY_API_SECRET not configured');
         return res.status(500).json({ error: 'Server configuration error' });
       }
+      
+      console.log('  API Secret (trimmed) length:', apiSecret.length);
       
       // Validate timestamp freshness (prevent replay attacks)
       const requestTime = parseInt(timestamp as string, 10);
@@ -7857,13 +7860,17 @@ Output format: Markdown with clear section headings.`;
       if (hmac) {
         console.log('📋 Step 4: Verifying HMAC signature...');
         const crypto = await import('crypto');
-        const apiSecret = process.env.SHOPIFY_API_SECRET;
+        // IMPORTANT: Trim whitespace/newlines - Vercel preserves trailing chars in env vars
+        const apiSecret = (process.env.SHOPIFY_API_SECRET || '').trim();
         
         if (!apiSecret) {
           console.error('❌ SHOPIFY_API_SECRET not configured');
           await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
           return res.status(500).send('Server configuration error');
         }
+        
+        console.log('  API Secret (trimmed) length:', apiSecret.length);
+        console.log('  API Secret first 10 chars:', apiSecret.substring(0, 10) + '...');
         
         // HMAC Verification Helper - tries multiple methods per Shopify docs
         const verifyCallbackHmac = (providedHmac: string, queryParams: Record<string, string>, secret: string): { valid: boolean; method: string; computed: string } => {
@@ -7967,8 +7974,9 @@ Output format: Markdown with clear section headings.`;
 
       // Step 5: Exchange code for access token
       console.log('📋 Step 5: Exchanging authorization code for access token...');
-      const apiKey = process.env.SHOPIFY_API_KEY;
-      const apiSecret = process.env.SHOPIFY_API_SECRET;
+      const apiKey = (process.env.SHOPIFY_API_KEY || '').trim();
+      // Re-retrieve and trim for token exchange (apiSecret was scoped inside HMAC block)
+      const tokenApiSecret = (process.env.SHOPIFY_API_SECRET || '').trim();
       const accessTokenUrl = `https://${shop}/admin/oauth/access_token`;
       console.log('  Token URL:', accessTokenUrl);
       
@@ -7977,7 +7985,7 @@ Output format: Markdown with clear section headings.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           client_id: apiKey,
-          client_secret: apiSecret,
+          client_secret: tokenApiSecret,
           code
         })
       });
