@@ -2086,6 +2086,10 @@ export class MemStorage {
       .slice(0, limit);
   }
 
+  // Bulk optimization data storage
+  private bulkOptimizationJobsData: Map<string, BulkOptimizationJob> = new Map();
+  private bulkOptimizationItemsData: Map<string, BulkOptimizationItem> = new Map();
+
   // Payment transaction methods (mock implementation)
   private paymentTransactionsData: Map<string, any> = new Map();
 
@@ -2379,45 +2383,115 @@ export class MemStorage {
     // No-op in memory storage
   }
 
-  // Bulk Optimization stub methods
+  // Bulk Optimization methods
   async getBulkOptimizationJobs(userId: string): Promise<BulkOptimizationJob[]> {
-    return [];
+    return Array.from(this.bulkOptimizationJobsData.values())
+      .filter(job => job.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async getBulkOptimizationJob(jobId: string): Promise<BulkOptimizationJob | undefined> {
-    return undefined;
+    return this.bulkOptimizationJobsData.get(jobId);
   }
 
   async createBulkOptimizationJob(data: InsertBulkOptimizationJob): Promise<BulkOptimizationJob> {
-    throw new Error("Bulk optimization not supported in memory storage");
+    const id = randomUUID();
+    const newJob: BulkOptimizationJob = {
+      id,
+      userId: data.userId,
+      name: data.name,
+      status: data.status || 'pending',
+      totalItems: data.totalItems || 0,
+      processedItems: data.processedItems || 0,
+      optimizedItems: data.optimizedItems || 0,
+      failedItems: data.failedItems || 0,
+      skippedItems: data.skippedItems || 0,
+      progressPercentage: data.progressPercentage || 0,
+      errorMessage: data.errorMessage || null,
+      startedAt: data.startedAt || null,
+      completedAt: data.completedAt || null,
+      estimatedCompletionTime: data.estimatedCompletionTime || null,
+      aiModel: data.aiModel || 'gpt-4o-mini',
+      totalTokensUsed: data.totalTokensUsed || 0,
+      estimatedCost: data.estimatedCost || '0',
+      metadata: data.metadata || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.bulkOptimizationJobsData.set(id, newJob);
+    return newJob;
   }
 
   async updateBulkOptimizationJob(jobId: string, updates: Partial<BulkOptimizationJob>): Promise<BulkOptimizationJob> {
-    throw new Error("Bulk optimization not supported in memory storage");
+    const job = this.bulkOptimizationJobsData.get(jobId);
+    if (!job) throw new Error("Bulk optimization job not found");
+    const updatedJob = { ...job, ...updates, updatedAt: new Date() };
+    this.bulkOptimizationJobsData.set(jobId, updatedJob);
+    return updatedJob;
   }
 
   async deleteBulkOptimizationJob(jobId: string): Promise<void> {
-    // No-op
+    this.bulkOptimizationJobsData.delete(jobId);
+    // Also delete all items for this job
+    const itemsToDelete = Array.from(this.bulkOptimizationItemsData.entries())
+      .filter(([_, item]) => item.jobId === jobId)
+      .map(([itemId]) => itemId);
+    itemsToDelete.forEach(itemId => this.bulkOptimizationItemsData.delete(itemId));
   }
 
   async getBulkOptimizationItems(jobId: string): Promise<BulkOptimizationItem[]> {
-    return [];
+    return Array.from(this.bulkOptimizationItemsData.values())
+      .filter(item => item.jobId === jobId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
   }
 
   async getBulkOptimizationItem(itemId: string): Promise<BulkOptimizationItem | undefined> {
-    return undefined;
+    return this.bulkOptimizationItemsData.get(itemId);
   }
 
   async createBulkOptimizationItem(data: InsertBulkOptimizationItem): Promise<BulkOptimizationItem> {
-    throw new Error("Bulk optimization not supported in memory storage");
+    const id = randomUUID();
+    const newItem: BulkOptimizationItem = {
+      id,
+      jobId: data.jobId,
+      productId: data.productId || null,
+      productName: data.productName,
+      category: data.category || null,
+      keyFeatures: data.keyFeatures || null,
+      targetAudience: data.targetAudience || null,
+      status: data.status || 'pending',
+      seoTitle: data.seoTitle || null,
+      seoDescription: data.seoDescription || null,
+      metaTitle: data.metaTitle || null,
+      metaDescription: data.metaDescription || null,
+      keywords: data.keywords || null,
+      seoScore: data.seoScore || null,
+      searchIntent: data.searchIntent || null,
+      suggestedKeywords: data.suggestedKeywords || null,
+      errorMessage: data.errorMessage || null,
+      tokensUsed: data.tokensUsed || 0,
+      processingTimeMs: data.processingTimeMs || null,
+      retryCount: data.retryCount || 0,
+      maxRetries: data.maxRetries || 3,
+      publishedToShopify: data.publishedToShopify || false,
+      publishedAt: data.publishedAt || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.bulkOptimizationItemsData.set(id, newItem);
+    return newItem;
   }
 
   async updateBulkOptimizationItem(itemId: string, updates: Partial<BulkOptimizationItem>): Promise<BulkOptimizationItem> {
-    throw new Error("Bulk optimization not supported in memory storage");
+    const item = this.bulkOptimizationItemsData.get(itemId);
+    if (!item) throw new Error("Bulk optimization item not found");
+    const updatedItem = { ...item, ...updates, updatedAt: new Date() };
+    this.bulkOptimizationItemsData.set(itemId, updatedItem);
+    return updatedItem;
   }
 
   async deleteBulkOptimizationItem(itemId: string): Promise<void> {
-    // No-op
+    this.bulkOptimizationItemsData.delete(itemId);
   }
 }
 
