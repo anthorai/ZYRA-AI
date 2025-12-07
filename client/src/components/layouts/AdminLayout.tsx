@@ -168,25 +168,23 @@ function AdminSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="bg-[#16162c] p-6">
-        <div className="flex items-center space-x-3 mb-4" data-testid="admin-sidebar-logo">
-          <img 
-            src={zyraLogo} 
-            alt="Zyra AI Logo" 
-            className="w-10 h-10 rounded-lg"
-          />
-          <span className="text-xl sm:text-2xl font-bold text-foreground">Zyra AI</span>
+      <SidebarHeader className="bg-[#16162c] px-4 py-4">
+        <div className="flex items-start gap-3" data-testid="admin-sidebar-logo">
+          <Link href="/dashboard">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground flex-shrink-0 mt-0.5"
+              data-testid="button-back-to-app"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div className="flex flex-col">
+            <span className="text-base font-semibold text-foreground">Zyra AI Admin</span>
+            <span className="text-sm text-muted-foreground">Control Panel</span>
+          </div>
         </div>
-        <Link href="/dashboard">
-          <Button
-            variant="ghost"
-            className="w-full justify-start px-4 py-3 h-auto text-muted-foreground hover:text-foreground hover:bg-muted"
-            data-testid="button-back-to-app"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="ml-3">Back to App</span>
-          </Button>
-        </Link>
       </SidebarHeader>
       <SidebarContent className="bg-[#16162c]">
         {adminNavGroups.map((group) => (
