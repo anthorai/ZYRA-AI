@@ -309,7 +309,8 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/error-logs"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/error-logs");
-      return res.json();
+      const data = await res.json();
+      return data.errors || [];
     },
   });
 
