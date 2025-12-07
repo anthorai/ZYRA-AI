@@ -637,9 +637,14 @@ export default function BulkOptimization() {
     
     const content: { seoTitle?: string; metaDescription?: string; tags?: string[] } = {};
     
-    if (approved.has('seoTitle') || approved.has('metaTitle')) {
+    // For Shopify, both SEO Title and Meta Title map to the title tag
+    // Prioritize Meta Title if approved, otherwise use SEO Title
+    if (approved.has('metaTitle')) {
       const metaTitle = getEditedValue(item.id, 'metaTitle', item.metaTitle) as string;
       if (metaTitle) content.seoTitle = metaTitle;
+    } else if (approved.has('seoTitle')) {
+      const seoTitle = getEditedValue(item.id, 'seoTitle', item.seoTitle) as string;
+      if (seoTitle) content.seoTitle = seoTitle;
     }
     
     if (approved.has('metaDescription')) {
