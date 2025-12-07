@@ -168,14 +168,22 @@ function AdminSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-6">
-        <div className="flex items-center space-x-3 mb-8" data-testid="admin-sidebar-logo">
-          <img 
-            src={zyraLogo} 
-            alt="Zyra AI Logo" 
-            className="w-10 h-10 rounded-lg"
-          />
-          <span className="text-xl sm:text-2xl font-bold text-foreground">Zyra AI</span>
+      <SidebarHeader className="p-4">
+        <div className="flex items-start gap-3" data-testid="admin-sidebar-header">
+          <Link href="/dashboard">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground flex-shrink-0"
+              data-testid="button-back-to-app"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div className="flex flex-col pt-1">
+            <h1 className="text-lg font-bold text-foreground">Admin Panel</h1>
+            <p className="text-sm text-muted-foreground">Manage your application</p>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
