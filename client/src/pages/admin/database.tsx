@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -88,6 +90,17 @@ interface QueryResult {
   executionTime: number;
 }
 
+interface DatabaseStatsResponse {
+  tables: Array<{
+    name: string;
+    row_count: number;
+    size_estimate: string;
+  }>;
+  total_tables: number;
+  total_rows: number;
+  database_size: string;
+}
+
 function StatCard({
   title,
   value,
@@ -148,6 +161,19 @@ export default function DatabaseControls() {
   const [isViewPoliciesDialogOpen, setIsViewPoliciesDialogOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState<TableSchema | null>(null);
 
+  // Fetch real database stats from API
+  const { data: dbStats, isLoading: isLoadingStats } = useQuery<DatabaseStatsResponse>({
+    queryKey: ['/api/admin/database-stats'],
+  });
+
+  // Transform API data to match TableSchema interface
+  const tables: TableSchema[] = dbStats?.tables?.map(t => ({
+    name: t.name,
+    rowCount: t.row_count,
+    sizeEstimate: t.size_estimate,
+    lastUpdated: "Just now", // API doesn't provide this, using placeholder
+  })) || [];
+
   const mockBackups: BackupEntry[] = [
     {
       id: "backup-1",
@@ -179,17 +205,6 @@ export default function DatabaseControls() {
     },
   ];
 
-  const mockTables: TableSchema[] = [
-    { name: "users", rowCount: 2847, sizeEstimate: "8.2 MB", lastUpdated: "2 min ago" },
-    { name: "products", rowCount: 15632, sizeEstimate: "24.5 MB", lastUpdated: "5 min ago" },
-    { name: "orders", rowCount: 8421, sizeEstimate: "12.1 MB", lastUpdated: "1 min ago" },
-    { name: "sessions", rowCount: 542, sizeEstimate: "1.8 MB", lastUpdated: "Just now" },
-    { name: "subscriptions", rowCount: 1256, sizeEstimate: "2.4 MB", lastUpdated: "10 min ago" },
-    { name: "campaigns", rowCount: 328, sizeEstimate: "0.9 MB", lastUpdated: "30 min ago" },
-    { name: "error_logs", rowCount: 12847, sizeEstimate: "18.6 MB", lastUpdated: "Just now" },
-    { name: "audit_logs", rowCount: 45621, sizeEstimate: "32.4 MB", lastUpdated: "1 min ago" },
-  ];
-
   const mockRlsPolicies = [
     { table: "users", policy: "Users can only view their own data", type: "SELECT" },
     { table: "products", policy: "Store owners can manage their products", type: "ALL" },
@@ -197,7 +212,8 @@ export default function DatabaseControls() {
     { table: "subscriptions", policy: "Users can view their own subscription", type: "SELECT" },
   ];
 
-  const totalRowCount = mockTables.reduce((acc, t) => acc + t.rowCount, 0);
+  // Use real data from API, fallback to calculated value from tables array
+  const totalRowCount = dbStats?.total_rows ?? tables.reduce((acc, t) => acc + t.rowCount, 0);
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
@@ -334,9 +350,6 @@ export default function DatabaseControls() {
           <p className="text-muted-foreground">
             Manage database operations, backups, and maintenance tasks
           </p>
-          <Badge variant="outline" className="w-fit">
-            UI Mock - No real database changes
-          </Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -347,27 +360,60 @@ export default function DatabaseControls() {
             variant={isConnected ? "success" : "danger"}
             testId="stat-connection-status"
           />
-          <StatCard
-            title="Database Size"
-            value="156.8 MB"
-            description="Total storage used"
-            icon={HardDrive}
-            testId="stat-database-size"
-          />
-          <StatCard
-            title="Table Count"
-            value={mockTables.length}
-            description="Active tables"
-            icon={TableIcon}
-            testId="stat-table-count"
-          />
-          <StatCard
-            title="Total Rows"
-            value={totalRowCount.toLocaleString()}
-            description="Approximate count"
-            icon={Database}
-            testId="stat-row-count"
-          />
+          {isLoadingStats ? (
+            <Card data-testid="stat-database-size">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-20" />
+              </CardContent>
+            </Card>
+          ) : (
+            <StatCard
+              title="Database Size"
+              value={dbStats?.database_size || "N/A"}
+              description="Total storage used"
+              icon={HardDrive}
+              testId="stat-database-size"
+            />
+          )}
+          {isLoadingStats ? (
+            <Card data-testid="stat-table-count">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-12" />
+              </CardContent>
+            </Card>
+          ) : (
+            <StatCard
+              title="Table Count"
+              value={dbStats?.total_tables ?? tables.length}
+              description="Active tables"
+              icon={TableIcon}
+              testId="stat-table-count"
+            />
+          )}
+          {isLoadingStats ? (
+            <Card data-testid="stat-row-count">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ) : (
+            <StatCard
+              title="Total Rows"
+              value={totalRowCount.toLocaleString()}
+              description="Approximate count"
+              icon={Database}
+              testId="stat-row-count"
+            />
+          )}
           <StatCard
             title="Last Backup"
             value="1h ago"
@@ -487,41 +533,54 @@ export default function DatabaseControls() {
             </CardHeader>
             <CardContent>
               <div className="max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Table Name</TableHead>
-                      <TableHead className="text-right">Rows</TableHead>
-                      <TableHead className="text-right">Size</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockTables.map((table) => (
-                      <TableRow key={table.name} data-testid={`row-table-${table.name}`}>
-                        <TableCell className="font-mono text-sm">
-                          {table.name}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {table.rowCount.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right text-sm text-muted-foreground">
-                          {table.sizeEstimate}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleViewSchema(table)}
-                            data-testid={`button-view-schema-${table.name}`}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                {isLoadingStats ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-8 w-8" />
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Table Name</TableHead>
+                        <TableHead className="text-right">Rows</TableHead>
+                        <TableHead className="text-right">Size</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tables.map((table) => (
+                        <TableRow key={table.name} data-testid={`row-table-${table.name}`}>
+                          <TableCell className="font-mono text-sm">
+                            {table.name}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {table.rowCount.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right text-sm text-muted-foreground">
+                            {table.sizeEstimate}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleViewSchema(table)}
+                              data-testid={`button-view-schema-${table.name}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
             </CardContent>
           </Card>

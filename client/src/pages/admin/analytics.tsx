@@ -72,6 +72,21 @@ interface ErrorLogsResponse {
   offset: number;
 }
 
+interface AnalyticsSummaryResponse {
+  users: {
+    total: number;
+    newThisWeek: number;
+  };
+  subscriptions: {
+    active: number;
+    byType: Array<{ type: string; count: number }>;
+  };
+  aiUsage: {
+    totalTokens: number;
+    totalCost: number;
+  };
+}
+
 const userGrowthData = [
   { date: "Nov 1", users: 1245, newSignups: 45 },
   { date: "Nov 5", users: 1312, newSignups: 67 },
@@ -245,6 +260,14 @@ export default function AdminAnalytics() {
     },
   });
 
+  const { data: analyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsSummaryResponse>({
+    queryKey: ["/api/admin/analytics-summary"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics-summary");
+      return res.json();
+    },
+  });
+
   const resolveErrorMutation = useMutation({
     mutationFn: async (errorId: string) => {
       const res = await apiRequest("PATCH", `/api/admin/error-logs/${errorId}/resolve`);
@@ -325,11 +348,11 @@ export default function AdminAnalytics() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 title="Total Users"
-                value="2,234"
+                value={analyticsData?.users?.total?.toLocaleString() || "0"}
                 icon={Users}
                 trend="+12.5% this month"
                 trendDirection="up"
-                isMock
+                isLoading={analyticsLoading}
                 testId="stat-total-users"
               />
               <StatCard
@@ -342,12 +365,12 @@ export default function AdminAnalytics() {
                 testId="stat-dau"
               />
               <StatCard
-                title="New Signups (Today)"
-                value="78"
+                title="New This Week"
+                value={analyticsData?.users?.newThisWeek?.toLocaleString() || "0"}
                 icon={UserPlus}
-                trend="+23% vs yesterday"
-                trendDirection="up"
-                isMock
+                trend="Last 7 days"
+                trendDirection="neutral"
+                isLoading={analyticsLoading}
                 testId="stat-new-signups"
               />
               <StatCard
@@ -402,7 +425,6 @@ export default function AdminAnalytics() {
                       <Line type="monotone" dataKey="newSignups" stroke="#00F0FF" strokeWidth={2} name="New Signups" dot={{ fill: "#00F0FF" }} />
                     </AreaChart>
                   </ResponsiveContainer>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
 
@@ -433,7 +455,6 @@ export default function AdminAnalytics() {
                       <Bar dataKey="new" stackId="a" fill="#00F0FF" name="New Users" />
                     </BarChart>
                   </ResponsiveContainer>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
             </div>
@@ -466,7 +487,6 @@ export default function AdminAnalytics() {
                       <Bar dataKey="usage" fill="#A78BFA" name="Usage Count" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
 
@@ -513,7 +533,6 @@ export default function AdminAnalytics() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
             </div>
@@ -565,12 +584,11 @@ export default function AdminAnalytics() {
           <TabsContent value="ai-usage" className="space-y-6" data-testid="content-ai-usage">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                title="Tokens Today"
-                value={todayTokens.toLocaleString()}
+                title="Total Tokens Used"
+                value={analyticsData?.aiUsage?.totalTokens?.toLocaleString() || "0"}
                 icon={Zap}
-                trend="+5.2% vs yesterday"
-                trendDirection="up"
-                isMock
+                description="All-time token usage"
+                isLoading={analyticsLoading}
                 testId="stat-tokens-today"
               />
               <StatCard
@@ -591,11 +609,11 @@ export default function AdminAnalytics() {
                 testId="stat-tokens-month"
               />
               <StatCard
-                title="Est. Cost (Month)"
-                value={`$${estimatedCost.toFixed(2)}`}
+                title="Total AI Cost"
+                value={`$${(analyticsData?.aiUsage?.totalCost || 0).toFixed(2)}`}
                 icon={DollarSign}
-                description="Based on current usage"
-                isMock
+                description="All-time AI costs"
+                isLoading={analyticsLoading}
                 testId="stat-ai-cost"
               />
             </div>
@@ -635,7 +653,6 @@ export default function AdminAnalytics() {
                       />
                     </LineChart>
                   </ResponsiveContainer>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
 
@@ -682,7 +699,6 @@ export default function AdminAnalytics() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
             </div>
@@ -863,22 +879,19 @@ export default function AdminAnalytics() {
           <TabsContent value="revenue" className="space-y-6" data-testid="content-revenue">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                title="MRR"
-                value="$16,234"
-                icon={DollarSign}
-                trend="+11.5% this month"
-                trendDirection="up"
-                isMock
+                title="Active Subscriptions"
+                value={analyticsData?.subscriptions?.active?.toLocaleString() || "0"}
+                icon={CreditCard}
+                description="Currently active subscribers"
+                isLoading={analyticsLoading}
                 testId="stat-mrr"
               />
               <StatCard
-                title="ARPU"
-                value="$51"
+                title="Subscription Breakdown"
+                value={analyticsData?.subscriptions?.byType?.map(s => `${s.type}: ${s.count}`).join(", ") || "No data"}
                 icon={Users}
-                trend="+4.1% this month"
-                trendDirection="up"
-                description="Average Revenue Per User"
-                isMock
+                description="By plan type"
+                isLoading={analyticsLoading}
                 testId="stat-arpu"
               />
               <StatCard
@@ -942,7 +955,6 @@ export default function AdminAnalytics() {
                       />
                     </AreaChart>
                   </ResponsiveContainer>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
 
@@ -989,7 +1001,6 @@ export default function AdminAnalytics() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">Mock data - Ready for real API integration</p>
                 </CardContent>
               </Card>
             </div>
