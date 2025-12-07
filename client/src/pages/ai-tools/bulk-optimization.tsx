@@ -1220,12 +1220,12 @@ export default function BulkOptimization() {
               {jobs.map((job) => (
                 <div
                   key={job.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30 hover-elevate cursor-pointer"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg bg-slate-800/30 hover-elevate cursor-pointer"
                   onClick={() => setViewingJobId(job.id)}
                   data-testid={`job-${job.id}`}
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <span className="font-medium text-white">{job.totalItems} Products</span>
                       {getStatusBadge(job.status)}
                     </div>
@@ -1236,7 +1236,7 @@ export default function BulkOptimization() {
                       <Progress value={job.progressPercentage} className="h-1 mt-2" />
                     )}
                   </div>
-                  <div className="text-right space-y-1">
+                  <div className="text-left sm:text-right space-y-1 flex-shrink-0">
                     <div className="text-sm">
                       <span className="text-green-400">{job.optimizedItems} optimized</span>
                       {job.failedItems > 0 && (
