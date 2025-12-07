@@ -430,25 +430,25 @@ export default function AIEngineControls() {
           </div>
         </div>
 
-        <Card className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800" data-testid="section-emergency-controls">
+        <Card data-testid="section-emergency-controls">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
-              <Shield className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-destructive" />
               Emergency Controls
             </CardTitle>
-            <CardDescription className="text-red-600/80 dark:text-red-400/80">
+            <CardDescription>
               Critical controls for emergency situations. Use with caution.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg bg-red-100/50 dark:bg-red-900/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg bg-destructive/10">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-500/20">
-                  <Power className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div className="p-2 rounded-lg bg-destructive/20">
+                  <Power className="h-5 w-5 text-destructive" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-red-700 dark:text-red-300">AI Kill Switch</h4>
-                  <p className="text-sm text-red-600/80 dark:text-red-400/80">
+                  <h4 className="font-medium">AI Kill Switch</h4>
+                  <p className="text-sm text-muted-foreground">
                     Immediately disable all AI operations across the platform
                   </p>
                 </div>
@@ -462,10 +462,10 @@ export default function AIEngineControls() {
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg bg-muted/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg bg-muted/50">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/20">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <div className="p-2 rounded-lg bg-muted">
+                  <AlertTriangle className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <h4 className="font-medium">Fallback Mode</h4>
@@ -475,7 +475,7 @@ export default function AIEngineControls() {
                 </div>
               </div>
               <div className="flex items-center gap-2 self-end sm:self-center">
-                <span className={`text-xs font-medium ${fallbackMode ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                <span className={`text-xs font-medium ${fallbackMode ? "text-primary" : "text-muted-foreground"}`}>
                   {fallbackMode ? "Active" : "Inactive"}
                 </span>
                 <Switch
@@ -665,10 +665,10 @@ export default function AIEngineControls() {
           </DialogContent>
         </Dialog>
 
-        <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800" data-testid="notice-api-pending">
+        <Card data-testid="notice-api-pending">
           <CardContent className="flex items-center gap-3 py-4">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
+            <AlertTriangle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
               Backend API integration is pending. All changes are currently stored in local state and will not persist across page reloads.
             </p>
           </CardContent>
