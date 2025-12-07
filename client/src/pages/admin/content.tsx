@@ -287,6 +287,7 @@ function LandingPageSection() {
               value={content.heroHeadline}
               onChange={(e) => setContent({ ...content, heroHeadline: e.target.value })}
               placeholder="Enter hero headline..."
+              className="bg-background"
             />
           </div>
           <div className="space-y-2">
@@ -298,6 +299,7 @@ function LandingPageSection() {
               onChange={(e) => setContent({ ...content, heroSubheadline: e.target.value })}
               placeholder="Enter hero subheadline..."
               rows={3}
+              className="bg-background"
             />
           </div>
           <div className="space-y-2">
@@ -308,6 +310,7 @@ function LandingPageSection() {
               value={content.ctaButtonText}
               onChange={(e) => setContent({ ...content, ctaButtonText: e.target.value })}
               placeholder="Enter CTA button text..."
+              className="bg-background"
             />
           </div>
         </CardContent>
@@ -326,6 +329,7 @@ function LandingPageSection() {
               onChange={(e) => setNewFeature(e.target.value)}
               placeholder="Add new feature highlight..."
               onKeyDown={(e) => e.key === "Enter" && addFeature()}
+              className="bg-background"
             />
             <Button onClick={addFeature} data-testid="button-add-feature">
               <Plus className="h-4 w-4 mr-2" />
