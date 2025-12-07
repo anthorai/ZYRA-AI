@@ -289,7 +289,7 @@ export async function getModelFromUserPreferences(
   description: string;
 }> {
   // Get user's plan and preferences
-  const user = await storage.getUserById(userId);
+  const user = await storage.getUser(userId);
   const userPlan = (user?.plan || 'trial') as SubscriptionPlan;
   
   // Get performance mode from preferences

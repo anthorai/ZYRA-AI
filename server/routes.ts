@@ -2984,7 +2984,7 @@ Respond with JSON:
       const SERP_CREDIT_COST = 10;
       
       // Get user's current credits (from subscription plan)
-      const userProfile = await supabaseStorage.getUserById(userId);
+      const userProfile = await supabaseStorage.getUser(userId);
       if (!userProfile) {
         return res.status(404).json({ message: "User not found" });
       }
