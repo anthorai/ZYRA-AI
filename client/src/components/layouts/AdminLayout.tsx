@@ -168,35 +168,25 @@ function AdminSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-sidebar-border bg-[#16162c]">
-        <div className="flex items-center gap-3 px-2 py-3">
+      <SidebarHeader className="bg-[#16162c] p-6">
+        <div className="flex items-center space-x-3 mb-4" data-testid="admin-sidebar-logo">
           <img 
             src={zyraLogo} 
             alt="Zyra AI Logo" 
             className="w-10 h-10 rounded-lg"
           />
-          <div className="flex flex-col">
-            <span className="text-lg font-bold text-foreground">
-              Zyra AI
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Admin Panel
-            </span>
-          </div>
+          <span className="text-xl sm:text-2xl font-bold text-foreground">Zyra AI</span>
         </div>
-        <div className="px-2 pb-2">
-          <Link href="/dashboard">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 text-muted-foreground"
-              data-testid="button-back-to-app"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to App
-            </Button>
-          </Link>
-        </div>
+        <Link href="/dashboard">
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-4 py-3 h-auto text-muted-foreground hover:text-foreground hover:bg-muted"
+            data-testid="button-back-to-app"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="ml-3">Back to App</span>
+          </Button>
+        </Link>
       </SidebarHeader>
       <SidebarContent className="bg-[#16162c]">
         {adminNavGroups.map((group) => (
