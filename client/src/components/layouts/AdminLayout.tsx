@@ -168,7 +168,7 @@ function AdminSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4 bg-[#16162c]">
+      <SidebarHeader className="p-4 bg-[#16162c] pt-[7px] pb-[7px]">
         <div className="flex items-start gap-3" data-testid="admin-sidebar-header">
           <Link href="/dashboard">
             <Button
