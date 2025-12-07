@@ -294,7 +294,7 @@ export default function AdminSubscriptions() {
 
   return (
     <AdminLayout>
-      <div className="p-6">
+      <div className="p-6 bg-[#0D0D1F]">
         <div className="mb-6">
           <h1 className="text-2xl font-bold" data-testid="heading-admin-subscriptions">Users & Subscriptions</h1>
           <p className="text-muted-foreground">Manage merchant subscriptions and credits</p>
