@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
@@ -60,6 +59,35 @@ interface SupportTicket {
   };
 }
 
+interface SystemHealthResponse {
+  timestamp: string;
+  overallStatus: string;
+  services: {
+    database: { status: string; message: string };
+    aiEngine: { status: string; message: string };
+    emailService: { status: string; message: string };
+    shopifyIntegration: { status: string; message: string; activeConnections?: number };
+  };
+}
+
+interface AnalyticsSummaryResponse {
+  timestamp: string;
+  users: {
+    total: number;
+    signupsToday: number;
+    signupsThisWeek: number;
+    signupsThisMonth: number;
+  };
+  subscriptions: {
+    active: number;
+  };
+  featureUsage: Array<{ feature: string; totalUsage: number }>;
+  aiUsage: {
+    totalGenerations: number;
+    totalTokensUsed: number;
+  };
+}
+
 function StatCard({
   title,
   value,
@@ -67,7 +95,6 @@ function StatCard({
   icon: Icon,
   trend,
   trendDirection,
-  isMock = false,
   isLoading = false,
   testId,
 }: {
@@ -77,7 +104,6 @@ function StatCard({
   icon: React.ElementType;
   trend?: string;
   trendDirection?: "up" | "down" | "neutral";
-  isMock?: boolean;
   isLoading?: boolean;
   testId: string;
 }) {
@@ -86,11 +112,6 @@ function StatCard({
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
-          {isMock && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              mock
-            </Badge>
-          )}
         </CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
@@ -259,6 +280,22 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
+function mapApiStatusToComponentStatus(apiStatus: string): "online" | "degraded" | "offline" | "checking" {
+  switch (apiStatus) {
+    case "operational":
+      return "online";
+    case "degraded":
+    case "no_connections":
+    case "not_configured":
+      return "degraded";
+    case "unavailable":
+    case "error":
+      return "offline";
+    default:
+      return "checking";
+  }
+}
+
 export default function AdminDashboard() {
   const { data: usersResponse, isLoading: usersLoading } = useQuery<PaginatedUsersResponse>({
     queryKey: ["/api/admin/users-with-subscriptions"],
@@ -284,13 +321,21 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: dbStatus, isLoading: dbLoading } = useQuery<{ success: boolean }>({
-    queryKey: ["/api/admin/db-test"],
+  const { data: systemHealth, isLoading: healthLoading } = useQuery<SystemHealthResponse>({
+    queryKey: ["/api/admin/system-health"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/admin/db-test");
+      const res = await apiRequest("GET", "/api/admin/system-health");
       return res.json();
     },
     retry: false,
+  });
+
+  const { data: analyticsSummary, isLoading: analyticsLoading } = useQuery<AnalyticsSummaryResponse>({
+    queryKey: ["/api/admin/analytics-summary"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics-summary");
+      return res.json();
+    },
   });
 
   const totalUsers = usersResponse?.pagination?.total || usersResponse?.users?.length || 0;
@@ -310,12 +355,32 @@ export default function AdminDashboard() {
   const recentSignups = users
     .filter((u) => u.createdAt)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 3);
+    .slice(0, 5);
 
   const recentTickets = supportTickets
     ?.filter((t) => t.created_at)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 2) || [];
+    .slice(0, 3) || [];
+
+  const aiCreditsToday = analyticsSummary?.aiUsage?.totalGenerations 
+    ? analyticsSummary.aiUsage.totalGenerations.toLocaleString()
+    : "N/A";
+
+  const databaseStatus = healthLoading 
+    ? "checking" 
+    : mapApiStatusToComponentStatus(systemHealth?.services?.database?.status || "");
+  
+  const aiEngineStatus = healthLoading 
+    ? "checking" 
+    : mapApiStatusToComponentStatus(systemHealth?.services?.aiEngine?.status || "");
+  
+  const emailServiceStatus = healthLoading 
+    ? "checking" 
+    : mapApiStatusToComponentStatus(systemHealth?.services?.emailService?.status || "");
+  
+  const shopifyStatus = healthLoading 
+    ? "checking" 
+    : mapApiStatusToComponentStatus(systemHealth?.services?.shopifyIntegration?.status || "");
 
   return (
     <AdminLayout>
@@ -348,12 +413,11 @@ export default function AdminDashboard() {
             testId="stat-active-subscriptions"
           />
           <StatCard
-            title="AI Credits Used Today"
-            value="2,847"
+            title="AI Generations"
+            value={aiCreditsToday}
             icon={Zap}
-            trend="+8% vs yesterday"
-            trendDirection="up"
-            isMock
+            description="Total AI generations"
+            isLoading={analyticsLoading}
             testId="stat-ai-credits"
           />
           <StatCard
@@ -366,11 +430,9 @@ export default function AdminDashboard() {
           />
           <StatCard
             title="Revenue This Month"
-            value="$12,450"
+            value="Coming soon"
             icon={DollarSign}
-            trend="+15% vs last month"
-            trendDirection="up"
-            isMock
+            description="Payment analytics pending"
             testId="stat-revenue"
           />
           <StatCard
@@ -421,20 +483,6 @@ export default function AdminDashboard() {
                       testId={`activity-ticket-${index}`}
                     />
                   ))}
-                  <ActivityItem
-                    type="subscription"
-                    title="Plan Upgrade (mock)"
-                    description="user@example.com upgraded to Pro"
-                    time="2h ago"
-                    testId="activity-subscription-mock"
-                  />
-                  <ActivityItem
-                    type="system"
-                    title="System Event (mock)"
-                    description="Scheduled backup completed"
-                    time="4h ago"
-                    testId="activity-system-mock"
-                  />
                 </>
               )}
             </CardContent>
@@ -451,31 +499,28 @@ export default function AdminDashboard() {
             <CardContent className="space-y-3">
               <SystemHealthItem
                 name="Database"
-                status={dbLoading ? "checking" : dbStatus?.success ? "online" : "offline"}
+                status={databaseStatus}
                 icon={Database}
                 testId="health-database"
               />
               <SystemHealthItem
                 name="AI Engine"
-                status="online"
+                status={aiEngineStatus}
                 icon={Brain}
                 testId="health-ai-engine"
               />
               <SystemHealthItem
                 name="Email Service"
-                status="online"
+                status={emailServiceStatus}
                 icon={Mail}
                 testId="health-email"
               />
               <SystemHealthItem
                 name="Shopify Integration"
-                status="online"
+                status={shopifyStatus}
                 icon={ShoppingBag}
                 testId="health-shopify"
               />
-              <p className="text-xs text-muted-foreground pt-2">
-                AI Engine, Email, and Shopify status are simulated (mock)
-              </p>
             </CardContent>
           </Card>
         </div>
