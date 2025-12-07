@@ -213,7 +213,7 @@ export default function DatabaseControls() {
   ];
 
   // Use real data from API, fallback to calculated value from tables array
-  const totalRowCount = dbStats?.total_rows ?? tables.reduce((acc, t) => acc + (t.rowCount || 0), 0) || 0;
+  const totalRowCount = dbStats?.total_rows ?? (tables.reduce((acc, t) => acc + (t.rowCount || 0), 0) || 0);
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
