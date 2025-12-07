@@ -496,6 +496,7 @@ export default function ContentModerationPage() {
                   onChange={(e) => setNewKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddKeyword()}
                   data-testid="input-new-keyword"
+                  className="bg-background"
                 />
                 <Button onClick={handleAddKeyword} data-testid="button-add-keyword">
                   <Plus className="h-4 w-4" />
