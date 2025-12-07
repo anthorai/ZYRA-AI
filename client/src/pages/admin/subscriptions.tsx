@@ -49,7 +49,9 @@ import {
   Coins,
   Check,
   AlertCircle,
-  Trash2
+  Trash2,
+  Ban,
+  UserCheck
 } from "lucide-react";
 
 interface UserWithSubscription {
@@ -203,6 +205,42 @@ export default function AdminSubscriptions() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete user account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserStatusMutation = useMutation({
+    mutationFn: async ({ userId, status }: { userId: string; status: 'active' | 'suspended' }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/admin/users/${userId}/status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to update user status');
+      }
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: variables.status === 'suspended' ? "User Suspended" : "User Activated",
+        description: variables.status === 'suspended' 
+          ? "User has been suspended and cannot access the platform" 
+          : "User has been reactivated and can access the platform",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users-with-subscriptions'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user status",
         variant: "destructive",
       });
     },
@@ -392,11 +430,18 @@ export default function AdminSubscriptions() {
                           <div className="flex flex-col">
                             <span className="font-medium">{user.fullName || 'Unknown'}</span>
                             <span className="text-sm text-muted-foreground">{user.email}</span>
-                            {user.role === 'admin' && (
-                              <Badge variant="outline" className="w-fit mt-1 text-xs bg-primary/10 text-primary border-primary/30">
-                                Admin
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-1 mt-1">
+                              {user.role === 'admin' && (
+                                <Badge variant="outline" className="w-fit text-xs bg-primary/10 text-primary border-primary/30">
+                                  Admin
+                                </Badge>
+                              )}
+                              {user.plan === 'suspended' && (
+                                <Badge variant="destructive" className="w-fit text-xs">
+                                  Suspended
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -462,15 +507,38 @@ export default function AdminSubscriptions() {
                               <RefreshCw className={`w-4 h-4 ${resettingUserId === user.id ? 'animate-spin' : ''}`} />
                             </Button>
                             {user.role !== 'admin' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openDeleteDialog(user)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                data-testid={`button-delete-user-${user.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => updateUserStatusMutation.mutate({ 
+                                    userId: user.id, 
+                                    status: user.plan === 'suspended' ? 'active' : 'suspended' 
+                                  })}
+                                  disabled={updateUserStatusMutation.isPending}
+                                  className={user.plan === 'suspended' 
+                                    ? "text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20" 
+                                    : "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                                  }
+                                  title={user.plan === 'suspended' ? 'Activate User' : 'Suspend User'}
+                                  data-testid={`button-toggle-status-${user.id}`}
+                                >
+                                  {user.plan === 'suspended' ? (
+                                    <UserCheck className="w-4 h-4" />
+                                  ) : (
+                                    <Ban className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openDeleteDialog(user)}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  data-testid={`button-delete-user-${user.id}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
