@@ -143,13 +143,13 @@ export default function SupportInboxPage() {
               <div className="flex-1 min-w-[200px]">
                 <Label htmlFor="search" className="mb-2 block">Search</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <Input
                 id="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search tickets..."
-                className="pl-10 bg-slate-800/50 border-slate-600"
+                className="pr-10 bg-slate-800/50 border-slate-600"
                 data-testid="input-search-tickets"
               />
             </div>
