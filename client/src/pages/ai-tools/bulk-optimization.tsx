@@ -22,7 +22,8 @@ import {
   Trash2,
   Play,
   Target,
-  Search
+  Search,
+  Loader2
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -482,12 +483,21 @@ export default function BulkOptimization() {
                 className="w-full"
                 data-testid="button-create-job"
               >
-                {optimizationMode === 'competitive' ? (
-                  <Target className="w-4 h-4 mr-2" />
+                {createJobMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating optimization job...
+                  </>
                 ) : (
-                  <Zap className="w-4 h-4 mr-2" />
+                  <>
+                    {optimizationMode === 'competitive' ? (
+                      <Target className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Zap className="w-4 h-4 mr-2" />
+                    )}
+                    Create {optimizationMode === 'competitive' ? 'Competitive' : 'Fast'} Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''} - {selectedProducts.length * getCreditsPerProduct()} credits
+                  </>
                 )}
-                Create {optimizationMode === 'competitive' ? 'Competitive' : 'Fast'} Job for {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''} - {selectedProducts.length * getCreditsPerProduct()} credits
               </Button>
             )}
           </div>
