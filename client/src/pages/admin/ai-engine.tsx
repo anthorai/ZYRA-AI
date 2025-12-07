@@ -533,6 +533,7 @@ export default function AIEngineControls() {
                   type="number"
                   value={rateLimits.requestsPerMinutePerUser}
                   onChange={(e) => handleRateLimitChange("requestsPerMinutePerUser", e.target.value)}
+                  className="bg-background"
                   data-testid="input-rpm-user"
                 />
               </div>
@@ -543,6 +544,7 @@ export default function AIEngineControls() {
                   type="number"
                   value={rateLimits.requestsPerHourPerUser}
                   onChange={(e) => handleRateLimitChange("requestsPerHourPerUser", e.target.value)}
+                  className="bg-background"
                   data-testid="input-rph-user"
                 />
               </div>
@@ -553,6 +555,7 @@ export default function AIEngineControls() {
                   type="number"
                   value={rateLimits.globalRateLimit}
                   onChange={(e) => handleRateLimitChange("globalRateLimit", e.target.value)}
+                  className="bg-background"
                   data-testid="input-global-limit"
                 />
               </div>
