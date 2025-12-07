@@ -12723,7 +12723,8 @@ Output format: Markdown with clear section headings.`;
       const job = await bulkOptService.createJob(userId, productIds, 'Bulk Optimization Job', optimizationMode);
 
       // Fetch product details and create items for each product
-      const products = await storage.getProducts(userId);
+      // Use supabaseStorage since products are stored in Supabase (synced from Shopify)
+      const products = await supabaseStorage.getProducts(userId);
       const productMap = new Map(products.map(p => [p.id, p]));
       
       console.log(`📦 [BULK OPT] Creating items for job ${job.id}:`);
