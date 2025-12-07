@@ -384,12 +384,12 @@ export default function AdminSubscriptions() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Search by email or name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pl-10 bg-background text-foreground placeholder:text-muted-foreground"
+                    className="w-64 pr-10 bg-background text-foreground placeholder:text-muted-foreground"
                     data-testid="input-search-users"
                   />
                 </div>
