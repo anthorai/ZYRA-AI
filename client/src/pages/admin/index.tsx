@@ -348,9 +348,10 @@ export default function AdminDashboard() {
 
   const openTickets = supportTickets?.filter((t) => t.status === "open" || t.status === "in_progress").length || 0;
 
-  const unresolvedErrors = errorLogs?.filter((e) => !e.resolved).length || 0;
-  const errorRate = errorLogs?.length
-    ? ((unresolvedErrors / errorLogs.length) * 100).toFixed(1)
+  const errorLogsArray = Array.isArray(errorLogs) ? errorLogs : [];
+  const unresolvedErrors = errorLogsArray.filter((e) => !e.resolved).length;
+  const errorRate = errorLogsArray.length
+    ? ((unresolvedErrors / errorLogsArray.length) * 100).toFixed(1)
     : "0";
 
   const recentSignups = users
