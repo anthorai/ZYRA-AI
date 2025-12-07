@@ -12724,7 +12724,12 @@ Output format: Markdown with clear section headings.`;
       // Fetch product details and create items for each product
       const products = await storage.getProducts(userId);
       const productMap = new Map(products.map(p => [p.id, p]));
+      
+      console.log(`📦 [BULK OPT] Creating items for job ${job.id}:`);
+      console.log(`   - Requested productIds: ${JSON.stringify(productIds)}`);
+      console.log(`   - Available product IDs: ${JSON.stringify(products.map(p => p.id))}`);
 
+      let itemsCreated = 0;
       for (const productId of productIds) {
         const product = productMap.get(productId);
         if (product) {
@@ -12739,8 +12744,14 @@ Output format: Markdown with clear section headings.`;
             retryCount: 0,
             maxRetries: 3,
           });
+          itemsCreated++;
+          console.log(`   ✅ Created item for product: ${product.name}`);
+        } else {
+          console.log(`   ⚠️ Product not found: ${productId}`);
         }
       }
+      
+      console.log(`📦 [BULK OPT] Created ${itemsCreated} items for job ${job.id}`);
 
       // Trigger processing asynchronously (don't await - let it run in background)
       bulkOptService.processJob(job.id).catch(err => {
