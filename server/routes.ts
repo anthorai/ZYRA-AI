@@ -12718,7 +12718,35 @@ Output format: Markdown with clear section headings.`;
         return res.status(400).json({ error: "Invalid optimization mode. Must be 'fast' or 'competitive'" });
       }
 
+      // Create the job
       const job = await bulkOptService.createJob(userId, productIds, 'Bulk Optimization Job', optimizationMode);
+
+      // Fetch product details and create items for each product
+      const products = await storage.getProducts(userId);
+      const productMap = new Map(products.map(p => [p.id, p]));
+
+      for (const productId of productIds) {
+        const product = productMap.get(productId);
+        if (product) {
+          await storage.createBulkOptimizationItem({
+            jobId: job.id,
+            productId: product.id,
+            productName: product.name,
+            category: product.category || null,
+            keyFeatures: product.description?.substring(0, 500) || null,
+            targetAudience: null,
+            status: 'pending',
+            retryCount: 0,
+            maxRetries: 3,
+          });
+        }
+      }
+
+      // Trigger processing asynchronously (don't await - let it run in background)
+      bulkOptService.processJob(job.id).catch(err => {
+        console.error(`Background job ${job.id} processing failed:`, err);
+      });
+
       res.json(job);
     } catch (error: any) {
       console.error("Error creating bulk optimization job:", error);
