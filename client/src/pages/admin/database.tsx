@@ -561,7 +561,7 @@ export default function DatabaseControls() {
                             {table.name}
                           </TableCell>
                           <TableCell className="text-right text-sm">
-                            {table.rowCount.toLocaleString()}
+                            {(table.rowCount || 0).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right text-sm text-muted-foreground">
                             {table.sizeEstimate}
@@ -1008,7 +1008,7 @@ export default function DatabaseControls() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Row Count:</span>
-                  <p className="font-medium">{selectedTable?.rowCount.toLocaleString()}</p>
+                  <p className="font-medium">{(selectedTable?.rowCount || 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Size:</span>
