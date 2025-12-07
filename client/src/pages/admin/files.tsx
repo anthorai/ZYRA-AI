@@ -562,7 +562,7 @@ export default function FileManager() {
                     placeholder="Search files..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-48 pl-9"
+                    className="w-48 pl-9 bg-background"
                     data-testid="input-search-files"
                   />
                 </div>
