@@ -67,7 +67,7 @@ const DATAFORSEO_API = {
   username: process.env.DATAFORSEO_USERNAME || '',
   password: process.env.DATAFORSEO_PASSWORD || '',
   endpoints: {
-    googleOrganic: '/serp/google/organic/live',
+    googleOrganic: '/serp/google/organic/live/advanced',
   },
 };
 
