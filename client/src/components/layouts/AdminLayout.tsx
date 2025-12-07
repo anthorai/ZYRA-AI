@@ -17,8 +17,8 @@ import {
   FolderOpen,
   Database,
   ArrowLeft,
-  Sparkles,
 } from "lucide-react";
+import zyraLogo from "@assets/zyra logo_1758518826550.png";
 import {
   Sidebar,
   SidebarContent,
@@ -170,15 +170,17 @@ function AdminSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border bg-[#16162c]">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img 
+            src={zyraLogo} 
+            alt="Zyra AI Logo" 
+            className="w-10 h-10 rounded-lg"
+          />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-sidebar-foreground">
-              Zyra AI Admin
+            <span className="text-lg font-bold text-foreground">
+              Zyra AI
             </span>
-            <span className="text-xs text-sidebar-foreground/60">
-              Control Panel
+            <span className="text-xs text-muted-foreground">
+              Admin Panel
             </span>
           </div>
         </div>
@@ -187,7 +189,7 @@ function AdminSidebar() {
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+              className="w-full justify-start gap-2 text-muted-foreground"
               data-testid="button-back-to-app"
             >
               <ArrowLeft className="h-4 w-4" />
