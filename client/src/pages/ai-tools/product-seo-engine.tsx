@@ -782,20 +782,20 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                 className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500"
               >
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 gap-2 p-1">
-                      <TabsTrigger value="seo-title" data-testid="tab-seo-title" className="text-xs sm:text-sm">
+                    <TabsList className="flex w-full overflow-x-auto gap-1 p-1 h-auto">
+                      <TabsTrigger value="seo-title" data-testid="tab-seo-title" className="text-xs sm:text-sm flex-1 min-w-fit whitespace-nowrap px-2 sm:px-3">
                         SEO Title
                       </TabsTrigger>
-                      <TabsTrigger value="description" data-testid="tab-description" className="text-xs sm:text-sm">
+                      <TabsTrigger value="description" data-testid="tab-description" className="text-xs sm:text-sm flex-1 min-w-fit whitespace-nowrap px-2 sm:px-3">
                         Description
                       </TabsTrigger>
-                      <TabsTrigger value="meta-title" data-testid="tab-meta-title" className="text-xs sm:text-sm">
+                      <TabsTrigger value="meta-title" data-testid="tab-meta-title" className="text-xs sm:text-sm flex-1 min-w-fit whitespace-nowrap px-2 sm:px-3">
                         Meta Title
                       </TabsTrigger>
-                      <TabsTrigger value="meta-desc" data-testid="tab-meta-desc" className="text-xs sm:text-sm">
+                      <TabsTrigger value="meta-desc" data-testid="tab-meta-desc" className="text-xs sm:text-sm flex-1 min-w-fit whitespace-nowrap px-2 sm:px-3">
                         Meta Desc
                       </TabsTrigger>
-                      <TabsTrigger value="tags" data-testid="tab-tags" className="text-xs sm:text-sm">
+                      <TabsTrigger value="tags" data-testid="tab-tags" className="text-xs sm:text-sm flex-1 min-w-fit whitespace-nowrap px-2 sm:px-3">
                         Tags
                       </TabsTrigger>
                     </TabsList>
