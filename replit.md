@@ -73,6 +73,13 @@ AI-powered customer segmentation system that automatically categorizes customers
 ## System Design Choices
 The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend. It supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup. Performance is optimized with extensive database indexes, Upstash Redis caching for AI responses, and frontend optimizations.
 
+### Storage Architecture
+The application uses two storage implementations:
+- **MemStorage** (`storage`): In-memory storage for general data. Used for billing/dashboard operations.
+- **DatabaseStorage** (`dbStorage`): PostgreSQL-backed storage for persistent data. Used for bulk optimization jobs and items.
+
+**Important**: Bulk optimization jobs use `dbStorage` (PostgreSQL) to ensure jobs survive server restarts. This was fixed on Dec 7, 2025 - previously used MemStorage which caused jobs to show "0 optimized" after server restarts.
+
 # External Dependencies
 
 ## Database & Hosting

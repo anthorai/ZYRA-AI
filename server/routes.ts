@@ -76,7 +76,7 @@ import {
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
-import { storage } from "./storage";
+import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
 import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon } from "./db";
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
@@ -12700,8 +12700,9 @@ Output format: Markdown with clear section headings.`;
   // BULK OPTIMIZATION ROUTES
   // ========================
 
-  // Initialize bulk optimization service
-  const bulkOptService = new BulkOptimizationService(storage);
+  // Initialize bulk optimization service with database storage for persistence
+  // Using dbStorage instead of MemStorage so jobs survive server restarts
+  const bulkOptService = new BulkOptimizationService(dbStorage);
 
   // Create a new bulk optimization job
   app.post("/api/bulk-optimization", requireAuth, async (req, res) => {
@@ -12733,7 +12734,7 @@ Output format: Markdown with clear section headings.`;
       for (const productId of productIds) {
         const product = productMap.get(productId);
         if (product) {
-          await storage.createBulkOptimizationItem({
+          await dbStorage.createBulkOptimizationItem({
             jobId: job.id,
             productId: product.id,
             productName: product.name,
@@ -12769,7 +12770,7 @@ Output format: Markdown with clear section headings.`;
   app.get("/api/bulk-optimization", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const jobs = await storage.getBulkOptimizationJobs(userId);
+      const jobs = await dbStorage.getBulkOptimizationJobs(userId);
       res.json(jobs);
     } catch (error: any) {
       console.error("Error fetching bulk optimization jobs:", error);
@@ -12783,7 +12784,7 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { jobId } = req.params;
 
-      const job = await storage.getBulkOptimizationJob(jobId);
+      const job = await dbStorage.getBulkOptimizationJob(jobId);
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
@@ -12793,7 +12794,7 @@ Output format: Markdown with clear section headings.`;
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      const items = await storage.getBulkOptimizationItems(jobId);
+      const items = await dbStorage.getBulkOptimizationItems(jobId);
       res.json({ ...job, items });
     } catch (error: any) {
       console.error("Error fetching bulk optimization job:", error);
@@ -12807,7 +12808,7 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { jobId } = req.params;
 
-      const job = await storage.getBulkOptimizationJob(jobId);
+      const job = await dbStorage.getBulkOptimizationJob(jobId);
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
@@ -12844,7 +12845,7 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { jobId } = req.params;
 
-      const job = await storage.getBulkOptimizationJob(jobId);
+      const job = await dbStorage.getBulkOptimizationJob(jobId);
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
@@ -12872,7 +12873,7 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { jobId } = req.params;
 
-      const job = await storage.getBulkOptimizationJob(jobId);
+      const job = await dbStorage.getBulkOptimizationJob(jobId);
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
@@ -12882,7 +12883,7 @@ Output format: Markdown with clear section headings.`;
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      await storage.deleteBulkOptimizationJob(jobId);
+      await dbStorage.deleteBulkOptimizationJob(jobId);
       res.json({ message: "Job deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting bulk optimization job:", error);

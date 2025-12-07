@@ -2496,3 +2496,7 @@ export class MemStorage {
 }
 
 export const storage = new MemStorage();
+
+// Export DatabaseStorage for bulk optimization operations that need to persist to PostgreSQL
+// This is essential because bulk optimization jobs should survive server restarts
+export const dbStorage = process.env.DATABASE_URL ? new DatabaseStorage() : storage;
