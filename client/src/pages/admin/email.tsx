@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -40,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Mail,
   Send,
@@ -57,13 +60,13 @@ import {
   Bell,
   Smartphone,
   BarChart3,
-  Clock,
   Calendar,
   TrendingUp,
   TrendingDown,
   RefreshCw,
   Zap,
   FileText,
+  Inbox,
 } from "lucide-react";
 
 interface EmailServiceStatus {
@@ -111,6 +114,21 @@ interface EmailCampaign {
   openRate: number;
   clickRate: number;
   scheduledDate?: string;
+}
+
+function StatCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-32 mb-1" />
+        <Skeleton className="h-3 w-20" />
+      </CardContent>
+    </Card>
+  );
 }
 
 function StatCard({
@@ -186,6 +204,16 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
+function EmptyState({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <Icon className="h-12 w-12 text-muted-foreground/50 mb-4" />
+      <h3 className="text-lg font-medium text-muted-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground/70 max-w-sm">{description}</p>
+    </div>
+  );
+}
+
 export default function EmailNotificationControl() {
   const { toast } = useToast();
   const [showApiKey, setShowApiKey] = useState(false);
@@ -195,157 +223,144 @@ export default function EmailNotificationControl() {
   const [isDeleteTemplateDialogOpen, setIsDeleteTemplateDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [testEmailAddress, setTestEmailAddress] = useState("");
-  const [isSendingTest, setIsSendingTest] = useState(false);
 
   const [smtpConfig, setSMTPConfig] = useState<SMTPConfig>({
     provider: "sendgrid",
-    apiKey: "SG.xxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    apiKey: "",
     fromEmail: "noreply@zyra.ai",
     fromName: "Zyra AI",
   });
 
-  const mockServiceStatus: EmailServiceStatus = {
-    connected: true,
-    provider: "SendGrid",
-    dailyQuotaRemaining: 9847,
-    dailyQuotaTotal: 10000,
-    emailsSentToday: 153,
-    emailsSentThisMonth: 4782,
-    bounceRate: 0.8,
-    openRate: 42.5,
-    lastChecked: new Date(Date.now() - 300000).toISOString(),
-  };
+  const { data: serviceStatus, isLoading: isLoadingStatus } = useQuery<EmailServiceStatus>({
+    queryKey: ["/api/admin/email-service-status"],
+  });
 
-  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([
-    {
-      id: "1",
-      name: "Welcome Email",
-      type: "welcome",
-      subject: "Welcome to Zyra AI - Let's Get Started!",
-      lastUpdated: new Date(Date.now() - 86400000 * 2).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "2",
-      name: "Password Reset",
-      type: "password-reset",
-      subject: "Reset Your Password - Zyra AI",
-      lastUpdated: new Date(Date.now() - 86400000 * 5).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "3",
-      name: "Trial Expiring",
-      type: "billing",
-      subject: "Your Trial Ends in 3 Days - Upgrade Now",
-      lastUpdated: new Date(Date.now() - 86400000 * 3).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "4",
-      name: "Subscription Confirmation",
-      type: "billing",
-      subject: "Your Subscription is Confirmed!",
-      lastUpdated: new Date(Date.now() - 86400000 * 7).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "5",
-      name: "Payment Receipt",
-      type: "billing",
-      subject: "Payment Receipt - Zyra AI",
-      lastUpdated: new Date(Date.now() - 86400000 * 4).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "6",
-      name: "Payment Failed",
-      type: "billing",
-      subject: "Action Required: Payment Failed",
-      lastUpdated: new Date(Date.now() - 86400000 * 6).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "7",
-      name: "Cart Recovery",
-      type: "marketing",
-      subject: "You Left Something Behind!",
-      lastUpdated: new Date(Date.now() - 86400000).toISOString(),
-      isActive: true,
-    },
-    {
-      id: "8",
-      name: "Product Optimized Notification",
-      type: "system",
-      subject: "Your Product Has Been Optimized",
-      lastUpdated: new Date(Date.now() - 86400000 * 8).toISOString(),
-      isActive: true,
-    },
-  ]);
+  const { data: emailTemplates = [], isLoading: isLoadingTemplates } = useQuery<EmailTemplate[]>({
+    queryKey: ["/api/admin/email-templates"],
+  });
 
-  const [notificationChannels, setNotificationChannels] = useState<NotificationChannel[]>([
-    {
-      id: "email",
-      name: "Email Notifications",
-      type: "email",
-      enabled: true,
-      status: "connected",
-      provider: "SendGrid",
-    },
-    {
-      id: "sms",
-      name: "SMS Notifications",
-      type: "sms",
-      enabled: true,
-      status: "connected",
-      provider: "Twilio",
-    },
-    {
-      id: "push",
-      name: "Push Notifications",
-      type: "push",
-      enabled: false,
-      status: "disconnected",
-    },
-    {
-      id: "in-app",
-      name: "In-App Notifications",
-      type: "in-app",
-      enabled: true,
-      status: "connected",
-    },
-  ]);
+  const { data: notificationChannels = [], isLoading: isLoadingChannels } = useQuery<NotificationChannel[]>({
+    queryKey: ["/api/admin/notification-channels"],
+  });
 
-  const mockCampaigns: EmailCampaign[] = [
-    {
-      id: "1",
-      name: "Welcome Series",
-      status: "active",
-      sentCount: 1247,
-      openRate: 58.2,
-      clickRate: 12.4,
-    },
-    {
-      id: "2",
-      name: "Black Friday Promo",
-      status: "scheduled",
-      sentCount: 0,
-      openRate: 0,
-      clickRate: 0,
-      scheduledDate: new Date(Date.now() + 86400000 * 7).toISOString(),
-    },
-    {
-      id: "3",
-      name: "Feature Announcement",
-      status: "completed",
-      sentCount: 3892,
-      openRate: 45.6,
-      clickRate: 8.9,
-    },
-  ];
+  const { data: campaigns = [], isLoading: isLoadingCampaigns } = useQuery<EmailCampaign[]>({
+    queryKey: ["/api/admin/email-campaigns"],
+  });
 
-  const activeCampaigns = mockCampaigns.filter(c => c.status === "active").length;
-  const scheduledCampaigns = mockCampaigns.filter(c => c.status === "scheduled").length;
+  const updateTemplateMutation = useMutation({
+    mutationFn: async (template: Partial<EmailTemplate> & { id: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/email-templates/${template.id}`, template);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      toast({
+        title: "Template Updated",
+        description: "Email template has been updated successfully",
+      });
+      setIsEditTemplateDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (template: Omit<EmailTemplate, "id" | "lastUpdated">) => {
+      const res = await apiRequest("POST", "/api/admin/email-templates", template);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      toast({
+        title: "Template Created",
+        description: "New email template has been created",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Creation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/email-templates/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      toast({
+        title: "Template Deleted",
+        description: "Email template has been deleted",
+      });
+      setIsDeleteTemplateDialogOpen(false);
+      setSelectedTemplate(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Deletion Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleChannelMutation = useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/admin/notification-channels/${id}`, { enabled });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-channels"] });
+      const channel = notificationChannels.find(c => c.id === variables.id);
+      toast({
+        title: "Channel Updated",
+        description: `${channel?.name} ${variables.enabled ? "enabled" : "disabled"}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendTestEmailMutation = useMutation({
+    mutationFn: async (data: { to: string; fromEmail: string; fromName: string }) => {
+      const res = await apiRequest("POST", "/api/admin/send-test-email", data);
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Test Email Sent",
+        description: `Test email sent successfully to ${variables.to}`,
+      });
+      setIsTestEmailDialogOpen(false);
+      setTestEmailAddress("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Send Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const activeCampaigns = campaigns.filter(c => c.status === "active").length;
+  const scheduledCampaigns = campaigns.filter(c => c.status === "scheduled").length;
+  const avgOpenRate = campaigns.filter(c => c.sentCount > 0).length > 0
+    ? campaigns.filter(c => c.sentCount > 0).reduce((acc, c) => acc + c.openRate, 0) / campaigns.filter(c => c.sentCount > 0).length
+    : 0;
 
   const handleProviderChange = (value: string) => {
     setSMTPConfig(prev => ({ ...prev, provider: value as SMTPConfig["provider"] }));
@@ -365,33 +380,18 @@ export default function EmailNotificationControl() {
       return;
     }
 
-    setIsSendingTest(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSendingTest(false);
-
-    toast({
-      title: "Test Email Sent",
-      description: `Test email sent successfully to ${testEmailAddress}`,
+    sendTestEmailMutation.mutate({
+      to: testEmailAddress,
+      fromEmail: smtpConfig.fromEmail,
+      fromName: smtpConfig.fromName,
     });
-
-    setIsTestEmailDialogOpen(false);
-    setTestEmailAddress("");
   };
 
   const handleToggleChannel = (channelId: string) => {
-    setNotificationChannels(prev =>
-      prev.map(channel =>
-        channel.id === channelId
-          ? { ...channel, enabled: !channel.enabled }
-          : channel
-      )
-    );
-
     const channel = notificationChannels.find(c => c.id === channelId);
-    toast({
-      title: "Channel Updated",
-      description: `${channel?.name} ${channel?.enabled ? "disabled" : "enabled"}`,
-    });
+    if (channel) {
+      toggleChannelMutation.mutate({ id: channelId, enabled: !channel.enabled });
+    }
   };
 
   const handleEditTemplate = (template: EmailTemplate) => {
@@ -405,28 +405,18 @@ export default function EmailNotificationControl() {
   };
 
   const handleDuplicateTemplate = (template: EmailTemplate) => {
-    const newTemplate: EmailTemplate = {
-      ...template,
-      id: `${Date.now()}`,
+    createTemplateMutation.mutate({
       name: `${template.name} (Copy)`,
-      lastUpdated: new Date().toISOString(),
-    };
-    setEmailTemplates(prev => [...prev, newTemplate]);
-    toast({
-      title: "Template Duplicated",
-      description: `Created copy of "${template.name}"`,
+      type: template.type,
+      subject: template.subject,
+      isActive: template.isActive,
     });
   };
 
   const handleDeleteTemplate = () => {
-    if (!selectedTemplate) return;
-    setEmailTemplates(prev => prev.filter(t => t.id !== selectedTemplate.id));
-    toast({
-      title: "Template Deleted",
-      description: `"${selectedTemplate.name}" has been deleted`,
-    });
-    setIsDeleteTemplateDialogOpen(false);
-    setSelectedTemplate(null);
+    if (selectedTemplate) {
+      deleteTemplateMutation.mutate(selectedTemplate.id);
+    }
   };
 
   const getChannelIcon = (type: NotificationChannel["type"]) => {
@@ -500,44 +490,60 @@ export default function EmailNotificationControl() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <StatCard
-            title="SendGrid Status"
-            value={mockServiceStatus.connected ? "Connected" : "Disconnected"}
-            icon={mockServiceStatus.connected ? CheckCircle : XCircle}
-            variant={mockServiceStatus.connected ? "success" : "danger"}
-            description={`Checked ${formatTimeAgo(mockServiceStatus.lastChecked)}`}
-            testId="stat-sendgrid-status"
-          />
-          <StatCard
-            title="Daily Quota"
-            value={`${mockServiceStatus.dailyQuotaRemaining.toLocaleString()} / ${mockServiceStatus.dailyQuotaTotal.toLocaleString()}`}
-            icon={Zap}
-            description={`${((mockServiceStatus.dailyQuotaRemaining / mockServiceStatus.dailyQuotaTotal) * 100).toFixed(0)}% remaining`}
-            testId="stat-daily-quota"
-          />
-          <StatCard
-            title="Emails Today"
-            value={mockServiceStatus.emailsSentToday}
-            icon={Send}
-            description={`${mockServiceStatus.emailsSentThisMonth.toLocaleString()} this month`}
-            testId="stat-emails-today"
-          />
-          <StatCard
-            title="Bounce Rate"
-            value={`${mockServiceStatus.bounceRate}%`}
-            icon={TrendingDown}
-            variant={mockServiceStatus.bounceRate > 2 ? "warning" : "success"}
-            description="Last 30 days"
-            testId="stat-bounce-rate"
-          />
-          <StatCard
-            title="Open Rate"
-            value={`${mockServiceStatus.openRate}%`}
-            icon={TrendingUp}
-            variant={mockServiceStatus.openRate > 30 ? "success" : "warning"}
-            description="Last 30 days"
-            testId="stat-open-rate"
-          />
+          {isLoadingStatus ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : serviceStatus ? (
+            <>
+              <StatCard
+                title="SendGrid Status"
+                value={serviceStatus.connected ? "Connected" : "Disconnected"}
+                icon={serviceStatus.connected ? CheckCircle : XCircle}
+                variant={serviceStatus.connected ? "success" : "danger"}
+                description={`Checked ${formatTimeAgo(serviceStatus.lastChecked)}`}
+                testId="stat-sendgrid-status"
+              />
+              <StatCard
+                title="Daily Quota"
+                value={`${serviceStatus.dailyQuotaRemaining.toLocaleString()} / ${serviceStatus.dailyQuotaTotal.toLocaleString()}`}
+                icon={Zap}
+                description={`${((serviceStatus.dailyQuotaRemaining / serviceStatus.dailyQuotaTotal) * 100).toFixed(0)}% remaining`}
+                testId="stat-daily-quota"
+              />
+              <StatCard
+                title="Emails Today"
+                value={serviceStatus.emailsSentToday}
+                icon={Send}
+                description={`${serviceStatus.emailsSentThisMonth.toLocaleString()} this month`}
+                testId="stat-emails-today"
+              />
+              <StatCard
+                title="Bounce Rate"
+                value={`${serviceStatus.bounceRate}%`}
+                icon={TrendingDown}
+                variant={serviceStatus.bounceRate > 2 ? "warning" : "success"}
+                description="Last 30 days"
+                testId="stat-bounce-rate"
+              />
+              <StatCard
+                title="Open Rate"
+                value={`${serviceStatus.openRate}%`}
+                icon={TrendingUp}
+                variant={serviceStatus.openRate > 30 ? "success" : "warning"}
+                description="Last 30 days"
+                testId="stat-open-rate"
+              />
+            </>
+          ) : (
+            <div className="col-span-5 text-center text-muted-foreground py-8">
+              Unable to load email service status
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -576,6 +582,7 @@ export default function EmailNotificationControl() {
                       type={showApiKey ? "text" : "password"}
                       value={smtpConfig.apiKey}
                       onChange={(e) => setSMTPConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="Enter API key..."
                       data-testid="input-api-key"
                     />
                   </div>
@@ -634,35 +641,59 @@ export default function EmailNotificationControl() {
               <CardDescription>Enable or disable notification channels</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {notificationChannels.map((channel) => (
-                <div
-                  key={channel.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-muted/30"
-                  data-testid={`channel-${channel.id}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-md bg-muted">
-                      {getChannelIcon(channel.type)}
+              {isLoadingChannels ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-10 w-10 rounded-md" />
+                        <div>
+                          <Skeleton className="h-4 w-32 mb-2" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-6 w-10" />
                     </div>
-                    <div>
-                      <p className="font-medium">{channel.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {getStatusBadge(channel.status)}
-                        {channel.provider && (
-                          <span className="text-xs text-muted-foreground">
-                            via {channel.provider}
-                          </span>
-                        )}
+                  ))}
+                </div>
+              ) : notificationChannels.length === 0 ? (
+                <EmptyState
+                  icon={Bell}
+                  title="No Channels Configured"
+                  description="Configure notification channels to send emails, SMS, and push notifications."
+                />
+              ) : (
+                notificationChannels.map((channel) => (
+                  <div
+                    key={channel.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-muted/30"
+                    data-testid={`channel-${channel.id}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-md bg-muted">
+                        {getChannelIcon(channel.type)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{channel.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {getStatusBadge(channel.status)}
+                          {channel.provider && (
+                            <span className="text-xs text-muted-foreground">
+                              via {channel.provider}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <Switch
+                      checked={channel.enabled}
+                      onCheckedChange={() => handleToggleChannel(channel.id)}
+                      disabled={toggleChannelMutation.isPending}
+                      data-testid={`switch-channel-${channel.id}`}
+                    />
                   </div>
-                  <Switch
-                    checked={channel.enabled}
-                    onCheckedChange={() => handleToggleChannel(channel.id)}
-                    data-testid={`switch-channel-${channel.id}`}
-                  />
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
@@ -676,74 +707,99 @@ export default function EmailNotificationControl() {
             <CardDescription>Manage and customize email templates</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Template Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Subject Preview</TableHead>
-                  <TableHead className="hidden md:table-cell">Last Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {emailTemplates.map((template) => (
-                  <TableRow key={template.id} data-testid={`row-template-${template.id}`}>
-                    <TableCell className="font-medium">{template.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={getTypeBadgeVariant(template.type)}>
-                        {template.type.charAt(0).toUpperCase() + template.type.slice(1).replace("-", " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell max-w-[200px] truncate text-muted-foreground">
-                      {template.subject}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">
-                      {formatTimeAgo(template.lastUpdated)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditTemplate(template)}
-                          data-testid={`button-edit-template-${template.id}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handlePreviewTemplate(template)}
-                          data-testid={`button-preview-template-${template.id}`}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDuplicateTemplate(template)}
-                          data-testid={`button-duplicate-template-${template.id}`}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedTemplate(template);
-                            setIsDeleteTemplateDialogOpen(true);
-                          }}
-                          data-testid={`button-delete-template-${template.id}`}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+            {isLoadingTemplates ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-4 border-b last:border-0">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-5 w-20" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-8 w-8" />
+                      <Skeleton className="h-8 w-8" />
+                      <Skeleton className="h-8 w-8" />
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : emailTemplates.length === 0 ? (
+              <EmptyState
+                icon={FileText}
+                title="No Email Templates"
+                description="Create email templates for welcome emails, password resets, billing notifications, and more."
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Template Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="hidden sm:table-cell">Subject Preview</TableHead>
+                    <TableHead className="hidden md:table-cell">Last Updated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {emailTemplates.map((template) => (
+                    <TableRow key={template.id} data-testid={`row-template-${template.id}`}>
+                      <TableCell className="font-medium">{template.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={getTypeBadgeVariant(template.type)}>
+                          {template.type.charAt(0).toUpperCase() + template.type.slice(1).replace("-", " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell max-w-[200px] truncate text-muted-foreground">
+                        {template.subject}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {formatTimeAgo(template.lastUpdated)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditTemplate(template)}
+                            data-testid={`button-edit-template-${template.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handlePreviewTemplate(template)}
+                            data-testid={`button-preview-template-${template.id}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDuplicateTemplate(template)}
+                            disabled={createTemplateMutation.isPending}
+                            data-testid={`button-duplicate-template-${template.id}`}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedTemplate(template);
+                              setIsDeleteTemplateDialogOpen(true);
+                            }}
+                            data-testid={`button-delete-template-${template.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -757,68 +813,93 @@ export default function EmailNotificationControl() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              <div className="p-4 rounded-lg bg-muted/30 text-center" data-testid="stat-active-campaigns">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
-                  <Play className="h-4 w-4" />
-                  <span className="text-sm">Active Campaigns</span>
-                </div>
-                <span className="text-2xl font-bold">{activeCampaigns}</span>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/30 text-center" data-testid="stat-scheduled-campaigns">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">Scheduled</span>
-                </div>
-                <span className="text-2xl font-bold">{scheduledCampaigns}</span>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/30 text-center" data-testid="stat-avg-open-rate">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="text-sm">Avg. Open Rate</span>
-                </div>
-                <span className="text-2xl font-bold">
-                  {(mockCampaigns.filter(c => c.sentCount > 0).reduce((acc, c) => acc + c.openRate, 0) / mockCampaigns.filter(c => c.sentCount > 0).length || 0).toFixed(1)}%
-                </span>
-              </div>
+              {isLoadingCampaigns ? (
+                <>
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                </>
+              ) : (
+                <>
+                  <div className="p-4 rounded-lg bg-muted/30 text-center" data-testid="stat-active-campaigns">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                      <Play className="h-4 w-4" />
+                      <span className="text-sm">Active Campaigns</span>
+                    </div>
+                    <span className="text-2xl font-bold">{activeCampaigns}</span>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/30 text-center" data-testid="stat-scheduled-campaigns">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                      <Calendar className="h-4 w-4" />
+                      <span className="text-sm">Scheduled</span>
+                    </div>
+                    <span className="text-2xl font-bold">{scheduledCampaigns}</span>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/30 text-center" data-testid="stat-avg-open-rate">
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                      <TrendingUp className="h-4 w-4" />
+                      <span className="text-sm">Avg. Open Rate</span>
+                    </div>
+                    <span className="text-2xl font-bold">{avgOpenRate.toFixed(1)}%</span>
+                  </div>
+                </>
+              )}
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Campaign Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Sent</TableHead>
-                  <TableHead className="hidden md:table-cell">Open Rate</TableHead>
-                  <TableHead className="hidden md:table-cell">Click Rate</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockCampaigns.map((campaign) => (
-                  <TableRow key={campaign.id} data-testid={`row-campaign-${campaign.id}`}>
-                    <TableCell className="font-medium">{campaign.name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getCampaignStatusBadge(campaign.status)}
-                        {campaign.scheduledDate && (
-                          <span className="text-xs text-muted-foreground hidden sm:inline">
-                            {new Date(campaign.scheduledDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {campaign.sentCount.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {campaign.sentCount > 0 ? `${campaign.openRate}%` : "-"}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {campaign.sentCount > 0 ? `${campaign.clickRate}%` : "-"}
-                    </TableCell>
-                  </TableRow>
+            {isLoadingCampaigns ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-4 border-b last:border-0">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : campaigns.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                title="No Campaigns Yet"
+                description="Create email campaigns to engage with your customers and track performance."
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Campaign Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sent</TableHead>
+                    <TableHead className="hidden md:table-cell">Open Rate</TableHead>
+                    <TableHead className="hidden md:table-cell">Click Rate</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {campaigns.map((campaign) => (
+                    <TableRow key={campaign.id} data-testid={`row-campaign-${campaign.id}`}>
+                      <TableCell className="font-medium">{campaign.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getCampaignStatusBadge(campaign.status)}
+                          {campaign.scheduledDate && (
+                            <span className="text-xs text-muted-foreground hidden sm:inline">
+                              {new Date(campaign.scheduledDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {campaign.sentCount.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {campaign.sentCount > 0 ? `${campaign.openRate}%` : "-"}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {campaign.sentCount > 0 ? `${campaign.clickRate}%` : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -858,10 +939,10 @@ export default function EmailNotificationControl() {
               </Button>
               <Button
                 onClick={handleSendTestEmail}
-                disabled={isSendingTest}
+                disabled={sendTestEmailMutation.isPending}
                 data-testid="button-confirm-test-email"
               >
-                {isSendingTest ? (
+                {sendTestEmailMutation.isPending ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                     Sending...
@@ -936,23 +1017,25 @@ export default function EmailNotificationControl() {
               <Button
                 onClick={() => {
                   if (selectedTemplate) {
-                    setEmailTemplates(prev =>
-                      prev.map(t =>
-                        t.id === selectedTemplate.id
-                          ? { ...selectedTemplate, lastUpdated: new Date().toISOString() }
-                          : t
-                      )
-                    );
-                    toast({
-                      title: "Template Updated",
-                      description: `"${selectedTemplate.name}" has been updated`,
+                    updateTemplateMutation.mutate({
+                      id: selectedTemplate.id,
+                      name: selectedTemplate.name,
+                      type: selectedTemplate.type,
+                      subject: selectedTemplate.subject,
                     });
-                    setIsEditTemplateDialogOpen(false);
                   }
                 }}
+                disabled={updateTemplateMutation.isPending}
                 data-testid="button-save-template"
               >
-                Save Changes
+                {updateTemplateMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1035,9 +1118,10 @@ export default function EmailNotificationControl() {
               <AlertDialogAction
                 onClick={handleDeleteTemplate}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteTemplateMutation.isPending}
                 data-testid="button-confirm-delete-template"
               >
-                Delete
+                {deleteTemplateMutation.isPending ? "Deleting..." : "Delete"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -2774,3 +2774,140 @@ export type CustomerProfile = typeof customerProfiles.$inferSelect;
 export type InsertCustomerProfile = z.infer<typeof insertCustomerProfileSchema>;
 export type SegmentAnalytics = typeof segmentAnalytics.$inferSelect;
 export type InsertSegmentAnalytics = z.infer<typeof insertSegmentAnalyticsSchema>;
+
+// ============================================
+// CMS / Admin Content Management Tables
+// ============================================
+
+// Landing page content for CMS
+export const cmsLandingContent = pgTable("cms_landing_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  heroHeadline: text("hero_headline").notNull(),
+  heroSubheadline: text("hero_subheadline").notNull(),
+  ctaButtonText: text("cta_button_text").notNull(),
+  featureHighlights: jsonb("feature_highlights").notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+// System announcements
+export const cmsAnnouncements = pgTable("cms_announcements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull().default("info"), // 'info' | 'warning' | 'success'
+  targetAudience: text("target_audience").notNull().default("all"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('cms_announcements_active_idx').on(table.active),
+  index('cms_announcements_dates_idx').on(table.startDate, table.endDate),
+]);
+
+// AI/Notification templates
+export const cmsAiTemplates = pgTable("cms_ai_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  subject: text("subject"),
+  body: text("body").notNull(),
+  type: text("type").notNull().default("email"), // 'email' | 'sms' | 'push'
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+// Blog posts for content marketing
+export const cmsBlogPosts = pgTable("cms_blog_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  slug: text("slug").unique(),
+  excerpt: text("excerpt"),
+  content: text("content"),
+  status: text("status").notNull().default("draft"), // 'draft' | 'published'
+  author: text("author"),
+  featuredImage: text("featured_image"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+  publishedAt: timestamp("published_at"),
+}, (table) => [
+  index('cms_blog_posts_status_idx').on(table.status),
+  index('cms_blog_posts_published_at_idx').on(table.publishedAt),
+]);
+
+// FAQ items
+export const cmsFaqs = pgTable("cms_faqs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  order: integer("order").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('cms_faqs_order_idx').on(table.order),
+  index('cms_faqs_active_idx').on(table.active),
+]);
+
+// Legal pages (Terms, Privacy, etc.)
+export const cmsLegalPages = pgTable("cms_legal_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  path: text("path").notNull(),
+  content: text("content"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+// CMS Insert Schemas
+export const insertCmsLandingContentSchema = createInsertSchema(cmsLandingContent).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsAnnouncementSchema = createInsertSchema(cmsAnnouncements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsAiTemplateSchema = createInsertSchema(cmsAiTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsBlogPostSchema = createInsertSchema(cmsBlogPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsFaqSchema = createInsertSchema(cmsFaqs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmsLegalPageSchema = createInsertSchema(cmsLegalPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// CMS Types
+export type CmsLandingContent = typeof cmsLandingContent.$inferSelect;
+export type InsertCmsLandingContent = z.infer<typeof insertCmsLandingContentSchema>;
+export type CmsAnnouncement = typeof cmsAnnouncements.$inferSelect;
+export type InsertCmsAnnouncement = z.infer<typeof insertCmsAnnouncementSchema>;
+export type CmsAiTemplate = typeof cmsAiTemplates.$inferSelect;
+export type InsertCmsAiTemplate = z.infer<typeof insertCmsAiTemplateSchema>;
+export type CmsBlogPost = typeof cmsBlogPosts.$inferSelect;
+export type InsertCmsBlogPost = z.infer<typeof insertCmsBlogPostSchema>;
+export type CmsFaq = typeof cmsFaqs.$inferSelect;
+export type InsertCmsFaq = z.infer<typeof insertCmsFaqSchema>;
+export type CmsLegalPage = typeof cmsLegalPages.$inferSelect;
+export type InsertCmsLegalPage = z.infer<typeof insertCmsLegalPageSchema>;

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,6 +102,24 @@ interface DatabaseStatsResponse {
   database_size: string;
 }
 
+interface BackupsResponse {
+  backups: BackupEntry[];
+  message?: string;
+}
+
+interface RlsPolicy {
+  table: string;
+  policyName?: string;
+  policy: string;
+  type: string;
+  permissive?: boolean;
+}
+
+interface RlsPoliciesResponse {
+  policies: RlsPolicy[];
+  message?: string;
+}
+
 function StatCard({
   title,
   value,
@@ -150,7 +169,6 @@ export default function DatabaseControls() {
   const [selectedBackup, setSelectedBackup] = useState("");
   const [queryInput, setQueryInput] = useState("");
   const [queryResults, setQueryResults] = useState<QueryResult | null>(null);
-  const [isQueryExecuting, setIsQueryExecuting] = useState(false);
 
   const [isCreateBackupDialogOpen, setIsCreateBackupDialogOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
@@ -166,6 +184,42 @@ export default function DatabaseControls() {
     queryKey: ['/api/admin/database-stats'],
   });
 
+  // Fetch backup history from API
+  const { data: backupsData, isLoading: isLoadingBackups } = useQuery<BackupsResponse>({
+    queryKey: ['/api/admin/database-backups'],
+  });
+
+  // Fetch RLS policies from API
+  const { data: rlsData, isLoading: isLoadingRls } = useQuery<RlsPoliciesResponse>({
+    queryKey: ['/api/admin/rls-policies'],
+  });
+
+  // Mutation for executing SQL queries
+  const executeQueryMutation = useMutation({
+    mutationFn: async (query: string) => {
+      const response = await apiRequest('POST', '/api/admin/execute-query', { query });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setQueryResults({
+        columns: data.columns || [],
+        rows: data.rows || [],
+        executionTime: data.executionTime || 0,
+      });
+      toast({
+        title: "Query Executed",
+        description: `Query completed successfully in ${data.executionTime}ms.${data.truncated ? ` Results truncated to ${data.rows?.length || 0} rows.` : ''}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Query Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Transform API data to match TableSchema interface
   const tables: TableSchema[] = dbStats?.tables?.map(t => ({
     name: t.name,
@@ -174,43 +228,11 @@ export default function DatabaseControls() {
     lastUpdated: "Just now", // API doesn't provide this, using placeholder
   })) || [];
 
-  const mockBackups: BackupEntry[] = [
-    {
-      id: "backup-1",
-      date: new Date(Date.now() - 3600000).toISOString(),
-      size: "45.2 MB",
-      status: "completed",
-      type: "full",
-    },
-    {
-      id: "backup-2",
-      date: new Date(Date.now() - 86400000).toISOString(),
-      size: "44.8 MB",
-      status: "completed",
-      type: "full",
-    },
-    {
-      id: "backup-3",
-      date: new Date(Date.now() - 172800000).toISOString(),
-      size: "12.3 MB",
-      status: "completed",
-      type: "incremental",
-    },
-    {
-      id: "backup-4",
-      date: new Date(Date.now() - 259200000).toISOString(),
-      size: "43.1 MB",
-      status: "failed",
-      type: "full",
-    },
-  ];
+  // Use real backup data from API
+  const backups: BackupEntry[] = backupsData?.backups || [];
 
-  const mockRlsPolicies = [
-    { table: "users", policy: "Users can only view their own data", type: "SELECT" },
-    { table: "products", policy: "Store owners can manage their products", type: "ALL" },
-    { table: "orders", policy: "Users can view their own orders", type: "SELECT" },
-    { table: "subscriptions", policy: "Users can view their own subscription", type: "SELECT" },
-  ];
+  // Use real RLS policies from API
+  const rlsPolicies: RlsPolicy[] = rlsData?.policies || [];
 
   // Use real data from API, fallback to calculated value from tables array
   const totalRowCount = dbStats?.total_rows ?? (tables.reduce((acc, t) => acc + (t.rowCount || 0), 0) || 0);
@@ -310,23 +332,7 @@ export default function DatabaseControls() {
       return;
     }
 
-    setIsQueryExecuting(true);
-    setTimeout(() => {
-      setQueryResults({
-        columns: ["id", "email", "created_at", "status"],
-        rows: [
-          { id: 1, email: "john@example.com", created_at: "2024-01-15", status: "active" },
-          { id: 2, email: "sarah@example.com", created_at: "2024-01-16", status: "active" },
-          { id: 3, email: "mike@example.com", created_at: "2024-01-17", status: "inactive" },
-        ],
-        executionTime: 42,
-      });
-      setIsQueryExecuting(false);
-      toast({
-        title: "Query Executed",
-        description: "Query completed successfully in 42ms.",
-      });
-    }, 800);
+    executeQueryMutation.mutate(queryInput);
   };
 
   const getStatusBadge = (status: BackupEntry["status"]) => {
@@ -414,14 +420,25 @@ export default function DatabaseControls() {
               testId="stat-row-count"
             />
           )}
-          <StatCard
-            title="Last Backup"
-            value="1h ago"
-            description={formatDate(mockBackups[0].date)}
-            icon={Archive}
-            variant="success"
-            testId="stat-last-backup"
-          />
+          {isLoadingBackups ? (
+            <Card data-testid="stat-last-backup">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ) : (
+            <StatCard
+              title="Last Backup"
+              value={backups.length > 0 ? "Available" : "No backups"}
+              description={backups.length > 0 ? formatDate(backups[0].date) : "Create your first backup"}
+              icon={Archive}
+              variant={backups.length > 0 ? "success" : "warning"}
+              testId="stat-last-backup"
+            />
+          )}
           <StatCard
             title="Uptime"
             value="99.97%"
@@ -462,45 +479,64 @@ export default function DatabaseControls() {
 
               <div className="space-y-2">
                 <Label>Backup History</Label>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockBackups.map((backup) => (
-                      <TableRow key={backup.id} data-testid={`row-backup-${backup.id}`}>
-                        <TableCell className="text-sm">
-                          {formatDate(backup.date)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {backup.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {backup.size}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(backup.status)}</TableCell>
-                      </TableRow>
+                {isLoadingBackups ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : backups.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Archive className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No backups found</p>
+                    <p className="text-xs mt-1">Create your first backup to get started</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {backups.map((backup) => (
+                        <TableRow key={backup.id} data-testid={`row-backup-${backup.id}`}>
+                          <TableCell className="text-sm">
+                            {formatDate(backup.date)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {backup.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {backup.size}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(backup.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 pt-4 border-t">
                 <div className="flex-1 space-y-2 w-full sm:w-auto">
                   <Label htmlFor="restore-backup">Restore from Backup</Label>
-                  <Select value={selectedBackup} onValueChange={setSelectedBackup}>
+                  <Select value={selectedBackup} onValueChange={setSelectedBackup} disabled={backups.length === 0}>
                     <SelectTrigger data-testid="select-restore-backup">
-                      <SelectValue placeholder="Select a backup..." />
+                      <SelectValue placeholder={backups.length === 0 ? "No backups available" : "Select a backup..."} />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockBackups
+                      {backups
                         .filter((b) => b.status === "completed")
                         .map((backup) => (
                           <SelectItem key={backup.id} value={backup.id}>
@@ -805,10 +841,10 @@ export default function DatabaseControls() {
             <div className="flex items-center gap-3">
               <Button
                 onClick={handleExecuteQuery}
-                disabled={isQueryExecuting}
+                disabled={executeQueryMutation.isPending}
                 data-testid="button-execute-query"
               >
-                {isQueryExecuting ? (
+                {executeQueryMutation.isPending ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                     Executing...
@@ -1074,24 +1110,44 @@ export default function DatabaseControls() {
             </DialogHeader>
             <div className="space-y-4">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Policy</TableHead>
-                    <TableHead>Type</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockRlsPolicies.map((policy, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-mono text-sm">{policy.table}</TableCell>
-                      <TableCell className="text-sm">{policy.policy}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{policy.type}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                {isLoadingRls ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                ) : rlsPolicies.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No RLS policies found</p>
+                    <p className="text-xs mt-1">Configure policies via Supabase dashboard</p>
+                  </div>
+                ) : (
+                  <>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Policy</TableHead>
+                        <TableHead>Type</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rlsPolicies.map((policy, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono text-sm">{policy.table}</TableCell>
+                          <TableCell className="text-sm">{policy.policyName || policy.policy}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{policy.type}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </>
+                )}
               </Table>
             </div>
             <DialogFooter>

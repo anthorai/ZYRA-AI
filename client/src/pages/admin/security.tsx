@@ -66,6 +66,7 @@ import {
   Globe,
   UserX,
   Zap,
+  Inbox,
 } from "lucide-react";
 
 interface SecurityOverview {
@@ -172,11 +173,98 @@ function StatCard({
             {value}
           </span>
         )}
-        {description && (
+        {description && !isLoading && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}
+        {isLoading && <Skeleton className="h-3 w-32 mt-1" />}
       </CardContent>
     </Card>
+  );
+}
+
+function TableSkeleton({ rows = 3, cols = 5 }: { rows?: number; cols?: number }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {Array.from({ length: cols }).map((_, i) => (
+            <TableHead key={i}>
+              <Skeleton className="h-4 w-20" />
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <TableRow key={rowIndex}>
+            {Array.from({ length: cols }).map((_, colIndex) => (
+              <TableCell key={colIndex}>
+                <Skeleton className="h-4 w-full" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function EmptyState({ 
+  icon: Icon, 
+  title, 
+  description 
+}: { 
+  icon: React.ElementType; 
+  title: string; 
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 text-center">
+      <div className="p-3 rounded-full bg-muted mb-3">
+        <Icon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1">{description}</p>
+    </div>
+  );
+}
+
+function SessionSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-8 rounded-md" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ActivitySkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+          <Skeleton className="h-10 w-10 rounded-md" />
+          <div className="flex-1 space-y-2">
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -210,213 +298,132 @@ export default function SecurityCenter() {
   const [sessionToTerminate, setSessionToTerminate] = useState<ActiveSession | null>(null);
   const [ipToUnban, setIPToUnban] = useState<IPBan | null>(null);
 
-  const mockSecurityOverview: SecurityOverview = {
-    activeSessions: 47,
-    failedLogins24h: 12,
-    suspiciousActivityCount: 3,
-    twoFactorAdoptionRate: 34,
-    totalUsers: 156,
-    usersWithTwoFactor: 53,
-  };
+  const { data: securityOverview, isLoading: isLoadingOverview } = useQuery<SecurityOverview>({
+    queryKey: ["/api/admin/security-overview"],
+  });
 
-  const mockIPBans: IPBan[] = [
-    {
-      id: "1",
-      ipAddress: "192.168.1.100",
-      reason: "Multiple failed login attempts",
-      bannedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      expiresAt: new Date(Date.now() + 86400000 * 5).toISOString(),
-      bannedBy: "admin@zyra.ai",
-    },
-    {
-      id: "2",
-      ipAddress: "10.0.0.55",
-      reason: "Suspected bot activity",
-      bannedAt: new Date(Date.now() - 86400000).toISOString(),
-      expiresAt: null,
-      bannedBy: "admin@zyra.ai",
-    },
-    {
-      id: "3",
-      ipAddress: "172.16.0.88",
-      reason: "API abuse detected",
-      bannedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-      expiresAt: new Date(Date.now() + 86400000 * 30).toISOString(),
-      bannedBy: "system",
-    },
-  ];
+  const { data: ipBans = [], isLoading: isLoadingIPBans } = useQuery<IPBan[]>({
+    queryKey: ["/api/admin/ip-bans"],
+  });
 
-  const mockActiveSessions: ActiveSession[] = [
-    {
-      id: "1",
-      userId: "user-1",
-      userEmail: "john@example.com",
-      deviceType: "desktop",
-      browser: "Chrome",
-      os: "Windows",
-      ipAddress: "203.0.113.50",
-      location: "New York, US",
-      lastSeenAt: new Date(Date.now() - 300000).toISOString(),
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: "2",
-      userId: "user-2",
-      userEmail: "sarah@example.com",
-      deviceType: "mobile",
-      browser: "Safari",
-      os: "iOS",
-      ipAddress: "198.51.100.75",
-      location: "London, UK",
-      lastSeenAt: new Date(Date.now() - 60000).toISOString(),
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-    },
-    {
-      id: "3",
-      userId: "user-3",
-      userEmail: "mike@example.com",
-      deviceType: "tablet",
-      browser: "Firefox",
-      os: "Android",
-      ipAddress: "192.0.2.123",
-      location: "Toronto, CA",
-      lastSeenAt: new Date(Date.now() - 1800000).toISOString(),
-      createdAt: new Date(Date.now() - 14400000).toISOString(),
-    },
-  ];
+  const { data: activeSessions = [], isLoading: isLoadingSessions } = useQuery<ActiveSession[]>({
+    queryKey: ["/api/admin/active-sessions"],
+  });
 
-  const mockLoginLogs: LoginLog[] = [
-    {
-      id: "1",
-      userId: "user-1",
-      userEmail: "john@example.com",
-      ipAddress: "203.0.113.50",
-      location: "New York, US",
-      success: true,
-      failureReason: null,
-      createdAt: new Date(Date.now() - 300000).toISOString(),
-    },
-    {
-      id: "2",
-      userId: "user-4",
-      userEmail: "attacker@suspicious.com",
-      ipAddress: "192.168.1.100",
-      location: "Unknown",
-      success: false,
-      failureReason: "Invalid password",
-      createdAt: new Date(Date.now() - 600000).toISOString(),
-    },
-    {
-      id: "3",
-      userId: "user-2",
-      userEmail: "sarah@example.com",
-      ipAddress: "198.51.100.75",
-      location: "London, UK",
-      success: true,
-      failureReason: null,
-      createdAt: new Date(Date.now() - 900000).toISOString(),
-    },
-    {
-      id: "4",
-      userId: "user-5",
-      userEmail: "test@example.com",
-      ipAddress: "10.0.0.55",
-      location: "Moscow, RU",
-      success: false,
-      failureReason: "Account locked",
-      createdAt: new Date(Date.now() - 1200000).toISOString(),
-    },
-    {
-      id: "5",
-      userId: "user-3",
-      userEmail: "mike@example.com",
-      ipAddress: "192.0.2.123",
-      location: "Toronto, CA",
-      success: true,
-      failureReason: null,
-      createdAt: new Date(Date.now() - 1500000).toISOString(),
-    },
-  ];
+  const { data: loginLogs = [], isLoading: isLoadingLoginLogs } = useQuery<LoginLog[]>({
+    queryKey: ["/api/admin/login-logs"],
+  });
 
-  const mockSuspiciousActivities: SuspiciousActivity[] = [
-    {
-      id: "1",
-      type: "multiple_failed_logins",
-      description: "15 failed login attempts from same IP in 5 minutes",
-      ipAddress: "192.168.1.100",
-      userId: null,
-      userEmail: null,
-      severity: "high",
-      createdAt: new Date(Date.now() - 1800000).toISOString(),
-      resolved: false,
-    },
-    {
-      id: "2",
-      type: "unusual_location",
-      description: "Login from unusual location detected",
-      ipAddress: "203.0.113.99",
-      userId: "user-6",
-      userEmail: "alex@example.com",
-      severity: "medium",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      resolved: false,
-    },
-    {
-      id: "3",
-      type: "rapid_requests",
-      description: "500+ API requests in 1 minute from single IP",
-      ipAddress: "10.0.0.55",
-      userId: null,
-      userEmail: null,
-      severity: "high",
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-      resolved: true,
-    },
-  ];
+  const { data: suspiciousActivities = [], isLoading: isLoadingSuspicious } = useQuery<SuspiciousActivity[]>({
+    queryKey: ["/api/admin/suspicious-activity"],
+  });
 
-  const mockAdminActivityLogs: AdminActivityLog[] = [
-    {
-      id: "1",
-      adminId: "admin-1",
-      adminEmail: "admin@zyra.ai",
-      action: "Banned IP",
-      target: "192.168.1.100",
-      details: "Multiple failed login attempts",
-      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    },
-    {
-      id: "2",
-      adminId: "admin-1",
-      adminEmail: "admin@zyra.ai",
-      action: "Reset User Password",
-      target: "john@example.com",
-      details: "User requested password reset",
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: "3",
-      adminId: "admin-2",
-      adminEmail: "superadmin@zyra.ai",
-      action: "Changed Session Timeout",
-      target: "System Settings",
-      details: "Session timeout changed from 1h to 4h",
-      createdAt: new Date(Date.now() - 43200000).toISOString(),
-    },
-    {
-      id: "4",
-      adminId: "admin-1",
-      adminEmail: "admin@zyra.ai",
-      action: "Terminated Session",
-      target: "user@example.com",
-      details: "Admin terminated user session manually",
-      createdAt: new Date(Date.now() - 21600000).toISOString(),
-    },
-  ];
+  const { data: adminActivityLogs = [], isLoading: isLoadingAdminLogs } = useQuery<AdminActivityLog[]>({
+    queryKey: ["/api/admin/admin-activity-logs"],
+  });
 
-  const filteredLoginLogs = mockLoginLogs.filter((log) => {
+  const filteredLoginLogs = loginLogs.filter((log) => {
     if (loginStatusFilter === "all") return true;
     if (loginStatusFilter === "success") return log.success;
     return !log.success;
+  });
+
+  const addIPBanMutation = useMutation({
+    mutationFn: async (data: { ipAddress: string; reason: string; expiration: string }) => {
+      return apiRequest("/api/admin/ip-bans", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ip-bans"] });
+      toast({
+        title: "IP Banned",
+        description: `Successfully banned IP ${newIPAddress}`,
+      });
+      setIsAddIPDialogOpen(false);
+      setNewIPAddress("");
+      setNewIPReason("");
+      setNewIPExpiration("permanent");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to ban IP address",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unbanIPMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest(`/api/admin/ip-bans/${id}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ip-bans"] });
+      toast({
+        title: "IP Unbanned",
+        description: `Successfully unbanned IP ${ipToUnban?.ipAddress}`,
+      });
+      setIPToUnban(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to unban IP address",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const terminateSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      return apiRequest(`/api/admin/active-sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/active-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-overview"] });
+      toast({
+        title: "Session Terminated",
+        description: `Successfully terminated session for ${sessionToTerminate?.userEmail}`,
+      });
+      setSessionToTerminate(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to terminate session",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const forceLogoutAllMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/admin/force-logout-all", {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/active-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-overview"] });
+      toast({
+        title: "Force Logout Initiated",
+        description: "All users have been logged out. They will need to sign in again.",
+      });
+      setIsForceLogoutDialogOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to force logout all users",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleAddIPBan = () => {
@@ -429,46 +436,25 @@ export default function SecurityCenter() {
       return;
     }
 
-    toast({
-      title: "IP Banned",
-      description: `Successfully banned IP ${newIPAddress}`,
+    addIPBanMutation.mutate({
+      ipAddress: newIPAddress,
+      reason: newIPReason,
+      expiration: newIPExpiration,
     });
-
-    setIsAddIPDialogOpen(false);
-    setNewIPAddress("");
-    setNewIPReason("");
-    setNewIPExpiration("permanent");
   };
 
   const handleUnbanIP = () => {
     if (!ipToUnban) return;
-
-    toast({
-      title: "IP Unbanned",
-      description: `Successfully unbanned IP ${ipToUnban.ipAddress}`,
-    });
-
-    setIPToUnban(null);
+    unbanIPMutation.mutate(ipToUnban.id);
   };
 
   const handleTerminateSession = () => {
     if (!sessionToTerminate) return;
-
-    toast({
-      title: "Session Terminated",
-      description: `Successfully terminated session for ${sessionToTerminate.userEmail}`,
-    });
-
-    setSessionToTerminate(null);
+    terminateSessionMutation.mutate(sessionToTerminate.id);
   };
 
   const handleForceLogoutAll = () => {
-    toast({
-      title: "Force Logout Initiated",
-      description: "All users have been logged out. They will need to sign in again.",
-    });
-
-    setIsForceLogoutDialogOpen(false);
+    forceLogoutAllMutation.mutate();
   };
 
   const handleUpdateSessionTimeout = (value: string) => {
@@ -540,33 +526,37 @@ export default function SecurityCenter() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Active Sessions"
-            value={mockSecurityOverview.activeSessions}
+            value={securityOverview?.activeSessions ?? 0}
             icon={Users}
             description="Currently logged in users"
+            isLoading={isLoadingOverview}
             testId="stat-active-sessions"
           />
           <StatCard
             title="Failed Logins (24h)"
-            value={mockSecurityOverview.failedLogins24h}
+            value={securityOverview?.failedLogins24h ?? 0}
             icon={XCircle}
             variant="warning"
             description="In the last 24 hours"
+            isLoading={isLoadingOverview}
             testId="stat-failed-logins"
           />
           <StatCard
             title="Suspicious Activity"
-            value={mockSecurityOverview.suspiciousActivityCount}
+            value={securityOverview?.suspiciousActivityCount ?? 0}
             icon={AlertTriangle}
             variant="danger"
             description="Unresolved alerts"
+            isLoading={isLoadingOverview}
             testId="stat-suspicious-activity"
           />
           <StatCard
             title="2FA Adoption"
-            value={`${mockSecurityOverview.twoFactorAdoptionRate}%`}
+            value={`${securityOverview?.twoFactorAdoptionRate ?? 0}%`}
             icon={ShieldCheck}
             variant="success"
-            description={`${mockSecurityOverview.usersWithTwoFactor} of ${mockSecurityOverview.totalUsers} users`}
+            description={securityOverview ? `${securityOverview.usersWithTwoFactor} of ${securityOverview.totalUsers} users` : undefined}
+            isLoading={isLoadingOverview}
             testId="stat-2fa-adoption"
           />
         </div>
@@ -591,7 +581,9 @@ export default function SecurityCenter() {
               </Button>
             </CardHeader>
             <CardContent>
-              {mockIPBans.length > 0 ? (
+              {isLoadingIPBans ? (
+                <TableSkeleton rows={3} cols={5} />
+              ) : ipBans.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -603,7 +595,7 @@ export default function SecurityCenter() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockIPBans.map((ban) => (
+                    {ipBans.map((ban) => (
                       <TableRow key={ban.id} data-testid={`row-ip-ban-${ban.id}`}>
                         <TableCell className="font-mono text-sm">
                           {ban.ipAddress}
@@ -638,9 +630,11 @@ export default function SecurityCenter() {
                   </TableBody>
                 </Table>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No IP addresses are currently banned
-                </div>
+                <EmptyState
+                  icon={Ban}
+                  title="No banned IPs"
+                  description="No IP addresses are currently banned"
+                />
               )}
             </CardContent>
           </Card>
@@ -689,6 +683,7 @@ export default function SecurityCenter() {
                   variant="destructive"
                   size="sm"
                   onClick={() => setIsForceLogoutDialogOpen(true)}
+                  disabled={forceLogoutAllMutation.isPending}
                   data-testid="button-force-logout-all"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
@@ -698,42 +693,52 @@ export default function SecurityCenter() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Active Sessions ({mockActiveSessions.length})</Label>
+                  <Label>Active Sessions ({isLoadingSessions ? "..." : activeSessions.length})</Label>
                 </div>
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                  {mockActiveSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                      data-testid={`session-item-${session.id}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-muted">
-                          {getDeviceIcon(session.deviceType)}
+                {isLoadingSessions ? (
+                  <SessionSkeleton />
+                ) : activeSessions.length > 0 ? (
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {activeSessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                        data-testid={`session-item-${session.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-md bg-muted">
+                            {getDeviceIcon(session.deviceType)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{session.userEmail}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {session.browser} on {session.os} - {session.location}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{session.userEmail}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {session.browser} on {session.os} - {session.location}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {formatTimeAgo(session.lastSeenAt)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSessionToTerminate(session)}
+                            data-testid={`button-terminate-${session.id}`}
+                          >
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {formatTimeAgo(session.lastSeenAt)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSessionToTerminate(session)}
-                          data-testid={`button-terminate-${session.id}`}
-                        >
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Users}
+                    title="No active sessions"
+                    description="No users are currently logged in"
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -763,47 +768,57 @@ export default function SecurityCenter() {
             </Select>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLoginLogs.map((log) => (
-                  <TableRow key={log.id} data-testid={`row-login-log-${log.id}`}>
-                    <TableCell className="font-medium">{log.userEmail}</TableCell>
-                    <TableCell className="font-mono text-sm">{log.ipAddress}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">{log.location}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatTimeAgo(log.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      {log.success ? (
-                        <Badge variant="secondary" className="gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Success
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive" className="gap-1">
-                          <XCircle className="h-3 w-3" />
-                          Failed
-                        </Badge>
-                      )}
-                    </TableCell>
+            {isLoadingLoginLogs ? (
+              <TableSkeleton rows={5} cols={5} />
+            ) : filteredLoginLogs.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredLoginLogs.map((log) => (
+                    <TableRow key={log.id} data-testid={`row-login-log-${log.id}`}>
+                      <TableCell className="font-medium">{log.userEmail}</TableCell>
+                      <TableCell className="font-mono text-sm">{log.ipAddress}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{log.location}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatTimeAgo(log.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        {log.success ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Success
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="gap-1">
+                            <XCircle className="h-3 w-3" />
+                            Failed
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <EmptyState
+                icon={Activity}
+                title="No login activity"
+                description="No login attempts have been recorded yet"
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -816,47 +831,59 @@ export default function SecurityCenter() {
               </CardTitle>
               <CardDescription>Potential security threats detected by the system</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {mockSuspiciousActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg ${
-                    activity.resolved ? "bg-muted/20" : "bg-muted/40"
-                  }`}
-                  data-testid={`suspicious-activity-${activity.id}`}
-                >
-                  <div className="p-2 rounded-md bg-muted">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {getSeverityBadge(activity.severity)}
-                      {activity.resolved && (
-                        <Badge variant="outline" className="gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Resolved
-                        </Badge>
+            <CardContent>
+              {isLoadingSuspicious ? (
+                <ActivitySkeleton />
+              ) : suspiciousActivities.length > 0 ? (
+                <div className="space-y-3">
+                  {suspiciousActivities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg ${
+                        activity.resolved ? "bg-muted/20" : "bg-muted/40"
+                      }`}
+                      data-testid={`suspicious-activity-${activity.id}`}
+                    >
+                      <div className="p-2 rounded-md bg-muted">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {getSeverityBadge(activity.severity)}
+                          {activity.resolved && (
+                            <Badge variant="outline" className="gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              Resolved
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium mt-1">{activity.description}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="font-mono">{activity.ipAddress}</span>
+                          {activity.userEmail && <span>{activity.userEmail}</span>}
+                          <span>{formatTimeAgo(activity.createdAt)}</span>
+                        </div>
+                      </div>
+                      {!activity.resolved && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          data-testid={`button-resolve-${activity.id}`}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Review
+                        </Button>
                       )}
                     </div>
-                    <p className="text-sm font-medium mt-1">{activity.description}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span className="font-mono">{activity.ipAddress}</span>
-                      {activity.userEmail && <span>{activity.userEmail}</span>}
-                      <span>{formatTimeAgo(activity.createdAt)}</span>
-                    </div>
-                  </div>
-                  {!activity.resolved && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      data-testid={`button-resolve-${activity.id}`}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Review
-                    </Button>
-                  )}
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <EmptyState
+                  icon={ShieldCheck}
+                  title="No suspicious activity"
+                  description="No security threats have been detected"
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -868,32 +895,44 @@ export default function SecurityCenter() {
               </CardTitle>
               <CardDescription>Recent administrative actions</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {mockAdminActivityLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/30"
-                  data-testid={`admin-activity-${log.id}`}
-                >
-                  <div className="p-2 rounded-md bg-primary/10">
-                    <Lock className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{log.action}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      <span className="font-medium">{log.adminEmail}</span>
-                      {" → "}
-                      <span className="font-mono">{log.target}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {log.details}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {formatTimeAgo(log.createdAt)}
-                  </span>
+            <CardContent>
+              {isLoadingAdminLogs ? (
+                <ActivitySkeleton />
+              ) : adminActivityLogs.length > 0 ? (
+                <div className="space-y-3">
+                  {adminActivityLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/30"
+                      data-testid={`admin-activity-${log.id}`}
+                    >
+                      <div className="p-2 rounded-md bg-primary/10">
+                        <Lock className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{log.action}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          <span className="font-medium">{log.adminEmail}</span>
+                          {" → "}
+                          <span className="font-mono">{log.target}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {log.details}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {formatTimeAgo(log.createdAt)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <EmptyState
+                  icon={Shield}
+                  title="No admin activity"
+                  description="No administrative actions have been recorded yet"
+                />
+              )}
             </CardContent>
           </Card>
         </div>
@@ -951,7 +990,11 @@ export default function SecurityCenter() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleAddIPBan} data-testid="button-confirm-ban">
+              <Button 
+                onClick={handleAddIPBan} 
+                disabled={addIPBanMutation.isPending}
+                data-testid="button-confirm-ban"
+              >
                 <Ban className="h-4 w-4 mr-1" />
                 Ban IP
               </Button>
@@ -971,7 +1014,11 @@ export default function SecurityCenter() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel data-testid="button-cancel-unban">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleUnbanIP} data-testid="button-confirm-unban">
+              <AlertDialogAction 
+                onClick={handleUnbanIP} 
+                disabled={unbanIPMutation.isPending}
+                data-testid="button-confirm-unban"
+              >
                 Unban
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -992,6 +1039,7 @@ export default function SecurityCenter() {
               <AlertDialogCancel data-testid="button-cancel-terminate">Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleTerminateSession}
+                disabled={terminateSessionMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 data-testid="button-confirm-terminate"
               >
@@ -1014,6 +1062,7 @@ export default function SecurityCenter() {
               <AlertDialogCancel data-testid="button-cancel-force-logout">Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleForceLogoutAll}
+                disabled={forceLogoutAllMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 data-testid="button-confirm-force-logout"
               >

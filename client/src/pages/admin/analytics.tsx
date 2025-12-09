@@ -51,6 +51,7 @@ import {
   Target,
   UserPlus,
   CreditCard,
+  Inbox,
 } from "lucide-react";
 
 interface ErrorLog {
@@ -87,83 +88,86 @@ interface AnalyticsSummaryResponse {
   };
 }
 
-const userGrowthData = [
-  { date: "Nov 1", users: 1245, newSignups: 45 },
-  { date: "Nov 5", users: 1312, newSignups: 67 },
-  { date: "Nov 10", users: 1398, newSignups: 86 },
-  { date: "Nov 15", users: 1524, newSignups: 126 },
-  { date: "Nov 20", users: 1687, newSignups: 163 },
-  { date: "Nov 25", users: 1845, newSignups: 158 },
-  { date: "Nov 30", users: 2012, newSignups: 167 },
-  { date: "Dec 1", users: 2089, newSignups: 77 },
-  { date: "Dec 3", users: 2156, newSignups: 67 },
-  { date: "Dec 5", users: 2234, newSignups: 78 },
-];
+interface UserGrowthDataPoint {
+  date: string;
+  users: number;
+  newSignups: number;
+}
 
-const dailyActiveUsersData = [
-  { day: "Mon", dau: 456, returning: 312, new: 144 },
-  { day: "Tue", dau: 523, returning: 378, new: 145 },
-  { day: "Wed", dau: 498, returning: 356, new: 142 },
-  { day: "Thu", dau: 567, returning: 412, new: 155 },
-  { day: "Fri", dau: 612, returning: 445, new: 167 },
-  { day: "Sat", dau: 478, returning: 334, new: 144 },
-  { day: "Sun", dau: 389, returning: 267, new: 122 },
-];
+interface DailyActiveUsersDataPoint {
+  day: string;
+  dau: number;
+  returning: number;
+  new: number;
+}
 
-const featureUsageData = [
-  { feature: "Product SEO", usage: 2847, adoption: 78 },
-  { feature: "AI Descriptions", usage: 2156, adoption: 65 },
-  { feature: "Bulk Optimization", usage: 1834, adoption: 52 },
-  { feature: "Campaign Manager", usage: 1523, adoption: 45 },
-  { feature: "Cart Recovery", usage: 1245, adoption: 38 },
-  { feature: "Competitor Analysis", usage: 987, adoption: 28 },
-  { feature: "A/B Testing", usage: 756, adoption: 22 },
-  { feature: "Brand Voice", usage: 534, adoption: 16 },
-];
+interface UserGrowthResponse {
+  userGrowth: UserGrowthDataPoint[];
+  dailyActiveUsers: DailyActiveUsersDataPoint[];
+  retentionRate: number;
+  retentionTrend: string;
+}
 
-const usageByPlanData = [
-  { name: "Pro", value: 45, color: "#A78BFA" },
-  { name: "Growth", value: 32, color: "#00F0FF" },
-  { name: "Starter", value: 18, color: "#34D399" },
-  { name: "Trial", value: 5, color: "#94A3B8" },
-];
+interface FeatureUsageDataPoint {
+  feature: string;
+  usage: number;
+  adoption: number;
+}
 
-const aiTokenUsageData = [
-  { date: "Nov 25", tokens: 45234, cost: 0.45 },
-  { date: "Nov 26", tokens: 52187, cost: 0.52 },
-  { date: "Nov 27", tokens: 48923, cost: 0.49 },
-  { date: "Nov 28", tokens: 61234, cost: 0.61 },
-  { date: "Nov 29", tokens: 58456, cost: 0.58 },
-  { date: "Nov 30", tokens: 67890, cost: 0.68 },
-  { date: "Dec 1", tokens: 72345, cost: 0.72 },
-  { date: "Dec 2", tokens: 68234, cost: 0.68 },
-  { date: "Dec 3", tokens: 75678, cost: 0.76 },
-  { date: "Dec 4", tokens: 81234, cost: 0.81 },
-  { date: "Dec 5", tokens: 78456, cost: 0.78 },
-];
+interface UsageByPlanDataPoint {
+  name: string;
+  value: number;
+  color: string;
+}
 
-const tokensByFeatureData = [
-  { name: "SEO Engine", value: 35, color: "#A78BFA" },
-  { name: "AI Descriptions", value: 28, color: "#00F0FF" },
-  { name: "Competitor Analysis", value: 18, color: "#34D399" },
-  { name: "A/B Testing", value: 12, color: "#F59E0B" },
-  { name: "Other", value: 7, color: "#94A3B8" },
-];
+interface FeatureUsageResponse {
+  featureUsage: FeatureUsageDataPoint[];
+  usageByPlan: UsageByPlanDataPoint[];
+}
 
-const revenueData = [
-  { month: "Jul", mrr: 8234, arpu: 42 },
-  { month: "Aug", mrr: 9456, arpu: 44 },
-  { month: "Sep", mrr: 10823, arpu: 45 },
-  { month: "Oct", mrr: 12145, arpu: 47 },
-  { month: "Nov", mrr: 14567, arpu: 49 },
-  { month: "Dec", mrr: 16234, arpu: 51 },
-];
+interface AITokenUsageDataPoint {
+  date: string;
+  tokens: number;
+  cost: number;
+}
 
-const revenueByPlanData = [
-  { name: "Pro ($199)", value: 58, color: "#A78BFA" },
-  { name: "Growth ($99)", value: 32, color: "#00F0FF" },
-  { name: "Starter ($49)", value: 10, color: "#34D399" },
-];
+interface TokensByFeatureDataPoint {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface AITokenUsageResponse {
+  tokenUsage: AITokenUsageDataPoint[];
+  tokensByFeature: TokensByFeatureDataPoint[];
+  todayTokens: number;
+  weekTokens: number;
+  monthTokens: number;
+  weekTrend: string;
+}
+
+interface RevenueDataPoint {
+  month: string;
+  mrr: number;
+  arpu: number;
+}
+
+interface RevenueByPlanDataPoint {
+  name: string;
+  value: number;
+  color: string;
+  revenue: number;
+}
+
+interface RevenueAnalyticsResponse {
+  revenueData: RevenueDataPoint[];
+  revenueByPlan: RevenueByPlanDataPoint[];
+  trialConversion: number;
+  trialConversionTrend: string;
+  churnRate: number;
+  churnRateTrend: string;
+  ltv: number;
+}
 
 const CHART_COLORS = ["#A78BFA", "#00F0FF", "#34D399", "#F59E0B", "#94A3B8"];
 
@@ -174,7 +178,6 @@ function StatCard({
   icon: Icon,
   trend,
   trendDirection,
-  isMock = false,
   isLoading = false,
   testId,
 }: {
@@ -184,7 +187,6 @@ function StatCard({
   icon: React.ElementType;
   trend?: string;
   trendDirection?: "up" | "down" | "neutral";
-  isMock?: boolean;
   isLoading?: boolean;
   testId: string;
 }) {
@@ -193,11 +195,6 @@ function StatCard({
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
-          {isMock && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              mock
-            </Badge>
-          )}
         </CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
@@ -234,6 +231,26 @@ function StatCard({
   );
 }
 
+function ChartLoadingSkeleton({ height = 300 }: { height?: number }) {
+  return (
+    <div className={`h-[${height}px] flex flex-col items-center justify-center space-y-4`}>
+      <Skeleton className="h-40 w-40 rounded-lg" />
+      <Skeleton className="h-4 w-32" />
+    </div>
+  );
+}
+
+function EmptyState({ message, icon: Icon = Inbox }: { message: string; icon?: React.ElementType }) {
+  return (
+    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <div className="text-center">
+        <Icon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+        <p>{message}</p>
+      </div>
+    </div>
+  );
+}
+
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -264,6 +281,38 @@ export default function AdminAnalytics() {
     queryKey: ["/api/admin/analytics-summary"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/admin/analytics-summary");
+      return res.json();
+    },
+  });
+
+  const { data: userGrowthData, isLoading: userGrowthLoading } = useQuery<UserGrowthResponse>({
+    queryKey: ["/api/admin/user-growth-data"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/user-growth-data");
+      return res.json();
+    },
+  });
+
+  const { data: featureUsageData, isLoading: featureUsageLoading } = useQuery<FeatureUsageResponse>({
+    queryKey: ["/api/admin/feature-usage"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/feature-usage");
+      return res.json();
+    },
+  });
+
+  const { data: aiTokenData, isLoading: aiTokenLoading } = useQuery<AITokenUsageResponse>({
+    queryKey: ["/api/admin/ai-token-usage"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/ai-token-usage");
+      return res.json();
+    },
+  });
+
+  const { data: revenueData, isLoading: revenueLoading } = useQuery<RevenueAnalyticsResponse>({
+    queryKey: ["/api/admin/revenue-analytics"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/revenue-analytics");
       return res.json();
     },
   });
@@ -303,10 +352,14 @@ export default function AdminAnalytics() {
     color: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
-  const todayTokens = 78456;
-  const weekTokens = 523456;
-  const monthTokens = 2145678;
-  const estimatedCost = (monthTokens / 1000000) * 0.01;
+  const userGrowthChartData = userGrowthData?.userGrowth || [];
+  const dailyActiveUsersChartData = userGrowthData?.dailyActiveUsers || [];
+  const featureUsageChartData = featureUsageData?.featureUsage || [];
+  const usageByPlanChartData = featureUsageData?.usageByPlan || [];
+  const aiTokenUsageChartData = aiTokenData?.tokenUsage || [];
+  const tokensByFeatureChartData = aiTokenData?.tokensByFeature || [];
+  const revenueChartData = revenueData?.revenueData || [];
+  const revenueByPlanChartData = revenueData?.revenueByPlan || [];
 
   return (
     <AdminLayout>
@@ -357,11 +410,13 @@ export default function AdminAnalytics() {
               />
               <StatCard
                 title="Daily Active Users"
-                value="567"
+                value={dailyActiveUsersChartData.length > 0 
+                  ? dailyActiveUsersChartData[dailyActiveUsersChartData.length - 1]?.dau?.toLocaleString() || "0"
+                  : "0"}
                 icon={Activity}
                 trend="+8.3% vs last week"
                 trendDirection="up"
-                isMock
+                isLoading={userGrowthLoading}
                 testId="stat-dau"
               />
               <StatCard
@@ -375,11 +430,11 @@ export default function AdminAnalytics() {
               />
               <StatCard
                 title="Retention Rate"
-                value="84.2%"
+                value={userGrowthData?.retentionRate ? `${userGrowthData.retentionRate}%` : "0%"}
                 icon={Target}
-                trend="+2.1% this month"
+                trend={userGrowthData?.retentionTrend || ""}
                 trendDirection="up"
-                isMock
+                isLoading={userGrowthLoading}
                 testId="stat-retention"
               />
             </div>
@@ -394,37 +449,43 @@ export default function AdminAnalytics() {
                   <CardDescription>Total users and new signups over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={userGrowthData}>
-                      <defs>
-                        <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                      />
-                      <Legend />
-                      <Area
-                        type="monotone"
-                        dataKey="users"
-                        stroke="#A78BFA"
-                        fillOpacity={1}
-                        fill="url(#colorUsers)"
-                        name="Total Users"
-                      />
-                      <Line type="monotone" dataKey="newSignups" stroke="#00F0FF" strokeWidth={2} name="New Signups" dot={{ fill: "#00F0FF" }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {userGrowthLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : userGrowthChartData.length === 0 ? (
+                    <EmptyState message="No user growth data available" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={userGrowthChartData}>
+                        <defs>
+                          <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            color: "hsl(var(--foreground))",
+                          }}
+                        />
+                        <Legend />
+                        <Area
+                          type="monotone"
+                          dataKey="users"
+                          stroke="#A78BFA"
+                          fillOpacity={1}
+                          fill="url(#colorUsers)"
+                          name="Total Users"
+                        />
+                        <Line type="monotone" dataKey="newSignups" stroke="#00F0FF" strokeWidth={2} name="New Signups" dot={{ fill: "#00F0FF" }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
 
@@ -437,24 +498,30 @@ export default function AdminAnalytics() {
                   <CardDescription>Returning vs new users by day of week</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={dailyActiveUsersData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                      />
-                      <Legend />
-                      <Bar dataKey="returning" stackId="a" fill="#A78BFA" name="Returning Users" />
-                      <Bar dataKey="new" stackId="a" fill="#00F0FF" name="New Users" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {userGrowthLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : dailyActiveUsersChartData.length === 0 ? (
+                    <EmptyState message="No daily active users data available" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={dailyActiveUsersChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            color: "hsl(var(--foreground))",
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="returning" stackId="a" fill="#A78BFA" name="Returning Users" />
+                        <Bar dataKey="new" stackId="a" fill="#00F0FF" name="New Users" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -471,22 +538,28 @@ export default function AdminAnalytics() {
                   <CardDescription>Most used features by total usage count</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={featureUsageData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <YAxis type="category" dataKey="feature" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} width={120} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                      />
-                      <Bar dataKey="usage" fill="#A78BFA" name="Usage Count" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {featureUsageLoading ? (
+                    <ChartLoadingSkeleton height={350} />
+                  ) : featureUsageChartData.length === 0 ? (
+                    <EmptyState message="No feature usage data available" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={350}>
+                      <BarChart data={featureUsageChartData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis type="category" dataKey="feature" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} width={120} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            color: "hsl(var(--foreground))",
+                          }}
+                        />
+                        <Bar dataKey="usage" fill="#A78BFA" name="Usage Count" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
 
@@ -499,40 +572,48 @@ export default function AdminAnalytics() {
                   <CardDescription>Feature usage distribution by subscription plan</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={usageByPlanData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {usageByPlanData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                  {featureUsageLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : usageByPlanChartData.length === 0 ? (
+                    <EmptyState message="No usage by plan data available" />
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={usageByPlanChartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {usageByPlanChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px",
+                              color: "hsl(var(--foreground))",
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex flex-wrap justify-center gap-4 mt-4">
+                        {usageByPlanChartData.map((item, index) => (
+                          <div key={item.name} className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || CHART_COLORS[index % CHART_COLORS.length] }} />
+                            <span className="text-sm text-muted-foreground">{item.name}</span>
+                          </div>
                         ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap justify-center gap-4 mt-4">
-                    {usageByPlanData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-muted-foreground">{item.name}</span>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -543,40 +624,51 @@ export default function AdminAnalytics() {
                 <CardDescription>Percentage of users who have used each feature</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Feature</TableHead>
-                      <TableHead>Total Usage</TableHead>
-                      <TableHead>Adoption Rate</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {featureUsageData.map((feature) => (
-                      <TableRow key={feature.feature} data-testid={`row-feature-${feature.feature.toLowerCase().replace(/\s+/g, "-")}`}>
-                        <TableCell className="font-medium">{feature.feature}</TableCell>
-                        <TableCell>{feature.usage.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-24 bg-muted rounded-full h-2">
-                              <div
-                                className="bg-primary h-2 rounded-full"
-                                style={{ width: `${feature.adoption}%` }}
-                              />
-                            </div>
-                            <span className="text-sm">{feature.adoption}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={feature.adoption >= 50 ? "default" : feature.adoption >= 25 ? "secondary" : "outline"}>
-                            {feature.adoption >= 50 ? "High" : feature.adoption >= 25 ? "Medium" : "Low"}
-                          </Badge>
-                        </TableCell>
+                {featureUsageLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : featureUsageChartData.length === 0 ? (
+                  <EmptyState message="No feature adoption data available" />
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Feature</TableHead>
+                        <TableHead>Total Usage</TableHead>
+                        <TableHead>Adoption Rate</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {featureUsageChartData.map((feature) => (
+                        <TableRow key={feature.feature} data-testid={`row-feature-${feature.feature.toLowerCase().replace(/\s+/g, "-")}`}>
+                          <TableCell className="font-medium">{feature.feature}</TableCell>
+                          <TableCell>{feature.usage.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 bg-muted rounded-full h-2">
+                                <div
+                                  className="bg-primary h-2 rounded-full"
+                                  style={{ width: `${feature.adoption}%` }}
+                                />
+                              </div>
+                              <span className="text-sm">{feature.adoption}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={feature.adoption >= 50 ? "default" : feature.adoption >= 25 ? "secondary" : "outline"}>
+                              {feature.adoption >= 50 ? "High" : feature.adoption >= 25 ? "Medium" : "Low"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -593,19 +685,21 @@ export default function AdminAnalytics() {
               />
               <StatCard
                 title="Tokens This Week"
-                value={weekTokens.toLocaleString()}
+                value={(aiTokenData?.weekTokens || 0).toLocaleString()}
                 icon={Zap}
-                trend="+12.8% vs last week"
+                trend={aiTokenData?.weekTrend || ""}
                 trendDirection="up"
-                isMock
+                isLoading={aiTokenLoading}
                 testId="stat-tokens-week"
               />
               <StatCard
                 title="Tokens This Month"
-                value={(monthTokens / 1000000).toFixed(2) + "M"}
+                value={aiTokenData?.monthTokens 
+                  ? (aiTokenData.monthTokens / 1000000).toFixed(2) + "M"
+                  : "0"}
                 icon={Zap}
-                description="2.15M tokens consumed"
-                isMock
+                description={`${((aiTokenData?.monthTokens || 0) / 1000000).toFixed(2)}M tokens consumed`}
+                isLoading={aiTokenLoading}
                 testId="stat-tokens-month"
               />
               <StatCard
@@ -628,31 +722,37 @@ export default function AdminAnalytics() {
                   <CardDescription>Daily AI token consumption over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={aiTokenUsageData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                        formatter={(value: number) => [value.toLocaleString(), "Tokens"]}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="tokens"
-                        stroke="#00F0FF"
-                        strokeWidth={2}
-                        dot={{ fill: "#00F0FF" }}
-                        name="Tokens"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {aiTokenLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : aiTokenUsageChartData.length === 0 ? (
+                    <EmptyState message="No token usage data available" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={aiTokenUsageChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            color: "hsl(var(--foreground))",
+                          }}
+                          formatter={(value: number) => [value.toLocaleString(), "Tokens"]}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="tokens"
+                          stroke="#00F0FF"
+                          strokeWidth={2}
+                          dot={{ fill: "#00F0FF" }}
+                          name="Tokens"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
 
@@ -665,40 +765,48 @@ export default function AdminAnalytics() {
                   <CardDescription>Token distribution across AI features</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={tokensByFeatureData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {tokensByFeatureData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                  {aiTokenLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : tokensByFeatureChartData.length === 0 ? (
+                    <EmptyState message="No token distribution data available" />
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={tokensByFeatureChartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {tokensByFeatureChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px",
+                              color: "hsl(var(--foreground))",
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex flex-wrap justify-center gap-4 mt-4">
+                        {tokensByFeatureChartData.map((item, index) => (
+                          <div key={item.name} className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || CHART_COLORS[index % CHART_COLORS.length] }} />
+                            <span className="text-sm text-muted-foreground">{item.name}</span>
+                          </div>
                         ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap justify-center gap-4 mt-4">
-                    {tokensByFeatureData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-muted-foreground">{item.name}</span>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -732,11 +840,10 @@ export default function AdminAnalytics() {
               />
               <StatCard
                 title="Resolution Rate"
-                value="76%"
+                value="N/A"
                 icon={CheckCircle}
-                trend="+5% this week"
-                trendDirection="up"
-                isMock
+                description="Coming soon"
+                isLoading={errorsLoading}
                 testId="stat-resolution-rate"
               />
             </div>
@@ -896,20 +1003,20 @@ export default function AdminAnalytics() {
               />
               <StatCard
                 title="Trial Conversion"
-                value="24.5%"
+                value={revenueData?.trialConversion ? `${revenueData.trialConversion}%` : "0%"}
                 icon={Target}
-                trend="+3.2% this month"
+                trend={revenueData?.trialConversionTrend || ""}
                 trendDirection="up"
-                isMock
+                isLoading={revenueLoading}
                 testId="stat-conversion"
               />
               <StatCard
                 title="Churn Rate"
-                value="2.8%"
+                value={revenueData?.churnRate ? `${revenueData.churnRate}%` : "0%"}
                 icon={ArrowDownRight}
-                trend="-0.4% this month"
+                trend={revenueData?.churnRateTrend || ""}
                 trendDirection="up"
-                isMock
+                isLoading={revenueLoading}
                 testId="stat-churn"
               />
             </div>
@@ -924,37 +1031,43 @@ export default function AdminAnalytics() {
                   <CardDescription>Monthly recurring revenue over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={revenueData}>
-                      <defs>
-                        <linearGradient id="colorMRR" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#34D399" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} tickFormatter={(value) => `$${value / 1000}k`} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, "MRR"]}
-                      />
-                      <Legend />
-                      <Area
-                        type="monotone"
-                        dataKey="mrr"
-                        stroke="#34D399"
-                        fillOpacity={1}
-                        fill="url(#colorMRR)"
-                        name="MRR"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {revenueLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : revenueChartData.length === 0 ? (
+                    <EmptyState message="No MRR data available" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={revenueChartData}>
+                        <defs>
+                          <linearGradient id="colorMRR" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#34D399" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))" }} tickFormatter={(value) => `$${value / 1000}k`} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            color: "hsl(var(--foreground))",
+                          }}
+                          formatter={(value: number) => [`$${value.toLocaleString()}`, "MRR"]}
+                        />
+                        <Legend />
+                        <Area
+                          type="monotone"
+                          dataKey="mrr"
+                          stroke="#34D399"
+                          fillOpacity={1}
+                          fill="url(#colorMRR)"
+                          name="MRR"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
 
@@ -967,40 +1080,48 @@ export default function AdminAnalytics() {
                   <CardDescription>Revenue distribution across subscription plans</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={revenueByPlanData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                      >
-                        {revenueByPlanData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                  {revenueLoading ? (
+                    <ChartLoadingSkeleton />
+                  ) : revenueByPlanChartData.length === 0 ? (
+                    <EmptyState message="No revenue by plan data available" />
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={revenueByPlanChartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey="value"
+                            label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                          >
+                            {revenueByPlanChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px",
+                              color: "hsl(var(--foreground))",
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex flex-wrap justify-center gap-4 mt-4">
+                        {revenueByPlanChartData.map((item, index) => (
+                          <div key={item.name} className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || CHART_COLORS[index % CHART_COLORS.length] }} />
+                            <span className="text-sm text-muted-foreground">{item.name}: {item.value}%</span>
+                          </div>
                         ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          color: "hsl(var(--foreground))",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap justify-center gap-4 mt-4">
-                    {revenueByPlanData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-muted-foreground">{item.name}: {item.value}%</span>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -1011,28 +1132,31 @@ export default function AdminAnalytics() {
                 <CardDescription>Key revenue metrics breakdown</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-lg bg-muted/30 text-center">
-                    <p className="text-sm text-muted-foreground">Pro Plan Revenue</p>
-                    <p className="text-2xl font-bold mt-1">$9,415</p>
-                    <p className="text-xs text-muted-foreground">58% of total</p>
+                {revenueLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
                   </div>
-                  <div className="p-4 rounded-lg bg-muted/30 text-center">
-                    <p className="text-sm text-muted-foreground">Growth Plan Revenue</p>
-                    <p className="text-2xl font-bold mt-1">$5,195</p>
-                    <p className="text-xs text-muted-foreground">32% of total</p>
+                ) : revenueByPlanChartData.length === 0 ? (
+                  <EmptyState message="No revenue summary data available" />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {revenueByPlanChartData.slice(0, 3).map((plan) => (
+                      <div key={plan.name} className="p-4 rounded-lg bg-muted/30 text-center">
+                        <p className="text-sm text-muted-foreground">{plan.name} Revenue</p>
+                        <p className="text-2xl font-bold mt-1">${(plan.revenue || 0).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{plan.value}% of total</p>
+                      </div>
+                    ))}
+                    <div className="p-4 rounded-lg bg-muted/30 text-center">
+                      <p className="text-sm text-muted-foreground">LTV (Lifetime Value)</p>
+                      <p className="text-2xl font-bold mt-1">${revenueData?.ltv?.toLocaleString() || "0"}</p>
+                      <p className="text-xs text-muted-foreground">Average customer value</p>
+                    </div>
                   </div>
-                  <div className="p-4 rounded-lg bg-muted/30 text-center">
-                    <p className="text-sm text-muted-foreground">Starter Plan Revenue</p>
-                    <p className="text-2xl font-bold mt-1">$1,623</p>
-                    <p className="text-xs text-muted-foreground">10% of total</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-muted/30 text-center">
-                    <p className="text-sm text-muted-foreground">LTV (Lifetime Value)</p>
-                    <p className="text-2xl font-bold mt-1">$612</p>
-                    <p className="text-xs text-muted-foreground">12 months avg</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
