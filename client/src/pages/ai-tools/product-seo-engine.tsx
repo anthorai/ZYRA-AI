@@ -748,7 +748,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                 <Button
                   onClick={handleOptimize}
                   disabled={!selectedProduct || generateSEOMutation.isPending || serpAnalysisMutation.isPending}
-                  className="w-full h-14 text-lg font-semibold bg-primary hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  className="w-full"
                   data-testid="button-optimize"
                 >
                   {serpAnalysisMutation.isPending ? (
