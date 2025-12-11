@@ -71,6 +71,7 @@ interface BulkOptimizationItem {
   seoTitle: string | null;
   metaTitle: string | null;
   metaDescription: string | null;
+  mainDescription: string | null;
   keywords: string[] | null;
   seoScore: number | null;
   tokensUsed: number | null;
@@ -80,7 +81,7 @@ interface BulkOptimizationItem {
 
 type OptimizationMode = 'fast' | 'competitive';
 
-type SectionType = 'seoTitle' | 'metaTitle' | 'metaDescription' | 'keywords';
+type SectionType = 'seoTitle' | 'metaTitle' | 'metaDescription' | 'mainDescription' | 'keywords';
 
 // SeoSection component for displaying and editing text-based SEO fields
 interface SeoSectionProps {
@@ -602,7 +603,7 @@ export default function BulkOptimization() {
   };
 
   const approveAllForItem = (itemId: string) => {
-    const sections = ['seoTitle', 'metaTitle', 'metaDescription', 'keywords'];
+    const sections = ['seoTitle', 'metaTitle', 'metaDescription', 'mainDescription', 'keywords'];
     setApprovedSections(prev => ({
       ...prev,
       [itemId]: new Set(sections)
@@ -610,7 +611,7 @@ export default function BulkOptimization() {
   };
 
   const approveAllProducts = (items: BulkOptimizationItem[]) => {
-    const sections = ['seoTitle', 'metaTitle', 'metaDescription', 'keywords'];
+    const sections = ['seoTitle', 'metaTitle', 'metaDescription', 'mainDescription', 'keywords'];
     const newApproved: Record<string, Set<string>> = {};
     items.filter(item => item.status === 'optimized').forEach(item => {
       newApproved[item.id] = new Set(sections);
@@ -635,7 +636,7 @@ export default function BulkOptimization() {
 
     setApplyingItem(item.id);
     
-    const content: { seoTitle?: string; metaDescription?: string; tags?: string[] } = {};
+    const content: { seoTitle?: string; metaDescription?: string; mainDescription?: string; tags?: string[] } = {};
     
     // For Shopify, both SEO Title and Meta Title map to the title tag
     // Prioritize Meta Title if approved, otherwise use SEO Title
@@ -650,6 +651,11 @@ export default function BulkOptimization() {
     if (approved.has('metaDescription')) {
       const metaDesc = getEditedValue(item.id, 'metaDescription', item.metaDescription) as string;
       if (metaDesc) content.metaDescription = metaDesc;
+    }
+    
+    if (approved.has('mainDescription')) {
+      const mainDesc = getEditedValue(item.id, 'mainDescription', item.mainDescription) as string;
+      if (mainDesc) content.mainDescription = mainDesc;
     }
     
     if (approved.has('keywords')) {
@@ -1010,6 +1016,29 @@ export default function BulkOptimization() {
                                 onCopy={(text) => handleCopy(text, 'Meta Description')}
                                 countType="characters"
                                 optimalRange={[130, 150]}
+                              />
+                            )}
+
+                            {/* Main Description Section */}
+                            {item.mainDescription && (
+                              <SeoSection
+                                itemId={item.id}
+                                sectionKey="mainDescription"
+                                title="Main Description"
+                                hint="Golden Formula: 100-300 characters"
+                                value={getEditedValue(item.id, 'mainDescription', item.mainDescription) as string}
+                                originalValue={item.mainDescription}
+                                isApproved={isSectionApproved(item.id, 'mainDescription')}
+                                isApplied={isSectionApplied(item.id, 'mainDescription')}
+                                isEditing={editingSection?.itemId === item.id && editingSection?.section === 'mainDescription'}
+                                onToggleApproved={() => toggleSectionApproved(item.id, 'mainDescription')}
+                                onStartEdit={() => startEditing(item.id, 'mainDescription')}
+                                onSaveEdit={saveEditing}
+                                onCancelEdit={() => cancelEditing(item.id, 'mainDescription')}
+                                onValueChange={(val) => setEditedValueForSection(item.id, 'mainDescription', val)}
+                                onCopy={(text) => handleCopy(text, 'Main Description')}
+                                countType="characters"
+                                optimalRange={[100, 300]}
                               />
                             )}
 

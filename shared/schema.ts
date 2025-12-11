@@ -1694,6 +1694,7 @@ export const bulkOptimizationItems = pgTable("bulk_optimization_items", {
   seoDescription: text("seo_description"),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
+  mainDescription: text("main_description"),
   keywords: jsonb("keywords"), // Array of keywords
   seoScore: integer("seo_score"),
   searchIntent: text("search_intent"),
