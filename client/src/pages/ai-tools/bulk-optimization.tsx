@@ -1025,7 +1025,7 @@ export default function BulkOptimization() {
                                 itemId={item.id}
                                 sectionKey="mainDescription"
                                 title="Main Description"
-                                hint="Golden Formula: 100-300 characters"
+                                hint="Golden Formula: 150-250 words"
                                 value={getEditedValue(item.id, 'mainDescription', item.mainDescription) as string}
                                 originalValue={item.mainDescription}
                                 isApproved={isSectionApproved(item.id, 'mainDescription')}
@@ -1037,8 +1037,8 @@ export default function BulkOptimization() {
                                 onCancelEdit={() => cancelEditing(item.id, 'mainDescription')}
                                 onValueChange={(val) => setEditedValueForSection(item.id, 'mainDescription', val)}
                                 onCopy={(text) => handleCopy(text, 'Main Description')}
-                                countType="characters"
-                                optimalRange={[100, 300]}
+                                countType="words"
+                                optimalRange={[150, 250]}
                               />
                             )}
 

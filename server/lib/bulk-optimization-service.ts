@@ -112,7 +112,12 @@ Generate ALL of the following in a single, optimized package:
    - Use case scenarios
    - Call to action
    - Natural keyword integration
-3. **Main Description** (100-300 characters): Concise product description for main product page
+3. **Main Description** (150-250 words): Engaging product description for main product page with:
+   - Hook that highlights key benefit
+   - Feature-benefit pairs
+   - Why it's different
+   - Use cases
+   - Value proposition
 4. **Meta Title** (under 60 characters): Optimized for search result previews
 5. **Meta Description** (under 160 characters): Compelling preview text for search results
 6. **SEO Keywords** (5-7 keywords): Most relevant keywords for this product
@@ -124,7 +129,7 @@ Respond with JSON in this exact format:
 {
   "seoTitle": "your seo title",
   "seoDescription": "your full product description with proper structure and formatting",
-  "mainDescription": "concise product description for main product page",
+  "mainDescription": "engaging product description for main product page (150-250 words)",
   "metaTitle": "your meta title",
   "metaDescription": "your meta description",
   "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
