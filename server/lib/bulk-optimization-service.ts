@@ -263,24 +263,30 @@ Respond with JSON in this exact format:
    * Uses smart batching and parallel processing
    */
   async processJob(jobId: string): Promise<void> {
-    console.log(`🚀 Starting bulk optimization job: ${jobId}`);
+    console.log(`🚀 [BULK PROCESS] Starting bulk optimization job: ${jobId}`);
 
     try {
       // Update job status to processing
+      console.log(`🚀 [BULK PROCESS] Updating job ${jobId} status to processing...`);
       await this.storage.updateBulkOptimizationJob(jobId, {
         status: 'processing',
         startedAt: new Date(),
         updatedAt: new Date(),
       });
+      console.log(`🚀 [BULK PROCESS] Job ${jobId} status updated to processing`);
 
       // Get all pending and retrying items for this job
+      console.log(`🚀 [BULK PROCESS] Fetching items for job ${jobId}...`);
       const allItems = await this.storage.getBulkOptimizationItems(jobId);
+      console.log(`🚀 [BULK PROCESS] Found ${allItems.length} total items for job ${jobId}`);
+      
       const itemsToProcess = allItems.filter(
         item => item.status === 'pending' || item.status === 'retrying'
       );
+      console.log(`🚀 [BULK PROCESS] ${itemsToProcess.length} items to process (pending/retrying)`);
 
       if (itemsToProcess.length === 0) {
-        console.log('✅ No items to process');
+        console.log(`⚠️ [BULK PROCESS] No items to process for job ${jobId}. Marking as completed.`);
         await this.storage.updateBulkOptimizationJob(jobId, {
           status: 'completed',
           completedAt: new Date(),

@@ -13975,35 +13975,67 @@ Output format: Markdown with clear section headings.`;
       console.log(`   - Available product IDs: ${JSON.stringify(products.map(p => p.id))}`);
 
       let itemsCreated = 0;
+      const creationErrors: string[] = [];
+      
       for (const productId of productIds) {
         const product = productMap.get(productId);
         if (product) {
-          await dbStorage.createBulkOptimizationItem({
-            jobId: job.id,
-            productId: product.id,
-            productName: product.name,
-            category: product.category || null,
-            keyFeatures: product.description?.substring(0, 500) || null,
-            targetAudience: null,
-            status: 'pending',
-            retryCount: 0,
-            maxRetries: 3,
-          });
-          itemsCreated++;
-          console.log(`   ✅ Created item for product: ${product.name}`);
+          try {
+            const item = await dbStorage.createBulkOptimizationItem({
+              jobId: job.id,
+              productId: product.id,
+              productName: product.name,
+              category: product.category || null,
+              keyFeatures: product.description?.substring(0, 500) || null,
+              targetAudience: null,
+              status: 'pending',
+              retryCount: 0,
+              maxRetries: 3,
+            });
+            itemsCreated++;
+            console.log(`   ✅ Created item ${item.id} for product: ${product.name}`);
+          } catch (itemError: any) {
+            console.error(`   ❌ Failed to create item for product ${product.name}:`, itemError.message);
+            creationErrors.push(`${product.name}: ${itemError.message}`);
+          }
         } else {
-          console.log(`   ⚠️ Product not found: ${productId}`);
+          console.log(`   ⚠️ Product not found in database: ${productId}`);
         }
       }
       
       console.log(`📦 [BULK OPT] Created ${itemsCreated} items for job ${job.id}`);
+      if (creationErrors.length > 0) {
+        console.error(`📦 [BULK OPT] Item creation errors:`, creationErrors);
+      }
+      
+      // Verify items were created before starting processing
+      const verifyItems = await dbStorage.getBulkOptimizationItems(job.id);
+      console.log(`📦 [BULK OPT] Verified ${verifyItems.length} items exist for job ${job.id}`);
+      
+      // CRITICAL: Abort if no items were created - prevents "Optimizing 0" issue
+      if (verifyItems.length === 0) {
+        console.error(`❌ [BULK OPT] CRITICAL: No items were created for job ${job.id}. Aborting.`);
+        // Delete the orphaned job
+        await dbStorage.deleteBulkOptimizationJob(job.id);
+        return res.status(500).json({ 
+          error: "Failed to create optimization items. Please try again.",
+          details: creationErrors.length > 0 ? creationErrors : ["No matching products found"]
+        });
+      }
+      
+      // Update job with actual item count (in case some products weren't found)
+      const updatedJob = await dbStorage.updateBulkOptimizationJob(job.id, {
+        totalItems: verifyItems.length,
+        updatedAt: new Date(),
+      });
 
       // Trigger processing asynchronously (don't await - let it run in background)
       bulkOptService.processJob(job.id).catch(err => {
         console.error(`Background job ${job.id} processing failed:`, err);
       });
 
-      res.json(job);
+      // Return updated job
+      res.json(updatedJob);
     } catch (error: any) {
       console.error("Error creating bulk optimization job:", error);
       res.status(500).json({ error: error.message || "Failed to create bulk optimization job" });

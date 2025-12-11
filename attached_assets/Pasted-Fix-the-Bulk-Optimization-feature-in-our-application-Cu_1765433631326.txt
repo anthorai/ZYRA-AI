@@ -1,0 +1,56 @@
+Fix the Bulk Optimization feature in our application.
+
+Current Issue:
+- When user starts Bulk Optimization, UI shows "Optimizing 0".
+- No progress updates.
+- Jobs are created but not processed.
+- Background worker / queue is not running or not receiving tasks.
+
+Objectives:
+1. Ensure bulk optimization jobs are created correctly with all required fields.
+2. Ensure the background worker/queue system (Supabase Edge Function / Cron Worker / Node worker) is consuming and processing jobs.
+3. Ensure the optimization process updates status fields: pending → running → completed.
+4. UI should show correct progress: current, total, completion percentage.
+5. Automatically handle failed jobs and retry logic.
+
+Required Fixes:
+
+A) Check job creation:
+- Verify request payload: product IDs, merchant ID, settings.
+- Confirm DB insertion includes status="pending".
+- Return job_id and total_count.
+
+B) Fix job processor:
+- Ensure worker listens to the correct DB table or queue (e.g., supabase.functions.invoke / pg cron / background worker).
+- Fetch pending jobs in FIFO order.
+- Mark job as running when started.
+- For each product:
+  - Call optimization function.
+  - Save result back to DB.
+  - Update job.progress_current += 1.
+- Mark job as completed when finished.
+
+C) Add real-time updates:
+- Update row in DB after each product optimization.
+- UI should subscribe to job_id changes via Supabase realtime.
+
+D) Fix UI progress:
+- Calculate: (progress_current / progress_total) * 100
+- Show steps visually.
+- Update in realtime.
+
+E) Provide full implementation:
+- API route to start bulk optimization job.
+- Worker function that processes the job.
+- Supabase SQL schema for jobs + job_items or products queue.
+- Next.js client code to subscribe to updates.
+- Fix any missing async/await issues, race conditions, or wrong DB column names.
+
+Please write complete corrected code for:
+1. `/api/bulk/start` → create bulk job
+2. Worker function (Node script or Supabase Edge Function) that processes optimization tasks
+3. DB queries for updating job progress
+4. Realtime listener code for UI
+5. Optional automatic retry for failed tasks
+
+Also add detailed logging everywhere so we can trace job flow.
