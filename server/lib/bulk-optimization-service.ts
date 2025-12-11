@@ -113,11 +113,14 @@ Generate ALL of the following in a single, optimized package:
    - Call to action
    - Natural keyword integration
 3. **Main Description** (150-250 words): Engaging product description for main product page with:
+   - Repeat the product name 3-4 times in **BOLD**
    - Hook that highlights key benefit
-   - Feature-benefit pairs
+   - Feature-benefit pairs with product name in bold
    - Why it's different
    - Use cases
    - Value proposition
+   - Use markdown formatting with **bold** for product name
+   - Structure with clear sections and line breaks
 4. **Meta Title** (under 60 characters): Optimized for search result previews
 5. **Meta Description** (under 160 characters): Compelling preview text for search results
 6. **SEO Keywords** (5-7 keywords): Most relevant keywords for this product
@@ -129,7 +132,7 @@ Respond with JSON in this exact format:
 {
   "seoTitle": "your seo title",
   "seoDescription": "your full product description with proper structure and formatting",
-  "mainDescription": "engaging product description for main product page (150-250 words)",
+  "mainDescription": "engaging product description with **bold product name repeated 3-4 times**, structured sections, and markdown formatting",
   "metaTitle": "your meta title",
   "metaDescription": "your meta description",
   "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],

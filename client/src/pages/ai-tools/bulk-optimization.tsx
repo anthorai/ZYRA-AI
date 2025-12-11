@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import ReactMarkdown from "react-markdown";
 import { getToolCreditsPerProduct } from "@shared/ai-credits";
 import { 
   Package,
@@ -202,6 +203,10 @@ function SeoSection({
           className="min-h-[80px] text-white"
           data-testid={`textarea-${sectionKey}-${itemId}`}
         />
+      ) : sectionKey === 'mainDescription' ? (
+        <div className="text-white leading-relaxed prose prose-invert max-w-none" data-testid={`text-${sectionKey}-${itemId}`}>
+          <ReactMarkdown>{value}</ReactMarkdown>
+        </div>
       ) : (
         <p className="text-white leading-relaxed" data-testid={`text-${sectionKey}-${itemId}`}>
           {value}
