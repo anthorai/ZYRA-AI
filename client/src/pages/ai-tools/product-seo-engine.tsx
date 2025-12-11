@@ -250,13 +250,18 @@ export default function ProductSeoEngine() {
     },
     onSuccess: (data) => {
       if (data.fieldName) {
-        setAppliedFields(prev => new Set(prev).add(data.fieldName));
+        if (data.fieldName === 'All Fields') {
+          // Mark all individual fields as applied when 'All Fields' is applied
+          setAppliedFields(new Set(['SEO Title', 'Description', 'Meta Title', 'Meta Description', 'Tags', 'All Fields']));
+        } else {
+          setAppliedFields(prev => new Set(prev).add(data.fieldName));
+        }
       }
       toast({
-        title: "Applied to Shopify!",
-        description: data.fieldName 
-          ? `${data.fieldName} has been updated on your Shopify store.`
-          : "All SEO content has been published to your Shopify store.",
+        title: "Applied to Shopify Successfully!",
+        description: data.fieldName === 'All Fields'
+          ? "All your SEO content (title, description, meta tags) has been applied to your Shopify product."
+          : `${data.fieldName} has been updated on your Shopify store.`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
     },
@@ -314,6 +319,12 @@ export default function ProductSeoEngine() {
       fieldName: 'All Fields',
     });
   };
+
+  // Check if all fields have been applied
+  const allFieldsApplied = appliedFields.has('All Fields') || 
+    (appliedFields.has('SEO Title') && appliedFields.has('Description') && 
+     appliedFields.has('Meta Title') && appliedFields.has('Meta Description') && 
+     appliedFields.has('Tags'));
 
   const handleOptimize = async () => {
     if (!selectedProduct) {
@@ -1200,35 +1211,73 @@ Keywords: ${generatedSEO.keywords.join(", ")}
                 testId="card-apply-all"
                 className="animate-in fade-in-50 slide-in-from-bottom-4 duration-600"
               >
-                <Button
-                  onClick={handleApplyAllToShopify}
-                  disabled={applyingField === 'all' || !selectedProduct?.shopifyId}
-                  className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 hover:shadow-2xl hover:shadow-green-600/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="button-apply-shopify"
-                >
-                  {applyingField === 'all' ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Applying to Shopify...
-                    </>
-                  ) : appliedFields.has('All Fields') ? (
-                    <>
-                      <CheckCircle2 className="w-5 h-5 mr-2" />
-                      Applied to Shopify
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 mr-2" />
-                      Apply All to Shopify Product
-                    </>
+                <div className="space-y-4">
+                  <Button
+                    onClick={handleApplyAllToShopify}
+                    disabled={applyingField === 'all' || !selectedProduct?.shopifyId}
+                    className={`w-full h-14 text-lg font-semibold transition-all duration-300 ${
+                      allFieldsApplied
+                        ? 'bg-green-600 hover:bg-green-700 hover:shadow-2xl hover:shadow-green-600/50'
+                        : 'bg-blue-600 hover:bg-blue-700 hover:shadow-2xl hover:shadow-blue-600/50'
+                    } hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed`}
+                    data-testid="button-apply-shopify"
+                  >
+                    {applyingField === 'all' ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Applying All SEO to Shopify...
+                      </>
+                    ) : allFieldsApplied ? (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        All SEO Applied to Shopify Successfully
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5 mr-2" />
+                        Apply All SEO to Shopify Product
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Applied Fields Confirmation */}
+                  {allFieldsApplied && (
+                    <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 animate-in fade-in-50 duration-300">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                        <div className="space-y-2">
+                          <p className="font-semibold text-green-500">All SEO Content Applied</p>
+                          <ul className="text-xs text-green-400 space-y-1">
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3 h-3" /> Optimized Title
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3 h-3" /> Product Description
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3 h-3" /> Meta Title
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3 h-3" /> Meta Description
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <Check className="w-3 h-3" /> Keywords & Tags
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </Button>
-                <p className="text-center text-xs text-slate-400 mt-3">
-                  {!selectedProduct?.shopifyId 
-                    ? "This product is not linked to Shopify. Import products from your Shopify store first."
-                    : "Directly updates your Shopify product with all generated SEO content"
-                  }
-                </p>
+                  
+                  <p className="text-center text-xs text-slate-400">
+                    {!selectedProduct?.shopifyId 
+                      ? "This product is not linked to Shopify. Import products from your Shopify store first."
+                      : allFieldsApplied
+                      ? "Your Shopify product has been updated with all optimized SEO content"
+                      : "Apply all generated SEO content (title, description, meta tags) to your Shopify store in one click"
+                    }
+                  </p>
+                </div>
               </DashboardCard>
             )}
 
