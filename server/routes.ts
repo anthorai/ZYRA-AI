@@ -9752,10 +9752,10 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Fetch products from Shopify
-      // Use status=any to include active, draft, and archived products for complete sync
-      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any`);
+      // Use status=any AND published_status=any to include ALL products (active, draft, archived, published, unpublished)
+      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any&published_status=any`);
       
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any`, {
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any&published_status=any&limit=250`, {
         headers: {
           'X-Shopify-Access-Token': shopifyConnection.accessToken
         }
@@ -9773,8 +9773,38 @@ Output format: Markdown with clear section headings.`;
         throw new Error(`Failed to fetch Shopify products: ${productsResponse.status} ${productsResponse.statusText}`);
       }
 
+      // Capture the Link header from initial response for pagination
+      const initialLinkHeader = productsResponse.headers.get('Link') || '';
+
       const productsData = await productsResponse.json();
-      const shopifyProducts = productsData.products || [];
+      let shopifyProducts = productsData.products || [];
+      
+      // Paginate through ALL products using cursor-based pagination
+      // The page_info cursor preserves the original filters (status=any, published_status=any)
+      // Best practice: Extract and use the FULL URL from Link header directly
+      let currentLinkHeader = initialLinkHeader;
+      let paginationComplete = true; // Track if we successfully fetched ALL pages
+      while (currentLinkHeader) {
+        // Extract full URL from Link header for next page
+        const nextMatch = currentLinkHeader.match(/<([^>]+)>;\s*rel="next"/);
+        if (!nextMatch) break; // No more pages - pagination completed successfully
+        
+        const nextUrl = nextMatch[1]; // Use full URL directly (already encoded by Shopify)
+        
+        const nextPageResponse = await fetch(nextUrl, {
+          headers: { 'X-Shopify-Access-Token': shopifyConnection.accessToken }
+        });
+        
+        if (!nextPageResponse.ok) {
+          console.error('❌ [SHOPIFY SYNC] Pagination failed at:', nextUrl, 'status:', nextPageResponse.status);
+          paginationComplete = false; // Mark as incomplete - orphan cleanup will be skipped
+          break;
+        }
+        
+        const nextData = await nextPageResponse.json();
+        shopifyProducts = [...shopifyProducts, ...(nextData.products || [])];
+        currentLinkHeader = nextPageResponse.headers.get('Link') || '';
+      }
       
       console.log('✅ [SHOPIFY SYNC] Fetched products from Shopify:', {
         count: shopifyProducts.length,
@@ -9913,94 +9943,59 @@ Output format: Markdown with clear section headings.`;
       let orphanCleanupSkipped = false;
       
       try {
-        // Use the already fetched products as the starting point for the complete list
-        let allShopifyProducts: any[] = [...shopifyProducts];
-        
-        // Get the Link header from initial request for pagination
-        // Note: We need to re-fetch the first page to get the Link header properly
-        // since the initial productsResponse didn't store it
-        let hasMorePages = shopifyProducts.length === 250;
-        let pageInfo: string | null = null;
-        
-        // First, check if there's a next page by re-fetching with limit=1 to get Link header
-        if (hasMorePages) {
-          const checkUrl = `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any&limit=250`;
-          const checkResponse = await fetch(checkUrl, {
-            headers: { 'X-Shopify-Access-Token': shopifyConnection.accessToken }
-          });
-          
-          if (checkResponse.ok) {
-            const linkHeader = checkResponse.headers.get('Link') || '';
-            const nextLink = linkHeader.split(',').find((l: string) => l.includes('rel="next"'));
-            pageInfo = nextLink ? (nextLink.match(/page_info=([^>&]*)/)?.[1] || null) : null;
-          }
-        }
-        
-        // Paginate through remaining pages if there are more
-        // Use status=any to include active, draft, and archived products
-        while (pageInfo) {
-          const nextPageUrl = `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?limit=250&page_info=${pageInfo}`;
-          const nextPageResponse = await fetch(nextPageUrl, {
-            headers: { 'X-Shopify-Access-Token': shopifyConnection.accessToken }
-          });
-          
-          if (!nextPageResponse.ok) break;
-          
-          // Always parse the response body
-          const nextData = await nextPageResponse.json();
-          const nextProducts = nextData.products || [];
-          allShopifyProducts = [...allShopifyProducts, ...nextProducts];
-          
-          // Parse Link header for next pagination cursor
-          const linkHeader = nextPageResponse.headers.get('Link') || '';
-          const nextLink = linkHeader.split(',').find((l: string) => l.includes('rel="next"'));
-          pageInfo = nextLink ? (nextLink.match(/page_info=([^>&]*)/)?.[1] || null) : null;
-        }
-        
-        console.log(`📊 [SHOPIFY SYNC] Complete Shopify catalog: ${allShopifyProducts.length} products`);
-        
-        // Get all Shopify product IDs from the complete sync
-        const shopifyProductIds = allShopifyProducts
-          .filter((p: any) => p.id)
-          .map((p: any) => p.id.toString());
-        
-        // Find products in our DB for this user with Shopify IDs
-        const userProducts = await db
-          .select({ id: products.id, shopifyId: products.shopifyId, name: products.name })
-          .from(products)
-          .where(and(
-            eq(products.userId, userId),
-            isNotNull(products.shopifyId)
-          ));
-        
-        const localProductCount = userProducts.filter(p => p.shopifyId).length;
-        
-        // SAFEGUARD: Skip cleanup if Shopify returns significantly fewer products
-        // This prevents mass deletion during API errors or rate limiting
-        if (allShopifyProducts.length < localProductCount * 0.5 && localProductCount > 10) {
-          console.warn(`⚠️ [SHOPIFY SYNC] Skipping orphan cleanup: Shopify returned ${allShopifyProducts.length} products but we have ${localProductCount} locally. Possible API issue.`);
+        // Skip orphan cleanup if pagination failed (incomplete product list)
+        if (!paginationComplete) {
+          console.warn('⚠️ [SHOPIFY SYNC] Skipping orphan cleanup: Pagination failed, incomplete product list');
           orphanCleanupSkipped = true;
-        } else {
-          for (const product of userProducts) {
-            if (product.shopifyId && !shopifyProductIds.includes(product.shopifyId)) {
-              try {
-                // Delete the orphaned product
-                await db.delete(products).where(eq(products.id, product.id));
-                
-                // Clean up related SEO meta
-                await db.delete(seoMeta).where(eq(seoMeta.productId, product.id));
-                
-                productsDeleted++;
-                orphanedProducts.push(product.name || product.shopifyId);
-                console.log(`🗑️ [SHOPIFY SYNC] Deleted orphaned product: ${product.name} (${product.shopifyId})`);
-              } catch (deleteError) {
-                console.error(`⚠️ [SHOPIFY SYNC] Failed to delete orphan:`, deleteError);
+        }
+        
+        if (!orphanCleanupSkipped) {
+          // Use the already-fetched complete products list (includes all pages)
+          console.log(`📊 [SHOPIFY SYNC] Complete Shopify catalog: ${shopifyProducts.length} products`);
+          
+          // Get all Shopify product IDs from the complete sync
+          const shopifyProductIds = shopifyProducts
+            .filter((p: any) => p.id)
+            .map((p: any) => p.id.toString());
+          
+          // Find products in our DB for this user with Shopify IDs
+          const userProducts = await db
+            .select({ id: products.id, shopifyId: products.shopifyId, name: products.name })
+            .from(products)
+            .where(and(
+              eq(products.userId, userId),
+              isNotNull(products.shopifyId)
+            ));
+          
+          const localProductCount = userProducts.filter(p => p.shopifyId).length;
+          
+          // SAFEGUARD: Skip cleanup if Shopify returns significantly fewer products
+          // This prevents mass deletion during API errors or rate limiting
+          if (shopifyProducts.length < localProductCount * 0.5 && localProductCount > 10) {
+            console.warn(`⚠️ [SHOPIFY SYNC] Skipping orphan cleanup: Shopify returned ${shopifyProducts.length} products but we have ${localProductCount} locally. Possible API issue.`);
+            orphanCleanupSkipped = true;
+          } else {
+            for (const product of userProducts) {
+              if (product.shopifyId && !shopifyProductIds.includes(product.shopifyId)) {
+                try {
+                  // Delete the orphaned product
+                  await db.delete(products).where(eq(products.id, product.id));
+                  
+                  // Clean up related SEO meta
+                  await db.delete(seoMeta).where(eq(seoMeta.productId, product.id));
+                  
+                  productsDeleted++;
+                  orphanedProducts.push(product.name || product.shopifyId);
+                  console.log(`🗑️ [SHOPIFY SYNC] Deleted orphaned product: ${product.name} (${product.shopifyId})`);
+                } catch (deleteError) {
+                  console.error(`⚠️ [SHOPIFY SYNC] Failed to delete orphan:`, deleteError);
+                }
               }
             }
-          }
-          
-          if (productsDeleted > 0) {
-            console.log(`✅ [SHOPIFY SYNC] Cleaned up ${productsDeleted} orphaned product(s)`);
+            
+            if (productsDeleted > 0) {
+              console.log(`✅ [SHOPIFY SYNC] Cleaned up ${productsDeleted} orphaned product(s)`);
+            }
           }
         }
       } catch (orphanError) {

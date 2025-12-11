@@ -82,17 +82,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log(`[Orphan Cleanup Cron] Processing store: ${storeName}`);
         
         // Fetch ALL products from Shopify with pagination
-        // Use status=any to include active, draft, and archived products
+        // Use status=any AND published_status=any to include ALL products (active, draft, archived, published, unpublished)
+        // Best practice: Extract and use the FULL URL from Link header directly
         let allShopifyProducts: any[] = [];
-        let pageInfo: string | null = null;
-        let isFirstRequest = true;
+        let nextUrl: string | null = `${storeUrl}/admin/api/2025-10/products.json?limit=250&status=any&published_status=any`;
         
-        do {
-          const url = isFirstRequest
-            ? `${storeUrl}/admin/api/2025-10/products.json?limit=250&status=any`
-            : `${storeUrl}/admin/api/2025-10/products.json?limit=250&page_info=${pageInfo}`;
-          
-          const shopifyResponse = await fetch(url, {
+        while (nextUrl) {
+          const shopifyResponse = await fetch(nextUrl, {
             headers: { 'X-Shopify-Access-Token': accessToken }
           });
           
@@ -106,12 +102,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const fetchedProducts = shopifyData.products || [];
           allShopifyProducts = [...allShopifyProducts, ...fetchedProducts];
           
-          // Parse Link header for next pagination cursor
+          // Extract full URL from Link header for next page
           const linkHeader = shopifyResponse.headers.get('Link') || '';
-          const nextLink = linkHeader.split(',').find((l: string) => l.includes('rel="next"'));
-          pageInfo = nextLink ? (nextLink.match(/page_info=([^>&]*)/)?.[1] || null) : null;
-          isFirstRequest = false;
-        } while (pageInfo);
+          const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+          nextUrl = nextMatch ? nextMatch[1] : null; // Use full URL directly (already encoded by Shopify)
+        }
         
         const shopifyProductIds = allShopifyProducts.map((p: any) => p.id.toString());
         
