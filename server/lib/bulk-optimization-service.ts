@@ -112,17 +112,19 @@ Generate ALL of the following in a single, optimized package:
    - Use case scenarios
    - Call to action
    - Natural keyword integration
-3. **Meta Title** (under 60 characters): Optimized for search result previews
-4. **Meta Description** (under 160 characters): Compelling preview text for search results
-5. **SEO Keywords** (5-7 keywords): Most relevant keywords for this product
-6. **SEO Score** (0-100): Predicted ranking score based on optimization quality
-7. **Search Intent**: Primary search intent (commercial, informational, navigational, or transactional)
-8. **Suggested Keywords** (3-5): Additional high-value keywords to consider
+3. **Main Description** (100-300 characters): Concise product description for main product page
+4. **Meta Title** (under 60 characters): Optimized for search result previews
+5. **Meta Description** (under 160 characters): Compelling preview text for search results
+6. **SEO Keywords** (5-7 keywords): Most relevant keywords for this product
+7. **SEO Score** (0-100): Predicted ranking score based on optimization quality
+8. **Search Intent**: Primary search intent (commercial, informational, navigational, or transactional)
+9. **Suggested Keywords** (3-5): Additional high-value keywords to consider
 
 Respond with JSON in this exact format:
 {
   "seoTitle": "your seo title",
   "seoDescription": "your full product description with proper structure and formatting",
+  "mainDescription": "concise product description for main product page",
   "metaTitle": "your meta title",
   "metaDescription": "your meta description",
   "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
@@ -165,6 +167,7 @@ Respond with JSON in this exact format:
       return {
         seoTitle: result.seoTitle || '',
         seoDescription: result.seoDescription || '',
+        mainDescription: result.mainDescription || '',
         metaTitle: result.metaTitle || '',
         metaDescription: result.metaDescription || '',
         keywords: Array.isArray(result.keywords) ? result.keywords : [],
@@ -209,6 +212,7 @@ Respond with JSON in this exact format:
           status: 'optimized',
           seoTitle: result.seoTitle,
           seoDescription: result.seoDescription,
+          mainDescription: result.mainDescription,
           metaTitle: result.metaTitle,
           metaDescription: result.metaDescription,
           keywords: result.keywords,
