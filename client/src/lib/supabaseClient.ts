@@ -123,7 +123,22 @@ function createMockClient() {
       insert: () => Promise.resolve({ data: null, error: new Error('Database not configured') }),
       update: () => Promise.resolve({ data: null, error: new Error('Database not configured') }),
       delete: () => Promise.resolve({ data: null, error: new Error('Database not configured') })
-    })
+    }),
+    // Mock realtime channel methods
+    channel: (name: string) => {
+      const mockChannel = {
+        on: () => mockChannel,
+        subscribe: (callback?: (status: string) => void) => {
+          if (callback) {
+            setTimeout(() => callback('SUBSCRIBED'), 0);
+          }
+          return mockChannel;
+        },
+        unsubscribe: () => Promise.resolve()
+      };
+      return mockChannel;
+    },
+    removeChannel: () => Promise.resolve()
   } as any;
 }
 
