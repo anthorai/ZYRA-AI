@@ -2796,7 +2796,7 @@ Respond with JSON:
   // Ultimate Product SEO Engine - USING REAL WAVE 1 ORCHESTRATION SERVICE! 🚀
   app.post("/api/generate-product-seo", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
     try {
-      const { productName, keyFeatures, targetAudience, category, price } = req.body;
+      const { productName, keyFeatures, targetAudience, category, price, optimizationMode, serpAnalysis } = req.body;
 
       if (!productName) {
         return res.status(400).json({ message: "Product name is required" });
@@ -2804,10 +2804,15 @@ Respond with JSON:
 
       const userId = (req as AuthenticatedRequest).user.id;
 
+      // Log the mode and SERP data for debugging
+      console.log('[Product SEO Engine] Mode:', optimizationMode, 'Has SERP:', !!serpAnalysis);
       console.log('[Product SEO Engine] Using Wave 1 Orchestration Service for:', productName);
 
       // 🎯 WAVE 1: Use the real orchestration service
       const { orchestrateSEOGeneration } = await import('./lib/seo-orchestration-service');
+
+      // Enable SERP analysis if in competitive mode and SERP data is available
+      const enableSERPAnalysis = optimizationMode === 'competitive' && !!serpAnalysis;
 
       // Generate SEO with full Wave 1 orchestration
       const result = await orchestrateSEOGeneration({
@@ -2820,9 +2825,11 @@ Respond with JSON:
         options: {
           enableFrameworkAutoSelection: true,
           enableBrandDNA: true,
-          enableSERPAnalysis: false,
+          enableSERPAnalysis,
           shopifyFormatting: true,
         },
+        // Pass SERP data to the orchestration service if available
+        ...(serpAnalysis && { serpData: serpAnalysis }),
       }, openai, db);
 
       // Track SEO usage

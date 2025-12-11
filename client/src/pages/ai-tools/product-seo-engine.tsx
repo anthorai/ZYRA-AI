@@ -139,7 +139,8 @@ export default function ProductSeoEngine() {
   
   // Generate SEO mutation
   const generateSEOMutation = useMutation({
-    mutationFn: async (productData: { productName: string; keyFeatures: string; targetAudience: string; category: string }) => {
+    mutationFn: async (productData: { productName: string; keyFeatures: string; targetAudience: string; category: string; optimizationMode?: string; serpAnalysis?: SERPAnalysis | null }) => {
+      console.log('[Product SEO] Sending request with mode:', productData.optimizationMode, 'and SERP data:', !!productData.serpAnalysis);
       const response = await apiRequest("POST", "/api/generate-product-seo", productData);
       return await response.json();
     },
@@ -175,6 +176,7 @@ export default function ProductSeoEngine() {
     },
     onSuccess: (data: { success: boolean; analysis: SERPAnalysis }) => {
       if (data.success) {
+        console.log('[SERP Analysis] Success for keyword');
         setSerpAnalysis(data.analysis);
         toast({
           title: "Competitor Analysis Complete!",
@@ -183,13 +185,14 @@ export default function ProductSeoEngine() {
       }
     },
     onError: (error: any) => {
+      console.error('[SERP Analysis] Failed:', error);
       toast({
         title: "SERP Analysis Failed",
         description: error.message || "Failed to fetch competitor data",
         variant: "destructive",
       });
-      // Fallback to fast mode
-      setOptimizationMode('fast');
+      // NOTE: Do NOT reset mode here - let backend handle fallback
+      // Mode will be preserved and backend will use fast generation if needed
     },
   });
 
@@ -343,29 +346,34 @@ export default function ProductSeoEngine() {
     setSerpAnalysis(null);
     setAppliedFields(new Set());
 
+    // Track if SERP analysis succeeded
+    let currentSerpAnalysis: SERPAnalysis | null = null;
+
     // If competitive mode, try to fetch SERP data first
     if (optimizationMode === 'competitive') {
       try {
         const keyword = selectedProduct.name;
+        console.log('[Optimize] Attempting SERP analysis for:', keyword);
         await serpAnalysisMutation.mutateAsync(keyword);
+        // If successful, capture the serpAnalysis state for the generate call
+        currentSerpAnalysis = serpAnalysis; // Will be updated by mutation
       } catch (error) {
-        // SERP analysis failed - fall back to fast mode for UI display
-        // Note: Credit consumption still uses the originally checked toolId
-        console.error('SERP analysis failed, falling back to fast mode:', error);
-        setOptimizationMode('fast');
-        toast({
-          title: "Switched to Fast Mode",
-          description: "Competitor analysis unavailable. Using fast AI-only optimization.",
-        });
+        // SERP analysis failed - continue with fast mode (backend will handle)
+        // DO NOT reset UI mode here - preserve user's selection
+        console.error('[Optimize] SERP analysis failed, continuing with fast generation:', error);
+        // Mode stays as selected - backend will use mode + available SERP data
       }
     }
 
-    // Generate SEO (will use SERP data if available from successful competitive mode)
+    // Generate SEO with the current mode and SERP data (if available)
+    // Backend will handle fallback logic if needed
     generateSEOMutation.mutate({
       productName: selectedProduct.name,
       keyFeatures: selectedProduct.features || selectedProduct.description || "Premium quality product",
       targetAudience: "General consumers",
       category: selectedProduct.category,
+      optimizationMode,
+      serpAnalysis: currentSerpAnalysis || serpAnalysis, // Use latest SERP data
     });
   };
 
