@@ -1,0 +1,58 @@
+Fix the bug where the “Competitive Intelligence” optimization mode automatically switches to “Fast Mode”.
+
+Expected behavior:
+- When the user selects Competitive Intelligence mode, the optimization engine must stay in CI mode.
+- CI mode should run the Google SERP fetch → competitor extraction → AI analysis workflow.
+- No automatic fallback or switching unless an actual error happens.
+
+Current Issue:
+- The app switches to Fast Mode immediately or mid-process.
+- CI mode flag is being overwritten or defaulted due to incorrect state handling.
+
+Tasks to debug and fix:
+
+1. Validate the mode parameter:
+- Check the optimizeProduct() or bulkOptimizeProduct() function.
+- Confirm the `mode` variable is correctly received (e.g., “competitive_intel”).
+- Ensure no fallback code overwrites mode because of null/undefined checks.
+
+2. Fix mode switching logic:
+- Remove or rewrite logic like:
+    if (!mode) mode = "fast"
+    if (error) fallback to fast mode
+- Ensure CI mode is preserved unless a *real* error occurs.
+
+3. Check API Endpoint:
+- Verify the API route `/api/optimize` or `/api/products/optimize` is sending the correct mode.
+- Confirm Supabase job row stores the mode value correctly (not defaulting to fast).
+
+4. Fix Bulk Optimization:
+- Bulk jobs must preserve each item's selected mode.
+- Validate job creation:
+    job_items.mode should equal "competitive_intel"
+- Ensure worker reads job_items.mode correctly instead of defaulting.
+
+5. Check frontend state:
+- Fix UI selector: ensure selectedMode is not resetting to 'fast' after API call.
+- Ensure React state is stable and not overwritten during useEffect or rerender.
+
+6. Add logging:
+- Log selected mode at:
+    - User selection
+    - API request
+    - Job creation
+    - Worker runtime
+- Verify mode consistency end-to-end.
+
+7. Deliverables:
+- Corrected backend function that respects CI mode.
+- Updated worker processor code handling SERP → competitor → AI pipeline.
+- Updated frontend ensuring mode is not reset.
+- Remove any hidden auto-fallback that forces Fast Mode.
+
+Provide:
+- Full corrected code for API route
+- Worker code modifications
+- UI fix for mode selector
+- Logging improvements
+- Explanation of where the bug existed
