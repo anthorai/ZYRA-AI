@@ -238,6 +238,16 @@ export async function registerShopifyWebhooks(
       topic: 'orders/paid',
       address: `${webhookBaseUrl}/api/webhooks/shopify/orders/paid`,
       format: 'json'
+    },
+    {
+      topic: 'products/delete',
+      address: `${webhookBaseUrl}/api/webhooks/shopify/products/delete`,
+      format: 'json'
+    },
+    {
+      topic: 'products/update',
+      address: `${webhookBaseUrl}/api/webhooks/shopify/products/update`,
+      format: 'json'
     }
   ];
 
@@ -367,7 +377,9 @@ export async function verifyWebhooksRegistered(
   // are configured in shopify.app.toml and managed by Shopify
   const requiredTopics = [
     'APP_UNINSTALLED',
-    'ORDERS_PAID'
+    'ORDERS_PAID',
+    'PRODUCTS_DELETE',
+    'PRODUCTS_UPDATE'
   ];
 
   const productionBaseUrl = getProductionBaseUrl();

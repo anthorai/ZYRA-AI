@@ -79,7 +79,7 @@ import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
 import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon } from "./db";
-import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
+import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
@@ -9752,9 +9752,10 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Fetch products from Shopify
-      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`);
+      // Use status=any to include active, draft, and archived products for complete sync
+      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any`);
       
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`, {
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any`, {
         headers: {
           'X-Shopify-Access-Token': shopifyConnection.accessToken
         }
@@ -9905,6 +9906,108 @@ Output format: Markdown with clear section headings.`;
         }
       }
 
+      // ORPHAN CLEANUP: Remove products from our DB that no longer exist in Shopify
+      // SAFEGUARDS: Only perform cleanup when we have the COMPLETE Shopify product list
+      let productsDeleted = 0;
+      const orphanedProducts: string[] = [];
+      let orphanCleanupSkipped = false;
+      
+      try {
+        // Use the already fetched products as the starting point for the complete list
+        let allShopifyProducts: any[] = [...shopifyProducts];
+        
+        // Get the Link header from initial request for pagination
+        // Note: We need to re-fetch the first page to get the Link header properly
+        // since the initial productsResponse didn't store it
+        let hasMorePages = shopifyProducts.length === 250;
+        let pageInfo: string | null = null;
+        
+        // First, check if there's a next page by re-fetching with limit=1 to get Link header
+        if (hasMorePages) {
+          const checkUrl = `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?status=any&limit=250`;
+          const checkResponse = await fetch(checkUrl, {
+            headers: { 'X-Shopify-Access-Token': shopifyConnection.accessToken }
+          });
+          
+          if (checkResponse.ok) {
+            const linkHeader = checkResponse.headers.get('Link') || '';
+            const nextLink = linkHeader.split(',').find((l: string) => l.includes('rel="next"'));
+            pageInfo = nextLink ? (nextLink.match(/page_info=([^>&]*)/)?.[1] || null) : null;
+          }
+        }
+        
+        // Paginate through remaining pages if there are more
+        // Use status=any to include active, draft, and archived products
+        while (pageInfo) {
+          const nextPageUrl = `${shopifyConnection.storeUrl}/admin/api/2025-10/products.json?limit=250&page_info=${pageInfo}`;
+          const nextPageResponse = await fetch(nextPageUrl, {
+            headers: { 'X-Shopify-Access-Token': shopifyConnection.accessToken }
+          });
+          
+          if (!nextPageResponse.ok) break;
+          
+          // Always parse the response body
+          const nextData = await nextPageResponse.json();
+          const nextProducts = nextData.products || [];
+          allShopifyProducts = [...allShopifyProducts, ...nextProducts];
+          
+          // Parse Link header for next pagination cursor
+          const linkHeader = nextPageResponse.headers.get('Link') || '';
+          const nextLink = linkHeader.split(',').find((l: string) => l.includes('rel="next"'));
+          pageInfo = nextLink ? (nextLink.match(/page_info=([^>&]*)/)?.[1] || null) : null;
+        }
+        
+        console.log(`📊 [SHOPIFY SYNC] Complete Shopify catalog: ${allShopifyProducts.length} products`);
+        
+        // Get all Shopify product IDs from the complete sync
+        const shopifyProductIds = allShopifyProducts
+          .filter((p: any) => p.id)
+          .map((p: any) => p.id.toString());
+        
+        // Find products in our DB for this user with Shopify IDs
+        const userProducts = await db
+          .select({ id: products.id, shopifyId: products.shopifyId, name: products.name })
+          .from(products)
+          .where(and(
+            eq(products.userId, userId),
+            isNotNull(products.shopifyId)
+          ));
+        
+        const localProductCount = userProducts.filter(p => p.shopifyId).length;
+        
+        // SAFEGUARD: Skip cleanup if Shopify returns significantly fewer products
+        // This prevents mass deletion during API errors or rate limiting
+        if (allShopifyProducts.length < localProductCount * 0.5 && localProductCount > 10) {
+          console.warn(`⚠️ [SHOPIFY SYNC] Skipping orphan cleanup: Shopify returned ${allShopifyProducts.length} products but we have ${localProductCount} locally. Possible API issue.`);
+          orphanCleanupSkipped = true;
+        } else {
+          for (const product of userProducts) {
+            if (product.shopifyId && !shopifyProductIds.includes(product.shopifyId)) {
+              try {
+                // Delete the orphaned product
+                await db.delete(products).where(eq(products.id, product.id));
+                
+                // Clean up related SEO meta
+                await db.delete(seoMeta).where(eq(seoMeta.productId, product.id));
+                
+                productsDeleted++;
+                orphanedProducts.push(product.name || product.shopifyId);
+                console.log(`🗑️ [SHOPIFY SYNC] Deleted orphaned product: ${product.name} (${product.shopifyId})`);
+              } catch (deleteError) {
+                console.error(`⚠️ [SHOPIFY SYNC] Failed to delete orphan:`, deleteError);
+              }
+            }
+          }
+          
+          if (productsDeleted > 0) {
+            console.log(`✅ [SHOPIFY SYNC] Cleaned up ${productsDeleted} orphaned product(s)`);
+          }
+        }
+      } catch (orphanError) {
+        console.error('⚠️ [SHOPIFY SYNC] Error during orphan cleanup:', orphanError);
+        orphanCleanupSkipped = true;
+      }
+
       // Update last sync time
       await db.update(storeConnections)
         .set({ lastSyncAt: sql`NOW()` })
@@ -9913,6 +10016,7 @@ Output format: Markdown with clear section headings.`;
       console.log('✅ [SHOPIFY SYNC] Sync completed:', {
         productsAdded,
         productsUpdated,
+        productsDeleted,
         totalProcessed: shopifyProducts.length,
         skipped: shopifyProducts.length - (productsAdded + productsUpdated),
         errors: errors.length
@@ -9945,8 +10049,10 @@ Output format: Markdown with clear section headings.`;
         imported: imported.length,
         added: productsAdded,
         updated: productsUpdated,
+        deleted: productsDeleted,
+        orphanCleanupSkipped,
         errors: errors.length,
-        details: { imported, errors }
+        details: { imported, errors, orphanedProducts }
       });
     } catch (error) {
       console.error('❌ [SHOPIFY SYNC] Sync failed:', error);
@@ -12352,7 +12458,121 @@ Output format: Markdown with clear section headings.`;
   // (customers/data_request, customers/redact, shop/redact) are handled by the 
   // unified /api/webhooks/compliance endpoint above, which is configured in shopify.app.toml
 
-  // 2. Orders Paid Webhook - Track product sales for conversion lift attribution
+  // 2. Products Delete Webhook - Remove product when deleted from Shopify
+  app.post('/api/webhooks/shopify/products/delete', verifyShopifyWebhook, async (req, res) => {
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    res.status(200).json({ success: true });
+    
+    try {
+      const productData = req.body;
+      const shopDomain = req.get('X-Shopify-Shop-Domain') || '';
+      const shopifyProductId = productData.id?.toString();
+      
+      console.log('🗑️ [PRODUCT DELETE] Webhook received:', {
+        shopify_product_id: shopifyProductId,
+        title: productData.title || 'N/A',
+        shop: shopDomain
+      });
+
+      if (!shopifyProductId) {
+        console.error('❌ [PRODUCT DELETE] Missing product ID in webhook payload');
+        return;
+      }
+
+      // Delete product from our database by shopifyId
+      const deleteResult = await db
+        .delete(products)
+        .where(eq(products.shopifyId, shopifyProductId))
+        .returning();
+
+      if (deleteResult.length > 0) {
+        console.log(`✅ [PRODUCT DELETE] Deleted ${deleteResult.length} product(s) with shopifyId: ${shopifyProductId}`);
+        
+        // Also clean up related SEO meta entries
+        for (const deletedProduct of deleteResult) {
+          try {
+            await db
+              .delete(seoMeta)
+              .where(eq(seoMeta.productId, deletedProduct.id));
+            console.log(`✅ [PRODUCT DELETE] Cleaned up SEO meta for product: ${deletedProduct.id}`);
+          } catch (seoError) {
+            console.error(`⚠️ [PRODUCT DELETE] Failed to clean up SEO meta:`, seoError);
+          }
+        }
+      } else {
+        console.log(`ℹ️ [PRODUCT DELETE] Product not found in database: ${shopifyProductId}`);
+      }
+    } catch (error) {
+      console.error('❌ [PRODUCT DELETE] Error handling webhook:', error);
+    }
+  });
+
+  // 3. Products Update Webhook - Sync product updates from Shopify in real-time
+  app.post('/api/webhooks/shopify/products/update', verifyShopifyWebhook, async (req, res) => {
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    res.status(200).json({ success: true });
+    
+    try {
+      const productData = req.body;
+      const shopDomain = req.get('X-Shopify-Shop-Domain') || '';
+      const shopifyProductId = productData.id?.toString();
+      
+      console.log('🔄 [PRODUCT UPDATE] Webhook received:', {
+        shopify_product_id: shopifyProductId,
+        title: productData.title || 'N/A',
+        shop: shopDomain
+      });
+
+      if (!shopifyProductId) {
+        console.error('❌ [PRODUCT UPDATE] Missing product ID in webhook payload');
+        return;
+      }
+
+      // Find the existing product
+      const existingProducts = await db
+        .select()
+        .from(products)
+        .where(eq(products.shopifyId, shopifyProductId))
+        .limit(1);
+
+      if (existingProducts.length === 0) {
+        console.log(`ℹ️ [PRODUCT UPDATE] Product not found in database: ${shopifyProductId}`);
+        return;
+      }
+
+      const existingProduct = existingProducts[0];
+      const variant = productData.variants?.[0];
+      
+      // Extract features from product description
+      const extractedFeatures = extractProductFeatures([], productData.body_html || '');
+
+      // Update the product with latest Shopify data
+      const updateResult = await db
+        .update(products)
+        .set({
+          name: productData.title,
+          description: productData.body_html || '',
+          originalDescription: existingProduct.isOptimized ? existingProduct.originalDescription : productData.body_html || '',
+          price: variant?.price || existingProduct.price,
+          category: productData.product_type || existingProduct.category,
+          stock: variant?.inventory_quantity ?? existingProduct.stock,
+          image: productData.image?.src || productData.images?.[0]?.src || existingProduct.image,
+          tags: productData.tags || '',
+          features: extractedFeatures,
+          updatedAt: sql`NOW()`
+        })
+        .where(eq(products.id, existingProduct.id))
+        .returning();
+
+      if (updateResult.length > 0) {
+        console.log(`✅ [PRODUCT UPDATE] Updated product: ${updateResult[0].name} (${shopifyProductId})`);
+      }
+    } catch (error) {
+      console.error('❌ [PRODUCT UPDATE] Error handling webhook:', error);
+    }
+  });
+
+  // 4. Orders Paid Webhook - Track product sales for conversion lift attribution
   app.post('/api/webhooks/shopify/orders/paid', verifyShopifyWebhook, async (req, res) => {
     // CRITICAL: Respond immediately to prevent 503 timeout
     res.status(200).json({ success: true });
