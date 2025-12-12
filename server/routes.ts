@@ -9798,10 +9798,10 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Fetch products from Shopify
-      // Use status=any AND published_status=any to include ALL products (active, draft, archived, published, unpublished)
-      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2024-10/products.json?status=any&published_status=any`);
+      // Use published_status=any to include ALL products (published and unpublished)
+      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2024-10/products.json?published_status=any`);
       
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-10/products.json?status=any&published_status=any&limit=250`, {
+      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-10/products.json?published_status=any&limit=250`, {
         headers: {
           'X-Shopify-Access-Token': shopifyConnection.accessToken
         }
@@ -10321,7 +10321,7 @@ Output format: Markdown with clear section headings.`;
       
       // Fetch ALL products from Shopify with pagination
       let allShopifyProducts: any[] = [];
-      let nextUrl: string | null = `${storeUrl}/admin/api/2024-10/products.json?limit=250&status=any&published_status=any`;
+      let nextUrl: string | null = `${storeUrl}/admin/api/2024-10/products.json?limit=250&published_status=any`;
       
       while (nextUrl) {
         const shopifyResponse = await fetch(nextUrl, {
