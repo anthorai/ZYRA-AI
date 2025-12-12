@@ -249,34 +249,34 @@ export default function AbandonedCartSMSPage() {
         title="Recovery Analytics"
         testId="card-recovery-analytics"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          <div className="text-center min-w-0">
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-primary truncate" data-testid="stat-recovery-rate">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="text-center p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1" data-testid="stat-recovery-rate">
               {analytics?.recoveryRate || "0"}%
             </div>
-            <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm truncate">Recovery Rate</div>
-            <div className="text-slate-400 text-[9px] sm:text-[10px] md:text-xs truncate">last 30 days</div>
+            <div className="text-slate-300 text-xs sm:text-sm font-medium">Recovery Rate</div>
+            <div className="text-slate-500 text-[10px] sm:text-xs">last 30 days</div>
           </div>
-          <div className="text-center min-w-0">
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-primary truncate" data-testid="stat-carts-recovered">
+          <div className="text-center p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1" data-testid="stat-carts-recovered">
               {analytics?.recoveredCarts || 0}
             </div>
-            <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm truncate">Carts Recovered</div>
-            <div className="text-slate-400 text-[9px] sm:text-[10px] md:text-xs truncate">this month</div>
+            <div className="text-slate-300 text-xs sm:text-sm font-medium">Carts Recovered</div>
+            <div className="text-slate-500 text-[10px] sm:text-xs">this month</div>
           </div>
-          <div className="text-center min-w-0">
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-primary truncate" data-testid="stat-revenue-recovered">
+          <div className="text-center p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-500 mb-1" data-testid="stat-revenue-recovered">
               ${analytics?.recoveredValue?.toLocaleString() || "0"}
             </div>
-            <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm truncate">Revenue Recovered</div>
-            <div className="text-slate-400 text-[9px] sm:text-[10px] md:text-xs truncate">this month</div>
+            <div className="text-slate-300 text-xs sm:text-sm font-medium">Revenue Recovered</div>
+            <div className="text-slate-500 text-[10px] sm:text-xs">this month</div>
           </div>
-          <div className="text-center min-w-0">
-            <div className="text-lg sm:text-2xl md:text-3xl font-bold text-primary truncate" data-testid="stat-campaign-rate">
+          <div className="text-center p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1" data-testid="stat-campaign-rate">
               {analytics?.campaignSuccessRate || "0"}%
             </div>
-            <div className="text-slate-300 text-[10px] sm:text-xs md:text-sm truncate">Campaign Success</div>
-            <div className="text-slate-400 text-[9px] sm:text-[10px] md:text-xs truncate">campaign performance</div>
+            <div className="text-slate-300 text-xs sm:text-sm font-medium">Campaign Success</div>
+            <div className="text-slate-500 text-[10px] sm:text-xs">campaign performance</div>
           </div>
         </div>
       </DashboardCard>
