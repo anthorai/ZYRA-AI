@@ -392,7 +392,7 @@ export default function UpsellEmailReceiptsPage() {
                       <Input
                         value={settings?.primaryColor || "#6366f1"}
                         onChange={(e) => handleSettingsChange("primaryColor", e.target.value)}
-                        className="flex-1"
+                        className="flex-1 bg-background"
                       />
                     </div>
                   </div>
@@ -409,7 +409,7 @@ export default function UpsellEmailReceiptsPage() {
                       <Input
                         value={settings?.secondaryColor || "#22c55e"}
                         onChange={(e) => handleSettingsChange("secondaryColor", e.target.value)}
-                        className="flex-1"
+                        className="flex-1 bg-background"
                       />
                     </div>
                   </div>
@@ -429,7 +429,7 @@ export default function UpsellEmailReceiptsPage() {
                       <Input
                         value={settings?.backgroundColor || "#1e293b"}
                         onChange={(e) => handleSettingsChange("backgroundColor", e.target.value)}
-                        className="flex-1"
+                        className="flex-1 bg-background"
                       />
                     </div>
                   </div>
@@ -446,7 +446,7 @@ export default function UpsellEmailReceiptsPage() {
                       <Input
                         value={settings?.textColor || "#f8fafc"}
                         onChange={(e) => handleSettingsChange("textColor", e.target.value)}
-                        className="flex-1"
+                        className="flex-1 bg-background"
                       />
                     </div>
                   </div>
@@ -458,6 +458,7 @@ export default function UpsellEmailReceiptsPage() {
                     placeholder="https://your-store.com/logo.png"
                     value={settings?.logoUrl || ""}
                     onChange={(e) => handleSettingsChange("logoUrl", e.target.value)}
+                    className="bg-background"
                     data-testid="input-logo-url"
                   />
                 </div>
@@ -478,6 +479,7 @@ export default function UpsellEmailReceiptsPage() {
                   <Input
                     value={settings?.headerText || "Thank you for your order!"}
                     onChange={(e) => handleSettingsChange("headerText", e.target.value)}
+                    className="bg-background"
                     data-testid="input-header-text"
                   />
                 </div>
@@ -487,6 +489,7 @@ export default function UpsellEmailReceiptsPage() {
                   <Input
                     value={settings?.upsellSectionTitle || "Complete Your Setup:"}
                     onChange={(e) => handleSettingsChange("upsellSectionTitle", e.target.value)}
+                    className="bg-background"
                     data-testid="input-upsell-title"
                   />
                 </div>
@@ -498,6 +501,7 @@ export default function UpsellEmailReceiptsPage() {
                     value={settings?.footerText || ""}
                     onChange={(e) => handleSettingsChange("footerText", e.target.value)}
                     rows={3}
+                    className="bg-background"
                     data-testid="input-footer-text"
                   />
                 </div>
