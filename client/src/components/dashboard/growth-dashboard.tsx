@@ -167,19 +167,7 @@ export default function GrowthDashboard() {
       metadata: any;
     }>;
   }>({
-    queryKey: ['/api/analytics/daily-report', reportDate],
-    queryFn: async () => {
-      const res = await fetch(`/api/analytics/daily-report?date=${reportDate}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(errorData.error || `Request failed: ${res.status}`);
-      }
-      return res.json();
-    },
+    queryKey: [`/api/analytics/daily-report?date=${reportDate}`],
     enabled: showDailyReport && !!dashboardData?.user,
   });
 
