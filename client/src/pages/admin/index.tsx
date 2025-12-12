@@ -110,7 +110,7 @@ function StatCard({
   return (
     <Card data-testid={testId}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+        <CardTitle className="text-sm font-medium text-muted-foreground xl:whitespace-nowrap">
           {title}
         </CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -396,7 +396,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <StatCard
             title="Total Users"
             value={totalUsers}
