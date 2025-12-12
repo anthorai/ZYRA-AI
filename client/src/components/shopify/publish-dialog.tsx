@@ -132,6 +132,12 @@ export function ShopifyPublishDialog({
           <div className="space-y-2">
             <span className="text-sm font-medium">Content to Publish</span>
             <div className="bg-muted/50 p-3 rounded-lg space-y-2 text-sm">
+              {content.title && (
+                <div>
+                  <span className="font-medium text-primary">Title: </span>
+                  <span className="text-muted-foreground">{content.title}</span>
+                </div>
+              )}
               {content.description && (
                 <div>
                   <span className="font-medium text-primary">Description: </span>

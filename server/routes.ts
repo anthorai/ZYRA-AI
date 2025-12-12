@@ -10346,8 +10346,12 @@ Output format: Markdown with clear section headings.`;
               .where(eq(products.id, update.productId));
           }
 
-          // Publish to Shopify
-          const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, update.content);
+          // Publish to Shopify - map seoTitle to title for Shopify product update
+          const publishContent = {
+            ...update.content,
+            title: update.content.seoTitle || update.content.title,
+          };
+          const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, publishContent);
 
           // MERGE content with existing optimizedCopy (don't replace entirely)
           const existingOptimizedCopy = (product.optimizedCopy || {}) as any;
@@ -10483,8 +10487,12 @@ Output format: Markdown with clear section headings.`;
       const { recordProductOptimizationForProduct } = await import('./lib/record-product-optimization');
       await recordProductOptimizationForProduct(userId, product);
 
-      // Publish content to Shopify
-      const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, content);
+      // Publish content to Shopify - map seoTitle to title for Shopify product update
+      const publishContent = {
+        ...content,
+        title: content.seoTitle || content.title,
+      };
+      const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, publishContent);
 
       // Update product in Zyra database
       // MERGE new content with existing optimizedCopy (don't replace entirely)

@@ -3,9 +3,11 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 export interface PublishContent {
+  title?: string;
   description?: string;
   seoTitle?: string;
   metaDescription?: string;
+  tags?: string[] | string;
   imageAltTexts?: Array<{ imageId: string; altText: string }>;
 }
 

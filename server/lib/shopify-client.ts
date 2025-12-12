@@ -299,6 +299,7 @@ export class ShopifyClient {
   }
 
   async publishAIContent(productId: string, content: {
+    title?: string;
     description?: string;
     seoTitle?: string;
     metaDescription?: string;
@@ -306,6 +307,11 @@ export class ShopifyClient {
     imageAltTexts?: Array<{ imageId: string; altText: string }>;
   }): Promise<ShopifyProduct> {
     const updates: ShopifyProductUpdate = {};
+
+    // Update product title if provided
+    if (content.title) {
+      updates.title = content.title;
+    }
 
     if (content.description) {
       updates.body_html = content.description;
