@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
@@ -285,6 +285,14 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("plans");
+  const plansRef = useRef<HTMLDivElement>(null);
+
+  const scrollToPlans = useCallback(() => {
+    setActiveTab("plans");
+    setTimeout(() => {
+      plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, []);
   const [isAnnual, setIsAnnual] = useState(false);
 
   // Fetch real subscription plans from API
@@ -675,7 +683,7 @@ export default function BillingPage() {
               {currentPlan.planName !== 'Pro' && (
                 <Button
                   className="flex-1 gradient-button"
-                  onClick={() => setActiveTab("plans")}
+                  onClick={scrollToPlans}
                   data-testid="button-upgrade-plan"
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
@@ -700,7 +708,7 @@ export default function BillingPage() {
           </div>
         </DashboardCard>
       )}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs ref={plansRef} value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="inline-flex flex-nowrap w-full sm:grid sm:grid-cols-4 gradient-surface overflow-x-auto gap-2">
           <TabsTrigger value="plans" data-testid="tab-plans" className="flex-none min-w-max sm:flex-auto">Plans</TabsTrigger>
           <TabsTrigger value="billing" data-testid="tab-billing" className="flex-none min-w-max sm:flex-auto">Billing History</TabsTrigger>
