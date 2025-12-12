@@ -71,7 +71,55 @@ Real AI-powered behavioral automation that tracks customer actions and triggers 
 AI-powered customer segmentation system that automatically categorizes customers into groups based on purchase behavior. Database schema includes 4 tables: `customer_segments` (segment definitions with rules), `customer_segment_members` (customers in each segment), `customer_profiles` (aggregated customer data), and `segment_analytics` (segment performance metrics). Supports segment types: high_spenders, first_timers, loyal_buyers, discount_seekers, dormant, cart_abandoners, vip, at_risk, and custom. Features AI-powered segment analysis using GPT-4o-mini, automatic member population based on rules, segment recalculation, and default segment seeding. Frontend includes analytics overview, AI suggestions, segment management grid, create/delete dialogs, and member viewing.
 
 ## System Design Choices
-The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend. It supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup. Performance is optimized with extensive database indexes, Upstash Redis caching for AI responses, and frontend optimizations.
+The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend. It supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup.
+
+### Ultra-Fast Performance Optimization (Dec 12, 2025)
+Comprehensive performance infrastructure for instant UI responsiveness:
+
+**Query & Data Layer (`client/src/lib/queryClient.ts`):**
+- TanStack Query with 5-minute stale time and 30-minute garbage collection
+- Token caching with automatic refresh and cache invalidation
+- `prefetchCriticalData()` for preloading common endpoints
+- `smartInvalidate()` for conditional cache invalidation
+- `networkMode: 'offlineFirst'` for instant display from cache
+
+**Performance Utilities (`client/src/lib/performance.ts`):**
+- `debounce()` and `throttle()` for input optimization
+- `memoizeWithTTL()` for function result caching with expiration
+- `sessionCache` for session-level data persistence
+- `batchOperations()` for efficient bulk processing
+
+**Optimistic Updates (`client/src/hooks/useOptimistic.ts`):**
+- `useOptimisticMutation()` for instant UI feedback during mutations
+- `useOptimisticToggle()` for toggle interactions
+- `useOptimisticList()` for list CRUD with rollback support
+- `useDebouncedMutation()` for rapid input handling
+- `useBatchMutation()` for parallel bulk operations
+
+**Prefetching (`client/src/hooks/usePrefetch.ts`):**
+- Route-based data prefetching on hover
+- Adjacent route preloading based on navigation patterns
+- Intersection observer-based visibility prefetching
+- Smart refresh on tab visibility changes
+
+**Lazy Loading (`client/src/components/LazyComponent.tsx`):**
+- `createLazyComponent()` wrapper with intersection observer
+- `DeferredContent` for delayed rendering
+- `VisibilityAware` for viewport-based loading
+- `ProgressiveList` for incremental list rendering
+
+**Service Worker (`public/sw.js`):**
+- Stale-while-revalidate strategy for instant API responses
+- Priority endpoint caching for critical data
+- 10-minute API cache duration with background refresh
+- Offline fallback support
+
+**GPU-Accelerated Animations (`client/src/index.css`):**
+- `.gpu-accelerated` class for hardware-accelerated transforms
+- `.fade-in`, `.slide-in-up`, `.scale-in` for smooth transitions
+- `.skeleton-pulse` and `.shimmer` for loading states
+- `.content-visibility-auto` for off-screen optimization
+- `prefers-reduced-motion` media query support
 
 ### Storage Architecture
 The application uses two storage implementations:
