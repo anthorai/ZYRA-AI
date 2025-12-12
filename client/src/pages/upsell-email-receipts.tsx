@@ -656,7 +656,7 @@ export default function UpsellEmailReceiptsPage() {
                   placeholder="Rule name..."
                   value={newRuleName}
                   onChange={(e) => setNewRuleName(e.target.value)}
-                  className="max-w-xs"
+                  className="max-w-xs bg-background"
                   data-testid="input-new-rule-name"
                 />
                 <Select value={newRuleType} onValueChange={setNewRuleType}>
