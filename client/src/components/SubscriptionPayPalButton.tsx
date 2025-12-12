@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 declare global {
   namespace JSX {
@@ -11,49 +11,6 @@ declare global {
       >;
     }
   }
-}
-
-// Cache PayPal client token globally to avoid refetching
-let cachedClientToken: string | null = null;
-let tokenFetchPromise: Promise<string> | null = null;
-
-// Preload PayPal SDK globally
-let sdkLoadPromise: Promise<void> | null = null;
-
-function preloadPayPalSDK(): Promise<void> {
-  if (sdkLoadPromise) return sdkLoadPromise;
-  
-  if ((window as any).paypal) {
-    return Promise.resolve();
-  }
-
-  sdkLoadPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = import.meta.env.PROD
-      ? "https://www.paypal.com/web-sdk/v6/core"
-      : "https://www.sandbox.paypal.com/web-sdk/v6/core";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("PayPal SDK failed to load"));
-    document.head.appendChild(script);
-  });
-
-  return sdkLoadPromise;
-}
-
-async function fetchClientToken(): Promise<string> {
-  if (cachedClientToken) return cachedClientToken;
-  
-  if (tokenFetchPromise) return tokenFetchPromise;
-
-  tokenFetchPromise = fetch("/api/paypal/setup")
-    .then((res) => res.json())
-    .then((data) => {
-      cachedClientToken = data.clientToken;
-      return data.clientToken;
-    });
-
-  return tokenFetchPromise;
 }
 
 interface SubscriptionPayPalButtonProps {
@@ -80,6 +37,8 @@ export default function SubscriptionPayPalButton({
   const { toast } = useToast();
   const [isReady, setIsReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const paypalCheckoutRef = useRef<any>(null);
   const mountedRef = useRef(true);
 
@@ -178,44 +137,101 @@ export default function SubscriptionPayPalButton({
     }
   }, [createOrder, isProcessing, toast]);
 
+  const initPayPal = useCallback(async () => {
+    setLoadError(null);
+    
+    try {
+      const setupResponse = await fetch("/api/paypal/setup");
+      if (!setupResponse.ok) {
+        throw new Error("Failed to get PayPal configuration");
+      }
+      const setupData = await setupResponse.json();
+      const clientToken = setupData.clientToken;
+
+      if (!clientToken) {
+        throw new Error("Invalid PayPal client token");
+      }
+
+      if (!mountedRef.current) return;
+
+      const sdkUrl = import.meta.env.PROD
+        ? "https://www.paypal.com/web-sdk/v6/core"
+        : "https://www.sandbox.paypal.com/web-sdk/v6/core";
+
+      if (!(window as any).paypal) {
+        await new Promise<void>((resolve, reject) => {
+          const existingScript = document.querySelector(`script[src="${sdkUrl}"]`);
+          if (existingScript) {
+            existingScript.remove();
+          }
+          
+          const script = document.createElement("script");
+          script.src = sdkUrl;
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("PayPal SDK failed to load"));
+          document.head.appendChild(script);
+        });
+      }
+
+      if (!mountedRef.current) return;
+
+      const sdkInstance = await (window as any).paypal.createInstance({
+        clientToken,
+        components: ["paypal-payments"],
+      });
+
+      if (!mountedRef.current) return;
+
+      paypalCheckoutRef.current = sdkInstance.createPayPalOneTimePaymentSession({
+        onApprove,
+        onCancel,
+        onError: onErrorHandler,
+      });
+
+      setIsReady(true);
+      setLoadError(null);
+    } catch (e: any) {
+      console.error("PayPal initialization failed:", e);
+      if (mountedRef.current) {
+        setLoadError(e.message || "Failed to load PayPal");
+        setIsReady(false);
+      }
+    }
+  }, [onApprove, onCancel, onErrorHandler]);
+
+  const handleRetry = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+    initPayPal();
+  }, [initPayPal]);
+
   useEffect(() => {
     mountedRef.current = true;
-
-    const initPayPal = async () => {
-      try {
-        // Parallel load: SDK + client token
-        const [, clientToken] = await Promise.all([
-          preloadPayPalSDK(),
-          fetchClientToken(),
-        ]);
-
-        if (!mountedRef.current) return;
-
-        const sdkInstance = await (window as any).paypal.createInstance({
-          clientToken,
-          components: ["paypal-payments"],
-        });
-
-        if (!mountedRef.current) return;
-
-        paypalCheckoutRef.current = sdkInstance.createPayPalOneTimePaymentSession({
-          onApprove,
-          onCancel,
-          onError: onErrorHandler,
-        });
-
-        setIsReady(true);
-      } catch (e) {
-        console.warn("PayPal initialization pending:", e);
-      }
-    };
-
     initPayPal();
 
     return () => {
       mountedRef.current = false;
     };
-  }, [onApprove, onCancel, onErrorHandler]);
+  }, [initPayPal, retryCount]);
+
+  if (loadError) {
+    return (
+      <div className="w-full">
+        <button
+          onClick={handleRetry}
+          className="w-full bg-[#0070ba] hover:bg-[#005ea6] text-white font-semibold py-3 px-4 rounded-md transition-colors flex items-center justify-center gap-2"
+          data-testid="button-paypal-retry"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Retry Loading PayPal
+        </button>
+        <p className="text-xs text-muted-foreground mt-2 text-center flex items-center justify-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          {loadError}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <button
