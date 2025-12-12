@@ -5004,15 +5004,44 @@ Output format: Markdown with clear section headings.`;
   // Get usage stats
   app.get("/api/usage-stats", requireAuth, async (req, res) => {
     try {
-      const usageStats = await supabaseStorage.getUserUsageStats((req as AuthenticatedRequest).user.id);
-      res.json(usageStats || {
-        productsCount: 0,
-        emailsSent: 0,
-        emailsRemaining: 0,
-        smsSent: 0,
-        smsRemaining: 0,
-        aiGenerationsUsed: 0,
-        seoOptimizationsUsed: 0
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get actual credit balance data
+      const { getCreditBalance } = await import('./lib/credits');
+      const creditBalance = await getCreditBalance(userId);
+      
+      // Get usage stats from database
+      const usageStats = await supabaseStorage.getUserUsageStats(userId);
+      
+      // Count products for this user
+      const userProducts = await db?.select().from(products).where(eq(products.userId, userId));
+      const productsCount = userProducts?.length || 0;
+      
+      // Aggregate actual usage from history tables
+      const aiHistory = await db?.select().from(aiGenerationHistory).where(eq(aiGenerationHistory.userId, userId));
+      const aiGenerationsUsed = aiHistory?.length || 0;
+      
+      // Count SEO optimizations (products that have been optimized)
+      const optimizedProducts = await db?.select().from(products).where(
+        and(
+          eq(products.userId, userId),
+          eq(products.isOptimized, true)
+        )
+      );
+      const seoOptimizationsUsed = optimizedProducts?.length || 0;
+      
+      res.json({
+        productsCount,
+        emailsSent: usageStats?.emailsSent || 0,
+        emailsRemaining: usageStats?.emailsRemaining || 0,
+        smsSent: usageStats?.smsSent || 0,
+        smsRemaining: usageStats?.smsRemaining || 0,
+        aiGenerationsUsed,
+        seoOptimizationsUsed,
+        creditsUsed: creditBalance.creditsUsed,
+        creditsRemaining: creditBalance.creditsRemaining,
+        creditLimit: creditBalance.creditLimit,
+        percentUsed: creditBalance.percentUsed
       });
     } catch (error: any) {
       console.error("Error fetching usage stats:", error);
