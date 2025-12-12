@@ -10321,7 +10321,7 @@ Output format: Markdown with clear section headings.`;
       
       // Fetch ALL products from Shopify with pagination
       let allShopifyProducts: any[] = [];
-      let nextUrl: string | null = `${storeUrl}/admin/api/2024-01/products.json?limit=250&status=any&published_status=any`;
+      let nextUrl: string | null = `${storeUrl}/admin/api/2024-10/products.json?limit=250&status=any&published_status=any`;
       
       while (nextUrl) {
         const shopifyResponse = await fetch(nextUrl, {
