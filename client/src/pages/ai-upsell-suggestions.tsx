@@ -102,60 +102,72 @@ export default function AIUpsellSuggestionsPage() {
           </div>
         </DashboardCard>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {suggestedProducts.map((product) => {
             const confidenceScore = generateConfidenceScore();
             return (
               <Card 
                 key={product.id} 
-                className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl dark-theme-bg"
+                className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl dark-theme-bg"
                 data-testid={`product-card-${product.id}`}
               >
-                <CardContent className="p-3 sm:p-4 md:p-6 overflow-hidden">
-                  <div className="flex items-center space-x-4">
-                    {product.image ? (
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="w-20 h-20 rounded-lg object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <div className={`w-20 h-20 bg-slate-700 rounded-lg flex items-center justify-center ${product.image ? 'hidden' : ''}`}>
-                      <ShoppingCart className="w-10 h-10 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-medium text-lg truncate">{product.name}</h4>
-                      <p className="text-primary font-bold text-xl">
-                        ${Number(product.price).toFixed(2)}
-                      </p>
-                      <p className="text-slate-400 text-sm mt-1">
-                        AI Confidence: <span className="text-green-400">{confidenceScore}%</span>
-                      </p>
-                      <div className="flex space-x-3 mt-4">
-                        <Button 
-                          size="sm" 
-                          className="bg-green-600 hover:bg-green-700 text-white flex-1"
-                          onClick={() => handleApproveUpsell(product.id, product.name)}
-                          data-testid={`button-approve-${product.id}`}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Approve
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="border-red-600 text-red-400 hover:bg-red-600/20 flex-1"
-                          onClick={() => handleRejectUpsell(product.id, product.name)}
-                          data-testid={`button-reject-${product.id}`}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Reject
-                        </Button>
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex flex-col">
+                    {/* Product Image */}
+                    <div className="w-full aspect-square rounded-lg overflow-hidden mb-4 bg-slate-800">
+                      {product.image ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center ${product.image ? 'hidden' : ''}`}>
+                        <ShoppingCart className="w-16 h-16 text-primary/50" />
                       </div>
+                    </div>
+                    
+                    {/* Product Info */}
+                    <div className="space-y-2">
+                      <h4 className="text-white font-semibold text-base leading-tight line-clamp-2 min-h-[2.5rem]">
+                        {product.name}
+                      </h4>
+                      <div className="flex items-center justify-between">
+                        <p className="text-primary font-bold text-xl">
+                          ${Number(product.price).toFixed(2)}
+                        </p>
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-medium">
+                          {confidenceScore}% match
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-4">
+                      <Button 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                        onClick={() => handleApproveUpsell(product.id, product.name)}
+                        data-testid={`button-approve-${product.id}`}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Approve
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 flex-1"
+                        onClick={() => handleRejectUpsell(product.id, product.name)}
+                        data-testid={`button-reject-${product.id}`}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
