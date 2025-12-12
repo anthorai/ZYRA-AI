@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -20,7 +21,8 @@ import {
   Megaphone,
   Copy,
   Check,
-  Sparkles
+  Sparkles,
+  Package
 } from "lucide-react";
 
 interface GeneratedContent {
@@ -34,14 +36,48 @@ interface GeneratedContent {
   adCopy: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  image: string | null;
+  category: string | null;
+}
+
 export default function MultiChannelRepurposingPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [productDescription, setProductDescription] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Fetch products from store
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  // Handle product selection - auto-fill description
+  const handleProductSelect = (productId: string) => {
+    setSelectedProductId(productId);
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const descriptionParts = [
+        product.name,
+        product.description ? `\n\n${product.description}` : '',
+        `\n\nPrice: $${Number(product.price).toFixed(2)}`,
+        product.category ? `\nCategory: ${product.category}` : ''
+      ];
+      setProductDescription(descriptionParts.join(''));
+      toast({
+        title: "Product Selected",
+        description: `${product.name} details loaded. You can edit the description before generating.`,
+      });
+    }
+  };
 
   const generateMutation = useMutation({
     mutationFn: async (description: string) => {
@@ -172,17 +208,67 @@ export default function MultiChannelRepurposingPage() {
     >
       <DashboardCard
         title="Product Description"
-        description="Enter your product description to generate content for all channels"
+        description="Select a product from your store or enter details manually"
         testId="card-product-description"
       >
         <div className="space-y-6">
+          {/* Product Selector */}
+          <div>
+            <Label className="text-white text-lg mb-2 block">Select Product from Store</Label>
+            <Select value={selectedProductId} onValueChange={handleProductSelect}>
+              <SelectTrigger 
+                className="w-full bg-background border-slate-600 text-white"
+                data-testid="select-product"
+              >
+                <SelectValue placeholder={productsLoading ? "Loading products..." : "Choose a product to auto-fill details"} />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-600">
+                {products.map((product) => (
+                  <SelectItem 
+                    key={product.id} 
+                    value={product.id}
+                    className="text-white hover:bg-slate-700 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      {product.image ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-8 h-8 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-slate-700 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-slate-400" />
+                        </div>
+                      )}
+                      <span className="truncate">{product.name}</span>
+                      <span className="text-primary ml-auto">${Number(product.price).toFixed(2)}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+                {products.length === 0 && !productsLoading && (
+                  <div className="p-3 text-center text-slate-400 text-sm">
+                    No products found. Connect your Shopify store first.
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-700"></div>
+            <span className="text-slate-500 text-sm">or enter manually</span>
+            <div className="flex-1 h-px bg-slate-700"></div>
+          </div>
+
+          {/* Manual Description Input */}
           <div>
             <Label className="text-white text-lg">Product Description</Label>
             <Textarea
               value={productDescription}
               onChange={(e) => setProductDescription(e.target.value)}
               placeholder="Enter your product description here... Include key features, benefits, target audience, and any promotional details."
-              className="mt-2 form-textarea text-white text-base min-h-[120px]"
+              className="mt-2 bg-background border-slate-600 text-white text-base min-h-[120px]"
               rows={5}
               data-testid="input-product-description"
             />
