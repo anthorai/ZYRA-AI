@@ -109,11 +109,11 @@ function StatCard({
 }) {
   return (
     <Card data-testid={testId}>
-      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
-        <CardTitle className="sm:text-2xl font-medium text-muted-foreground tracking-tight text-[24px]">
+      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2 xl:min-h-[60px]">
+        <CardTitle className="text-sm font-medium text-muted-foreground tracking-tight xl:text-base xl:leading-tight">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+        <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       </CardHeader>
       <CardContent>
         {isLoading ? (
