@@ -30,6 +30,7 @@ import {
   SidebarMenuButton,
   SidebarHeader,
   SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -225,9 +226,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <SidebarProvider style={sidebarStyle as React.CSSProperties}>
       <div className="flex min-h-screen w-full">
         <AdminSidebar />
-        <main className="flex-1 overflow-auto bg-background">
-          {children}
-        </main>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <header className="flex h-12 items-center gap-2 border-b bg-background px-4 md:px-6">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <Separator orientation="vertical" className="h-6" />
+            <span className="text-sm font-medium text-muted-foreground">Admin</span>
+          </header>
+          <main className="flex-1 overflow-auto bg-background">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
