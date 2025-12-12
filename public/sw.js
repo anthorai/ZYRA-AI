@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `zyra-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `zyra-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `zyra-api-${CACHE_VERSION}`;
@@ -14,12 +14,23 @@ const STATIC_ASSETS = [
 
 const CACHE_STRATEGIES = {
   static: 'cache-first',
-  api: 'network-first',
+  api: 'stale-while-revalidate',
   images: 'cache-first',
-  default: 'network-first'
+  default: 'stale-while-revalidate'
 };
 
-const API_CACHE_DURATION = 5 * 60 * 1000;
+// Extended cache duration for faster repeat loads
+const API_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for API data
+
+// Endpoints to cache aggressively for instant access
+const PRIORITY_CACHE_ENDPOINTS = [
+  '/api/products',
+  '/api/credits/balance',
+  '/api/subscription-plans',
+  '/api/shopify/status',
+  '/api/me',
+  '/api/dashboard-complete'
+];
 
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
@@ -130,12 +141,46 @@ async function handleDynamicRequest(request) {
   }
 }
 
+// Stale-While-Revalidate for instant response with background refresh
 async function handleApiRequest(request) {
   const url = new URL(request.url);
-  const isReadOnly = url.pathname.includes('/api/me') || 
-                     url.pathname.includes('/api/products') ||
+  const isPriorityEndpoint = PRIORITY_CACHE_ENDPOINTS.some(ep => url.pathname.includes(ep));
+  const isReadOnly = isPriorityEndpoint || 
                      url.pathname.includes('/api/campaigns') ||
                      url.pathname.includes('/api/analytics');
+
+  // For priority endpoints, serve from cache immediately if available
+  if (isPriorityEndpoint) {
+    const cache = await caches.open(API_CACHE);
+    const cached = await cache.match(request);
+    
+    if (cached) {
+      // Start background revalidation
+      fetch(request.clone()).then(async (response) => {
+        if (response.ok) {
+          const headers = new Headers(response.headers);
+          headers.set('sw-cached-at', Date.now().toString());
+          const blob = await response.blob();
+          const newResponse = new Response(blob, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: headers
+          });
+          cache.put(request, newResponse);
+        }
+      }).catch(() => {});
+      
+      // Return cached immediately for instant response
+      const headers = new Headers(cached.headers);
+      headers.set('x-cache-status', 'STALE-REVALIDATING');
+      const blob = await cached.blob();
+      return new Response(blob, {
+        status: cached.status,
+        statusText: cached.statusText,
+        headers: headers
+      });
+    }
+  }
 
   try {
     const response = await fetch(request.clone());

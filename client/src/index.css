@@ -307,6 +307,147 @@
 }
 
 @layer utilities {
+  /* ===============================================
+     GPU-ACCELERATED PERFORMANCE UTILITIES
+     Use transform and opacity for 60fps animations
+     =============================================== */
+  
+  /* GPU-accelerated transitions - use these for smooth animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform, opacity;
+  }
+
+  /* Fast fade transitions (GPU-optimized) */
+  .fade-in {
+    animation: fadeIn 0.15s ease-out forwards;
+  }
+  
+  .fade-out {
+    animation: fadeOut 0.15s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-4px); }
+  }
+
+  /* Instant slide transitions */
+  .slide-in-right {
+    animation: slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .slide-in-up {
+    animation: slideInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes slideInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scale pop animation */
+  .scale-in {
+    animation: scaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Skeleton pulse - smooth loading indicator */
+  .skeleton-pulse {
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+    background: linear-gradient(90deg, 
+      rgba(0, 240, 255, 0.05) 0%,
+      rgba(0, 240, 255, 0.1) 50%,
+      rgba(0, 240, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  @keyframes skeletonPulse {
+    0%, 100% { background-position: 200% 0; }
+    50% { background-position: 0% 0; }
+  }
+
+  /* Shimmer effect for loading states */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 240, 255, 0.1) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    to { left: 100%; }
+  }
+
+  /* Micro-interaction for buttons */
+  .btn-press {
+    transition: transform 0.1s ease;
+  }
+
+  .btn-press:active {
+    transform: scale(0.98);
+  }
+
+  /* Optimized hover state - GPU only */
+  .hover-lift {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 240, 255, 0.15);
+  }
+
+  /* Content visibility for off-screen optimization */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in, .fade-out, .slide-in-right, .slide-in-up, .scale-in {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+    
+    .skeleton-pulse, .shimmer::after {
+      animation: none;
+    }
+  }
+
   /* Dark theme utility classes */
   .dark-theme-bg {
     background: linear-gradient(135deg, #0D0D1F 0%, #14142B 100%);

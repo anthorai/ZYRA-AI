@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { clearTokenCache, prefetchCriticalData } from '@/lib/queryClient';
+import { sessionCache } from '@/lib/performance';
 
 // App user type for backend user profiles
 interface AppUser {
@@ -41,10 +43,14 @@ const WARNING_TIME = INACTIVITY_TIMEOUT - WARNING_BEFORE_TIMEOUT; // Show warnin
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
-  const [user, setUser] = useState<User | null>(null);
-  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  
+  // Performance: Try to restore from session cache for instant display
+  const cachedAuth = useMemo(() => sessionCache.get<{ user: User | null; appUser: AppUser | null }>('auth_state'), []);
+  
+  const [user, setUser] = useState<User | null>(cachedAuth?.user ?? null);
+  const [appUser, setAppUser] = useState<AppUser | null>(cachedAuth?.appUser ?? null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedAuth); // Skip loading if we have cached state
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -288,10 +294,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (response.ok) {
           const data = await response.json();
-          setAppUser(data.user || data);
+          const fetchedUser = data.user || data;
+          setAppUser(fetchedUser);
+          
+          // Cache auth state for instant restore on refresh
+          sessionCache.set('auth_state', { user, appUser: fetchedUser });
+          
+          // Prefetch critical data after successful auth
+          prefetchCriticalData();
           return;
         } else if (response.status === 401) {
           setAppUser(null);
+          sessionCache.remove('auth_state');
           return;
         } else {
           throw new Error(`HTTP ${response.status}`);
@@ -365,7 +379,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
       // Get token synchronously from current session state (faster than await)
@@ -379,6 +393,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }).catch(() => {}); // Silent catch
       }
       
+      // Clear all cached state immediately
+      clearTokenCache();
+      sessionCache.remove('auth_state');
+      
       // Immediately clear local session (don't wait for backend)
       const result = await supabase.auth.signOut();
       return result;
@@ -387,7 +405,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoggingOut(false);
     }
-  };
+  }, [session?.access_token]);
 
   const value = {
     user,
