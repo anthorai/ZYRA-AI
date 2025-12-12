@@ -45,13 +45,24 @@ async function refreshSessionToken(): Promise<string | null> {
     
     if (error || !data.session) {
       console.error('❌ Failed to refresh session:', error?.message);
+      // Clear stale cache on refresh failure
+      cachedToken = null;
+      tokenExpiry = 0;
       return null;
     }
     
-    console.log('✅ Session refreshed successfully');
-    return data.session.access_token;
+    // CRITICAL: Update the cache with the new token to prevent refresh loops
+    const newToken = data.session.access_token;
+    cachedToken = newToken;
+    tokenExpiry = Date.now() + 55 * 60 * 1000; // Cache for 55 minutes
+    
+    console.log('✅ Session refreshed successfully, cache updated');
+    return newToken;
   } catch (error) {
     console.error('❌ Error refreshing session:', error);
+    // Clear stale cache on error
+    cachedToken = null;
+    tokenExpiry = 0;
     return null;
   }
 }
