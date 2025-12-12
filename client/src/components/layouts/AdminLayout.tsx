@@ -227,7 +227,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex min-h-screen w-full">
         <AdminSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-12 items-center gap-2 border-b bg-background px-4 md:px-6">
+          <header className="flex h-12 items-center gap-2 border-b px-4 md:px-6 bg-[#16162c]">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <Separator orientation="vertical" className="h-6" />
             <span className="text-sm font-medium text-muted-foreground">Admin</span>
