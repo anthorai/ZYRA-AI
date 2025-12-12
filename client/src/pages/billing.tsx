@@ -507,7 +507,7 @@ export default function BillingPage() {
                     </h2>
                     {currentSubscription?.status && (
                       <Badge 
-                        variant={currentSubscription.status === 'active' || currentSubscription.status === 'trial' ? 'default' : 'secondary'}
+                        variant={currentSubscription.status === 'active' || currentSubscription.status === 'trial' ? 'default' : currentSubscription.status === 'expired' ? 'destructive' : 'secondary'}
                         className="capitalize"
                         data-testid="badge-subscription-status"
                       >
@@ -515,6 +515,8 @@ export default function BillingPage() {
                           <><CheckCircle2 className="w-3 h-3 mr-1" /> Active</>
                         ) : currentSubscription.status === 'trial' ? (
                           <><Sparkles className="w-3 h-3 mr-1" /> Trial</>
+                        ) : currentSubscription.status === 'expired' ? (
+                          <><AlertCircle className="w-3 h-3 mr-1" /> Expired</>
                         ) : currentSubscription.status}
                       </Badge>
                     )}
@@ -550,14 +552,14 @@ export default function BillingPage() {
 
                 {/* Renewal/Trial End Date */}
                 <div className="flex items-center gap-3 p-3 sm:p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-5 h-5 text-emerald-400" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${currentSubscription.status === 'expired' ? 'bg-red-500/10' : 'bg-emerald-500/10'}`}>
+                    <Clock className={`w-5 h-5 ${currentSubscription.status === 'expired' ? 'text-red-400' : 'text-emerald-400'}`} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-slate-400 text-xs uppercase tracking-wide">
-                      {currentSubscription.status === 'trial' ? 'Trial Ends' : 'Renews On'}
+                      {currentSubscription.status === 'expired' ? 'Trial Ended' : currentSubscription.status === 'trial' ? 'Trial Ends' : 'Renews On'}
                     </p>
-                    <p className="text-white font-semibold text-sm truncate" data-testid="text-renewal-date">
+                    <p className={`font-semibold text-sm truncate ${currentSubscription.status === 'expired' ? 'text-red-400' : 'text-white'}`} data-testid="text-renewal-date">
                       {formatShortDate(currentSubscription.currentPeriodEnd)}
                     </p>
                   </div>
@@ -565,12 +567,12 @@ export default function BillingPage() {
 
                 {/* Days Remaining */}
                 <div className="flex items-center gap-3 p-3 sm:p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-5 h-5 text-purple-400" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getDaysRemaining(currentSubscription.currentPeriodEnd) === 0 ? 'bg-red-500/10' : 'bg-purple-500/10'}`}>
+                    <TrendingUp className={`w-5 h-5 ${getDaysRemaining(currentSubscription.currentPeriodEnd) === 0 ? 'text-red-400' : 'text-purple-400'}`} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-slate-400 text-xs uppercase tracking-wide">Days Left</p>
-                    <p className="text-white font-semibold text-sm" data-testid="text-days-remaining">
+                    <p className={`font-semibold text-sm ${getDaysRemaining(currentSubscription.currentPeriodEnd) === 0 ? 'text-red-400' : 'text-white'}`} data-testid="text-days-remaining">
                       {getDaysRemaining(currentSubscription.currentPeriodEnd)} days
                     </p>
                   </div>

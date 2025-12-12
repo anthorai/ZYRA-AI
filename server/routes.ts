@@ -4859,17 +4859,27 @@ Output format: Markdown with clear section headings.`;
           : new Date().toISOString();
         const trialEnd = trialEndDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
         
+        // Check if trial has expired
+        const trialExpired = trialEndDate ? new Date(trialEndDate) < new Date() : false;
+        
+        // Calculate days remaining
+        const daysRemaining = trialEndDate 
+          ? Math.max(0, Math.ceil((new Date(trialEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          : 7;
+        
         // Create a virtual trial subscription response
         const trialSubscription = {
           id: `trial_${userId}`,
           userId: userId,
           planId: trialPlan?.id || 'trial',
           planName: '7-Day Free Trial',
-          status: 'trial',
+          status: trialExpired ? 'expired' : 'trial',
           currentPeriodStart: trialStartDate,
           currentPeriodEnd: trialEnd,
           cancelAtPeriodEnd: false,
           isTrial: true,
+          isExpired: trialExpired,
+          daysRemaining: daysRemaining,
           creditsIncluded: 100,
           creditsUsed: 0,
           price: '0',
