@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Sparkles,
   Layers,
+  Trash2,
 } from 'lucide-react';
 
 interface Product {
@@ -222,12 +223,12 @@ export default function ManageProducts() {
     onSuccess: (data) => {
       if (data.removed > 0) {
         toast({
-          title: '🧹 Duplicates Removed!',
+          title: 'Duplicates Removed!',
           description: `Successfully removed ${data.removed} duplicate product${data.removed !== 1 ? 's' : ''}.`,
         });
       } else {
         toast({
-          title: '✅ No Duplicates Found',
+          title: 'No Duplicates Found',
           description: 'Your products are already clean!',
         });
       }
@@ -235,8 +236,37 @@ export default function ManageProducts() {
     },
     onError: (error: any) => {
       toast({
-        title: '❌ Cleanup Failed',
+        title: 'Cleanup Failed',
         description: error.message || 'Failed to cleanup duplicates',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const cleanupOrphansMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/shopify/cleanup-orphans', {});
+      const data = await response.json();
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.removed > 0) {
+        toast({
+          title: 'Orphans Removed!',
+          description: `Removed ${data.removed} product${data.removed !== 1 ? 's' : ''} that no longer exist in Shopify. Now showing ${data.remainingLocalCount} products.`,
+        });
+      } else {
+        toast({
+          title: 'All Products Synced',
+          description: `All ${data.localProductCount} products match your Shopify store.`,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Cleanup Failed',
+        description: error.message || 'Failed to cleanup orphaned products',
         variant: 'destructive',
       });
     },
@@ -399,27 +429,50 @@ export default function ManageProducts() {
             )}
           </Button>
           {products && products.length > 0 && (
-            <Button
-              onClick={() => cleanupDuplicatesMutation.mutate()}
-              disabled={cleanupDuplicatesMutation.isPending}
-              variant="outline"
-              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-all border-slate-600 hover:bg-slate-700"
-              data-testid="button-cleanup-duplicates"
-            >
-              {cleanupDuplicatesMutation.isPending ? (
-                <>
-                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
-                  <span className="hidden sm:inline">Cleaning...</span>
-                  <span className="sm:hidden">Clean</span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Remove Duplicates</span>
-                  <span className="sm:hidden">Clean</span>
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                onClick={() => cleanupOrphansMutation.mutate()}
+                disabled={cleanupOrphansMutation.isPending}
+                variant="outline"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-all border-slate-600 hover:bg-slate-700"
+                data-testid="button-cleanup-orphans"
+              >
+                {cleanupOrphansMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Cleaning...</span>
+                    <span className="sm:hidden">Clean</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Remove Orphans</span>
+                    <span className="sm:hidden">Orphans</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => cleanupDuplicatesMutation.mutate()}
+                disabled={cleanupDuplicatesMutation.isPending}
+                variant="outline"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm transition-all border-slate-600 hover:bg-slate-700"
+                data-testid="button-cleanup-duplicates"
+              >
+                {cleanupDuplicatesMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Cleaning...</span>
+                    <span className="sm:hidden">Clean</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Remove Duplicates</span>
+                    <span className="sm:hidden">Dupes</span>
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
       </div>

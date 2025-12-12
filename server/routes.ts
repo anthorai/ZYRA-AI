@@ -10292,6 +10292,115 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Clean up orphaned products (removes products that no longer exist in Shopify)
+  app.post('/api/shopify/cleanup-orphans', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      console.log('🧹 [ORPHAN CLEANUP] Starting orphan cleanup for user:', userId);
+      
+      // Get the user's Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(400).json({
+          error: 'No active Shopify connection found',
+          message: 'Please connect your Shopify store first'
+        });
+      }
+      
+      const { storeUrl, accessToken } = shopifyConnection;
+      
+      if (!storeUrl || !accessToken) {
+        return res.status(400).json({
+          error: 'Invalid Shopify connection',
+          message: 'Store URL or access token is missing'
+        });
+      }
+      
+      // Fetch ALL products from Shopify with pagination
+      let allShopifyProducts: any[] = [];
+      let nextUrl: string | null = `${storeUrl}/admin/api/2024-01/products.json?limit=250&status=any&published_status=any`;
+      
+      while (nextUrl) {
+        const shopifyResponse = await fetch(nextUrl, {
+          headers: { 'X-Shopify-Access-Token': accessToken }
+        });
+        
+        if (!shopifyResponse.ok) {
+          const errorText = await shopifyResponse.text();
+          throw new Error(`Shopify API error: ${shopifyResponse.status} - ${errorText}`);
+        }
+        
+        const shopifyData = await shopifyResponse.json();
+        const fetchedProducts = shopifyData.products || [];
+        allShopifyProducts = [...allShopifyProducts, ...fetchedProducts];
+        
+        // Extract full URL from Link header for next page
+        const linkHeader = shopifyResponse.headers.get('Link') || '';
+        const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+        nextUrl = nextMatch ? nextMatch[1] : null;
+      }
+      
+      const shopifyProductIds = new Set(allShopifyProducts.map((p: any) => p.id.toString()));
+      console.log(`📊 [ORPHAN CLEANUP] Shopify has ${allShopifyProducts.length} products`);
+      
+      // Get all local products
+      const localProducts = await supabaseStorage.getProducts(userId);
+      console.log(`📊 [ORPHAN CLEANUP] Local database has ${localProducts.length} products`);
+      
+      // Find orphaned products (exist locally but not in Shopify)
+      const orphanedProducts = localProducts.filter(p => 
+        p.shopifyId && !shopifyProductIds.has(p.shopifyId)
+      );
+      
+      console.log(`🔍 [ORPHAN CLEANUP] Found ${orphanedProducts.length} orphaned products`);
+      
+      if (orphanedProducts.length === 0) {
+        return res.json({
+          success: true,
+          message: 'No orphaned products found',
+          removed: 0,
+          shopifyProductCount: allShopifyProducts.length,
+          localProductCount: localProducts.length
+        });
+      }
+      
+      // Delete orphaned products
+      let removedCount = 0;
+      const removedProducts: string[] = [];
+      
+      for (const product of orphanedProducts) {
+        try {
+          await supabaseStorage.deleteProduct(product.id);
+          removedCount++;
+          removedProducts.push(product.name);
+          console.log(`  ✅ Deleted orphan: ${product.name} (shopifyId: ${product.shopifyId})`);
+        } catch (deleteError) {
+          console.error(`  ❌ Failed to delete ${product.name}:`, deleteError);
+        }
+      }
+      
+      console.log(`✅ [ORPHAN CLEANUP] Removed ${removedCount} orphaned products`);
+      
+      res.json({
+        success: true,
+        message: `Removed ${removedCount} orphaned product${removedCount !== 1 ? 's' : ''} that no longer exist in Shopify`,
+        removed: removedCount,
+        removedProducts,
+        shopifyProductCount: allShopifyProducts.length,
+        remainingLocalCount: localProducts.length - removedCount
+      });
+    } catch (error) {
+      console.error('❌ [ORPHAN CLEANUP] Cleanup failed:', error);
+      res.status(500).json({
+        error: 'Failed to cleanup orphaned products',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Bulk publish AI content to Shopify (MUST come before /:productId route!)
   app.post('/api/shopify/publish/bulk', requireAuth, async (req, res) => {
     try {
