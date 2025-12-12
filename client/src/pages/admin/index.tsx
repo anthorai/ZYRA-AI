@@ -110,7 +110,7 @@ function StatCard({
   return (
     <Card data-testid={testId}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">
           {title}
         </CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
