@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useROISummary } from "@/hooks/use-roi-summary";
@@ -22,7 +23,15 @@ import {
   BarChart3,
   Zap,
   RefreshCw,
-  Wand2
+  Wand2,
+  FileText,
+  Bot,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ShoppingCart,
+  Tag,
+  Send
 } from "lucide-react";
 import {
   LineChart,
@@ -123,6 +132,44 @@ export default function GrowthDashboard() {
 
   // Fetch ROI summary for revenue breakdown using shared hook
   const { data: roiSummary } = useROISummary();
+
+  // State for daily report modal
+  const [showDailyReport, setShowDailyReport] = useState(false);
+  const [reportDate, setReportDate] = useState<string>(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  });
+
+  // Fetch daily report data
+  const { data: dailyReport, isLoading: dailyReportLoading, refetch: refetchDailyReport, error: dailyReportError } = useQuery<{
+    reportDate: string;
+    autopilotEnabled: boolean;
+    summary: {
+      totalActions: number;
+      completed: number;
+      failed: number;
+      pending: number;
+      successRate: number;
+    };
+    breakdown: {
+      seoOptimizations: number;
+      cartRecoveries: number;
+      priceAdjustments: number;
+      campaignsSent: number;
+    };
+    recentActions: Array<{
+      id: string;
+      type: string;
+      status: string;
+      description: string;
+      createdAt: string;
+      metadata: any;
+    }>;
+  }>({
+    queryKey: ['/api/analytics/daily-report', { date: reportDate }],
+    enabled: showDailyReport && !!dashboardData?.user,
+  });
 
   // Log campaign stats errors
   if (campaignStatsError) {
@@ -291,6 +338,189 @@ export default function GrowthDashboard() {
         title="Growth Command Center"
         subtitle="Monitor your business performance, track AI-powered optimizations, and analyze marketing campaigns in real-time"
       />
+
+      {/* Daily Report Button */}
+      <div className="flex justify-end">
+        <Dialog open={showDailyReport} onOpenChange={setShowDailyReport}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              data-testid="button-view-daily-report"
+            >
+              <FileText className="w-4 h-4" />
+              View Daily Report
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5 text-primary" />
+                Autonomous Daily Report
+              </DialogTitle>
+              <DialogDescription>
+                Summary of AI actions for {new Date(reportDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* Date Picker */}
+            <div className="flex items-center gap-2 mb-4">
+              <input 
+                type="date" 
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className="px-3 py-2 rounded-md border bg-background text-sm"
+                data-testid="input-report-date"
+              />
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => refetchDailyReport()}
+                data-testid="button-refresh-report"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {dailyReportLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            ) : dailyReportError ? (
+              <div className="text-center py-8">
+                <XCircle className="w-12 h-12 mx-auto mb-3 text-red-500" />
+                <p className="text-red-500 font-medium">Failed to load report</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {(dailyReportError as Error)?.message || 'Please try again later'}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => refetchDailyReport()}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+              </div>
+            ) : dailyReport ? (
+              <div className="space-y-6">
+                {/* Mode Status */}
+                <div className="flex items-center gap-2">
+                  <Badge variant={dailyReport.autopilotEnabled ? "default" : "secondary"}>
+                    {dailyReport.autopilotEnabled ? (
+                      <><Bot className="w-3 h-3 mr-1" /> Autonomous Mode</>
+                    ) : (
+                      <><Clock className="w-3 h-3 mr-1" /> Manual Mode</>
+                    )}
+                  </Badge>
+                </div>
+
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <Card className="p-4 text-center">
+                    <div className="text-2xl font-bold text-primary">{dailyReport.summary.totalActions}</div>
+                    <div className="text-xs text-muted-foreground">Total Actions</div>
+                  </Card>
+                  <Card className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-500">{dailyReport.summary.completed}</div>
+                    <div className="text-xs text-muted-foreground">Completed</div>
+                  </Card>
+                  <Card className="p-4 text-center">
+                    <div className="text-2xl font-bold text-red-500">{dailyReport.summary.failed}</div>
+                    <div className="text-xs text-muted-foreground">Failed</div>
+                  </Card>
+                  <Card className="p-4 text-center">
+                    <div className="text-2xl font-bold">{dailyReport.summary.successRate}%</div>
+                    <div className="text-xs text-muted-foreground">Success Rate</div>
+                  </Card>
+                </div>
+
+                {/* Breakdown by Type */}
+                <div>
+                  <h4 className="font-semibold mb-3">Actions Breakdown</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                      <Search className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <div className="font-medium">{dailyReport.breakdown.seoOptimizations}</div>
+                        <div className="text-xs text-muted-foreground">SEO Optimizations</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                      <ShoppingCart className="w-5 h-5 text-green-500" />
+                      <div>
+                        <div className="font-medium">{dailyReport.breakdown.cartRecoveries}</div>
+                        <div className="text-xs text-muted-foreground">Cart Recoveries</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                      <Tag className="w-5 h-5 text-orange-500" />
+                      <div>
+                        <div className="font-medium">{dailyReport.breakdown.priceAdjustments}</div>
+                        <div className="text-xs text-muted-foreground">Price Adjustments</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                      <Send className="w-5 h-5 text-purple-500" />
+                      <div>
+                        <div className="font-medium">{dailyReport.breakdown.campaignsSent}</div>
+                        <div className="text-xs text-muted-foreground">Campaigns Sent</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Actions */}
+                {dailyReport.recentActions.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3">Recent Actions</h4>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {dailyReport.recentActions.map((action) => (
+                        <div 
+                          key={action.id} 
+                          className="flex items-center gap-3 p-3 rounded-lg bg-muted/20"
+                        >
+                          {action.status === 'completed' ? (
+                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          ) : action.status === 'failed' ? (
+                            <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{action.description}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(action.createdAt).toLocaleTimeString()}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-xs flex-shrink-0">
+                            {action.type?.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {dailyReport.summary.totalActions === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bot className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No autonomous actions on this date</p>
+                    <p className="text-sm">AI actions will appear here when scheduled tasks run</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Unable to load report</p>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* ROI Summary - Prominent display of total revenue generated */}
       <ROISummaryCard />

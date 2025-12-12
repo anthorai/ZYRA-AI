@@ -12206,6 +12206,117 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get autonomous daily report (same as morning email but viewable anytime)
+  app.get('/api/analytics/daily-report', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { date } = req.query;
+      
+      // Validate and parse date parameter
+      let reportDateStr: string;
+      if (date && typeof date === 'string') {
+        // Validate date format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+          return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+        }
+        // Validate it's a real date
+        const testDate = new Date(date + 'T00:00:00');
+        if (isNaN(testDate.getTime())) {
+          return res.status(400).json({ error: 'Invalid date value.' });
+        }
+        reportDateStr = date;
+      } else {
+        // Default to yesterday
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        reportDateStr = yesterday.toISOString().split('T')[0];
+      }
+      
+      // Create date range using the date string directly to avoid timezone issues
+      // Parse as local midnight to midnight
+      const reportDate = new Date(reportDateStr + 'T00:00:00');
+      const endDate = new Date(reportDateStr + 'T23:59:59.999');
+      
+      // Get autonomous actions for the date range
+      const actions = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            sql`${autonomousActions.createdAt} >= ${reportDate}::timestamp`,
+            sql`${autonomousActions.createdAt} <= ${endDate}::timestamp`
+          )
+        )
+        .orderBy(desc(autonomousActions.createdAt));
+      
+      // Get automation settings
+      const settings = await db
+        .select()
+        .from(automationSettings)
+        .where(eq(automationSettings.userId, userId))
+        .limit(1);
+      
+      const autopilotEnabled = settings.length > 0 && settings[0].autopilotEnabled;
+      
+      // Calculate stats
+      const totalActions = actions.length;
+      const completed = actions.filter(a => a.status === 'completed').length;
+      const failed = actions.filter(a => a.status === 'failed').length;
+      const pending = actions.filter(a => a.status === 'pending').length;
+      const successRate = totalActions > 0 ? Math.round((completed / totalActions) * 100) : 0;
+      
+      // Group by action type
+      const seoOptimizations = actions.filter(a => a.actionType === 'optimize_seo' && a.status === 'completed').length;
+      const cartRecoveries = actions.filter(a => a.actionType === 'send_cart_recovery' && a.status === 'completed').length;
+      const priceAdjustments = actions.filter(a => a.actionType === 'adjust_price' && a.status === 'completed').length;
+      const campaignsSent = actions.filter(a => a.actionType === 'send_campaign' && a.status === 'completed').length;
+      
+      // Helper to get action descriptions
+      const actionDescriptions: Record<string, string> = {
+        'optimize_seo': 'SEO optimization for product',
+        'send_cart_recovery': 'Cart recovery email sent',
+        'adjust_price': 'Price adjustment applied',
+        'send_campaign': 'Marketing campaign sent',
+        'update_inventory': 'Inventory updated',
+        'sync_products': 'Products synchronized'
+      };
+      
+      // Get recent actions with details
+      const recentActions = actions.slice(0, 10).map(action => ({
+        id: action.id,
+        type: action.actionType,
+        status: action.status,
+        description: action.description || actionDescriptions[action.actionType || ''] || 'Autonomous action',
+        createdAt: action.createdAt,
+        metadata: action.metadata
+      }));
+      
+      res.json({
+        reportDate: reportDate.toISOString().split('T')[0],
+        autopilotEnabled,
+        summary: {
+          totalActions,
+          completed,
+          failed,
+          pending,
+          successRate
+        },
+        breakdown: {
+          seoOptimizations,
+          cartRecoveries,
+          priceAdjustments,
+          campaignsSent
+        },
+        recentActions
+      });
+    } catch (error) {
+      console.error('Get daily report error:', error);
+      res.status(500).json({ error: 'Failed to get daily report' });
+    }
+  });
+
   // Track conversion (when a campaign leads to a sale)
   app.post('/api/analytics/track-conversion', requireAuth, async (req, res) => {
     try {
