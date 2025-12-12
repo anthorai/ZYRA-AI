@@ -1,0 +1,97 @@
+Optimize my entire application for ultra-fast performance with millisecond-level response. Apply the following improvements across all files, components, API routes, database queries, authentication, and UI rendering:
+
+1. Core Speed Architecture
+
+Implement full client-side caching, SSR, ISR, and edge functions wherever possible.
+
+Reduce all API responses to < 200ms and UI interactions to < 16ms.
+
+Add debounce + throttle logic to remove unnecessary re-renders.
+
+Make UI transitions GPU-accelerated (transform, opacity).
+
+2. Authentication (Login / Signup / Logout)
+
+Optimize Supabase auth calls to resolve in < 100ms.
+
+Preload auth state on app start.
+
+Add instant feedback loaders + skeleton animation.
+
+Prevent unnecessary page reloads and context refresh.
+
+3. Buttons & Actions (Generate, Optimize, Sync, Pay, Upload)
+
+Add async micro-state updates for instant feel (optimistic updates).
+
+Reduce blocking operations.
+
+Make all button actions execute with:
+
+Preloading
+
+Prefetching
+
+Deferred transitions
+
+Web workers for heavy AI tasks
+
+4. UI Rendering Optimization
+
+Remove unused components, CSS, imports.
+
+Convert heavy components to lazy-loaded modules.
+
+Use React Server Components where possible.
+
+Preload all main UI layouts + cards for seamless navigation.
+
+Add Zyra Cyberwave theme with smooth 120fps animations.
+
+5. State Management & Caching
+
+Use TanStack Query / Zustand for ultra-fast client state.
+
+Cache API responses locally and invalidate smartly.
+
+Add SWR fallback and realtime updates.
+
+6. Supabase Database Optimization
+
+Add indexes for all high-frequency queries.
+
+Reduce query payloads to minimal fields.
+
+Enable row-level caching.
+
+Optimize read/write latency for sub-100ms.
+
+7. Payment System Optimization
+
+Prefetch Stripe/PayPal/Shopify SDKs.
+
+Use webhooks instead of polling.
+
+Add instant “Processing…” micro-animations.
+
+8. File Uploads / AI Calls
+
+Move AI requests to background workers.
+
+Compress images before upload.
+
+Provide instant local preview for zero wait time.
+
+9. Global Performance
+
+Enable code splitting, tree shaking, bundle optimization.
+
+Minimise layout shifts, repaints, and blocking scripts.
+
+Preload fonts, icons, theme assets, and dashboards.
+
+Add service worker for offline + faster repeat loads.
+
+Deliver the optimized code, components, and folder structure.
+Ensure every action feels instant.
+Output only improved, production-level optimized code.
