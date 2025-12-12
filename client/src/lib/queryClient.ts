@@ -1,6 +1,33 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
 
+// Performance: Cache token to avoid repeated async calls
+let cachedToken: string | null = null;
+let tokenExpiry: number = 0;
+
+// Get cached token or refresh if expired (< 30 seconds remaining)
+async function getCachedToken(): Promise<string | null> {
+  const now = Date.now();
+  if (cachedToken && tokenExpiry > now + 30000) {
+    return cachedToken;
+  }
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    cachedToken = session.access_token;
+    // JWT typically expires in 1 hour, cache for 55 minutes
+    tokenExpiry = now + 55 * 60 * 1000;
+    return cachedToken;
+  }
+  return null;
+}
+
+// Clear token cache on logout
+export function clearTokenCache() {
+  cachedToken = null;
+  tokenExpiry = 0;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -34,8 +61,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Get the current session token from Supabase
-  const { data: { session } } = await supabase.auth.getSession();
+  // Performance: Use cached token instead of fetching each time
+  const token = await getCachedToken();
   
   // Check if data is FormData (for file uploads)
   const isFormData = data instanceof FormData;
@@ -43,7 +70,7 @@ export async function apiRequest(
   const headers: Record<string, string> = {
     // Don't set Content-Type for FormData - browser will set it with boundary
     ...(data && !isFormData ? { "Content-Type": "application/json" } : {}),
-    ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {})
+    ...(token ? { "Authorization": `Bearer ${token}` } : {})
   };
 
   let res = await fetch(url, {
@@ -139,14 +166,43 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes cache for better performance
-      gcTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
-      retry: 1, // Allow 1 retry for better reliability
-      retryDelay: 1000, // Quick retry
+      staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
+      gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer for instant access
+      retry: 1,
+      retryDelay: 500, // Faster retry
+      networkMode: 'offlineFirst', // Use cache first for instant display
     },
     mutations: {
-      retry: 1, // Allow 1 retry for mutations too
-      retryDelay: 1000,
+      retry: 1,
+      retryDelay: 500,
+      networkMode: 'offlineFirst',
     },
   },
 });
+
+// Prefetch commonly accessed data for instant access
+export function prefetchCriticalData() {
+  const prefetchQueries = [
+    '/api/products',
+    '/api/credits/balance',
+    '/api/subscription-plans',
+  ];
+  
+  prefetchQueries.forEach(queryKey => {
+    queryClient.prefetchQuery({
+      queryKey: [queryKey],
+      staleTime: 5 * 60 * 1000,
+    });
+  });
+}
+
+// Smart invalidation - only invalidate if data is stale
+export function smartInvalidate(queryKey: string[]) {
+  const queryState = queryClient.getQueryState(queryKey);
+  if (!queryState || queryState.isInvalidated) return;
+  
+  const isStale = queryState.dataUpdatedAt < Date.now() - 60000; // 1 minute
+  if (isStale) {
+    queryClient.invalidateQueries({ queryKey });
+  }
+}
