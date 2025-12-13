@@ -9671,7 +9671,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Get Shopify products (from connected store)
+  // Get Shopify products (from connected store) - Using GraphQL API
   app.get('/api/shopify/products', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
@@ -9682,26 +9682,21 @@ Output format: Markdown with clear section headings.`;
         return res.status(404).json({ error: 'No active Shopify connection found' });
       }
 
-      // Fetch products from Shopify API
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products.json`, {
-        headers: {
-          'X-Shopify-Access-Token': shopifyConnection.accessToken
-        }
-      });
-
-      if (!productsResponse.ok) {
-        throw new Error('Failed to fetch Shopify products');
-      }
-
-      const productsData = await productsResponse.json();
-      res.json(productsData.products || []);
+      // Fetch ALL products from Shopify GraphQL API (with pagination)
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+      const graphqlProducts = await graphqlClient.fetchAllProducts();
+      
+      // Convert to REST format for backward compatibility
+      const products = graphqlProducts.map(graphqlProductToRest);
+      res.json(products);
     } catch (error) {
       console.error('Shopify products fetch error:', error);
       res.status(500).json({ error: 'Failed to fetch Shopify products' });
     }
   });
 
-  // Get full Shopify product details by Shopify product ID (with all images)
+  // Get full Shopify product details by Shopify product ID (with all images) - Using GraphQL API
   app.get('/api/shopify/products/:shopifyProductId', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
@@ -9714,38 +9709,41 @@ Output format: Markdown with clear section headings.`;
         return res.status(404).json({ error: 'No active Shopify connection found' });
       }
 
-      // Fetch single product from Shopify API
-      const productResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2025-10/products/${shopifyProductId}.json`, {
-        headers: {
-          'X-Shopify-Access-Token': shopifyConnection.accessToken
-        }
-      });
-
-      if (!productResponse.ok) {
-        throw new Error('Failed to fetch Shopify product details');
+      // Fetch single product from Shopify GraphQL API
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+      const graphqlProduct = await graphqlClient.getProduct(shopifyProductId);
+      
+      if (!graphqlProduct) {
+        return res.status(404).json({ error: 'Product not found in Shopify' });
       }
 
-      const productData = await productResponse.json();
-      const product = productData.product;
-      
       // Extract all images (up to 10)
-      const images = (product.images || []).slice(0, 10).map((img: any) => ({
-        id: img.id,
-        src: img.src,
-        alt: img.alt || product.title,
-        position: img.position
+      const images = graphqlProduct.images.edges.slice(0, 10).map((edge: any, index: number) => ({
+        id: parseInt(edge.node.id.replace('gid://shopify/ProductImage/', '')),
+        src: edge.node.url,
+        alt: edge.node.altText || graphqlProduct.title,
+        position: index + 1
+      }));
+      
+      // Convert variants
+      const variants = graphqlProduct.variants.edges.map((edge: any) => ({
+        id: parseInt(edge.node.legacyResourceId),
+        title: edge.node.title,
+        price: edge.node.price,
+        sku: edge.node.sku || ''
       }));
       
       // Return formatted product data
       res.json({
-        id: product.id,
-        title: product.title,
-        description: product.body_html || '',
+        id: parseInt(graphqlProduct.legacyResourceId),
+        title: graphqlProduct.title,
+        description: graphqlProduct.descriptionHtml || '',
         images: images,
-        variants: product.variants || [],
-        tags: product.tags || '',
-        productType: product.product_type || '',
-        vendor: product.vendor || '',
+        variants: variants,
+        tags: graphqlProduct.tags.join(', '),
+        productType: graphqlProduct.productType || '',
+        vendor: graphqlProduct.vendor || '',
       });
     } catch (error) {
       console.error('Shopify product details fetch error:', error);
@@ -9798,59 +9796,23 @@ Output format: Markdown with clear section headings.`;
         // Continue without sync history - but this is NOT ideal
       }
 
-      // Fetch products from Shopify
-      // Use published_status=any to include ALL products (published and unpublished)
-      console.log('📡 [SHOPIFY SYNC] Fetching products from:', `${shopifyConnection.storeUrl}/admin/api/2024-10/products.json?published_status=any`);
+      // Fetch products from Shopify using GraphQL API
+      console.log('📡 [SHOPIFY SYNC] Fetching products using GraphQL API');
       
-      const productsResponse = await fetch(`${shopifyConnection.storeUrl}/admin/api/2024-10/products.json?published_status=any&limit=250`, {
-        headers: {
-          'X-Shopify-Access-Token': shopifyConnection.accessToken
-        }
-      });
-
-      console.log('📥 [SHOPIFY SYNC] Shopify API response status:', productsResponse.status);
-
-      if (!productsResponse.ok) {
-        const errorText = await productsResponse.text();
-        console.error('❌ [SHOPIFY SYNC] Shopify API error:', {
-          status: productsResponse.status,
-          statusText: productsResponse.statusText,
-          body: errorText
-        });
-        throw new Error(`Failed to fetch Shopify products: ${productsResponse.status} ${productsResponse.statusText}`);
-      }
-
-      // Capture the Link header from initial response for pagination
-      const initialLinkHeader = productsResponse.headers.get('Link') || '';
-
-      const productsData = await productsResponse.json();
-      let shopifyProducts = productsData.products || [];
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
       
-      // Paginate through ALL products using cursor-based pagination
-      // The page_info cursor preserves the original filters (status=any, published_status=any)
-      // Best practice: Extract and use the FULL URL from Link header directly
-      let currentLinkHeader = initialLinkHeader;
-      let paginationComplete = true; // Track if we successfully fetched ALL pages
-      while (currentLinkHeader) {
-        // Extract full URL from Link header for next page
-        const nextMatch = currentLinkHeader.match(/<([^>]+)>;\s*rel="next"/);
-        if (!nextMatch) break; // No more pages - pagination completed successfully
-        
-        const nextUrl = nextMatch[1]; // Use full URL directly (already encoded by Shopify)
-        
-        const nextPageResponse = await fetch(nextUrl, {
-          headers: { 'X-Shopify-Access-Token': shopifyConnection.accessToken }
-        });
-        
-        if (!nextPageResponse.ok) {
-          console.error('❌ [SHOPIFY SYNC] Pagination failed at:', nextUrl, 'status:', nextPageResponse.status);
-          paginationComplete = false; // Mark as incomplete - orphan cleanup will be skipped
-          break;
-        }
-        
-        const nextData = await nextPageResponse.json();
-        shopifyProducts = [...shopifyProducts, ...(nextData.products || [])];
-        currentLinkHeader = nextPageResponse.headers.get('Link') || '';
+      let shopifyProducts: any[] = [];
+      let paginationComplete = true;
+      
+      try {
+        const graphqlProducts = await graphqlClient.fetchAllProducts();
+        shopifyProducts = graphqlProducts.map(graphqlProductToRest);
+        console.log('📥 [SHOPIFY SYNC] GraphQL API fetched products:', shopifyProducts.length);
+      } catch (fetchError) {
+        console.error('❌ [SHOPIFY SYNC] GraphQL API error:', fetchError);
+        paginationComplete = false;
+        throw new Error(`Failed to fetch Shopify products: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
       }
       
       console.log('✅ [SHOPIFY SYNC] Fetched products from Shopify:', {
@@ -10320,29 +10282,11 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      // Fetch ALL products from Shopify with pagination
-      let allShopifyProducts: any[] = [];
-      let nextUrl: string | null = `${storeUrl}/admin/api/2024-10/products.json?limit=250&published_status=any`;
-      
-      while (nextUrl) {
-        const shopifyResponse = await fetch(nextUrl, {
-          headers: { 'X-Shopify-Access-Token': accessToken }
-        });
-        
-        if (!shopifyResponse.ok) {
-          const errorText = await shopifyResponse.text();
-          throw new Error(`Shopify API error: ${shopifyResponse.status} - ${errorText}`);
-        }
-        
-        const shopifyData = await shopifyResponse.json();
-        const fetchedProducts = shopifyData.products || [];
-        allShopifyProducts = [...allShopifyProducts, ...fetchedProducts];
-        
-        // Extract full URL from Link header for next page
-        const linkHeader = shopifyResponse.headers.get('Link') || '';
-        const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-        nextUrl = nextMatch ? nextMatch[1] : null;
-      }
+      // Fetch ALL products from Shopify using GraphQL API
+      const shopUrl = storeUrl.replace('https://', '').replace('http://', '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, accessToken);
+      const graphqlProducts = await graphqlClient.fetchAllProducts();
+      const allShopifyProducts = graphqlProducts.map(graphqlProductToRest);
       
       const shopifyProductIds = new Set(allShopifyProducts.map((p: any) => p.id.toString()));
       console.log(`📊 [ORPHAN CLEANUP] Shopify has ${allShopifyProducts.length} products`);

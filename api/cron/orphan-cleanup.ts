@@ -25,11 +25,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Import Supabase client and database
+    // Import Supabase client, database, and GraphQL client
     const { supabase } = await import('../../server/lib/supabase');
     const { db } = await import('../../server/db');
     const { products, seoMeta, storeConnections } = await import('../../shared/schema');
     const { eq, and, isNotNull } = await import('drizzle-orm');
+    const { ShopifyGraphQLClient, graphqlProductToRest } = await import('../../server/lib/shopify-graphql');
     
     // Get all active Shopify connections
     const { data: connections, error: connError } = await supabase
@@ -81,32 +82,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         console.log(`[Orphan Cleanup Cron] Processing store: ${storeName}`);
         
-        // Fetch ALL products from Shopify with pagination
-        // Use status=any AND published_status=any to include ALL products (active, draft, archived, published, unpublished)
-        // Best practice: Extract and use the FULL URL from Link header directly
-        let allShopifyProducts: any[] = [];
-        let nextUrl: string | null = `${storeUrl}/admin/api/2025-10/products.json?limit=250&status=any&published_status=any`;
-        
-        while (nextUrl) {
-          const shopifyResponse = await fetch(nextUrl, {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          });
-          
-          if (!shopifyResponse.ok) {
-            const errorText = await shopifyResponse.text();
-            throw new Error(`Shopify API error: ${shopifyResponse.status} - ${errorText}`);
-          }
-          
-          // Always parse the response body
-          const shopifyData = await shopifyResponse.json();
-          const fetchedProducts = shopifyData.products || [];
-          allShopifyProducts = [...allShopifyProducts, ...fetchedProducts];
-          
-          // Extract full URL from Link header for next page
-          const linkHeader = shopifyResponse.headers.get('Link') || '';
-          const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-          nextUrl = nextMatch ? nextMatch[1] : null; // Use full URL directly (already encoded by Shopify)
-        }
+        // Fetch ALL products from Shopify using GraphQL API
+        const shopUrl = storeUrl.replace('https://', '').replace('http://', '');
+        const graphqlClient = new ShopifyGraphQLClient(shopUrl, accessToken);
+        const graphqlProducts = await graphqlClient.fetchAllProducts();
+        const allShopifyProducts = graphqlProducts.map(graphqlProductToRest);
         
         const shopifyProductIds = allShopifyProducts.map((p: any) => p.id.toString());
         
