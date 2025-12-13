@@ -301,14 +301,30 @@ Use Case: ${input.imageAnalysis.useCase}
 🔷 STRICT SEO GENERATION FORMAT - FOLLOW EXACTLY
 ====================================================
 
-1️⃣ PRODUCT TITLE (seoTitle field) - FOR SHOPIFY PRODUCT PAGE
-- Length: EXACTLY 8-12 WORDS (count carefully!)
-- **CRITICAL: DO NOT just repeat the original product name! Create an ENHANCED, SEO-optimized version**
-- Add compelling keywords, benefits, or features that the original title lacks
-- Include main keyword at the BEGINNING
-- Make it more descriptive and SEO-friendly than the original
-- Create curiosity or highlight key benefit
-- Example: If product is "Blue T-Shirt", create "Premium Blue Cotton T-Shirt for Men Comfortable Everyday Casual Wear"
+1️⃣ PRODUCT TITLE (seoTitle field) - 100% UNIQUE GOOGLE-RANKABLE TITLE
+
+❌ STRICT RULES (MANDATORY):
+- NEVER reuse or slightly modify the original product name
+- NO semantic duplication - create completely fresh title
+- Do NOT exceed 60 characters
+- Avoid generic phrases like: Best, Top, Ultimate, Perfect unless contextually required
+- NO robotic or templated phrasing
+
+✅ SEO OPTIMIZATION:
+- Use primary keyword + secondary intent keyword
+- Match search intent (buying, comparison, problem-solving, benefits)
+- Optimize for CTR + rankings
+- Use natural, human-like language
+- Include power words ONLY if relevant
+
+🔄 VARIATION - Rotate between these styles:
+- Benefit-driven titles (what customer gains)
+- Problem-solution titles (solving a pain point)
+- Outcome-focused titles (end result)
+- Use-case-based titles (specific scenario)
+- Authority-style titles (expertise/quality)
+
+Example: If product is "Blue T-Shirt", create "Soft Cotton Blue Tee - Breathable All-Day Comfort for Men"
 
 2️⃣ META TITLE (metaTitle field) - FOR GOOGLE SEARCH RESULTS (MUST BE DIFFERENT FROM seoTitle!)
 - Length: EXACTLY 50-60 CHARACTERS (count precisely!)
@@ -360,7 +376,7 @@ Use Case: ${input.imageAnalysis.useCase}
 
 Respond with JSON in this exact format:
 {
-  "seoTitle": "Your Descriptive Product Title Here With Eight To Twelve Words Exactly",
+  "seoTitle": "Unique SEO Title Under 60 Chars - Benefit Focused Natural Language",
   "seoDescription": "your full product description with <strong>Product Name</strong> appearing 3-4 times (EXACTLY 150-300 words, structured as intro paragraph + 3-5 bullets + closing paragraph)",
   "metaTitle": "Short Click Title - Action Hook | Brand (50-60 chars, DIFFERENT from seoTitle)",
   "metaDescription": "your meta description (EXACTLY 130-150 chars)",
