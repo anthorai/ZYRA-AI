@@ -303,10 +303,12 @@ Use Case: ${input.imageAnalysis.useCase}
 
 1️⃣ PRODUCT TITLE (seoTitle field) - FOR SHOPIFY PRODUCT PAGE
 - Length: EXACTLY 8-12 WORDS (count carefully!)
+- **CRITICAL: DO NOT just repeat the original product name! Create an ENHANCED, SEO-optimized version**
+- Add compelling keywords, benefits, or features that the original title lacks
 - Include main keyword at the BEGINNING
-- Human-friendly, descriptive product name
+- Make it more descriptive and SEO-friendly than the original
 - Create curiosity or highlight key benefit
-- Example: "Premium Wireless Bluetooth Headphones with Active Noise Cancellation Technology"
+- Example: If product is "Blue T-Shirt", create "Premium Blue Cotton T-Shirt for Men Comfortable Everyday Casual Wear"
 
 2️⃣ META TITLE (metaTitle field) - FOR GOOGLE SEARCH RESULTS (MUST BE DIFFERENT FROM seoTitle!)
 - Length: EXACTLY 50-60 CHARACTERS (count precisely!)
