@@ -264,7 +264,7 @@ export default function SeoKeywordDensity() {
       {/* Keyword Analysis */}
       <DashboardCard
         title={
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between w-full gap-4">
             <div>
               <h3 className="text-white text-xl font-semibold">Product Keyword Analysis</h3>
               <p className="text-slate-300 text-sm mt-1">
@@ -274,7 +274,7 @@ export default function SeoKeywordDensity() {
             <Button 
               onClick={handleRefresh} 
               disabled={isLoading}
-              className="gradient-button"
+              className="gradient-button flex-shrink-0"
               data-testid="button-refresh-analysis"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
