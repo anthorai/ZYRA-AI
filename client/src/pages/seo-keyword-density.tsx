@@ -222,61 +222,9 @@ export default function SeoKeywordDensity() {
     }
   };
 
-  // Right actions (notification center + user dropdown)
+  // Right actions (notification center only)
   const rightActions = (
-    <>
-      <NotificationCenter />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="relative h-10 w-10 rounded-full text-slate-200 hover:text-primary transition-all duration-300 ease-in-out"
-            data-testid="button-user-menu"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="" alt={appUser?.fullName || "User"} />
-              <AvatarFallback className="dark-theme-bg text-primary">
-                {appUser?.fullName?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 gradient-surface text-white" align="end" forceMount>
-          <div className="flex items-center justify-start gap-2 p-2">
-            <div className="flex flex-col space-y-1 leading-none">
-              <p className="font-bold text-white text-sm">{appUser?.fullName || "User"}</p>
-              <p className="text-xs text-slate-300">{user?.email}</p>
-            </div>
-          </div>
-          <DropdownMenuSeparator className="bg-slate-700/30" />
-          <DropdownMenuItem
-            className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
-            onClick={() => setLocation("/profile")}
-            data-testid="menu-profile"
-          >
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-slate-200 hover:text-white hover:bg-white/10 focus:text-white focus:bg-white/10 cursor-pointer"
-            onClick={() => setLocation("/billing")}
-            data-testid="menu-settings"
-          >
-            <SettingsIcon className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-slate-700/30" />
-          <DropdownMenuItem
-            className="text-red-300 hover:text-red-200 hover:bg-red-500/20 focus:text-red-200 focus:bg-red-500/20 cursor-pointer"
-            onClick={handleLogout}
-            data-testid="menu-logout"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    <NotificationCenter />
   );
 
   return (
