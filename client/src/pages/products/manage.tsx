@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { DashboardCard } from '@/components/ui/dashboard-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,13 +44,15 @@ function ProductCard({
   canBeSelected, 
   isSelected, 
   onToggleSelection,
-  onPublishClick 
+  onPublishClick,
+  onGenerateAI
 }: { 
   product: Product;
   canBeSelected: boolean;
   isSelected: boolean;
   onToggleSelection: (id: string) => void;
   onPublishClick: (product: Product) => void;
+  onGenerateAI: (productId: string) => void;
 }) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -143,7 +146,7 @@ function ProductCard({
             </Button>
           ) : product.shopifyId ? (
             <Button 
-              onClick={() => window.location.href = `/ai-tools/product-seo-engine?productId=${product.id}`}
+              onClick={() => onGenerateAI(product.id)}
               className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95"
             >
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -168,6 +171,7 @@ function ProductCard({
 export default function ManageProducts() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
@@ -176,6 +180,11 @@ export default function ManageProducts() {
 
   // Enable real-time product updates
   useProductRealtime();
+
+  // Navigate to AI content generation page
+  const handleGenerateAI = (productId: string) => {
+    setLocation(`/ai-tools/product-seo-engine?productId=${productId}`);
+  };
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['/api/products'],
@@ -530,6 +539,7 @@ export default function ManageProducts() {
             isSelected={selectedProductIds.includes(product.id)}
             onToggleSelection={toggleProductSelection}
             onPublishClick={handlePublishClick}
+            onGenerateAI={handleGenerateAI}
           />
         ))}
       </CardGrid>
