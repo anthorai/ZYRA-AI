@@ -263,24 +263,18 @@ export default function SeoKeywordDensity() {
 
       {/* Keyword Analysis */}
       <DashboardCard
-        title={
-          <div className="flex items-center justify-between w-full gap-4">
-            <div>
-              <h3 className="text-white text-xl font-semibold">Product Keyword Analysis</h3>
-              <p className="text-slate-300 text-sm mt-1">
-                AI-powered keyword density analysis and SEO optimization recommendations
-              </p>
-            </div>
-            <Button 
-              onClick={handleRefresh} 
-              disabled={isLoading}
-              className="gradient-button flex-shrink-0"
-              data-testid="button-refresh-analysis"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
+        title="Product Keyword Analysis"
+        description="AI-powered keyword density analysis and SEO optimization recommendations"
+        headerAction={
+          <Button 
+            onClick={handleRefresh} 
+            disabled={isLoading}
+            className="gradient-button"
+            data-testid="button-refresh-analysis"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         }
       >
         <div className="space-y-6">
