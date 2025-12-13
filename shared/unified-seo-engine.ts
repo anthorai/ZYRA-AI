@@ -301,17 +301,21 @@ Use Case: ${input.imageAnalysis.useCase}
 🔷 STRICT SEO GENERATION FORMAT - FOLLOW EXACTLY
 ====================================================
 
-1️⃣ PRODUCT TITLE (seoTitle field)
+1️⃣ PRODUCT TITLE (seoTitle field) - FOR SHOPIFY PRODUCT PAGE
 - Length: EXACTLY 8-12 WORDS (count carefully!)
 - Include main keyword at the BEGINNING
-- Human-friendly, not keyword-stuffed
+- Human-friendly, descriptive product name
 - Create curiosity or highlight key benefit
+- Example: "Premium Wireless Bluetooth Headphones with Active Noise Cancellation Technology"
 
-2️⃣ META TITLE (metaTitle field)
+2️⃣ META TITLE (metaTitle field) - FOR GOOGLE SEARCH RESULTS (MUST BE DIFFERENT FROM seoTitle!)
 - Length: EXACTLY 50-60 CHARACTERS (count precisely!)
-- Must contain main keyword
-- Include brand differentiator if space allows
-- Action-oriented language
+- This is the clickable headline shown in Google search results
+- Must be SHORTER and MORE ACTION-ORIENTED than seoTitle
+- Include main keyword + compelling hook
+- Format: "[Keyword] - [Benefit/Action] | [Brand]"
+- Example: "Wireless Headphones - Crystal Clear Sound | Shop Now"
+- IMPORTANT: This MUST be different from seoTitle - it's optimized for clicks, not description
 
 3️⃣ META DESCRIPTION (metaDescription field)
 - Length: EXACTLY 130-150 CHARACTERS (count precisely!)
@@ -354,9 +358,9 @@ Use Case: ${input.imageAnalysis.useCase}
 
 Respond with JSON in this exact format:
 {
-  "seoTitle": "your seo title (EXACTLY 8-12 words)",
+  "seoTitle": "Your Descriptive Product Title Here With Eight To Twelve Words Exactly",
   "seoDescription": "your full product description with <strong>Product Name</strong> appearing 3-4 times (EXACTLY 150-300 words, structured as intro paragraph + 3-5 bullets + closing paragraph)",
-  "metaTitle": "your meta title (EXACTLY 50-60 chars)",
+  "metaTitle": "Short Click Title - Action Hook | Brand (50-60 chars, DIFFERENT from seoTitle)",
   "metaDescription": "your meta description (EXACTLY 130-150 chars)",
   "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7"],
   "shopifyTags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10"],
