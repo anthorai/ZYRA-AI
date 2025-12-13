@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { ShopifyGraphQLClient, graphqlProductToRest } from './shopify-graphql';
 
 export interface ShopifyProduct {
   id: number;
@@ -37,7 +38,8 @@ export interface ShopifyMetafieldUpdate {
 export class ShopifyClient {
   private shop: string;
   private accessToken: string;
-  private apiVersion = '2025-10';
+  private apiVersion = '2025-01';
+  private graphqlClient: ShopifyGraphQLClient;
   
   // Rate limiting: Shopify REST Admin API allows 2 requests/second with burst of 40
   private requestQueue: Array<() => Promise<any>> = [];
@@ -51,6 +53,7 @@ export class ShopifyClient {
   constructor(shop: string, accessToken: string) {
     this.shop = shop;
     this.accessToken = accessToken;
+    this.graphqlClient = new ShopifyGraphQLClient(shop, accessToken);
   }
 
   /**
@@ -191,94 +194,84 @@ export class ShopifyClient {
   }
 
   async getProduct(productId: string): Promise<ShopifyProduct> {
-    const result = await this.makeRequest(`/products/${productId}.json`);
-    return result.product;
+    const graphqlProduct = await this.graphqlClient.getProduct(productId);
+    if (!graphqlProduct) {
+      throw new Error(`Product ${productId} not found`);
+    }
+    return graphqlProductToRest(graphqlProduct);
   }
 
   async getProductMetafields(productId: string): Promise<any[]> {
-    const result = await this.makeRequest(`/products/${productId}/metafields.json`);
-    return result.metafields || [];
+    const graphqlProduct = await this.graphqlClient.getProduct(productId);
+    if (!graphqlProduct) {
+      return [];
+    }
+    return graphqlProduct.metafields.edges.map(edge => ({
+      id: edge.node.id,
+      namespace: edge.node.namespace,
+      key: edge.node.key,
+      value: edge.node.value,
+      type: edge.node.type
+    }));
   }
 
   async updateProduct(productId: string, updates: ShopifyProductUpdate): Promise<ShopifyProduct> {
-    const result = await this.makeRequest(`/products/${productId}.json`, 'PUT', {
-      product: updates
-    });
-    return result.product;
+    const graphqlInput: {
+      title?: string;
+      descriptionHtml?: string;
+      productType?: string;
+      tags?: string[];
+      vendor?: string;
+    } = {};
+
+    if (updates.title) graphqlInput.title = updates.title;
+    if (updates.body_html) graphqlInput.descriptionHtml = updates.body_html;
+    if (updates.product_type) graphqlInput.productType = updates.product_type;
+    if (updates.tags) graphqlInput.tags = updates.tags.split(',').map(t => t.trim());
+    if (updates.vendor) graphqlInput.vendor = updates.vendor;
+
+    const graphqlProduct = await this.graphqlClient.updateProduct(productId, graphqlInput);
+    if (!graphqlProduct) {
+      throw new Error(`Failed to update product ${productId}`);
+    }
+    return graphqlProductToRest(graphqlProduct);
   }
 
   async updateProductMetafields(productId: string, metafields: ShopifyMetafieldUpdate[]): Promise<void> {
-    const existingMetafields = await this.getProductMetafields(productId);
-    
     for (const metafield of metafields) {
-      const existing = existingMetafields.find(
-        m => m.namespace === metafield.namespace && m.key === metafield.key
+      await this.graphqlClient.setProductMetafield(
+        productId,
+        metafield.namespace,
+        metafield.key,
+        metafield.value,
+        metafield.type
       );
-      
-      if (existing) {
-        await this.makeRequest(`/metafields/${existing.id}.json`, 'PUT', {
-          metafield: {
-            id: existing.id,
-            value: metafield.value,
-            type: metafield.type
-          }
-        });
-      } else {
-        await this.makeRequest(`/products/${productId}/metafields.json`, 'POST', {
-          metafield: {
-            ...metafield,
-            owner_resource: 'product',
-            owner_id: productId
-          }
-        });
-      }
     }
   }
 
   async updateProductImage(productId: string, imageId: string, altText: string): Promise<void> {
-    await this.makeRequest(`/products/${productId}/images/${imageId}.json`, 'PUT', {
-      image: {
-        id: parseInt(imageId),
-        alt: altText
-      }
-    });
+    await this.graphqlClient.updateProductImage(productId, imageId, altText);
   }
 
-  /**
-   * Update variant price (for pricing automation)
-   * Note: Shopify prices are at the variant level, not product level
-   */
   async updateVariantPrice(variantId: number, price: string): Promise<void> {
-    await this.makeRequest(`/variants/${variantId}.json`, 'PUT', {
-      variant: {
-        id: variantId,
-        price: price
-      }
-    });
+    await this.graphqlClient.updateVariantPrice(variantId.toString(), price);
   }
 
-  /**
-   * Update price for all variants of a product (simple products have 1 variant)
-   */
   async updateProductPrice(productId: string, price: string): Promise<void> {
-    // Get product to access variants
     const product = await this.getProduct(productId);
     
     if (!product.variants || product.variants.length === 0) {
       throw new Error(`Product ${productId} has no variants to update price`);
     }
 
-    // Update all variants with the new price
-    // For simple products (most common), this updates the single default variant
-    // For products with variants (size/color), this updates all to same price
     for (const variant of product.variants) {
       await this.updateVariantPrice(variant.id, price);
     }
   }
 
   async getAllProducts(limit: number = 250): Promise<ShopifyProduct[]> {
-    const result = await this.makeRequest(`/products.json?limit=${limit}`);
-    return result.products;
+    const graphqlProducts = await this.graphqlClient.fetchAllProducts();
+    return graphqlProducts.map(graphqlProductToRest);
   }
 
   async updateProductSEO(productId: string, seoTitle: string, metaDescription: string): Promise<void> {
@@ -351,12 +344,15 @@ export class ShopifyClient {
 
   async testConnection(): Promise<boolean> {
     try {
-      await this.makeRequest('/shop.json');
-      return true;
+      return await this.graphqlClient.testConnection();
     } catch (error) {
       console.error('Shopify connection test failed:', error);
       return false;
     }
+  }
+
+  getGraphQLClient(): ShopifyGraphQLClient {
+    return this.graphqlClient;
   }
 }
 

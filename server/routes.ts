@@ -120,6 +120,7 @@ import { cachedTextGeneration, cachedVisionAnalysis, getAICacheStats } from "./l
 import { extractProductFeatures } from "./lib/shopify-features-extractor";
 import { BulkOptimizationService } from "./lib/bulk-optimization-service";
 import { upsellRecommendationEngine } from "./lib/upsell-recommendation-engine";
+import { ShopifyGraphQLClient, graphqlProductToRest } from "./lib/shopify-graphql";
 import { upsellRecommendationRules } from "@shared/schema";
 import { grantFreeTrial } from "./lib/trial-expiration-service";
 
