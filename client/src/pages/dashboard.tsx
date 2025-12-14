@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,16 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Zap, TrendingUp, ShoppingCart, Eye, RotateCcw, Plus, Menu, User, LogOut, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { Zap, TrendingUp, ShoppingCart, Eye, RotateCcw, Plus, Menu, User, LogOut, Settings as SettingsIcon, Sparkles, AlertTriangle, ExternalLink } from "lucide-react";
+
+interface StoreConnection {
+  id: string;
+  userId: number;
+  platform: string;
+  storeName: string | null;
+  storeUrl: string;
+  isActive: boolean;
+}
 
 export default function Dashboard() {
   const { user, appUser } = useAuth();
@@ -104,6 +114,14 @@ export default function Dashboard() {
 
   // Connection status monitoring
   const { isOnline } = useConnectionStatus();
+
+  // Shopify store connection status
+  const { data: storesData, isLoading: isLoadingStores } = useQuery<StoreConnection[]>({
+    queryKey: ['/api/stores/connected'],
+  });
+  
+  const shopifyStores = storesData?.filter(s => s.platform === 'shopify') || [];
+  const isShopifyConnected = shopifyStores.length > 0 && shopifyStores.some(s => s.isActive);
 
   
 
@@ -315,7 +333,32 @@ export default function Dashboard() {
       case "settings":
         return <Settings />;
       default:
-        return <GrowthDashboard />;
+        return (
+          <div className="space-y-6">
+            {!isShopifyConnected && !isLoadingStores && (
+              <Card className="border-yellow-500/30 bg-yellow-500/5">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <AlertTriangle className="h-8 w-8 text-yellow-500 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg" data-testid="text-no-store-title">No Shopify Store Connected</h3>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        Connect your Shopify store to sync products, manage inventory, and enable AI-powered optimizations.
+                      </p>
+                    </div>
+                    <Button asChild>
+                      <a href="/settings/stores" data-testid="button-connect-store-dashboard">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Connect Store
+                      </a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            <GrowthDashboard />
+          </div>
+        );
     }
   };
 
