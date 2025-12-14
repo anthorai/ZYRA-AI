@@ -349,11 +349,12 @@ export default function Dashboard() {
                         Connect your Shopify store to sync products, manage inventory, and enable AI-powered optimizations.
                       </p>
                     </div>
-                    <Button asChild>
-                      <a href="/settings/stores" data-testid="button-connect-store-dashboard">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Connect Store
-                      </a>
+                    <Button 
+                      onClick={() => setActiveTab("settings")}
+                      data-testid="button-connect-store-dashboard"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Connect Store
                     </Button>
                   </div>
                 </CardContent>
