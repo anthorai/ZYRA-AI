@@ -350,7 +350,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <Button 
-                      onClick={() => setActiveTab("settings")}
+                      onClick={() => setLocation("/settings/integrations?connect=shopify")}
                       data-testid="button-connect-store-dashboard"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />

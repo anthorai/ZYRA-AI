@@ -151,6 +151,16 @@ export default function IntegrationsPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const shopifyConnected = urlParams.get('shopify');
+    const connectParam = urlParams.get('connect');
+    
+    // Auto-open Shopify connect modal if ?connect=shopify is in URL
+    if (connectParam === 'shopify') {
+      setShowShopifyConnectModal(true);
+      // Clean up the URL
+      urlParams.delete('connect');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
     
     if (shopifyConnected === 'connected') {
       toast({
