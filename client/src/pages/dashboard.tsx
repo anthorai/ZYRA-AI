@@ -116,12 +116,14 @@ export default function Dashboard() {
   const { isOnline } = useConnectionStatus();
 
   // Shopify store connection status
-  const { data: storesData, isLoading: isLoadingStores } = useQuery<StoreConnection[]>({
+  const { data: storesData, isLoading: isLoadingStores, isSuccess: storesQuerySuccess } = useQuery<StoreConnection[]>({
     queryKey: ['/api/stores/connected'],
   });
   
+  // Only show banner if query succeeded and no active Shopify store exists
   const shopifyStores = storesData?.filter(s => s.platform === 'shopify') || [];
   const isShopifyConnected = shopifyStores.length > 0 && shopifyStores.some(s => s.isActive);
+  const shouldShowShopifyBanner = storesQuerySuccess && !isShopifyConnected;
 
   
 
@@ -335,7 +337,7 @@ export default function Dashboard() {
       default:
         return (
           <div className="space-y-6">
-            {!isShopifyConnected && !isLoadingStores && (
+            {shouldShowShopifyBanner && (
               <Card className="border-yellow-500/30 bg-yellow-500/5">
                 <CardContent className="pt-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
