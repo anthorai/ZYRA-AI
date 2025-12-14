@@ -31,11 +31,11 @@ import { Zap, TrendingUp, ShoppingCart, Eye, RotateCcw, Plus, Menu, User, LogOut
 
 interface StoreConnection {
   id: string;
-  userId: number;
+  name: string | null;
   platform: string;
-  storeName: string | null;
-  storeUrl: string;
-  isActive: boolean;
+  status: string;
+  url: string;
+  lastSync: string | null;
 }
 
 export default function Dashboard() {
@@ -121,8 +121,9 @@ export default function Dashboard() {
   });
   
   // Only show banner if query succeeded and no active Shopify store exists
-  const shopifyStores = storesData?.filter(s => s.platform === 'shopify') || [];
-  const isShopifyConnected = shopifyStores.length > 0 && shopifyStores.some(s => s.isActive);
+  // Use case-insensitive check for platform and check status is 'connected' or 'active'
+  const shopifyStores = storesData?.filter(s => s.platform?.toLowerCase() === 'shopify') || [];
+  const isShopifyConnected = shopifyStores.length > 0 && shopifyStores.some(s => s.status === 'connected' || s.status === 'active');
   const shouldShowShopifyBanner = storesQuerySuccess && !isShopifyConnected;
 
   
