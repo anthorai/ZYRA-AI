@@ -240,131 +240,102 @@ export default function Landing() {
   const features = [
     {
       icon: <Settings className="w-6 h-6" />,
-      title: "Stop Losing Sales to Boring Product Pages",
-      description: "Your products could be selling 3X more—if they had descriptions that actually convince buyers. Zyra writes high-converting copy in seconds, optimized for both customers and Google.",
-      benefit: "10X faster optimization"
+      title: "AI-Powered Product Descriptions",
+      description: "Generate compelling product descriptions optimized for both customers and search engines. Review and approve before publishing.",
+      benefit: "Save time on content"
     },
     {
       icon: <FileText className="w-6 h-6" />,
-      title: "Finally, SEO That Actually Ranks on Google",
-      description: "Most Shopify stores never show up in search. Zyra uses proven SEO strategies that get you on page 1—without hiring an expensive agency.",
-      benefit: "120% more organic traffic"
+      title: "SEO Optimization Tools",
+      description: "Zyra uses AI-powered SEO optimization to help improve your product visibility in search results.",
+      benefit: "Better search visibility"
     },
     {
       icon: <TrendingUp className="w-6 h-6" />,
-      title: "Know Exactly What's Making You Money",
-      description: "Stop guessing which products, emails, or campaigns are working. Zyra shows you exactly where your revenue is coming from—so you can double down on what works.",
+      title: "Performance Analytics",
+      description: "Track which products, emails, or campaigns are performing. Zyra provides analytics to help you understand what's working.",
       benefit: "Data-driven decisions"
     },
     {
       icon: <Network className="w-6 h-6" />,
-      title: "Multi-Channel Automation That Just Works",
-      description: "Repurpose content across email, SMS, blogs, and ads instantly. One click, maximum reach, zero extra work.",
-      benefit: "Save 15+ hours/week"
+      title: "Multi-Channel Content Tools",
+      description: "Repurpose content across email, SMS, blogs, and ads. One click publishing to multiple channels.",
+      benefit: "Streamlined workflow"
     },
     {
       icon: <Activity className="w-6 h-6" />,
-      title: "Real-Time Analytics That Drive Action",
-      description: "Track sales, content ROI, email & SMS performance in one dashboard. See what's working, what's not—and fix it fast.",
-      benefit: "85% better insights"
+      title: "Real-Time Analytics Dashboard",
+      description: "Track sales, content performance, and campaign metrics in one dashboard. Monitor what's working and adjust accordingly.",
+      benefit: "Actionable insights"
     },
     {
       icon: <Shield className="w-6 h-6" />,
-      title: "One-Click Rollback (Because Mistakes Happen)",
-      description: "Don't like our AI edits? Undo everything with one click. Your original data is always safe and 100% reversible.",
-      benefit: "Zero risk"
+      title: "One-Click Rollback",
+      description: "Don't like our AI edits? Undo changes with one click. Your original data is always safe and reversible.",
+      benefit: "Peace of mind"
     }
   ];
 
-  // Testimonials data
-  const testimonials = [
+  // Feature highlights data (replacing testimonials with feature descriptions)
+  const featureHighlights = [
     {
-      name: "Jessica Chen",
-      company: "Urban Home Decor",
-      rating: 5,
-      quote: "I was skeptical about AI-generated product descriptions, but Zyra blew me away. My conversion rate jumped 34% in the first month. The ROI is insane.",
-      result: "+34% conversion rate",
-      badge: "Verified Purchase",
-      verified: true
+      title: "AI Product Descriptions",
+      description: "Generate optimized product descriptions that match your brand voice. Review and edit before publishing.",
+      icon: <Pen className="w-6 h-6" />
     },
     {
-      name: "Mike Rodriguez",
-      company: "TechGear Pro",
-      rating: 5,
-      quote: "Zyra saves me 15+ hours every week. I used to dread writing product descriptions. Now I focus on marketing while Zyra handles the content. Game changer.",
-      result: "15hrs saved weekly",
-      badge: "Verified Purchase",
-      verified: true
+      title: "Time Savings",
+      description: "Automate repetitive content tasks so you can focus on growing your business.",
+      icon: <Clock className="w-6 h-6" />
     },
     {
-      name: "Sarah Thompson",
-      company: "FashionForward",
-      rating: 5,
-      quote: "We recovered $18,000 in abandoned carts in our first 60 days with Zyra. The automated email sequences are pure magic. Worth every penny.",
-      result: "$18K recovered",
-      badge: "Verified Purchase",
-      verified: true
+      title: "Cart Recovery",
+      description: "Automated email sequences to help recover abandoned shopping carts.",
+      icon: <ShoppingCart className="w-6 h-6" />
     },
     {
-      name: "David Park",
-      company: "Dropshipper",
-      rating: 5,
-      quote: "As a solo founder, I can't afford a copywriter or marketing team. Zyra gives me enterprise-level AI for $49/month. My sales tripled.",
-      result: "3X sales increase",
-      badge: "Verified Purchase",
-      verified: true
+      title: "Affordable for All Stores",
+      description: "Plans designed for solo founders, small teams, and growing businesses.",
+      icon: <Users className="w-6 h-6" />
     },
     {
-      name: "Amanda Foster",
-      company: "GlobalRetail Inc.",
-      rating: 5,
-      quote: "Managing 5,000+ SKUs manually was impossible. Zyra optimized everything in 48 hours. Our organic traffic is up 120%. Best investment we've made.",
-      result: "+120% traffic",
-      badge: "Verified Purchase",
-      verified: true
+      title: "Bulk Optimization",
+      description: "Optimize multiple products at once to save time on large catalogs.",
+      icon: <Sparkles className="w-6 h-6" />
     }
   ];
 
-  // Case studies data
-  const caseStudies = [
+  // Features overview (replacing case studies)
+  const featuresOverview = [
     {
-      company: "FitLife Nutrition",
-      industry: "Health & Wellness",
-      challenge: "Poor product descriptions, 2.3% conversion rate",
-      solution: "Zyra AI product optimization + abandoned cart recovery",
-      results: [
-        { label: "Conversion rate", before: "2.3%", after: "7.8%", change: "+239%" },
-        { label: "Monthly revenue", before: "$12K", after: "$41K", change: "+242%" },
-        { label: "Time saved", before: "20 hrs/week", after: "2 hrs/week", change: "-90%" }
-      ],
-      quote: "Zyra paid for itself in the first week. The AI writes better descriptions than our $3,000/month copywriter.",
-      author: "Tom Jenkins, Founder"
+      title: "Product SEO Optimization",
+      industry: "All Industries",
+      description: "AI-powered product description optimization for improved search visibility",
+      features: [
+        "Keyword-optimized product titles",
+        "SEO-friendly descriptions",
+        "Meta tag generation"
+      ]
     },
     {
-      company: "GreenHome Goods",
-      industry: "Eco Products",
-      challenge: "Zero organic traffic, relying 100% on paid ads",
-      solution: "Zyra AI SEO optimization + smart keyword targeting",
-      results: [
-        { label: "Organic traffic", before: "50/mo", after: "8,500/mo", change: "+16,900%" },
-        { label: "Keyword rankings", before: "3", after: "180", change: "+5,900%" },
-        { label: "Customer acquisition cost", before: "$45", after: "$15", change: "-67%" }
-      ],
-      quote: "We cut our ad spend in half and still doubled revenue. Zyra's SEO is scary good.",
-      author: "Lisa Martinez, CMO"
+      title: "Content Automation",
+      industry: "All Store Types",
+      description: "Automate content creation and marketing tasks",
+      features: [
+        "AI content generation",
+        "Email campaign templates",
+        "Multi-channel publishing"
+      ]
     },
     {
-      company: "TrendyTech",
-      industry: "Electronics",
-      challenge: "78% cart abandonment rate, no email automation",
-      solution: "Zyra AI abandoned cart recovery + personalized sequences",
-      results: [
-        { label: "Abandoned carts recovered", before: "$0", after: "$50,342", change: "∞" },
-        { label: "Email open rates", before: "18%", after: "45.2%", change: "+151%" },
-        { label: "ROI on Zyra", before: "N/A", after: "4,200%", change: "NEW" }
-      ],
-      quote: "We were leaving money on the table every single day. Zyra fixed that overnight.",
-      author: "Carlos Silva, Owner"
+      title: "Cart Recovery Tools",
+      industry: "E-commerce",
+      description: "Tools to help reduce cart abandonment",
+      features: [
+        "Automated follow-up emails",
+        "Customizable templates",
+        "Performance tracking"
+      ]
     }
   ];
 
@@ -372,43 +343,31 @@ export default function Landing() {
   const faqs = [
     {
       question: "Will the AI content sound generic or robotic?",
-      answer: "Not at all! Zyra's AI is trained on 500,000+ high-converting product descriptions from successful Shopify stores. It learns your brand voice and writes like your best copywriter—but 100X faster. You can see before/after examples in our case studies section above."
+      answer: "Zyra's AI is designed to learn your brand voice and create product descriptions that match your style. You can review and edit all generated content before publishing."
     },
     {
       question: "Is this hard to set up? I'm not technical.",
-      answer: "Setup takes 5 minutes. Simply connect your Shopify store, click optimize, and you're done. No coding, no training required. We've designed Zyra to be so simple that even non-technical store owners can use it immediately."
-    },
-    {
-      question: "Can I really afford this right now?",
-      answer: "Zyra pays for itself in the first week. Our average customer generates $2,800 extra revenue in month 1. That's an ROI of 5,700% on the Starter plan. Plus, you can try it free for 7 days with no credit card required."
+      answer: "Setup takes a few minutes. Simply connect your Shopify store, select products to optimize, and you're ready to go. No coding or technical skills required."
     },
     {
       question: "Will this work for my specific niche?",
-      answer: "Yes! Zyra works for ALL Shopify stores—fashion, tech, home goods, dropshipping, health & wellness, you name it. We have 50,000+ merchants across 180+ industries using Zyra successfully. The AI adapts to your specific products and audience."
+      answer: "Zyra works with Shopify stores across many industries including fashion, tech, home goods, health & wellness, and more. The AI adapts to your specific products and audience."
     },
     {
       question: "Is my store data safe?",
-      answer: "Absolutely. We use bank-level AES-256 encryption, we're SOC 2 Type II certified, and fully GDPR compliant. Your data is NEVER sold or used to train AI models. We're more secure than Shopify itself. Plus, you have one-click rollback if you ever want to restore your original data."
-    },
-    {
-      question: "I've tried other AI tools before—they were terrible. How is Zyra different?",
-      answer: "Those tools used GPT-3 or generic AI. Zyra uses GPT-4o (the most advanced AI available) PLUS custom training on 500,000 eCommerce products. It's specifically built for Shopify stores, not general content. Try the free trial and compare—you'll see the difference immediately."
-    },
-    {
-      question: "What if I don't see results?",
-      answer: "We offer a 60-day money-back guarantee. If you don't see measurable improvement in your store performance, we'll refund every penny—no questions asked. But 98% of our customers see results within the first 30 days."
+      answer: "We use AES-256 encryption and follow GDPR compliance guidelines. Your data is not sold or shared. You have one-click rollback if you ever want to restore your original product data."
     },
     {
       question: "Can I cancel anytime?",
-      answer: "Yes! There are no lock-in contracts. Cancel with one click from your dashboard, keep your credits, no penalties, no hassle. We believe in earning your business every month."
+      answer: "Yes. Subscriptions are managed through Shopify billing. You can cancel anytime from your Shopify admin with no penalties."
     },
     {
       question: "How many products can I optimize?",
-      answer: "It depends on your plan. The Starter plan ($49/mo) includes 1,000 credits which can optimize 200+ products. The Growth plan ($299/mo) includes 5,000 credits for 1,000+ products. The Pro plan ($999/mo) includes 20,000 credits for unlimited optimization."
+      answer: "It depends on your plan. Each plan includes a monthly allowance of credits that can be used across optimization features. Check our pricing section for details."
     },
     {
       question: "Do I need to hire someone to use this?",
-      answer: "No! Zyra is designed for solo entrepreneurs and small teams. Everything is automated—you just click a button and Zyra does the work. If you're on the Pro plan, we even offer white-glove onboarding where we set everything up for you."
+      answer: "Zyra is designed for store owners and small teams. The interface is straightforward and includes helpful guides to get you started."
     }
   ];
 
@@ -447,9 +406,9 @@ export default function Landing() {
       period: "per month",
       annualPrice: "$39",
       icon: <Zap className="w-8 h-8" />,
-      description: "Best for new Shopify stores just getting started.",
-      whoItsFor: "Best for new Shopify stores just getting started.",
-      badge: "Best for Beginners",
+      description: "For new Shopify stores getting started.",
+      whoItsFor: "For new Shopify stores getting started.",
+      badge: "For Beginners",
       valueProps: "$1.63/day • Less than a coffee",
       costPerDay: "$1.63",
       features: [
@@ -487,7 +446,7 @@ export default function Landing() {
       description: "Made for scaling merchants ready to grow.",
       whoItsFor: "Made for scaling merchants ready to grow.",
       badge: "Most Popular",
-      valueProps: "83% of customers choose this",
+      valueProps: "Most popular plan",
       costPerDay: "$9.96",
       features: [
         "5,000 credits / month",
@@ -547,21 +506,21 @@ export default function Landing() {
     <div className="min-h-screen">
       {/* SEO Meta Tags */}
       <Helmet>
-        <title>Zyra AI: Shopify Growth Tool | 3X Sales with AI Product Optimization</title>
-        <meta name="description" content="Grow your Shopify store 300% faster with AI-powered product descriptions, abandoned cart recovery, and SEO optimization. Trusted by 50,000+ merchants. Start free—no credit card required." />
+        <title>Zyra AI: AI-Powered Shopify Store Optimization</title>
+        <meta name="description" content="Optimize your Shopify store with AI-powered product descriptions, cart recovery tools, and SEO optimization. Start your free trial today." />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://zyraai.com/" />
-        <meta property="og:title" content="Zyra AI: Turn Your Shopify Store Into a Sales Machine" />
-        <meta property="og:description" content="Join 50,000+ Shopify merchants using AI to 3X their sales. Automated product descriptions, cart recovery, and SEO optimization." />
+        <meta property="og:title" content="Zyra AI: AI-Powered Shopify Store Optimization" />
+        <meta property="og:description" content="Optimize your Shopify store with AI-powered product descriptions, cart recovery tools, and SEO optimization." />
         <meta property="og:image" content="https://zyraai.com/og-image.png" />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://zyraai.com/" />
-        <meta property="twitter:title" content="Zyra AI: Turn Your Shopify Store Into a Sales Machine" />
-        <meta property="twitter:description" content="Join 50,000+ Shopify merchants using AI to 3X their sales." />
+        <meta property="twitter:title" content="Zyra AI: AI-Powered Shopify Store Optimization" />
+        <meta property="twitter:description" content="Optimize your Shopify store with AI-powered product descriptions and SEO tools." />
         <meta property="twitter:image" content="https://zyraai.com/og-image.png" />
 
         {/* Structured Data - Organization */}
@@ -576,13 +535,6 @@ export default function Landing() {
               "@type": "Offer",
               "price": "49.00",
               "priceCurrency": "USD"
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.9",
-              "ratingCount": "2300",
-              "bestRating": "5",
-              "worstRating": "1"
             }
           })}
         </script>
@@ -634,7 +586,6 @@ export default function Landing() {
       <ResponsiveNavbar
         navItems={[
           { label: "Features", href: "#features", external: true },
-          { label: "Testimonials", href: "#testimonials", external: true },
           { label: "Pricing", href: "#pricing", external: true },
           { label: "FAQ", href: "#faq", external: true },
           ...(loading ? [
@@ -666,26 +617,26 @@ export default function Landing() {
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-6">
               <Users className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Trusted by 50,000+ Shopify Merchants</span>
+              <span className="text-sm font-medium">Built for Shopify Merchants</span>
             </div>
 
             {/* Modern Professional Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
               <span className="block mb-2">
-                Turn Your Shopify Store
+                AI-Powered Tools for
               </span>
               <span className="block bg-gradient-to-r from-[#00D4FF] via-[#00E5CC] to-[#7C3AED] bg-clip-text text-transparent bg-[length:150%_auto] animate-[gradient_8s_ease_infinite]">
-                Into a Sales Machine
+                Shopify Stores
               </span>
               <span className="block mt-3 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-muted-foreground/80 tracking-normal">
-                While You Sleep
+                Optimize with AI
               </span>
             </h1>
 
             {/* Benefit-focused subheadline */}
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-              Stop losing money to bad product descriptions and abandoned carts. 
-              Zyra AI optimizes your entire store automatically—so you can focus 
+              Streamline your product descriptions and cart recovery with AI tools. 
+              Zyra helps you optimize your store—so you can focus 
               on what matters: <span className="text-foreground font-semibold">growing your business</span>.
             </p>
 
@@ -694,22 +645,22 @@ export default function Landing() {
               <div className="flex items-start gap-3 text-left">
                 <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-semibold text-foreground">10X Faster Optimization</p>
-                  <p className="text-sm text-muted-foreground">Not weeks, minutes</p>
+                  <p className="font-semibold text-foreground">Fast Optimization</p>
+                  <p className="text-sm text-muted-foreground">AI-powered content creation</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 text-left">
                 <DollarSign className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-semibold text-foreground">85% Cart Recovery</p>
-                  <p className="text-sm text-muted-foreground">Recover lost sales automatically</p>
+                  <p className="font-semibold text-foreground">Cart Recovery Tools</p>
+                  <p className="text-sm text-muted-foreground">Automated follow-up emails</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 text-left">
                 <Target className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-semibold text-foreground">SEO That Ranks</p>
-                  <p className="text-sm text-muted-foreground">Google-friendly AI</p>
+                  <p className="font-semibold text-foreground">SEO Optimization</p>
+                  <p className="text-sm text-muted-foreground">Search-friendly content</p>
                 </div>
               </div>
             </div>
@@ -744,15 +695,15 @@ export default function Landing() {
               Setup in 5 minutes • Cancel anytime • 7 days free
             </p>
 
-            {/* Stats with animated counters */}
+            {/* Feature highlights */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto mb-6">
               <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-[#00F0FF] to-[#00FFE5] bg-clip-text text-transparent mb-1" data-testid="text-stat-sales">300%</div>
-                <div className="text-sm text-muted-foreground">Sales Increase</div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-[#00F0FF] to-[#00FFE5] bg-clip-text text-transparent mb-1" data-testid="text-stat-ai">AI</div>
+                <div className="text-sm text-muted-foreground">Powered Optimization</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-[#00FFE5] to-[#FF00F5] bg-clip-text text-transparent mb-1" data-testid="text-stat-recovery">85%</div>
-                <div className="text-sm text-muted-foreground">Cart Recovery</div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-[#00FFE5] to-[#FF00F5] bg-clip-text text-transparent mb-1" data-testid="text-stat-recovery">SEO</div>
+                <div className="text-sm text-muted-foreground">Enhanced Content</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold bg-gradient-to-r from-[#FF00F5] to-[#00F0FF] bg-clip-text text-transparent mb-1" data-testid="text-stat-setup">5 min</div>
@@ -760,11 +711,11 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* 60-day money-back guarantee badge */}
+            {/* Shopify billing badge */}
             <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-6 py-3 text-sm">
               <Shield className="w-5 h-5 text-primary" />
-              <span className="font-semibold">60-Day Money-Back Guarantee</span>
-              <span className="text-muted-foreground">• Love it or leave it, risk-free</span>
+              <span className="font-semibold">Billed through Shopify</span>
+              <span className="text-muted-foreground">• Cancel anytime</span>
             </div>
           </div>
         </section>
@@ -848,82 +799,77 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Live social proof */}
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground" data-testid="trust-live-activity">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span>342 merchants started their trial in the last 30 days</span>
-            </div>
           </div>
         </section>
 
-        {/* Problem-Agitation Section */}
+        {/* Common Challenges Section */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#0e0e20]">
           <div className="container mx-auto max-w-5xl">
             <div className="text-center mb-12">
-              <Badge variant="outline" className="mb-4 text-red-500 border-red-500/30">
+              <Badge variant="outline" className="mb-4">
                 <AlertTriangle className="w-3 h-3 mr-1" />
-                The Hard Truth
+                Common Challenges
               </Badge>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-                Your Store Is <span className="text-red-500">Bleeding Money</span> Right Now
+                Store Optimization <span className="text-primary">Takes Time</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                Every day you wait, you're losing customers to competitors with better product pages and smarter marketing. Here's what's happening while you sleep:
+                Many store owners face these common challenges. Zyra AI is designed to help address them efficiently.
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-12">
-              <Card className="border-red-500/20 bg-red-500/5">
+              <Card className="border-primary/20 bg-primary/5">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
-                    <ShoppingCart className="w-8 h-8 text-red-500" />
+                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                    <ShoppingCart className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">78% of Carts</h3>
+                  <h3 className="text-xl font-bold mb-2">Cart Abandonment</h3>
                   <p className="text-muted-foreground text-sm mb-3">
-                    Are abandoned without any follow-up
+                    Customers leave without completing purchases
                   </p>
-                  <div className="text-2xl font-bold text-red-500">-$2,400/mo</div>
-                  <p className="text-xs text-muted-foreground">Average lost revenue</p>
+                  <div className="text-lg font-bold text-primary">Automated Recovery</div>
+                  <p className="text-xs text-muted-foreground">Follow-up email sequences</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-red-500/20 bg-red-500/5">
+              <Card className="border-primary/20 bg-primary/5">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
-                    <Search className="w-8 h-8 text-red-500" />
+                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Search className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">91% of Stores</h3>
+                  <h3 className="text-xl font-bold mb-2">SEO Challenges</h3>
                   <p className="text-muted-foreground text-sm mb-3">
-                    Never appear on Google's first page
+                    Products not appearing in search results
                   </p>
-                  <div className="text-2xl font-bold text-red-500">-5,000+</div>
-                  <p className="text-xs text-muted-foreground">Monthly visitors missed</p>
+                  <div className="text-lg font-bold text-primary">AI Optimization</div>
+                  <p className="text-xs text-muted-foreground">Search-friendly content</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-red-500/20 bg-red-500/5">
+              <Card className="border-primary/20 bg-primary/5">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-red-500" />
+                  <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                    <FileText className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">2.3% Conversion</h3>
+                  <h3 className="text-xl font-bold mb-2">Content Creation</h3>
                   <p className="text-muted-foreground text-sm mb-3">
-                    Poor descriptions kill conversions
+                    Writing descriptions takes hours
                   </p>
-                  <div className="text-2xl font-bold text-red-500">-67%</div>
-                  <p className="text-xs text-muted-foreground">Below optimized stores</p>
+                  <div className="text-lg font-bold text-primary">AI-Generated</div>
+                  <p className="text-xs text-muted-foreground">Quick content creation</p>
                 </CardContent>
               </Card>
             </div>
 
             <div className="text-center">
               <p className="text-lg mb-6">
-                <span className="font-bold">The good news?</span> Zyra AI fixes all of this in under 5 minutes.
+                <span className="font-bold">Get started</span> with Zyra AI in minutes.
               </p>
               <Button asChild size="lg" className="gradient-button">
                 <Link href="/auth">
                   <Rocket className="w-5 h-5 mr-2" />
-                  Fix My Store Now—Free Trial
+                  Start Free Trial
                 </Link>
               </Button>
             </div>
@@ -974,7 +920,7 @@ export default function Landing() {
                   </p>
                   <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
                     <Bot className="w-4 h-4" />
-                    <span>100% hands-free</span>
+                    <span>Automated process</span>
                   </div>
                 </div>
 
@@ -1052,7 +998,7 @@ export default function Landing() {
                     </div>
                     <div className="flex items-center gap-2 text-red-500">
                       <X className="w-4 h-4" />
-                      <span>2.1% conversion rate</span>
+                      <span>Basic product listing</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1091,7 +1037,7 @@ export default function Landing() {
                     </div>
                     <div className="flex items-center gap-2 text-primary">
                       <Check className="w-4 h-4" />
-                      <span>7.8% conversion rate (+271%)</span>
+                      <span>Professional product presentation</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1192,10 +1138,10 @@ export default function Landing() {
                       <td className="p-4 text-center bg-primary/5"><CheckCircle className="w-5 h-5 text-primary mx-auto" /></td>
                     </tr>
                     <tr>
-                      <td className="p-4 font-medium">Avg. ROI</td>
-                      <td className="p-4 text-center text-muted-foreground">Low</td>
+                      <td className="p-4 font-medium">Time Investment</td>
+                      <td className="p-4 text-center text-muted-foreground">High</td>
                       <td className="p-4 text-center text-muted-foreground">Moderate</td>
-                      <td className="p-4 text-center font-bold text-primary bg-primary/5">5,700%</td>
+                      <td className="p-4 text-center font-bold text-primary bg-primary/5">Minimal</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1212,169 +1158,6 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ROI Calculator Section */}
-        <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#0f0f23]" id="roi-calculator">
-          <div className="container mx-auto max-w-5xl">
-            <div className="text-center mb-12">
-              <Badge variant="outline" className="mb-4">
-                <Calculator className="w-3 h-3 mr-1" />
-                Free ROI Calculator
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-                Calculate Your <span className="text-primary">Potential Revenue</span>
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Enter your current metrics and see how much more you could be making with Zyra AI
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Input Side */}
-              <Card className="gradient-card border-0">
-                <CardContent className="p-6 space-y-6">
-                  <h3 className="text-lg font-semibold">Your Current Metrics</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">
-                        Monthly Revenue: <span className="text-primary font-bold">${monthlyRevenue.toLocaleString()}</span>
-                      </Label>
-                      <Slider
-                        value={[monthlyRevenue]}
-                        onValueChange={(val) => setMonthlyRevenue(val[0])}
-                        min={1000}
-                        max={100000}
-                        step={1000}
-                        className="my-4"
-                        data-testid="slider-monthly-revenue"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>$1K</span>
-                        <span>$100K</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">
-                        Current Conversion Rate: <span className="text-primary font-bold">{conversionRate}%</span>
-                      </Label>
-                      <Slider
-                        value={[conversionRate]}
-                        onValueChange={(val) => setConversionRate(val[0])}
-                        min={0.5}
-                        max={10}
-                        step={0.1}
-                        className="my-4"
-                        data-testid="slider-conversion-rate"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>0.5%</span>
-                        <span>10%</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">
-                        Monthly Abandoned Carts: <span className="text-primary font-bold">{abandonedCarts}</span>
-                      </Label>
-                      <Slider
-                        value={[abandonedCarts]}
-                        onValueChange={(val) => setAbandonedCarts(val[0])}
-                        min={10}
-                        max={500}
-                        step={5}
-                        className="my-4"
-                        data-testid="slider-abandoned-carts"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>10</span>
-                        <span>500</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Results Side */}
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-6">Your Potential with Zyra AI</h3>
-                  
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-[#16162c]">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Current Monthly Revenue</p>
-                        <p className="text-2xl font-bold">${roiResults.currentRevenue.toLocaleString()}</p>
-                      </div>
-                      <ArrowRight className="w-6 h-6 text-muted-foreground" />
-                      <div className="text-right">
-                        <p className="text-sm text-primary font-medium">Projected Revenue</p>
-                        <p className="text-2xl font-bold text-primary">${roiResults.projectedRevenue.toLocaleString()}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg text-center bg-[#16162c]">
-                        <p className="text-sm text-muted-foreground mb-1">Extra Revenue</p>
-                        <p className="text-2xl font-bold text-primary">+${roiResults.additionalRevenue.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">per month</p>
-                      </div>
-                      <div className="p-4 rounded-lg text-center bg-[#16162c]">
-                        <p className="text-sm text-muted-foreground mb-1">Revenue Increase</p>
-                        <p className="text-2xl font-bold text-primary">+{roiResults.percentIncrease}%</p>
-                        <p className="text-xs text-muted-foreground">growth</p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg text-center">
-                      <p className="text-sm font-medium mb-2">Your ROI with Zyra AI</p>
-                      <p className="text-4xl font-bold text-primary">{roiResults.roi.toLocaleString()}%</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        For every $1 spent, you get ${Math.round(roiResults.roi / 100)} back
-                      </p>
-                    </div>
-
-                    <Button asChild className="gradient-button w-full" size="lg">
-                      <Link href="/auth">
-                        <Rocket className="w-5 h-5 mr-2" />
-                        Unlock This Revenue—Start Free
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* As Featured In Section */}
-        <section className="py-12 px-4 sm:px-6 bg-muted/30 border-y border-border/50">
-          <div className="container mx-auto">
-            <p className="text-center text-sm text-muted-foreground mb-8">As Featured In</p>
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60">
-              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-forbes">
-                <Newspaper className="w-6 h-6" />
-                <span className="text-lg font-bold tracking-tight">Forbes</span>
-              </div>
-              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-techcrunch">
-                <Globe className="w-6 h-6" />
-                <span className="text-lg font-bold tracking-tight">TechCrunch</span>
-              </div>
-              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-entrepreneur">
-                <Newspaper className="w-6 h-6" />
-                <span className="text-lg font-bold tracking-tight">Entrepreneur</span>
-              </div>
-              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-shopify">
-                <ShoppingCart className="w-6 h-6" />
-                <span className="text-lg font-bold tracking-tight">Shopify Blog</span>
-              </div>
-              <div className="flex items-center gap-2 text-foreground/70 hover-elevate transition-all" data-testid="press-producthunt">
-                <Rocket className="w-6 h-6" />
-                <span className="text-lg font-bold tracking-tight">Product Hunt</span>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Product Demo Video Section */}
         <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#0f0f23]">
@@ -1518,138 +1301,79 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
+        {/* Feature Highlights Section */}
         <section id="testimonials" className="py-16 sm:py-20 px-4 sm:px-6 bg-muted/30">
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-                Success Stories from <span className="text-primary">Real Merchants</span>
+                What <span className="text-primary">Zyra AI</span> Can Do
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Join thousands of Shopify store owners who transformed their business with Zyra AI
+                AI-powered tools designed specifically for Shopify store optimization
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {testimonials.map((testimonial, index) => (
-                <Card key={index} className="gradient-card border-0 hover-elevate transition-all duration-300" data-testid={`card-testimonial-${index}`}>
+              {featureHighlights.map((feature, index) => (
+                <Card key={index} className="gradient-card border-0 hover-elevate transition-all duration-300" data-testid={`card-feature-highlight-${index}`}>
                   <CardContent className="p-6">
-                    {/* Star Rating */}
-                    <div className="flex items-center gap-1 mb-4" data-testid={`rating-testimonial-${index}`}>
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      ))}
-                      <span className="ml-1 text-sm text-muted-foreground">({testimonial.rating}.0)</span>
+                    <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4 text-primary">
+                      {feature.icon}
                     </div>
-                    
-                    {/* Quote */}
-                    <Quote className="w-8 h-8 text-primary/20 mb-3" />
-                    <p className="text-foreground mb-6 leading-relaxed" data-testid={`quote-testimonial-${index}`}>
-                      "{testimonial.quote}"
-                    </p>
-                    
-                    {/* Customer Info with Avatar */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar className="w-14 h-14 border-2 border-primary/30" data-testid={`avatar-testimonial-${index}`}>
-                        <AvatarFallback className="bg-gradient-to-br from-[#00F0FF] to-[#FF00F5] text-white font-bold text-xl">
-                          {testimonial.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold" data-testid={`name-testimonial-${index}`}>{testimonial.name}</p>
-                          {testimonial.verified && (
-                            <BadgeCheck className="w-4 h-4 text-primary" data-testid={`verified-icon-${index}`} />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Store className="w-3 h-3" />
-                          <span data-testid={`company-testimonial-${index}`}>{testimonial.company}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Badge and Result */}
-                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                      <Badge variant="outline" className="text-xs flex items-center gap-1" data-testid={`badge-testimonial-${index}`}>
-                        <CheckCircle2 className="w-3 h-3" />
-                        {testimonial.badge}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-semibold text-primary" data-testid={`result-testimonial-${index}`}>
-                          {testimonial.result}
-                        </span>
-                      </div>
-                    </div>
+                    <h3 className="text-xl font-semibold mb-3" data-testid={`text-feature-highlight-title-${index}`}>{feature.title}</h3>
+                    <p className="text-muted-foreground" data-testid={`text-feature-highlight-description-${index}`}>{feature.description}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            {/* CTA after testimonials */}
+            {/* CTA */}
             <div className="text-center">
-              <p className="text-lg mb-4 text-muted-foreground">Ready to join 50,000+ merchants growing with Zyra?</p>
+              <p className="text-lg mb-4 text-muted-foreground">Ready to try Zyra AI for your store?</p>
               <Button asChild size="lg" className="gradient-button">
                 <Link href="/auth">
-                  Start Free Trial—No Risk
+                  Start Free Trial
                 </Link>
               </Button>
             </div>
           </div>
         </section>
 
-        {/* Case Studies Section */}
+        {/* Features Overview Section */}
         <section className="py-16 sm:py-20 px-4 sm:px-6">
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-                Real Results, <span className="text-primary">Real Numbers</span>
+                Optimization <span className="text-primary">Made Simple</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                See how Zyra AI helped real Shopify stores achieve massive growth
+                Explore how Zyra AI can help streamline your Shopify store operations
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {caseStudies.map((study, index) => (
+              {featuresOverview.map((item, index) => (
                 <Card key={index} className="gradient-card border-0 hover-elevate transition-all duration-300">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-xl font-bold mb-1">{study.company}</h3>
-                        <p className="text-sm text-muted-foreground">{study.industry}</p>
+                        <h3 className="text-xl font-bold mb-1">{item.title}</h3>
+                        <p className="text-sm text-muted-foreground">{item.industry}</p>
                       </div>
-                      <TrendingUp className="w-6 h-6 text-primary" />
+                      <Sparkles className="w-6 h-6 text-primary" />
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-semibold text-muted-foreground mb-1">Challenge:</p>
-                        <p className="text-sm">{study.challenge}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-muted-foreground mb-1">Solution:</p>
-                        <p className="text-sm">{study.solution}</p>
-                      </div>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
                       <div className="border-t border-border pt-4">
-                        <p className="text-sm font-semibold mb-3">Results (90 days):</p>
-                        {study.results.map((result, i) => (
-                          <div key={i} className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-muted-foreground">{result.label}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">{result.before} →</span>
-                              <span className="text-sm font-bold text-primary">{result.after}</span>
-                              <Badge variant="outline" className="text-xs">{result.change}</Badge>
-                            </div>
+                        <p className="text-sm font-semibold mb-3">Key Features:</p>
+                        {item.features.map((feature, i) => (
+                          <div key={i} className="flex items-center gap-2 mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
+                            <span className="text-sm">{feature}</span>
                           </div>
                         ))}
-                      </div>
-                      <div className="border-t border-border pt-4">
-                        <Quote className="w-6 h-6 text-primary/20 mb-2" />
-                        <p className="text-sm italic mb-2">"{study.quote}"</p>
-                        <p className="text-xs text-muted-foreground">— {study.author}</p>
                       </div>
                     </div>
                   </CardContent>

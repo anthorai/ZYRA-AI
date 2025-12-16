@@ -339,38 +339,27 @@ export default function BillingPage() {
 
   const plansErrorDetails = plansError as any;
 
-  // Upgrade/downgrade mutation - PayPal USD-only
+  // Upgrade/downgrade mutation - Shopify Managed Pricing only
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
       const billingPeriod = isAnnual ? 'annual' : 'monthly';
-      const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, gateway: 'paypal', billingPeriod });
+      const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, billingPeriod });
       return await response.json();
     },
     onMutate: async (planId: string) => {
       setProcessingPlanId(planId);
     },
     onSuccess: async (data: any) => {
-      console.log('💳 Payment flow started:', data);
+      console.log('Subscription change response:', data);
       
-      if (data.requiresPayment && data.gateway === 'paypal') {
-        console.log('💳 PayPal payment required - redirecting to checkout');
-        const billingPeriod = data.billingPeriod || 'monthly';
-        const periodLabel = billingPeriod === 'annual' ? '/year' : '/month';
+      if (data.requiresShopifyBilling) {
+        // For paid plans, inform user to upgrade via Shopify
         toast({
-          title: "Payment Required",
-          description: `Complete payment of $${data.amount} USD${periodLabel} via PayPal to activate your ${data.plan.planName} plan.`,
+          title: "Upgrade via Shopify",
+          description: `To activate the ${data.plan.planName} plan, please upgrade through your Shopify admin billing settings.`,
         });
-        
-        sessionStorage.setItem('pending_subscription', JSON.stringify({
-          transactionId: data.transactionId,
-          planId: data.plan.id,
-          amount: data.amount,
-          planName: data.plan.planName,
-          billingPeriod: billingPeriod
-        }));
-        
-        setLocation('/checkout');
-      } else if (data.requiresPayment === false) {
+      } else if (data.requiresShopifyBilling === false) {
+        // Free plan activated directly
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
         queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
         toast({

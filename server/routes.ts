@@ -82,19 +82,8 @@ import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUs
 import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
-import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import multer from "multer";
 import csvParser from "csv-parser";
-import {
-  createRazorpayOrder,
-  verifyRazorpaySignature,
-  captureRazorpayPayment,
-  fetchRazorpayPayment,
-  refundRazorpayPayment,
-  getRazorpayKeyId,
-  isRazorpayConfigured,
-  handleRazorpayWebhook
-} from "./razorpay";
 import { sendEmail, sendBulkEmails } from "./lib/sendgrid-client";
 import { sendSMS, sendBulkSMS } from "./lib/twilio-client";
 import { 
@@ -102,8 +91,7 @@ import {
   authLimiter, 
   aiLimiter, 
   campaignLimiter, 
-  uploadLimiter,
-  paymentLimiter 
+  uploadLimiter
 } from "./middleware/rateLimiting";
 import { 
   sanitizeBody, 
@@ -5140,12 +5128,12 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Get payment methods
+  // Get payment methods - Shopify Managed Billing only
   app.get("/api/payment-methods", requireAuth, async (req, res) => {
     try {
-      // Payment methods managed through PayPal and Razorpay
-      const paymentMethods: any[] = [];
-      res.json(paymentMethods || []);
+      // All payments are managed through Shopify's billing system
+      // No external payment methods are stored
+      res.json([]);
     } catch (error: any) {
       console.error("Error fetching payment methods:", error);
       res.status(500).json({ 
@@ -5155,7 +5143,7 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/update-subscription", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
+  app.post("/api/update-subscription", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const { planId } = req.body;
       if (!planId) {
@@ -5175,11 +5163,12 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Change subscription plan (alternative endpoint for billing page)
-  app.post("/api/subscription/change-plan", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
+  // Change subscription plan - Shopify Managed Pricing only
+  // All payments are handled through Shopify's billing system
+  app.post("/api/subscription/change-plan", requireAuth, sanitizeBody, async (req, res) => {
     try {
-      const { planId, gateway = 'razorpay', billingPeriod = 'monthly' } = req.body;
-      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "gateway:", gateway, "billingPeriod:", billingPeriod);
+      const { planId, billingPeriod = 'monthly' } = req.body;
+      console.log("[SUBSCRIPTION] Received plan change request with planId:", planId, "billingPeriod:", billingPeriod);
       
       if (!planId) {
         return res.status(400).json({ error: "Plan ID is required" });
@@ -5202,7 +5191,7 @@ Output format: Markdown with clear section headings.`;
       
       // Check if the plan is free (7-Day Free Trial)
       if (Number(selectedPlan.price) === 0 || selectedPlan.planName === '7-Day Free Trial') {
-        console.log("[SUBSCRIPTION] Free plan selected, updating directly without payment");
+        console.log("[SUBSCRIPTION] Free plan selected, updating directly");
         
         // Update subscription directly for free plans
         const updatedUser = await updateUserSubscription(userId, planId, userEmail);
@@ -5211,90 +5200,22 @@ Output format: Markdown with clear section headings.`;
         
         return res.json({ 
           success: true,
-          requiresPayment: false,
+          requiresShopifyBilling: false,
           user: updatedUser 
         });
       }
       
-      // For paid plans, create a payment order
-      console.log("[SUBSCRIPTION] Paid plan selected, creating payment order");
+      // For paid plans, redirect to Shopify billing
+      // NOTE: All paid subscriptions must go through Shopify's billing system
+      console.log("[SUBSCRIPTION] Paid plan selected, requires Shopify billing");
       
-      // Calculate the correct amount based on billing period
-      const monthlyPrice = Number(selectedPlan.price);
-      const finalAmount = billingPeriod === 'annual' 
-        ? Math.round(monthlyPrice * 12 * 0.8)  // 20% discount for annual
-        : monthlyPrice;
-      
-      console.log("[SUBSCRIPTION] Calculated amount:", { monthlyPrice, billingPeriod, finalAmount });
-      
-      // Create payment transaction record
-      const transaction = await storage.createPaymentTransaction({
-        userId,
-        amount: finalAmount.toString(),
-        currency: 'USD',  // All payments are in USD
-        gateway,
-        purpose: 'subscription',
-        status: 'pending',
-        metadata: {
-          planId,
-          planName: selectedPlan.planName,
-          userEmail,
-          billingPeriod
-        }
+      return res.json({
+        success: true,
+        requiresShopifyBilling: true,
+        message: "Please upgrade via Shopify to activate this plan",
+        plan: selectedPlan,
+        billingPeriod: billingPeriod
       });
-      
-      // Create payment order based on gateway
-      let paymentOrder;
-      if (gateway === 'razorpay' && isRazorpayConfigured()) {
-        paymentOrder = await createRazorpayOrder({
-          amount: Number(selectedPlan.price),
-          currency: 'USD',  // USD-only pricing
-          receipt: transaction.id,
-          notes: {
-            userId,
-            planId,
-            planName: selectedPlan.planName,
-            transactionId: transaction.id
-          }
-        });
-        
-        // Update transaction with gateway order ID
-        await storage.updatePaymentTransaction(transaction.id, {
-          gatewayOrderId: paymentOrder.id
-        });
-        
-        return res.json({
-          success: true,
-          requiresPayment: true,
-          gateway: 'razorpay',
-          transactionId: transaction.id,
-          order: {
-            id: paymentOrder.id,
-            amount: paymentOrder.amount,
-            currency: paymentOrder.currency,
-            keyId: getRazorpayKeyId()
-          },
-          plan: selectedPlan
-        });
-      } else if (gateway === 'paypal' && process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
-        // PayPal requires frontend integration, return transaction ID
-        return res.json({
-          success: true,
-          requiresPayment: true,
-          gateway: 'paypal',
-          transactionId: transaction.id,
-          amount: finalAmount,
-          currency: 'USD',  // All payments are in USD
-          billingPeriod: billingPeriod,
-          plan: selectedPlan
-        });
-      } else {
-        // No payment gateway configured
-        return res.status(503).json({ 
-          error: "Payment gateway not configured",
-          message: `${gateway} is not configured. Please contact support.` 
-        });
-      }
     } catch (error: any) {
       console.error("Error changing subscription plan:", error);
       res.status(500).json({ 
@@ -5304,348 +5225,67 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // ==================== PAYMENT GATEWAY ROUTES ====================
+  // ==================== SHOPIFY BILLING ROUTES ====================
   
-  // Get payment gateway configuration (for frontend)
-  app.get("/api/payments/config", requireAuth, async (req, res) => {
+  // Check Shopify subscription status
+  app.get("/api/shopify/billing/status", requireAuth, async (req, res) => {
     try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      // Check if user has an active Shopify subscription
+      // This would be stored in the user's subscription record
+      const currentSubscription = await supabaseStorage.getUserSubscription(user.id);
+      
       res.json({
-        razorpay: {
-          enabled: isRazorpayConfigured(),
-          keyId: isRazorpayConfigured() ? getRazorpayKeyId() : null
-        },
-        paypal: {
-          enabled: !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
-          clientId: process.env.PAYPAL_CLIENT_ID || null
-        }
+        hasActiveSubscription: currentSubscription?.status === 'active',
+        plan: currentSubscription?.planId || null,
+        status: currentSubscription?.status || 'none',
+        currentPeriodEnd: currentSubscription?.currentPeriodEnd || null
       });
     } catch (error: any) {
-      console.error("Error fetching payment config:", error);
-      res.status(500).json({ error: "Failed to fetch payment configuration" });
+      console.error("Error checking Shopify billing status:", error);
+      res.status(500).json({ error: "Failed to check billing status" });
     }
   });
 
-  // === RAZORPAY ROUTES ===
-  
-  // Create Razorpay order
-  app.post("/api/payments/razorpay/create-order", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
+  // Shopify billing callback - called after merchant approves billing
+  app.post("/api/shopify/billing/confirm", requireAuth, sanitizeBody, async (req, res) => {
     try {
-      if (!isRazorpayConfigured()) {
-        return res.status(503).json({ error: "Razorpay is not configured" });
-      }
-
-      const { amount, currency = 'USD', notes } = req.body;
+      const { chargeId, planId } = req.body;
       const user = (req as AuthenticatedRequest).user;
-
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: "Invalid amount" });
-      }
-
-      const order = await createRazorpayOrder({
-        amount,
-        currency,
-        receipt: `order_${user.id}_${Date.now()}`,
-        notes: { userId: user.id, ...notes }
-      });
-
-      res.json({
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        keyId: getRazorpayKeyId()
-      });
-    } catch (error: any) {
-      console.error("Error creating Razorpay order:", error);
-      res.status(500).json({ 
-        error: "Failed to create order",
-        message: error.message 
-      });
-    }
-  });
-
-  // Verify Razorpay payment and activate subscription
-  app.post("/api/payments/razorpay/verify", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
-    try {
-      const { orderId, paymentId, signature, transactionId } = req.body;
-      const user = (req as AuthenticatedRequest).user;
-
-      if (!orderId || !paymentId || !signature) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      if (!transactionId) {
-        return res.status(400).json({ error: "Transaction ID is required" });
-      }
-
-      // Get transaction first to validate amount
-      const transaction = await storage.getPaymentTransaction(transactionId);
       
-      if (!transaction || transaction.userId !== user.id) {
-        return res.status(404).json({ error: "Transaction not found or unauthorized" });
+      if (!chargeId || !planId) {
+        return res.status(400).json({ error: "Charge ID and Plan ID are required" });
       }
-
-      // Ensure transaction is still pending
-      if (transaction.status !== 'pending') {
-        return res.status(400).json({ 
-          error: "Invalid transaction status",
-          message: `Transaction is ${transaction.status}, expected pending` 
-        });
-      }
-
-      // Verify signature
-      const isValid = await verifyRazorpaySignature(orderId, paymentId, signature);
-
-      if (!isValid) {
-        // Mark transaction as failed
-        await storage.updatePaymentTransaction(transactionId, {
-          status: 'failed',
-          errorMessage: 'Invalid payment signature'
-        });
-        return res.status(400).json({ error: "Invalid payment signature" });
-      }
-
-      // Fetch payment details from Razorpay
-      const payment = await fetchRazorpayPayment(paymentId);
-
-      // Validate payment amount matches transaction amount
-      const paidAmount = Number(payment.amount) / 100;
-      const expectedAmount = Number(transaction.amount);
       
-      console.log("[PAYMENT] Validating amount - Paid:", paidAmount, "Expected:", expectedAmount);
+      console.log(`[Shopify Billing] Confirming charge ${chargeId} for user ${user.id}, plan ${planId}`);
       
-      if (Math.abs(paidAmount - expectedAmount) > 0.01) {
-        // Amount mismatch - mark transaction as failed
-        await storage.updatePaymentTransaction(transactionId, {
-          status: 'failed',
-          errorMessage: `Amount mismatch: Expected ${expectedAmount}, received ${paidAmount}`,
-          gatewayTransactionId: paymentId
-        });
-        return res.status(400).json({ 
-          error: "Payment amount mismatch",
-          message: `Expected ${expectedAmount}, received ${paidAmount}` 
-        });
-      }
-
-      // Validate currency matches
-      if (payment.currency.toUpperCase() !== transaction.currency.toUpperCase()) {
-        await storage.updatePaymentTransaction(transactionId, {
-          status: 'failed',
-          errorMessage: `Currency mismatch: Expected ${transaction.currency}, received ${payment.currency}`,
-          gatewayTransactionId: paymentId
-        });
-        return res.status(400).json({ 
-          error: "Payment currency mismatch" 
-        });
-      }
-
-      // Validate payment status - must be captured
-      if (payment.status !== 'captured') {
-        // If payment is only authorized, capture it first
-        if (payment.status === 'authorized') {
-          try {
-            console.log("[PAYMENT] Payment is authorized, capturing now...");
-            const capturedPayment = await captureRazorpayPayment(paymentId, paidAmount, payment.currency);
-            console.log("[PAYMENT] Payment captured successfully:", capturedPayment.id);
-            
-            // Verify capture was successful
-            if (capturedPayment.status !== 'captured') {
-              await storage.updatePaymentTransaction(transactionId, {
-                status: 'failed',
-                errorMessage: `Capture failed: ${capturedPayment.status}`,
-                gatewayTransactionId: paymentId
-              });
-              return res.status(400).json({ 
-                error: "Payment capture failed",
-                message: `Capture status is ${capturedPayment.status}` 
-              });
-            }
-          } catch (captureError: any) {
-            console.error("[PAYMENT] Capture failed:", captureError);
-            await storage.updatePaymentTransaction(transactionId, {
-              status: 'failed',
-              errorMessage: `Capture error: ${captureError.message}`,
-              gatewayTransactionId: paymentId
-            });
-            return res.status(400).json({ 
-              error: "Payment capture failed",
-              message: captureError.message 
-            });
-          }
-        } else {
-          // Payment is neither captured nor authorized
-          await storage.updatePaymentTransaction(transactionId, {
-            status: 'failed',
-            errorMessage: `Payment not successful: ${payment.status}`,
-            gatewayTransactionId: paymentId
-          });
-          return res.status(400).json({ 
-            error: "Payment not successful",
-            message: `Payment status is ${payment.status}` 
-          });
-        }
-      }
-
-      // All validations passed - update transaction as completed
-      await storage.updatePaymentTransaction(transactionId, {
-        gatewayTransactionId: paymentId,
-        status: 'completed',
-        paymentMethod: payment.method,
-        paymentDetails: {
-          card_id: payment.card_id,
-          email: payment.email,
-          contact: payment.contact
-        },
-        signature,
-        webhookReceived: false
-      });
-
-      // If this is a subscription payment, activate the subscription
-      if (transaction.purpose === 'subscription' && transaction.metadata?.planId) {
-        const planId = transaction.metadata.planId;
-        const userEmail = user.email;
-        
-        console.log("[PAYMENT] Payment verified and validated, activating subscription for planId:", planId);
-        
-        // Update user subscription
-        const updatedUser = await updateUserSubscription(user.id, planId, userEmail);
-        await initializeUserCredits(user.id, planId);
-        await NotificationService.notifySubscriptionChanged(user.id, planId);
-      }
-
-      // Send payment success notification
-      await NotificationService.notifyPaymentSuccess(user.id, paidAmount, user.plan || 'subscription');
-
-      res.json({ 
-        success: true, 
-        paymentId,
-        status: payment.status 
-      });
-    } catch (error: any) {
-      console.error("Error verifying Razorpay payment:", error);
-      res.status(500).json({ 
-        error: "Payment verification failed",
-        message: error.message 
-      });
-    }
-  });
-
-  // Razorpay webhook
-  app.post("/api/webhooks/razorpay", async (req, res) => {
-    await handleRazorpayWebhook(req, res);
-  });
-
-  // PayPal webhook
-  app.post("/api/webhooks/paypal", async (req, res) => {
-    const { handlePaypalWebhook } = await import("./paypal");
-    await handlePaypalWebhook(req, res);
-  });
-
-  // === PAYPAL ROUTES (Blueprint integration) ===
-  
-  // From PayPal blueprint - referenced integration: blueprint:javascript_paypal
-  app.get("/api/paypal/setup", async (req, res) => {
-    try {
-      await loadPaypalDefault(req, res);
-    } catch (error: any) {
-      console.error("PayPal setup error:", error);
-      res.status(500).json({ error: "PayPal setup failed" });
-    }
-  });
-
-  app.post("/api/paypal/order", async (req, res) => {
-    try {
-      await createPaypalOrder(req, res);
-    } catch (error: any) {
-      console.error("PayPal order creation error:", error);
-      res.status(500).json({ error: "Failed to create PayPal order" });
-    }
-  });
-
-  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
-    try {
-      await capturePaypalOrder(req, res);
-    } catch (error: any) {
-      console.error("PayPal capture error:", error);
-      res.status(500).json({ error: "Failed to capture PayPal payment" });
-    }
-  });
-
-  // Verify PayPal payment and activate subscription
-  app.post("/api/payments/paypal/verify-subscription", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
-    try {
-      const { transactionId, planId, paypalOrderId } = req.body;
-      const user = (req as AuthenticatedRequest).user;
-
-      if (!transactionId || !planId || !paypalOrderId) {
-        return res.status(400).json({ 
-          error: "Missing required fields",
-          message: "Transaction ID, Plan ID, and PayPal Order ID are required" 
-        });
-      }
-
-      console.log(`[PayPal Verify] Processing payment for user ${user.id}, transaction ${transactionId}`);
-
-      // Import required functions
-      const { updateUserSubscription } = await import('./db');
-      const { initializeUserCredits } = await import('./lib/credits');
-      const { NotificationService } = await import('./lib/notification-service');
-
-      // Get the transaction to retrieve billing period from metadata
-      const transaction = await storage.getPaymentTransaction(transactionId);
-      const billingPeriod = transaction?.metadata?.billingPeriod || 'monthly';
+      // Verify plan exists
+      const plans = await getSubscriptionPlans();
+      const selectedPlan = plans.find(p => p.id === planId);
       
-      console.log(`[PayPal Verify] Billing period: ${billingPeriod}`);
-
-      // Update the transaction status to completed
-      await storage.updatePaymentTransaction(transactionId, {
-        status: 'completed',
-        gatewayOrderId: paypalOrderId,
-        paidAt: new Date()
-      });
-
-      // Update user subscription and activate the plan with billing period
-      const updatedUser = await updateUserSubscription(user.id, planId, user.email, billingPeriod);
+      if (!selectedPlan) {
+        return res.status(400).json({ error: "Invalid plan ID" });
+      }
       
-      // Initialize credits for the new plan
+      // Update user subscription
+      const updatedUser = await updateUserSubscription(user.id, planId, user.email);
       await initializeUserCredits(user.id, planId);
-      
-      // Send notification about subscription activation
       await NotificationService.notifySubscriptionChanged(user.id, planId);
-
-      console.log(`[PayPal Verify] Subscription activated successfully for user ${user.id}, billingPeriod: ${billingPeriod}`);
-
-      res.json({ 
+      
+      console.log(`[Shopify Billing] Subscription activated for user ${user.id}`);
+      
+      res.json({
         success: true,
         message: "Subscription activated successfully",
-        billingPeriod: billingPeriod,
         user: updatedUser
       });
     } catch (error: any) {
-      console.error("PayPal subscription verification error:", error);
+      console.error("Shopify billing confirmation error:", error);
       res.status(500).json({ 
-        error: "Failed to verify payment and activate subscription",
+        error: "Failed to confirm billing",
         message: error.message 
       });
-    }
-  });
-
-  // Payment Gateway Selection
-  app.get("/api/payments/gateway-selection", requireAuth, async (req, res) => {
-    try {
-      const { selectPaymentGateway, getAvailableGateways } = await import('./lib/payment-gateway-selector');
-      const { currency, countryCode } = req.query as { currency?: string; countryCode?: string };
-      
-      const recommended = selectPaymentGateway(currency, countryCode);
-      const available = getAvailableGateways(currency);
-      
-      res.json({
-        recommended,
-        available,
-        currentCurrency: currency || 'USD'
-      });
-    } catch (error: any) {
-      console.error("Gateway selection error:", error);
-      res.status(500).json({ error: "Failed to determine payment gateway" });
     }
   });
 
@@ -5780,47 +5420,14 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Request refund
-  app.post("/api/payments/refund/:transactionId", requireAuth, paymentLimiter, sanitizeBody, async (req, res) => {
+  // Request refund - Handled via Shopify billing
+  app.post("/api/payments/refund/:transactionId", requireAuth, sanitizeBody, async (req, res) => {
     try {
-      const { transactionId } = req.params;
-      const { amount, reason } = req.body;
-      const user = (req as AuthenticatedRequest).user;
-
-      const transaction = await storage.getPaymentTransaction(transactionId);
-      
-      if (!transaction || transaction.userId !== user.id) {
-        return res.status(404).json({ error: "Transaction not found" });
-      }
-
-      if (transaction.status !== 'completed') {
-        return res.status(400).json({ error: "Only completed payments can be refunded" });
-      }
-
-      let refundResult;
-
-      switch (transaction.gateway) {
-        case 'razorpay':
-          refundResult = await refundRazorpayPayment(
-            transaction.gatewayTransactionId,
-            amount ? Number(amount) : undefined
-          );
-          break;
-        default:
-          return res.status(400).json({ error: `Refunds not supported for ${transaction.gateway}` });
-      }
-
-      // Update transaction status
-      await storage.updatePaymentTransaction(transactionId, {
-        status: amount ? 'partially_refunded' : 'refunded',
-        refundAmount: amount || transaction.amount,
-        refundReason: reason,
-        refundedAt: new Date()
-      });
-
-      res.json({ 
-        success: true, 
-        refund: refundResult 
+      // All refunds must be processed through Shopify's billing system
+      // Merchants should contact Shopify support for refunds
+      res.status(400).json({ 
+        error: "Refunds are managed through Shopify",
+        message: "Please contact Shopify support to process refunds for your subscription."
       });
     } catch (error: any) {
       console.error("Error processing refund:", error);

@@ -35,7 +35,6 @@ const ManageProducts = lazy(() => import("@/pages/products/manage"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Billing = lazy(() => import("@/pages/billing"));
 const Settings = lazy(() => import("@/pages/settings"));
-const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
 
 // Settings subpages
@@ -336,13 +335,6 @@ function Router() {
               <Billing />
             </Suspense>
           </SettingsLayout>
-        </ProtectedRoute>
-      )} />
-      <Route path="/checkout" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CheckoutPage />
-          </Suspense>
         </ProtectedRoute>
       )} />
       <Route path="/subscription" component={() => (
