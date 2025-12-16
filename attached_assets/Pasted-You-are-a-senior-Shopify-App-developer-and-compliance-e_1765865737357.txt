@@ -1,0 +1,60 @@
+You are a senior Shopify App developer and compliance expert.
+
+TASK: Update the Zyra AI Shopify app to fully comply with Shopify App Store billing and content policies.
+
+BILLING & PRICING (CRITICAL):
+1. Remove ALL off-platform payment systems completely:
+   - Remove Stripe, Razorpay, PayPal, manual payments, invoices, and any external checkout pages.
+   - Remove any references, SDKs, UI buttons, logos, or environment variables related to external payments.
+
+2. Implement Shopify Managed Pricing ONLY:
+   - Use pricing plans created inside the Shopify Partner Dashboard.
+   - Do NOT create any custom checkout or pricing URLs.
+   - Ensure all charges are handled by Shopify billing only.
+
+3. Upgrade Flow:
+   - Replace all “Buy Now”, “Pay Now”, or “Upgrade” actions with a single button labeled:
+     “Upgrade via Shopify”
+   - When clicked, redirect the merchant to the Shopify billing confirmation screen using Shopify’s billing request flow.
+   - Do NOT hardcode any Shopify pricing page URL.
+   - If the merchant already has an active plan, redirect back to the app dashboard.
+
+4. Billing Logic:
+   - On app load, check if the merchant has an active Shopify subscription.
+   - If no active subscription exists, block premium features and redirect to the Shopify billing screen.
+   - After successful approval, unlock features based on the subscribed plan.
+
+5. Credits / Usage:
+   - Keep the internal credit or usage limit system.
+   - Treat credits strictly as a usage allowance, NOT as a purchasable item.
+   - Reset usage allowances on each Shopify billing cycle.
+   - Remove any “Buy credits” or “Top-up credits” language.
+
+CONTENT & CLAIMS (SHOPIFY POLICY 4.3.4):
+6. Remove ALL guarantees, statistics, and superlative claims from:
+   - Landing pages
+   - App UI
+   - App Store listing
+   - Images, banners, badges, and marketing sections
+
+7. Specifically remove or rewrite:
+   - Percentages (e.g., “300%”, “85%”)
+   - Time claims (e.g., “10 min setup”)
+   - Words like: “best”, “#1”, “guaranteed”, “proven”, “boosts sales”, “increase revenue”
+
+8. Replace claims with neutral, capability-based language only.
+   Examples:
+   - ❌ “300% Sales Increase”
+   - ✅ “Tools to help optimize product content and storefront performance”
+
+
+
+
+
+FINAL CHECK:
+11. Ensure there is no remaining reference to:
+   - External payments
+   - Guarantees or statistical claims
+   - Off-platform billing
+
+The final result must be 100% compliant with Shopify Managed Pricing and App Store review requirements.
