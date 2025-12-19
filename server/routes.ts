@@ -10347,7 +10347,7 @@ Output format: Markdown with clear section headings.`;
       const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
       const shopifyClient = await getShopifyClient(shopDomain, shopifyConnection.accessToken);
       
-      const imageService = new ImageOptimizationService(supabaseStorage);
+      const imageService = new ImageOptimizationService(dbStorage);
 
       // Fetch product images from Shopify
       const productImages = await imageService.fetchProductImages(userId, productIds, shopifyClient);
@@ -10375,7 +10375,7 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { ImageOptimizationService } = await import('./lib/image-optimization-service');
-      const imageService = new ImageOptimizationService(supabaseStorage);
+      const imageService = new ImageOptimizationService(dbStorage);
 
       const jobs = await imageService.getJobs(userId);
       res.json(jobs);
@@ -10395,7 +10395,7 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       const { jobId } = req.params;
       const { ImageOptimizationService } = await import('./lib/image-optimization-service');
-      const imageService = new ImageOptimizationService(supabaseStorage);
+      const imageService = new ImageOptimizationService(dbStorage);
 
       const job = await imageService.getJob(jobId);
       
@@ -10426,7 +10426,7 @@ Output format: Markdown with clear section headings.`;
       const { jobId } = req.params;
       
       const { ImageOptimizationService } = await import('./lib/image-optimization-service');
-      const imageService = new ImageOptimizationService(supabaseStorage);
+      const imageService = new ImageOptimizationService(dbStorage);
 
       // Get job and verify ownership
       const job = await imageService.getJob(jobId);
@@ -10477,7 +10477,7 @@ Output format: Markdown with clear section headings.`;
       const { productId, jobId } = req.query;
       
       const { ImageOptimizationService } = await import('./lib/image-optimization-service');
-      const imageService = new ImageOptimizationService(supabaseStorage);
+      const imageService = new ImageOptimizationService(dbStorage);
 
       const filters: any = {};
       if (productId) filters.productId = productId as string;
@@ -10518,7 +10518,7 @@ Output format: Markdown with clear section headings.`;
       const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
       const shopifyClient = await getShopifyClient(shopDomain, shopifyConnection.accessToken);
       
-      const imageService = new ImageOptimizationService(supabaseStorage);
+      const imageService = new ImageOptimizationService(dbStorage);
 
       // Apply to Shopify
       const result = await imageService.applyToShopify(historyIds, shopifyClient);

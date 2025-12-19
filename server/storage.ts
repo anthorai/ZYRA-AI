@@ -2493,6 +2493,152 @@ export class MemStorage {
   async deleteBulkOptimizationItem(itemId: string): Promise<void> {
     this.bulkOptimizationItemsData.delete(itemId);
   }
+
+  // Bulk Image Optimization methods
+  private bulkImageJobsData: Map<string, BulkImageJob> = new Map();
+  private bulkImageJobItemsData: Map<string, BulkImageJobItem> = new Map();
+  private imageOptimizationHistoryData: Map<string, ImageOptimizationHistory> = new Map();
+
+  async getBulkImageJobs(userId: string): Promise<BulkImageJob[]> {
+    return Array.from(this.bulkImageJobsData.values())
+      .filter(job => job.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getBulkImageJob(jobId: string): Promise<BulkImageJob | undefined> {
+    return this.bulkImageJobsData.get(jobId);
+  }
+
+  async createBulkImageJob(data: InsertBulkImageJob): Promise<BulkImageJob> {
+    const id = randomUUID();
+    const newJob: BulkImageJob = {
+      id,
+      userId: data.userId,
+      name: data.name,
+      status: data.status || 'pending',
+      totalProducts: data.totalProducts || 0,
+      totalImages: data.totalImages || 0,
+      processedImages: data.processedImages || 0,
+      optimizedImages: data.optimizedImages || 0,
+      failedImages: data.failedImages || 0,
+      missingImageProducts: data.missingImageProducts || 0,
+      progressPercentage: data.progressPercentage || 0,
+      totalTokensUsed: data.totalTokensUsed || 0,
+      estimatedCost: data.estimatedCost || '0',
+      errorMessage: data.errorMessage || null,
+      createdAt: new Date(),
+      completedAt: data.completedAt || null,
+    };
+    this.bulkImageJobsData.set(id, newJob);
+    return newJob;
+  }
+
+  async updateBulkImageJob(jobId: string, updates: Partial<BulkImageJob>): Promise<BulkImageJob> {
+    const job = this.bulkImageJobsData.get(jobId);
+    if (!job) throw new Error("Bulk image job not found");
+    const updatedJob = { ...job, ...updates };
+    this.bulkImageJobsData.set(jobId, updatedJob);
+    return updatedJob;
+  }
+
+  async deleteBulkImageJob(jobId: string): Promise<void> {
+    this.bulkImageJobsData.delete(jobId);
+    const itemsToDelete = Array.from(this.bulkImageJobItemsData.entries())
+      .filter(([_, item]) => item.jobId === jobId)
+      .map(([itemId]) => itemId);
+    itemsToDelete.forEach(itemId => this.bulkImageJobItemsData.delete(itemId));
+  }
+
+  async getBulkImageJobItems(jobId: string): Promise<BulkImageJobItem[]> {
+    return Array.from(this.bulkImageJobItemsData.values())
+      .filter(item => item.jobId === jobId)
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+  }
+
+  async getBulkImageJobItem(itemId: string): Promise<BulkImageJobItem | undefined> {
+    return this.bulkImageJobItemsData.get(itemId);
+  }
+
+  async createBulkImageJobItem(data: InsertBulkImageJobItem): Promise<BulkImageJobItem> {
+    const id = randomUUID();
+    const newItem: BulkImageJobItem = {
+      id,
+      jobId: data.jobId,
+      productId: data.productId,
+      productName: data.productName,
+      shopifyProductId: data.shopifyProductId || null,
+      images: data.images || [],
+      status: data.status || 'pending',
+      errorMessage: data.errorMessage || null,
+      tokensUsed: data.tokensUsed || 0,
+      processingTimeMs: data.processingTimeMs || null,
+      retryCount: data.retryCount || 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.bulkImageJobItemsData.set(id, newItem);
+    return newItem;
+  }
+
+  async updateBulkImageJobItem(itemId: string, updates: Partial<BulkImageJobItem>): Promise<BulkImageJobItem> {
+    const item = this.bulkImageJobItemsData.get(itemId);
+    if (!item) throw new Error("Bulk image job item not found");
+    const updatedItem = { ...item, ...updates, updatedAt: new Date() };
+    this.bulkImageJobItemsData.set(itemId, updatedItem);
+    return updatedItem;
+  }
+
+  async deleteBulkImageJobItem(itemId: string): Promise<void> {
+    this.bulkImageJobItemsData.delete(itemId);
+  }
+
+  async getImageOptimizationHistory(userId: string, filters?: { productId?: string, jobId?: string }): Promise<ImageOptimizationHistory[]> {
+    let results = Array.from(this.imageOptimizationHistoryData.values())
+      .filter(h => h.userId === userId);
+    
+    if (filters?.productId) {
+      results = results.filter(h => h.productId === filters.productId);
+    }
+    if (filters?.jobId) {
+      results = results.filter(h => h.jobId === filters.jobId);
+    }
+    
+    return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getImageOptimizationHistoryByIds(ids: string[]): Promise<ImageOptimizationHistory[]> {
+    return Array.from(this.imageOptimizationHistoryData.values())
+      .filter(h => ids.includes(h.id));
+  }
+
+  async createImageOptimizationHistory(data: InsertImageOptimizationHistory): Promise<ImageOptimizationHistory> {
+    const id = randomUUID();
+    const newHistory: ImageOptimizationHistory = {
+      id,
+      userId: data.userId,
+      productId: data.productId,
+      productName: data.productName,
+      shopifyProductId: data.shopifyProductId || null,
+      shopifyImageId: data.shopifyImageId,
+      imageUrl: data.imageUrl,
+      oldAltText: data.oldAltText || null,
+      newAltText: data.newAltText,
+      aiAnalysis: data.aiAnalysis,
+      appliedToShopify: data.appliedToShopify || false,
+      jobId: data.jobId || null,
+      createdAt: new Date(),
+    };
+    this.imageOptimizationHistoryData.set(id, newHistory);
+    return newHistory;
+  }
+
+  async updateImageOptimizationHistory(id: string, updates: Partial<ImageOptimizationHistory>): Promise<ImageOptimizationHistory> {
+    const history = this.imageOptimizationHistoryData.get(id);
+    if (!history) throw new Error("Image optimization history not found");
+    const updatedHistory = { ...history, ...updates };
+    this.imageOptimizationHistoryData.set(id, updatedHistory);
+    return updatedHistory;
+  }
 }
 
 export const storage = new MemStorage();
