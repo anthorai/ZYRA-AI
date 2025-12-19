@@ -48,8 +48,22 @@ export const supabaseAuth = createClient(devUrl, devAnonKey, {
 
 // Test connection function
 export async function testSupabaseConnection() {
+  // Skip connection test in development mode without real credentials
+  const hasRealCredentials = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+  if (isDevelopment && !hasRealCredentials) {
+    console.log('⚠️  Skipping Supabase connection test (no credentials in dev mode)');
+    return true;
+  }
+  
   try {
-    const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Connection timeout')), 5000)
+    );
+    
+    const queryPromise = supabase.from('users').select('count', { count: 'exact', head: true });
+    
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
     if (error) throw error;
     console.log('✅ Supabase connection successful');
     return true;
