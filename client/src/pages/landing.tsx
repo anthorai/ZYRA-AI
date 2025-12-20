@@ -1927,7 +1927,16 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <Lock className="w-6 h-6 text-indigo-500" />
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="securityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{ stopColor: '#6366F1', stopOpacity: 1 }} />
+                        <stop offset="100%" style={{ stopColor: '#8B5CF6', stopOpacity: 1 }} />
+                      </linearGradient>
+                    </defs>
+                    <path d="M12 2L20 5.5V12C20 18.5 12 22 12 22C12 22 4 18.5 4 12V5.5L12 2Z" stroke="url(#securityGradient)" strokeWidth="1.5" fill="none" />
+                    <path d="M10 14L12 16L16 10" stroke="url(#securityGradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                   <div className="text-left">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Enterprise Security</div>
                     <div className="text-lg font-bold text-white">Encrypted & Secure</div>
