@@ -1918,10 +1918,10 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-emerald-500" />
+                  <Zap className="w-6 h-6 text-yellow-500" />
                   <div className="text-left">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Proven Impact</div>
-                    <div className="text-lg font-bold text-white">Instant ROI</div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Simple Setup</div>
+                    <div className="text-lg font-bold text-white">No Coding Required</div>
                   </div>
                 </div>
               </div>
