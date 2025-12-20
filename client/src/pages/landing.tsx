@@ -1550,32 +1550,32 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto mb-12">
               {plans.map((plan, index) => (
                 <Card 
                   key={index} 
-                  className={`pricing-card border-0 relative h-full hover-elevate transition-all duration-300 ${plan.popular ? 'ring-2 ring-primary scale-105' : ''}`}
+                  className={`pricing-card border-0 relative h-full hover-elevate transition-all duration-300 ${plan.popular ? 'ring-2 ring-primary md:scale-105' : ''}`}
                   data-testid={`card-plan-${index}`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge className="bg-primary text-primary-foreground px-4 py-1">Most Popular</Badge>
+                      <Badge className="bg-primary text-primary-foreground px-3 py-0.5 text-xs sm:px-4 sm:py-1">Most Popular</Badge>
                     </div>
                   )}
                   {plan.badge && !plan.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge variant="outline" className="px-4 py-1 ml-[-14px] mr-[-14px]">{plan.badge}</Badge>
+                      <Badge variant="outline" className="px-3 py-0.5 text-xs sm:px-4 sm:py-1 ml-[-14px] mr-[-14px]">{plan.badge}</Badge>
                     </div>
                   )}
-                  <CardContent className="p-6 h-full flex flex-col">
-                    <div className="text-center mb-6">
-                      <div className="flex justify-center text-primary mb-3">{plan.icon}</div>
-                      <h3 className="text-xl font-semibold mb-2" data-testid={`text-plan-name-${index}`}>{plan.name}</h3>
+                  <CardContent className="p-4 sm:p-6 h-full flex flex-col">
+                    <div className="text-center mb-4 sm:mb-6">
+                      <div className="flex justify-center text-primary mb-2 sm:mb-3 text-lg sm:text-xl">{plan.icon}</div>
+                      <h3 className="text-base sm:text-xl font-semibold mb-2" data-testid={`text-plan-name-${index}`}>{plan.name}</h3>
                       <div className="mb-2">
-                        <span className="text-4xl font-bold" data-testid={`text-plan-price-${index}`}>
+                        <span className="text-2xl sm:text-4xl font-bold" data-testid={`text-plan-price-${index}`}>
                           {isAnnual && plan.annualPrice ? plan.annualPrice : plan.price}
                         </span>
-                        {index !== 0 && <span className="text-muted-foreground">/{isAnnual ? 'month' : 'month'}</span>}
+                        {index !== 0 && <span className="text-xs sm:text-sm text-muted-foreground">/{isAnnual ? 'month' : 'month'}</span>}
                       </div>
                       {isAnnual && plan.annualPrice && index !== 0 && (
                         <p className="text-xs text-muted-foreground line-through mb-1">{plan.price}/month</p>
@@ -1589,10 +1589,10 @@ export default function Landing() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <ul className="space-y-3 mb-6">
+                      <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                         {plan.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-start text-sm" data-testid={`text-plan-feature-${index}-${featureIndex}`}>
-                            <Check className="w-4 h-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                          <li key={featureIndex} className="flex items-start text-xs sm:text-sm" data-testid={`text-plan-feature-${index}-${featureIndex}`}>
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
                             <span>{feature}</span>
                           </li>
                         ))}
@@ -1600,8 +1600,9 @@ export default function Landing() {
                     </div>
                     <Button 
                       asChild
-                      className={`w-full ${plan.popular ? 'gradient-button' : 'border border-border hover:bg-muted'}`}
+                      className={`w-full text-xs sm:text-sm ${plan.popular ? 'gradient-button' : 'border border-border hover:bg-muted'}`}
                       variant={plan.popular ? "default" : "outline"}
+                      size="sm"
                       data-testid={`button-choose-plan-${index}`}
                     >
                       <Link href="/auth">
