@@ -15,7 +15,7 @@ import {
   BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart, Calculator, X, AlertTriangle,
   Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame, Lightbulb
 } from "lucide-react";
-import { SiLinkedin, SiInstagram, SiX } from "react-icons/si";
+import { SiLinkedin, SiInstagram, SiX, SiShopify } from "react-icons/si";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -1891,20 +1891,39 @@ export default function Landing() {
               </Link>
             </Button>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" />
-                <span>24/7 Expert Support</span>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8">
+              <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <SiShopify className="w-6 h-6 text-green-500" />
+                  <div className="text-left">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Trusted by</div>
+                    <div className="text-lg font-bold text-white">Shopify Stores</div>
+                  </div>
+                </div>
               </div>
-              <div className="h-4 w-px bg-border hidden sm:block" />
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <span>5-Minute Setup</span>
+
+              <div className="hidden sm:block h-12 w-px bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
+
+              <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <Store className="w-6 h-6 text-blue-500" />
+                  <div className="text-left">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Powering</div>
+                    <div className="text-lg font-bold text-white">1000+ Stores</div>
+                  </div>
+                </div>
               </div>
-              <div className="h-4 w-px bg-border hidden sm:block" />
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-                <span>Cancel Anytime</span>
+
+              <div className="hidden sm:block h-12 w-px bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
+
+              <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <Award className="w-6 h-6 text-amber-500" />
+                  <div className="text-left">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Top Rated</div>
+                    <div className="text-lg font-bold text-white">4.9 / 5 Stars</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
