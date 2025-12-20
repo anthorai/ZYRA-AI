@@ -1918,10 +1918,10 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <Zap className="w-6 h-6 text-yellow-500" />
+                  <Lock className="w-6 h-6 text-indigo-500" />
                   <div className="text-left">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Simple Setup</div>
-                    <div className="text-lg font-bold text-white">No Coding Required</div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Enterprise Security</div>
+                    <div className="text-lg font-bold text-white">Encrypted & Secure</div>
                   </div>
                 </div>
               </div>
