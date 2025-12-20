@@ -15,7 +15,7 @@ import {
   BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart, Calculator, X, AlertTriangle,
   Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame, Lightbulb
 } from "lucide-react";
-import { SiLinkedin, SiInstagram, SiX, SiShopify, SiOpenai } from "react-icons/si";
+import { SiLinkedin, SiInstagram, SiX, SiShopify } from "react-icons/si";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -1906,10 +1906,19 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <SiOpenai className="w-6 h-6" />
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="zyraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{ stopColor: '#00F0FF', stopOpacity: 1 }} />
+                        <stop offset="100%" style={{ stopColor: '#FF00F5', stopOpacity: 1 }} />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="12" cy="12" r="10" stroke="url(#zyraGradient)" strokeWidth="1.5" />
+                    <path d="M12 6 L15.5 18 L12 14 L8.5 18 Z" fill="url(#zyraGradient)" />
+                  </svg>
                   <div className="text-left">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Powered by</div>
-                    <div className="text-lg font-bold text-white">OpenAI</div>
+                    <div className="text-lg font-bold text-white">Zyra AI</div>
                   </div>
                 </div>
               </div>
