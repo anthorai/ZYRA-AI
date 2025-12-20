@@ -1884,10 +1884,10 @@ export default function Landing() {
               Your competitors are already using AI to win. Start your free trial and see results in 5 minutes.
             </p>
             
-            <Button asChild size="lg" className="gradient-button px-12 py-6 text-lg shadow-2xl shadow-primary/30 animate-pulse-glow mb-6">
-              <Link href="/auth">
-                <Rocket className="w-5 h-5 mr-2" />
-                Start Free Trial—No CC Required
+            <Button asChild size="lg" className="gradient-button px-6 sm:px-12 py-6 text-sm sm:text-lg shadow-2xl shadow-primary/30 animate-pulse-glow mb-6 w-full sm:w-auto">
+              <Link href="/auth" className="flex items-center justify-center">
+                <Rocket className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                <span>Start Free Trial—No CC Required</span>
               </Link>
             </Button>
 
