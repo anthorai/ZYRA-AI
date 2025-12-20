@@ -434,9 +434,12 @@ export default function AIImageAltText() {
 
       {/* Product Selection Dialog */}
       <Dialog open={showProductSelector} onOpenChange={setShowProductSelector}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="product-selection-description">
           <DialogHeader>
             <DialogTitle>Select Products</DialogTitle>
+            <p id="product-selection-description" className="text-sm text-muted-foreground">
+              Choose which products you want to optimize with AI. Only products linked to Shopify can be processed.
+            </p>
           </DialogHeader>
 
           <div className="space-y-4">
