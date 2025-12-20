@@ -1918,10 +1918,10 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <Award className="w-6 h-6 text-amber-500" />
+                  <Clock className="w-6 h-6 text-cyan-500" />
                   <div className="text-left">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Top Rated</div>
-                    <div className="text-lg font-bold text-white">4.9 / 5 Stars</div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Always Available</div>
+                    <div className="text-lg font-bold text-white">24/7 AI Support</div>
                   </div>
                 </div>
               </div>
