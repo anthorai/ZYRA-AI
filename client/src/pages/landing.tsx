@@ -1906,10 +1906,10 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <Store className="w-6 h-6 text-blue-500" />
+                  <Sparkles className="w-6 h-6 text-orange-500" />
                   <div className="text-left">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Powering</div>
-                    <div className="text-lg font-bold text-white">1000+ Stores</div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Powered by</div>
+                    <div className="text-lg font-bold text-white">Advanced AI</div>
                   </div>
                 </div>
               </div>
