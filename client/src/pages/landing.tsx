@@ -15,7 +15,7 @@ import {
   BadgeCheck, Store, Shirt, Home, Laptop, Dumbbell, Heart, Calculator, X, AlertTriangle,
   Minus, Bot, Pen, XCircle, CheckCircle, Newspaper, Globe, Flame, Lightbulb
 } from "lucide-react";
-import { SiLinkedin, SiInstagram, SiX, SiShopify } from "react-icons/si";
+import { SiLinkedin, SiInstagram, SiX, SiShopify, SiOpenai } from "react-icons/si";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -1906,10 +1906,10 @@ export default function Landing() {
 
               <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
                 <div className="flex items-center gap-3">
-                  <Sparkles className="w-6 h-6 text-orange-500" />
+                  <SiOpenai className="w-6 h-6" />
                   <div className="text-left">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Powered by</div>
-                    <div className="text-lg font-bold text-white">Advanced AI</div>
+                    <div className="text-lg font-bold text-white">OpenAI</div>
                   </div>
                 </div>
               </div>
