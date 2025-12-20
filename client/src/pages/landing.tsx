@@ -1891,22 +1891,22 @@ export default function Landing() {
               </Link>
             </Button>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8">
-              <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <SiShopify className="w-6 h-6 text-green-500" />
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+              <div className="hover-elevate px-4 py-2 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
+                <div className="flex items-center gap-2">
+                  <SiShopify className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Trusted by</div>
-                    <div className="text-lg font-bold text-white">Shopify Stores</div>
+                    <div className="text-sm font-bold text-white">Shopify</div>
                   </div>
                 </div>
               </div>
 
-              <div className="hidden sm:block h-12 w-px bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
+              <div className="hidden sm:block h-10 w-px bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
 
-              <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="hover-elevate px-4 py-2 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <linearGradient id="zyraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" style={{ stopColor: '#00F0FF', stopOpacity: 1 }} />
@@ -1918,16 +1918,16 @@ export default function Landing() {
                   </svg>
                   <div className="text-left">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Powered by</div>
-                    <div className="text-lg font-bold text-white">Zyra AI</div>
+                    <div className="text-sm font-bold text-white">Zyra AI</div>
                   </div>
                 </div>
               </div>
 
-              <div className="hidden sm:block h-12 w-px bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
+              <div className="hidden sm:block h-10 w-px bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
 
-              <div className="hover-elevate px-6 py-3 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="hover-elevate px-4 py-2 rounded-lg bg-gradient-to-br from-slate-900/40 to-slate-800/40 border border-slate-700/50 backdrop-blur-sm transition-all duration-300">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <linearGradient id="securityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" style={{ stopColor: '#6366F1', stopOpacity: 1 }} />
@@ -1938,8 +1938,8 @@ export default function Landing() {
                     <path d="M10 14L12 16L16 10" stroke="url(#securityGradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <div className="text-left">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Enterprise Security</div>
-                    <div className="text-lg font-bold text-white">Encrypted & Secure</div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-300">Security</div>
+                    <div className="text-sm font-bold text-white">Encrypted</div>
                   </div>
                 </div>
               </div>
