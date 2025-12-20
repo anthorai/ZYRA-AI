@@ -102,12 +102,7 @@ export default function AIImageAltText() {
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (productIds: string[]) => {
-      const response = await fetch('/api/image-optimization/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ productIds }),
-      });
+      const response = await apiRequest('POST', '/api/image-optimization/jobs', { productIds });
       if (!response.ok) throw new Error('Failed to create job');
       return response.json();
     },
@@ -132,10 +127,7 @@ export default function AIImageAltText() {
   // Process job mutation
   const processJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      const response = await fetch(`/api/image-optimization/jobs/${jobId}/process`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await apiRequest('POST', `/api/image-optimization/jobs/${jobId}/process`);
       if (!response.ok) throw new Error('Failed to process job');
       return response.json();
     },
@@ -164,12 +156,7 @@ export default function AIImageAltText() {
   // Apply to Shopify mutation
   const applyToShopifyMutation = useMutation({
     mutationFn: async (historyIds: string[]) => {
-      const response = await fetch('/api/image-optimization/apply-to-shopify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ historyIds }),
-      });
+      const response = await apiRequest('POST', '/api/image-optimization/apply-to-shopify', { historyIds });
       if (!response.ok) throw new Error('Failed to apply changes');
       return response.json();
     },
