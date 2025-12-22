@@ -85,9 +85,6 @@ app.use(helmet({
       scriptSrc: [
         "'self'", 
         "'unsafe-inline'",
-        "https://checkout.razorpay.com",
-        "https://www.paypal.com",
-        "https://www.sandbox.paypal.com",
         "https://replit.com"
       ],
       styleSrc: [
@@ -99,19 +96,13 @@ app.use(helmet({
       connectSrc: [
         "'self'", 
         "https://api.openai.com",
-        "https://api.razorpay.com",
-        "https://www.paypal.com",
-        "https://www.sandbox.paypal.com",
         "https://*.supabase.co",
         "wss://*.supabase.co",
         "https://*.ingest.us.sentry.io",
         "https://*.ingest.sentry.io"
       ],
       frameSrc: [
-        "'self'",
-        "https://api.razorpay.com",
-        "https://www.paypal.com",
-        "https://www.sandbox.paypal.com"
+        "'self'"
       ],
       fontSrc: [
         "'self'", 

@@ -327,8 +327,7 @@ export async function handleSubscriptionRenewals(): Promise<{
         console.log(`[Billing Service] Renewed subscription ${subscription.id} until ${nextPeriodEnd}`);
         processedCount++;
 
-        // TODO: Trigger payment via payment gateway webhook or API
-        // This would integrate with Razorpay/PayPal subscription APIs
+        // Subscription renewals are handled automatically by Shopify's billing system
 
       } catch (error: any) {
         const errorMsg = `Failed to renew subscription ${subscription.id}: ${error.message}`;

@@ -73,7 +73,7 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: "What payment methods do you accept?",
-        answer: "We accept PayPal for all subscription payments. This provides secure international payment processing with buyer protection."
+        answer: "All subscription payments are handled through Shopify Billing. This provides secure payment processing integrated directly with your Shopify account."
       },
       {
         question: "Can I cancel my subscription anytime?",

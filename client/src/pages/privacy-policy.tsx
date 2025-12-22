@@ -186,7 +186,7 @@ export default function PrivacyPolicyPage() {
       list: [
         "Shopify: E-commerce platform integration for product management and sales data",
         "SendGrid: Email delivery service for transactional and marketing communications",
-        "Stripe & PayPal: Payment processing for secure subscription and billing management",
+        "Shopify Billing: Subscription and billing management through Shopify's secure payment system",
         "OpenAI: AI technology provider for content generation and optimization",
         "Analytics Providers: Tools for measuring platform performance and user engagement",
       ],

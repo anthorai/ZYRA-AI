@@ -104,7 +104,7 @@ const termsSections: TermsSection[] = [
           <h4 className="font-semibold mb-2">Billing Terms</h4>
           <ul className="list-disc pl-6 space-y-1">
             <li>Subscriptions are billed monthly in advance</li>
-            <li>All payments are processed securely through PayPal</li>
+            <li>All payments are processed securely through Shopify Billing</li>
             <li>Prices are in USD and exclude applicable taxes</li>
             <li>We reserve the right to change pricing with 30 days advance notice</li>
           </ul>
@@ -140,7 +140,7 @@ const termsSections: TermsSection[] = [
           <ul className="list-disc pl-6 space-y-1">
             <li>AI generation limits are based on your subscription plan</li>
             <li>Unused generations do not roll over to the next billing period</li>
-            <li>Additional generations may be purchased as add-ons</li>
+            <li>Usage limits are included with your subscription plan</li>
             <li>Rate limits apply to prevent abuse and ensure fair access</li>
           </ul>
         </div>
@@ -249,11 +249,10 @@ const termsSections: TermsSection[] = [
       <div className="space-y-3">
         <p>Our platform integrates with third-party services to provide enhanced functionality:</p>
         <ul className="list-disc pl-6 space-y-2">
-          <li><strong>Shopify:</strong> Store integration and product synchronization</li>
+          <li><strong>Shopify:</strong> Store integration, product synchronization, and billing management</li>
           <li><strong>OpenAI:</strong> AI-powered content generation</li>
           <li><strong>SendGrid:</strong> Email delivery services</li>
           <li><strong>Twilio:</strong> SMS messaging services</li>
-          <li><strong>PayPal:</strong> Payment processing</li>
         </ul>
         <p>
           Your use of these third-party services is subject to their respective terms and privacy policies. We are not responsible for the actions or policies of third-party service providers.

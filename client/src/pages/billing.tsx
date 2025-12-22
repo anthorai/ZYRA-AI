@@ -701,7 +701,7 @@ export default function BillingPage() {
         <TabsList className="inline-flex flex-nowrap w-full sm:grid sm:grid-cols-4 gradient-surface overflow-x-auto gap-2">
           <TabsTrigger value="plans" data-testid="tab-plans" className="flex-none min-w-max sm:flex-auto">Plans</TabsTrigger>
           <TabsTrigger value="billing" data-testid="tab-billing" className="flex-none min-w-max sm:flex-auto">Billing History</TabsTrigger>
-          <TabsTrigger value="payment" data-testid="tab-payment" className="flex-none min-w-max sm:flex-auto">Payment Methods</TabsTrigger>
+          <TabsTrigger value="payment" data-testid="tab-payment" className="flex-none min-w-max sm:flex-auto">Shopify Billing</TabsTrigger>
           <TabsTrigger value="settings" data-testid="tab-settings" className="flex-none min-w-max sm:flex-auto">Settings</TabsTrigger>
         </TabsList>
 
@@ -860,10 +860,7 @@ export default function BillingPage() {
                           {isCurrentPlan ? "Current Plan" :
                            processingPlanId === plan.id ? "Processing..." : 
                            plan.planName === "7-Day Free Trial" ? "Start Free Trial" :
-                           plan.planName === "Starter" ? "Upgrade to Starter" :
-                           plan.planName === "Growth" ? "Scale with Growth" :
-                           plan.planName === "Pro" ? "Power Up with Pro" :
-                           "Choose Plan"}
+                           "Upgrade via Shopify"}
                         </span>
                       </Button>
                     </div>
@@ -957,60 +954,30 @@ export default function BillingPage() {
 
         <TabsContent value="payment" className="space-y-6">
           <DashboardCard
-            title="Payment Methods"
-            description="Manage your payment methods and billing information"
-            headerAction={
-              <Button
-                onClick={() => addPaymentMethodMutation.mutate()}
-                disabled={addPaymentMethodMutation.isPending}
-                className="gradient-button ml-auto"
-                data-testid="button-add-payment-method"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Payment Method
-              </Button>
-            }
-            testId="card-payment-methods"
+            title="Shopify Billing"
+            description="All payments are managed through Shopify's secure billing system"
+            headerAction={<CreditCard className="w-5 h-5 mr-2 text-primary" />}
+            testId="card-shopify-billing"
           >
-              {paymentMethodsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-slate-300">Loading payment methods...</p>
+              <div className="text-center py-8 text-slate-300" data-testid="shopify-billing-info">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CreditCard className="w-8 h-8 text-primary" />
                 </div>
-              ) : paymentMethods.length === 0 ? (
-                <div className="text-center py-8 text-slate-300" data-testid="empty-state-payment-methods">
-                  <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">No payment methods yet</p>
-                  <p className="text-sm">Add a payment method to manage your subscriptions</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                  {paymentMethods.map((method) => (
-                    <div 
-                      key={method.id} 
-                      className="flex flex-col p-3 sm:p-4 md:p-6 bg-slate-800/30 border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl shadow-lg"
-                      data-testid={`payment-method-${method.id}`}
-                    >
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
-                          <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-white font-medium text-base sm:text-lg truncate">
-                            {method.cardBrand} •••• {method.cardLast4}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-slate-300 truncate">
-                            Expires {method.cardExpMonth}/{method.cardExpYear}
-                          </p>
-                        </div>
-                      </div>
-                      {method.isDefault && (
-                        <Badge className="bg-primary/20 text-primary text-[10px] sm:text-xs">Default</Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                <p className="text-lg font-medium mb-2 text-white">Managed by Shopify</p>
+                <p className="text-sm mb-6 max-w-md mx-auto">
+                  Your subscription billing is handled securely through Shopify. 
+                  To manage your payment methods or view billing details, visit your Shopify admin.
+                </p>
+                <Button 
+                  variant="outline"
+                  onClick={() => window.open('https://admin.shopify.com/store', '_blank')}
+                  className="border-slate-600 text-slate-300 hover:bg-white/10"
+                  data-testid="button-shopify-admin"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open Shopify Admin
+                </Button>
+              </div>
           </DashboardCard>
         </TabsContent>
 

@@ -222,7 +222,7 @@ const initialFAQs: FAQItem[] = [
   {
     id: "4",
     question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and can arrange invoicing for enterprise customers.",
+    answer: "All subscription payments are handled through Shopify Billing, which integrates with your existing Shopify payment methods.",
     order: 4,
   },
 ];

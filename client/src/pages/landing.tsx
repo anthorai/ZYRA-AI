@@ -33,178 +33,7 @@ export default function Landing() {
   const [isAnnual, setIsAnnual] = useState(false);
   
 
-  // ROI Calculator state
-  const [monthlyRevenue, setMonthlyRevenue] = useState(10000);
-  const [conversionRate, setConversionRate] = useState(2);
-  const [abandonedCarts, setAbandonedCarts] = useState(50);
 
-  // Exit intent popup state
-  const [showExitPopup, setShowExitPopup] = useState(false);
-  const exitIntentTriggered = useRef(false);
-
-  // Social proof notification state
-  const [showNotification, setShowNotification] = useState(false);
-  const [currentNotification, setCurrentNotification] = useState(0);
-  
-  // Sticky header state
-  const [showStickyBar, setShowStickyBar] = useState(false);
-
-  // Urgency countdown
-  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 32 });
-
-  // ROI Calculator logic
-  const calculateROI = useCallback(() => {
-    // Assume typical ecommerce metrics if not provided
-    const monthlyVisitors = Math.round(monthlyRevenue / 50); // Avg $50 per visitor
-    const currentOrders = Math.round(monthlyVisitors * (conversionRate / 100));
-    const avgOrderValue = currentOrders > 0 ? monthlyRevenue / currentOrders : 75;
-    
-    // With Zyra AI improvements
-    const improvedConversion = conversionRate * 1.34; // 34% avg improvement from optimized descriptions
-    const newOrders = Math.round(monthlyVisitors * (improvedConversion / 100));
-    const conversionRevenue = (newOrders - currentOrders) * avgOrderValue;
-    
-    // Cart recovery calculation
-    const avgCartValue = avgOrderValue * 1.2; // Abandoned carts tend to be higher value
-    const recoveredCarts = Math.round(abandonedCarts * 0.35); // 35% recovery rate
-    const cartRecoveryRevenue = recoveredCarts * avgCartValue;
-    
-    // SEO improvement (10% traffic increase over time)
-    const seoBonus = monthlyRevenue * 0.08;
-    
-    const additionalRevenue = conversionRevenue + cartRecoveryRevenue + seoBonus;
-    const projectedRevenue = monthlyRevenue + additionalRevenue;
-    const percentIncrease = ((projectedRevenue - monthlyRevenue) / monthlyRevenue) * 100;
-    
-    // ROI based on Growth plan ($299/mo) for most realistic calculation
-    const monthlyPlanCost = 299;
-    const roi = additionalRevenue > 0 ? ((additionalRevenue - monthlyPlanCost) / monthlyPlanCost * 100) : 0;
-    
-    return {
-      currentRevenue: monthlyRevenue,
-      projectedRevenue: Math.round(projectedRevenue),
-      additionalRevenue: Math.round(additionalRevenue),
-      percentIncrease: Math.round(percentIncrease),
-      roi: Math.max(0, Math.round(roi))
-    };
-  }, [monthlyRevenue, conversionRate, abandonedCarts]);
-
-  const roiResults = calculateROI();
-
-  // Social proof notifications
-  const socialProofMessages = [
-    { name: "Sarah M.", location: "New York", action: "just started their free trial", time: "2 minutes ago" },
-    { name: "James K.", location: "London", action: "upgraded to Growth plan", time: "5 minutes ago" },
-    { name: "Maria G.", location: "Sydney", action: "recovered $847 in abandoned carts", time: "8 minutes ago" },
-    { name: "David L.", location: "Toronto", action: "optimized 156 products", time: "12 minutes ago" },
-    { name: "Lisa T.", location: "Berlin", action: "just started their free trial", time: "15 minutes ago" },
-    { name: "Chen W.", location: "Singapore", action: "upgraded to Pro plan", time: "18 minutes ago" }
-  ];
-
-  // Exit intent detection (desktop + mobile)
-  useEffect(() => {
-    let idleTimer: NodeJS.Timeout | null = null;
-    let lastScrollY = window.scrollY;
-    let scrollBackCount = 0;
-    
-    // Desktop: detect mouse leaving page
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0 && !exitIntentTriggered.current && !isAuthenticated) {
-        exitIntentTriggered.current = true;
-        setShowExitPopup(true);
-      }
-    };
-
-    // Mobile: detect rapid scroll back to top (exit intent signal)
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const scrollDiff = lastScrollY - currentScrollY;
-      
-      // Reset idle timer on any scroll
-      if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
-        // User has been idle for 30 seconds on mobile, show exit popup
-        if ('ontouchstart' in window && !exitIntentTriggered.current && !isAuthenticated && window.scrollY > 300) {
-          exitIntentTriggered.current = true;
-          setShowExitPopup(true);
-        }
-      }, 30000);
-      
-      // If user rapidly scrolls up more than 300px, increment scroll back count
-      if (scrollDiff > 100 && currentScrollY > 200) {
-        scrollBackCount++;
-        if (scrollBackCount >= 3 && !exitIntentTriggered.current && !isAuthenticated) {
-          exitIntentTriggered.current = true;
-          setShowExitPopup(true);
-        }
-      } else {
-        scrollBackCount = 0;
-      }
-      
-      lastScrollY = currentScrollY;
-    };
-
-    document.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      document.removeEventListener('mouseleave', handleMouseLeave);
-      window.removeEventListener('scroll', handleScroll);
-      if (idleTimer) clearTimeout(idleTimer);
-    };
-  }, [isAuthenticated]);
-
-  // Countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 23, minutes: 59, seconds: 59 }; // Reset
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Social proof notifications rotation
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    
-    const showNotificationCycle = () => {
-      setShowNotification(true);
-      setTimeout(() => {
-        setShowNotification(false);
-        setTimeout(() => {
-          setCurrentNotification(prev => (prev + 1) % socialProofMessages.length);
-        }, 500);
-      }, 4000);
-    };
-
-    // Initial delay before first notification
-    const initialDelay = setTimeout(() => {
-      showNotificationCycle();
-      intervalId = setInterval(showNotificationCycle, 12000);
-    }, 5000);
-
-    return () => {
-      clearTimeout(initialDelay);
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
-
-  // Sticky bar on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowStickyBar(window.scrollY > 600);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
 
   // Handle logout functionality
@@ -555,33 +384,6 @@ export default function Landing() {
           })}
         </script>
       </Helmet>
-      {/* Social Proof Notification Toast */}
-      <div 
-        className={`fixed bottom-20 lg:bottom-6 left-4 z-50 transition-all duration-500 transform ${
-          showNotification ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
-        }`}
-        data-testid="social-proof-notification"
-      >
-        <Card className="bg-card/95 backdrop-blur-sm border shadow-lg max-w-sm">
-          <CardContent className="p-4 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00F0FF] to-[#FF00F5] flex items-center justify-center text-white font-bold flex-shrink-0">
-              {socialProofMessages[currentNotification]?.name.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">
-                <span className="font-semibold">{socialProofMessages[currentNotification]?.name}</span>
-                {' from '}
-                <span className="text-muted-foreground">{socialProofMessages[currentNotification]?.location}</span>
-              </p>
-              <p className="text-sm text-primary font-medium">
-                {socialProofMessages[currentNotification]?.action}
-              </p>
-              <p className="text-xs text-muted-foreground">{socialProofMessages[currentNotification]?.time}</p>
-            </div>
-            <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-          </CardContent>
-        </Card>
-      </div>
       {/* Navigation */}
       <ResponsiveNavbar
         navItems={[
@@ -770,12 +572,8 @@ export default function Landing() {
             {/* Star rating + security badges */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-6 flex-wrap">
               <div className="flex items-center gap-2" data-testid="trust-star-rating">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <span className="text-sm font-semibold">4.9/5 from 2,300+ reviews</span>
+                <Users className="w-5 h-5 text-primary" />
+                <span className="text-sm font-semibold">Trusted by Shopify Merchants</span>
               </div>
               <div className="h-4 w-px bg-border hidden md:block" />
               <div className="flex items-center gap-2" data-testid="trust-shopify-partner">
@@ -884,10 +682,10 @@ export default function Landing() {
                 Simple 3-Step Process
               </Badge>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-                Start Growing in <span className="text-primary">5 Minutes</span>
+                Get Started <span className="text-primary">Quickly</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                No coding, no training, no hiring. Just results.
+                No coding required. Simple setup for any Shopify store.
               </p>
             </div>
 
@@ -906,7 +704,7 @@ export default function Landing() {
                   </p>
                   <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
                     <Clock className="w-4 h-4" />
-                    <span>Takes 30 seconds</span>
+                    <span>Quick setup</span>
                   </div>
                 </div>
 
@@ -928,13 +726,13 @@ export default function Landing() {
                   <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#FF00F5] to-[#00F0FF] rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/30 relative z-10">
                     3
                   </div>
-                  <h3 className="text-xl font-bold mb-3">Watch Sales Grow</h3>
+                  <h3 className="text-xl font-bold mb-3">Track Your Progress</h3>
                   <p className="text-muted-foreground">
-                    Track real-time revenue increases, recovered carts, and SEO rankings from your dashboard.
+                    Monitor your optimizations, recovered carts, and content performance from your dashboard.
                   </p>
                   <div className="mt-4 inline-flex items-center gap-1 text-sm text-primary">
                     <TrendingUp className="w-4 h-4" />
-                    <span>Results in 24 hours</span>
+                    <span>Real-time dashboard</span>
                   </div>
                 </div>
               </div>
@@ -963,7 +761,7 @@ export default function Landing() {
                 See the <span className="text-primary">AI Difference</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Here's how Zyra transforms boring product pages into conversion machines
+                Here's how Zyra helps transform product pages with AI-optimized content
               </p>
             </div>
 

@@ -76,7 +76,7 @@ export default function TermsOfService() {
               <p className="mt-3"><strong>Billing Terms:</strong></p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Subscriptions are billed monthly or annually</li>
-                <li>Payments are processed securely through our payment partners</li>
+                <li>Payments are processed securely through Shopify Billing</li>
                 <li>Refunds are available within 14 days of purchase</li>
                 <li>We reserve the right to change pricing with 30 days notice</li>
               </ul>
@@ -153,7 +153,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-xl font-semibold mb-3">10. Third-Party Services</h2>
             <p className="text-muted-foreground">
-              Our platform integrates with third-party services (OpenAI, SendGrid, Twilio, PayPal, Razorpay). Your use of these services is subject to their respective terms and conditions.
+              Our platform integrates with third-party services (Shopify, OpenAI, SendGrid, Twilio). Your use of these services is subject to their respective terms and conditions.
             </p>
           </section>
 
