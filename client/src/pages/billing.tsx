@@ -117,125 +117,125 @@ interface PlanDetails {
 
 const planDetails: Record<string, PlanDetails> = {
   "7-Day Free Trial": {
-    credits: "100 credits / 7 days",
+    credits: "100 usage allowance / 7 days",
     tagline: "New users exploring Zyra features",
     categories: [
       {
         name: "Product Optimization & SEO",
         features: [
-          "Optimized Products – 20 credits",
-          "SEO Keyword Density Analysis – 10 credits"
+          "Optimized Products",
+          "SEO Keyword Density Analysis"
         ]
       },
       {
         name: "Conversion Boosting & Sales Automation",
         features: [
-          "AI-Powered Growth Intelligence – 20 credits",
-          "Basic A/B Testing – 10 credits"
+          "AI-Powered Growth Intelligence",
+          "Basic A/B Testing"
         ]
       },
       {
         name: "Content & Branding at Scale",
         features: [
-          "Smart Product Descriptions – 20 credits",
-          "Limited Dynamic Templates – 10 credits"
+          "Smart Product Descriptions",
+          "Limited Dynamic Templates"
         ]
       },
       {
         name: "Performance Tracking & ROI Insights",
-        features: ["Email Performance Analytics – 10 credits"]
+        features: ["Email Performance Analytics"]
       },
       {
         name: "Workflow & Integration Tools",
         features: [
-          "One-Click Shopify Publish – 10 credits",
-          "Rollback Button – included"
+          "One-Click Shopify Publish",
+          "Rollback Button"
         ]
       }
     ]
   },
   "Starter": {
-    credits: "1,000 credits / month",
+    credits: "1,000 usage allowance / month",
     tagline: "Best for new Shopify stores just getting started",
     categories: [
       {
         name: "Product Optimization & SEO",
         features: [
-          "Optimized Products – 200 credits",
-          "SEO Keyword Density Analysis – 100 credits",
-          "AI Image Alt-Text Generator – 100 credits",
-          "Smart SEO Titles & Meta Tags – 100 credits"
+          "Optimized Products",
+          "SEO Keyword Density Analysis",
+          "AI Image Alt-Text Generator",
+          "Smart SEO Titles & Meta Tags"
         ]
       },
       {
         name: "Conversion Boosting & Sales Automation",
         features: [
-          "AI-Powered Growth Intelligence – 150 credits",
-          "A/B Testing – 50 credits",
-          "Upsell Email Receipts – 100 credits",
-          "Abandoned Cart SMS – 50 credits"
+          "AI-Powered Growth Intelligence",
+          "A/B Testing",
+          "Upsell Email Receipts",
+          "Abandoned Cart SMS"
         ]
       },
       {
         name: "Content & Branding at Scale",
         features: [
-          "Smart Product Descriptions – 100 credits",
-          "Dynamic Templates – 50 credits",
-          "Brand Voice Memory – included"
+          "Smart Product Descriptions",
+          "Dynamic Templates",
+          "Brand Voice Memory"
         ]
       },
       {
         name: "Performance Tracking & ROI Insights",
-        features: ["Email & SMS Conversion Analytics – included"]
+        features: ["Email & SMS Conversion Analytics"]
       },
       {
         name: "Workflow & Integration Tools",
         features: [
-          "CSV Import/Export – included",
-          "One-Click Shopify Publish – included",
-          "Rollback Button – included",
-          "Smart Bulk Suggestions – included"
+          "CSV Import/Export",
+          "One-Click Shopify Publish",
+          "Rollback Button",
+          "Smart Bulk Suggestions"
         ]
       }
     ]
   },
   "Growth": {
-    credits: "5,000 credits / month",
+    credits: "5,000 usage allowance / month",
     tagline: "For scaling merchants ready to grow",
     categories: [
       {
         name: "Product Optimization & SEO",
         features: [
           "All Starter features +",
-          "SEO Ranking Tracker – 200 credits",
-          "Bulk Optimization & Smart Bulk Suggestions – 500 credits",
-          "Scheduled Refresh for Content & SEO Updates – 300 credits"
+          "SEO Ranking Tracker",
+          "Bulk Optimization & Smart Bulk Suggestions",
+          "Scheduled Refresh for Content & SEO Updates"
         ]
       },
       {
         name: "Conversion Boosting & Sales Automation",
         features: [
-          "AI Upsell Suggestions & Triggers – 300 credits",
-          "Dynamic Segmentation of Customers – 200 credits",
-          "Behavioral Targeting – 200 credits",
-          "Full A/B Test Results Dashboard – included"
+          "AI Upsell Suggestions & Triggers",
+          "Dynamic Segmentation of Customers",
+          "Behavioral Targeting",
+          "Full A/B Test Results Dashboard"
         ]
       },
       {
         name: "Content & Branding at Scale",
         features: [
-          "Custom Templates – included",
-          "Multimodal AI (text + image + insights) – 300 credits",
-          "Multi-Channel Content Repurposing – 300 credits"
+          "Custom Templates",
+          "Multimodal AI (text + image + insights)",
+          "Multi-Channel Content Repurposing"
         ]
       },
       {
         name: "Performance Tracking & ROI Insights",
         features: [
-          "Full Email & SMS tracking – included",
-          "Content ROI Tracking – included",
-          "Revenue Impact Attribution – included",
-          "Product Management Dashboard – included"
+          "Full Email & SMS tracking",
+          "Content ROI Tracking",
+          "Revenue Impact Attribution",
+          "Product Management Dashboard"
         ]
       },
       {
@@ -245,7 +245,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Pro": {
-    credits: "20,000 credits / month",
+    credits: "20,000 usage allowance / month",
     tagline: "For high-revenue brands & enterprise",
     categories: [
       {
@@ -849,13 +849,21 @@ export default function BillingPage() {
                         className={`w-full px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
                           isCurrentPlan 
                             ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
-                            : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
+                            : processingPlanId === plan.id
+                              ? 'bg-primary/70 text-primary-foreground cursor-wait'
+                              : processingPlanId !== null
+                                ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                                : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
                         }`}
                         disabled={isCurrentPlan || processingPlanId !== null}
                         onClick={() => changePlanMutation.mutate(plan.id)}
                         data-testid={`button-choose-plan-${index}`}
                       >
-                        <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        {processingPlanId === plan.id ? (
+                          <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        )}
                         <span className="truncate">
                           {isCurrentPlan ? "Current Plan" :
                            processingPlanId === plan.id ? "Processing..." : 
