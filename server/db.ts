@@ -378,7 +378,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         price: "299.00",
         description: "For scaling merchants ready to grow",
         features: [
-          "✨ 5,000 credits / month",
+          "✨ 6,000 credits / month",
           "Product Optimization & SEO:",
           "• All Starter features +",
           "• SEO Ranking Tracker – 200 credits",
@@ -402,7 +402,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           "• Unlimited Starter workflow tools – included"
         ],
         limits: {
-          credits: 5000
+          credits: 6000
         },
         interval: "month",
         isActive: true

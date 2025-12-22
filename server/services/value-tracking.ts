@@ -105,7 +105,7 @@ export const CREDIT_COSTS = {
 export const PLAN_CREDITS = {
   trial: 100, // 7-day trial
   starter: 1000, // $49/mo
-  growth: 5000, // $299/mo
+  growth: 6000, // $299/mo
   pro: 20000, // $999/mo
 } as const;
 

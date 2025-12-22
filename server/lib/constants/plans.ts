@@ -8,7 +8,7 @@ export const ZYRA_PLANS = {
 export const CREDIT_LIMITS = {
   [ZYRA_PLANS.FREE]: 100,
   [ZYRA_PLANS.STARTER]: 1000,
-  [ZYRA_PLANS.GROWTH]: 5000,
+  [ZYRA_PLANS.GROWTH]: 6000,
   [ZYRA_PLANS.PRO]: 20000,
 } as const;
 

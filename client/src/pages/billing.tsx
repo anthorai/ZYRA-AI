@@ -200,7 +200,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Growth": {
-    credits: "5,000 Credit / month",
+    credits: "6,000 Credit / month",
     tagline: "For scaling merchants ready to grow",
     categories: [
       {
