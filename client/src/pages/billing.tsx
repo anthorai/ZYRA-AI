@@ -117,7 +117,7 @@ interface PlanDetails {
 
 const planDetails: Record<string, PlanDetails> = {
   "7-Day Free Trial": {
-    credits: "100 usage allowance / 7 days",
+    credits: "100 Credit / 7 days",
     tagline: "New users exploring Zyra features",
     categories: [
       {
@@ -155,7 +155,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Starter": {
-    credits: "1,000 usage allowance / month",
+    credits: "1,000 Credit / month",
     tagline: "Best for new Shopify stores just getting started",
     categories: [
       {
@@ -200,7 +200,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Growth": {
-    credits: "5,000 usage allowance / month",
+    credits: "5,000 Credit / month",
     tagline: "For scaling merchants ready to grow",
     categories: [
       {
@@ -245,7 +245,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Pro": {
-    credits: "20,000 usage allowance / month",
+    credits: "20,000 Credit / month",
     tagline: "For high-revenue brands & enterprise",
     categories: [
       {
