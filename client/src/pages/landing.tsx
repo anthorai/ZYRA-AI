@@ -278,7 +278,7 @@ export default function Landing() {
       valueProps: "Most popular plan",
       costPerDay: "$9.96",
       features: [
-        "5,000 credits / month",
+        "6,000 credits / month",
         "Product Optimization & SEO:",
         "All Starter features +",
         "SEO Ranking Tracker",
