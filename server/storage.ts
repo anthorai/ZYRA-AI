@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { 
   type User, 
   type InsertUser, 
@@ -1121,7 +1121,7 @@ export class DatabaseStorage {
     if (ids.length === 0) return [];
     
     return await db.select().from(imageOptimizationHistory)
-      .where(sql`${imageOptimizationHistory.id} = ANY(${ids})`);
+      .where(inArray(imageOptimizationHistory.id, ids));
   }
 
   async createImageOptimizationHistory(data: InsertImageOptimizationHistory): Promise<ImageOptimizationHistory> {
