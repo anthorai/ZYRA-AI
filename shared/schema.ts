@@ -2912,3 +2912,54 @@ export type CmsFaq = typeof cmsFaqs.$inferSelect;
 export type InsertCmsFaq = z.infer<typeof insertCmsFaqSchema>;
 export type CmsLegalPage = typeof cmsLegalPages.$inferSelect;
 export type InsertCmsLegalPage = z.infer<typeof insertCmsLegalPageSchema>;
+
+// Brand Voice Transformation Status Enum
+export const brandVoiceStatusEnum = pgEnum('brand_voice_status', ['pending', 'preview', 'approved', 'rejected', 'applied']);
+
+// Brand Voice Transformations - Track product copy transformations with preview/approval flow
+export const brandVoiceTransformations = pgTable("brand_voice_transformations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  
+  // Brand Voice Selection
+  brandVoice: text("brand_voice").notNull(), // 'luxury' | 'friendly' | 'bold' | 'minimal' | 'energetic' | 'professional'
+  
+  // Original Content
+  originalDescription: text("original_description"),
+  originalFeatures: jsonb("original_features").default(sql`'[]'::jsonb`),
+  originalCta: text("original_cta"),
+  originalMicrocopy: text("original_microcopy"),
+  
+  // Transformed Content (Preview)
+  transformedDescription: text("transformed_description"),
+  transformedFeatures: jsonb("transformed_features").default(sql`'[]'::jsonb`),
+  transformedCta: text("transformed_cta"),
+  transformedMicrocopy: text("transformed_microcopy"),
+  
+  // Status & Flow
+  status: brandVoiceStatusEnum("status").notNull().default("pending"),
+  appliedToShopify: boolean("applied_to_shopify").default(false),
+  appliedAt: timestamp("applied_at"),
+  
+  // Metadata
+  tokensUsed: integer("tokens_used").default(0),
+  processingTimeMs: integer("processing_time_ms"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('brand_voice_transform_user_id_idx').on(table.userId),
+  index('brand_voice_transform_product_id_idx').on(table.productId),
+  index('brand_voice_transform_status_idx').on(table.status),
+  index('brand_voice_transform_brand_voice_idx').on(table.brandVoice),
+]);
+
+export const insertBrandVoiceTransformationSchema = createInsertSchema(brandVoiceTransformations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type BrandVoiceTransformation = typeof brandVoiceTransformations.$inferSelect;
+export type InsertBrandVoiceTransformation = z.infer<typeof insertBrandVoiceTransformationSchema>;
