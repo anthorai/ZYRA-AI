@@ -1,345 +1,561 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { 
   Palette,
-  Copy,
   CheckCircle,
+  XCircle,
   Clock,
-  Zap,
   Sparkles,
-  TrendingUp,
-  Circle
+  Zap,
+  Crown,
+  Target,
+  Megaphone,
+  Briefcase,
+  Package,
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  Upload,
+  Eye
 } from "lucide-react";
 
-interface ToneTemplate {
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  category: string;
+  image: string | null;
+  shopifyId: string | null;
+}
+
+interface BrandVoice {
   id: string;
   name: string;
   description: string;
-  icon: React.ReactNode;
-  color: string;
-  example: string;
-  keywords: string[];
 }
 
-interface TransformForm {
-  originalText: string;
-  productName: string;
+interface Transformation {
+  id: string;
+  productId: string;
+  brandVoice: string;
+  originalDescription: string | null;
+  originalFeatures: string[];
+  originalCta: string | null;
+  transformedDescription: string | null;
+  transformedFeatures: string[];
+  transformedCta: string | null;
+  transformedMicrocopy: string | null;
+  status: 'pending' | 'preview' | 'approved' | 'rejected' | 'applied';
+  appliedToShopify: boolean;
+  createdAt: string;
 }
+
+const VOICE_ICONS: Record<string, React.ReactNode> = {
+  luxury: <Crown className="w-5 h-5" />,
+  friendly: <Sparkles className="w-5 h-5" />,
+  bold: <Target className="w-5 h-5" />,
+  minimal: <Package className="w-5 h-5" />,
+  energetic: <Zap className="w-5 h-5" />,
+  professional: <Briefcase className="w-5 h-5" />
+};
+
+const VOICE_COLORS: Record<string, string> = {
+  luxury: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  friendly: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+  bold: 'bg-red-500/20 text-red-400 border-red-500/30',
+  minimal: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  energetic: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  professional: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+};
 
 export default function DynamicTemplates() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [transformedText, setTransformedText] = useState<string>("");
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
+  const [viewingTransformation, setViewingTransformation] = useState<Transformation | null>(null);
 
-  const form = useForm<TransformForm>({
-    defaultValues: {
-      originalText: "",
-      productName: "",
-    },
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ['/api/products']
   });
 
+  const { data: voices = [] } = useQuery<BrandVoice[]>({
+    queryKey: ['/api/brand-voice/voices']
+  });
 
-  const toneTemplates: ToneTemplate[] = [
-    {
-      id: 'luxury',
-      name: 'Luxury',
-      description: 'Sophisticated, premium, exclusive language for high-end products',
-      icon: <Sparkles className="w-6 h-6" />,
-      color: '#F59E0B',
-      example: 'Exquisite craftsmanship meets unparalleled elegance...',
-      keywords: ['sophisticated', 'premium', 'exclusive', 'elegant', 'craftsmanship']
-    },
-    {
-      id: 'eco-friendly',
-      name: 'Eco-Friendly',
-      description: 'Sustainable, environmentally conscious, green messaging',
-      icon: <Zap className="w-6 h-6" />,
-      color: '#10B981',
-      example: 'Sustainably sourced materials for a better tomorrow...',
-      keywords: ['sustainable', 'eco-friendly', 'green', 'natural', 'responsible']
-    },
-    {
-      id: 'gen-z',
-      name: 'Gen Z',
-      description: 'Fun, trendy, casual language with modern slang and energy',
-      icon: <TrendingUp className="w-6 h-6" />,
-      color: '#8B5CF6',
-      example: 'This is literally the vibe you need in your life...',
-      keywords: ['trendy', 'vibes', 'iconic', 'aesthetic', 'mood']
-    },
-    {
-      id: 'minimalist',
-      name: 'Minimalist',
-      description: 'Clean, simple, straightforward copy that focuses on essentials',
-      icon: <Circle className="w-6 h-6" />,
-      color: '#6B7280',
-      example: 'Simple. Effective. Essential.',
-      keywords: ['simple', 'clean', 'essential', 'minimal', 'focused']
-    }
-  ];
+  const { data: transformations = [], isLoading: transformationsLoading, refetch: refetchTransformations } = useQuery<Transformation[]>({
+    queryKey: ['/api/brand-voice/transformations'],
+    refetchInterval: 5000
+  });
 
-  // Mock tone transformation mutation
   const transformMutation = useMutation({
-    mutationFn: async (data: TransformForm & { templateId: string }) => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
-      const template = toneTemplates.find(t => t.id === data.templateId);
-      if (!template) throw new Error('Template not found');
-      
-      const { originalText, productName } = data;
-      let transformedText = "";
-      
-      // Generate transformed text based on selected tone
-      switch (data.templateId) {
-        case 'luxury':
-          transformedText = `Discover the epitome of sophistication with our exquisite ${productName}. ${originalText ? `${originalText.replace(/\b(good|nice|great)\b/gi, 'exceptional').replace(/\b(buy|get)\b/gi, 'acquire')}` : ''} Crafted with meticulous attention to detail, this premium offering represents the finest in luxury and elegance. An investment in excellence that transcends mere ownership—it's a statement of refined taste.`;
-          break;
-        case 'eco-friendly':
-          transformedText = `Choose sustainable excellence with our eco-conscious ${productName}. ${originalText ? `${originalText.replace(/\b(made|created)\b/gi, 'sustainably crafted').replace(/\b(materials|parts)\b/gi, 'eco-friendly materials')}` : ''} Responsibly sourced and environmentally mindful, this product helps you make a positive impact while enjoying premium quality. Together, we're building a greener tomorrow, one conscious choice at a time.`;
-          break;
-        case 'gen-z':
-          transformedText = `Okay, this ${productName} is literally everything! 💯 ${originalText ? `${originalText.replace(/\b(good|great)\b/gi, 'iconic').replace(/\b(very)\b/gi, 'SO')}` : ''} The vibes are immaculate and the aesthetic is *chef's kiss*. This is going to be your new obsession, no cap. Your friends are gonna be like "where did you GET that?!" Trust me, this hits different. It's giving main character energy fr 🔥`;
-          break;
-        case 'minimalist':
-          transformedText = `${productName}. ${originalText ? originalText.replace(/\b(amazing|incredible|fantastic)\b/gi, 'effective').split('.')[0] + '.' : 'Essential function.'} Clean design. Pure performance. Nothing more, nothing less.`;
-          break;
-        default:
-          transformedText = originalText;
-      }
-      
-      // Store tone preference in mock Supabase
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return transformedText;
+    mutationFn: async ({ productId, brandVoice }: { productId: string; brandVoice: string }) => {
+      return apiRequest('/api/brand-voice/transform', {
+        method: 'POST',
+        body: JSON.stringify({ productId, brandVoice })
+      });
     },
-    onSuccess: (result) => {
-      setTransformedText(result);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/brand-voice/transformations'] });
       toast({
-        title: "🎨 Transformation Complete!",
-        description: "Your content has been adapted to the selected tone style!",
+        title: "Transformation Started",
+        description: "Your product copy is being transformed..."
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Transformation failed",
-        description: error.message || "Failed to transform content",
-        variant: "destructive",
+        title: "Transformation Failed",
+        description: error.message || "Failed to transform product copy",
+        variant: "destructive"
       });
-    },
+    }
   });
 
-  const onSubmit = (data: TransformForm) => {
-    if (!selectedTemplate) {
+  const bulkTransformMutation = useMutation({
+    mutationFn: async ({ productIds, brandVoice }: { productIds: string[]; brandVoice: string }) => {
+      return apiRequest('/api/brand-voice/bulk-transform', {
+        method: 'POST',
+        body: JSON.stringify({ productIds, brandVoice })
+      });
+    },
+    onSuccess: (_, variables) => {
+      setSelectedProducts([]);
+      queryClient.invalidateQueries({ queryKey: ['/api/brand-voice/transformations'] });
       toast({
-        title: "Select a tone template",
-        description: "Please choose a tone style before transforming",
-        variant: "destructive",
+        title: "Bulk Transformation Started",
+        description: `Transforming ${variables.productIds.length} products...`
+      });
+    }
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest(`/api/brand-voice/transformations/${id}/approve`, {
+        method: 'POST'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/brand-voice/transformations'] });
+      setViewingTransformation(null);
+      toast({
+        title: "Approved",
+        description: "Transformation approved and ready for Shopify"
+      });
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest(`/api/brand-voice/transformations/${id}/reject`, {
+        method: 'POST'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/brand-voice/transformations'] });
+      setViewingTransformation(null);
+      toast({
+        title: "Rejected",
+        description: "Transformation rejected"
+      });
+    }
+  });
+
+  const applyToShopifyMutation = useMutation({
+    mutationFn: async (transformationIds: string[]) => {
+      return apiRequest('/api/brand-voice/apply-to-shopify', {
+        method: 'POST',
+        body: JSON.stringify({ transformationIds })
+      });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/brand-voice/transformations'] });
+      toast({
+        title: "Applied to Shopify",
+        description: `${data.applied} transformations pushed to Shopify`
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed",
+        description: error.message || "Failed to apply to Shopify",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleProductSelect = (productId: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === products.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(products.map(p => p.id));
+    }
+  };
+
+  const handleTransform = () => {
+    if (!selectedVoice || selectedProducts.length === 0) {
+      toast({
+        title: "Selection Required",
+        description: "Please select products and a brand voice",
+        variant: "destructive"
       });
       return;
     }
 
-    if (!data.originalText.trim() && !data.productName.trim()) {
-      toast({
-        title: "Content required",
-        description: "Please provide either original text or a product name",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    transformMutation.mutate({ ...data, templateId: selectedTemplate });
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copied!",
-        description: "Transformed content copied to clipboard.",
-      });
-    } catch (error) {
-      toast({
-        title: "Copy failed",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
+    if (selectedProducts.length === 1) {
+      transformMutation.mutate({ productId: selectedProducts[0], brandVoice: selectedVoice });
+    } else {
+      bulkTransformMutation.mutate({ productIds: selectedProducts, brandVoice: selectedVoice });
     }
   };
 
-  const saveAsTemplate = () => {
-    // Simulate saving preference to Supabase
-    toast({
-      title: "Template Saved!",
-      description: "This tone style has been saved as your default preference.",
-    });
+  const approvedTransformations = transformations.filter(t => t.status === 'approved');
+  const previewTransformations = transformations.filter(t => t.status === 'preview');
+  const appliedTransformations = transformations.filter(t => t.status === 'applied');
+
+  const getProductName = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    return product?.name || 'Unknown Product';
   };
 
   return (
     <PageShell
       title="Dynamic Tone Templates"
-      subtitle="Transform your product descriptions to match different brand voices and tones using AI"
-      backTo="/dashboard?tab=campaigns"
+      description="Transform product copy into consistent brand voice - no manual writing required"
+      icon={<Palette className="w-6 h-6 text-primary" />}
+      backLink="/ai-tools"
     >
-      {/* Process Overview */}
-      <DashboardCard
-        title="Transform Your Brand Voice"
-        description="Choose from pre-built tone templates to instantly transform your product descriptions. Zyra AI learns your preferred style and can apply it consistently across all your content."
-      >
-        <div className="flex items-center space-x-2 text-slate-300 text-sm">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <p>AI-powered tone transformation available instantly</p>
-        </div>
-      </DashboardCard>
-
-      {/* Tone Templates */}
-      <DashboardCard
-        title="Choose Your Tone Style"
-        description="Select a tone template that matches your brand personality"
-      >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              {toneTemplates.map((template) => (
-                <Card 
-                  key={template.id}
-                  className="group relative shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl cursor-pointer hover:scale-105"
-                  onClick={() => setSelectedTemplate(template.id)}
-                >
-                  <div className="h-full p-3 sm:p-4 md:p-6 space-y-4 overflow-hidden">
-                    <div className="flex items-start space-x-4">
-                      <div className="text-primary">
-                        {template.icon}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <DashboardCard
+            title="Select Products"
+            description="Choose products to transform with your brand voice"
+            headerAction={
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSelectAll}
+                data-testid="button-select-all"
+              >
+                {selectedProducts.length === products.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            }
+          >
+            {productsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No products found. Sync your Shopify store first.</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[300px] pr-4">
+                <div className="space-y-2">
+                  {products.map(product => (
+                    <div 
+                      key={product.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                        selectedProducts.includes(product.id) 
+                          ? 'bg-primary/10 border-primary/30' 
+                          : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+                      }`}
+                      onClick={() => handleProductSelect(product.id)}
+                      data-testid={`product-row-${product.id}`}
+                    >
+                      <Checkbox 
+                        checked={selectedProducts.includes(product.id)}
+                        onCheckedChange={() => handleProductSelect(product.id)}
+                        data-testid={`checkbox-product-${product.id}`}
+                      />
+                      {product.image && (
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{product.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{product.category}</p>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white mb-1">{template.name}</h3>
-                        <p className="text-slate-300 text-sm mb-3">{template.description}</p>
-                        <div className="bg-slate-800/50 p-3 rounded-lg mb-3">
-                          <p className="text-slate-200 text-sm italic">"{template.example}"</p>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {template.keywords.map((keyword, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                      <Badge variant="outline" className="shrink-0">${product.price}</Badge>
                     </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+            
+            {selectedProducts.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
+                </span>
+              </div>
+            )}
+          </DashboardCard>
+
+          <DashboardCard
+            title="Choose Brand Voice"
+            description="Select a tone style for your product copy"
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {voices.map(voice => (
+                <button
+                  key={voice.id}
+                  onClick={() => setSelectedVoice(voice.id)}
+                  className={`p-4 rounded-lg border text-left transition-all ${
+                    selectedVoice === voice.id
+                      ? `${VOICE_COLORS[voice.id]} border-2`
+                      : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+                  }`}
+                  data-testid={`button-voice-${voice.id}`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    {VOICE_ICONS[voice.id]}
+                    <span className="font-medium">{voice.name}</span>
                   </div>
-                </Card>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{voice.description}</p>
+                </button>
               ))}
             </div>
-      </DashboardCard>
 
-      {/* Input Form */}
-      <DashboardCard
-        title="Content to Transform"
-        description="Provide your original content and watch Zyra AI transform it to match your selected tone"
-      >
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+            <div className="mt-6 flex gap-3">
+              <Button 
+                className="flex-1"
+                onClick={handleTransform}
+                disabled={!selectedVoice || selectedProducts.length === 0 || transformMutation.isPending || bulkTransformMutation.isPending}
+                data-testid="button-transform"
+              >
+                {(transformMutation.isPending || bulkTransformMutation.isPending) ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                Transform {selectedProducts.length > 0 ? `${selectedProducts.length} Product${selectedProducts.length > 1 ? 's' : ''}` : 'Products'}
+              </Button>
+            </div>
+          </DashboardCard>
+        </div>
+
+        <div className="space-y-6">
+          <DashboardCard
+            title="Pending Review"
+            description="Approve or reject transformations"
+            headerAction={
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => refetchTransformations()}
+                data-testid="button-refresh-transformations"
+              >
+                <RefreshCw className={`w-4 h-4 ${transformationsLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            }
+          >
+            {previewTransformations.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No pending transformations</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[200px]">
+                <div className="space-y-2">
+                  {previewTransformations.map(t => (
+                    <div 
+                      key={t.id}
+                      className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 cursor-pointer"
+                      onClick={() => setViewingTransformation(t)}
+                      data-testid={`transformation-preview-${t.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium truncate">{getProductName(t.productId)}</span>
+                        <Badge className={VOICE_COLORS[t.brandVoice]} variant="outline">
+                          {t.brandVoice}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button size="sm" variant="outline" className="flex-1" data-testid={`button-view-${t.id}`}>
+                          <Eye className="w-3 h-3 mr-1" /> Preview
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </DashboardCard>
+
+          <DashboardCard
+            title="Ready for Shopify"
+            description="Approved transformations ready to push"
+          >
+            {approvedTransformations.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No approved transformations</p>
+              </div>
+            ) : (
+              <>
+                <ScrollArea className="h-[150px]">
+                  <div className="space-y-2">
+                    {approvedTransformations.map(t => (
+                      <div 
+                        key={t.id}
+                        className="p-3 rounded-lg bg-green-500/10 border border-green-500/30"
+                        data-testid={`transformation-approved-${t.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium truncate text-green-400">{getProductName(t.productId)}</span>
+                          <Badge className={VOICE_COLORS[t.brandVoice]} variant="outline">
+                            {t.brandVoice}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <Button 
+                  className="w-full mt-4"
+                  onClick={() => applyToShopifyMutation.mutate(approvedTransformations.map(t => t.id))}
+                  disabled={applyToShopifyMutation.isPending}
+                  data-testid="button-apply-to-shopify"
+                >
+                  {applyToShopifyMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  Push {approvedTransformations.length} to Shopify
+                </Button>
+              </>
+            )}
+          </DashboardCard>
+
+          <Card className="bg-slate-800/50 border-slate-700/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Pending Review</span>
+                <span className="font-medium">{previewTransformations.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Approved</span>
+                <span className="font-medium text-green-400">{approvedTransformations.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Applied to Shopify</span>
+                <span className="font-medium text-blue-400">{appliedTransformations.length}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {viewingTransformation && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewingTransformation(null)}>
+          <Card 
+            className="w-full max-w-3xl max-h-[90vh] overflow-hidden bg-slate-900 border-slate-700"
+            onClick={e => e.stopPropagation()}
+          >
+            <CardHeader className="border-b border-slate-700/50">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="productName" className="text-white">Product Name (Optional)</Label>
-                  <Input
-                    id="productName"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Wireless Headphones"
-                    {...form.register("productName")}
-                  />
+                  <CardTitle>Preview Transformation</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {getProductName(viewingTransformation.productId)} - {viewingTransformation.brandVoice} voice
+                  </p>
+                </div>
+                <Badge className={VOICE_COLORS[viewingTransformation.brandVoice]} variant="outline">
+                  {viewingTransformation.brandVoice}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Original Description</h4>
+                  <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 text-sm">
+                    {viewingTransformation.originalDescription || 'No original description'}
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-white">Selected Tone</Label>
-                  <div className="mt-2 p-3 bg-slate-800/50 border border-slate-600 rounded-md">
-                    {selectedTemplate ? (
-                      <span className="text-primary font-medium">
-                        {toneTemplates.find(t => t.id === selectedTemplate)?.name}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">No tone selected</span>
-                    )}
+                  <h4 className="text-sm font-medium text-primary mb-2">Transformed Description</h4>
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/30 text-sm">
+                    {viewingTransformation.transformedDescription || 'No transformation available'}
                   </div>
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="originalText" className="text-white">Original Text</Label>
-                <Textarea
-                  id="originalText"
-                  className="mt-2 h-32 resize-none bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="Enter your original product description or copy here..."
-                  {...form.register("originalText")}
-                />
-              </div>
+              {viewingTransformation.transformedFeatures && viewingTransformation.transformedFeatures.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-primary mb-2">Transformed Features</h4>
+                  <ul className="space-y-2">
+                    {viewingTransformation.transformedFeatures.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
+              {viewingTransformation.transformedCta && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-primary mb-2">Call to Action</h4>
+                  <Badge className="text-base py-1 px-4">{viewingTransformation.transformedCta}</Badge>
+                </div>
+              )}
+
+              {viewingTransformation.transformedMicrocopy && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium text-primary mb-2">Microcopy</h4>
+                  <p className="text-sm text-muted-foreground italic">{viewingTransformation.transformedMicrocopy}</p>
+                </div>
+              )}
+            </CardContent>
+            <div className="border-t border-slate-700/50 p-4 flex gap-3 justify-end">
               <Button
-                type="submit"
-                disabled={transformMutation.isPending || !selectedTemplate}
-                className="w-full gradient-button transition-all duration-200 font-medium"
-                data-testid="button-transform"
+                variant="outline"
+                onClick={() => rejectMutation.mutate(viewingTransformation.id)}
+                disabled={rejectMutation.isPending}
+                data-testid="button-reject-transformation"
               >
-                {transformMutation.isPending ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Transforming tone...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Transform Content - {formatCreditsDisplay(getToolCredits('dynamic-templates'))}
-                  </>
-                )}
+                {rejectMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                Reject
               </Button>
-            </form>
-      </DashboardCard>
-
-      {/* Transformed Result */}
-      {transformedText && (
-        <DashboardCard
-          className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary-foreground/20"
-        >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <h3 className="text-xl font-semibold text-white">Transformed Content</h3>
-                  <Badge className="bg-primary/20 text-primary">
-                    {toneTemplates.find(t => t.id === selectedTemplate)?.name} Style
-                  </Badge>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(transformedText)}
-                    className="text-primary hover:text-white hover:bg-primary/10"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    onClick={saveAsTemplate}
-                    className="gradient-button"
-                  >
-                    Save as Default
-                  </Button>
-                </div>
-              </div>
-              <div className="bg-slate-800/30 p-4 rounded-lg border border-primary/20">
-                <p className="text-slate-100 leading-relaxed">
-                  {transformedText}
-                </p>
-              </div>
-        </DashboardCard>
+              <Button
+                onClick={() => approveMutation.mutate(viewingTransformation.id)}
+                disabled={approveMutation.isPending}
+                data-testid="button-approve-transformation"
+              >
+                {approveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                Approve
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </PageShell>
   );
