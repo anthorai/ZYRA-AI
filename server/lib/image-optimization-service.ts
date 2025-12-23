@@ -440,23 +440,69 @@ IMPORTANT: Respond ONLY with valid JSON in this exact format:
     // Fetch specific history records by IDs
     const historyItems = await this.storage.getImageOptimizationHistoryByIds(historyIds);
 
+    // Cache for product media to avoid repeated API calls
+    const productMediaCache = new Map<string, any[]>();
+
     for (const item of historyItems) {
       try {
-        if (!item.shopifyProductId || !item.shopifyImageId) {
-          console.error(`Missing Shopify IDs for history ${item.id}`);
+        if (!item.shopifyProductId) {
+          console.error(`Missing Shopify product ID for history ${item.id}`);
+          failed++;
+          continue;
+        }
+
+        // Fetch product media from Shopify to get correct MediaImage ID
+        let mediaItems = productMediaCache.get(item.shopifyProductId);
+        if (!mediaItems) {
+          try {
+            const product = await shopifyClient.graphqlClient?.getProduct(item.shopifyProductId);
+            if (product?.media?.edges) {
+              mediaItems = product.media.edges
+                .filter((e: any) => e.node.mediaContentType === 'IMAGE')
+                .map((e: any) => ({
+                  id: e.node.id,
+                  url: e.node.preview?.image?.url || ''
+                }));
+              productMediaCache.set(item.shopifyProductId, mediaItems || []);
+            }
+          } catch (fetchErr) {
+            console.error(`Failed to fetch product media for ${item.shopifyProductId}:`, fetchErr);
+          }
+        }
+
+        // Find the correct MediaImage ID by matching image URL
+        let correctMediaId = item.shopifyImageId;
+        if (mediaItems && item.imageUrl) {
+          const matchedMedia = mediaItems.find((m: any) => {
+            // Match by URL (handle different URL formats)
+            const itemUrl = item.imageUrl?.split('?')[0] || '';
+            const mediaUrl = m.url?.split('?')[0] || '';
+            return itemUrl === mediaUrl || 
+                   itemUrl.includes(mediaUrl.split('/').pop() || 'NOMATCH') ||
+                   mediaUrl.includes(itemUrl.split('/').pop() || 'NOMATCH');
+          });
+          if (matchedMedia) {
+            correctMediaId = matchedMedia.id;
+            console.log(`Found correct MediaImage ID: ${correctMediaId} for image ${item.imageUrl}`);
+          }
+        }
+
+        if (!correctMediaId) {
+          console.error(`Could not find MediaImage ID for history ${item.id}`);
           failed++;
           continue;
         }
 
         await shopifyClient.updateProductImage(
           item.shopifyProductId,
-          item.shopifyImageId,
+          correctMediaId,
           item.newAltText
         );
 
         await this.storage.updateImageOptimizationHistory(item.id, {
           appliedToShopify: true,
           appliedAt: new Date(),
+          shopifyImageId: correctMediaId, // Update with correct ID
         });
 
         success++;
