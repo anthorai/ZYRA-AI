@@ -31,6 +31,20 @@ export interface ShopifyGraphQLProduct {
       };
     }>;
   };
+  media: {
+    edges: Array<{
+      node: {
+        id: string;
+        alt: string | null;
+        mediaContentType: string;
+        preview?: {
+          image?: {
+            url: string;
+          };
+        };
+      };
+    }>;
+  };
   metafields: {
     edges: Array<{
       node: {
@@ -209,6 +223,20 @@ export class ShopifyGraphQLClient {
               }
             }
           }
+          media(first: 50) {
+            edges {
+              node {
+                id
+                alt
+                mediaContentType
+                preview {
+                  image {
+                    url
+                  }
+                }
+              }
+            }
+          }
           metafields(first: 20) {
             edges {
               node {
@@ -274,6 +302,20 @@ export class ShopifyGraphQLClient {
                     id
                     altText
                     url
+                  }
+                }
+              }
+              media(first: 10) {
+                edges {
+                  node {
+                    id
+                    alt
+                    mediaContentType
+                    preview {
+                      image {
+                        url
+                      }
+                    }
                   }
                 }
               }
@@ -537,8 +579,17 @@ export function graphqlProductToRest(product: ShopifyGraphQLProduct): {
   status: string;
   updated_at: string;
   variants: Array<{ id: number; title: string; price: string; sku: string }>;
-  images: Array<{ id: number; src: string; alt: string }>;
+  images: Array<{ id: number; src: string; alt: string; mediaId?: string }>;
 } {
+  const imageMediaMap = new Map<string, string>();
+  if (product.media?.edges) {
+    product.media.edges.forEach(edge => {
+      if (edge.node.mediaContentType === 'IMAGE' && edge.node.preview?.image?.url) {
+        imageMediaMap.set(edge.node.preview.image.url, edge.node.id);
+      }
+    });
+  }
+
   return {
     id: parseInt(product.legacyResourceId),
     title: product.title,
@@ -554,11 +605,16 @@ export function graphqlProductToRest(product: ShopifyGraphQLProduct): {
       price: edge.node.price,
       sku: edge.node.sku || ''
     })),
-    images: product.images.edges.map(edge => ({
-      id: parseInt(edge.node.id.replace('gid://shopify/ProductImage/', '')),
-      src: edge.node.url,
-      alt: edge.node.altText || ''
-    }))
+    images: product.images.edges.map(edge => {
+      const mediaId = imageMediaMap.get(edge.node.url) || 
+        (product.media?.edges.find(m => m.node.mediaContentType === 'IMAGE')?.node.id);
+      return {
+        id: parseInt(edge.node.id.replace('gid://shopify/ProductImage/', '')),
+        src: edge.node.url,
+        alt: edge.node.altText || '',
+        mediaId: mediaId
+      };
+    })
   };
 }
 

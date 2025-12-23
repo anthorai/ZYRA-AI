@@ -234,13 +234,13 @@ export class ImageOptimizationService {
                   optimizedCount++;
                   totalTokensUsed += result.tokensUsed;
 
-                  // Save to history
+                  // Save to history - use mediaId if available for Shopify API compatibility
                   await this.storage.createImageOptimizationHistory({
                     userId: job.userId,
                     productId: item.productId,
                     productName: item.productName,
                     shopifyProductId: item.shopifyProductId || null,
-                    shopifyImageId: image.id,
+                    shopifyImageId: image.mediaId || image.id,
                     imageUrl: image.url,
                     oldAltText: image.alt || null,
                     newAltText: result.newAltText,
