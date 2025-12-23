@@ -2,7 +2,12 @@ import OpenAI from "openai";
 import { eq, and, desc } from "drizzle-orm";
 import { db } from "../db";
 import { brandVoiceTransformations, products } from "@shared/schema";
-import type { BrandVoiceTransformation, InsertBrandVoiceTransformation } from "@shared/schema";
+import type { BrandVoiceTransformation } from "@shared/schema";
+
+function getDb() {
+  if (!db) throw new Error("Database not initialized");
+  return db;
+}
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -138,7 +143,8 @@ Transform the above into ${brandVoice} brand voice. Keep all product facts accur
     productId: string,
     brandVoice: BrandVoice
   ): Promise<BrandVoiceTransformation> {
-    const product = await db.select().from(products).where(
+    const database = getDb();
+    const product = await database.select().from(products).where(
       and(eq(products.id, productId), eq(products.userId, userId))
     ).limit(1);
 
@@ -166,7 +172,7 @@ Transform the above into ${brandVoice} brand voice. Keep all product facts accur
 
     const result = await this.transformProductCopy(productData, brandVoice);
 
-    const [transformation] = await db.insert(brandVoiceTransformations).values({
+    const [transformation] = await database.insert(brandVoiceTransformations).values({
       userId,
       productId,
       brandVoice,
@@ -207,7 +213,7 @@ Transform the above into ${brandVoice} brand voice. Keep all product facts accur
   }
 
   async approveTransformation(userId: string, transformationId: string): Promise<BrandVoiceTransformation> {
-    const [updated] = await db.update(brandVoiceTransformations)
+    const [updated] = await getDb().update(brandVoiceTransformations)
       .set({ status: 'approved', updatedAt: new Date() })
       .where(and(
         eq(brandVoiceTransformations.id, transformationId),
@@ -223,7 +229,7 @@ Transform the above into ${brandVoice} brand voice. Keep all product facts accur
   }
 
   async rejectTransformation(userId: string, transformationId: string): Promise<BrandVoiceTransformation> {
-    const [updated] = await db.update(brandVoiceTransformations)
+    const [updated] = await getDb().update(brandVoiceTransformations)
       .set({ status: 'rejected', updatedAt: new Date() })
       .where(and(
         eq(brandVoiceTransformations.id, transformationId),
@@ -245,13 +251,13 @@ Transform the above into ${brandVoice} brand voice. Keep all product facts accur
       conditions.push(eq(brandVoiceTransformations.status, status as any));
     }
 
-    return db.select().from(brandVoiceTransformations)
+    return getDb().select().from(brandVoiceTransformations)
       .where(and(...conditions))
       .orderBy(desc(brandVoiceTransformations.createdAt));
   }
 
   async getTransformationById(userId: string, id: string): Promise<BrandVoiceTransformation | null> {
-    const [transformation] = await db.select().from(brandVoiceTransformations)
+    const [transformation] = await getDb().select().from(brandVoiceTransformations)
       .where(and(
         eq(brandVoiceTransformations.id, id),
         eq(brandVoiceTransformations.userId, userId)
@@ -262,7 +268,7 @@ Transform the above into ${brandVoice} brand voice. Keep all product facts accur
   }
 
   async markAsApplied(userId: string, transformationId: string): Promise<BrandVoiceTransformation> {
-    const [updated] = await db.update(brandVoiceTransformations)
+    const [updated] = await getDb().update(brandVoiceTransformations)
       .set({ 
         status: 'applied', 
         appliedToShopify: true, 

@@ -10539,6 +10539,210 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== BRAND VOICE TRANSFORMATION ROUTES =====
+  
+  // Get all transformations
+  app.get('/api/brand-voice/transformations', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { status } = req.query;
+      
+      const { BrandVoiceService } = await import('./lib/brand-voice-service');
+      const brandVoiceService = new BrandVoiceService();
+      
+      const transformations = await brandVoiceService.getTransformations(
+        userId, 
+        status as string | undefined
+      );
+      res.json(transformations);
+    } catch (error: any) {
+      console.error('Get transformations error:', error);
+      res.status(500).json({ error: 'Failed to get transformations', details: error.message });
+    }
+  });
+
+  // Create brand voice transformation (single product)
+  app.post('/api/brand-voice/transform', requireAuth, aiLimiter, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId, brandVoice } = req.body;
+      
+      if (!productId || !brandVoice) {
+        return res.status(400).json({ error: 'Product ID and brand voice are required' });
+      }
+      
+      const validVoices = ['luxury', 'friendly', 'bold', 'minimal', 'energetic', 'professional'];
+      if (!validVoices.includes(brandVoice)) {
+        return res.status(400).json({ error: 'Invalid brand voice. Must be one of: ' + validVoices.join(', ') });
+      }
+      
+      const { BrandVoiceService } = await import('./lib/brand-voice-service');
+      const brandVoiceService = new BrandVoiceService();
+      
+      const transformation = await brandVoiceService.createTransformation(userId, productId, brandVoice);
+      res.json(transformation);
+    } catch (error: any) {
+      console.error('Transform error:', error);
+      res.status(500).json({ error: 'Failed to transform product copy', details: error.message });
+    }
+  });
+
+  // Bulk transform multiple products
+  app.post('/api/brand-voice/bulk-transform', requireAuth, aiLimiter, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productIds, brandVoice } = req.body;
+      
+      if (!Array.isArray(productIds) || productIds.length === 0) {
+        return res.status(400).json({ error: 'Product IDs array is required' });
+      }
+      
+      if (!brandVoice) {
+        return res.status(400).json({ error: 'Brand voice is required' });
+      }
+      
+      const validVoices = ['luxury', 'friendly', 'bold', 'minimal', 'energetic', 'professional'];
+      if (!validVoices.includes(brandVoice)) {
+        return res.status(400).json({ error: 'Invalid brand voice' });
+      }
+      
+      const { BrandVoiceService } = await import('./lib/brand-voice-service');
+      const brandVoiceService = new BrandVoiceService();
+      
+      // Process in background
+      res.json({ 
+        success: true, 
+        message: `Processing ${productIds.length} products...`,
+        count: productIds.length 
+      });
+      
+      brandVoiceService.bulkTransform(userId, productIds, brandVoice).catch(err => {
+        console.error('Bulk transform error:', err);
+      });
+    } catch (error: any) {
+      console.error('Bulk transform error:', error);
+      res.status(500).json({ error: 'Failed to start bulk transformation', details: error.message });
+    }
+  });
+
+  // Approve transformation
+  app.post('/api/brand-voice/transformations/:id/approve', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      const { BrandVoiceService } = await import('./lib/brand-voice-service');
+      const brandVoiceService = new BrandVoiceService();
+      
+      const transformation = await brandVoiceService.approveTransformation(userId, id);
+      res.json(transformation);
+    } catch (error: any) {
+      console.error('Approve transformation error:', error);
+      res.status(500).json({ error: 'Failed to approve transformation', details: error.message });
+    }
+  });
+
+  // Reject transformation
+  app.post('/api/brand-voice/transformations/:id/reject', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { id } = req.params;
+      
+      const { BrandVoiceService } = await import('./lib/brand-voice-service');
+      const brandVoiceService = new BrandVoiceService();
+      
+      const transformation = await brandVoiceService.rejectTransformation(userId, id);
+      res.json(transformation);
+    } catch (error: any) {
+      console.error('Reject transformation error:', error);
+      res.status(500).json({ error: 'Failed to reject transformation', details: error.message });
+    }
+  });
+
+  // Apply approved transformations to Shopify
+  app.post('/api/brand-voice/apply-to-shopify', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { transformationIds } = req.body;
+      
+      if (!Array.isArray(transformationIds) || transformationIds.length === 0) {
+        return res.status(400).json({ error: 'Transformation IDs are required' });
+      }
+      
+      // Get Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection) {
+        return res.status(404).json({ error: 'No active Shopify connection found' });
+      }
+      
+      const { BrandVoiceService } = await import('./lib/brand-voice-service');
+      const { ShopifyGraphQLClient } = await import('./lib/shopify-graphql');
+      
+      const brandVoiceService = new BrandVoiceService();
+      const shopDomain = (shopifyConnection.storeUrl || shopifyConnection.storeName).replace(/^https?:\/\//, '');
+      const shopifyClient = new ShopifyGraphQLClient(shopDomain, shopifyConnection.accessToken);
+      
+      const results = { success: 0, failed: 0, errors: [] as string[] };
+      
+      for (const transformationId of transformationIds) {
+        try {
+          const transformation = await brandVoiceService.getTransformationById(userId, transformationId);
+          
+          if (!transformation || transformation.status !== 'approved') {
+            results.failed++;
+            results.errors.push(`Transformation ${transformationId} not found or not approved`);
+            continue;
+          }
+          
+          // Get the product to find Shopify ID
+          const product = await dbStorage.getProduct(transformation.productId);
+          if (!product || !product.shopifyId) {
+            results.failed++;
+            results.errors.push(`Product not found or not linked to Shopify`);
+            continue;
+          }
+          
+          // Update product description in Shopify
+          const productGid = `gid://shopify/Product/${product.shopifyId}`;
+          await shopifyClient.updateProduct(productGid, {
+            descriptionHtml: transformation.transformedDescription || ''
+          });
+          
+          await brandVoiceService.markAsApplied(userId, transformationId);
+          results.success++;
+        } catch (err: any) {
+          results.failed++;
+          results.errors.push(err.message);
+        }
+      }
+      
+      res.json({
+        success: true,
+        applied: results.success,
+        failed: results.failed,
+        errors: results.errors,
+        message: `Applied ${results.success} transformations to Shopify`
+      });
+    } catch (error: any) {
+      console.error('Apply brand voice to Shopify error:', error);
+      res.status(500).json({ error: 'Failed to apply to Shopify', details: error.message });
+    }
+  });
+
+  // Get available brand voices
+  app.get('/api/brand-voice/voices', requireAuth, async (req, res) => {
+    res.json([
+      { id: 'luxury', name: 'Luxury', description: 'Elegant, sophisticated, premium quality' },
+      { id: 'friendly', name: 'Friendly', description: 'Warm, approachable, conversational' },
+      { id: 'bold', name: 'Bold', description: 'Confident, assertive, action-oriented' },
+      { id: 'minimal', name: 'Minimal', description: 'Clean, direct, essential only' },
+      { id: 'energetic', name: 'Energetic', description: 'Excited, dynamic, upbeat' },
+      { id: 'professional', name: 'Professional', description: 'Authoritative, trustworthy, expert' }
+    ]);
+  });
+
   // ===== CAMPAIGN ROUTES =====
   
   // Get all campaigns
