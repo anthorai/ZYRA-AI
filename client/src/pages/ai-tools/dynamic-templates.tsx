@@ -135,6 +135,13 @@ export default function DynamicTemplates() {
         title: "Bulk Transformation Started",
         description: `Transforming ${variables.productIds.length} products...`
       });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Bulk Transformation Failed",
+        description: error.message || "Failed to start bulk transformation",
+        variant: "destructive"
+      });
     }
   });
 
