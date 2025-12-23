@@ -417,33 +417,37 @@ export class ShopifyGraphQLClient {
 
   async updateProductImage(productId: string, imageId: string, altText: string): Promise<void> {
     const productGid = productId.includes('gid://') ? productId : `gid://shopify/Product/${productId}`;
-    const imageGid = imageId.includes('gid://') ? imageId : `gid://shopify/ProductImage/${imageId}`;
+    const mediaGid = imageId.includes('gid://shopify/MediaImage/') 
+      ? imageId 
+      : imageId.includes('gid://shopify/ProductImage/')
+        ? imageId.replace('ProductImage', 'MediaImage')
+        : `gid://shopify/MediaImage/${imageId}`;
     
     const response = await this.query<{
-      productImageUpdate: {
-        image: { id: string; altText: string | null };
-        userErrors: Array<{ field: string[]; message: string }>;
+      productUpdateMedia: {
+        media: Array<{ id: string; alt: string | null }>;
+        mediaUserErrors: Array<{ field: string[]; message: string }>;
       };
     }>(`
-      mutation updateProductImage($productId: ID!, $image: ImageInput!) {
-        productImageUpdate(productId: $productId, image: $image) {
-          image {
+      mutation productUpdateMedia($productId: ID!, $media: [UpdateMediaInput!]!) {
+        productUpdateMedia(productId: $productId, media: $media) {
+          media {
             id
-            altText
+            alt
           }
-          userErrors {
+          mediaUserErrors {
             field
             message
           }
         }
       }
-    `, { productId: productGid, image: { id: imageGid, altText } });
+    `, { productId: productGid, media: [{ id: mediaGid, alt: altText }] });
 
     if (response.errors?.length) {
       throw new Error(response.errors[0].message);
     }
 
-    const userErrors = response.data?.productImageUpdate.userErrors;
+    const userErrors = response.data?.productUpdateMedia.mediaUserErrors;
     if (userErrors?.length) {
       throw new Error(`Image update failed: ${userErrors.map(e => e.message).join(', ')}`);
     }
