@@ -145,7 +145,7 @@ export default function CampaignDetailPage() {
     <PageShell
       title={campaign.name}
       subtitle={`${campaign.type === 'email' ? 'Email' : 'SMS'} Campaign`}
-      backTo="/campaigns"
+      backTo="/dashboard?tab=campaigns"
       rightActions={
         <div className="flex gap-2 flex-wrap">
           {campaign.status === 'draft' && (

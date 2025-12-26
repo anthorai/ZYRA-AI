@@ -200,7 +200,7 @@ export default function CreateCampaignPageV2() {
     <PageShell
       title="Create Campaign"
       subtitle="Create and schedule email or SMS campaigns for your customers"
-      backTo="/campaigns"
+      backTo="/dashboard?tab=campaigns"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Autosave Indicator */}
