@@ -3075,10 +3075,10 @@ Respond with JSON:
       }
 
       // Import orchestration service
-      const { trainBrandDNAIfNeeded } = await import('./lib/seo-orchestration-service');
+      const { trainBrandDNA } = await import('./lib/seo-orchestration-service');
 
       // Train brand DNA
-      const brandDNA = await trainBrandDNAIfNeeded(userId, sampleTexts, openai, db);
+      const brandDNA = await trainBrandDNA(userId, sampleTexts, openai, db);
 
       res.json({
         success: true,
