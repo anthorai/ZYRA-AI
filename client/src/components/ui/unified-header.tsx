@@ -32,11 +32,8 @@ export function UnifiedHeader({
     if (onBack) {
       // Custom onBack handler takes priority
       onBack();
-    } else if (backTo) {
-      // Use custom route if specified
-      setLocation(backTo);
     } else {
-      // Default to browser history back
+      // Always use browser history to go back to the previous page
       window.history.back();
     }
   };
