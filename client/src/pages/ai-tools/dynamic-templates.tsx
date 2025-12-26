@@ -247,7 +247,7 @@ export default function DynamicTemplates() {
       title="Dynamic Tone Templates"
       description="Transform product copy into consistent brand voice - no manual writing required"
       icon={<Palette className="w-6 h-6 text-primary" />}
-      backLink="/ai-tools"
+      backTo="/dashboard?tab=ai-tools"
     >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
