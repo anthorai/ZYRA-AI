@@ -212,6 +212,7 @@ export function MasterAutomationToggle() {
                     max={1000}
                     value={creditLimit ?? currentCreditLimit}
                     onChange={(e) => setCreditLimit(parseInt(e.target.value) || 0)}
+                    className="bg-background"
                     data-testid="input-credit-limit"
                   />
                   <Button 
