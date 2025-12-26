@@ -9,8 +9,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, User } from "lucide-react";
+import { Bot, User, Settings, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,19 +24,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useState, useEffect } from "react";
+
+interface AutomationSettings {
+  globalAutopilotEnabled?: boolean;
+  autopilotEnabled?: boolean;
+  autonomousCreditLimit?: number;
+  maxDailyActions?: number;
+}
 
 export function MasterAutomationToggle() {
   const { toast } = useToast();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingState, setPendingState] = useState<boolean | null>(null);
+  const [creditLimit, setCreditLimit] = useState<number | undefined>(undefined);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Fetch automation settings
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<AutomationSettings>({
     queryKey: ['/api/automation/settings'],
   });
 
   const globalEnabled = settings?.globalAutopilotEnabled ?? true;
+  const currentCreditLimit = settings?.autonomousCreditLimit ?? 100;
+
+  // Initialize credit limit from settings
+  useEffect(() => {
+    if (creditLimit === undefined && settings?.autonomousCreditLimit) {
+      setCreditLimit(settings.autonomousCreditLimit);
+    }
+  }, [settings?.autonomousCreditLimit, creditLimit]);
 
   // Toggle mutation
   const toggleMutation = useMutation({
@@ -63,6 +88,32 @@ export function MasterAutomationToggle() {
     }
   });
 
+  // Credit limit mutation
+  const creditLimitMutation = useMutation({
+    mutationFn: async (limit: number) => {
+      const response = await apiRequest('PUT', '/api/automation/settings', { 
+        autonomousCreditLimit: limit 
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/automation/settings'] });
+      setShowSettings(false);
+      
+      toast({
+        title: 'Credit Limit Updated',
+        description: `Autonomous mode credit limit set to ${creditLimit} credits per day.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update credit limit',
+        variant: 'destructive'
+      });
+    }
+  });
+
   const handleToggle = (checked: boolean) => {
     setPendingState(checked);
     setShowConfirmDialog(true);
@@ -79,6 +130,18 @@ export function MasterAutomationToggle() {
   const handleCancel = () => {
     setShowConfirmDialog(false);
     setPendingState(null);
+  };
+
+  const handleSaveCreditLimit = () => {
+    if (creditLimit && creditLimit >= 1 && creditLimit <= 1000) {
+      creditLimitMutation.mutate(creditLimit);
+    } else {
+      toast({
+        title: 'Invalid Credit Limit',
+        description: 'Please enter a value between 1 and 1000.',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -114,6 +177,58 @@ export function MasterAutomationToggle() {
           className="data-[state=checked]:bg-emerald-600"
           data-testid="switch-global-autopilot"
         />
+
+        <Popover open={showSettings} onOpenChange={setShowSettings}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              data-testid="button-autonomous-settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="end">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm flex items-center gap-2">
+                  <Coins className="h-4 w-4" />
+                  Autonomous Credit Limit
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Maximum credits that autonomous mode can use per day. This helps control costs while AI works automatically.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="credit-limit" className="text-xs">
+                  Daily credit limit (1-1000)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="credit-limit"
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={creditLimit ?? currentCreditLimit}
+                    onChange={(e) => setCreditLimit(parseInt(e.target.value) || 0)}
+                    data-testid="input-credit-limit"
+                  />
+                  <Button 
+                    onClick={handleSaveCreditLimit}
+                    disabled={creditLimitMutation.isPending}
+                    data-testid="button-save-credit-limit"
+                  >
+                    {creditLimitMutation.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Current: {currentCreditLimit} credits/day
+                </p>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -133,7 +248,7 @@ export function MasterAutomationToggle() {
                     <li>Prices adjusted based on competitors</li>
                   </ul>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Safety limits still apply (max daily actions, quiet hours, etc.)
+                    Safety limits still apply (max {currentCreditLimit} credits/day, quiet hours, etc.)
                   </p>
                 </>
               ) : (

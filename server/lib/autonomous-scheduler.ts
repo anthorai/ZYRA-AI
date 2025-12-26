@@ -170,11 +170,16 @@ export async function runDailySEOAudit(): Promise<void> {
   console.log('🤖 [SEO Audit] Starting daily SEO audit...');
 
   try {
-    // Get all users with autopilot enabled
+    // Get all users with autopilot enabled (must have BOTH globalAutopilotEnabled AND autopilotEnabled = true)
     const usersWithAutopilot = await db
       .select()
       .from(automationSettings)
-      .where(eq(automationSettings.autopilotEnabled, true));
+      .where(
+        and(
+          eq(automationSettings.globalAutopilotEnabled, true),
+          eq(automationSettings.autopilotEnabled, true)
+        )
+      );
 
     console.log(`📊 [SEO Audit] Found ${usersWithAutopilot.length} users with autopilot enabled`);
 
@@ -374,11 +379,16 @@ async function sendMorningReports(): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get all users with autopilot enabled
+    // Get all users with autopilot enabled (must have BOTH globalAutopilotEnabled AND autopilotEnabled = true)
     const settings = await db
       .select()
       .from(automationSettings)
-      .where(eq(automationSettings.autopilotEnabled, true));
+      .where(
+        and(
+          eq(automationSettings.globalAutopilotEnabled, true),
+          eq(automationSettings.autopilotEnabled, true)
+        )
+      );
 
     console.log(`📊 [Morning Reports] Found ${settings.length} users with autopilot enabled`);
 
@@ -601,7 +611,7 @@ async function runDailyPricingScan(): Promise<void> {
           .where(eq(automationSettings.userId, userId))
           .limit(1);
 
-        if (!autoSettings || !autoSettings.autopilotEnabled) {
+        if (!autoSettings || !autoSettings.globalAutopilotEnabled || !autoSettings.autopilotEnabled) {
           console.log(`⏭️  [Pricing Scan] Autopilot disabled for user ${userId}, skipping`);
           continue;
         }
@@ -845,11 +855,16 @@ async function runMarketingCampaignScan(): Promise<void> {
     const { eq, and, sql } = await import('drizzle-orm');
     const db = requireDb();
 
-    // Get all users with autopilot enabled
+    // Get all users with autopilot enabled (must have BOTH globalAutopilotEnabled AND autopilotEnabled = true)
     const settings = await db
       .select()
       .from(automationSettings)
-      .where(eq(automationSettings.autopilotEnabled, true));
+      .where(
+        and(
+          eq(automationSettings.globalAutopilotEnabled, true),
+          eq(automationSettings.autopilotEnabled, true)
+        )
+      );
 
     console.log(`📊 [Marketing Scan] Found ${settings.length} users with autopilot enabled`);
 

@@ -172,6 +172,7 @@ export const automationSettings = pgTable("automation_settings", {
   autoPublishEnabled: boolean("auto_publish_enabled").default(false),
   maxDailyActions: integer("max_daily_actions").default(10),
   maxCatalogChangePercent: integer("max_catalog_change_percent").default(5), // Max % of products to change per day
+  autonomousCreditLimit: integer("autonomous_credit_limit").default(100), // Max credits autonomous mode can use per day
   enabledActionTypes: jsonb("enabled_action_types").default(sql`'["optimize_seo"]'::jsonb`), // Which actions are allowed
   notificationPreferences: jsonb("notification_preferences").default(sql`'{"email_daily_summary": true}'::jsonb`),
   // Cart Recovery Settings
@@ -743,6 +744,7 @@ export const updateAutomationSettingsSchema = z.object({
   autoPublishEnabled: z.boolean().optional(),
   maxDailyActions: z.number().int().min(1).max(100).optional(),
   maxCatalogChangePercent: z.number().int().min(1).max(100).optional(),
+  autonomousCreditLimit: z.number().int().min(1).max(1000).optional(), // Max credits for autonomous mode per day
   enabledActionTypes: z.array(z.string()).optional(),
   notificationPreferences: z.record(z.boolean()).optional(),
   // Cart Recovery Settings

@@ -243,7 +243,7 @@ async function executeCartRecovery(action: any): Promise<void> {
   console.log(`🛒 [Action Processor] Processing cart recovery for cart ${action.entityId}`);
 
   try {
-    // SAFETY: Verify cart recovery is still enabled
+    // SAFETY: Verify BOTH global autopilot AND cart recovery are still enabled
     const { automationSettings } = await import('@shared/schema');
     const settings = await db
       .select()
@@ -251,13 +251,29 @@ async function executeCartRecovery(action: any): Promise<void> {
       .where(eq(automationSettings.userId, action.userId))
       .limit(1);
 
-    if (settings.length === 0 || !settings[0].cartRecoveryEnabled) {
+    // Check global autopilot is enabled
+    if (settings.length === 0 || !settings[0].globalAutopilotEnabled || !settings[0].autopilotEnabled) {
+      console.log(`⏸️  [Action Processor] Autonomous mode disabled for user ${action.userId}, skipping cart recovery`);
+      
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'cancelled' as any,
+          completedAt: new Date(),
+          result: { reason: 'autopilot_disabled', skipped: true } as any,
+        })
+        .where(eq(autonomousActions.id, action.id));
+      return;
+    }
+
+    // Check cart recovery is enabled
+    if (!settings[0].cartRecoveryEnabled) {
       console.log(`⏸️  [Action Processor] Cart recovery disabled for user ${action.userId}, skipping action`);
       
       await db
         .update(autonomousActions)
         .set({
-          status: 'failed',
+          status: 'cancelled' as any,
           completedAt: new Date(),
           result: { reason: 'cart_recovery_disabled', skipped: true } as any,
         })
@@ -404,13 +420,14 @@ async function executePriceChange(action: any): Promise<void> {
       .where(eq(automationSettings.userId, action.userId))
       .limit(1);
 
-    if (!autoSettings || !autoSettings.autopilotEnabled) {
+    if (!autoSettings || !autoSettings.globalAutopilotEnabled || !autoSettings.autopilotEnabled) {
       console.log(`⏸️  [Action Processor] Autopilot disabled for user ${action.userId}, skipping action`);
       
       await db
         .update(autonomousActions)
         .set({
           status: 'cancelled' as any,
+          completedAt: new Date(),
           result: { reason: 'autopilot_disabled' } as any,
         })
         .where(eq(autonomousActions.id, action.id));
@@ -431,6 +448,7 @@ async function executePriceChange(action: any): Promise<void> {
         .update(autonomousActions)
         .set({
           status: 'cancelled' as any,
+          completedAt: new Date(),
           result: { reason: 'pricing_automation_disabled' } as any,
         })
         .where(eq(autonomousActions.id, action.id));
@@ -702,13 +720,14 @@ async function executeOptimizeSEO(action: any): Promise<void> {
       .where(eq(automationSettings.userId, action.userId))
       .limit(1);
 
-    if (settings.length === 0 || !settings[0].autopilotEnabled) {
+    if (settings.length === 0 || !settings[0].globalAutopilotEnabled || !settings[0].autopilotEnabled) {
       console.log(`⏸️  [Action Processor] Autopilot disabled for user ${action.userId}, skipping action`);
       
       await db
         .update(autonomousActions)
         .set({
           status: 'cancelled' as any,
+          completedAt: new Date(),
           result: { reason: 'autopilot_disabled' } as any,
         })
         .where(eq(autonomousActions.id, action.id));
@@ -815,6 +834,111 @@ async function executeOptimizeSEO(action: any): Promise<void> {
 }
 
 /**
+ * Map action types to feature types for credit cost lookups
+ */
+const ACTION_TO_FEATURE_TYPE: Record<string, string> = {
+  'optimize_seo': 'OPTIMIZE_PRODUCT',
+  'fix_product': 'AI_OPTIMIZATION',
+  'send_cart_recovery': 'ABANDONED_CART_SMS',
+  'price_change': 'AI_OPTIMIZATION',
+  'send_campaign': 'AI_GENERATION',
+};
+
+/**
+ * Check if user has enough credits for the action using the real credit system
+ */
+async function checkAutonomousCreditLimit(userId: string, actionType: string): Promise<{
+  allowed: boolean;
+  creditsUsed: number;
+  creditsRemaining: number;
+  creditLimit: number;
+  autonomousCreditLimit: number;
+  actionCreditCost: number;
+  reason?: string;
+}> {
+  const { automationSettings } = await import('@shared/schema');
+  const { checkCredits, getCreditBalance } = await import('./credits');
+  const { FEATURE_CREDIT_COST, FeatureType } = await import('./constants/feature-credits');
+  
+  // Get the feature type for this action
+  const featureType = (ACTION_TO_FEATURE_TYPE[actionType] || 'AI_OPTIMIZATION') as FeatureType;
+  const actionCreditCost = FEATURE_CREDIT_COST[featureType] || 10;
+  
+  // Get user's automation settings for autonomous-specific limit
+  const [settings] = await db
+    .select()
+    .from(automationSettings)
+    .where(eq(automationSettings.userId, userId))
+    .limit(1);
+  
+  const autonomousCreditLimit = settings?.autonomousCreditLimit ?? 100;
+  
+  // Use the real credit system to check user's actual credit balance
+  const creditCheck = await checkCredits(userId, featureType);
+  
+  // Check 1: Does user have enough credits overall?
+  if (!creditCheck.hasEnoughCredits) {
+    return {
+      allowed: false,
+      creditsUsed: creditCheck.creditsUsed,
+      creditsRemaining: creditCheck.creditsRemaining,
+      creditLimit: creditCheck.creditLimit,
+      autonomousCreditLimit,
+      actionCreditCost,
+      reason: creditCheck.message || 'Insufficient credits in account'
+    };
+  }
+  
+  // Check 2: Would this action exceed the daily autonomous credit limit?
+  // Calculate autonomous credits used today by summing action costs
+  const { sql: drizzleSql } = await import('drizzle-orm');
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  
+  const todaysActions = await db
+    .select({
+      actionType: autonomousActions.actionType,
+    })
+    .from(autonomousActions)
+    .where(
+      and(
+        eq(autonomousActions.userId, userId),
+        eq(autonomousActions.executedBy, 'agent'),
+        drizzleSql`${autonomousActions.createdAt} >= ${todayStart}`,
+        drizzleSql`${autonomousActions.status} IN ('completed', 'running')`
+      )
+    );
+  
+  // Sum up actual credit costs for each completed action today
+  let autonomousCreditsUsedToday = 0;
+  for (const action of todaysActions) {
+    const ft = (ACTION_TO_FEATURE_TYPE[action.actionType] || 'AI_OPTIMIZATION') as FeatureType;
+    autonomousCreditsUsedToday += FEATURE_CREDIT_COST[ft] || 10;
+  }
+  
+  if (autonomousCreditsUsedToday + actionCreditCost > autonomousCreditLimit) {
+    return {
+      allowed: false,
+      creditsUsed: creditCheck.creditsUsed,
+      creditsRemaining: creditCheck.creditsRemaining,
+      creditLimit: creditCheck.creditLimit,
+      autonomousCreditLimit,
+      actionCreditCost,
+      reason: `Would exceed daily autonomous limit: ${autonomousCreditsUsedToday}+${actionCreditCost}>${autonomousCreditLimit}`
+    };
+  }
+  
+  return {
+    allowed: true,
+    creditsUsed: creditCheck.creditsUsed,
+    creditsRemaining: creditCheck.creditsRemaining,
+    creditLimit: creditCheck.creditLimit,
+    autonomousCreditLimit,
+    actionCreditCost
+  };
+}
+
+/**
  * Process a single autonomous action
  */
 export async function processAutonomousAction(action: any): Promise<void> {
@@ -826,6 +950,31 @@ export async function processAutonomousAction(action: any): Promise<void> {
     console.log(`⏭️  [Action Processor] Skipping dry-run action ${action.id} (preview only)`);
     return;
   }
+
+  // SAFETY: Check both subscription credits AND autonomous daily limit
+  const creditCheck = await checkAutonomousCreditLimit(action.userId, action.actionType);
+  
+  if (!creditCheck.allowed) {
+    console.log(`⏸️  [Action Processor] Credit check failed for user ${action.userId}: ${creditCheck.reason}`);
+    
+    // Mark as cancelled with terminal status (completedAt set to prevent requeue)
+    await db
+      .update(autonomousActions)
+      .set({
+        status: 'cancelled' as any,
+        completedAt: new Date(),
+        result: { 
+          reason: 'credit_limit_exceeded', 
+          details: creditCheck,
+          message: creditCheck.reason
+        } as any,
+      })
+      .where(eq(autonomousActions.id, action.id));
+    
+    return;
+  }
+  
+  console.log(`💳 [Action Processor] Credit check passed: ${creditCheck.actionCreditCost} credits needed, ${creditCheck.creditsRemaining} remaining`);
 
   // Update status to running (only for pending actions)
   await db
