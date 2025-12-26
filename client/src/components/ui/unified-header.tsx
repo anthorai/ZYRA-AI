@@ -32,8 +32,11 @@ export function UnifiedHeader({
     if (onBack) {
       // Custom onBack handler takes priority
       onBack();
+    } else if (backTo) {
+      // Use specific route to go back to correct dashboard tab
+      setLocation(backTo);
     } else {
-      // Always use browser history to go back to the previous page
+      // Default to browser history back
       window.history.back();
     }
   };
