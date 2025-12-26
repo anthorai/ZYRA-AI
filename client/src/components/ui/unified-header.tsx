@@ -36,8 +36,8 @@ export function UnifiedHeader({
       // Use custom route if specified
       setLocation(backTo);
     } else {
-      // Default to dashboard if no specific route is provided
-      setLocation('/dashboard');
+      // Default to browser history back
+      window.history.back();
     }
   };
 
