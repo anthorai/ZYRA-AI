@@ -4254,6 +4254,273 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // =============================================================================
+  // MULTIMODAL AI - Intelligent Optimization Orchestration
+  // =============================================================================
+  
+  app.post("/api/multimodal/analyze-and-apply", requireAuth, aiLimiter, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productIds, autoApply = true } = req.body;
+
+      if (!Array.isArray(productIds) || productIds.length === 0) {
+        return res.status(400).json({ error: "No product IDs provided" });
+      }
+
+      // Limit to 10 products per request
+      const limitedIds = productIds.slice(0, 10);
+      const results: any[] = [];
+      let optimized = 0;
+      let skipped = 0;
+
+      for (const productId of limitedIds) {
+        try {
+          // Fetch product data
+          const product = await supabaseStorage.getProduct(productId);
+          if (!product || product.userId !== userId) {
+            skipped++;
+            continue;
+          }
+
+          // Analyze product signals to determine optimal strategy
+          const signals = analyzeProductSignals(product);
+          const strategy = selectOptimizationStrategy(signals);
+          const enginesConfig = determineEnginesActivation(signals, strategy);
+
+          // Generate SEO content using the orchestration service
+          const { orchestrateSEOGeneration } = await import('./lib/seo-orchestration-service');
+          
+          const seoResult = await orchestrateSEOGeneration({
+            userId,
+            productName: product.name,
+            keyFeatures: product.features || product.description || '',
+            category: product.category,
+            price: product.price ? parseFloat(String(product.price)) : undefined,
+            options: {
+              enableFrameworkAutoSelection: true,
+              enableBrandDNA: enginesConfig.brandVoiceMemory,
+              enableSERPAnalysis: enginesConfig.seoEngine === 'full',
+              shopifyFormatting: true,
+            },
+          }, openai, db);
+
+          let rollbackId: string | null = null;
+
+          // Apply optimizations if autoApply is enabled
+          if (autoApply) {
+            // Save original state for rollback BEFORE making changes
+            const historyEntry = await supabaseStorage.createProductHistory({
+              productId: product.id,
+              userId,
+              productName: product.name,
+              changeType: 'ai-optimization',
+              changedBy: 'Multimodal AI',
+              changes: [
+                {
+                  field: 'Title',
+                  before: product.name,
+                  after: seoResult.seoTitle || product.name
+                },
+                {
+                  field: 'Description',
+                  before: product.description || '',
+                  after: seoResult.seoDescription || ''
+                },
+                {
+                  field: 'Meta Description',
+                  before: '',
+                  after: seoResult.metaDescription || ''
+                }
+              ],
+              canRollback: true
+            });
+            rollbackId = historyEntry.id;
+
+            // Update product
+            await supabaseStorage.updateProduct(productId, {
+              description: seoResult.seoDescription,
+              isOptimized: true,
+              optimizedCopy: {
+                title: seoResult.seoTitle,
+                description: seoResult.seoDescription,
+                metaTitle: seoResult.metaTitle,
+                metaDescription: seoResult.metaDescription,
+                keywords: seoResult.keywords,
+                appliedBy: 'multimodal-ai',
+                appliedAt: new Date().toISOString()
+              },
+              updatedAt: new Date()
+            });
+
+            // Update/create SEO meta
+            const existingSeoMeta = await db
+              .select()
+              .from(seoMeta)
+              .where(eq(seoMeta.productId, productId))
+              .limit(1);
+
+            if (existingSeoMeta.length > 0) {
+              await db.update(seoMeta)
+                .set({
+                  seoTitle: seoResult.seoTitle,
+                  optimizedTitle: seoResult.seoTitle,
+                  metaDescription: seoResult.metaDescription,
+                  optimizedMeta: seoResult.metaDescription,
+                  keywords: seoResult.keywords?.join(', '),
+                  seoScore: seoResult.seoScore
+                })
+                .where(eq(seoMeta.productId, productId));
+            } else {
+              await db.insert(seoMeta).values({
+                productId,
+                seoTitle: seoResult.seoTitle,
+                optimizedTitle: seoResult.seoTitle,
+                metaDescription: seoResult.metaDescription,
+                optimizedMeta: seoResult.metaDescription,
+                keywords: seoResult.keywords?.join(', '),
+                seoScore: seoResult.seoScore
+              });
+            }
+          }
+
+          optimized++;
+
+          results.push({
+            productId: product.id,
+            productName: product.name,
+            strategySelected: strategy.id,
+            strategyLabel: strategy.label,
+            reasonSummary: strategy.reason,
+            enginesActivated: enginesConfig,
+            signals: {
+              imageContentAlignment: signals.imageContentAlignment,
+              contentIntentAlignment: signals.contentIntentAlignment,
+              overOptimizationRisk: signals.overOptimizationRisk,
+              searchIntent: signals.searchIntent
+            },
+            appliedChanges: autoApply ? {
+              title: seoResult.seoTitle,
+              metaTitle: seoResult.metaTitle,
+              metaDescription: seoResult.metaDescription,
+              tags: seoResult.keywords?.slice(0, 10)
+            } : null,
+            rollbackId
+          });
+        } catch (productError: any) {
+          console.error(`[Multimodal AI] Error processing product ${productId}:`, productError);
+          skipped++;
+        }
+      }
+
+      res.json({
+        success: true,
+        totalProducts: limitedIds.length,
+        optimized,
+        skipped,
+        results
+      });
+    } catch (error: any) {
+      console.error("[Multimodal AI] Error:", error);
+      res.status(500).json({ error: error.message || "Failed to analyze and apply optimizations" });
+    }
+  });
+
+  // Helper functions for Multimodal AI strategy selection
+  function analyzeProductSignals(product: any) {
+    const hasImage = !!product.image;
+    const hasDescription = !!product.description && product.description.length > 50;
+    const hasFeatures = !!product.features && product.features.length > 20;
+    const hasTags = !!product.tags && product.tags.length > 0;
+    
+    // Calculate alignment scores
+    const imageContentAlignment = hasImage && hasDescription ? 85 : hasImage ? 60 : hasDescription ? 70 : 40;
+    const contentIntentAlignment = hasFeatures && hasTags ? 90 : hasDescription ? 75 : 50;
+    
+    // Determine over-optimization risk
+    const descriptionLength = product.description?.length || 0;
+    const overOptimizationRisk = descriptionLength > 2000 ? 'high' : descriptionLength > 1000 ? 'medium' : 'low';
+    
+    // Determine search intent based on product characteristics
+    const price = parseFloat(String(product.price)) || 0;
+    const searchIntent = price > 200 ? 'commercial' : price > 50 ? 'transactional' : 'informational';
+    
+    return {
+      hasImage,
+      hasDescription,
+      hasFeatures,
+      hasTags,
+      imageContentAlignment,
+      contentIntentAlignment,
+      overOptimizationRisk,
+      searchIntent,
+      pricePoint: price
+    };
+  }
+
+  function selectOptimizationStrategy(signals: any): { id: string; label: string; reason: string } {
+    // Strategy selection logic based on signals
+    if (signals.hasImage && signals.imageContentAlignment > 80) {
+      return {
+        id: 'image-led-conversion',
+        label: 'Image-Led Conversion',
+        reason: 'Strong product imagery detected. Optimizing to highlight visual appeal and drive conversions.'
+      };
+    }
+    
+    if (signals.contentIntentAlignment > 85 && signals.overOptimizationRisk === 'low') {
+      return {
+        id: 'balanced-organic-growth',
+        label: 'Balanced Organic Growth',
+        reason: 'Well-structured content with good intent alignment. Applying balanced SEO and conversion optimization.'
+      };
+    }
+    
+    if (signals.searchIntent === 'commercial' || signals.pricePoint > 100) {
+      return {
+        id: 'trust-clarity-priority',
+        label: 'Trust & Clarity Priority',
+        reason: 'Higher-priced product detected. Prioritizing trust signals and clear value propositions.'
+      };
+    }
+    
+    return {
+      id: 'search-intent-focused',
+      label: 'Search-Intent Focused',
+      reason: 'Optimizing for search visibility and matching user query intent to improve rankings.'
+    };
+  }
+
+  function determineEnginesActivation(signals: any, strategy: { id: string }) {
+    const config = {
+      seoEngine: 'balanced' as 'light' | 'balanced' | 'full',
+      brandVoiceMemory: true,
+      templates: false,
+      conversionOptimization: false
+    };
+    
+    switch (strategy.id) {
+      case 'search-intent-focused':
+        config.seoEngine = 'full';
+        config.brandVoiceMemory = false;
+        break;
+      case 'image-led-conversion':
+        config.seoEngine = 'light';
+        config.conversionOptimization = true;
+        break;
+      case 'balanced-organic-growth':
+        config.seoEngine = 'balanced';
+        config.brandVoiceMemory = true;
+        config.templates = true;
+        break;
+      case 'trust-clarity-priority':
+        config.seoEngine = 'balanced';
+        config.conversionOptimization = true;
+        break;
+    }
+    
+    return config;
+  }
+
   app.delete("/api/products/:id", requireAuth, apiLimiter, async (req, res) => {
     try {
       // Check if the product exists and belongs to the user

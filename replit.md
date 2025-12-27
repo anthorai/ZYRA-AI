@@ -64,6 +64,30 @@ An AI-powered post-purchase upsell system that sends personalized product recomm
 ### Autonomous AI Store Manager
 This system transforms manual optimization into autonomous, AI-driven processes. It includes Autonomous SEO (daily audits, AI-powered action processing, product snapshots), Dynamic Pricing AI (automates pricing based on market conditions, competitor monitoring), and Autonomous Marketing (multi-channel automation, A/B testing orchestration, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system for manual review.
 
+### Multimodal AI Optimization Orchestrator (Dec 27, 2025)
+An intelligent orchestration system that automatically analyzes product data and applies optimal SEO optimizations with zero manual input. Located at `client/src/pages/ai-tools/multimodal-ai.tsx` with backend API at `/api/multimodal/analyze-and-apply`.
+
+**Key Features:**
+- **Zero Manual Input**: Auto-collects all data from product selection (images, content, SEO context, store intent)
+- **Intelligent Strategy Selection**: Automatically selects from 4 optimization strategies:
+  - `search-intent-focused`: Maximizes search visibility for ranking improvement
+  - `image-led-conversion`: Leverages product imagery for conversion optimization
+  - `balanced-organic-growth`: Balanced SEO and conversion with brand voice
+  - `trust-clarity-priority`: Emphasizes trust signals for higher-priced products
+- **Engine Activation System**: Dynamically configures engine intensity:
+  - SEO Engine: light/balanced/full intensity
+  - Brand Voice Memory: enabled/disabled based on strategy
+  - Templates and Conversion optimization toggles
+- **Bulk Processing**: Supports up to 10 products per optimization run
+- **Full Rollback Protection**: Creates product history snapshots before applying changes
+- **Signal Analysis**: Evaluates image-content alignment, content-intent alignment, over-optimization risk, and search intent
+
+**Technical Implementation:**
+- Uses `orchestrateSEOGeneration` from `server/lib/seo-orchestration-service.ts`
+- Creates rollback entries only when changes are applied (autoApply=true)
+- Stores history in `product_history` table for Rollback Changes feature
+- Integrates with existing SEO meta table for optimization data persistence
+
 ### Behavioral Triggers System
 Real AI-powered behavioral automation that tracks customer actions and triggers marketing responses. Database schema includes 4 tables: `behavioral_triggers` (trigger configurations), `behavior_events` (customer event logs), `trigger_executions` (action history), and `trigger_analytics` (performance metrics). Supports 8 event types (product_view, cart_add, cart_abandon, checkout_start, order_placed, first_purchase, repeat_purchase, page_visit), 5 condition types (min_count, time_elapsed, cart_value, no_action, segment_match), and 8 action types (send_email, send_sms, show_popup, offer_discount, assign_tag, add_to_segment, send_push, trigger_webhook). Features AI-powered trigger recommendations using GPT-4o-mini via Replit AI Integrations, Shopify webhook handlers for real-time event tracking, cooldown management to prevent spam, and comprehensive analytics dashboard.
 
