@@ -71,7 +71,8 @@ import {
   pricingSettings,
   sessions,
   customerSegmentMembers,
-  segmentAnalytics
+  segmentAnalytics,
+  productSnapshots
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -8268,7 +8269,7 @@ Output format: Markdown with clear section headings.`;
       const { importType, productCount } = req.body;
 
       // Get all current products for this user to create a snapshot
-      const userProducts = await supabaseStorage.getProductsByUser(userId);
+      const userProducts = await supabaseStorage.getProducts(userId);
 
       // Create a bulk import history entry for rollback purposes
       const historyEntries = [];
