@@ -1548,6 +1548,155 @@ export const abTestResults = pgTable("ab_test_results", {
   index('campaign_ab_tests_started_at_idx').on(table.startedAt),
 ]);
 
+// ============================================================================
+// PRODUCT COPY A/B TESTING - Strategy-Based Automatic Testing
+// ============================================================================
+
+// Strategy enum for copy testing
+export const copyTestStrategyEnum = pgEnum('copy_test_strategy', [
+  'seo_clarity',           // SEO + clarity focused
+  'benefit_first',         // Benefit-first conversion focused  
+  'trust_reassurance',     // Trust & reassurance focused
+  'urgency_light',         // Urgency-light CTA focused
+  'control'                // Original copy (control)
+]);
+
+// Test status enum
+export const copyTestStatusEnum = pgEnum('copy_test_status', [
+  'pending',               // Not started
+  'testing',               // Currently running
+  'completed',             // Winner selected
+  'paused',                // Manually paused
+  'stopped'                // Auto-stopped due to poor performance
+]);
+
+// Product Copy A/B Tests - Strategy-based automatic testing
+export const productCopyAbTests = pgTable("product_copy_ab_tests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  
+  // Test Configuration
+  status: text("status").notNull().default("pending"), // pending, testing, completed, paused, stopped
+  trafficPercentage: integer("traffic_percentage").notNull().default(20), // Start with 20% traffic
+  
+  // Original Content (for rollback)
+  originalTitle: text("original_title"),
+  originalDescription: text("original_description"),
+  originalMetaTitle: text("original_meta_title"),
+  originalMetaDescription: text("original_meta_description"),
+  
+  // Winning Content (after test completes)
+  winningVariantId: varchar("winning_variant_id"),
+  winnerAppliedAt: timestamp("winner_applied_at"),
+  
+  // Rollback Integration
+  rollbackHistoryId: varchar("rollback_history_id"), // Links to productHistory for rollback
+  canRollback: boolean("can_rollback").default(true),
+  
+  // Smart Success Signals Configuration
+  decisionMetrics: jsonb("decision_metrics").default(sql`'{"timeOnPage": 0.3, "scrollDepth": 0.2, "addToCart": 0.35, "bounce": 0.15}'::jsonb`),
+  
+  // Store-wide Learning
+  learningApplied: boolean("learning_applied").default(false),
+  learningInsights: jsonb("learning_insights"), // What patterns were learned
+  
+  // Timing
+  startedAt: timestamp("started_at"),
+  endedAt: timestamp("ended_at"),
+  minTestDuration: integer("min_test_duration").default(72), // Minimum 72 hours
+  maxTestDuration: integer("max_test_duration").default(168), // Maximum 7 days (168 hours)
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('product_copy_ab_tests_user_id_idx').on(table.userId),
+  index('product_copy_ab_tests_product_id_idx').on(table.productId),
+  index('product_copy_ab_tests_status_idx').on(table.status),
+  uniqueIndex('product_copy_ab_tests_active_product_unique').on(table.userId, table.productId).where(sql`status IN ('pending', 'testing')`),
+]);
+
+// Product Copy A/B Test Variants - Individual strategy variants
+export const productCopyAbVariants = pgTable("product_copy_ab_variants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  testId: varchar("test_id").references(() => productCopyAbTests.id).notNull(),
+  
+  // Strategy Info
+  strategy: text("strategy").notNull(), // seo_clarity, benefit_first, trust_reassurance, urgency_light, control
+  strategyDescription: text("strategy_description"),
+  
+  // Generated Content
+  title: text("title"),
+  description: text("description"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  keywords: jsonb("keywords").default(sql`'[]'::jsonb`),
+  
+  // Smart Success Signals Metrics
+  impressions: integer("impressions").default(0),
+  timeOnPageTotal: numeric("time_on_page_total", { precision: 12, scale: 2 }).default("0"), // Total seconds
+  avgTimeOnPage: numeric("avg_time_on_page", { precision: 8, scale: 2 }).default("0"), // Average seconds
+  scrollDepthTotal: numeric("scroll_depth_total", { precision: 12, scale: 2 }).default("0"), // Total percentage
+  avgScrollDepth: numeric("avg_scroll_depth", { precision: 5, scale: 2 }).default("0"), // Average percentage (0-100)
+  addToCartCount: integer("add_to_cart_count").default(0),
+  addToCartRate: numeric("add_to_cart_rate", { precision: 5, scale: 2 }).default("0"), // Percentage
+  bounceCount: integer("bounce_count").default(0),
+  bounceRate: numeric("bounce_rate", { precision: 5, scale: 2 }).default("0"), // Percentage
+  clickCount: integer("click_count").default(0),
+  conversionCount: integer("conversion_count").default(0),
+  conversionRate: numeric("conversion_rate", { precision: 5, scale: 2 }).default("0"),
+  
+  // Composite Score (weighted combination of signals)
+  compositeScore: numeric("composite_score", { precision: 5, scale: 2 }).default("0"), // 0-100
+  confidence: numeric("confidence", { precision: 5, scale: 2 }).default("0"), // Statistical confidence 0-100
+  
+  // Status
+  isWinner: boolean("is_winner").default(false),
+  isStopped: boolean("is_stopped").default(false), // Auto-stopped due to poor performance
+  stoppedReason: text("stopped_reason"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('product_copy_ab_variants_test_id_idx').on(table.testId),
+  index('product_copy_ab_variants_strategy_idx').on(table.strategy),
+  index('product_copy_ab_variants_is_winner_idx').on(table.isWinner),
+]);
+
+// Store-wide Copy Learning - Aggregated insights across all tests
+export const copyLearningInsights = pgTable("copy_learning_insights", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Pattern Recognition
+  category: text("category"), // Product category this insight applies to
+  strategy: text("strategy").notNull(), // Which strategy
+  
+  // Performance Stats
+  testsCount: integer("tests_count").default(0),
+  winsCount: integer("wins_count").default(0),
+  winRate: numeric("win_rate", { precision: 5, scale: 2 }).default("0"), // Percentage
+  avgCompositeScore: numeric("avg_composite_score", { precision: 5, scale: 2 }).default("0"),
+  avgAddToCartLift: numeric("avg_add_to_cart_lift", { precision: 5, scale: 2 }).default("0"), // vs control
+  avgConversionLift: numeric("avg_conversion_lift", { precision: 5, scale: 2 }).default("0"), // vs control
+  
+  // Learned Patterns
+  effectivePatterns: jsonb("effective_patterns"), // What works: keywords, tone, structure
+  ineffectivePatterns: jsonb("ineffective_patterns"), // What doesn't work
+  
+  // Recommendation
+  recommendedForCategories: jsonb("recommended_for_categories").default(sql`'[]'::jsonb`),
+  confidenceLevel: numeric("confidence_level", { precision: 5, scale: 2 }).default("0"), // How reliable is this insight
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('copy_learning_insights_user_id_idx').on(table.userId),
+  index('copy_learning_insights_strategy_idx').on(table.strategy),
+  index('copy_learning_insights_category_idx').on(table.category),
+  uniqueIndex('copy_learning_user_category_strategy_unique').on(table.userId, table.category, table.strategy),
+]);
+
 // Customer Engagement History - Track engagement levels for segmentation
 export const customerEngagementHistory = pgTable("customer_engagement_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2417,6 +2566,25 @@ export const insertAbTestResultSchema = createInsertSchema(abTestResults).omit({
   createdAt: true,
 });
 
+// Product Copy A/B Testing Insert Schemas
+export const insertProductCopyAbTestSchema = createInsertSchema(productCopyAbTests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductCopyAbVariantSchema = createInsertSchema(productCopyAbVariants).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCopyLearningInsightSchema = createInsertSchema(copyLearningInsights).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCustomerEngagementHistorySchema = createInsertSchema(customerEngagementHistory).omit({
   id: true,
   createdAt: true,
@@ -2737,6 +2905,15 @@ export type MarketingAutomationRule = typeof marketingAutomationRules.$inferSele
 export type InsertMarketingAutomationRule = z.infer<typeof insertMarketingAutomationRuleSchema>;
 export type AbTestResult = typeof abTestResults.$inferSelect;
 export type InsertAbTestResult = z.infer<typeof insertAbTestResultSchema>;
+
+// Product Copy A/B Testing Types
+export type ProductCopyAbTest = typeof productCopyAbTests.$inferSelect;
+export type InsertProductCopyAbTest = z.infer<typeof insertProductCopyAbTestSchema>;
+export type ProductCopyAbVariant = typeof productCopyAbVariants.$inferSelect;
+export type InsertProductCopyAbVariant = z.infer<typeof insertProductCopyAbVariantSchema>;
+export type CopyLearningInsight = typeof copyLearningInsights.$inferSelect;
+export type InsertCopyLearningInsight = z.infer<typeof insertCopyLearningInsightSchema>;
+
 export type CustomerEngagementHistory = typeof customerEngagementHistory.$inferSelect;
 export type InsertCustomerEngagementHistory = z.infer<typeof insertCustomerEngagementHistorySchema>;
 export type SendTimePreferences = typeof sendTimePreferences.$inferSelect;

@@ -3343,6 +3343,207 @@ Respond with JSON:
   });
 
   // =============================================================================
+  // STRATEGY-BASED A/B TESTING - UPGRADED AUTOMATIC TESTING
+  // =============================================================================
+
+  // Create automatic strategy-based A/B test for a product
+  app.post("/api/ab-test/strategy/create", requireAuth, aiLimiter, sanitizeBody, checkRateLimit, checkAIUsageLimit, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const {
+        productId,
+        productName,
+        productDescription,
+        category,
+        originalContent,
+        strategies,
+        brandVoice,
+        trafficPercentage = 20, // Start with 20% traffic (zero-risk)
+      } = req.body;
+
+      if (!productId || !productName || !productDescription) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Product ID, name, and description are required" 
+        });
+      }
+
+      // Verify product ownership - only allow testing products that belong to the user
+      const userProducts = await supabaseStorage.getProducts(userId);
+      const productBelongsToUser = userProducts.some(p => p.id === productId);
+      if (!productBelongsToUser) {
+        return res.status(403).json({
+          success: false,
+          message: "You don't have permission to test this product"
+        });
+      }
+
+      // Import strategy-based service
+      const { generateStrategyVariants, COPY_TEST_STRATEGIES } = await import('./lib/ab-testing-service');
+
+      // Generate strategy variants automatically
+      const results = await generateStrategyVariants(
+        {
+          productId,
+          productName,
+          productDescription,
+          category,
+          originalContent,
+          strategies,
+          brandVoice,
+        },
+        openai
+      );
+
+      // Track AI usage
+      await trackSEOUsage(userId);
+
+      // Save to generation history
+      await supabaseStorage.createAiGenerationHistory({
+        userId,
+        generationType: 'strategy_ab_test',
+        inputData: { productId, productName, category, strategies: strategies || Object.keys(COPY_TEST_STRATEGIES) },
+        outputData: { 
+          testId: results.testId, 
+          variantCount: results.variants.length,
+          recommendedStrategy: results.recommendedStrategies.primary
+        },
+        brandVoice: brandVoice || 'auto',
+        tokensUsed: (strategies?.length || 4) * 600,
+        model: 'gpt-4o-mini'
+      });
+
+      res.json({
+        success: true,
+        ...results,
+        config: {
+          trafficPercentage,
+          strategies: strategies || Object.keys(COPY_TEST_STRATEGIES),
+          zeroRiskMode: trafficPercentage <= 30,
+        },
+      });
+    } catch (error: any) {
+      console.error("[Strategy A/B] Test creation error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to create strategy-based A/B test",
+        error: error.message 
+      });
+    }
+  });
+
+  // Record success signals for a variant (time on page, scroll depth, add-to-cart)
+  app.post("/api/ab-test/strategy/signals", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const {
+        variantId,
+        testId,
+        signals,
+      } = req.body;
+
+      if (!variantId || !testId || !signals) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Variant ID, test ID, and signals are required" 
+        });
+      }
+
+      // Calculate composite score
+      const { calculateCompositeScore, shouldAutoStopVariant } = await import('./lib/ab-testing-service');
+      
+      const { compositeScore, breakdown } = calculateCompositeScore({
+        impressions: signals.impressions || 1,
+        totalTimeOnPage: signals.timeOnPage || 0,
+        totalScrollDepth: signals.scrollDepth || 0,
+        addToCartCount: signals.addToCart ? 1 : 0,
+        bounceCount: signals.bounce ? 1 : 0,
+      });
+
+      res.json({
+        success: true,
+        compositeScore,
+        breakdown,
+        variantId,
+      });
+    } catch (error: any) {
+      console.error("[Strategy A/B] Signal recording error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to record success signals" 
+      });
+    }
+  });
+
+  // Check for winner and auto-stop underperformers
+  app.post("/api/ab-test/strategy/evaluate", requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { testId, variants, controlScore } = req.body;
+
+      if (!testId || !variants || !Array.isArray(variants)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Test ID and variants array are required" 
+        });
+      }
+
+      const { detectWinner, shouldAutoStopVariant } = await import('./lib/ab-testing-service');
+
+      // Check for winner
+      const winnerResult = detectWinner(variants, 100, 95);
+
+      // Check which variants should be stopped
+      const variantStatuses = variants.map(v => ({
+        id: v.id,
+        ...shouldAutoStopVariant(
+          v.compositeScore,
+          controlScore || 50,
+          v.impressions,
+          50
+        ),
+      }));
+
+      res.json({
+        success: true,
+        winner: winnerResult,
+        variantStatuses,
+        testId,
+      });
+    } catch (error: any) {
+      console.error("[Strategy A/B] Evaluation error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to evaluate A/B test" 
+      });
+    }
+  });
+
+  // Get available strategies for display
+  app.get("/api/ab-test/strategy/list", requireAuth, async (req, res) => {
+    try {
+      const { COPY_TEST_STRATEGIES } = await import('./lib/ab-testing-service');
+      
+      const strategies = Object.entries(COPY_TEST_STRATEGIES).map(([key, value]) => ({
+        id: key,
+        name: value.name,
+        description: value.description,
+        emphasis: value.emphasis,
+      }));
+
+      res.json({
+        success: true,
+        strategies,
+      });
+    } catch (error: any) {
+      console.error("[Strategy A/B] List strategies error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to fetch strategies" 
+      });
+    }
+  });
+
+  // =============================================================================
   // END WAVE 1 + WAVE 2 API ENDPOINTS
   // =============================================================================
 

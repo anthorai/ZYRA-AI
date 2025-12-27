@@ -94,6 +94,38 @@ Real AI-powered behavioral automation that tracks customer actions and triggers 
 ### Dynamic Customer Segmentation
 AI-powered customer segmentation system that automatically categorizes customers into groups based on purchase behavior. Database schema includes 4 tables: `customer_segments` (segment definitions with rules), `customer_segment_members` (customers in each segment), `customer_profiles` (aggregated customer data), and `segment_analytics` (segment performance metrics). Supports segment types: high_spenders, first_timers, loyal_buyers, discount_seekers, dormant, cart_abandoners, vip, at_risk, and custom. Features AI-powered segment analysis using GPT-4o-mini, automatic member population based on rules, segment recalculation, and default segment seeding. Frontend includes analytics overview, AI suggestions, segment management grid, create/delete dialogs, and member viewing.
 
+### Strategy-Based A/B Testing Copy (Dec 27, 2025)
+Upgraded from manual input to automatic, strategy-based testing with zero-risk rules. Located at `client/src/pages/ai-tools/ab-testing-copy.tsx` with backend service at `server/lib/ab-testing-service.ts`.
+
+**Key Features:**
+- **4 Conversion Strategies**: Tests automatically generated variants for each strategy:
+  - `seo_clarity`: SEO-optimized with clear, direct messaging
+  - `benefit_first`: Leads with key benefits and value proposition
+  - `trust_reassurance`: Emphasizes trust signals, warranties, reviews
+  - `urgency_light`: Subtle urgency cues without being pushy
+- **Zero Manual Writing**: Auto-generates all copy variants based on product data
+- **Smart Success Signals**: Composite scoring beyond just clicks:
+  - Add-to-cart rate (35% weight)
+  - Time on page (30% weight)
+  - Scroll depth (20% weight)
+  - Bounce rate inverse (15% weight)
+- **Zero-Risk Testing Rules**:
+  - Limited to 20% traffic allocation by default
+  - Auto-stop for variants underperforming control by >25% after 50 impressions
+  - Winner detection with 95% statistical confidence threshold
+- **Product Ownership Verification**: Security check ensures users can only test their own products
+
+**API Endpoints:**
+- `POST /api/ab-test/strategy/create`: Create automatic strategy test
+- `POST /api/ab-test/strategy/signals`: Record success signals for variants
+- `POST /api/ab-test/strategy/evaluate`: Check for winner and auto-stop underperformers
+- `GET /api/ab-test/strategy/list`: List available strategies
+
+**Database Schema:**
+- `productCopyAbTests`: Test configurations and status
+- `productCopyAbVariants`: Individual variant content and metrics
+- `copyLearningInsights`: Cross-product learning for strategy recommendations
+
 ## System Design Choices
 The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend. It supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup.
 
