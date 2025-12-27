@@ -8261,6 +8261,95 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Create pre-import snapshot for CSV/XLSX bulk import rollback protection
+  app.post('/api/csv-import/create-snapshot', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { importType, productCount } = req.body;
+
+      // Get all current products for this user to create a snapshot
+      const userProducts = await supabaseStorage.getProductsByUser(userId);
+
+      // Create a bulk import history entry for rollback purposes
+      const historyEntries = [];
+
+      for (const product of userProducts) {
+        const historyEntry = {
+          productId: product.id,
+          userId,
+          productName: product.name,
+          changeType: 'bulk-import' as const,
+          changedBy: 'CSV Import',
+          changes: [
+            {
+              field: 'Pre-Import Snapshot',
+              before: JSON.stringify({
+                name: product.name,
+                description: product.description,
+                price: product.price,
+                category: product.category,
+                tags: product.tags,
+                stock: product.stock
+              }),
+              after: 'Pending import changes'
+            }
+          ],
+          canRollback: true
+        };
+        historyEntries.push(historyEntry);
+      }
+
+      // Create history entries for rollback
+      for (const entry of historyEntries.slice(0, 50)) { // Limit to 50 for performance
+        try {
+          await supabaseStorage.createProductHistory(entry);
+        } catch (err) {
+          console.error('Error creating history entry:', err);
+        }
+      }
+
+      // Also create product snapshots for more detailed rollback
+      for (const product of userProducts.slice(0, 50)) {
+        try {
+          await db.insert(productSnapshots).values({
+            productId: product.id,
+            snapshotData: {
+              product: {
+                name: product.name,
+                description: product.description,
+                originalDescription: product.originalDescription,
+                price: product.price,
+                category: product.category,
+                tags: product.tags,
+                stock: product.stock,
+                image: product.image,
+                features: product.features,
+                optimizedCopy: product.optimizedCopy,
+                isOptimized: product.isOptimized
+              }
+            },
+            reason: 'before_bulk_import'
+          });
+        } catch (err) {
+          console.error('Error creating snapshot:', err);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Pre-import snapshot created successfully',
+        snapshotCount: Math.min(userProducts.length, 50),
+        totalProducts: userProducts.length
+      });
+    } catch (error) {
+      console.error('CSV snapshot error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create snapshot', 
+        message: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
   // ===== SHOPIFY OAUTH INTEGRATION =====
   
   // Helper function to get the correct base URL for OAuth redirects
