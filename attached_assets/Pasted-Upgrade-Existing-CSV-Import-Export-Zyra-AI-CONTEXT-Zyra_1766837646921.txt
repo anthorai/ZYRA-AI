@@ -1,0 +1,120 @@
+Upgrade Existing CSV Import / Export (Zyra AI)
+CONTEXT
+
+Zyra AI already has a working CSV Import / Export feature used for bulk product management and data synchronization.
+
+Your task is NOT to rebuild or replace it, but to upgrade and extend the existing feature with modern, premium value while keeping current workflows stable.
+
+🎯 UPDATE OBJECTIVE
+
+Update the current CSV Import / Export feature so it:
+
+Remains backward-compatible with existing CSV workflows
+
+Adds intelligence, safety, and scale value
+
+Feels like a premium bulk-control system, not a basic file tool
+
+Requires no manual writing from users
+
+📁 FILE FORMAT UPDATE (EXTEND, DON’T BREAK)
+
+Keep existing CSV support exactly as-is.
+
+Add support for:
+
+XLSX (.xlsx) import and export
+
+Internally convert XLSX → CSV
+
+Processing logic must still operate on CSV internally
+
+Do NOT add any other file formats.
+
+🧠 PRE-IMPORT INTELLIGENCE (NEW LAYER)
+
+Before applying an imported file, add a non-destructive validation step:
+
+Validate required fields (handle, title, description)
+
+Detect duplicate handles or titles
+
+Detect keyword conflicts across products
+
+Identify missing SEO-critical fields
+
+Flag risky updates that may affect store-level consistency
+
+This step must:
+
+Show a read-only validation summary
+
+NOT apply changes automatically
+
+Allow user to continue or cancel
+
+⚙️ BULK APPLY UPGRADE (KEEP EXISTING APPLY FLOW)
+
+When user confirms:
+
+Apply changes using the existing bulk apply logic
+
+Enhance it by:
+
+Grouping products logically (category / intent where possible)
+
+Respecting Multimodal AI strategy decisions
+
+Apply changes instantly to products (no push step)
+
+🔐 ROLLBACK INTEGRATION (CONNECT, DON’T DUPLICATE)
+
+Integrate the existing CSV flow with Zyra’s current Rollback system:
+
+Automatically save a pre-import snapshot
+
+Register the import as a rollback event
+
+Allow revert by:
+
+Full import
+
+Product group
+
+Single product
+
+Do NOT build a new rollback system.
+
+🖥️ UX UPDATE (MINIMAL & SAFE)
+
+Update UI behavior so that:
+
+CSV Import clearly shows:
+
+Validation summary
+
+“Safe to apply / Needs attention” states
+
+No new manual input fields are introduced
+
+Existing users can continue using CSV without friction
+
+🚫 HARD CONSTRAINTS (DO NOT CHANGE)
+
+Do NOT remove existing CSV behavior
+
+Do NOT add manual writing or prompt inputs
+
+Do NOT generate SEO or content inside CSV logic
+
+Do NOT add ranking, revenue, or performance claims
+
+Do NOT bypass Multimodal AI decisions
+
+📌 UPDATED FEATURE DESCRIPTION (REPLACE OLD ONE)
+
+CSV Import/Export lets you safely sync, review, and manage products in bulk—with built-in validation and rollback protection for large-scale optimization.
+
+🔑 INTERNAL UPDATE PRINCIPLE
+
+Upgrade the system’s intelligence and safety without changing how users already trust it.
