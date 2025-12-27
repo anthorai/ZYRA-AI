@@ -1,0 +1,144 @@
+Upgrade A/B Testing Copy (Zyra AI)
+CONTEXT
+
+Zyra AI already has an A/B Testing Copy feature that tests different versions of product copy.
+
+Your task is NOT to remove or redesign it, but to upgrade the existing feature so it becomes automatic, safer, smarter, and more valuable, aligned with Zyra AI’s goal of organic Google-driven sales growth.
+
+🎯 UPDATE OBJECTIVE
+
+Update the current A/B Testing Copy feature so it:
+
+Requires zero manual writing
+
+Runs automatically and safely
+
+Tests strategies, not random text
+
+Protects sales during testing
+
+Learns and improves results store-wide
+
+Integrates with Zyra’s Rollback system
+
+🧠 TESTING LOGIC UPGRADE (CORE CHANGE)
+
+Replace basic “Version A vs Version B” logic with strategy-based testing:
+
+Generate copy variants based on different conversion strategies, such as:
+
+SEO + clarity focused
+
+Benefit-first conversion focused
+
+Trust & reassurance focused
+
+Urgency-light CTA focused
+
+Variants must:
+
+Stay SEO-safe
+
+Respect Brand Voice Memory
+
+Align with product images and intent
+
+Be approved automatically (no user prompts)
+
+🛡️ ZERO-RISK TESTING RULES (NEW)
+
+To protect merchants:
+
+Start tests on a limited traffic percentage
+
+Continuously monitor performance signals
+
+Automatically stop underperforming variants
+
+Promote winning copy without waiting for manual input
+
+At no point should testing risk store-wide performance.
+
+📊 SMART SUCCESS SIGNALS (UPGRADE METRICS)
+
+Do NOT rely only on clicks.
+
+Evaluate variants using:
+
+Time on product page
+
+Scroll depth
+
+Add-to-cart actions
+
+Bounce behavior (if available)
+
+Choose winners based on buyer intent, not vanity metrics.
+
+⚙️ AUTO-APPLY + ROLLBACK INTEGRATION
+
+When a winner is detected:
+
+Apply the winning copy automatically
+
+Register the change in Zyra’s existing Rollback system
+
+Allow revert at:
+
+Product level
+
+Bulk test level
+
+Do NOT create a new rollback mechanism.
+
+🧠 STORE-WIDE LEARNING (MODERN VALUE)
+
+Enhance the system so it:
+
+Stores anonymized insights about what copy styles perform best
+
+Uses these learnings to improve:
+
+Future A/B tests
+
+Default copy generation
+
+Reduces testing time over time
+
+This learning must stay internal and automatic.
+
+🖥️ USER EXPERIENCE RULES
+
+No manual copy editing
+
+No prompt fields
+
+Clear status indicators:
+
+“Testing in progress”
+
+“Winner selected”
+
+Rollback always visible
+
+Works for single products and bulk testing
+
+🚫 HARD CONSTRAINTS (DO NOT CHANGE)
+
+Do NOT add ranking or revenue guarantees
+
+Do NOT require ads or paid traffic
+
+Do NOT expose raw metrics that confuse users
+
+Do NOT duplicate SEO Engine functionality
+
+Shopify App Store–safe language only
+
+📌 UPDATED FEATURE DESCRIPTION (REPLACE OLD TEXT)
+
+A/B Testing Copy automatically tests different product copy strategies, keeps the better-performing version, and protects every change with rollback—no manual work required.
+
+🔑 INTERNAL UPDATE PRINCIPLE
+
+Testing should feel invisible, safe, and intelligent—not experimental.
