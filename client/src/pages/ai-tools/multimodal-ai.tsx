@@ -1,717 +1,613 @@
-import { useState, useRef } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { ProductSelector, stripHtmlTags } from "@/components/product-selector";
-import { getToolCredits, formatCreditsDisplay } from "@shared/ai-credits";
 import { 
-  Camera,
-  Upload,
-  Copy,
+  Brain,
+  Zap,
   CheckCircle,
   Clock,
-  Zap,
+  Eye,
+  RotateCcw,
+  Target,
+  Sparkles,
+  Shield,
+  Settings,
+  TrendingUp,
   Image as ImageIcon,
   FileText,
-  Eye,
-  X,
-  Plus,
-  Package
+  Tag,
+  AlertCircle,
+  Play,
+  Package,
+  Search,
+  Users,
+  Palette,
+  ArrowRight,
+  RefreshCw
 } from "lucide-react";
 
-interface MultimodalForm {
-  productName: string;
+interface Product {
+  id: string;
+  shopifyId?: string;
+  name: string;
+  description?: string;
   category: string;
-  attributes: string;
-  targetKeywords: string;
+  price: string;
+  image?: string;
+  features?: string;
+  tags?: string;
+  isOptimized?: boolean;
 }
 
-interface ImageAnalysis {
-  colors: string[];
-  materials: string[];
-  style: string;
-  features: string[];
-  visualElements: string[];
+type OptimizationStrategy = 
+  | "search-intent-focused"
+  | "image-led-conversion"
+  | "balanced-organic-growth"
+  | "trust-clarity-priority";
+
+type SEOIntensity = "light" | "balanced" | "full";
+
+interface MultimodalAnalysis {
+  productId: string;
+  productName: string;
+  strategySelected: OptimizationStrategy;
+  strategyLabel: string;
+  reasonSummary: string;
+  enginesActivated: {
+    seoEngine: SEOIntensity;
+    brandVoiceMemory: boolean;
+    templates: boolean;
+    conversionOptimization: boolean;
+  };
+  signals: {
+    imageContentAlignment: number;
+    contentIntentAlignment: number;
+    overOptimizationRisk: "low" | "medium" | "high";
+    searchIntent: "informational" | "commercial" | "transactional";
+  };
+  appliedChanges?: {
+    title?: string;
+    description?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    tags?: string[];
+  };
+  rollbackId?: string;
 }
 
-interface GeneratedContent {
-  richDescription: string;
-  visualDescription: string;
-  seoContent: string;
-  marketingCopy: string;
-  imageAnalysis: ImageAnalysis;
+interface BulkMultimodalResult {
+  success: boolean;
+  totalProducts: number;
+  optimized: number;
+  skipped: number;
+  results: MultimodalAnalysis[];
 }
+
+const strategyDescriptions: Record<OptimizationStrategy, { label: string; description: string; icon: typeof Search }> = {
+  "search-intent-focused": {
+    label: "Search-Intent Focused",
+    description: "Optimizes for matching user search queries and Google's understanding of search intent",
+    icon: Search
+  },
+  "image-led-conversion": {
+    label: "Image-Led Conversion",
+    description: "Leverages strong visual signals to drive purchases when images tell the story",
+    icon: ImageIcon
+  },
+  "balanced-organic-growth": {
+    label: "Balanced Organic Growth",
+    description: "Harmonizes SEO, conversion, and brand voice for sustainable rankings",
+    icon: TrendingUp
+  },
+  "trust-clarity-priority": {
+    label: "Trust & Clarity Priority",
+    description: "Emphasizes clear messaging and trust signals for hesitant buyers",
+    icon: Shield
+  }
+};
 
 export default function MultimodalAI() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [shopifyImageUrls, setShopifyImageUrls] = useState<string[]>([]); // Shopify product images
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [analysisResults, setAnalysisResults] = useState<MultimodalAnalysis[]>([]);
+  const [isBulkMode, setIsBulkMode] = useState(false);
 
-  const baseCategories = [
-    "Electronics",
-    "Fashion & Apparel",
-    "Home & Garden",
-    "Beauty & Personal Care",
-    "Sports & Outdoors",
-    "Toys & Games",
-    "Books & Media",
-    "Food & Beverage",
-    "Health & Wellness",
-    "Automotive",
-    "Pet Supplies",
-    "Office & Stationery",
-    "Baby & Kids",
-    "Arts & Crafts",
-    "Jewelry & Accessories",
-    "Tools & Hardware",
-    "Musical Instruments"
-  ];
-
-  // Combine base categories with any custom ones from Shopify products
-  const categories = [...baseCategories, ...customCategories];
-
-  const form = useForm<MultimodalForm>({
-    defaultValues: {
-      productName: "",
-      category: "",
-      attributes: "",
-      targetKeywords: "",
-    },
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
   });
 
-
-  // Mock multimodal AI generation mutation
-  const generateMultimodalMutation = useMutation({
-    mutationFn: async (data: MultimodalForm & { images: File[] }) => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 4000));
-      
-      const { productName, category, attributes, targetKeywords, images } = data;
-      
-      // Mock image analysis based on filenames
-      const primaryImage = images[0];
-      const fileName = primaryImage?.name.toLowerCase() || '';
-      
-      let imageAnalysis: ImageAnalysis = {
-        colors: ['Black', 'Silver'],
-        materials: ['Plastic', 'Metal'],
-        style: 'Modern',
-        features: ['Sleek design', 'Compact'],
-        visualElements: ['Product shot', 'Clean background']
-      };
-      
-      // Simulate vision AI analysis based on filename
-      if (fileName.includes('headphone') || fileName.includes('audio')) {
-        imageAnalysis = {
-          colors: ['Black', 'Silver', 'Blue accents'],
-          materials: ['Premium plastic', 'Metal hinges', 'Soft padding'],
-          style: 'Modern tech',
-          features: ['Over-ear design', 'Adjustable headband', 'Control buttons'],
-          visualElements: ['Studio lighting', 'Angle view', 'Detail shots']
-        };
-      } else if (fileName.includes('shirt') || fileName.includes('clothing')) {
-        imageAnalysis = {
-          colors: ['Navy blue', 'White'],
-          materials: ['Cotton blend', 'Breathable fabric'],
-          style: 'Casual modern',
-          features: ['Button front', 'Collar', 'Regular fit'],
-          visualElements: ['Model wearing', 'Lifestyle shot', 'Natural lighting']
-        };
-      } else if (fileName.includes('phone') || fileName.includes('mobile')) {
-        imageAnalysis = {
-          colors: ['Space gray', 'Glass back'],
-          materials: ['Aluminum frame', 'Gorilla glass'],
-          style: 'Minimalist tech',
-          features: ['Edge-to-edge screen', 'Multiple cameras', 'Wireless charging'],
-          visualElements: ['Product angles', 'Screen detail', 'Professional lighting']
-        };
+  const analyzeAndApplyMutation = useMutation({
+    mutationFn: async (productIds: string[]) => {
+      const response = await apiRequest("POST", "/api/multimodal/analyze-and-apply", {
+        productIds,
+        autoApply: true
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to analyze products");
       }
-      
-      // Generate rich content combining visual and text inputs
-      const richDescription = `Experience the ${imageAnalysis.style.toLowerCase()} design of our ${productName}. ${attributes ? `Featuring ${attributes}, ` : ''}this ${category.toLowerCase()} showcases beautiful ${imageAnalysis.colors.join(' and ')} tones with premium ${imageAnalysis.materials.join(' and ')} construction. The ${imageAnalysis.features.join(', ')} create an elegant combination of form and function that stands out in any setting.`;
-      
-      const visualDescription = `The product image reveals a stunning ${imageAnalysis.style.toLowerCase()} aesthetic with ${imageAnalysis.colors.join(', ')} color palette. Key visual elements include ${imageAnalysis.visualElements.join(', ')}, highlighting the ${imageAnalysis.features.join(' and ')} in crisp detail.`;
-      
-      const seoContent = `${productName} ${targetKeywords ? `- ${targetKeywords} ` : ''}| ${imageAnalysis.colors.join(' ')} ${category} with ${imageAnalysis.materials.join(', ')}. ${imageAnalysis.features.join(', ')}. Premium quality ${productName.toLowerCase()} available now with free shipping.`;
-      
-      const marketingCopy = `🎯 Introducing the ${productName} - where ${imageAnalysis.style.toLowerCase()} meets functionality! \n\n✨ Stunning ${imageAnalysis.colors.join(' & ')} design\n🔥 Premium ${imageAnalysis.materials.join(' and ')} build\n💫 ${imageAnalysis.features.join(' + ')}\n\nSee it to believe it. Feel the difference quality makes. #${productName.replace(/\s/g, '')} #${category}`;
-      
-      return {
-        richDescription,
-        visualDescription,
-        seoContent,
-        marketingCopy,
-        imageAnalysis
-      };
+      return response.json();
     },
-    onSuccess: (result) => {
-      setGeneratedContent(result);
+    onSuccess: (result: BulkMultimodalResult) => {
+      setAnalysisResults(result.results);
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products/history'] });
+      
       toast({
-        title: "🎨 Multimodal AI Complete!",
-        description: "Rich content generated from your images and text inputs!",
+        title: "Optimization Complete",
+        description: `Applied optimizations to ${result.optimized} of ${result.totalProducts} products`,
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate multimodal content",
+        title: "Optimization Failed",
+        description: error.message || "Failed to analyze and apply optimizations",
         variant: "destructive",
       });
     },
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
-
-    // Validate file types
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    if (imageFiles.length !== files.length) {
+  const rollbackMutation = useMutation({
+    mutationFn: async (rollbackId: string) => {
+      const response = await apiRequest("POST", `/api/products/history/rollback/${rollbackId}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to rollback changes");
+      }
+      return response.json();
+    },
+    onSuccess: (_, rollbackId) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products/history'] });
+      
+      setAnalysisResults(prev => prev.filter(r => r.rollbackId !== rollbackId));
+      
       toast({
-        title: "Invalid file format",
-        description: "Please upload only image files",
+        title: "Changes Reverted",
+        description: "Product has been restored to its previous state",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Rollback Failed",
+        description: error.message || "Failed to revert changes",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAnalyzeProduct = () => {
+    if (!selectedProductId) {
+      toast({
+        title: "No Product Selected",
+        description: "Please select a product to analyze",
         variant: "destructive",
       });
       return;
     }
-
-    // Limit to 3 images
-    const selectedFiles = imageFiles.slice(0, 3);
-    setUploadedImages(prev => [...prev, ...selectedFiles].slice(0, 3));
-    
-    // Create previews
-    selectedFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreviews(prev => [...prev, e.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    analyzeAndApplyMutation.mutate([selectedProductId]);
   };
 
-  const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const onSubmit = (data: MultimodalForm) => {
-    if (uploadedImages.length === 0) {
+  const handleBulkAnalyze = () => {
+    const eligibleProducts = products.filter(p => !p.isOptimized).slice(0, 10);
+    if (eligibleProducts.length === 0) {
       toast({
-        title: "Images required",
-        description: "Please upload at least one product image",
+        title: "No Eligible Products",
+        description: "All products are already optimized or no products available",
         variant: "destructive",
       });
       return;
     }
-
-    if (!data.productName.trim()) {
-      toast({
-        title: "Product name required",
-        description: "Please enter a product name",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    generateMultimodalMutation.mutate({ ...data, images: uploadedImages });
+    setIsBulkMode(true);
+    analyzeAndApplyMutation.mutate(eligibleProducts.map(p => p.id));
   };
 
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copied!",
-        description: `${type} copied to clipboard.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Copy failed",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
+  const handleRollback = (rollbackId: string) => {
+    rollbackMutation.mutate(rollbackId);
+  };
+
+  const getStrategyBadgeClass = (strategy: OptimizationStrategy): string => {
+    switch (strategy) {
+      case "search-intent-focused":
+        return "bg-blue-500/20 text-blue-300";
+      case "image-led-conversion":
+        return "bg-purple-500/20 text-purple-300";
+      case "balanced-organic-growth":
+        return "bg-green-500/20 text-green-300";
+      case "trust-clarity-priority":
+        return "bg-amber-500/20 text-amber-300";
+      default:
+        return "bg-slate-500/20 text-slate-300";
     }
   };
+
+  const getSEOIntensityBadge = (intensity: SEOIntensity) => {
+    switch (intensity) {
+      case "light":
+        return <Badge className="bg-slate-500/20 text-slate-300">Light</Badge>;
+      case "balanced":
+        return <Badge className="bg-blue-500/20 text-blue-300">Balanced</Badge>;
+      case "full":
+        return <Badge className="bg-green-500/20 text-green-300">Full</Badge>;
+    }
+  };
+
+  const unoptimizedCount = products.filter(p => !p.isOptimized).length;
 
   return (
     <PageShell
       title="Multimodal AI"
-      subtitle="Combine product images with text to generate rich, contextual content"
+      subtitle="Intelligent optimization that analyzes images, content, and context together"
       backTo="/dashboard?tab=ai-tools"
     >
-      {/* Multimodal AI Overview */}
+      {/* System Philosophy */}
       <DashboardCard
-        title="Visual + Text AI Generation"
-        description="Upload product images and provide text attributes for comprehensive AI-generated content"
+        title="Multimodal Intelligence Layer"
+        description="Automatically selects the optimal organic optimization strategy for your products"
       >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 text-[10px] sm:text-xs md:text-sm">
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">1</div>
-                <span className="text-slate-300 truncate">Upload product images (up to 3)</span>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">2</div>
-                <span className="text-slate-300 truncate">AI analyzes visual + text attributes</span>
-              </div>
-              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">3</div>
-                <span className="text-slate-300 truncate">Generate rich, contextual copy</span>
-              </div>
-            </div>
-      </DashboardCard>
-
-      {/* Upload and Form */}
-      <DashboardCard
-        title="Upload Images & Product Details"
-        description="Combine visual and text inputs for the most accurate AI-generated content"
-      >
-        <div className="space-y-6">
-            {/* Product Selector - Auto-fill from Shopify */}
-            <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-              <div className="flex items-center gap-2 text-primary">
-                <Package className="w-5 h-5" />
-                <Label className="text-sm font-semibold">Quick-Fill from Shopify Product</Label>
-              </div>
-              <ProductSelector
-                value={selectedProductId}
-                onSelect={async (product) => {
-                  if (product) {
-                    // Persist selected product ID
-                    setSelectedProductId(product.id);
-                    
-                    // Clear previous Shopify images
-                    setShopifyImageUrls([]);
-                    
-                    try {
-                      // Guard against missing shopifyId
-                      if (!product.shopifyId) {
-                        throw new Error('Product missing Shopify ID');
-                      }
-                      
-                      // Fetch full product details from Shopify using authenticated request
-                      const response = await apiRequest('GET', `/api/shopify/products/${product.shopifyId}`);
-                      
-                      // Check response status before parsing
-                      if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                        throw new Error(errorData.error || `API error: ${response.status}`);
-                      }
-                      
-                      const fullProduct = await response.json();
-                      
-                      // Auto-fill product name and category
-                      form.setValue("productName", fullProduct.title || product.name);
-                      
-                      // Add custom category if needed
-                      const productCategory = fullProduct.productType || product.category;
-                      if (productCategory && !categories.includes(productCategory)) {
-                        setCustomCategories(prev => 
-                          prev.includes(productCategory) ? prev : [...prev, productCategory]
-                        );
-                      }
-                      form.setValue("category", productCategory);
-                      
-                      // Auto-fill description (strip HTML tags, reset to empty if no description)
-                      const cleanDescription = stripHtmlTags(fullProduct.description || '');
-                      form.setValue("attributes", cleanDescription);
-                      
-                      // Auto-fill keywords from tags (reset to empty if no tags)
-                      form.setValue("targetKeywords", fullProduct.tags || "");
-                      
-                      // Fetch and display multiple Shopify product images (up to 3)
-                      const imageCount = fullProduct.images?.length || 0;
-                      if (fullProduct.images && imageCount > 0) {
-                        const imageUrls = fullProduct.images.slice(0, 3).map((img: any) => img.src);
-                        setShopifyImageUrls(imageUrls);
-                      }
-                      
-                      toast({
-                        title: "Product Loaded!",
-                        description: `Auto-filled from: ${fullProduct.title}. ${imageCount} image(s) loaded from Shopify.`,
-                      });
-                    } catch (error: any) {
-                      // Clear stale images on error
-                      setShopifyImageUrls([]);
-                      
-                      // Fallback to basic product data if API call fails
-                      form.setValue("productName", product.name);
-                      if (product.category && !categories.includes(product.category)) {
-                        setCustomCategories(prev => 
-                          prev.includes(product.category) ? prev : [...prev, product.category]
-                        );
-                      }
-                      form.setValue("category", product.category);
-                      
-                      // Auto-fill description from basic product (strip HTML, reset to empty if none)
-                      const cleanDescription = stripHtmlTags(product.description || '');
-                      form.setValue("attributes", cleanDescription);
-                      
-                      // Reset keywords to prevent stale data
-                      form.setValue("targetKeywords", "");
-                      
-                      if (product.image) {
-                        setShopifyImageUrls([product.image]);
-                      }
-                      
-                      toast({
-                        title: "Partial Load",
-                        description: error.message || `Auto-filled from: ${product.name}. Some details may be missing.`,
-                        variant: "destructive",
-                      });
-                    }
-                  } else {
-                    // Handle null product (user deselected)
-                    setSelectedProductId("");
-                    setShopifyImageUrls([]);
-                    form.setValue("productName", "");
-                    form.setValue("category", "");
-                    form.setValue("attributes", "");
-                    form.setValue("targetKeywords", "");
-                  }
-                }}
-                placeholder="Select Shopify product to auto-fill and fetch images..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Or manually enter product details and upload images below
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <Brain className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Multimodal AI analyzes product images, content, and store context together to automatically 
+                apply the most effective organic optimization strategy - while keeping every change reversible with rollback.
               </p>
             </div>
-
-            {/* Shopify Product Images */}
-            {shopifyImageUrls.length > 0 && (
-              <div>
-                <Label className="text-white">Shopify Product Images</Label>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                  {shopifyImageUrls.map((imageUrl, index) => (
-                    <div key={index} className="relative shadow-lg border border-primary/50 hover:border-primary hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
-                      <img 
-                        src={imageUrl} 
-                        alt={`Shopify Product ${index + 1}`}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge className="bg-primary/90 text-primary-foreground">
-                          From Shopify
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-400 mt-2">
-                  These images will be used for AI analysis. You can upload additional images below.
-                </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg border">
+              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <Search className="w-5 h-5 text-blue-400" />
               </div>
-            )}
-
-            {/* Image Upload Section */}
-            <div>
-              <Label className="text-white">Additional Product Images (Up to 3 total)</Label>
-              <div className="mt-2 space-y-4">
-                {/* Upload Area */}
-                {uploadedImages.length < 3 && (
-                  <div 
-                    className="border-2 border-dashed border-primary/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer bg-slate-800/20"
-                    onClick={handleUploadClick}
-                  >
-                    <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">Upload Product Images</h3>
-                    <p className="text-slate-300">Click to browse or drag & drop multiple images</p>
-                    <p className="text-sm text-slate-400 mt-2">JPG, PNG, WebP up to 10MB each</p>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef}
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden" 
-                    />
-                  </div>
-                )}
-
-                {/* Image Previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
-                        <img 
-                          src={preview} 
-                          alt={`Product ${index + 1}`} 
-                          className="w-full h-32 sm:h-40 md:h-48 object-cover"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white"
-                        >
-                          <X className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0" />
-                        </Button>
-                        <Badge className="absolute bottom-2 left-2 bg-slate-800/80 text-white text-[10px] sm:text-xs">
-                          Image {index + 1}
-                        </Badge>
-                      </div>
-                    ))}
-                    {uploadedImages.length < 3 && (
-                      <div 
-                        className="h-32 sm:h-40 md:h-48 border-2 border-dashed border-slate-600 rounded-xl sm:rounded-2xl flex items-center justify-center cursor-pointer hover:border-slate-500 transition-colors"
-                        onClick={handleUploadClick}
-                      >
-                        <div className="text-center">
-                          <Plus className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-slate-400 mx-auto mb-2 flex-shrink-0" />
-                          <p className="text-slate-400 text-[10px] sm:text-xs md:text-sm truncate">Add Another</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+              <div className="min-w-0">
+                <p className="font-medium text-sm">SEO Executes</p>
+                <p className="text-xs text-muted-foreground truncate">Applies ranking strategies</p>
               </div>
             </div>
-
-            {/* Product Information Form */}
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="productName" className="text-white">Product Name *</Label>
-                  <Input
-                    id="productName"
-                    className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                    placeholder="e.g., Premium Wireless Headphones"
-                    {...form.register("productName", { required: true })}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="category" className="text-white">Category</Label>
-                  <Controller
-                    name="category"
-                    control={form.control}
-                    render={({ field: { value, onChange } }) => (
-                      <Select onValueChange={onChange} value={value ?? ""}>
-                        <SelectTrigger className="mt-2 bg-slate-800/50 border-slate-600 text-white" data-testid="select-category">
-                          <SelectValue placeholder="Select product category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>{category}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg border">
+              <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                <Brain className="w-5 h-5 text-purple-400" />
               </div>
-
-              <div>
-                <Label htmlFor="attributes" className="text-white">Product Attributes</Label>
-                <Textarea
-                  id="attributes"
-                  className="mt-2 h-24 resize-none bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="e.g., Noise-canceling, 30-hour battery, wireless charging case, premium build"
-                  {...form.register("attributes")}
-                />
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Multimodal Decides</p>
+                <p className="text-xs text-muted-foreground truncate">Selects best strategy</p>
               </div>
-
-              <div>
-                <Label htmlFor="targetKeywords" className="text-white">Target Keywords</Label>
-                <Input
-                  id="targetKeywords"
-                  className="mt-2 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
-                  placeholder="e.g., wireless headphones, noise canceling, premium audio"
-                  {...form.register("targetKeywords")}
-                />
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg border">
+              <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-5 h-5 text-green-400" />
               </div>
-
-              <Button
-                type="submit"
-                disabled={generateMultimodalMutation.isPending || uploadedImages.length === 0}
-                className="w-full gradient-button transition-all duration-200 font-medium"
-                data-testid="button-generate-multimodal"
-              >
-                {generateMultimodalMutation.isPending ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    AI analyzing images and text...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Generate Multimodal Content - {formatCreditsDisplay(getToolCredits('multimodal-ai'))}
-                  </>
-                )}
-              </Button>
-            </form>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Rollback Protects</p>
+                <p className="text-xs text-muted-foreground truncate">Instant revert available</p>
+              </div>
+            </div>
+          </div>
         </div>
       </DashboardCard>
 
-      {/* Generated Results */}
-      {generatedContent && (
-          <div className="space-y-6">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-              <h2 className="text-2xl font-semibold text-white">AI-Generated Multimodal Content</h2>
+      {/* Product Selection */}
+      <DashboardCard
+        title="Select Product"
+        description="Choose a product for intelligent multimodal analysis and optimization"
+        headerAction={
+          <Button
+            onClick={handleBulkAnalyze}
+            disabled={analyzeAndApplyMutation.isPending || unoptimizedCount === 0}
+            variant="outline"
+            data-testid="button-bulk-analyze"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Optimize All ({unoptimizedCount})
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <ProductSelector
+            value={selectedProductId}
+            onSelect={(product) => {
+              if (product) {
+                setSelectedProductId(product.id);
+                setIsBulkMode(false);
+              } else {
+                setSelectedProductId("");
+              }
+            }}
+            placeholder="Select a product for multimodal analysis..."
+          />
+          
+          <Button
+            onClick={handleAnalyzeProduct}
+            disabled={!selectedProductId || analyzeAndApplyMutation.isPending}
+            className="w-full"
+            data-testid="button-analyze-apply"
+          >
+            {analyzeAndApplyMutation.isPending ? (
+              <>
+                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                Analyzing & Applying...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 mr-2" />
+                Analyze & Apply Optimization
+              </>
+            )}
+          </Button>
+          
+          <p className="text-xs text-muted-foreground text-center">
+            No manual input required. AI automatically collects and analyzes all product signals.
+          </p>
+        </div>
+      </DashboardCard>
+
+      {/* Loading State */}
+      {analyzeAndApplyMutation.isPending && (
+        <DashboardCard>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+                <Brain className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <Skeleton className="h-4 w-48 mb-2" />
+                <Skeleton className="h-3 w-72" />
+              </div>
             </div>
-
-            {/* Image Analysis */}
-            <DashboardCard className="border-2 border-cyan-400/30 bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
-                <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                  <Eye className="w-5 h-5 text-cyan-400 mr-2" />
-                  Visual Analysis
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                  <div className="min-w-0">
-                    <h4 className="text-white font-medium mb-2 text-base sm:text-lg md:text-xl truncate">Colors Detected</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {generatedContent.imageAnalysis.colors.map((color, index) => (
-                        <Badge key={index} className="bg-cyan-400/20 text-cyan-300 text-[10px] sm:text-xs truncate">
-                          {color}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-white font-medium mb-2 text-base sm:text-lg md:text-xl truncate">Materials</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {generatedContent.imageAnalysis.materials.map((material, index) => (
-                        <Badge key={index} className="bg-slate-600/50 text-slate-300 text-[10px] sm:text-xs truncate">
-                          {material}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-white font-medium mb-2 text-base sm:text-lg md:text-xl truncate">Style</h4>
-                    <Badge className="bg-purple-400/20 text-purple-300 text-[10px] sm:text-xs truncate">
-                      {generatedContent.imageAnalysis.style}
-                    </Badge>
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-white font-medium mb-2 text-base sm:text-lg md:text-xl truncate">Visual Features</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {generatedContent.imageAnalysis.features.map((feature, index) => (
-                        <Badge key={index} className="bg-blue-400/20 text-blue-300 text-[10px] sm:text-xs truncate">
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-            </DashboardCard>
-
-            {/* Rich Description */}
-            <DashboardCard className="border-2 border-green-400/30 bg-gradient-to-br from-green-900/20 to-emerald-900/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="w-5 h-5 text-green-400" />
-                    <h3 className="text-xl font-semibold text-white">Rich Description</h3>
-                    <Badge className="bg-green-400/20 text-green-300">Multimodal</Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(generatedContent.richDescription, "Rich description")}
-                    className="text-green-300 hover:text-green-200 hover:bg-green-400/10"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="bg-slate-800/30 p-4 rounded-lg border border-green-400/20">
-                  <p className="text-slate-100 leading-relaxed">
-                    {generatedContent.richDescription}
-                  </p>
-                </div>
-            </DashboardCard>
-
-            {/* Visual Description */}
-            <DashboardCard className="border-2 border-blue-400/30 bg-gradient-to-br from-blue-900/20 to-cyan-900/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <ImageIcon className="w-5 h-5 text-blue-400" />
-                    <h3 className="text-xl font-semibold text-white">Visual Description</h3>
-                    <Badge className="bg-blue-400/20 text-blue-300">Image-Based</Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => copyToClipboard(generatedContent.visualDescription, "Visual description")}
-                    className="text-blue-300 hover:text-blue-200 hover:bg-blue-400/10"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="bg-slate-800/30 p-4 rounded-lg border border-blue-400/20">
-                  <p className="text-slate-100 leading-relaxed">
-                    {generatedContent.visualDescription}
-                  </p>
-                </div>
-            </DashboardCard>
-
-            {/* SEO Content & Marketing Copy */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <DashboardCard className="border-2 border-purple-400/30 bg-gradient-to-br from-purple-900/20 to-violet-900/20">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Zap className="w-5 h-5 text-purple-400" />
-                      <h3 className="text-lg font-semibold text-white">SEO Content</h3>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => copyToClipboard(generatedContent.seoContent, "SEO content")}
-                      className="text-purple-300 hover:text-purple-200 hover:bg-purple-400/10"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="bg-slate-800/30 p-4 rounded-lg border border-purple-400/20">
-                    <p className="text-slate-100 leading-relaxed text-sm">
-                      {generatedContent.seoContent}
-                    </p>
-                  </div>
-              </DashboardCard>
-
-              <DashboardCard className="border-2 border-pink-400/30 bg-gradient-to-br from-pink-900/20 to-rose-900/20">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Camera className="w-5 h-5 text-pink-400" />
-                      <h3 className="text-lg font-semibold text-white">Marketing Copy</h3>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => copyToClipboard(generatedContent.marketingCopy, "Marketing copy")}
-                      className="text-pink-300 hover:text-pink-200 hover:bg-pink-400/10"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="bg-slate-800/30 p-4 rounded-lg border border-pink-400/20">
-                    <pre className="text-slate-100 leading-relaxed text-sm whitespace-pre-wrap">
-                      {generatedContent.marketingCopy}
-                    </pre>
-                  </div>
-              </DashboardCard>
+            <div className="grid grid-cols-2 gap-3">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+            <div className="text-center text-sm text-muted-foreground">
+              <p>Analyzing product images, content, and store context...</p>
+              <p className="text-xs mt-1">Selecting optimal optimization strategy</p>
             </div>
           </div>
-        )}
+        </DashboardCard>
+      )}
+
+      {/* Results */}
+      {analysisResults.length > 0 && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-400" />
+            <h2 className="text-xl font-semibold">
+              {isBulkMode ? `Optimized ${analysisResults.length} Products` : "Optimization Applied"}
+            </h2>
+          </div>
+
+          {analysisResults.map((result) => (
+            <DashboardCard key={result.productId} className="border-2 border-primary/20">
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Package className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                      <h3 className="font-semibold text-lg truncate">{result.productName}</h3>
+                      <Badge className={getStrategyBadgeClass(result.strategySelected)}>
+                        {result.strategyLabel}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {result.reasonSummary}
+                    </p>
+                  </div>
+                  
+                  {result.rollbackId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRollback(result.rollbackId!)}
+                      disabled={rollbackMutation.isPending}
+                      className="flex-shrink-0"
+                      data-testid={`button-rollback-${result.productId}`}
+                    >
+                      {rollbackMutation.isPending ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Revert Changes
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Engines Activated */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-muted-foreground" />
+                    Engines Activated
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Search className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm font-medium">SEO Engine</span>
+                      </div>
+                      {getSEOIntensityBadge(result.enginesActivated.seoEngine)}
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="w-4 h-4 text-purple-400" />
+                        <span className="text-sm font-medium">Brand Voice</span>
+                      </div>
+                      <Badge className={result.enginesActivated.brandVoiceMemory ? "bg-green-500/20 text-green-300" : "bg-slate-500/20 text-slate-400"}>
+                        {result.enginesActivated.brandVoiceMemory ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4 text-amber-400" />
+                        <span className="text-sm font-medium">Templates</span>
+                      </div>
+                      <Badge className={result.enginesActivated.templates ? "bg-green-500/20 text-green-300" : "bg-slate-500/20 text-slate-400"}>
+                        {result.enginesActivated.templates ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="w-4 h-4 text-green-400" />
+                        <span className="text-sm font-medium">Conversion</span>
+                      </div>
+                      <Badge className={result.enginesActivated.conversionOptimization ? "bg-green-500/20 text-green-300" : "bg-slate-500/20 text-slate-400"}>
+                        {result.enginesActivated.conversionOptimization ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Signal Analysis */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                    Signal Analysis
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Image-Content Alignment</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-blue-500 rounded-full"
+                            style={{ width: `${result.signals.imageContentAlignment}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium">{result.signals.imageContentAlignment}%</span>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Content-Intent Alignment</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-purple-500 rounded-full"
+                            style={{ width: `${result.signals.contentIntentAlignment}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium">{result.signals.contentIntentAlignment}%</span>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Over-Optimization Risk</p>
+                      <Badge className={
+                        result.signals.overOptimizationRisk === "low" ? "bg-green-500/20 text-green-300" :
+                        result.signals.overOptimizationRisk === "medium" ? "bg-amber-500/20 text-amber-300" :
+                        "bg-red-500/20 text-red-300"
+                      }>
+                        {result.signals.overOptimizationRisk.charAt(0).toUpperCase() + result.signals.overOptimizationRisk.slice(1)}
+                      </Badge>
+                    </div>
+                    <div className="p-3 rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Search Intent</p>
+                      <Badge className="bg-blue-500/20 text-blue-300">
+                        {result.signals.searchIntent.charAt(0).toUpperCase() + result.signals.searchIntent.slice(1)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Applied Changes Preview */}
+                {result.appliedChanges && (
+                  <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-green-400">
+                      <CheckCircle className="w-4 h-4" />
+                      Changes Applied
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {result.appliedChanges.title && (
+                        <div>
+                          <span className="text-muted-foreground">Title:</span>{" "}
+                          <span className="text-foreground">{result.appliedChanges.title}</span>
+                        </div>
+                      )}
+                      {result.appliedChanges.metaTitle && (
+                        <div>
+                          <span className="text-muted-foreground">Meta Title:</span>{" "}
+                          <span className="text-foreground">{result.appliedChanges.metaTitle}</span>
+                        </div>
+                      )}
+                      {result.appliedChanges.tags && result.appliedChanges.tags.length > 0 && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-muted-foreground">Tags:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {result.appliedChanges.tags.slice(0, 5).map((tag, i) => (
+                              <Badge key={i} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {result.appliedChanges.tags.length > 5 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{result.appliedChanges.tags.length - 5} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DashboardCard>
+          ))}
+        </div>
+      )}
+
+      {/* Optimization Strategies Reference */}
+      <DashboardCard
+        title="Available Strategies"
+        description="Multimodal AI automatically selects the best strategy based on your product signals"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Object.entries(strategyDescriptions).map(([key, strategy]) => {
+            const Icon = strategy.icon;
+            return (
+              <div key={key} className="p-4 rounded-lg border hover-elevate">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-sm">{strategy.label}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {strategy.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </DashboardCard>
+
+      {/* Safety Information */}
+      <DashboardCard className="bg-gradient-to-br from-green-900/10 to-emerald-900/10 border-green-500/20">
+        <div className="flex items-start gap-4">
+          <Shield className="w-6 h-6 text-green-400 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold mb-2">Rollback Protection</h3>
+            <p className="text-sm text-muted-foreground">
+              All optimizations are automatically saved with a snapshot of the original content. 
+              Use the "Revert Changes" button on any optimization to instantly restore the previous version. 
+              Your product data is always protected.
+            </p>
+          </div>
+        </div>
+      </DashboardCard>
     </PageShell>
   );
 }
