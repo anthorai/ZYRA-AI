@@ -86,6 +86,7 @@ import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompt
 import multer from "multer";
 import csvParser from "csv-parser";
 import { sendEmail, sendBulkEmails } from "./lib/sendgrid-client";
+import { sendBrevoEmail, sendConfirmationEmail as sendBrevoConfirmation } from "./lib/brevo-client";
 import { sendSMS, sendBulkSMS } from "./lib/twilio-client";
 import { 
   apiLimiter, 
@@ -1103,57 +1104,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // User was created but link generation failed - still try to send via alternative method
       }
       
-      // Send confirmation email via SendGrid
+      // Send confirmation email via Brevo (primary) or SendGrid (fallback)
       try {
         const confirmationUrl = linkData?.properties?.action_link || 
           `${process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`}/auth/confirm?token=${userData.user?.id}`;
         
-        const emailHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-              .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
-              .header h1 { color: white; margin: 0; font-size: 28px; }
-              .content { padding: 40px 30px; }
-              .content h2 { color: #333; margin-top: 0; }
-              .content p { color: #666; line-height: 1.6; font-size: 16px; }
-              .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
-              .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Welcome to Zyra AI!</h1>
+        // Try Brevo first (free tier available)
+        if (process.env.BREVO_API_KEY) {
+          await sendBrevoConfirmation(email, confirmationUrl);
+          console.log(`✅ Confirmation email sent to ${email} via Brevo`);
+        } else {
+          // Fallback to SendGrid
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+                .header h1 { color: white; margin: 0; font-size: 28px; }
+                .content { padding: 40px 30px; }
+                .content h2 { color: #333; margin-top: 0; }
+                .content p { color: #666; line-height: 1.6; font-size: 16px; }
+                .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+                .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 14px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Welcome to Zyra AI!</h1>
+                </div>
+                <div class="content">
+                  <h2>Hi ${fullName || 'there'}!</h2>
+                  <p>Thank you for signing up for Zyra AI. Please confirm your email address to activate your account and get started.</p>
+                  <p style="text-align: center;">
+                    <a href="${confirmationUrl}" class="cta-button" style="color: white;">Confirm Email Address</a>
+                  </p>
+                  <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                  <p style="word-break: break-all; color: #667eea; font-size: 14px;">${confirmationUrl}</p>
+                  <p>This link will expire in 24 hours.</p>
+                </div>
+                <div class="footer">
+                  <p>If you didn't create an account, you can safely ignore this email.</p>
+                  <p>&copy; ${new Date().getFullYear()} Zyra AI. All rights reserved.</p>
+                </div>
               </div>
-              <div class="content">
-                <h2>Hi ${fullName || 'there'}!</h2>
-                <p>Thank you for signing up for Zyra AI. Please confirm your email address to activate your account and get started.</p>
-                <p style="text-align: center;">
-                  <a href="${confirmationUrl}" class="cta-button" style="color: white;">Confirm Email Address</a>
-                </p>
-                <p>If the button doesn't work, copy and paste this link into your browser:</p>
-                <p style="word-break: break-all; color: #667eea; font-size: 14px;">${confirmationUrl}</p>
-                <p>This link will expire in 24 hours.</p>
-              </div>
-              <div class="footer">
-                <p>If you didn't create an account, you can safely ignore this email.</p>
-                <p>&copy; ${new Date().getFullYear()} Zyra AI. All rights reserved.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `;
-        
-        await sendEmail(email, 'Confirm your Zyra AI account', emailHtml);
-        console.log(`✅ Confirmation email sent to ${email} via SendGrid`);
+            </body>
+            </html>
+          `;
+          
+          await sendEmail(email, 'Confirm your Zyra AI account', emailHtml);
+          console.log(`✅ Confirmation email sent to ${email} via SendGrid`);
+        }
       } catch (emailError: any) {
-        console.error('Failed to send confirmation email via SendGrid:', emailError.message);
+        console.error('Failed to send confirmation email:', emailError.message);
         // Continue anyway - user account was created
       }
       
