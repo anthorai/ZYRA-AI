@@ -331,7 +331,7 @@ export default function GrowthDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 md:space-y-8">
       {/* Header */}
       <GradientPageHeader
         icon={<TrendingUp className="w-8 h-8 text-primary" />}
@@ -345,11 +345,12 @@ export default function GrowthDashboard() {
           <DialogTrigger asChild>
             <Button 
               variant="outline" 
-              className="gap-2"
+              size="sm"
+              className="gap-1 sm:gap-2 text-xs sm:text-sm"
               data-testid="button-view-daily-report"
             >
-              <FileText className="w-4 h-4" />
-              View Daily Report
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">View</span> Daily Report
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -645,19 +646,19 @@ export default function GrowthDashboard() {
         </Card>
       </div>
       {/* Visual Analytics Charts */}
-      <div className="mt-12">
+      <div className="mt-6 sm:mt-8 md:mt-12">
         <Tabs defaultValue="revenue" className="w-full">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Performance Analytics</h2>
-            <TabsList className="bg-slate-800/50">
-              <TabsTrigger value="revenue" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Revenue Trends
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+            <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white">Performance Analytics</h2>
+            <TabsList className="bg-slate-800/50 w-full sm:w-auto grid grid-cols-3 sm:flex">
+              <TabsTrigger value="revenue" className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                Revenue
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Campaign Performance
+              <TabsTrigger value="campaigns" className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                Campaigns
               </TabsTrigger>
-              <TabsTrigger value="funnel" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                Conversion Funnel
+              <TabsTrigger value="funnel" className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+                Funnel
               </TabsTrigger>
             </TabsList>
           </div>
