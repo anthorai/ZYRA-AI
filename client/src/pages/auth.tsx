@@ -84,12 +84,13 @@ export default function Auth() {
       }
       
       toast({ 
-        title: "Welcome to Zyra AI!", 
-        description: "Account created successfully!" 
+        title: "Check your email!", 
+        description: "We've sent you a confirmation link. Please verify your email before logging in." 
       });
       
-      // Don't manually redirect - let the useEffect handle it when user state updates
-      // This ensures the auth state is fully updated before navigation
+      // Switch to login mode after successful registration
+      setMode('login');
+      registerForm.reset();
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
@@ -120,10 +121,11 @@ export default function Auth() {
     }
   };
 
-  // Show session expired message if redirected
+  // Show messages based on URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const redirectReason = params.get('redirected');
+    const confirmed = params.get('confirmed');
     
     if (redirectReason === 'session_expired') {
       toast({
@@ -131,8 +133,17 @@ export default function Auth() {
         description: "Your session has expired. Please sign in again.",
         variant: "destructive",
       });
-      
-      // Clean up the URL parameter
+    }
+    
+    if (confirmed === 'true') {
+      toast({
+        title: "Email Confirmed!",
+        description: "Your email has been verified. You can now log in.",
+      });
+    }
+    
+    // Clean up the URL parameters
+    if (redirectReason || confirmed) {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }

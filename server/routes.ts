@@ -1067,37 +1067,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and password are required" });
       }
       
-      // Use admin API to create user with auto-confirmation (bypasses email sending)
-      const { data: userData, error: createError } = await supabase.auth.admin.createUser({
+      // Get the production domain for email redirect
+      const emailRedirectTo = process.env.PRODUCTION_DOMAIN 
+        ? `${process.env.PRODUCTION_DOMAIN}/auth?confirmed=true`
+        : `${req.protocol}://${req.get('host')}/auth?confirmed=true`;
+      
+      // Call Supabase signUp with email confirmation
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName
+        options: {
+          emailRedirectTo,
+          data: {
+            full_name: fullName
+          }
         }
       });
       
-      if (createError) {
-        console.error('Admin createUser error:', createError);
-        return res.status(400).json({ message: createError.message, error: createError });
+      if (error) {
+        console.error('Registration error from Supabase:', error);
+        return res.status(400).json({ message: error.message, error });
       }
       
-      // Now sign in the user to get a session
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      // Return success - user needs to confirm email before logging in
+      res.json({ 
+        data,
+        message: 'Registration successful! Please check your email to confirm your account.'
       });
-      
-      if (signInError) {
-        console.error('Auto sign-in after registration failed:', signInError);
-        // User was created but couldn't auto-login, still return success
-        return res.json({ 
-          data: { user: userData.user, session: null },
-          message: 'Account created. Please log in.'
-        });
-      }
-      
-      res.json({ data: signInData });
     } catch (error: any) {
       console.error('Registration error:', error);
       res.status(500).json({ message: 'Registration failed', error: error.message });
