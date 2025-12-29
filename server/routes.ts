@@ -5823,6 +5823,27 @@ Output format: Markdown with clear section headings.`;
         });
       } catch (billingError: any) {
         console.error("[SUBSCRIPTION] Shopify billing error:", billingError);
+        
+        // Check if this is a Managed Pricing error
+        const errorMessage = billingError.message || '';
+        if (errorMessage.includes('Managed Pricing') || errorMessage.includes('cannot use the Billing API')) {
+          // For Managed Pricing apps, redirect to Shopify admin billing page
+          console.log("[SUBSCRIPTION] Managed Pricing detected - redirecting to Shopify admin");
+          
+          // Build Shopify admin URL for the merchant to manage their subscription
+          const shopifyAdminUrl = `https://${shopUrl}/admin/settings/billing`;
+          
+          return res.json({
+            success: true,
+            requiresShopifyBilling: true,
+            useManagedPricing: true,
+            confirmationUrl: shopifyAdminUrl,
+            plan: selectedPlan,
+            billingPeriod: billingPeriod,
+            message: "Your app uses Shopify Managed Pricing. You'll be redirected to Shopify to complete the upgrade."
+          });
+        }
+        
         return res.status(500).json({
           error: "Shopify billing error",
           message: billingError.message || "Failed to create billing subscription. Please try again."
