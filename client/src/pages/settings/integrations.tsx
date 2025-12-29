@@ -42,12 +42,12 @@ export default function IntegrationsPage() {
       labelType: "recommended"
     },
     {
-      id: "sendgrid",
-      name: "SendGrid",
+      id: "email-service",
+      name: "Email Service",
       type: "Email Marketing",
-      icon: <SiSendgrid className="w-5 h-5" />,
+      icon: <Mail className="w-5 h-5" />,
       isConnected: false,
-      description: "Send marketing emails, abandoned cart recovery, and transactional emails with SendGrid. Includes email analytics and delivery tracking.",
+      description: "Connect SendGrid or Brevo to send marketing emails, abandoned cart recovery, and transactional emails. Choose your preferred provider.",
       label: "For Email Marketers 📧",
       tooltip: "Send AI-powered email campaigns, cart recovery emails, and track performance with detailed analytics.",
       labelType: "recommended"
@@ -128,6 +128,8 @@ export default function IntegrationsPage() {
   const [showApiKeyInput, setShowApiKeyInput] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [shopDomain, setShopDomain] = useState("");
+  const [emailProvider, setEmailProvider] = useState<"sendgrid" | "brevo">("sendgrid");
+  const [fromEmail, setFromEmail] = useState("");
   
   // Twilio credentials state
   const [twilioAccountSid, setTwilioAccountSid] = useState("");
@@ -285,6 +287,21 @@ export default function IntegrationsPage() {
           // Update integration status based on saved settings
           setIntegrations(prev =>
             prev.map(integration => {
+              // Special handling for email-service - check for sendgrid or brevo providers
+              if (integration.id === 'email-service') {
+                const emailSetting = integrationSettings.find(
+                  (s: any) => s.integrationType === 'email' && (s.provider === 'sendgrid' || s.provider === 'brevo')
+                );
+                if (emailSetting && emailSetting.isActive) {
+                  return { 
+                    ...integration, 
+                    isConnected: true,
+                    name: emailSetting.provider === 'sendgrid' ? 'SendGrid' : 'Brevo'
+                  };
+                }
+                return integration;
+              }
+              
               const setting = integrationSettings.find(
                 (s: any) => s.provider === integration.id
               );
@@ -600,12 +617,22 @@ export default function IntegrationsPage() {
       return;
     }
 
-    // Validate and save credentials for SendGrid
-    if (id === 'sendgrid') {
+    // Validate and save credentials for Email Service (SendGrid or Brevo)
+    if (id === 'email-service') {
       if (!apiKey.trim()) {
         toast({
           title: "API Key Required",
-          description: "Please enter your SendGrid API key",
+          description: `Please enter your ${emailProvider === 'sendgrid' ? 'SendGrid' : 'Brevo'} API key`,
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      if (!fromEmail.trim()) {
+        toast({
+          title: "From Email Required",
+          description: "Please enter the email address to send from",
           variant: "destructive",
           duration: 3000,
         });
@@ -625,7 +652,7 @@ export default function IntegrationsPage() {
         if (!token) {
           toast({
             title: "Authentication Required",
-            description: "Please log in again to connect SendGrid",
+            description: "Please log in again to connect your email service",
             variant: "destructive",
             duration: 3000,
           });
@@ -640,9 +667,12 @@ export default function IntegrationsPage() {
           },
           body: JSON.stringify({
             integrationType: 'email',
-            provider: 'sendgrid',
+            provider: emailProvider,
             credentials: {
               apiKey: apiKey.trim()
+            },
+            settings: {
+              fromEmail: fromEmail.trim()
             },
             isActive: true
           }),
@@ -650,30 +680,31 @@ export default function IntegrationsPage() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to save SendGrid credentials');
+          throw new Error(`Failed to save ${emailProvider} credentials`);
         }
 
         setIntegrations(prev =>
           prev.map(integration =>
-            integration.id === 'sendgrid'
-              ? { ...integration, isConnected: true }
+            integration.id === 'email-service'
+              ? { ...integration, isConnected: true, name: emailProvider === 'sendgrid' ? 'SendGrid' : 'Brevo' }
               : integration
           )
         );
         
         toast({
-          title: "SendGrid Connected",
-          description: "Your SendGrid API key has been securely saved",
+          title: `${emailProvider === 'sendgrid' ? 'SendGrid' : 'Brevo'} Connected`,
+          description: "Your email service has been securely connected",
           duration: 3000,
         });
         
         setShowApiKeyInput(null);
         setApiKey("");
+        setFromEmail("");
       } catch (error) {
-        console.error('SendGrid connection error:', error);
+        console.error('Email service connection error:', error);
         toast({
           title: "Connection Failed",
-          description: "Failed to connect SendGrid. Please check your API key.",
+          description: `Failed to connect ${emailProvider === 'sendgrid' ? 'SendGrid' : 'Brevo'}. Please check your API key.`,
           variant: "destructive",
           duration: 3000,
         });
@@ -917,16 +948,25 @@ export default function IntegrationsPage() {
       }
 
       const integrationSettings = await integrationsResponse.json();
-      const integrationToDelete = integrationSettings.find(
-        (s: any) => s.provider === id
-      );
+      
+      // For email-service, look for email type integration
+      let integrationToDelete;
+      if (id === 'email-service') {
+        integrationToDelete = integrationSettings.find(
+          (s: any) => s.integrationType === 'email' && (s.provider === 'sendgrid' || s.provider === 'brevo')
+        );
+      } else {
+        integrationToDelete = integrationSettings.find(
+          (s: any) => s.provider === id
+        );
+      }
 
       if (!integrationToDelete) {
         // Integration not found in backend, just update frontend
         setIntegrations(prev =>
           prev.map(integration =>
             integration.id === id
-              ? { ...integration, isConnected: false }
+              ? { ...integration, isConnected: false, ...(id === 'email-service' ? { name: 'Email Service' } : {}) }
               : integration
           )
         );
@@ -956,7 +996,7 @@ export default function IntegrationsPage() {
       setIntegrations(prev =>
         prev.map(integration =>
           integration.id === id
-            ? { ...integration, isConnected: false }
+            ? { ...integration, isConnected: false, ...(id === 'email-service' ? { name: 'Email Service' } : {}) }
             : integration
         )
       );
@@ -1099,40 +1139,87 @@ export default function IntegrationsPage() {
               
               {showApiKeyInput === integration.id && !integration.isConnected && integration.id !== 'shopify' && (
                 <div className="mt-4 space-y-3 p-4 bg-slate-800/50 rounded-lg">
-                  {integration.id === 'sendgrid' ? (
+                  {integration.id === 'email-service' ? (
                     <>
-                      <p className="text-slate-300 text-sm mb-3">
-                        Get your SendGrid API key from <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SendGrid Settings</a>
-                      </p>
-                      <div className="space-y-2">
-                        <Label htmlFor="sendgrid-api-key" className="text-white">
-                          SendGrid API Key
-                        </Label>
-                        <Input
-                          id="sendgrid-api-key"
-                          type="password"
-                          value={apiKey}
-                          onChange={(e) => setApiKey(e.target.value)}
-                          placeholder="SG.xxxxxxxxxxxxx"
-                          className="bg-slate-900/50 border-slate-600 text-white"
-                          data-testid="input-sendgrid-api-key"
-                        />
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label className="text-white">Choose Email Provider</Label>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant={emailProvider === 'sendgrid' ? 'default' : 'outline'}
+                              onClick={() => setEmailProvider('sendgrid')}
+                              className={emailProvider === 'sendgrid' ? 'gradient-button' : 'border-slate-600 text-slate-300'}
+                              data-testid="button-select-sendgrid"
+                            >
+                              <SiSendgrid className="w-4 h-4 mr-2" />
+                              SendGrid
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={emailProvider === 'brevo' ? 'default' : 'outline'}
+                              onClick={() => setEmailProvider('brevo')}
+                              className={emailProvider === 'brevo' ? 'gradient-button' : 'border-slate-600 text-slate-300'}
+                              data-testid="button-select-brevo"
+                            >
+                              <Mail className="w-4 h-4 mr-2" />
+                              Brevo
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-slate-300 text-sm">
+                          {emailProvider === 'sendgrid' ? (
+                            <>Get your API key from <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SendGrid Settings</a></>
+                          ) : (
+                            <>Get your API key from <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Brevo API Keys</a></>
+                          )}
+                        </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="email-api-key" className="text-white">
+                            {emailProvider === 'sendgrid' ? 'SendGrid' : 'Brevo'} API Key
+                          </Label>
+                          <Input
+                            id="email-api-key"
+                            type="password"
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            placeholder={emailProvider === 'sendgrid' ? 'SG.xxxxxxxxxxxxx' : 'xkeysib-xxxxxxxxxxxxx'}
+                            className="bg-slate-900/50 border-slate-600 text-white"
+                            data-testid="input-email-api-key"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="from-email" className="text-white">
+                            From Email Address
+                          </Label>
+                          <Input
+                            id="from-email"
+                            type="email"
+                            value={fromEmail}
+                            onChange={(e) => setFromEmail(e.target.value)}
+                            placeholder="yourstore@example.com"
+                            className="bg-slate-900/50 border-slate-600 text-white"
+                            data-testid="input-from-email"
+                          />
+                          <p className="text-xs text-slate-400">This email must be verified with your provider</p>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2 mt-4">
                         <Button
                           onClick={() => handleConnect(integration.id)}
                           className="gradient-button"
-                          disabled={!apiKey}
-                          data-testid="button-connect-sendgrid"
+                          disabled={!apiKey || !fromEmail}
+                          data-testid="button-connect-email-service"
                         >
                           <Send className="w-4 h-4 mr-2" />
-                          Connect SendGrid
+                          Connect
                         </Button>
                         <Button
                           variant="outline"
                           onClick={() => {
                             setShowApiKeyInput(null);
                             setApiKey("");
+                            setFromEmail("");
                           }}
                           className="border-slate-600 text-slate-300 hover:bg-slate-800"
                         >
