@@ -55,6 +55,111 @@ export async function sendBrevoEmail(options: BrevoEmailOptions) {
   return { success: true, messageId: result.messageId };
 }
 
+interface UserEmailConfig {
+  apiKey: string;
+  fromEmail: string;
+  fromName?: string;
+}
+
+export async function sendBrevoEmailWithUserConfig(
+  options: BrevoEmailOptions,
+  userConfig: UserEmailConfig
+) {
+  const { apiKey, fromEmail, fromName } = userConfig;
+
+  if (!apiKey) {
+    throw new Error('User Brevo API key is not configured');
+  }
+
+  const recipients = Array.isArray(options.to) 
+    ? options.to.map(email => ({ email }))
+    : [{ email: options.to }];
+
+  const payload = {
+    sender: { name: fromName || 'Store', email: fromEmail },
+    to: recipients,
+    subject: options.subject,
+    htmlContent: options.htmlContent,
+    textContent: options.textContent || options.htmlContent.replace(/<[^>]*>/g, '')
+  };
+
+  console.log('📧 Sending email via user Brevo config:', { 
+    to: options.to, 
+    subject: options.subject,
+    from: fromEmail 
+  });
+
+  const response = await fetch(BREVO_API_URL, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'api-key': apiKey
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('❌ Brevo API error:', errorData);
+    throw new Error(`Brevo API error: ${response.status} - ${JSON.stringify(errorData)}`);
+  }
+
+  const result = await response.json();
+  console.log('✅ Email sent successfully via user Brevo:', result);
+  return { success: true, messageId: result.messageId };
+}
+
+export async function sendBulkBrevoEmails(
+  messages: Array<{ to: string; subject: string; html: string }>,
+  userConfig?: UserEmailConfig
+) {
+  const apiKey = userConfig?.apiKey || process.env.BREVO_API_KEY;
+  const fromEmail = userConfig?.fromEmail || process.env.BREVO_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'team@zzyraai.com';
+  const fromName = userConfig?.fromName || process.env.BREVO_FROM_NAME || 'Zyra AI';
+
+  if (!apiKey) {
+    throw new Error('Brevo API key is not configured');
+  }
+
+  let sentCount = 0;
+  const errors: string[] = [];
+
+  for (const msg of messages) {
+    try {
+      const payload = {
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: msg.to }],
+        subject: msg.subject,
+        htmlContent: msg.html,
+        textContent: msg.html.replace(/<[^>]*>/g, '')
+      };
+
+      const response = await fetch(BREVO_API_URL, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'api-key': apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        errors.push(`Failed to send to ${msg.to}: ${JSON.stringify(errorData)}`);
+      } else {
+        sentCount++;
+      }
+    } catch (error: any) {
+      errors.push(`Failed to send to ${msg.to}: ${error.message}`);
+    }
+  }
+
+  console.log(`📧 Brevo bulk send complete: ${sentCount}/${messages.length} sent`);
+  return { success: true, count: sentCount, errors };
+}
+
 export async function sendConfirmationEmail(email: string, confirmationUrl: string) {
   const htmlContent = `
     <!DOCTYPE html>
