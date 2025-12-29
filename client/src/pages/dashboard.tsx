@@ -383,10 +383,10 @@ export default function Dashboard() {
         sidebarOpen ? 'lg:ml-64' : 'ml-0'
       }`}>
         {/* Top Bar */}
-        <header className="gradient-surface border-b border px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center">
+        <header className="gradient-surface border-b border px-3 sm:px-6 py-2 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             {/* Left Section - Hamburger + Title */}
-            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -396,17 +396,17 @@ export default function Dashboard() {
               >
                 <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
-              <div className="min-w-0 flex-1">
-                <h1 className="font-bold text-white text-base sm:text-lg lg:text-xl xl:text-2xl" data-testid="text-page-title">{pageTitle.title}</h1>
-                <p className="text-slate-300 text-xs sm:text-sm lg:text-base" data-testid="text-page-subtitle">{pageTitle.subtitle}</p>
+              <div className="min-w-0">
+                <h1 className="font-bold text-white text-sm sm:text-lg lg:text-xl xl:text-2xl truncate" data-testid="text-page-title">{pageTitle.title}</h1>
+                <p className="text-slate-300 text-xs sm:text-sm lg:text-base hidden sm:block truncate" data-testid="text-page-subtitle">{pageTitle.subtitle}</p>
               </div>
             </div>
 
-            
-
             {/* Right Section - Master Toggle + Notifications + Profile */}
-            <div className="flex items-center justify-end space-x-2 sm:space-x-4 flex-shrink-0">
-              <MasterAutomationToggle />
+            <div className="flex items-center justify-end gap-1 sm:gap-3 flex-shrink-0">
+              <div className="hidden sm:block">
+                <MasterAutomationToggle />
+              </div>
               <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
