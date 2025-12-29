@@ -1058,7 +1058,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Server-side auth proxy endpoints (fixes CORS/CSP issues with Supabase)
   
-  // Registration endpoint - proxies to Supabase from server
+  // Registration endpoint - uses admin API + SendGrid for confirmation emails
   app.post("/api/auth/register", authLimiter, sanitizeBody, async (req, res) => {
     try {
       const { email, password, fullName } = req.body;
@@ -1067,31 +1067,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and password are required" });
       }
       
-      // Get the production domain for email redirect
-      const emailRedirectTo = process.env.PRODUCTION_DOMAIN 
-        ? `${process.env.PRODUCTION_DOMAIN}/auth?confirmed=true`
-        : `${req.protocol}://${req.get('host')}/auth?confirmed=true`;
-      
-      // Call Supabase signUp with email confirmation
-      const { data, error } = await supabase.auth.signUp({
+      // Use admin API to create user (email not confirmed yet)
+      const { data: userData, error: createError } = await supabase.auth.admin.createUser({
         email,
         password,
-        options: {
-          emailRedirectTo,
-          data: {
-            full_name: fullName
-          }
+        email_confirm: false,
+        user_metadata: {
+          full_name: fullName
         }
       });
       
-      if (error) {
-        console.error('Registration error from Supabase:', error);
-        return res.status(400).json({ message: error.message, error });
+      if (createError) {
+        console.error('Admin createUser error:', createError);
+        // Check for duplicate email
+        if (createError.message?.includes('already registered') || createError.message?.includes('duplicate')) {
+          return res.status(400).json({ message: "An account with this email already exists" });
+        }
+        return res.status(400).json({ message: createError.message, error: createError });
+      }
+      
+      // Generate confirmation link using Supabase admin
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        password,
+        options: {
+          redirectTo: process.env.PRODUCTION_DOMAIN 
+            ? `${process.env.PRODUCTION_DOMAIN}/auth?confirmed=true`
+            : `${req.protocol}://${req.get('host')}/auth?confirmed=true`
+        }
+      });
+      
+      if (linkError) {
+        console.error('Error generating confirmation link:', linkError);
+        // User was created but link generation failed - still try to send via alternative method
+      }
+      
+      // Send confirmation email via SendGrid
+      try {
+        const confirmationUrl = linkData?.properties?.action_link || 
+          `${process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`}/auth/confirm?token=${userData.user?.id}`;
+        
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+              .header h1 { color: white; margin: 0; font-size: 28px; }
+              .content { padding: 40px 30px; }
+              .content h2 { color: #333; margin-top: 0; }
+              .content p { color: #666; line-height: 1.6; font-size: 16px; }
+              .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+              .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Welcome to Zyra AI!</h1>
+              </div>
+              <div class="content">
+                <h2>Hi ${fullName || 'there'}!</h2>
+                <p>Thank you for signing up for Zyra AI. Please confirm your email address to activate your account and get started.</p>
+                <p style="text-align: center;">
+                  <a href="${confirmationUrl}" class="cta-button" style="color: white;">Confirm Email Address</a>
+                </p>
+                <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                <p style="word-break: break-all; color: #667eea; font-size: 14px;">${confirmationUrl}</p>
+                <p>This link will expire in 24 hours.</p>
+              </div>
+              <div class="footer">
+                <p>If you didn't create an account, you can safely ignore this email.</p>
+                <p>&copy; ${new Date().getFullYear()} Zyra AI. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+        
+        await sendEmail(email, 'Confirm your Zyra AI account', emailHtml);
+        console.log(`✅ Confirmation email sent to ${email} via SendGrid`);
+      } catch (emailError: any) {
+        console.error('Failed to send confirmation email via SendGrid:', emailError.message);
+        // Continue anyway - user account was created
       }
       
       // Return success - user needs to confirm email before logging in
       res.json({ 
-        data,
+        data: { user: userData.user, session: null },
         message: 'Registration successful! Please check your email to confirm your account.'
       });
     } catch (error: any) {
