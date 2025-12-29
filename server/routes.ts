@@ -72,7 +72,8 @@ import {
   sessions,
   customerSegmentMembers,
   segmentAnalytics,
-  productSnapshots
+  productSnapshots,
+  upsellReceiptSettings
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -763,6 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { name: 'segmentAnalytics', table: segmentAnalytics },
         { name: 'profiles', table: profiles },
         { name: 'errorLogs', table: errorLogs },
+        { name: 'upsellReceiptSettings', table: upsellReceiptSettings },
       ];
 
       for (const { name, table } of tablesToClean) {
