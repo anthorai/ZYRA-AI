@@ -183,73 +183,53 @@ export default function Footer({ className = "" }: FooterProps) {
         </div>
 
         {/* Mobile Layout */}
-        <div className="md:hidden py-6 space-y-6">
-          {/* Logo & Zyra AI Text */}
-          <div className="text-center">
+        <div className="md:hidden py-4 space-y-4">
+          {/* Logo & Zyra AI Text - Centered */}
+          <div className="flex justify-center">
             <div
               onClick={handleLogoClick}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group"
+              className="inline-flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-300 ease-in-out hover:bg-[#00F0FF]/10 cursor-pointer group"
               data-testid="link-footer-logo-mobile"
             >
               <img 
                 src={zyraLogo} 
                 alt="Zyra AI Logo" 
-                className="w-6 h-6 rounded-lg"
+                className="w-5 h-5 rounded"
               />
-              <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-base font-bold font-sans transition-colors duration-300">
+              <span className="text-[#EAEAEA] group-hover:text-[#00F0FF] text-sm font-bold font-sans transition-colors duration-300">
                 Zyra AI
               </span>
             </div>
           </div>
 
-          {/* Links Grid - 2 columns on mobile */}
-          <div className="grid grid-cols-2 gap-6 text-center">
-            <div>
-              <h3 className="text-[#EAEAEA] font-semibold text-sm mb-3">Company</h3>
-              <ul className="space-y-2">
-                {companyLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href}>
-                      <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-xs transition-colors" data-testid={`${link.testId}-mobile`}>
-                        {link.label}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-[#EAEAEA] font-semibold text-sm mb-3">Resources</h3>
-              <ul className="space-y-2">
-                {resourceLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href}>
-                      <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] text-xs transition-colors" data-testid={`${link.testId}-mobile`}>
-                        {link.label}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Legal Links - horizontal on mobile */}
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-            {legalLinks.map((link, index) => (
-              <span key={link.href} className="flex items-center gap-4">
-                <Link href={link.href}>
-                  <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] transition-colors" data-testid={`${link.testId}-mobile`}>
-                    {link.label}
-                  </span>
-                </Link>
-                {index < legalLinks.length - 1 && <span className="text-[#00F0FF]/30">•</span>}
-              </span>
+          {/* Links Row - All in one line */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px]">
+            {companyLinks.map((link) => (
+              <Link key={link.href} href={link.href}>
+                <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] transition-colors" data-testid={`${link.testId}-mobile`}>
+                  {link.label}
+                </span>
+              </Link>
+            ))}
+            {resourceLinks.map((link) => (
+              <Link key={link.href} href={link.href}>
+                <span className="text-[#EAEAEA]/70 hover:text-[#00F0FF] transition-colors" data-testid={`${link.testId}-mobile`}>
+                  {link.label}
+                </span>
+              </Link>
             ))}
           </div>
 
-          {/* Trust Badges */}
-          <div className="flex items-center justify-center gap-4 text-xs text-[#EAEAEA]/60">
+          {/* Legal Links + Trust Badges - Single row */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-[#EAEAEA]/60">
+            {legalLinks.map((link) => (
+              <Link key={link.href} href={link.href}>
+                <span className="hover:text-[#00F0FF] transition-colors" data-testid={`${link.testId}-mobile`}>
+                  {link.label}
+                </span>
+              </Link>
+            ))}
+            <span className="text-[#00F0FF]/30">|</span>
             <div className="flex items-center gap-1">
               <Shield className="w-3 h-3 text-[#00F0FF]" />
               <span>SOC 2</span>
@@ -260,9 +240,9 @@ export default function Footer({ className = "" }: FooterProps) {
             </div>
           </div>
 
-          {/* Copyright */}
-          <div className="border-t border-[#00F0FF]/20 pt-4">
-            <p className="text-center text-[#EAEAEA]/60 text-xs" data-testid="text-copyright-mobile">
+          {/* Copyright - Compact */}
+          <div className="border-t border-[#00F0FF]/10 pt-3">
+            <p className="text-center text-[#EAEAEA]/50 text-[10px]" data-testid="text-copyright-mobile">
               © 2025 Zyra AI. All rights reserved.
             </p>
           </div>
