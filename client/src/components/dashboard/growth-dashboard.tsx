@@ -664,21 +664,21 @@ export default function GrowthDashboard() {
           </div>
 
           <TabsContent value="revenue">
-            <Card className="gradient-card rounded-2xl">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-white">Revenue Trends</CardTitle>
-                    <CardDescription className="text-slate-300">
-                      Daily revenue and order trends from cart recovery
+            <Card className="gradient-card rounded-xl sm:rounded-2xl">
+              <CardHeader className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                  <div className="min-w-0">
+                    <CardTitle className="text-white text-sm sm:text-base md:text-lg">Revenue Trends</CardTitle>
+                    <CardDescription className="text-slate-300 text-xs sm:text-sm">
+                      Daily revenue and order trends
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 sm:gap-2 flex-shrink-0">
                     <Button
                       variant={chartPeriod === '7' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setChartPeriod('7')}
-                      className={chartPeriod === '7' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}
+                      className={`h-7 sm:h-8 px-2 sm:px-3 text-xs ${chartPeriod === '7' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}`}
                     >
                       7D
                     </Button>
@@ -686,7 +686,7 @@ export default function GrowthDashboard() {
                       variant={chartPeriod === '30' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setChartPeriod('30')}
-                      className={chartPeriod === '30' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}
+                      className={`h-7 sm:h-8 px-2 sm:px-3 text-xs ${chartPeriod === '30' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}`}
                     >
                       30D
                     </Button>
@@ -694,20 +694,20 @@ export default function GrowthDashboard() {
                       variant={chartPeriod === '90' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setChartPeriod('90')}
-                      className={chartPeriod === '90' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}
+                      className={`h-7 sm:h-8 px-2 sm:px-3 text-xs ${chartPeriod === '90' ? 'bg-primary' : 'bg-transparent border-slate-600 text-slate-300'}`}
                     >
                       90D
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 pt-0">
                 {trendsLoading ? (
-                  <div className="h-80 flex items-center justify-center">
+                  <div className="h-48 sm:h-80 flex items-center justify-center">
                     <Skeleton className="h-full w-full bg-slate-700" />
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 200 : 320}>
                     <LineChart data={revenueTrends?.trends || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                       <XAxis 
@@ -752,35 +752,35 @@ export default function GrowthDashboard() {
                   </ResponsiveContainer>
                 )}
                 {revenueTrends && (
-                  <div className="mt-6 grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">Avg Daily Revenue</p>
-                      <p className="text-white font-bold text-lg mt-1">
+                  <div className="mt-3 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">Avg Revenue</p>
+                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
                         ${revenueTrends.summary.avgDailyRevenue.toLocaleString()}
                       </p>
                     </div>
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">Avg Daily Orders</p>
-                      <p className="text-white font-bold text-lg mt-1">
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">Avg Orders</p>
+                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
                         {revenueTrends.summary.avgDailyOrders}
                       </p>
                     </div>
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">Peak Revenue Day</p>
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">Peak Day</p>
                       {revenueTrends.summary.peakDay?.date ? (
                         <>
-                          <p className="text-white font-bold text-sm mt-1">
+                          <p className="text-white font-bold text-[10px] sm:text-sm mt-0.5 sm:mt-1">
                             {new Date(revenueTrends.summary.peakDay.date).toLocaleDateString('en-US', { 
                               month: 'short', 
                               day: 'numeric' 
                             })}
                           </p>
-                          <p className="text-primary text-xs mt-0.5">
+                          <p className="text-primary text-[9px] sm:text-xs mt-0.5">
                             ${revenueTrends.summary.peakDay.revenue}
                           </p>
                         </>
                       ) : (
-                        <p className="text-slate-500 text-sm mt-1">N/A</p>
+                        <p className="text-slate-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">N/A</p>
                       )}
                     </div>
                   </div>
@@ -790,20 +790,20 @@ export default function GrowthDashboard() {
           </TabsContent>
 
           <TabsContent value="campaigns">
-            <Card className="gradient-card rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-white">Campaign Performance</CardTitle>
-                <CardDescription className="text-slate-300">
-                  Email and SMS campaign metrics overview
+            <Card className="gradient-card rounded-xl sm:rounded-2xl">
+              <CardHeader className="p-3 sm:p-6">
+                <CardTitle className="text-white text-sm sm:text-base md:text-lg">Campaign Performance</CardTitle>
+                <CardDescription className="text-slate-300 text-xs sm:text-sm">
+                  Email and SMS campaign metrics
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 pt-0">
                 {campaignStatsLoading ? (
-                  <div className="h-80 flex items-center justify-center">
+                  <div className="h-48 sm:h-80 flex items-center justify-center">
                     <Skeleton className="h-full w-full bg-slate-700" />
                   </div>
                 ) : campaignStats ? (
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 200 : 320}>
                     <BarChart data={[
                       { metric: 'Open Rate', value: campaignStats.avgOpenRate, color: '#00F0FF' },
                       { metric: 'Click Rate', value: campaignStats.avgClickRate, color: '#8b5cf6' },
@@ -830,22 +830,22 @@ export default function GrowthDashboard() {
                   </div>
                 )}
                 {campaignStats && (
-                  <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">Total Campaigns</p>
-                      <p className="text-white font-bold text-lg mt-1">{campaignStats.totalCampaigns}</p>
+                  <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">Total</p>
+                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.totalCampaigns}</p>
                     </div>
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">Sent Campaigns</p>
-                      <p className="text-white font-bold text-lg mt-1">{campaignStats.sentCampaigns}</p>
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">Sent</p>
+                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.sentCampaigns}</p>
                     </div>
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">Email Campaigns</p>
-                      <p className="text-white font-bold text-lg mt-1">{campaignStats.emailCampaigns}</p>
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">Email</p>
+                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.emailCampaigns}</p>
                     </div>
-                    <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-sm">SMS Campaigns</p>
-                      <p className="text-white font-bold text-lg mt-1">{campaignStats.smsCampaigns}</p>
+                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                      <p className="text-slate-400 text-[10px] sm:text-sm">SMS</p>
+                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.smsCampaigns}</p>
                     </div>
                   </div>
                 )}
@@ -854,21 +854,21 @@ export default function GrowthDashboard() {
           </TabsContent>
 
           <TabsContent value="funnel">
-            <Card className="gradient-card rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-white">Cart Recovery Conversion Funnel</CardTitle>
-                <CardDescription className="text-slate-300">
-                  Track abandoned cart recovery performance from cart to conversion
+            <Card className="gradient-card rounded-xl sm:rounded-2xl">
+              <CardHeader className="p-3 sm:p-6">
+                <CardTitle className="text-white text-sm sm:text-base md:text-lg">Cart Recovery Funnel</CardTitle>
+                <CardDescription className="text-slate-300 text-xs sm:text-sm">
+                  Abandoned cart recovery performance
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 pt-0">
                 {cartRecoveryLoading ? (
-                  <div className="h-80 flex items-center justify-center">
+                  <div className="h-48 sm:h-80 flex items-center justify-center">
                     <Skeleton className="h-full w-full bg-slate-700" />
                   </div>
                 ) : cartRecoveryData ? (
                   <>
-                    <ResponsiveContainer width="100%" height={320}>
+                    <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 200 : 320}>
                       <AreaChart data={[
                         { 
                           stage: 'Abandoned Carts', 
@@ -923,28 +923,28 @@ export default function GrowthDashboard() {
                         />
                       </AreaChart>
                     </ResponsiveContainer>
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                        <p className="text-slate-400 text-sm">Recovery Rate</p>
-                        <p className="text-white font-bold text-lg mt-1">
+                    <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+                      <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-[10px] sm:text-sm">Recovery</p>
+                        <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
                           {cartRecoveryData.overview.recoveryRate.toFixed(1)}%
                         </p>
                       </div>
-                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                        <p className="text-slate-400 text-sm">Conversion Rate</p>
-                        <p className="text-white font-bold text-lg mt-1">
+                      <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-[10px] sm:text-sm">Conversion</p>
+                        <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
                           {cartRecoveryData.overview.conversionRate.toFixed(1)}%
                         </p>
                       </div>
-                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                        <p className="text-slate-400 text-sm">Recovered Value</p>
-                        <p className="text-white font-bold text-lg mt-1">
+                      <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-[10px] sm:text-sm">Recovered</p>
+                        <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
                           ${cartRecoveryData.overview.recoveredValue}
                         </p>
                       </div>
-                      <div className="text-center p-4 bg-slate-800/30 rounded-lg">
-                        <p className="text-slate-400 text-sm">Potential Revenue</p>
-                        <p className="text-white font-bold text-lg mt-1">
+                      <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
+                        <p className="text-slate-400 text-[10px] sm:text-sm">Potential</p>
+                        <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
                           ${cartRecoveryData.overview.potentialRevenue}
                         </p>
                       </div>
@@ -961,17 +961,15 @@ export default function GrowthDashboard() {
         </Tabs>
       </div>
       {/* AI Performance Notice */}
-      <div className="mt-8 p-6 gradient-card rounded-2xl bg-[#16162c]">
-        <div className="flex items-start space-x-4">
-          <div className="transition-all duration-300">
-            <Zap className="w-6 h-6 stroke-2 text-primary" />
+      <div className="mt-4 sm:mt-8 p-3 sm:p-6 gradient-card rounded-xl sm:rounded-2xl bg-[#16162c]">
+        <div className="flex items-start space-x-2 sm:space-x-4">
+          <div className="transition-all duration-300 flex-shrink-0">
+            <Zap className="w-4 h-4 sm:w-6 sm:h-6 stroke-2 text-primary" />
           </div>
           <div>
-            <h3 className="text-white font-bold text-lg mb-2">AI-Powered Growth Intelligence</h3>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              Your Zyra AI is continuously analyzing customer behavior, optimizing product descriptions, and improving 
-              conversion rates. The dashboard shows real-time performance metrics across all optimization channels 
-              including email campaigns, SMS recovery, SEO improvements, and content ROI tracking.
+            <h3 className="text-white font-bold text-sm sm:text-lg mb-1 sm:mb-2">AI-Powered Growth</h3>
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+              Your Zyra AI continuously analyzes customer behavior and optimizes conversion rates across all channels.
             </p>
           </div>
         </div>
