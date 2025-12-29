@@ -5761,17 +5761,73 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      // For paid plans, redirect to Shopify billing
+      // For paid plans, create Shopify billing subscription
       // NOTE: All paid subscriptions must go through Shopify's billing system
-      console.log("[SUBSCRIPTION] Paid plan selected, requires Shopify billing");
+      console.log("[SUBSCRIPTION] Paid plan selected, creating Shopify billing subscription");
       
-      return res.json({
-        success: true,
-        requiresShopifyBilling: true,
-        message: "Please upgrade via Shopify to activate this plan",
-        plan: selectedPlan,
-        billingPeriod: billingPeriod
-      });
+      // Get user's Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection || !shopifyConnection.accessToken || !shopifyConnection.storeUrl) {
+        return res.status(400).json({
+          error: "Shopify not connected",
+          message: "Please connect your Shopify store first to upgrade your plan."
+        });
+      }
+      
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+      
+      // Build return URL for after billing approval
+      const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
+      const returnUrl = `${baseUrl}/billing/confirm?planId=${planId}&billingPeriod=${billingPeriod}`;
+      
+      // Determine if this is a test charge (for development/review)
+      const isTestCharge = process.env.NODE_ENV !== 'production' || process.env.SHOPIFY_TEST_CHARGES === 'true';
+      
+      try {
+        // Calculate price based on billing period (preserve 2 decimal places)
+        const monthlyPrice = Number(selectedPlan.price);
+        const priceAmount = billingPeriod === 'annual' 
+          ? Number((monthlyPrice * 12 * 0.8).toFixed(2)) // 20% discount for annual, keep 2 decimals
+          : monthlyPrice;
+        const interval = billingPeriod === 'annual' ? 'ANNUAL' : 'EVERY_30_DAYS';
+        const currency = selectedPlan.currency || 'USD';
+        
+        // Create subscription using Shopify Billing API with Managed Pricing
+        const subscriptionResult = await graphqlClient.createAppSubscription(
+          selectedPlan.planName,
+          returnUrl,
+          priceAmount,
+          currency,
+          interval as 'EVERY_30_DAYS' | 'ANNUAL',
+          isTestCharge
+        );
+        
+        if (!subscriptionResult) {
+          throw new Error("Failed to create Shopify subscription");
+        }
+        
+        console.log("[SUBSCRIPTION] Shopify subscription created:", subscriptionResult.subscriptionId);
+        console.log("[SUBSCRIPTION] Confirmation URL:", subscriptionResult.confirmationUrl);
+        
+        // Return the confirmation URL for redirect
+        return res.json({
+          success: true,
+          requiresShopifyBilling: true,
+          confirmationUrl: subscriptionResult.confirmationUrl,
+          subscriptionId: subscriptionResult.subscriptionId,
+          plan: selectedPlan,
+          billingPeriod: billingPeriod
+        });
+      } catch (billingError: any) {
+        console.error("[SUBSCRIPTION] Shopify billing error:", billingError);
+        return res.status(500).json({
+          error: "Shopify billing error",
+          message: billingError.message || "Failed to create billing subscription. Please try again."
+        });
+      }
     } catch (error: any) {
       console.error("Error changing subscription plan:", error);
       res.status(500).json({ 
@@ -5782,6 +5838,91 @@ Output format: Markdown with clear section headings.`;
   });
 
   // ==================== SHOPIFY BILLING ROUTES ====================
+
+  // Billing confirmation - handle return from Shopify after merchant approves
+  app.get("/api/billing/confirm", requireAuth, async (req, res) => {
+    try {
+      const { planId, billingPeriod, charge_id } = req.query;
+      const user = (req as AuthenticatedRequest).user;
+      
+      console.log(`[Shopify Billing] Confirmation callback for user ${user.id}, planId: ${planId}, charge_id: ${charge_id}`);
+      
+      if (!planId) {
+        return res.status(400).json({ error: "Plan ID is required" });
+      }
+      
+      // Verify plan exists
+      const plans = await getSubscriptionPlans();
+      const selectedPlan = plans.find(p => p.id === planId);
+      
+      if (!selectedPlan) {
+        return res.status(400).json({ error: "Invalid plan ID" });
+      }
+      
+      // Get user's Shopify connection to verify subscription status
+      const connections = await supabaseStorage.getStoreConnections(user.id);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (shopifyConnection && shopifyConnection.accessToken && shopifyConnection.storeUrl) {
+        const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '');
+        const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+        
+        // Check current active subscription from Shopify
+        const activeSubscription = await graphqlClient.getCurrentActiveSubscription();
+        
+        console.log(`[Shopify Billing] Active subscription check:`, activeSubscription);
+        
+        if (activeSubscription && activeSubscription.status === 'ACTIVE') {
+          // Subscription is confirmed active - update user's subscription
+          const updatedUser = await updateUserSubscription(user.id, planId as string, user.email);
+          await initializeUserCredits(user.id, planId as string);
+          await NotificationService.notifySubscriptionChanged(user.id, planId as string);
+          
+          console.log(`[Shopify Billing] Subscription activated for user ${user.id}, plan: ${planId}`);
+          
+          return res.json({
+            success: true,
+            status: 'active',
+            message: "Subscription activated successfully",
+            plan: selectedPlan
+          });
+        } else if (activeSubscription && activeSubscription.status === 'PENDING') {
+          return res.json({
+            success: false,
+            status: 'pending',
+            message: "Subscription is pending approval"
+          });
+        }
+      }
+      
+      // If we can't verify with Shopify, still try to activate based on the callback
+      // This handles cases where the webhook already processed it
+      if (charge_id) {
+        const updatedUser = await updateUserSubscription(user.id, planId as string, user.email);
+        await initializeUserCredits(user.id, planId as string);
+        await NotificationService.notifySubscriptionChanged(user.id, planId as string);
+        
+        return res.json({
+          success: true,
+          status: 'active',
+          message: "Subscription activated",
+          plan: selectedPlan
+        });
+      }
+      
+      return res.json({
+        success: false,
+        status: 'unknown',
+        message: "Could not verify subscription status"
+      });
+    } catch (error: any) {
+      console.error("[Shopify Billing] Confirmation error:", error);
+      res.status(500).json({
+        error: "Failed to confirm subscription",
+        message: error.message
+      });
+    }
+  });
   
   // Check Shopify subscription status
   app.get("/api/shopify/billing/status", requireAuth, async (req, res) => {

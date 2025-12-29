@@ -567,6 +567,150 @@ export class ShopifyGraphQLClient {
       return false;
     }
   }
+
+  async createAppSubscription(
+    planName: string,
+    returnUrl: string,
+    priceAmount: number,
+    currencyCode: string = 'USD',
+    interval: 'EVERY_30_DAYS' | 'ANNUAL' = 'EVERY_30_DAYS',
+    test: boolean = false
+  ): Promise<{ confirmationUrl: string; subscriptionId: string } | null> {
+    const lineItems = [
+      {
+        plan: {
+          appRecurringPricingDetails: {
+            price: {
+              amount: priceAmount,
+              currencyCode: currencyCode
+            },
+            interval: interval
+          }
+        }
+      }
+    ];
+
+    const response = await this.query<{
+      appSubscriptionCreate: {
+        appSubscription: {
+          id: string;
+          status: string;
+        } | null;
+        confirmationUrl: string | null;
+        userErrors: Array<{ field: string[]; message: string }>;
+      };
+    }>(`
+      mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $test: Boolean) {
+        appSubscriptionCreate(
+          name: $name
+          returnUrl: $returnUrl
+          lineItems: $lineItems
+          test: $test
+        ) {
+          appSubscription {
+            id
+            status
+          }
+          confirmationUrl
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `, { name: planName, returnUrl, lineItems, test });
+
+    if (response.errors?.length) {
+      console.error('GraphQL errors creating app subscription:', response.errors);
+      throw new Error(response.errors[0].message);
+    }
+
+    const userErrors = response.data?.appSubscriptionCreate.userErrors;
+    if (userErrors?.length) {
+      throw new Error(`Subscription creation failed: ${userErrors.map(e => e.message).join(', ')}`);
+    }
+
+    const result = response.data?.appSubscriptionCreate;
+    if (!result?.confirmationUrl || !result?.appSubscription?.id) {
+      return null;
+    }
+
+    return {
+      confirmationUrl: result.confirmationUrl,
+      subscriptionId: result.appSubscription.id
+    };
+  }
+
+  async getAppSubscription(subscriptionId: string): Promise<{
+    id: string;
+    status: string;
+    name: string;
+    currentPeriodEnd: string | null;
+  } | null> {
+    const response = await this.query<{
+      node: {
+        id: string;
+        status: string;
+        name: string;
+        currentPeriodEnd: string | null;
+      } | null;
+    }>(`
+      query getAppSubscription($id: ID!) {
+        node(id: $id) {
+          ... on AppSubscription {
+            id
+            status
+            name
+            currentPeriodEnd
+          }
+        }
+      }
+    `, { id: subscriptionId });
+
+    if (response.errors?.length) {
+      console.error('GraphQL errors fetching app subscription:', response.errors);
+      return null;
+    }
+
+    return response.data?.node || null;
+  }
+
+  async getCurrentActiveSubscription(): Promise<{
+    id: string;
+    status: string;
+    name: string;
+    currentPeriodEnd: string | null;
+  } | null> {
+    const response = await this.query<{
+      currentAppInstallation: {
+        activeSubscriptions: Array<{
+          id: string;
+          status: string;
+          name: string;
+          currentPeriodEnd: string | null;
+        }>;
+      };
+    }>(`
+      query getCurrentSubscription {
+        currentAppInstallation {
+          activeSubscriptions {
+            id
+            status
+            name
+            currentPeriodEnd
+          }
+        }
+      }
+    `);
+
+    if (response.errors?.length) {
+      console.error('GraphQL errors fetching current subscription:', response.errors);
+      return null;
+    }
+
+    const subscriptions = response.data?.currentAppInstallation?.activeSubscriptions;
+    return subscriptions?.[0] || null;
+  }
 }
 
 export function graphqlProductToRest(product: ShopifyGraphQLProduct): {

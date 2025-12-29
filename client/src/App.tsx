@@ -34,6 +34,7 @@ const Dashboard = lazy(() => import("@/pages/dashboard"));
 const ManageProducts = lazy(() => import("@/pages/products/manage"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Billing = lazy(() => import("@/pages/billing"));
+const BillingConfirm = lazy(() => import("@/pages/billing-confirm"));
 const Settings = lazy(() => import("@/pages/settings"));
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
 
@@ -333,6 +334,15 @@ function Router() {
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
               <Billing />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
+      <Route path="/billing/confirm" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <BillingConfirm />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>

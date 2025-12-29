@@ -352,12 +352,10 @@ export default function BillingPage() {
     onSuccess: async (data: any) => {
       console.log('Subscription change response:', data);
       
-      if (data.requiresShopifyBilling) {
-        // For paid plans, inform user to upgrade via Shopify
-        toast({
-          title: "Upgrade via Shopify",
-          description: `To activate the ${data.plan.planName} plan, please upgrade through your Shopify admin billing settings.`,
-        });
+      if (data.requiresShopifyBilling && data.confirmationUrl) {
+        // Redirect to Shopify billing confirmation page
+        window.location.href = data.confirmationUrl;
+        return;
       } else if (data.requiresShopifyBilling === false) {
         // Free plan activated directly
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
