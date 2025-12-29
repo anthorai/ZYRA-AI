@@ -56,3 +56,4 @@ waitForPort = 5000
 
 [userenv.shared]
 SHOPIFY_HMAC_DEBUG = "1"
+SENDGRID_FROM_EMAIL = "noreply@zzyraai.com"
