@@ -146,11 +146,11 @@ export function MasterAutomationToggle() {
 
   return (
     <>
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
         <Badge 
           variant={globalEnabled ? "default" : "secondary"}
           className={`
-            flex items-center gap-1.5 px-2 sm:px-3 py-1
+            flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-0.5 sm:py-1
             ${globalEnabled 
               ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
               : 'bg-slate-700 text-slate-300 border-slate-600'
@@ -160,12 +160,13 @@ export function MasterAutomationToggle() {
           {globalEnabled ? (
             <>
               <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-medium">Autonomous</span>
+              <span className="text-[10px] sm:text-sm font-medium sm:hidden">Auto</span>
+              <span className="text-sm font-medium hidden sm:inline">Autonomous</span>
             </>
           ) : (
             <>
               <User className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-medium">Manual</span>
+              <span className="text-[10px] sm:text-sm font-medium">Manual</span>
             </>
           )}
         </Badge>
@@ -174,7 +175,7 @@ export function MasterAutomationToggle() {
           checked={globalEnabled}
           onCheckedChange={handleToggle}
           disabled={toggleMutation.isPending}
-          className="data-[state=checked]:bg-emerald-600"
+          className="data-[state=checked]:bg-emerald-600 scale-90 sm:scale-100"
           data-testid="switch-global-autopilot"
         />
 
@@ -183,9 +184,10 @@ export function MasterAutomationToggle() {
             <Button 
               variant="ghost" 
               size="icon"
+              className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9"
               data-testid="button-autonomous-settings"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72" align="end">

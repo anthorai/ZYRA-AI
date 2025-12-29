@@ -404,9 +404,7 @@ export default function Dashboard() {
 
             {/* Right Section - Master Toggle + Notifications + Profile */}
             <div className="flex items-center justify-end gap-1 sm:gap-3 flex-shrink-0">
-              <div className="hidden sm:block">
-                <MasterAutomationToggle />
-              </div>
+              <MasterAutomationToggle />
               <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
