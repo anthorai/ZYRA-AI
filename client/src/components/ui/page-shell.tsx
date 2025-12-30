@@ -56,7 +56,7 @@ export function PageShell({
         )}>
           {/* Simple Page Header */}
           {(title || backTo) && (
-            <div className="bg-card rounded-md p-4 sm:p-6 mb-4 sm:mb-6 border border-border">
+            <div className="bg-card rounded-md p-4 sm:p-6 sm:mb-6 border border-border mt-[-14px] mb-[-14px] pt-[17px] pb-[17px] pl-[0px] pr-[0px] ml-[-19px] mr-[-19px]">
               <div className="flex items-start gap-4">
                 {/* Back Button */}
                 {backTo && (
