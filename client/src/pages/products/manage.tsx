@@ -100,7 +100,7 @@ function ProductCard({
                 {product.name}
               </h3>
             </div>
-            {product.isOptimized && (
+            {product.optimizedCopy && (
               <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full hover:bg-green-500 flex-shrink-0 ml-2">
                 <Sparkles className="w-3 h-3 mr-1 flex-shrink-0" />
                 <span className="hidden sm:inline">AI</span>
@@ -135,10 +135,11 @@ function ProductCard({
         </div>
         
         <div className="flex justify-center mt-3 sm:mt-4">
-          {product.shopifyId && product.isOptimized ? (
+          {product.shopifyId && product.optimizedCopy ? (
             <Button
               onClick={() => onPublishClick(product)}
               className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95"
+              data-testid={`button-publish-${product.id}`}
             >
               <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               <span className="truncate hidden sm:inline">Publish to Shopify</span>
@@ -147,16 +148,18 @@ function ProductCard({
           ) : product.shopifyId ? (
             <Button 
               onClick={() => onGenerateAI(product.id)}
-              className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95"
+              className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 text-black hover:shadow-lg hover:shadow-amber-500/30 hover:scale-105 active:scale-95"
+              data-testid={`button-optimize-${product.id}`}
             >
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="truncate hidden sm:inline">Generate AI Content</span>
-              <span className="truncate sm:hidden">Generate</span>
+              <span className="truncate hidden sm:inline">Optimize with AI</span>
+              <span className="truncate sm:hidden">Optimize</span>
             </Button>
           ) : (
             <Button 
               disabled
               className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground opacity-50 cursor-not-allowed"
+              data-testid={`button-sync-first-${product.id}`}
             >
               <span className="truncate hidden sm:inline">Sync with Shopify First</span>
               <span className="truncate sm:hidden">Sync First</span>
@@ -343,7 +346,7 @@ export default function ManageProducts() {
 
   // Global stats (not affected by search filter)
   const shopifyProducts = products?.filter((p) => p.shopifyId);
-  const allOptimizedProducts = products?.filter((p) => p.isOptimized); // All AI optimized (for stats)
+  const allOptimizedProducts = products?.filter((p) => p.optimizedCopy); // All AI optimized (for stats)
 
   // Filtered products for display
   const filteredProducts = products?.filter((product) =>
