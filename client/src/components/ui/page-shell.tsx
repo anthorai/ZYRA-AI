@@ -63,35 +63,24 @@ export function PageShell({
                   <Link href={backTo}>
                     <Button 
                       variant="ghost" 
-                      size="sm"
-                      className="gap-1.5 flex-shrink-0 mt-0.5"
+                      size="icon"
+                      className="flex-shrink-0"
                       data-testid="button-back"
                     >
                       <ArrowLeft className="w-4 h-4" />
-                      <span className="hidden sm:inline">Back</span>
                     </Button>
                   </Link>
                 )}
                 
-                {/* Title and Subtitle */}
-                <div className="flex-1 space-y-1">
-                  {title && (
-                    <h1 
-                      className="text-xl sm:text-2xl font-bold"
-                      data-testid="page-title"
-                    >
-                      {title}
-                    </h1>
-                  )}
-                  {subtitle && (
-                    <p 
-                      className="text-sm text-muted-foreground"
-                      data-testid="page-subtitle"
-                    >
-                      {subtitle}
-                    </p>
-                  )}
-                </div>
+                {/* Title */}
+                {title && (
+                  <h1 
+                    className="text-xl sm:text-2xl font-bold flex-1"
+                    data-testid="page-title"
+                  >
+                    {title}
+                  </h1>
+                )}
               </div>
             </div>
           )}
