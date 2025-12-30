@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { ShopifyPublishDialog } from '@/components/shopify/publish-dialog';
-import { PublishContent, useShopifyBulkPublish } from '@/hooks/use-shopify-publish';
+import { PublishContent, useShopifyBulkPublish, useShopifyConnection } from '@/hooks/use-shopify-publish';
 import { useProductRealtime } from '@/hooks/use-product-realtime';
 import { CardGrid } from '@/components/ui/standardized-layout';
 import { PageShell } from '@/components/ui/page-shell';
@@ -177,6 +177,8 @@ export default function ManageProducts() {
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const bulkPublishMutation = useShopifyBulkPublish();
+  const { data: shopifyStatus } = useShopifyConnection();
+  const isStoreConnected = shopifyStatus?.connected === true;
 
   // Enable real-time product updates
   useProductRealtime();
@@ -365,7 +367,7 @@ export default function ManageProducts() {
 
   if (isLoading) {
     return (
-      <PageShell hideHeader>
+      <PageShell maxWidth="xl" spacing="normal">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -374,7 +376,7 @@ export default function ManageProducts() {
   }
 
   return (
-    <PageShell hideHeader maxWidth="xl" spacing="normal">
+    <PageShell maxWidth="xl" spacing="normal">
       {/* Header */}
       <GradientPageHeader
         icon={<Package className="w-8 h-8 text-primary" />}
@@ -491,13 +493,13 @@ export default function ManageProducts() {
         <DashboardCard size="sm" className="border-slate-700/50" testId="stat-card-total">
           <div className="p-3 sm:p-4">
             <p className="text-slate-400 text-xs">Total</p>
-            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-total-products">{products?.length || 0}</p>
+            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-total-products">{isStoreConnected ? (products?.length || 0) : 0}</p>
           </div>
         </DashboardCard>
         <DashboardCard size="sm" className="border-slate-700/50" testId="stat-card-synced">
           <div className="p-3 sm:p-4">
             <p className="text-slate-400 text-xs">Synced</p>
-            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-synced-products">{shopifyProducts?.length || 0}</p>
+            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-synced-products">{isStoreConnected ? (shopifyProducts?.length || 0) : 0}</p>
           </div>
         </DashboardCard>
         <DashboardCard size="sm" className="border-slate-700/50" testId="stat-card-ai">
@@ -506,13 +508,13 @@ export default function ManageProducts() {
               <Sparkles className="w-3 h-3 text-primary" />
               AI
             </p>
-            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-optimized-products">{allOptimizedProducts?.length || 0}</p>
+            <p className="text-xl sm:text-2xl text-white font-bold" data-testid="stat-optimized-products">{isStoreConnected ? (allOptimizedProducts?.length || 0) : 0}</p>
           </div>
         </DashboardCard>
       </div>
 
       {/* Select All */}
-      {filteredPublishableProducts && filteredPublishableProducts.length > 0 && (
+      {isStoreConnected && filteredPublishableProducts && filteredPublishableProducts.length > 0 && (
         <div className="flex items-center gap-2">
           <Checkbox
             checked={selectedProductIds.length === filteredPublishableProducts.length}
@@ -530,21 +532,33 @@ export default function ManageProducts() {
       )}
 
       {/* Products Grid */}
-      <CardGrid>
-        {filteredProducts?.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            canBeSelected={!!(product.shopifyId && product.isOptimized)}
-            isSelected={selectedProductIds.includes(product.id)}
-            onToggleSelection={toggleProductSelection}
-            onPublishClick={handlePublishClick}
-            onGenerateAI={handleGenerateAI}
-          />
-        ))}
-      </CardGrid>
+      {isStoreConnected ? (
+        <CardGrid>
+          {filteredProducts?.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              canBeSelected={!!(product.shopifyId && product.isOptimized)}
+              isSelected={selectedProductIds.includes(product.id)}
+              onToggleSelection={toggleProductSelection}
+              onPublishClick={handlePublishClick}
+              onGenerateAI={handleGenerateAI}
+            />
+          ))}
+        </CardGrid>
+      ) : (
+        <DashboardCard testId="card-store-disconnected">
+          <div className="text-center space-y-3 py-8">
+            <Package className="w-16 h-16 mx-auto text-muted-foreground" />
+            <h3 className="text-xl font-semibold">Store Not Connected</h3>
+            <p className="text-muted-foreground">
+              Connect your Shopify store to start managing products
+            </p>
+          </div>
+        </DashboardCard>
+      )}
 
-      {filteredProducts?.length === 0 && (
+      {isStoreConnected && filteredProducts?.length === 0 && (
         <DashboardCard testId="card-no-products">
           <div className="text-center space-y-3 py-8">
             <Package className="w-16 h-16 mx-auto text-muted-foreground" />
