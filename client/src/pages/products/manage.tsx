@@ -351,7 +351,7 @@ export default function ManageProducts() {
   );
   
   // Publishable products from filtered results (for select-all checkbox)
-  const filteredPublishableProducts = filteredProducts?.filter((p) => p.shopifyId && p.isOptimized);
+  const filteredPublishableProducts = filteredProducts?.filter((p) => p.shopifyId && p.optimizedCopy);
 
   // Auto-clear selections when filtered products change (deselect hidden products)
   useEffect(() => {
@@ -538,7 +538,7 @@ export default function ManageProducts() {
             <ProductCard
               key={product.id}
               product={product}
-              canBeSelected={!!(product.shopifyId && product.isOptimized)}
+              canBeSelected={!!(product.shopifyId && product.optimizedCopy)}
               isSelected={selectedProductIds.includes(product.id)}
               onToggleSelection={toggleProductSelection}
               onPublishClick={handlePublishClick}
