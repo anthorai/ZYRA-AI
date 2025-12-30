@@ -451,6 +451,7 @@ Keywords: ${generatedSEO.keywords.join(", ")}
     <PageShell
       title="Ultimate Product SEO Engine"
       subtitle="AI-powered SEO Titles, Descriptions & Meta Optimization — All in one place"
+      icon={<Sparkles className="w-full h-full" />}
       backTo="/dashboard?tab=ai-tools"
       maxWidth="xl"
       spacing="normal"
