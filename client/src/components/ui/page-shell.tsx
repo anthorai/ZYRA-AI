@@ -1,20 +1,31 @@
 import { ReactNode } from "react";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface PageShellProps {
   children: ReactNode;
+  title?: string;
+  subtitle?: string;
+  backTo?: string;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
   spacing?: "compact" | "normal" | "relaxed";
   className?: string;
   contentClassName?: string;
+  headerActions?: ReactNode;
 }
 
 export function PageShell({
   children,
+  title,
+  subtitle,
+  backTo,
   maxWidth = "full",
   spacing = "normal",
   className,
-  contentClassName
+  contentClassName,
+  headerActions
 }: PageShellProps) {
   const maxWidthClasses = {
     sm: "max-w-2xl",
@@ -41,6 +52,42 @@ export function PageShell({
           spacingClasses[spacing],
           contentClassName
         )}>
+          {/* Page Header */}
+          {(title || backTo) && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+              <div className="flex items-start gap-3">
+                {backTo && (
+                  <Link href={backTo}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="shrink-0 -ml-2"
+                      data-testid="button-back"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                  </Link>
+                )}
+                <div className="space-y-1">
+                  {title && (
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white" data-testid="page-title">
+                      {title}
+                    </h1>
+                  )}
+                  {subtitle && (
+                    <p className="text-sm sm:text-base text-slate-400" data-testid="page-subtitle">
+                      {subtitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {headerActions && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {headerActions}
+                </div>
+              )}
+            </div>
+          )}
           {children}
         </div>
       </main>
