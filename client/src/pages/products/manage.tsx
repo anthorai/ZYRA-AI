@@ -178,7 +178,7 @@ export default function ManageProducts() {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const bulkPublishMutation = useShopifyBulkPublish();
   const { data: shopifyStatus } = useShopifyConnection();
-  const isStoreConnected = shopifyStatus?.connected === true;
+  const isStoreConnected = shopifyStatus?.isConnected === true;
 
   // Enable real-time product updates
   useProductRealtime();
