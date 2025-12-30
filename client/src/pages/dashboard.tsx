@@ -383,7 +383,7 @@ export default function Dashboard() {
         sidebarOpen ? 'lg:ml-64' : 'ml-0'
       }`}>
         {/* Top Bar */}
-        <header className="gradient-surface border-b px-3 sm:px-6 py-2 sm:py-4">
+        <header className="gradient-surface border-b px-3 sm:px-6 py-2 sm:py-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-2">
             {/* Left Section - Hamburger + Title */}
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
