@@ -146,7 +146,7 @@ const createDefaultBlock = (type: EmailBlock["type"]): EmailBlock => {
     id: generateId(),
     type,
     styles: {
-      padding: "16px",
+      padding: "24px 32px",
       margin: "0",
       textAlign: "left" as const,
     },
@@ -156,44 +156,45 @@ const createDefaultBlock = (type: EmailBlock["type"]): EmailBlock => {
     case "heading":
       return {
         ...baseBlock,
-        content: { text: "Your Heading Here", level: "h2" },
-        styles: { ...baseBlock.styles, fontSize: "24px", textAlign: "center" as const },
+        content: { text: "Welcome to Your Order", level: "h1" },
+        styles: { ...baseBlock.styles, fontSize: "28px", textAlign: "center" as const, padding: "32px 32px 16px 32px" },
       };
     case "text":
       return {
         ...baseBlock,
-        content: { text: "Add your email content here. You can use {{customer.firstName}} and other variables to personalize your message." },
-        styles: { ...baseBlock.styles, fontSize: "16px" },
+        content: { text: "Hi {{customer.firstName}},\n\nThank you for your recent purchase! We're excited to let you know that your order is being prepared and will be shipped soon.\n\nIf you have any questions, our support team is here to help." },
+        styles: { ...baseBlock.styles, fontSize: "16px", padding: "16px 32px" },
       };
     case "image":
       return {
         ...baseBlock,
-        content: { src: "", alt: "Image description", linkUrl: "" },
-        styles: { ...baseBlock.styles, textAlign: "center" as const, width: "100%" },
+        content: { src: "", alt: "Product image", linkUrl: "", borderRadius: "12px" },
+        styles: { ...baseBlock.styles, textAlign: "center" as const, width: "100%", padding: "24px 32px" },
       };
     case "button":
       return {
         ...baseBlock,
-        content: { text: "Click Here", url: "{{cart.recoveryUrl}}" },
+        content: { text: "View Your Order", url: "{{order.statusUrl}}" },
         styles: { 
           ...baseBlock.styles, 
           textAlign: "center" as const, 
           backgroundColor: "#00F0FF", 
           textColor: "#000000",
-          borderRadius: "6px",
-          padding: "12px 24px",
+          borderRadius: "8px",
+          padding: "16px 32px",
+          fontSize: "16px",
         },
       };
     case "divider":
       return {
         ...baseBlock,
         content: { style: "solid", color: "#e5e7eb" },
-        styles: { ...baseBlock.styles, padding: "8px 0" },
+        styles: { ...baseBlock.styles, padding: "16px 32px" },
       };
     case "spacer":
       return {
         ...baseBlock,
-        content: { height: "24px" },
+        content: { height: "32px" },
         styles: { ...baseBlock.styles, padding: "0" },
       };
     case "columns":
@@ -264,11 +265,12 @@ export default function EmailTemplateBuilder() {
   const [status, setStatus] = useState<"draft" | "active" | "archived">("draft");
   const [blocks, setBlocks] = useState<EmailBlock[]>([
     createDefaultBlock("logo"),
+    createDefaultBlock("spacer"),
     createDefaultBlock("heading"),
     createDefaultBlock("text"),
+    createDefaultBlock("image"),
     createDefaultBlock("button"),
-    createDefaultBlock("divider"),
-    createDefaultBlock("text"),
+    createDefaultBlock("spacer"),
   ]);
   const [brandSettings, setBrandSettings] = useState<BrandSettings>(defaultBrandSettings);
 
@@ -657,12 +659,12 @@ export default function EmailTemplateBuilder() {
     handleDragEnd();
   };
 
-  // Render email block preview
+  // Render email block preview with professional email-safe inline styles
   const renderBlockPreview = (block: EmailBlock) => {
-    const styles: Record<string, string> = {
-      padding: block.styles?.padding || "16px",
+    const baseStyles: React.CSSProperties = {
+      padding: block.styles?.padding || "24px 32px",
       margin: block.styles?.margin || "0",
-      textAlign: block.styles?.textAlign || "left",
+      textAlign: (block.styles?.textAlign || "left") as React.CSSProperties["textAlign"],
       backgroundColor: block.styles?.backgroundColor || "transparent",
       color: block.styles?.textColor || brandSettings.textColor,
       fontFamily: block.styles?.fontFamily || brandSettings.fontFamily,
@@ -670,39 +672,64 @@ export default function EmailTemplateBuilder() {
 
     switch (block.type) {
       case "heading":
+        const headingLevel = block.content?.level || "h1";
+        const headingSize = headingLevel === "h1" ? "28px" : headingLevel === "h2" ? "24px" : "20px";
         return (
-          <div style={styles}>
+          <div style={{ ...baseStyles, textAlign: "center" as const }}>
             <h2 style={{ 
-              fontSize: block.styles?.fontSize || "24px", 
-              fontWeight: "bold",
+              fontSize: block.styles?.fontSize || headingSize, 
+              fontWeight: "700",
               margin: 0,
-              color: styles.color,
+              color: baseStyles.color,
+              lineHeight: "1.3",
+              letterSpacing: "-0.02em",
             }}>
-              {block.content?.text || "Heading"}
+              {block.content?.text || "Your Heading Here"}
             </h2>
           </div>
         );
       
       case "text":
         return (
-          <div style={{ ...styles, fontSize: block.styles?.fontSize || "16px", lineHeight: "1.6" }}>
-            {block.content?.text || "Text content"}
+          <div style={{ 
+            ...baseStyles, 
+            fontSize: block.styles?.fontSize || "16px", 
+            lineHeight: "1.7",
+            whiteSpace: "pre-wrap",
+          }}>
+            {block.content?.text || "Add your email content here..."}
           </div>
         );
       
       case "image":
         return (
-          <div style={{ ...styles, textAlign: "center" }}>
+          <div style={{ ...baseStyles, textAlign: "center" as const }}>
             {block.content?.src ? (
               <img 
                 src={block.content.src} 
                 alt={block.content?.alt || "Image"} 
-                style={{ maxWidth: block.styles?.width || "100%", height: "auto" }}
+                style={{ 
+                  maxWidth: block.styles?.width || "100%", 
+                  height: "auto",
+                  borderRadius: block.content?.borderRadius || "12px",
+                  display: "block",
+                  margin: "0 auto",
+                }}
               />
             ) : (
-              <div className="bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 flex flex-col items-center justify-center">
-                <Image className="w-12 h-12 text-muted-foreground/50 mb-2" />
-                <span className="text-muted-foreground/50 text-sm">Add image URL</span>
+              <div style={{
+                backgroundColor: "#f8f9fa",
+                border: "2px dashed #dee2e6",
+                borderRadius: "12px",
+                padding: "48px 32px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                <Image style={{ width: 48, height: 48, color: "#adb5bd", marginBottom: 12 }} />
+                <span style={{ color: "#868e96", fontSize: "14px" }}>Add product image</span>
+                <span style={{ color: "#adb5bd", fontSize: "12px", marginTop: 4 }}>Recommended: 600x400px</span>
               </div>
             )}
           </div>
@@ -710,53 +737,86 @@ export default function EmailTemplateBuilder() {
       
       case "button":
         return (
-          <div style={{ ...styles, textAlign: block.styles?.textAlign || "center" }}>
-            <a 
-              href="#" 
-              onClick={(e) => e.preventDefault()}
-              style={{
-                display: "inline-block",
-                padding: block.styles?.padding || "12px 24px",
-                backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
-                color: block.styles?.textColor || "#000000",
-                textDecoration: "none",
-                borderRadius: block.styles?.borderRadius || "6px",
-                fontWeight: "600",
-                fontSize: block.styles?.fontSize || "16px",
-              }}
-            >
-              {block.content?.text || "Click Here"}
-            </a>
+          <div style={{ ...baseStyles, textAlign: "center" as const, padding: "24px 32px" }}>
+            <table cellPadding="0" cellSpacing="0" style={{ margin: "0 auto" }}>
+              <tbody>
+                <tr>
+                  <td 
+                    style={{
+                      backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
+                      borderRadius: block.styles?.borderRadius || "8px",
+                      textAlign: "center" as const,
+                    }}
+                  >
+                    <a 
+                      href="#" 
+                      onClick={(e) => e.preventDefault()}
+                      style={{
+                        display: "inline-block",
+                        padding: "14px 32px",
+                        backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
+                        color: block.styles?.textColor || "#000000",
+                        textDecoration: "none",
+                        borderRadius: block.styles?.borderRadius || "8px",
+                        fontWeight: "600",
+                        fontSize: block.styles?.fontSize || "16px",
+                        letterSpacing: "0.02em",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {block.content?.text || "Shop Now"}
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         );
       
       case "divider":
         return (
-          <div style={{ ...styles, textAlign: "center" }}>
-            <hr style={{ 
-              border: "none", 
-              borderTop: `1px ${block.content?.style || "solid"} ${block.content?.color || "#e5e7eb"}`,
-              margin: "8px 0",
-            }} />
+          <div style={{ ...baseStyles, textAlign: "center" as const }}>
+            <table width="100%" cellPadding="0" cellSpacing="0">
+              <tbody>
+                <tr>
+                  <td style={{ padding: "16px 0" }}>
+                    <div style={{ 
+                      borderTop: `1px ${block.content?.style || "solid"} ${block.content?.color || "#e5e7eb"}`,
+                      height: 0,
+                      lineHeight: 0,
+                      fontSize: 0,
+                    }} />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         );
       
       case "spacer":
         return (
-          <div style={{ height: block.content?.height || "24px" }} />
+          <div style={{ height: block.content?.height || "32px", lineHeight: block.content?.height || "32px", fontSize: 0 }}>
+            &nbsp;
+          </div>
         );
       
       case "columns":
         return (
-          <div style={styles}>
-            <table width="100%" cellPadding="0" cellSpacing="0">
+          <div style={baseStyles}>
+            <table width="100%" cellPadding="0" cellSpacing="0" style={{ borderCollapse: "collapse" }}>
               <tbody>
                 <tr>
-                  <td width="50%" style={{ padding: "8px", verticalAlign: "top" }}>
-                    {block.content?.leftContent || "Left column"}
+                  <td width="48%" style={{ padding: "16px", verticalAlign: "top", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
+                    <div style={{ fontSize: "14px", color: "#495057", textAlign: "center" as const }}>
+                      {block.content?.leftContent || "Left column content"}
+                    </div>
                   </td>
-                  <td width="50%" style={{ padding: "8px", verticalAlign: "top" }}>
-                    {block.content?.rightContent || "Right column"}
+                  <td width="4%"></td>
+                  <td width="48%" style={{ padding: "16px", verticalAlign: "top", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
+                    <div style={{ fontSize: "14px", color: "#495057", textAlign: "center" as const }}>
+                      {block.content?.rightContent || "Right column content"}
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -766,24 +826,38 @@ export default function EmailTemplateBuilder() {
       
       case "logo":
         return (
-          <div style={{ ...styles, textAlign: "center" }}>
+          <div style={{ ...baseStyles, textAlign: "center" as const, padding: "32px 32px 16px 32px" }}>
             {block.content?.src || brandSettings.logoUrl ? (
               <img 
                 src={block.content?.src || brandSettings.logoUrl} 
                 alt={block.content?.alt || "Logo"} 
-                style={{ maxWidth: block.styles?.width || "150px", height: "auto" }}
+                style={{ 
+                  maxWidth: block.styles?.width || "160px", 
+                  height: "auto",
+                  display: "block",
+                  margin: "0 auto",
+                }}
               />
             ) : (
-              <div className="bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 inline-flex flex-col items-center justify-center">
-                <ImageIcon className="w-8 h-8 text-muted-foreground/50 mb-1" />
-                <span className="text-muted-foreground/50 text-xs">Add logo</span>
+              <div style={{
+                backgroundColor: "#f8f9fa",
+                border: "2px dashed #dee2e6",
+                borderRadius: "8px",
+                padding: "20px 40px",
+                display: "inline-flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                <ImageIcon style={{ width: 32, height: 32, color: "#adb5bd", marginBottom: 8 }} />
+                <span style={{ color: "#868e96", fontSize: "13px" }}>Your Logo</span>
               </div>
             )}
           </div>
         );
       
       default:
-        return <div style={styles}>Unknown block type</div>;
+        return <div style={baseStyles}>Unknown block type</div>;
     }
   };
 
@@ -1405,122 +1479,224 @@ export default function EmailTemplateBuilder() {
             </div>
           </div>
 
-          {/* Email canvas */}
+          {/* Email canvas - Professional ESP-style preview */}
           <ScrollArea className="flex-1">
-            <div className="p-6 flex justify-center bg-[#14142b]">
-              <div 
-                className={`bg-white shadow-xl rounded-lg transition-all duration-300 ${
-                  previewMode === "mobile" ? "w-[375px]" : "w-full max-w-[600px]"
-                }`}
-                style={{ backgroundColor: brandSettings.backgroundColor }}
-              >
-                {/* Email blocks */}
-                <div 
-                  className="min-h-[400px]"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDrop(blocks.length)}
-                >
-                  {blocks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[400px] text-center p-8">
-                      <Columns className="w-16 h-16 text-gray-300 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-600 mb-2">
-                        Start Building Your Email
-                      </h3>
-                      <p className="text-sm text-gray-400 mb-4">
-                        Drag blocks from the left panel or click to add them here
-                      </p>
-                      <Button variant="outline" onClick={() => addBlock("heading")}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add First Block
-                      </Button>
+            <div className="p-8 flex justify-center" style={{ backgroundColor: "#1a1a2e", minHeight: "100%" }}>
+              {/* Email container wrapper - mimics email client */}
+              <div className="w-full" style={{ maxWidth: previewMode === "mobile" ? "375px" : "680px" }}>
+                {/* Email client header simulation */}
+                <div className="rounded-t-xl overflow-hidden" style={{ backgroundColor: "#2d2d44" }}>
+                  <div className="flex items-center gap-2 px-4 py-3">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-400/80" />
                     </div>
-                  ) : (
-                    blocks.map((block, index) => (
-                      <div
-                        key={block.id}
-                        onClick={() => setSelectedBlockId(block.id)}
-                        className={`group relative cursor-pointer transition-all ${
-                          selectedBlockId === block.id 
-                            ? "ring-2 ring-primary ring-inset" 
-                            : "hover:ring-1 hover:ring-primary/50 hover:ring-inset"
-                        }`}
-                        data-testid={`block-preview-${block.id}`}
-                      >
-                        {/* Block controls */}
-                        <div className={`absolute left-0 top-0 bottom-0 w-8 flex flex-col items-center justify-center gap-1 bg-primary/10 transition-opacity ${
-                          selectedBlockId === block.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                        }`}>
-                          <GripVertical className="w-4 h-4 text-primary cursor-grab" />
-                        </div>
-                        
-                        {/* Block actions */}
-                        <div className={`absolute right-2 top-2 flex items-center gap-1 transition-opacity ${
-                          selectedBlockId === block.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                        }`}>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              duplicateBlock(block.id);
-                            }}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-red-500/20 hover:text-red-400"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteBlock(block.id);
-                            }}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                        
-                        {/* Block content */}
-                        <div className="pl-8">
-                          {renderBlockPreview(block)}
-                        </div>
-                        
-                        {/* Drop zone indicator */}
-                        {isDragging && (
-                          <div
-                            className="absolute inset-x-0 bottom-0 h-2 bg-primary/30"
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => {
-                              e.stopPropagation();
-                              handleDrop(index + 1);
-                            }}
-                          />
-                        )}
+                    <div className="flex-1 mx-4">
+                      <div className="bg-[#1a1a2e] rounded-md px-3 py-1.5 text-xs text-muted-foreground flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className="truncate">{subject || "Email Preview"}</span>
                       </div>
-                    ))
-                  )}
+                    </div>
+                  </div>
                 </div>
                 
-                {/* Footer for CAN-SPAM compliance */}
+                {/* Actual email content */}
                 <div 
-                  className="text-center p-4 text-xs border-t"
+                  className="shadow-2xl transition-all duration-300"
                   style={{ 
-                    color: brandSettings.textColor, 
                     backgroundColor: brandSettings.backgroundColor,
-                    opacity: 0.7 
+                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
                   }}
                 >
-                  <p>{brandSettings.footerText || "Your Company Name | 123 Street, City, State ZIP"}</p>
-                  <p className="mt-1">
-                    <a href="#" className="underline" style={{ color: brandSettings.primaryColor }}>
-                      Unsubscribe
-                    </a>
-                    {" | "}
-                    <a href="#" className="underline" style={{ color: brandSettings.primaryColor }}>
-                      Update Preferences
-                    </a>
-                  </p>
+                  {/* Email blocks */}
+                  <div 
+                    className="min-h-[500px]"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDrop(blocks.length)}
+                  >
+                    {blocks.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-[500px] text-center p-12" style={{ backgroundColor: brandSettings.backgroundColor }}>
+                        <div style={{ 
+                          width: 80, 
+                          height: 80, 
+                          borderRadius: "50%", 
+                          backgroundColor: "#f8f9fa",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginBottom: 24,
+                        }}>
+                          <Mail style={{ width: 40, height: 40, color: "#adb5bd" }} />
+                        </div>
+                        <h3 style={{ 
+                          fontSize: "20px", 
+                          fontWeight: "600", 
+                          color: "#495057",
+                          marginBottom: 8,
+                        }}>
+                          Build Your Email Template
+                        </h3>
+                        <p style={{ 
+                          fontSize: "14px", 
+                          color: "#868e96",
+                          marginBottom: 24,
+                          maxWidth: 280,
+                          lineHeight: 1.6,
+                        }}>
+                          Drag blocks from the left panel to create a professional email that converts
+                        </p>
+                        <Button onClick={() => addBlock("heading")} style={{ backgroundColor: brandSettings.primaryColor, color: "#000" }}>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Your First Block
+                        </Button>
+                      </div>
+                    ) : (
+                      blocks.map((block, index) => (
+                        <div
+                          key={block.id}
+                          onClick={() => setSelectedBlockId(block.id)}
+                          className={`group relative cursor-pointer transition-all duration-150`}
+                          style={{
+                            outline: selectedBlockId === block.id ? `2px solid ${brandSettings.primaryColor}` : "none",
+                            outlineOffset: "-2px",
+                          }}
+                          data-testid={`block-preview-${block.id}`}
+                        >
+                          {/* Block controls - left side drag handle */}
+                          <div 
+                            className={`absolute left-0 top-0 bottom-0 w-10 flex flex-col items-center justify-center gap-1 transition-opacity duration-150 ${
+                              selectedBlockId === block.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            }`}
+                            style={{ backgroundColor: `${brandSettings.primaryColor}15` }}
+                          >
+                            <GripVertical className="w-5 h-5 cursor-grab" style={{ color: brandSettings.primaryColor }} />
+                          </div>
+                          
+                          {/* Block actions - top right */}
+                          <div 
+                            className={`absolute right-3 top-3 flex items-center gap-1.5 transition-opacity duration-150 ${
+                              selectedBlockId === block.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            }`}
+                            style={{ zIndex: 10 }}
+                          >
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="h-7 w-7 shadow-md"
+                              style={{ backgroundColor: "#fff", border: "1px solid #dee2e6" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                duplicateBlock(block.id);
+                              }}
+                            >
+                              <Copy className="w-3.5 h-3.5" style={{ color: "#495057" }} />
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="h-7 w-7 shadow-md"
+                              style={{ backgroundColor: "#fff", border: "1px solid #dee2e6" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteBlock(block.id);
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" style={{ color: "#dc3545" }} />
+                            </Button>
+                          </div>
+                          
+                          {/* Block content */}
+                          <div className="pl-10">
+                            {renderBlockPreview(block)}
+                          </div>
+                          
+                          {/* Drop zone indicator */}
+                          {isDragging && (
+                            <div
+                              className="absolute inset-x-0 bottom-0 h-1"
+                              style={{ backgroundColor: brandSettings.primaryColor }}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.stopPropagation();
+                                handleDrop(index + 1);
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  {/* Professional footer for CAN-SPAM compliance */}
+                  <div style={{ 
+                    backgroundColor: "#f8f9fa",
+                    borderTop: "1px solid #e9ecef",
+                    padding: "32px",
+                  }}>
+                    {/* Help section */}
+                    <div style={{ textAlign: "center", marginBottom: 24 }}>
+                      <p style={{ fontSize: "14px", color: "#495057", marginBottom: 8 }}>
+                        Need help with your order?
+                      </p>
+                      <a 
+                        href="#" 
+                        onClick={(e) => e.preventDefault()}
+                        style={{ 
+                          color: brandSettings.primaryColor, 
+                          textDecoration: "none",
+                          fontWeight: "500",
+                          fontSize: "14px",
+                        }}
+                      >
+                        Contact Support
+                      </a>
+                    </div>
+                    
+                    {/* Divider */}
+                    <div style={{ borderTop: "1px solid #dee2e6", margin: "0 0 24px 0" }} />
+                    
+                    {/* Company info and compliance */}
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: "12px", color: "#6c757d", marginBottom: 8 }}>
+                        {brandSettings.footerText || "Your Company Name | 123 Business Street, City, State 12345"}
+                      </p>
+                      <p style={{ fontSize: "12px", color: "#868e96", marginBottom: 16 }}>
+                        You received this email because you made a purchase or signed up for updates.
+                      </p>
+                      <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
+                        <a 
+                          href="#" 
+                          onClick={(e) => e.preventDefault()}
+                          style={{ fontSize: "12px", color: "#495057", textDecoration: "underline" }}
+                        >
+                          Unsubscribe
+                        </a>
+                        <a 
+                          href="#" 
+                          onClick={(e) => e.preventDefault()}
+                          style={{ fontSize: "12px", color: "#495057", textDecoration: "underline" }}
+                        >
+                          Email Preferences
+                        </a>
+                        <a 
+                          href="#" 
+                          onClick={(e) => e.preventDefault()}
+                          style={{ fontSize: "12px", color: "#495057", textDecoration: "underline" }}
+                        >
+                          Privacy Policy
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Email client footer simulation */}
+                <div className="rounded-b-xl overflow-hidden" style={{ backgroundColor: "#2d2d44", padding: "8px 16px" }}>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{previewMode === "mobile" ? "Mobile Preview" : "Desktop Preview"} - 600px max width</span>
+                    <span>Email-safe HTML</span>
+                  </div>
                 </div>
               </div>
             </div>
