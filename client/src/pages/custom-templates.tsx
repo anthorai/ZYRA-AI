@@ -277,6 +277,15 @@ export default function EmailTemplateBuilder() {
   // Editor state (for new template or local edits)
   const [templateName, setTemplateName] = useState("New Email Template");
   const [subject, setSubject] = useState("Your subject line here");
+  const [subjectSettings, setSubjectSettings] = useState<{
+    alignment: "left" | "center" | "right";
+    color: string;
+    fontWeight: "normal" | "bold";
+  }>({
+    alignment: "left",
+    color: "#1f2937",
+    fontWeight: "normal",
+  });
   const [preheader, setPreheader] = useState("");
   const [workflowType, setWorkflowType] = useState<string>("custom");
   const [status, setStatus] = useState<"draft" | "active" | "archived">("draft");
@@ -1764,13 +1773,73 @@ export default function EmailTemplateBuilder() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground mb-1">Subject Line</Label>
-                <Input
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Enter email subject..."
-                  className="h-9"
-                  data-testid="input-subject"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Enter email subject..."
+                    className="h-9 flex-1"
+                    data-testid="input-subject"
+                  />
+                  {/* Subject Line Styling Controls */}
+                  <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1">
+                    {/* Alignment buttons */}
+                    <Button
+                      variant={subjectSettings.alignment === "left" ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setSubjectSettings(prev => ({ ...prev, alignment: "left" }))}
+                      data-testid="button-subject-align-left"
+                    >
+                      <AlignLeft className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant={subjectSettings.alignment === "center" ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setSubjectSettings(prev => ({ ...prev, alignment: "center" }))}
+                      data-testid="button-subject-align-center"
+                    >
+                      <AlignCenter className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant={subjectSettings.alignment === "right" ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setSubjectSettings(prev => ({ ...prev, alignment: "right" }))}
+                      data-testid="button-subject-align-right"
+                    >
+                      <AlignRight className="w-3.5 h-3.5" />
+                    </Button>
+                    {/* Divider */}
+                    <div className="w-px h-5 bg-border mx-1" />
+                    {/* Bold toggle */}
+                    <Button
+                      variant={subjectSettings.fontWeight === "bold" ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setSubjectSettings(prev => ({ 
+                        ...prev, 
+                        fontWeight: prev.fontWeight === "bold" ? "normal" : "bold" 
+                      }))}
+                      data-testid="button-subject-bold"
+                    >
+                      <Bold className="w-3.5 h-3.5" />
+                    </Button>
+                    {/* Divider */}
+                    <div className="w-px h-5 bg-border mx-1" />
+                    {/* Color picker */}
+                    <div className="relative">
+                      <Input
+                        type="color"
+                        value={subjectSettings.color}
+                        onChange={(e) => setSubjectSettings(prev => ({ ...prev, color: e.target.value }))}
+                        className="w-7 h-7 p-0.5 cursor-pointer rounded-md"
+                        data-testid="input-subject-color"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground mb-1">Preheader Text</Label>
@@ -1822,9 +1891,18 @@ export default function EmailTemplateBuilder() {
                       <div className="w-3 h-3 rounded-full bg-green-400/80" />
                     </div>
                     <div className="flex-1 mx-4">
-                      <div className="bg-[#1a1a2e] rounded-md px-3 py-1.5 text-xs text-muted-foreground flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5" />
-                        <span className="truncate">{subject || "Email Preview"}</span>
+                      <div className="bg-[#1a1a2e] rounded-md px-3 py-1.5 text-xs flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                        <span 
+                          className="truncate flex-1"
+                          style={{
+                            textAlign: subjectSettings.alignment,
+                            color: subjectSettings.color,
+                            fontWeight: subjectSettings.fontWeight,
+                          }}
+                        >
+                          {subject || "Email Preview"}
+                        </span>
                       </div>
                     </div>
                   </div>
