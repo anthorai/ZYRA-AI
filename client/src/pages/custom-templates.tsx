@@ -281,10 +281,12 @@ export default function EmailTemplateBuilder() {
     alignment: "left" | "center" | "right";
     color: string;
     fontWeight: "normal" | "bold";
+    headerColor: string;
   }>({
     alignment: "left",
     color: "#1f2937",
     fontWeight: "normal",
+    headerColor: "#2d2d44",
   });
   const [preheader, setPreheader] = useState("");
   const [workflowType, setWorkflowType] = useState<string>("custom");
@@ -1789,6 +1791,7 @@ export default function EmailTemplateBuilder() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => setSubjectSettings(prev => ({ ...prev, alignment: "left" }))}
+                      title="Align Left"
                       data-testid="button-subject-align-left"
                     >
                       <AlignLeft className="w-3.5 h-3.5" />
@@ -1798,6 +1801,7 @@ export default function EmailTemplateBuilder() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => setSubjectSettings(prev => ({ ...prev, alignment: "center" }))}
+                      title="Align Center"
                       data-testid="button-subject-align-center"
                     >
                       <AlignCenter className="w-3.5 h-3.5" />
@@ -1807,6 +1811,7 @@ export default function EmailTemplateBuilder() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => setSubjectSettings(prev => ({ ...prev, alignment: "right" }))}
+                      title="Align Right"
                       data-testid="button-subject-align-right"
                     >
                       <AlignRight className="w-3.5 h-3.5" />
@@ -1822,22 +1827,45 @@ export default function EmailTemplateBuilder() {
                         ...prev, 
                         fontWeight: prev.fontWeight === "bold" ? "normal" : "bold" 
                       }))}
+                      title="Bold"
                       data-testid="button-subject-bold"
                     >
                       <Bold className="w-3.5 h-3.5" />
                     </Button>
                     {/* Divider */}
                     <div className="w-px h-5 bg-border mx-1" />
-                    {/* Color picker */}
-                    <div className="relative">
-                      <Input
-                        type="color"
-                        value={subjectSettings.color}
-                        onChange={(e) => setSubjectSettings(prev => ({ ...prev, color: e.target.value }))}
-                        className="w-7 h-7 p-0.5 cursor-pointer rounded-md"
-                        data-testid="input-subject-color"
-                      />
-                    </div>
+                    {/* Text Color picker */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          <Input
+                            type="color"
+                            value={subjectSettings.color}
+                            onChange={(e) => setSubjectSettings(prev => ({ ...prev, color: e.target.value }))}
+                            className="w-7 h-7 p-0.5 cursor-pointer rounded-md"
+                            data-testid="input-subject-color"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Text Color</TooltipContent>
+                    </Tooltip>
+                    {/* Divider */}
+                    <div className="w-px h-5 bg-border mx-1" />
+                    {/* Header Background Color picker */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          <Input
+                            type="color"
+                            value={subjectSettings.headerColor}
+                            onChange={(e) => setSubjectSettings(prev => ({ ...prev, headerColor: e.target.value }))}
+                            className="w-7 h-7 p-0.5 cursor-pointer rounded-md"
+                            data-testid="input-header-color"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Header Background</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </div>
@@ -1883,7 +1911,7 @@ export default function EmailTemplateBuilder() {
               {/* Email container wrapper - mimics email client */}
               <div className="w-full" style={{ maxWidth: previewMode === "mobile" ? "375px" : "680px" }}>
                 {/* Email client header simulation */}
-                <div className="rounded-t-xl overflow-hidden" style={{ backgroundColor: "#2d2d44" }}>
+                <div className="rounded-t-xl overflow-hidden" style={{ backgroundColor: subjectSettings.headerColor }}>
                   <div className="flex items-center gap-2 px-4 py-3">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-red-400/80" />
@@ -1891,17 +1919,22 @@ export default function EmailTemplateBuilder() {
                       <div className="w-3 h-3 rounded-full bg-green-400/80" />
                     </div>
                     <div className="flex-1 mx-4">
-                      <div className="bg-[#1a1a2e] rounded-md px-3 py-1.5 text-xs flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <div 
+                        className="rounded-md px-3 py-2 text-sm"
+                        style={{
+                          backgroundColor: "rgba(255,255,255,0.1)",
+                          textAlign: subjectSettings.alignment,
+                        }}
+                      >
                         <span 
-                          className="truncate flex-1"
                           style={{
-                            textAlign: subjectSettings.alignment,
                             color: subjectSettings.color,
                             fontWeight: subjectSettings.fontWeight,
+                            display: "block",
                           }}
+                          data-testid="preview-subject-line"
                         >
-                          {subject || "Email Preview"}
+                          {subject || "Your subject line here"}
                         </span>
                       </div>
                     </div>
