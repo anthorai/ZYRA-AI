@@ -1071,12 +1071,12 @@ export default function EmailTemplateBuilder() {
                     </div>
                     
                     <div className="relative mb-3">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         placeholder="Search templates..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 h-9"
+                        className="pr-9 h-9"
                         data-testid="input-search-templates"
                       />
                     </div>
