@@ -1407,7 +1407,7 @@ export default function EmailTemplateBuilder() {
 
           {/* Email canvas */}
           <ScrollArea className="flex-1">
-            <div className="p-6 flex justify-center">
+            <div className="p-6 flex justify-center bg-[#14142b]">
               <div 
                 className={`bg-white shadow-xl rounded-lg transition-all duration-300 ${
                   previewMode === "mobile" ? "w-[375px]" : "w-full max-w-[600px]"
