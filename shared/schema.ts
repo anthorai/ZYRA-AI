@@ -3284,3 +3284,6 @@ export const insertBrandVoiceTransformationSchema = createInsertSchema(brandVoic
 
 export type BrandVoiceTransformation = typeof brandVoiceTransformations.$inferSelect;
 export type InsertBrandVoiceTransformation = z.infer<typeof insertBrandVoiceTransformationSchema>;
+
+// Re-export chat models for AI integrations
+export * from "./models/chat";

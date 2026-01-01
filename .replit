@@ -25,7 +25,7 @@ SUPABASE_URL = "https://uqahonxcssfxrlmynrjo.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxYWhvbnhjc3NmeHJsbXlucmpvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODcwMjMzMiwiZXhwIjoyMDc0Mjc4MzMyfQ.KSVUUEYzfJ_afl7U67gEGITXkl1tUvFLbtxctwJWvP0"
 
 [agent]
-integrations = ["javascript_stripe:1.0.0", "javascript_openai:1.0.0", "javascript_sendgrid:1.0.0", "javascript_database:1.0.0", "javascript_object_storage:1.0.0", "javascript_paypal:1.0.0", "sendgrid:1.0.0", "twilio:1.0.0", "javascript_openai_ai_integrations:1.0.0"]
+integrations = ["javascript_stripe:1.0.0", "javascript_openai:1.0.0", "javascript_sendgrid:1.0.0", "javascript_database:1.0.0", "javascript_object_storage:1.0.0", "javascript_paypal:1.0.0", "sendgrid:1.0.0", "twilio:1.0.0", "javascript_openai_ai_integrations:2.0.0"]
 expertMode = true
 
 [workflows]
