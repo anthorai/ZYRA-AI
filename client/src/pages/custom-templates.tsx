@@ -259,6 +259,7 @@ export default function EmailTemplateBuilder() {
   const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showTestEmailDialog, setShowTestEmailDialog] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [testEmailAddress, setTestEmailAddress] = useState("");
   const [aiLoading, setAiLoading] = useState<string | null>(null);
   
@@ -1220,6 +1221,16 @@ export default function EmailTemplateBuilder() {
                 </AlertDialog>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Preview button */}
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPreviewDialog(true)}
+              data-testid="button-preview"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
             
             {/* Generate HTML button */}
             <Button 
@@ -2493,6 +2504,222 @@ export default function EmailTemplateBuilder() {
                   Send Test Email
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full Email Preview Dialog */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Email Preview
+            </DialogTitle>
+            <DialogDescription>
+              Preview how your email will appear to recipients. Toggle between desktop and mobile views.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center justify-center gap-2 py-2 border-b border-border flex-shrink-0">
+            <Button
+              variant={previewMode === "desktop" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setPreviewMode("desktop")}
+              data-testid="preview-desktop"
+            >
+              <Monitor className="w-4 h-4 mr-2" />
+              Desktop
+            </Button>
+            <Button
+              variant={previewMode === "mobile" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setPreviewMode("mobile")}
+              data-testid="preview-mobile"
+            >
+              <Smartphone className="w-4 h-4 mr-2" />
+              Mobile
+            </Button>
+          </div>
+          
+          <ScrollArea className="flex-1 min-h-0">
+            <div className={`mx-auto p-4 ${previewMode === "mobile" ? "max-w-[375px]" : "max-w-[600px]"}`}>
+              {/* Email container */}
+              <div 
+                className="rounded-lg overflow-hidden shadow-xl"
+                style={{ backgroundColor: brandSettings.backgroundColor }}
+              >
+                {/* Email header with subject and preheader */}
+                <div className="bg-muted/50 p-4 border-b border-border">
+                  <div className="text-sm text-muted-foreground mb-1">Subject:</div>
+                  <div className="font-medium">{subject || "Your subject line here"}</div>
+                  {preheader && (
+                    <div className="text-sm text-muted-foreground mt-2 italic">
+                      {preheader}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Email body - all blocks */}
+                <div style={{ 
+                  backgroundColor: brandSettings.backgroundColor,
+                  fontFamily: brandSettings.fontFamily,
+                  color: brandSettings.textColor,
+                }}>
+                  {blocks.map((block) => (
+                    <div 
+                      key={block.id}
+                      style={{
+                        padding: block.styles?.padding || "16px",
+                        textAlign: block.styles?.textAlign || "left",
+                        backgroundColor: block.styles?.backgroundColor || "transparent",
+                      }}
+                    >
+                      {block.type === "logo" && block.content?.src && (
+                        <div style={{ textAlign: block.styles?.textAlign || "center" }}>
+                          <img
+                            src={block.content.src}
+                            alt={block.content.alt || "Logo"}
+                            style={{ 
+                              maxWidth: block.styles?.width || "150px",
+                              height: "auto",
+                              display: "inline-block",
+                            }}
+                          />
+                        </div>
+                      )}
+                      {block.type === "logo" && !block.content?.src && (
+                        <div style={{ 
+                          textAlign: block.styles?.textAlign || "center",
+                          padding: "20px",
+                          backgroundColor: "#f0f0f0",
+                          borderRadius: "4px",
+                        }}>
+                          <ImageIcon className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Logo placeholder</span>
+                        </div>
+                      )}
+                      
+                      {block.type === "heading" && (
+                        <div style={{ 
+                          fontSize: block.content?.level === "h1" ? "32px" : block.content?.level === "h3" ? "20px" : "24px",
+                          fontWeight: "bold",
+                        }}>
+                          {block.content?.text || "Heading text"}
+                        </div>
+                      )}
+                      
+                      {block.type === "text" && (
+                        <div style={{ 
+                          fontSize: block.styles?.fontSize || "16px",
+                          lineHeight: "1.6",
+                        }}>
+                          {block.content?.text || "Your text content here..."}
+                        </div>
+                      )}
+                      
+                      {block.type === "image" && block.content?.src && (
+                        <div style={{ textAlign: block.styles?.textAlign || "center" }}>
+                          <img
+                            src={block.content.src}
+                            alt={block.content.alt || "Image"}
+                            style={{ 
+                              maxWidth: "100%",
+                              height: "auto",
+                              display: "inline-block",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        </div>
+                      )}
+                      {block.type === "image" && !block.content?.src && (
+                        <div style={{ 
+                          textAlign: "center",
+                          padding: "40px",
+                          backgroundColor: "#f0f0f0",
+                          borderRadius: "4px",
+                        }}>
+                          <ImageIcon className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Image placeholder</span>
+                        </div>
+                      )}
+                      
+                      {block.type === "button" && (
+                        <div style={{ textAlign: block.styles?.textAlign || "center" }}>
+                          <span style={{
+                            display: "inline-block",
+                            padding: "12px 32px",
+                            backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
+                            color: block.styles?.textColor || "#ffffff",
+                            borderRadius: "6px",
+                            fontWeight: "600",
+                            fontSize: block.styles?.fontSize || "16px",
+                            textDecoration: "none",
+                          }}>
+                            {block.content?.text || "Click Here"}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {block.type === "divider" && (
+                        <hr style={{
+                          border: "none",
+                          borderTop: `1px ${block.content?.style || "solid"} ${block.content?.color || "#e5e7eb"}`,
+                          margin: "8px 0",
+                        }} />
+                      )}
+                      
+                      {block.type === "spacer" && (
+                        <div style={{ height: block.content?.height || "24px" }} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Footer */}
+                <div style={{ 
+                  backgroundColor: "#f8f9fa",
+                  borderTop: "1px solid #e9ecef",
+                  padding: "24px",
+                  textAlign: "center",
+                }}>
+                  <p style={{ fontSize: "12px", color: "#6c757d", marginBottom: "8px" }}>
+                    {brandSettings.footerText || "Your Company Name | 123 Business Street, City, State 12345"}
+                  </p>
+                  <p style={{ fontSize: "12px", color: "#868e96", marginBottom: "16px" }}>
+                    You received this email because you made a purchase or signed up for updates.
+                  </p>
+                  <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
+                    <span style={{ fontSize: "12px", color: "#495057", textDecoration: "underline" }}>
+                      Unsubscribe
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#495057", textDecoration: "underline" }}>
+                      Email Preferences
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#495057", textDecoration: "underline" }}>
+                      Privacy Policy
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+          
+          <DialogFooter className="flex-shrink-0 border-t border-border pt-4">
+            <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              setShowPreviewDialog(false);
+              if (selectedTemplateId) {
+                setShowTestEmailDialog(true);
+              } else {
+                toast({ title: "Save Required", description: "Please save your template first before sending a test email." });
+              }
+            }}>
+              <Mail className="w-4 h-4 mr-2" />
+              Send Test Email
             </Button>
           </DialogFooter>
         </DialogContent>
