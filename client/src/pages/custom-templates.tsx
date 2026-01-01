@@ -1363,8 +1363,16 @@ export default function EmailTemplateBuilder() {
                           <span className="text-sm text-muted-foreground">Loading templates...</span>
                         </div>
                       ) : templatesError ? (
-                        <div className="text-sm text-red-400 py-4 text-center">
-                          Failed to load templates
+                        <div className="text-sm text-red-400 py-4 text-center space-y-2">
+                          <p>Failed to load templates</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] })}
+                          >
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            Retry
+                          </Button>
                         </div>
                       ) : filteredTemplates.length === 0 ? (
                         <div className="text-sm text-muted-foreground py-4 text-center">
