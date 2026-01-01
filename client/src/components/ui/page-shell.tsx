@@ -72,14 +72,24 @@ export function PageShell({
                   </Link>
                 )}
                 
-                {/* Title */}
+                {/* Title and Subtitle */}
                 {title && (
-                  <h1 
-                    className="text-xl sm:text-2xl font-bold flex-1"
-                    data-testid="page-title"
-                  >
-                    {title}
-                  </h1>
+                  <div className="flex-1">
+                    <h1 
+                      className="text-xl sm:text-2xl font-bold"
+                      data-testid="page-title"
+                    >
+                      {title}
+                    </h1>
+                    {subtitle && (
+                      <p 
+                        className="text-sm text-muted-foreground mt-1"
+                        data-testid="page-subtitle"
+                      >
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
