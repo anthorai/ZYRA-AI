@@ -229,7 +229,8 @@ export default function CreateCampaignPageV2() {
     return (
       <div className="space-y-2">
         {blocks.map((block, index) => {
-          switch (block.type) {
+          const blockType = block.type as string;
+          switch (blockType) {
             case 'logo':
               return (
                 <div key={block.id || index} className="text-center py-4">
@@ -344,6 +345,87 @@ export default function CreateCampaignPageV2() {
                       ))}
                     </div>
                   ))}
+                </div>
+              );
+            case 'header':
+              return (
+                <div 
+                  key={block.id || index} 
+                  className="py-4 px-6 text-center"
+                  style={{ 
+                    backgroundColor: block.content?.backgroundColor || '#f8f9fa',
+                    borderBottom: '1px solid #e9ecef'
+                  }}
+                >
+                  {block.content?.logoSrc ? (
+                    <img 
+                      src={block.content.logoSrc} 
+                      alt={block.content?.logoAlt || 'Logo'} 
+                      className="max-h-12 mx-auto"
+                    />
+                  ) : block.content?.text ? (
+                    <h1 className="text-xl font-bold text-gray-900">{block.content.text}</h1>
+                  ) : (
+                    <div className="w-12 h-12 bg-primary rounded-lg mx-auto flex items-center justify-center">
+                      <Mail className="w-6 h-6 text-white" />
+                    </div>
+                  )}
+                </div>
+              );
+            case 'footer':
+              return (
+                <div 
+                  key={block.id || index} 
+                  className="py-6 px-4 text-center border-t border-gray-200 mt-4"
+                  style={{ 
+                    backgroundColor: block.content?.backgroundColor || '#f8f9fa',
+                    color: block.content?.textColor || '#6b7280'
+                  }}
+                >
+                  {block.content?.companyName && (
+                    <p className="font-semibold text-gray-700 mb-1">{block.content.companyName}</p>
+                  )}
+                  {block.content?.address && (
+                    <p className="text-xs text-gray-500 mb-2">{block.content.address}</p>
+                  )}
+                  {block.content?.text && (
+                    <p className="text-xs text-gray-500 mb-2">{block.content.text}</p>
+                  )}
+                  <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+                    {block.content?.unsubscribeText && (
+                      <a href="#" className="text-primary hover:underline">{block.content.unsubscribeText}</a>
+                    )}
+                    {block.content?.preferencesText && (
+                      <a href="#" className="text-primary hover:underline">{block.content.preferencesText}</a>
+                    )}
+                    {block.content?.privacyText && (
+                      <a href="#" className="text-primary hover:underline">{block.content.privacyText}</a>
+                    )}
+                  </div>
+                  {!block.content?.companyName && !block.content?.text && !block.content?.unsubscribeText && (
+                    <div className="text-xs text-gray-500">
+                      <p className="mb-1">Your Company Name | 123 Business Street, City, State 12345</p>
+                      <p>You received this email because you're subscribed. <a href="#" className="text-primary hover:underline">Unsubscribe</a> | <a href="#" className="text-primary hover:underline">Email Preferences</a> | <a href="#" className="text-primary hover:underline">Privacy Policy</a></p>
+                    </div>
+                  )}
+                </div>
+              );
+            case 'social':
+              return (
+                <div key={block.id || index} className="py-4 text-center">
+                  <div className="flex items-center justify-center gap-4">
+                    {block.content?.links?.map((link: any, linkIndex: number) => (
+                      <a 
+                        key={linkIndex} 
+                        href={link.url || '#'} 
+                        className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                      >
+                        <span className="text-xs text-gray-600">{link.platform?.[0]?.toUpperCase() || 'S'}</span>
+                      </a>
+                    )) || (
+                      <span className="text-xs text-gray-500">Social Links</span>
+                    )}
+                  </div>
                 </div>
               );
             default:
@@ -484,10 +566,59 @@ export default function CreateCampaignPageV2() {
                     </div>
                     
                     {/* Template Preview */}
-                    <div className="border border-slate-700 rounded-lg overflow-hidden bg-white">
+                    <div className="border border-slate-700 rounded-lg overflow-hidden">
                       <ScrollArea className="h-[500px]">
-                        <div className="p-4">
-                          {renderTemplatePreview(selectedCustomTemplate.blocks as EmailBlock[])}
+                        <div 
+                          className="min-h-full"
+                          style={{ 
+                            backgroundColor: (selectedCustomTemplate.brandSettings as any)?.backgroundColor || '#ffffff',
+                            fontFamily: (selectedCustomTemplate.brandSettings as any)?.fontFamily || 'Arial, sans-serif',
+                          }}
+                        >
+                          {/* Email Header with Logo */}
+                          {(selectedCustomTemplate.brandSettings as any)?.logoUrl && (
+                            <div 
+                              className="py-4 px-6 text-center border-b"
+                              style={{ 
+                                backgroundColor: (selectedCustomTemplate.brandSettings as any)?.primaryColor || '#00F0FF',
+                              }}
+                            >
+                              <img 
+                                src={(selectedCustomTemplate.brandSettings as any).logoUrl} 
+                                alt="Logo" 
+                                className="max-h-12 mx-auto"
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Email Body */}
+                          <div className="p-6">
+                            {renderTemplatePreview(selectedCustomTemplate.blocks as EmailBlock[])}
+                          </div>
+                          
+                          {/* Default Footer if not in blocks */}
+                          {(!Array.isArray(selectedCustomTemplate.blocks) || 
+                           !(selectedCustomTemplate.blocks as any[]).some(b => (b.type as string) === 'footer')) && (
+                            <div 
+                              className="py-6 px-4 text-center border-t mt-4"
+                              style={{ 
+                                backgroundColor: '#f8f9fa',
+                                color: '#6b7280',
+                                fontSize: '12px'
+                              }}
+                            >
+                              <p className="mb-1">
+                                {(selectedCustomTemplate.brandSettings as any)?.footerText || 
+                                  'Your Company Name | 123 Business Street, City, State 12345'}
+                              </p>
+                              <p>
+                                You received this email because you subscribed. 
+                                <a href="#" className="text-[#00F0FF] hover:underline ml-1">Unsubscribe</a> | 
+                                <a href="#" className="text-[#00F0FF] hover:underline ml-1">Email Preferences</a> | 
+                                <a href="#" className="text-[#00F0FF] hover:underline ml-1">Privacy Policy</a>
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </ScrollArea>
                     </div>
