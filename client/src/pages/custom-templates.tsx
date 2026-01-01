@@ -2511,7 +2511,7 @@ export default function EmailTemplateBuilder() {
 
       {/* Full Email Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" />
@@ -2543,7 +2543,7 @@ export default function EmailTemplateBuilder() {
             </Button>
           </div>
           
-          <ScrollArea className="flex-1 min-h-0">
+          <div className="flex-1 overflow-auto">
             <div className={`mx-auto p-4 ${previewMode === "mobile" ? "max-w-[375px]" : "max-w-[600px]"}`}>
               {/* Email container */}
               <div 
@@ -2704,7 +2704,7 @@ export default function EmailTemplateBuilder() {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
           
           <DialogFooter className="flex-shrink-0 border-t border-border pt-4">
             <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>
