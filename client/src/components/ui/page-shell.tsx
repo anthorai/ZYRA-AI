@@ -91,6 +91,13 @@ export function PageShell({
                     )}
                   </div>
                 )}
+
+                {/* Header Actions */}
+                {headerActions && (
+                  <div className="flex-shrink-0" data-testid="header-actions">
+                    {headerActions}
+                  </div>
+                )}
               </div>
             </div>
           )}

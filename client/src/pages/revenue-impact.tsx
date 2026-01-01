@@ -75,6 +75,7 @@ export default function RevenueImpact() {
     <PageShell
       title="Revenue Impact Dashboard"
       subtitle="See how different Zyra AI features contribute to your revenue growth"
+      backTo="/dashboard"
     >
       {/* Total Impact Card */}
       <DashboardCard>
