@@ -868,7 +868,7 @@ export default function EmailTemplateBuilder() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#14142b]">
       {/* Header */}
       <header className="border border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50 rounded-xl overflow-hidden m-2">
         <div className="flex items-center justify-between px-4 py-3 bg-[#14142b] rounded-xl">
