@@ -1125,9 +1125,7 @@ export default function EmailTemplateBuilder() {
                       boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15)",
                     }}
                   >
-                    <a 
-                      href="#" 
-                      onClick={(e) => e.preventDefault()}
+                    <span 
                       style={{
                         display: "inline-block",
                         padding: "16px 40px",
@@ -1144,7 +1142,7 @@ export default function EmailTemplateBuilder() {
                       }}
                     >
                       {block.content?.text || "Shop Now"}
-                    </a>
+                    </span>
                   </td>
                 </tr>
               </tbody>
