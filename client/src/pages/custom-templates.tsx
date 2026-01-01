@@ -989,11 +989,10 @@ export default function EmailTemplateBuilder() {
           </div>
         </div>
       </header>
-
       {/* Main 3-Panel Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT PANEL - Blocks, Variables, AI Actions */}
-        <div className="w-80 border-r border-border bg-card/30 flex flex-col">
+        <div className="w-80 border-r border-border flex flex-col bg-[#14142b]">
           <Tabs value={leftPanelTab} onValueChange={(v) => setLeftPanelTab(v as typeof leftPanelTab)} className="flex-1 flex flex-col">
             <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-12 px-2">
               <TabsTrigger value="blocks" className="data-[state=active]:bg-primary/10">
@@ -1877,7 +1876,7 @@ export default function EmailTemplateBuilder() {
                 </>
               ) : (
                 /* Brand Settings when no block selected */
-                <div className="space-y-6">
+                (<div className="space-y-6">
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <Palette className="w-4 h-4 text-primary" />
@@ -1887,7 +1886,6 @@ export default function EmailTemplateBuilder() {
                       Select a block to edit its properties, or customize your brand settings below.
                     </p>
                   </div>
-
                   <div className="space-y-4">
                     <div>
                       <Label className="text-xs">Logo URL</Label>
@@ -2008,13 +2006,12 @@ export default function EmailTemplateBuilder() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </div>)
               )}
             </div>
           </ScrollArea>
         </div>
       </div>
-
       {/* Version History Dialog */}
       <Dialog open={showVersionHistory} onOpenChange={setShowVersionHistory}>
         <DialogContent className="max-w-2xl">
