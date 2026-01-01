@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { campaignPresets, CampaignPreset } from "@/lib/campaign-presets";
 import { cn } from "@/lib/utils";
-import { Check, FileText, Layout, Loader2 } from "lucide-react";
+import { Check, FileText, Layout, Loader2, Mail, Image, Type, MousePointer, Columns, Minus, ArrowUpDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { EmailTemplate } from "@shared/schema";
+import type { EmailTemplate, EmailBlock } from "@shared/schema";
 
 type TemplateSelectorProps = {
   selectedPreset?: string;
@@ -14,6 +14,46 @@ type TemplateSelectorProps = {
   type?: 'email' | 'sms';
   selectedCustomTemplateId?: string;
 };
+
+function getBlockSummary(blocks: EmailBlock[] | unknown): string {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return "Empty template";
+  }
+  
+  const blockCounts: Record<string, number> = {};
+  blocks.forEach((block: EmailBlock) => {
+    const type = block.type || 'unknown';
+    blockCounts[type] = (blockCounts[type] || 0) + 1;
+  });
+  
+  const summary = Object.entries(blockCounts)
+    .map(([type, count]) => {
+      const label = type.charAt(0).toUpperCase() + type.slice(1);
+      return count > 1 ? `${count} ${label}s` : label;
+    })
+    .slice(0, 3)
+    .join(", ");
+  
+  const remaining = Object.keys(blockCounts).length - 3;
+  return remaining > 0 ? `${summary} +${remaining} more` : summary;
+}
+
+function getBlockIcon(blocks: EmailBlock[] | unknown) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return FileText;
+  }
+  
+  const firstBlock = blocks[0];
+  switch (firstBlock?.type) {
+    case 'image': return Image;
+    case 'heading': return Type;
+    case 'button': return MousePointer;
+    case 'columns': return Columns;
+    case 'divider': return Minus;
+    case 'spacer': return ArrowUpDown;
+    default: return Mail;
+  }
+}
 
 export function TemplateSelector({ 
   selectedPreset, 
@@ -32,6 +72,81 @@ export function TemplateSelector({
 
   const activeTemplates = savedTemplates?.filter(t => t.status === 'active') || [];
   const draftTemplates = savedTemplates?.filter(t => t.status === 'draft') || [];
+
+  const renderTemplateCard = (template: EmailTemplate, variant: 'active' | 'draft') => {
+    const isSelected = selectedCustomTemplateId === template.id;
+    const blocks = template.blocks as EmailBlock[];
+    const BlockIcon = getBlockIcon(blocks);
+    const blockCount = Array.isArray(blocks) ? blocks.length : 0;
+    
+    return (
+      <Card
+        key={template.id}
+        className={cn(
+          "cursor-pointer transition-all hover-elevate relative",
+          isSelected && "border-primary"
+        )}
+        onClick={() => onSelectCustomTemplate?.(template)}
+        data-testid={`${variant}-template-${template.id}`}
+      >
+        {isSelected && (
+          <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+            <Check className="w-4 h-4 text-primary-foreground" />
+          </div>
+        )}
+        
+        <CardHeader className="space-y-2 pb-3">
+          <div className={cn(
+            "w-12 h-12 rounded-lg flex items-center justify-center mb-2 bg-gradient-to-br",
+            variant === 'active' ? "from-primary to-primary/70" : "from-slate-500 to-slate-600"
+          )}>
+            <BlockIcon className="w-6 h-6 text-white" />
+          </div>
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle className="text-base leading-tight" data-testid={`text-${variant}-template-name-${template.id}`}>
+              {template.name}
+            </CardTitle>
+            <Badge 
+              variant={variant === 'active' ? "default" : "secondary"} 
+              className="text-xs shrink-0"
+            >
+              {variant === 'active' ? 'Active' : 'Draft'}
+            </Badge>
+          </div>
+          
+          {template.subject && (
+            <div className="flex items-center gap-1.5 text-sm text-foreground">
+              <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="truncate font-medium">{template.subject}</span>
+            </div>
+          )}
+          
+          <CardDescription className="text-xs flex items-center gap-1">
+            <span className="font-medium text-muted-foreground">{blockCount} blocks:</span>
+            <span className="truncate">{getBlockSummary(blocks)}</span>
+          </CardDescription>
+          
+          {template.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2">
+              {template.description}
+            </p>
+          )}
+          
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+            <span className="capitalize">
+              {template.workflowType !== 'custom' ? template.workflowType.replace(/_/g, ' ') : 'Custom'}
+            </span>
+            {template.updatedAt && (
+              <span>
+                {new Date(template.updatedAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  };
 
   return (
     <Tabs defaultValue="presets" className="w-full">
@@ -107,48 +222,7 @@ export function TemplateSelector({
                   Active Templates ({activeTemplates.length})
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeTemplates.map((template) => {
-                    const isSelected = selectedCustomTemplateId === template.id;
-                    return (
-                      <Card
-                        key={template.id}
-                        className={cn(
-                          "cursor-pointer transition-all hover-elevate relative",
-                          isSelected && "border-primary"
-                        )}
-                        onClick={() => onSelectCustomTemplate?.(template)}
-                        data-testid={`saved-template-${template.id}`}
-                      >
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                            <Check className="w-4 h-4 text-primary-foreground" />
-                          </div>
-                        )}
-                        
-                        <CardHeader className="space-y-1">
-                          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-2 bg-gradient-to-br from-primary to-primary/70">
-                            <FileText className="w-6 h-6 text-primary-foreground" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg" data-testid={`text-saved-template-name-${template.id}`}>
-                              {template.name}
-                            </CardTitle>
-                            <Badge variant="default" className="text-xs">
-                              Active
-                            </Badge>
-                          </div>
-                          <CardDescription className="text-sm">
-                            {template.workflowType !== 'custom' ? template.workflowType.replace(/_/g, ' ') : 'Custom email template'}
-                          </CardDescription>
-                          {template.updatedAt && (
-                            <p className="text-xs text-muted-foreground">
-                              Last updated: {new Date(template.updatedAt).toLocaleDateString()}
-                            </p>
-                          )}
-                        </CardHeader>
-                      </Card>
-                    );
-                  })}
+                  {activeTemplates.map((template) => renderTemplateCard(template, 'active'))}
                 </div>
               </div>
             )}
@@ -159,48 +233,7 @@ export function TemplateSelector({
                   Draft Templates ({draftTemplates.length})
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {draftTemplates.map((template) => {
-                    const isSelected = selectedCustomTemplateId === template.id;
-                    return (
-                      <Card
-                        key={template.id}
-                        className={cn(
-                          "cursor-pointer transition-all hover-elevate relative",
-                          isSelected && "border-primary"
-                        )}
-                        onClick={() => onSelectCustomTemplate?.(template)}
-                        data-testid={`draft-template-${template.id}`}
-                      >
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                            <Check className="w-4 h-4 text-primary-foreground" />
-                          </div>
-                        )}
-                        
-                        <CardHeader className="space-y-1">
-                          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-2 bg-gradient-to-br from-slate-500 to-slate-600">
-                            <FileText className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg" data-testid={`text-draft-template-name-${template.id}`}>
-                              {template.name}
-                            </CardTitle>
-                            <Badge variant="secondary" className="text-xs">
-                              Draft
-                            </Badge>
-                          </div>
-                          <CardDescription className="text-sm">
-                            {template.workflowType !== 'custom' ? template.workflowType.replace(/_/g, ' ') : 'Custom email template'}
-                          </CardDescription>
-                          {template.updatedAt && (
-                            <p className="text-xs text-muted-foreground">
-                              Last updated: {new Date(template.updatedAt).toLocaleDateString()}
-                            </p>
-                          )}
-                        </CardHeader>
-                      </Card>
-                    );
-                  })}
+                  {draftTemplates.map((template) => renderTemplateCard(template, 'draft'))}
                 </div>
               </div>
             )}
