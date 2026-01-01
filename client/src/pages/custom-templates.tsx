@@ -262,6 +262,8 @@ export default function EmailTemplateBuilder() {
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [testEmailAddress, setTestEmailAddress] = useState("");
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [showAiResultDialog, setShowAiResultDialog] = useState(false);
+  const [aiResult, setAiResult] = useState<{ action: string; result: string; simulated?: boolean } | null>(null);
   
   // Undo/Redo history state
   const [historyStack, setHistoryStack] = useState<EmailBlock[][]>([]);
@@ -376,24 +378,78 @@ export default function EmailTemplateBuilder() {
       return res.json();
     },
     onSuccess: (data: any) => {
-      toast({ title: "AI Enhancement Complete", description: `Successfully applied enhancement to your email template.` });
       if (data.result) {
-        // For text-based actions, update the first text block with the result
-        const textBlockIndex = blocks.findIndex(b => b.type === "text");
-        if (textBlockIndex !== -1) {
-          const updatedBlocks = [...blocks];
-          updatedBlocks[textBlockIndex] = {
-            ...updatedBlocks[textBlockIndex],
-            content: { ...updatedBlocks[textBlockIndex].content, text: data.result }
-          };
-          setBlocks(updatedBlocks);
-        }
+        // Show results in dialog for user review
+        setAiResult({ action: data.action, result: data.result, simulated: data.simulated });
+        setShowAiResultDialog(true);
       }
     },
     onError: (error: any) => {
       toast({ title: "AI Action Failed", description: error.message || "Failed to process AI action", variant: "destructive" });
     },
   });
+
+  // Apply AI result to template
+  const applyAiResult = () => {
+    if (!aiResult) return;
+    
+    const { action, result } = aiResult;
+    
+    // For content-improving actions, update the first text block
+    if (["tone-improvement", "ctr-optimization", "professional-rewrite"].includes(action)) {
+      const textBlockIndex = blocks.findIndex(b => b.type === "text");
+      if (textBlockIndex !== -1) {
+        // Extract just the improved content, removing introductory text
+        let cleanContent = result;
+        // Try to extract content after common AI prefixes
+        const prefixPatterns = [
+          /Here's an improved version.*?:\n\n/i,
+          /Here's your email optimized.*?:\n\n/i,
+          /Here's a professionally polished version:\n\n/i,
+        ];
+        for (const pattern of prefixPatterns) {
+          cleanContent = cleanContent.replace(pattern, "");
+        }
+        
+        const updatedBlocks = [...blocks];
+        updatedBlocks[textBlockIndex] = {
+          ...updatedBlocks[textBlockIndex],
+          content: { ...updatedBlocks[textBlockIndex].content, text: cleanContent }
+        };
+        setBlocks(updatedBlocks);
+        toast({ title: "AI Enhancement Applied", description: "Content has been updated with AI improvements." });
+      } else {
+        toast({ title: "No Text Block", description: "Add a text block first to apply AI improvements.", variant: "destructive" });
+      }
+    } else if (action === "generate-email") {
+      // For generate-email, create new blocks from the result
+      toast({ title: "Email Generated", description: "Review the AI suggestions and manually add content as needed." });
+    } else {
+      // For analysis actions (spam-analysis, can-spam-check), just show the report
+      toast({ title: "Analysis Complete", description: "Review the analysis report above." });
+    }
+    
+    setShowAiResultDialog(false);
+    setAiResult(null);
+  };
+
+  // Get AI action label for display
+  const getAiActionLabel = (action: string) => {
+    const labels: Record<string, string> = {
+      "tone-improvement": "Tone Improvement",
+      "ctr-optimization": "CTR Optimization",
+      "professional-rewrite": "Professional Rewrite",
+      "spam-analysis": "Spam Analysis Report",
+      "can-spam-check": "CAN-SPAM Compliance Check",
+      "generate-email": "Generated Email Content",
+    };
+    return labels[action] || "AI Result";
+  };
+
+  // Check if AI action can be applied to template
+  const canApplyAiResult = (action: string) => {
+    return ["tone-improvement", "ctr-optimization", "professional-rewrite"].includes(action);
+  };
 
   // Render HTML mutation
   const renderHtmlMutation = useMutation({
@@ -2729,6 +2785,51 @@ export default function EmailTemplateBuilder() {
               <Mail className="w-4 h-4 mr-2" />
               Send Test Email
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Result Dialog */}
+      <Dialog open={showAiResultDialog} onOpenChange={(open) => {
+        setShowAiResultDialog(open);
+        if (!open) setAiResult(null);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              {aiResult ? getAiActionLabel(aiResult.action) : "AI Result"}
+            </DialogTitle>
+            <DialogDescription>
+              {aiResult?.simulated && (
+                <Badge variant="outline" className="text-xs mt-2">
+                  Development Mode - Simulated Response
+                </Badge>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 mt-4">
+            <div className="p-4 bg-muted/30 rounded-lg">
+              <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
+                {aiResult?.result || "No result available"}
+              </pre>
+            </div>
+          </ScrollArea>
+          
+          <DialogFooter className="flex-shrink-0 mt-4 gap-2">
+            <Button variant="outline" onClick={() => {
+              setShowAiResultDialog(false);
+              setAiResult(null);
+            }}>
+              Close
+            </Button>
+            {aiResult && canApplyAiResult(aiResult.action) && (
+              <Button onClick={applyAiResult}>
+                <Check className="w-4 h-4 mr-2" />
+                Apply to Template
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
