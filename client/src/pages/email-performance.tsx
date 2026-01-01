@@ -69,7 +69,7 @@ export default function EmailPerformance() {
     <PageShell
       title="Email Performance"
       subtitle="Track email campaign engagement and conversion metrics"
-      backTo="/dashboard?tab=campaigns"
+      backTo="/dashboard"
     >
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">

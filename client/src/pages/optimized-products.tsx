@@ -548,7 +548,7 @@ export default function OptimizedProducts() {
       <PageShell
         title="AI-Optimized Products"
         subtitle="Products enhanced with AI-powered descriptions, titles, and SEO"
-        backTo="/dashboard?tab=ai-tools"
+        backTo="/dashboard"
       >
         <Card className="gradient-card border-red-500/30">
           <CardContent className="p-8 text-center">

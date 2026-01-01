@@ -67,7 +67,7 @@ export default function SmsConversion() {
       <PageShell
         title="SMS Marketing Performance"
         subtitle="Track SMS campaign conversions and revenue impact"
-        backTo="/dashboard?tab=campaigns"
+        backTo="/dashboard"
         headerActions={rightActions}
       >
         <DashboardCard testId="error-state">
