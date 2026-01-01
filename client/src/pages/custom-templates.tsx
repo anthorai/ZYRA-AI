@@ -989,17 +989,39 @@ export default function EmailTemplateBuilder() {
         return (
           <div style={{ ...baseStyles, textAlign: "center" as const }}>
             {block.content?.src ? (
-              <img 
-                src={block.content.src} 
-                alt={block.content?.alt || "Image"} 
-                style={{ 
-                  maxWidth: block.styles?.width || "100%", 
-                  height: "auto",
-                  borderRadius: block.content?.borderRadius || "12px",
-                  display: "block",
-                  margin: "0 auto",
-                }}
-              />
+              <div>
+                <img 
+                  src={block.content.src} 
+                  alt={block.content?.alt || "Image"} 
+                  style={{ 
+                    maxWidth: block.styles?.width || "100%", 
+                    height: "auto",
+                    borderRadius: block.content?.borderRadius || "12px",
+                    display: "block",
+                    margin: "0 auto",
+                  }}
+                />
+                {block.content?.productName && (
+                  <div style={{ 
+                    marginTop: "16px",
+                    fontSize: "18px",
+                    fontWeight: "600",
+                    color: brandSettings.textColor,
+                  }}>
+                    {block.content.productName}
+                  </div>
+                )}
+                {block.content?.productPrice && (
+                  <div style={{ 
+                    marginTop: "8px",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    color: brandSettings.primaryColor,
+                  }}>
+                    {block.content.productPrice}
+                  </div>
+                )}
+              </div>
             ) : (
               <div style={{
                 backgroundColor: "#f8f9fa",
@@ -1014,6 +1036,16 @@ export default function EmailTemplateBuilder() {
                 <Image style={{ width: 48, height: 48, color: "#adb5bd", marginBottom: 12 }} />
                 <span style={{ color: "#868e96", fontSize: "14px" }}>Add product image</span>
                 <span style={{ color: "#adb5bd", fontSize: "12px", marginTop: 4 }}>Recommended: 600x400px</span>
+                {block.content?.productName && (
+                  <div style={{ 
+                    marginTop: "16px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#495057",
+                  }}>
+                    {block.content.productName}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2352,6 +2384,37 @@ export default function EmailTemplateBuilder() {
                             data-testid="input-image-link"
                           />
                         </div>
+                        <Separator className="my-4" />
+                        <div>
+                          <Label className="text-xs">Product Name (optional)</Label>
+                          <Input
+                            value={selectedBlock.content?.productName || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, productName: e.target.value }
+                            })}
+                            placeholder="e.g. Premium Widget Pro"
+                            className="mt-1"
+                            data-testid="input-product-name"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Display product name below the image
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Product Price (optional)</Label>
+                          <Input
+                            value={selectedBlock.content?.productPrice || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, productPrice: e.target.value }
+                            })}
+                            placeholder="e.g. $49.99"
+                            className="mt-1"
+                            data-testid="input-product-price"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Display price below the product name
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -3004,6 +3067,26 @@ export default function EmailTemplateBuilder() {
                               borderRadius: "4px",
                             }}
                           />
+                          {block.content?.productName && (
+                            <div style={{ 
+                              marginTop: "12px",
+                              fontSize: "18px",
+                              fontWeight: "600",
+                              color: brandSettings.textColor,
+                            }}>
+                              {block.content.productName}
+                            </div>
+                          )}
+                          {block.content?.productPrice && (
+                            <div style={{ 
+                              marginTop: "6px",
+                              fontSize: "16px",
+                              fontWeight: "700",
+                              color: brandSettings.primaryColor,
+                            }}>
+                              {block.content.productPrice}
+                            </div>
+                          )}
                         </div>
                       )}
                       {block.type === "image" && !block.content?.src && (
