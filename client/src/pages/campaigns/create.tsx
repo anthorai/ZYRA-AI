@@ -19,6 +19,7 @@ import { campaignPresets, getPresetById } from "@/lib/campaign-presets";
 import { useAutosave } from "@/hooks/use-autosave";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { apiRequest } from "@/lib/queryClient";
+import type { EmailTemplate } from "@shared/schema";
 import { 
   Mail, 
   MessageSquare, 
@@ -99,6 +100,7 @@ export default function CreateCampaignPageV2() {
   const urlParams = new URLSearchParams(window.location.search);
   const presetFromUrl = urlParams.get('preset');
   const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>(presetFromUrl || undefined);
+  const [selectedCustomTemplate, setSelectedCustomTemplate] = useState<EmailTemplate | null>(null);
 
   const {
     register,
@@ -146,6 +148,16 @@ export default function CreateCampaignPageV2() {
     }
   }, [selectedPresetId, setValue]);
 
+  const handleSelectCustomTemplate = (template: EmailTemplate) => {
+    setSelectedCustomTemplate(template);
+    setSelectedPresetId(undefined);
+    setValue("type", "email");
+    setValue("name", template.name);
+    setValue("subject", template.subject || "");
+    const htmlContent = template.htmlContent || "";
+    setValue("content", htmlContent);
+  };
+
   const createCampaignMutation = useMutation({
     mutationFn: async (data: CampaignFormData) => {
       const payload = {
@@ -181,7 +193,7 @@ export default function CreateCampaignPageV2() {
   const canProceed = () => {
     switch (currentStep) {
       case 0:
-        return !!selectedPresetId;
+        return !!selectedPresetId || !!selectedCustomTemplate;
       case 1:
         return !!(name && content && (campaignType === "sms" || subject));
       case 2:
@@ -242,7 +254,12 @@ export default function CreateCampaignPageV2() {
               
               <TemplateSelector
                 selectedPreset={selectedPresetId}
-                onSelect={(preset) => setSelectedPresetId(preset.id)}
+                onSelect={(preset) => {
+                  setSelectedPresetId(preset.id);
+                  setSelectedCustomTemplate(null);
+                }}
+                onSelectCustomTemplate={handleSelectCustomTemplate}
+                selectedCustomTemplateId={selectedCustomTemplate?.id}
               />
             </div>
           )}
