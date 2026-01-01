@@ -8651,14 +8651,51 @@ Output format: Markdown with clear section headings.`;
         htmlContent += renderBlockToHtml(block, brandSettings);
       }
 
-      // Add footer for CAN-SPAM compliance
+      // Add professional footer for CAN-SPAM compliance - matches Template Editor exactly
       htmlContent += `
           <tr>
-            <td style="padding: 20px; text-align: center; font-size: 12px; color: #666666; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 8px 0;">${brandSettings.footerText || template.physicalAddress || 'Company Address'}</p>
-              <p style="margin: 0;">
-                <a href="${template.unsubscribeLink || '{{unsubscribe.url}}'}" style="color: ${brandSettings.primaryColor || '#00F0FF'}; text-decoration: underline;">Unsubscribe</a>
-              </p>
+            <td style="background-color: #f8f9fa; border-top: 1px solid #e9ecef; padding: 32px;">
+              <!-- Help section -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="text-align: center; padding-bottom: 24px;">
+                    <p style="font-size: 14px; color: #495057; margin: 0 0 8px 0;">
+                      Need help with your order?
+                    </p>
+                    <a href="#" style="color: ${brandSettings.primaryColor || '#00F0FF'}; text-decoration: none; font-weight: 500; font-size: 14px;">
+                      Contact Support
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Divider -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="border-top: 1px solid #dee2e6; padding-bottom: 24px;"></td>
+                </tr>
+              </table>
+              
+              <!-- Company info and compliance -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="font-size: 12px; color: #6c757d; margin: 0 0 8px 0;">
+                      ${brandSettings.footerText || template.physicalAddress || 'Your Company Name | 123 Business Street, City, State 12345'}
+                    </p>
+                    <p style="font-size: 12px; color: #868e96; margin: 0 0 16px 0;">
+                      You received this email because you made a purchase or signed up for updates.
+                    </p>
+                    <p style="margin: 0;">
+                      <a href="${template.unsubscribeLink || '{{unsubscribe.url}}'}" style="font-size: 12px; color: #495057; text-decoration: underline;">Unsubscribe</a>
+                      &nbsp;&nbsp;&nbsp;&nbsp;
+                      <a href="#" style="font-size: 12px; color: #495057; text-decoration: underline;">Email Preferences</a>
+                      &nbsp;&nbsp;&nbsp;&nbsp;
+                      <a href="#" style="font-size: 12px; color: #495057; text-decoration: underline;">Privacy Policy</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
