@@ -776,9 +776,20 @@ export default function EmailTemplateBuilder() {
       }
 
       const { url } = await response.json();
-      updateBlock(blockId, {
-        content: { src: url, alt: file.name }
-      });
+      // Preserve existing content (productName, productPrice, etc.) when updating image
+      setBlocks(prev => prev.map(block => {
+        if (block.id === blockId) {
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              src: url,
+              alt: file.name,
+            }
+          };
+        }
+        return block;
+      }));
       toast({ title: "Image Uploaded", description: "Image has been uploaded successfully." });
     } catch (error: any) {
       console.error('Image upload error:', error);
@@ -790,7 +801,7 @@ export default function EmailTemplateBuilder() {
     } finally {
       setUploadingImage(null);
     }
-  }, [updateBlock, toast]);
+  }, [toast]);
 
   const triggerFileUpload = useCallback((blockId: string, type: "logo" | "image") => {
     uploadTargetRef.current = { blockId, type };
