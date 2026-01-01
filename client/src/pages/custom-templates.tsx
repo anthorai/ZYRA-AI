@@ -2889,12 +2889,41 @@ export default function EmailTemplateBuilder() {
                 className="rounded-lg overflow-hidden shadow-xl"
                 style={{ backgroundColor: brandSettings.backgroundColor }}
               >
-                {/* Email header with subject and preheader */}
-                <div className="bg-muted/50 p-4 border-b border-border">
-                  <div className="text-sm text-muted-foreground mb-1">Subject:</div>
-                  <div className="font-medium">{subject || "Your subject line here"}</div>
+                {/* Email header with subject and preheader - applies subject settings */}
+                <div 
+                  className="p-4 border-b"
+                  style={{ 
+                    backgroundColor: subjectSettings.headerColor,
+                    borderColor: "rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <div 
+                    className="rounded-md px-3 py-2"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.1)",
+                      textAlign: subjectSettings.alignment,
+                    }}
+                  >
+                    <span 
+                      style={{
+                        color: subjectSettings.color,
+                        fontWeight: subjectSettings.fontWeight,
+                        fontSize: "16px",
+                        display: "block",
+                      }}
+                      data-testid="dialog-preview-subject"
+                    >
+                      {subject || "Your subject line here"}
+                    </span>
+                  </div>
                   {preheader && (
-                    <div className="text-sm text-muted-foreground mt-2 italic">
+                    <div 
+                      className="mt-2 text-sm italic"
+                      style={{ 
+                        color: "rgba(255,255,255,0.6)",
+                        textAlign: subjectSettings.alignment,
+                      }}
+                    >
                       {preheader}
                     </div>
                   )}
