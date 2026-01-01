@@ -1530,7 +1530,7 @@ export default function EmailTemplateBuilder() {
         {/* RIGHT PANEL - Styling Controls */}
         <div className="w-80 border-l border-border bg-card/30 flex flex-col">
           <ScrollArea className="flex-1">
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-6 bg-[#14142b]">
               {selectedBlock ? (
                 <>
                   {/* Block-specific settings */}
