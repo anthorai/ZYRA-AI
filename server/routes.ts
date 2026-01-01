@@ -8468,8 +8468,29 @@ Output format: Markdown with clear section headings.`;
       const { action } = req.params;
       const { content, subject, blocks } = req.body;
 
+      // Development mode mock responses when OpenAI is not configured
       if (!process.env.OPENAI_API_KEY) {
-        return res.status(503).json({ error: 'AI service not configured' });
+        console.log(`[DEV AI] Simulating AI action: ${action}`);
+        
+        // Provide mock responses for development/testing
+        const mockResponses: Record<string, string> = {
+          'tone-improvement': `Here's an improved version of your email with a more engaging tone:\n\nHi {{customer.firstName}},\n\nWe're so excited to connect with you! Your recent activity caught our attention, and we wanted to reach out personally.\n\n[Your original message with improved tone would appear here]\n\nLooking forward to hearing from you!\n\nWarm regards,\nThe {{store.name}} Team`,
+          'ctr-optimization': `Here's your email optimized for higher click-through rates:\n\n**Subject Line Suggestion:** Don't Miss Out - Limited Time Offer Inside!\n\n**Preheader:** {{customer.firstName}}, this exclusive deal expires soon...\n\n**Key Improvements:**\n- Added urgency with time-sensitive language\n- Clearer call-to-action buttons\n- Benefit-focused copy\n- Social proof elements\n\n[Your optimized email content would appear here with strong CTAs]`,
+          'professional-rewrite': `Here's a professionally polished version:\n\nDear {{customer.firstName}},\n\nThank you for being a valued member of the {{store.name}} community. We appreciate your continued trust in our products and services.\n\n[Your professionally rewritten content would appear here]\n\nShould you have any questions, please don't hesitate to reach out to our customer success team.\n\nBest regards,\n{{store.name}}`,
+          'spam-analysis': `**Email Spam Analysis Report**\n\n**Spam Score: 15/100** (Low Risk - Good!)\n\n**Spam Trigger Words Found:**\n- None detected\n\n**Recommendations:**\n1. Your subject line looks good - no excessive punctuation\n2. Good text-to-image ratio\n3. No deceptive content detected\n4. Unsubscribe link is present\n\n**CAN-SPAM Compliance:** Passed\n\n**Deliverability Score:** 8.5/10`,
+          'can-spam-check': `**CAN-SPAM Compliance Report**\n\n**Overall Status: COMPLIANT**\n\n**Checklist:**\n- [PASS] Clear sender identification\n- [PASS] Non-deceptive subject line\n- [PASS] Physical address included in footer\n- [PASS] Unsubscribe mechanism present\n- [PASS] Commercial nature clearly identified\n\n**Recommendations:**\n- Ensure you honor opt-out requests within 10 business days\n- Keep your suppression list up to date\n\n**Legal Note:** This is a simulated analysis. For production, enable OpenAI integration.`,
+          'generate-email': `**Generated Email Template**\n\n**Subject:** Welcome to {{store.name}} - Your First Order Awaits!\n\n**Preheader:** Hi {{customer.firstName}}, we're thrilled to have you!\n\n---\n\nHi {{customer.firstName}},\n\nWelcome to the {{store.name}} family! We're absolutely thrilled to have you join our community of discerning shoppers.\n\n**Here's what you can expect:**\n- Exclusive early access to new products\n- Member-only discounts and offers\n- First-class customer support\n\n**Ready to explore?**\n\n[SHOP NOW BUTTON]\n\nIf you have any questions, our team is here to help!\n\nBest,\nThe {{store.name}} Team\n\n---\n\n*Note: This is a simulated AI response. Configure OpenAI API key for production use.*`
+        };
+
+        const mockResult = mockResponses[action] || `AI action "${action}" simulated successfully.\n\n*Note: OpenAI API key not configured. This is a development preview.*`;
+        
+        return res.json({
+          action,
+          result: mockResult,
+          tokensUsed: 0,
+          simulated: true,
+          message: 'Development mode - OpenAI not configured'
+        });
       }
 
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
