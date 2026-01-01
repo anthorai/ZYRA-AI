@@ -30,12 +30,14 @@ import {
   Save,
   Eye,
   Edit2,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { EmailBlock } from "@shared/schema";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { queryClient } from "@/lib/queryClient";
 
 const campaignSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters"),
@@ -107,6 +109,8 @@ export default function CreateCampaignPageV2() {
   const presetFromUrl = urlParams.get('preset');
   const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>(presetFromUrl || undefined);
   const [selectedCustomTemplate, setSelectedCustomTemplate] = useState<EmailTemplate | null>(null);
+  const [renderedTemplateHtml, setRenderedTemplateHtml] = useState<string | null>(null);
+  const [isLoadingHtml, setIsLoadingHtml] = useState(false);
 
   const {
     register,
@@ -154,13 +158,28 @@ export default function CreateCampaignPageV2() {
     }
   }, [selectedPresetId, setValue]);
 
-  const handleSelectCustomTemplate = (template: EmailTemplate) => {
+  const handleSelectCustomTemplate = async (template: EmailTemplate) => {
     setSelectedCustomTemplate(template);
     setSelectedPresetId(undefined);
     setValue("type", "email");
     setValue("name", template.name);
     setValue("subject", template.subject || "");
     setValue("content", `[Custom Template: ${template.name}]`);
+    
+    setIsLoadingHtml(true);
+    setRenderedTemplateHtml(null);
+    
+    try {
+      const response = await apiRequest("POST", `/api/email-templates/${template.id}/render`);
+      const data = await response.json();
+      if (data.htmlContent) {
+        setRenderedTemplateHtml(data.htmlContent);
+      }
+    } catch (error) {
+      console.error("Failed to render template:", error);
+    } finally {
+      setIsLoadingHtml(false);
+    }
   };
 
   const createCampaignMutation = useMutation({
@@ -565,76 +584,30 @@ export default function CreateCampaignPageV2() {
                       </Button>
                     </div>
                     
-                    {/* Template Preview */}
-                    <div className="border border-slate-700 rounded-lg overflow-hidden">
-                      <ScrollArea className="h-[500px]">
-                        <div 
-                          className="min-h-full"
-                          style={{ 
-                            backgroundColor: (selectedCustomTemplate.brandSettings as any)?.backgroundColor || '#ffffff',
-                            fontFamily: (selectedCustomTemplate.brandSettings as any)?.fontFamily || 'Arial, sans-serif',
-                          }}
-                        >
-                          {/* Email Header with Logo - Always show */}
-                          {(() => {
-                            const brandSettings = selectedCustomTemplate.brandSettings as any;
-                            const blocks = selectedCustomTemplate.blocks as any[];
-                            const logoBlock = Array.isArray(blocks) ? blocks.find(b => b.type === 'logo') : null;
-                            const logoUrl = brandSettings?.logoUrl || logoBlock?.content?.src;
-                            
-                            return (
-                              <div 
-                                className="py-4 px-6 text-center border-b"
-                                style={{ 
-                                  backgroundColor: brandSettings?.primaryColor || '#00F0FF',
-                                }}
-                              >
-                                {logoUrl ? (
-                                  <img 
-                                    src={logoUrl} 
-                                    alt="Logo" 
-                                    className="max-h-12 mx-auto"
-                                  />
-                                ) : (
-                                  <div className="flex items-center justify-center gap-2">
-                                    <Mail className="w-8 h-8 text-white" />
-                                    <span className="text-xl font-bold text-white">ZYRA AI</span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
-                          
-                          {/* Email Body */}
-                          <div className="p-6">
-                            {renderTemplatePreview(selectedCustomTemplate.blocks as EmailBlock[])}
+                    {/* Template Preview - Exact HTML from server */}
+                    <div className="border border-slate-700 rounded-lg overflow-hidden bg-white">
+                      {isLoadingHtml ? (
+                        <div className="h-[500px] flex items-center justify-center bg-slate-100">
+                          <div className="text-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-gray-600">Loading template preview...</p>
                           </div>
-                          
-                          {/* Default Footer if not in blocks */}
-                          {(!Array.isArray(selectedCustomTemplate.blocks) || 
-                           !(selectedCustomTemplate.blocks as any[]).some(b => (b.type as string) === 'footer')) && (
-                            <div 
-                              className="py-6 px-4 text-center border-t mt-4"
-                              style={{ 
-                                backgroundColor: '#f8f9fa',
-                                color: '#6b7280',
-                                fontSize: '12px'
-                              }}
-                            >
-                              <p className="mb-1">
-                                {(selectedCustomTemplate.brandSettings as any)?.footerText || 
-                                  'Your Company Name | 123 Business Street, City, State 12345'}
-                              </p>
-                              <p>
-                                You received this email because you subscribed. 
-                                <a href="#" className="text-[#00F0FF] hover:underline ml-1">Unsubscribe</a> | 
-                                <a href="#" className="text-[#00F0FF] hover:underline ml-1">Email Preferences</a> | 
-                                <a href="#" className="text-[#00F0FF] hover:underline ml-1">Privacy Policy</a>
-                              </p>
-                            </div>
-                          )}
                         </div>
-                      </ScrollArea>
+                      ) : renderedTemplateHtml ? (
+                        <iframe
+                          srcDoc={renderedTemplateHtml}
+                          className="w-full h-[500px] border-0"
+                          title="Email Template Preview"
+                          sandbox="allow-same-origin"
+                        />
+                      ) : (
+                        <div className="h-[500px] flex items-center justify-center bg-slate-100">
+                          <div className="text-center text-gray-500">
+                            <Eye className="w-8 h-8 mx-auto mb-2" />
+                            <p>Preview will appear here</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     <input type="hidden" {...register("content")} />
