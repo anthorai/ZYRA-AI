@@ -575,21 +575,35 @@ export default function CreateCampaignPageV2() {
                             fontFamily: (selectedCustomTemplate.brandSettings as any)?.fontFamily || 'Arial, sans-serif',
                           }}
                         >
-                          {/* Email Header with Logo */}
-                          {(selectedCustomTemplate.brandSettings as any)?.logoUrl && (
-                            <div 
-                              className="py-4 px-6 text-center border-b"
-                              style={{ 
-                                backgroundColor: (selectedCustomTemplate.brandSettings as any)?.primaryColor || '#00F0FF',
-                              }}
-                            >
-                              <img 
-                                src={(selectedCustomTemplate.brandSettings as any).logoUrl} 
-                                alt="Logo" 
-                                className="max-h-12 mx-auto"
-                              />
-                            </div>
-                          )}
+                          {/* Email Header with Logo - Always show */}
+                          {(() => {
+                            const brandSettings = selectedCustomTemplate.brandSettings as any;
+                            const blocks = selectedCustomTemplate.blocks as any[];
+                            const logoBlock = Array.isArray(blocks) ? blocks.find(b => b.type === 'logo') : null;
+                            const logoUrl = brandSettings?.logoUrl || logoBlock?.content?.src;
+                            
+                            return (
+                              <div 
+                                className="py-4 px-6 text-center border-b"
+                                style={{ 
+                                  backgroundColor: brandSettings?.primaryColor || '#00F0FF',
+                                }}
+                              >
+                                {logoUrl ? (
+                                  <img 
+                                    src={logoUrl} 
+                                    alt="Logo" 
+                                    className="max-h-12 mx-auto"
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Mail className="w-8 h-8 text-white" />
+                                    <span className="text-xl font-bold text-white">ZYRA AI</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                           
                           {/* Email Body */}
                           <div className="p-6">
