@@ -8468,11 +8468,14 @@ Output format: Markdown with clear section headings.`;
       const { action } = req.params;
       const { content, subject, blocks } = req.body;
 
-      // Development mode mock responses when OpenAI is not configured
-      if (!process.env.OPENAI_API_KEY) {
-        console.log(`[DEV AI] Simulating AI action: ${action}`);
+      // Check for OpenAI API key - support both direct key and Replit AI Integrations
+      const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+      const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+      
+      if (!apiKey) {
+        console.log(`[DEV AI] Simulating AI action: ${action} - No API key configured`);
         
-        // Provide mock responses for development/testing
+        // Provide mock responses for development/testing when no API key is available
         const mockResponses: Record<string, string> = {
           'tone-improvement': `Here's an improved version of your email with a more engaging tone:\n\nHi {{customer.firstName}},\n\nWe're so excited to connect with you! Your recent activity caught our attention, and we wanted to reach out personally.\n\n[Your original message with improved tone would appear here]\n\nLooking forward to hearing from you!\n\nWarm regards,\nThe {{store.name}} Team`,
           'ctr-optimization': `Here's your email optimized for higher click-through rates:\n\n**Subject Line Suggestion:** Don't Miss Out - Limited Time Offer Inside!\n\n**Preheader:** {{customer.firstName}}, this exclusive deal expires soon...\n\n**Key Improvements:**\n- Added urgency with time-sensitive language\n- Clearer call-to-action buttons\n- Benefit-focused copy\n- Social proof elements\n\n[Your optimized email content would appear here with strong CTAs]`,
@@ -8493,7 +8496,13 @@ Output format: Markdown with clear section headings.`;
         });
       }
 
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      // Use Replit AI Integrations if baseURL is configured, otherwise standard OpenAI
+      const openaiConfig: { apiKey: string; baseURL?: string } = { apiKey };
+      if (baseURL) {
+        openaiConfig.baseURL = baseURL;
+        console.log(`[AI] Using Replit AI Integrations for email optimization`);
+      }
+      const openai = new OpenAI(openaiConfig);
 
       let prompt = '';
       let systemPrompt = 'You are an expert email marketing copywriter. You help create and optimize email content that converts while maintaining brand voice and preserving all personalization variables like {{customer.firstName}}.';
