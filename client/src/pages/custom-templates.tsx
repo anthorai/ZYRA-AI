@@ -997,6 +997,78 @@ export default function EmailTemplateBuilder() {
         );
       
       case "image":
+        const renderProductDetails = () => (
+          <div style={{ textAlign: "left", marginTop: "16px" }}>
+            {block.content?.productName && (
+              <div style={{ 
+                fontSize: "15px",
+                fontWeight: "500",
+                color: brandSettings.textColor,
+                lineHeight: "1.4",
+                marginBottom: "8px",
+              }}>
+                {block.content.productName}
+              </div>
+            )}
+            {block.content?.productRating && (
+              <div style={{ 
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                marginBottom: "6px",
+              }}>
+                <span style={{ fontSize: "14px", color: "#333" }}>{block.content.productRating}</span>
+                <span style={{ color: "#de7921", fontSize: "14px" }}>
+                  {"★".repeat(Math.floor(parseFloat(block.content.productRating) || 0))}
+                  {"☆".repeat(5 - Math.floor(parseFloat(block.content.productRating) || 0))}
+                </span>
+                {block.content?.reviewCount && (
+                  <span style={{ fontSize: "13px", color: "#007185" }}>({block.content.reviewCount})</span>
+                )}
+              </div>
+            )}
+            {block.content?.socialProof && (
+              <div style={{ 
+                fontSize: "13px",
+                color: "#555",
+                marginBottom: "8px",
+              }}>
+                {block.content.socialProof}
+              </div>
+            )}
+            {(block.content?.productPrice || block.content?.originalPrice) && (
+              <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+                {block.content?.productPrice && (
+                  <span style={{ 
+                    fontSize: "22px",
+                    fontWeight: "400",
+                    color: "#0F1111",
+                  }}>
+                    {block.content.productPrice}
+                  </span>
+                )}
+                {block.content?.originalPrice && (
+                  <span style={{ 
+                    fontSize: "13px",
+                    color: "#565959",
+                  }}>
+                    M.R.P: <span style={{ textDecoration: "line-through" }}>{block.content.originalPrice}</span>
+                  </span>
+                )}
+                {block.content?.discount && (
+                  <span style={{ 
+                    fontSize: "13px",
+                    color: "#CC0C39",
+                    fontWeight: "500",
+                  }}>
+                    ({block.content.discount})
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+
         return (
           <div style={{ ...baseStyles, textAlign: "center" as const }}>
             {block.content?.src ? (
@@ -1012,26 +1084,7 @@ export default function EmailTemplateBuilder() {
                     margin: "0 auto",
                   }}
                 />
-                {block.content?.productName && (
-                  <div style={{ 
-                    marginTop: "16px",
-                    fontSize: "18px",
-                    fontWeight: "600",
-                    color: brandSettings.textColor,
-                  }}>
-                    {block.content.productName}
-                  </div>
-                )}
-                {block.content?.productPrice && (
-                  <div style={{ 
-                    marginTop: "8px",
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    color: brandSettings.primaryColor,
-                  }}>
-                    {block.content.productPrice}
-                  </div>
-                )}
+                {renderProductDetails()}
               </div>
             ) : (
               <div>
@@ -1049,26 +1102,7 @@ export default function EmailTemplateBuilder() {
                   <span style={{ color: "#868e96", fontSize: "14px" }}>Add product image</span>
                   <span style={{ color: "#adb5bd", fontSize: "12px", marginTop: 4 }}>Recommended: 600x400px</span>
                 </div>
-                {block.content?.productName && (
-                  <div style={{ 
-                    marginTop: "16px",
-                    fontSize: "18px",
-                    fontWeight: "600",
-                    color: brandSettings.textColor,
-                  }}>
-                    {block.content.productName}
-                  </div>
-                )}
-                {block.content?.productPrice && (
-                  <div style={{ 
-                    marginTop: "8px",
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    color: brandSettings.primaryColor,
-                  }}>
-                    {block.content.productPrice}
-                  </div>
-                )}
+                {renderProductDetails()}
               </div>
             )}
           </div>
@@ -2408,35 +2442,94 @@ export default function EmailTemplateBuilder() {
                           />
                         </div>
                         <Separator className="my-4" />
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Product Details</p>
                         <div>
-                          <Label className="text-xs">Product Name (optional)</Label>
+                          <Label className="text-xs">Product Name</Label>
                           <Input
                             value={selectedBlock.content?.productName || ""}
                             onChange={(e) => updateBlock(selectedBlock.id, {
                               content: { ...selectedBlock.content, productName: e.target.value }
                             })}
-                            placeholder="e.g. Premium Widget Pro"
+                            placeholder="e.g. Boat 2025 Launch Stone 1200 Pro..."
                             className="mt-1"
                             data-testid="input-product-name"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Display product name below the image
-                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Rating (1-5)</Label>
+                            <Input
+                              value={selectedBlock.content?.productRating || ""}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, productRating: e.target.value }
+                              })}
+                              placeholder="e.g. 4.1"
+                              className="mt-1"
+                              data-testid="input-product-rating"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Reviews</Label>
+                            <Input
+                              value={selectedBlock.content?.reviewCount || ""}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, reviewCount: e.target.value }
+                              })}
+                              placeholder="e.g. 49"
+                              className="mt-1"
+                              data-testid="input-review-count"
+                            />
+                          </div>
                         </div>
                         <div>
-                          <Label className="text-xs">Product Price (optional)</Label>
+                          <Label className="text-xs">Social Proof</Label>
                           <Input
-                            value={selectedBlock.content?.productPrice || ""}
+                            value={selectedBlock.content?.socialProof || ""}
                             onChange={(e) => updateBlock(selectedBlock.id, {
-                              content: { ...selectedBlock.content, productPrice: e.target.value }
+                              content: { ...selectedBlock.content, socialProof: e.target.value }
                             })}
-                            placeholder="e.g. $49.99"
+                            placeholder="e.g. 400+ bought in past month"
                             className="mt-1"
-                            data-testid="input-product-price"
+                            data-testid="input-social-proof"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Display price below the product name
-                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Sale Price</Label>
+                            <Input
+                              value={selectedBlock.content?.productPrice || ""}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, productPrice: e.target.value }
+                              })}
+                              placeholder="e.g. $4,999"
+                              className="mt-1"
+                              data-testid="input-product-price"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Original Price</Label>
+                            <Input
+                              value={selectedBlock.content?.originalPrice || ""}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, originalPrice: e.target.value }
+                              })}
+                              placeholder="e.g. $14,990"
+                              className="mt-1"
+                              data-testid="input-original-price"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Discount</Label>
+                          <Input
+                            value={selectedBlock.content?.discount || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, discount: e.target.value }
+                            })}
+                            placeholder="e.g. 67% off"
+                            className="mt-1"
+                            data-testid="input-discount"
+                          />
                         </div>
                       </div>
                     )}
@@ -3079,35 +3172,73 @@ export default function EmailTemplateBuilder() {
                       )}
                       
                       {block.type === "image" && block.content?.src && (
-                        <div style={{ textAlign: block.styles?.textAlign || "center" }}>
-                          <img
-                            src={block.content.src}
-                            alt={block.content.alt || "Image"}
-                            style={{ 
-                              maxWidth: "100%",
-                              height: "auto",
-                              display: "inline-block",
-                              borderRadius: "4px",
-                            }}
-                          />
+                        <div style={{ textAlign: "left" }}>
+                          <div style={{ textAlign: "center" }}>
+                            <img
+                              src={block.content.src}
+                              alt={block.content.alt || "Image"}
+                              style={{ 
+                                maxWidth: "100%",
+                                height: "auto",
+                                display: "inline-block",
+                                borderRadius: "4px",
+                              }}
+                            />
+                          </div>
                           {block.content?.productName && (
                             <div style={{ 
                               marginTop: "12px",
-                              fontSize: "18px",
-                              fontWeight: "600",
+                              fontSize: "15px",
+                              fontWeight: "500",
                               color: brandSettings.textColor,
+                              lineHeight: "1.4",
                             }}>
                               {block.content.productName}
                             </div>
                           )}
-                          {block.content?.productPrice && (
+                          {block.content?.productRating && (
                             <div style={{ 
-                              marginTop: "6px",
-                              fontSize: "16px",
-                              fontWeight: "700",
-                              color: brandSettings.primaryColor,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              marginTop: "8px",
                             }}>
-                              {block.content.productPrice}
+                              <span style={{ fontSize: "14px", color: "#333" }}>{block.content.productRating}</span>
+                              <span style={{ color: "#de7921", fontSize: "14px" }}>
+                                {"★".repeat(Math.floor(parseFloat(block.content.productRating) || 0))}
+                                {"☆".repeat(5 - Math.floor(parseFloat(block.content.productRating) || 0))}
+                              </span>
+                              {block.content?.reviewCount && (
+                                <span style={{ fontSize: "13px", color: "#007185" }}>({block.content.reviewCount})</span>
+                              )}
+                            </div>
+                          )}
+                          {block.content?.socialProof && (
+                            <div style={{ 
+                              fontSize: "13px",
+                              color: "#555",
+                              marginTop: "6px",
+                            }}>
+                              {block.content.socialProof}
+                            </div>
+                          )}
+                          {(block.content?.productPrice || block.content?.originalPrice) && (
+                            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+                              {block.content?.productPrice && (
+                                <span style={{ fontSize: "22px", fontWeight: "400", color: "#0F1111" }}>
+                                  {block.content.productPrice}
+                                </span>
+                              )}
+                              {block.content?.originalPrice && (
+                                <span style={{ fontSize: "13px", color: "#565959" }}>
+                                  M.R.P: <span style={{ textDecoration: "line-through" }}>{block.content.originalPrice}</span>
+                                </span>
+                              )}
+                              {block.content?.discount && (
+                                <span style={{ fontSize: "13px", color: "#CC0C39", fontWeight: "500" }}>
+                                  ({block.content.discount})
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
