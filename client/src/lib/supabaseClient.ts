@@ -3,17 +3,46 @@ import { createClient } from '@supabase/supabase-js';
 // Session storage key for mock client
 const MOCK_SESSION_KEY = 'zyra_mock_session';
 
+// Development mode default session - used when Supabase is not configured
+const DEV_SESSION = {
+  access_token: 'dev-mock-token',
+  refresh_token: 'dev-mock-refresh',
+  token_type: 'bearer',
+  expires_in: 3600,
+  expires_at: Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
+  user: {
+    id: 'dev-test-user-id',
+    email: 'test@example.com',
+    aud: 'authenticated',
+    role: 'authenticated',
+    user_metadata: {
+      full_name: 'Test User'
+    }
+  }
+};
+
 // Enhanced mock client for when Supabase config is invalid
 function createMockClient() {
   // Store auth state change listeners
   const authListeners: Function[] = [];
   
-  // Get stored session from localStorage
+  // Get stored session from localStorage - defaults to DEV_SESSION in development
   const getStoredSession = () => {
     try {
       const stored = localStorage.getItem(MOCK_SESSION_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      // In development, return default dev session
+      if (import.meta.env.DEV) {
+        return DEV_SESSION;
+      }
+      return null;
     } catch {
+      // In development, return default dev session
+      if (import.meta.env.DEV) {
+        return DEV_SESSION;
+      }
       return null;
     }
   };

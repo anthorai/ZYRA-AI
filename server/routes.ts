@@ -186,9 +186,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(statusCode).json(status);
   });
 
+  // Check if Supabase is properly configured
+  const hasRealSupabaseCredentials = !!(
+    process.env.SUPABASE_URL && 
+    process.env.SUPABASE_SERVICE_ROLE_KEY && 
+    process.env.SUPABASE_ANON_KEY
+  );
+  const isDevelopmentMode = process.env.NODE_ENV === 'development';
+  
   // Supabase authentication middleware
   const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Development mode bypass: When Supabase is not configured, use test user
+      if (isDevelopmentMode && !hasRealSupabaseCredentials) {
+        // Get or create test user for development
+        let testUser = await supabaseStorage.getUserByEmail('test@example.com');
+        if (!testUser) {
+          testUser = {
+            id: 'dev-test-user-id',
+            email: 'test@example.com',
+            fullName: 'Test User',
+            role: 'user',
+            plan: 'trial',
+            imageUrl: null
+          } as any;
+        }
+        
+        (req as AuthenticatedRequest).user = {
+          id: testUser.id,
+          email: testUser.email,
+          fullName: testUser.fullName,
+          role: testUser.role,
+          plan: testUser.plan,
+          imageUrl: testUser.imageUrl ?? undefined
+        };
+        
+        return next();
+      }
+      
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         console.log('🔐 Auth failed: No authorization header');
