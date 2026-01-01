@@ -1357,7 +1357,7 @@ export default function EmailTemplateBuilder() {
         {/* CENTER PANEL - Email Preview */}
         <div className="flex-1 bg-muted/20 overflow-hidden flex flex-col">
           {/* Email metadata */}
-          <div className="p-4 bg-card/50 border-b border-border space-y-3">
+          <div className="p-4 border-b border-border space-y-3 bg-[#14142b]">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground mb-1">Subject Line</Label>
