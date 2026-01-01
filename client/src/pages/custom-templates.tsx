@@ -1034,27 +1034,39 @@ export default function EmailTemplateBuilder() {
                 )}
               </div>
             ) : (
-              <div style={{
-                backgroundColor: "#f8f9fa",
-                border: "2px dashed #dee2e6",
-                borderRadius: "12px",
-                padding: "48px 32px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                <Image style={{ width: 48, height: 48, color: "#adb5bd", marginBottom: 12 }} />
-                <span style={{ color: "#868e96", fontSize: "14px" }}>Add product image</span>
-                <span style={{ color: "#adb5bd", fontSize: "12px", marginTop: 4 }}>Recommended: 600x400px</span>
+              <div>
+                <div style={{
+                  backgroundColor: "#f8f9fa",
+                  border: "2px dashed #dee2e6",
+                  borderRadius: "12px",
+                  padding: "48px 32px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  <Image style={{ width: 48, height: 48, color: "#adb5bd", marginBottom: 12 }} />
+                  <span style={{ color: "#868e96", fontSize: "14px" }}>Add product image</span>
+                  <span style={{ color: "#adb5bd", fontSize: "12px", marginTop: 4 }}>Recommended: 600x400px</span>
+                </div>
                 {block.content?.productName && (
                   <div style={{ 
                     marginTop: "16px",
-                    fontSize: "16px",
+                    fontSize: "18px",
                     fontWeight: "600",
-                    color: "#495057",
+                    color: brandSettings.textColor,
                   }}>
                     {block.content.productName}
+                  </div>
+                )}
+                {block.content?.productPrice && (
+                  <div style={{ 
+                    marginTop: "8px",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    color: brandSettings.primaryColor,
+                  }}>
+                    {block.content.productPrice}
                   </div>
                 )}
               </div>
