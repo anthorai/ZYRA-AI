@@ -870,8 +870,8 @@ export default function EmailTemplateBuilder() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50 rounded-b-xl">
-        <div className="flex items-center justify-between px-4 py-3 bg-[#14142b]">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50 rounded-b-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#14142b] rounded-b-xl">
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
               <Button variant="ghost" size="icon" data-testid="button-back">
