@@ -67,7 +67,8 @@ import {
   X,
   Check,
   Loader2,
-  ImageIcon
+  ImageIcon,
+  Upload
 } from "lucide-react";
 import { Link } from "wouter";
 import type { EmailBlock, BrandSettings } from "@shared/schema";
@@ -264,6 +265,9 @@ export default function EmailTemplateBuilder() {
   const [aiLoading, setAiLoading] = useState<string | null>(null);
   const [showAiResultDialog, setShowAiResultDialog] = useState(false);
   const [aiResult, setAiResult] = useState<{ action: string; result: string; simulated?: boolean } | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTargetRef = useRef<{ blockId: string; type: "logo" | "image" } | null>(null);
   
   // Undo/Redo history state
   const [historyStack, setHistoryStack] = useState<EmailBlock[][]>([]);
@@ -742,6 +746,58 @@ export default function EmailTemplateBuilder() {
     });
   }, []);
 
+  // Upload image handler
+  const handleImageUpload = useCallback(async (file: File, blockId: string) => {
+    setUploadingImage(blockId);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload-template-image', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const { url } = await response.json();
+      updateBlock(blockId, {
+        content: { src: url, alt: file.name }
+      });
+      toast({ title: "Image Uploaded", description: "Image has been uploaded successfully." });
+    } catch (error: any) {
+      console.error('Image upload error:', error);
+      toast({ 
+        title: "Upload Failed", 
+        description: error.message || "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingImage(null);
+    }
+  }, [updateBlock, toast]);
+
+  const triggerFileUpload = useCallback((blockId: string, type: "logo" | "image") => {
+    uploadTargetRef.current = { blockId, type };
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && uploadTargetRef.current) {
+      handleImageUpload(file, uploadTargetRef.current.blockId);
+    }
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    uploadTargetRef.current = null;
+  }, [handleImageUpload]);
+
   const duplicateBlock = useCallback((id: string) => {
     const blockIndex = blocks.findIndex(b => b.id === id);
     if (blockIndex !== -1) {
@@ -1086,6 +1142,14 @@ export default function EmailTemplateBuilder() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#14142b]">
+      {/* Hidden file input for image upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+      />
       {/* Header */}
       <header className="border border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50 rounded-xl overflow-hidden m-2">
         <div className="flex items-center justify-between px-4 py-3 bg-[#14142b] rounded-xl">
@@ -2034,19 +2098,119 @@ export default function EmailTemplateBuilder() {
                       </div>
                     )}
 
+                    {selectedBlock.type === "logo" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-xs">Logo Image</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              value={selectedBlock.content?.src || ""}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, src: e.target.value }
+                              })}
+                              placeholder="https://... or upload"
+                              className="flex-1"
+                              data-testid="input-logo-url"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => triggerFileUpload(selectedBlock.id, "logo")}
+                              disabled={uploadingImage === selectedBlock.id}
+                              data-testid="button-upload-logo"
+                            >
+                              {uploadingImage === selectedBlock.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Upload or paste a URL for your logo
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Alt Text</Label>
+                          <Input
+                            value={selectedBlock.content?.alt || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, alt: e.target.value }
+                            })}
+                            placeholder="Logo description"
+                            className="mt-1"
+                            data-testid="input-logo-alt"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Logo Width</Label>
+                          <Select
+                            value={selectedBlock.styles?.width || "160px"}
+                            onValueChange={(value) => updateBlock(selectedBlock.id, {
+                              styles: { ...selectedBlock.styles, width: value }
+                            })}
+                          >
+                            <SelectTrigger className="mt-1" data-testid="select-logo-width">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="80px">Small (80px)</SelectItem>
+                              <SelectItem value="120px">Medium (120px)</SelectItem>
+                              <SelectItem value="160px">Default (160px)</SelectItem>
+                              <SelectItem value="200px">Large (200px)</SelectItem>
+                              <SelectItem value="250px">Extra Large (250px)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Link URL (optional)</Label>
+                          <Input
+                            value={selectedBlock.content?.linkUrl || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, linkUrl: e.target.value }
+                            })}
+                            placeholder="https://yourstore.com"
+                            className="mt-1"
+                            data-testid="input-logo-link"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Logo will link to this URL when clicked
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {selectedBlock.type === "image" && (
                       <div className="space-y-4">
                         <div>
-                          <Label className="text-xs">Image URL</Label>
-                          <Input
-                            value={selectedBlock.content?.src || ""}
-                            onChange={(e) => updateBlock(selectedBlock.id, {
-                              content: { ...selectedBlock.content, src: e.target.value }
-                            })}
-                            placeholder="https://..."
-                            className="mt-1"
-                            data-testid="input-image-url"
-                          />
+                          <Label className="text-xs">Image</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              value={selectedBlock.content?.src || ""}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, src: e.target.value }
+                              })}
+                              placeholder="https://... or upload"
+                              className="flex-1"
+                              data-testid="input-image-url"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => triggerFileUpload(selectedBlock.id, "image")}
+                              disabled={uploadingImage === selectedBlock.id}
+                              data-testid="button-upload-image"
+                            >
+                              {uploadingImage === selectedBlock.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Upload className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Upload or paste a URL for your image
+                          </p>
                         </div>
                         <div>
                           <Label className="text-xs">Alt Text</Label>

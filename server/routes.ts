@@ -7245,6 +7245,51 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Upload image for email templates (logo, images)
+  app.post('/api/upload-template-image', requireAuth, uploadLimiter, upload.single('image'), async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP' });
+      }
+
+      // Generate unique filename with timestamp
+      const timestamp = Date.now();
+      const ext = req.file.originalname.split('.').pop() || 'jpg';
+      const filename = `template-${userId}-${timestamp}.${ext}`;
+      const imageUrl = `/uploads/templates/${filename}`;
+
+      // Save file using multer's buffer
+      const fs = await import('fs');
+      const path = await import('path');
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'templates');
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Write file to disk
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error('Upload template image error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   app.post('/api/upload-profile-image', requireAuth, uploadLimiter, upload.single('image'), async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
