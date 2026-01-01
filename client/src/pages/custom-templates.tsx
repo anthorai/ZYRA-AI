@@ -1,4 +1,6 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,59 +217,46 @@ const createDefaultBlock = (type: EmailBlock["type"]): EmailBlock => {
   }
 };
 
-// Sample templates for different workflow types
-const sampleTemplates = [
-  { 
-    id: "1", 
-    name: "Welcome Series - Day 1", 
-    workflowType: "onboarding",
-    status: "active" as const,
-    usageCount: 156,
-    lastUsedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  { 
-    id: "2", 
-    name: "Cart Recovery - First Reminder", 
-    workflowType: "abandoned_cart",
-    status: "active" as const,
-    usageCount: 89,
-    lastUsedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  { 
-    id: "3", 
-    name: "Order Confirmation", 
-    workflowType: "order_confirmation",
-    status: "draft" as const,
-    usageCount: 0,
-    lastUsedAt: null,
-  },
-  { 
-    id: "4", 
-    name: "Post-Purchase Upsell", 
-    workflowType: "upsell",
-    status: "active" as const,
-    usageCount: 234,
-    lastUsedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  { 
-    id: "5", 
-    name: "Win-back Campaign", 
-    workflowType: "re_engagement",
-    status: "active" as const,
-    usageCount: 412,
-    lastUsedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+// Type for email template from API
+interface EmailTemplate {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string | null;
+  subject?: string | null;
+  preheader?: string | null;
+  workflowType: string;
+  status: "draft" | "active" | "archived";
+  blocks?: EmailBlock[] | null;
+  brandSettings?: BrandSettings | null;
+  htmlContent?: string | null;
+  plainTextContent?: string | null;
+  variables?: Record<string, string> | null;
+  unsubscribeLink?: string | null;
+  physicalAddress?: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function EmailTemplateBuilder() {
   const { toast } = useToast();
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Template state
-  const [templates] = useState(sampleTemplates);
+  // UI state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [leftPanelTab, setLeftPanelTab] = useState<"blocks" | "variables" | "ai">("blocks");
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedBlockType, setDraggedBlockType] = useState<EmailBlock["type"] | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
+  const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
   
-  // Editor state
+  // Editor state (for new template or local edits)
   const [templateName, setTemplateName] = useState("New Email Template");
   const [subject, setSubject] = useState("Your subject line here");
   const [preheader, setPreheader] = useState("");
@@ -282,18 +271,171 @@ export default function EmailTemplateBuilder() {
     createDefaultBlock("text"),
   ]);
   const [brandSettings, setBrandSettings] = useState<BrandSettings>(defaultBrandSettings);
-  
-  // UI state
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
-  const [leftPanelTab, setLeftPanelTab] = useState<"blocks" | "variables" | "ai">("blocks");
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedBlockType, setDraggedBlockType] = useState<EmailBlock["type"] | null>(null);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
-  const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const [aiLoading, setAiLoading] = useState<string | null>(null);
-  
+
+  // Fetch all email templates
+  const { data: templates = [], isLoading: templatesLoading, error: templatesError } = useQuery<EmailTemplate[]>({
+    queryKey: ["/api/email-templates"],
+  });
+
+  // Fetch selected template details
+  const { data: selectedTemplate, isLoading: templateLoading } = useQuery<EmailTemplate>({
+    queryKey: ["/api/email-templates", selectedTemplateId],
+    enabled: !!selectedTemplateId,
+  });
+
+  // Fetch version history
+  const { data: versionHistory = [], isLoading: versionsLoading } = useQuery<any[]>({
+    queryKey: ["/api/email-templates", selectedTemplateId, "versions"],
+    enabled: !!selectedTemplateId && showVersionHistory,
+  });
+
+  // Create template mutation
+  const createTemplateMutation = useMutation({
+    mutationFn: async (data: Partial<EmailTemplate>) => {
+      const res = await apiRequest("POST", "/api/email-templates", data);
+      return res.json();
+    },
+    onSuccess: (data: EmailTemplate) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] });
+      setSelectedTemplateId(data.id);
+      toast({ title: "Template Created", description: `"${data.name}" has been created successfully.` });
+      setShowNewTemplateDialog(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to create template", variant: "destructive" });
+    },
+  });
+
+  // Update template mutation
+  const updateTemplateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<EmailTemplate> }) => {
+      const res = await apiRequest("PATCH", `/api/email-templates/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/email-templates", selectedTemplateId] });
+      setAutoSaveStatus("saved");
+    },
+    onError: (error: any) => {
+      toast({ title: "Save Failed", description: error.message || "Failed to save template", variant: "destructive" });
+      setAutoSaveStatus("unsaved");
+    },
+  });
+
+  // Delete template mutation
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/email-templates/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] });
+      setSelectedTemplateId(null);
+      resetEditor();
+      toast({ title: "Template Deleted", description: "The template has been deleted." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to delete template", variant: "destructive" });
+    },
+  });
+
+  // Duplicate template mutation
+  const duplicateTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/email-templates/${id}/duplicate`);
+      return res.json();
+    },
+    onSuccess: (data: EmailTemplate) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] });
+      setSelectedTemplateId(data.id);
+      toast({ title: "Template Duplicated", description: `Copy created: "${data.name}"` });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to duplicate template", variant: "destructive" });
+    },
+  });
+
+  // AI action mutation
+  const aiActionMutation = useMutation({
+    mutationFn: async ({ action, content, subject }: { action: string; content: string; subject?: string }) => {
+      const res = await apiRequest("POST", `/api/email-templates/ai/${action}`, { content, subject, blocks });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "AI Enhancement Complete", description: `Successfully applied enhancement to your email template.` });
+      if (data.result) {
+        // For text-based actions, update the first text block with the result
+        const textBlockIndex = blocks.findIndex(b => b.type === "text");
+        if (textBlockIndex !== -1) {
+          const updatedBlocks = [...blocks];
+          updatedBlocks[textBlockIndex] = {
+            ...updatedBlocks[textBlockIndex],
+            content: { ...updatedBlocks[textBlockIndex].content, text: data.result }
+          };
+          setBlocks(updatedBlocks);
+        }
+      }
+    },
+    onError: (error: any) => {
+      toast({ title: "AI Action Failed", description: error.message || "Failed to process AI action", variant: "destructive" });
+    },
+  });
+
+  // Render HTML mutation
+  const renderHtmlMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/email-templates/${id}/render`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/email-templates", selectedTemplateId] });
+      toast({ title: "HTML Generated", description: "Email-safe HTML has been generated with inline CSS." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Render Failed", description: error.message || "Failed to generate HTML", variant: "destructive" });
+    },
+  });
+
+  // Reset editor to default state
+  const resetEditor = useCallback(() => {
+    setTemplateName("New Email Template");
+    setSubject("Your subject line here");
+    setPreheader("");
+    setWorkflowType("custom");
+    setStatus("draft");
+    setBlocks([
+      createDefaultBlock("logo"),
+      createDefaultBlock("heading"),
+      createDefaultBlock("text"),
+      createDefaultBlock("button"),
+      createDefaultBlock("divider"),
+      createDefaultBlock("text"),
+    ]);
+    setBrandSettings(defaultBrandSettings);
+    setSelectedBlockId(null);
+    setAutoSaveStatus("saved");
+  }, []);
+
+  // Load template into editor when selected
+  useEffect(() => {
+    if (selectedTemplate) {
+      setTemplateName(selectedTemplate.name);
+      setSubject(selectedTemplate.subject || "");
+      setPreheader(selectedTemplate.preheader || "");
+      setWorkflowType(selectedTemplate.workflowType || "custom");
+      setStatus(selectedTemplate.status);
+      setBlocks(selectedTemplate.blocks || [
+        createDefaultBlock("logo"),
+        createDefaultBlock("heading"),
+        createDefaultBlock("text"),
+        createDefaultBlock("button"),
+      ]);
+      setBrandSettings(selectedTemplate.brandSettings || defaultBrandSettings);
+      setAutoSaveStatus("saved");
+    }
+  }, [selectedTemplate]);
+
   // Get the currently selected block
   const selectedBlock = useMemo(() => 
     blocks.find(b => b.id === selectedBlockId), 
@@ -309,21 +451,41 @@ export default function EmailTemplateBuilder() {
     [templates, searchQuery]
   );
 
-  // Auto-save simulation
+  // Auto-save with debounce
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (autoSaveStatus === "unsaved") {
-        setAutoSaveStatus("saving");
-        setTimeout(() => setAutoSaveStatus("saved"), 1000);
+    if (selectedTemplateId && autoSaveStatus === "unsaved") {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
       }
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [blocks, templateName, subject, autoSaveStatus]);
+      autoSaveTimerRef.current = setTimeout(() => {
+        setAutoSaveStatus("saving");
+        updateTemplateMutation.mutate({
+          id: selectedTemplateId,
+          data: {
+            name: templateName,
+            subject,
+            preheader,
+            workflowType,
+            status,
+            blocks,
+            brandSettings,
+          },
+        });
+      }, 2000);
+    }
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [selectedTemplateId, blocks, templateName, subject, preheader, workflowType, status, brandSettings, autoSaveStatus]);
 
-  // Mark as unsaved when content changes
+  // Mark as unsaved when content changes (only if editing existing template)
   useEffect(() => {
-    setAutoSaveStatus("unsaved");
-  }, [blocks, templateName, subject, preheader, workflowType]);
+    if (selectedTemplateId && selectedTemplate) {
+      setAutoSaveStatus("unsaved");
+    }
+  }, [blocks, templateName, subject, preheader, workflowType, status, brandSettings]);
 
   // Block operations
   const addBlock = useCallback((type: EmailBlock["type"], index?: number) => {
@@ -379,33 +541,93 @@ export default function EmailTemplateBuilder() {
   const handleAIAction = async (action: string) => {
     setAiLoading(action);
     
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Gather content from text blocks
+    const textContent = blocks
+      .filter(b => b.type === "text" || b.type === "heading")
+      .map(b => b.content?.text || "")
+      .join("\n\n");
     
-    toast({
-      title: "AI Enhancement Complete",
-      description: `Successfully applied ${action} to your email template.`,
-    });
-    
-    setAiLoading(null);
+    aiActionMutation.mutate(
+      { action, content: textContent, subject },
+      {
+        onSettled: () => setAiLoading(null),
+      }
+    );
   };
 
   // Handle save
   const handleSave = () => {
-    toast({
-      title: "Template Saved",
-      description: `"${templateName}" has been saved successfully.`,
-    });
-    setAutoSaveStatus("saved");
+    if (selectedTemplateId) {
+      setAutoSaveStatus("saving");
+      updateTemplateMutation.mutate({
+        id: selectedTemplateId,
+        data: {
+          name: templateName,
+          subject,
+          preheader,
+          workflowType,
+          status,
+          blocks,
+          brandSettings,
+        },
+      });
+    } else {
+      createTemplateMutation.mutate({
+        name: templateName,
+        subject,
+        preheader,
+        workflowType,
+        status,
+        blocks,
+        brandSettings,
+      });
+    }
   };
 
   // Handle duplicate template
   const handleDuplicateTemplate = () => {
-    setTemplateName(`${templateName} (Copy)`);
-    toast({
-      title: "Template Duplicated",
-      description: "A copy of your template has been created.",
-    });
+    if (selectedTemplateId) {
+      duplicateTemplateMutation.mutate(selectedTemplateId);
+    } else {
+      setTemplateName(`${templateName} (Copy)`);
+      toast({
+        title: "Template Duplicated",
+        description: "A copy of your template has been created (save to persist).",
+      });
+    }
+  };
+
+  // Handle delete template
+  const handleDeleteTemplate = () => {
+    if (selectedTemplateId) {
+      deleteTemplateMutation.mutate(selectedTemplateId);
+    }
+  };
+
+  // Handle new template
+  const handleNewTemplate = () => {
+    setSelectedTemplateId(null);
+    resetEditor();
+    setShowNewTemplateDialog(true);
+  };
+
+  // Handle select template
+  const handleSelectTemplate = (id: string) => {
+    setSelectedTemplateId(id);
+    setSelectedBlockId(null);
+  };
+
+  // Handle generate HTML
+  const handleGenerateHtml = () => {
+    if (selectedTemplateId) {
+      renderHtmlMutation.mutate(selectedTemplateId);
+    } else {
+      toast({
+        title: "Save Required",
+        description: "Please save your template first before generating HTML.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Copy variable to clipboard
@@ -719,7 +941,14 @@ export default function EmailTemplateBuilder() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="bg-red-500 hover:bg-red-600">
+                      <AlertDialogAction 
+                        className="bg-red-500 hover:bg-red-600"
+                        onClick={handleDeleteTemplate}
+                        disabled={deleteTemplateMutation.isPending}
+                      >
+                        {deleteTemplateMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : null}
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -728,10 +957,34 @@ export default function EmailTemplateBuilder() {
               </DropdownMenuContent>
             </DropdownMenu>
             
+            {/* Generate HTML button */}
+            <Button 
+              variant="outline" 
+              onClick={handleGenerateHtml}
+              disabled={renderHtmlMutation.isPending || !selectedTemplateId}
+              data-testid="button-generate-html"
+            >
+              {renderHtmlMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 mr-2" />
+              )}
+              Export HTML
+            </Button>
+            
             {/* Save button */}
-            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90" data-testid="button-save">
-              <Save className="w-4 h-4 mr-2" />
-              Save
+            <Button 
+              onClick={handleSave} 
+              className="bg-primary hover:bg-primary/90" 
+              data-testid="button-save"
+              disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
+            >
+              {(createTemplateMutation.isPending || updateTemplateMutation.isPending) ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {selectedTemplateId ? "Save" : "Create"}
             </Button>
           </div>
         </div>
@@ -787,19 +1040,28 @@ export default function EmailTemplateBuilder() {
                                   key={wf.value}
                                   variant="outline"
                                   className="h-auto py-4 flex-col gap-2 hover:border-primary/50"
+                                  disabled={createTemplateMutation.isPending}
                                   onClick={() => {
-                                    setWorkflowType(wf.value);
-                                    setShowNewTemplateDialog(false);
-                                    setTemplateName(`New ${wf.label} Template`);
-                                    setBlocks([
+                                    const newBlocks = [
                                       createDefaultBlock("logo"),
                                       createDefaultBlock("heading"),
                                       createDefaultBlock("text"),
                                       createDefaultBlock("button"),
-                                    ]);
+                                    ];
+                                    createTemplateMutation.mutate({
+                                      name: `New ${wf.label} Template`,
+                                      workflowType: wf.value,
+                                      status: "draft",
+                                      blocks: newBlocks,
+                                      brandSettings: defaultBrandSettings,
+                                    });
                                   }}
                                 >
-                                  <Icon className={`w-6 h-6 ${wf.color}`} />
+                                  {createTemplateMutation.isPending ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                  ) : (
+                                    <Icon className={`w-6 h-6 ${wf.color}`} />
+                                  )}
                                   <span className="text-sm">{wf.label}</span>
                                 </Button>
                               );
@@ -821,37 +1083,52 @@ export default function EmailTemplateBuilder() {
                     </div>
                     
                     <div className="space-y-1">
-                      {filteredTemplates.slice(0, 5).map((template) => {
-                        const WorkflowIcon = getWorkflowIcon(template.workflowType);
-                        const workflow = workflowTypes.find(w => w.value === template.workflowType);
-                        return (
-                          <div
-                            key={template.id}
-                            onClick={() => setSelectedTemplateId(template.id)}
-                            className={`p-2 rounded-md cursor-pointer transition-all ${
-                              selectedTemplateId === template.id
-                                ? "bg-primary/20 border border-primary/50"
-                                : "hover:bg-muted/50"
-                            }`}
-                            data-testid={`template-item-${template.id}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <WorkflowIcon className={`w-4 h-4 ${workflow?.color || "text-gray-400"}`} />
-                              <span className="text-sm font-medium truncate flex-1">{template.name}</span>
-                              <Badge 
-                                variant="secondary" 
-                                className={`text-[10px] ${
-                                  template.status === "active" 
-                                    ? "bg-green-500/20 text-green-400" 
-                                    : "bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                {template.status}
-                              </Badge>
+                      {templatesLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          <span className="text-sm text-muted-foreground">Loading templates...</span>
+                        </div>
+                      ) : templatesError ? (
+                        <div className="text-sm text-red-400 py-4 text-center">
+                          Failed to load templates
+                        </div>
+                      ) : filteredTemplates.length === 0 ? (
+                        <div className="text-sm text-muted-foreground py-4 text-center">
+                          No templates yet. Click "New" to create one.
+                        </div>
+                      ) : (
+                        filteredTemplates.slice(0, 5).map((template) => {
+                          const WorkflowIcon = getWorkflowIcon(template.workflowType);
+                          const workflow = workflowTypes.find(w => w.value === template.workflowType);
+                          return (
+                            <div
+                              key={template.id}
+                              onClick={() => handleSelectTemplate(template.id)}
+                              className={`p-2 rounded-md cursor-pointer transition-all ${
+                                selectedTemplateId === template.id
+                                  ? "bg-primary/20 border border-primary/50"
+                                  : "hover:bg-muted/50"
+                              }`}
+                              data-testid={`template-item-${template.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <WorkflowIcon className={`w-4 h-4 ${workflow?.color || "text-gray-400"}`} />
+                                <span className="text-sm font-medium truncate flex-1">{template.name}</span>
+                                <Badge 
+                                  variant="secondary" 
+                                  className={`text-[10px] ${
+                                    template.status === "active" 
+                                      ? "bg-green-500/20 text-green-400" 
+                                      : "bg-muted text-muted-foreground"
+                                  }`}
+                                >
+                                  {template.status}
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
