@@ -27,9 +27,15 @@ import {
   Clock,
   Send,
   AlertCircle,
-  Save
+  Save,
+  Eye,
+  Edit2,
+  CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { EmailBlock } from "@shared/schema";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 const campaignSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters"),
@@ -154,8 +160,7 @@ export default function CreateCampaignPageV2() {
     setValue("type", "email");
     setValue("name", template.name);
     setValue("subject", template.subject || "");
-    const htmlContent = template.htmlContent || "";
-    setValue("content", htmlContent);
+    setValue("content", `[Custom Template: ${template.name}]`);
   };
 
   const createCampaignMutation = useMutation({
@@ -164,6 +169,7 @@ export default function CreateCampaignPageV2() {
         ...data,
         status: data.scheduleType === "now" ? "sending" : "scheduled",
         scheduledFor: data.scheduleType === "later" ? data.scheduledFor : new Date().toISOString(),
+        templateId: selectedCustomTemplate?.id,
       };
       
       return apiRequest("POST", "/api/campaigns", payload);
@@ -195,6 +201,9 @@ export default function CreateCampaignPageV2() {
       case 0:
         return !!selectedPresetId || !!selectedCustomTemplate;
       case 1:
+        if (selectedCustomTemplate) {
+          return !!(name && (campaignType === "sms" || subject));
+        }
         return !!(name && content && (campaignType === "sms" || subject));
       case 2:
         return !!audience;
@@ -207,6 +216,147 @@ export default function CreateCampaignPageV2() {
 
   const charCount = content?.length || 0;
   const smsCharLimit = 160;
+
+  const renderTemplatePreview = (blocks: EmailBlock[]) => {
+    if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          <p>No content blocks in this template</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {blocks.map((block, index) => {
+          switch (block.type) {
+            case 'logo':
+              return (
+                <div key={block.id || index} className="text-center py-4">
+                  {block.content?.src ? (
+                    <img 
+                      src={block.content.src} 
+                      alt={block.content.alt || 'Logo'} 
+                      className="max-h-16 mx-auto"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-primary rounded-lg mx-auto flex items-center justify-center">
+                      <Mail className="w-6 h-6 text-white" />
+                    </div>
+                  )}
+                </div>
+              );
+            case 'heading':
+              const HeadingTag = (block.content?.level || 'h2') as keyof JSX.IntrinsicElements;
+              return (
+                <HeadingTag 
+                  key={block.id || index}
+                  className={cn(
+                    "font-bold text-gray-900",
+                    block.content?.level === 'h1' && "text-3xl",
+                    block.content?.level === 'h2' && "text-2xl",
+                    block.content?.level === 'h3' && "text-xl",
+                    block.content?.level === 'h4' && "text-lg"
+                  )}
+                  style={{ textAlign: block.content?.align || 'center' }}
+                >
+                  {block.content?.text || 'Heading'}
+                </HeadingTag>
+              );
+            case 'text':
+              return (
+                <p 
+                  key={block.id || index}
+                  className="text-gray-700 leading-relaxed"
+                  style={{ textAlign: block.content?.align || 'left' }}
+                >
+                  {block.content?.text || 'Text content'}
+                </p>
+              );
+            case 'image':
+              return (
+                <div key={block.id || index} className="text-center py-2">
+                  {block.content?.src ? (
+                    <img 
+                      src={block.content.src} 
+                      alt={block.content.alt || 'Image'} 
+                      className="max-w-full mx-auto rounded-lg"
+                      style={{ maxWidth: block.content.width || '100%' }}
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                      <Eye className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                  {block.content?.caption && (
+                    <p className="text-sm text-gray-500 mt-2">{block.content.caption}</p>
+                  )}
+                  {block.content?.productName && (
+                    <div className="mt-2">
+                      <p className="font-semibold text-gray-900">{block.content.productName}</p>
+                      {block.content?.price && (
+                        <p className="text-lg font-bold text-primary">{block.content.price}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            case 'button':
+              return (
+                <div key={block.id || index} className="text-center py-4">
+                  <a
+                    href={block.content?.url || '#'}
+                    className="inline-block px-6 py-3 rounded-lg font-semibold text-white"
+                    style={{ 
+                      backgroundColor: block.content?.backgroundColor || '#00F0FF',
+                      color: block.content?.textColor || '#000000'
+                    }}
+                  >
+                    {block.content?.text || 'Click Here'}
+                  </a>
+                </div>
+              );
+            case 'divider':
+              return (
+                <hr 
+                  key={block.id || index} 
+                  className="my-4 border-gray-300"
+                  style={{ 
+                    borderWidth: block.content?.thickness || 1,
+                    borderStyle: block.content?.style || 'solid'
+                  }}
+                />
+              );
+            case 'spacer':
+              return (
+                <div 
+                  key={block.id || index} 
+                  style={{ height: block.content?.height || 20 }}
+                />
+              );
+            case 'columns':
+              return (
+                <div key={block.id || index} className="flex gap-4">
+                  {block.content?.columns?.map((col: any, colIndex: number) => (
+                    <div key={colIndex} className="flex-1">
+                      {col.blocks?.map((colBlock: EmailBlock, blockIndex: number) => (
+                        <div key={blockIndex}>{renderTemplatePreview([colBlock])}</div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            default:
+              return (
+                <div key={block.id || index} className="p-4 bg-gray-100 rounded text-gray-600 text-sm">
+                  {block.type} block
+                </div>
+              );
+          }
+        })}
+      </div>
+    );
+  };
 
   return (
     <PageShell
@@ -267,6 +417,7 @@ export default function CreateCampaignPageV2() {
           {/* Step 2: Content Creation */}
           {currentStep === 1 && (
             <div className="space-y-6">
+              {/* Campaign Details - Basic info */}
               <DashboardCard
                 title="Campaign Details"
                 testId="card-campaign-details"
@@ -301,37 +452,86 @@ export default function CreateCampaignPageV2() {
                       )}
                     </div>
                   )}
-
-                  <div>
-                    <Label htmlFor="content" className="text-white">
-                      Message {campaignType === "sms" && `(${charCount}/${smsCharLimit})`}
-                    </Label>
-                    <Textarea
-                      id="content"
-                      {...register("content")}
-                      placeholder={
-                        campaignType === "email"
-                          ? "Write your email content here..."
-                          : "Write your SMS message here..."
-                      }
-                      rows={campaignType === "email" ? 12 : 6}
-                      className="mt-1.5 bg-slate-800 border-slate-700 text-white"
-                      data-testid="input-campaign-content"
-                    />
-                    {errors.content && (
-                      <p className="text-red-400 text-sm mt-1">{errors.content.message}</p>
-                    )}
-                    {campaignType === "sms" && charCount >= smsCharLimit && charCount <= 320 && (
-                      <Alert className="mt-2 bg-yellow-500/10 border-yellow-500/50">
-                        <AlertCircle className="h-4 w-4 text-yellow-500" />
-                        <AlertDescription className="text-yellow-200">
-                          This message will be split into {Math.ceil(charCount / 160)} SMS messages ({charCount} chars)
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
                 </div>
               </DashboardCard>
+
+              {/* Email Content - Show template preview or text editor */}
+              {selectedCustomTemplate ? (
+                <DashboardCard
+                  title="Email Template Preview"
+                  description={`Using your custom template: "${selectedCustomTemplate.name}"`}
+                  testId="card-template-preview"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <span className="text-green-400 font-medium">Custom Template Selected</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {Array.isArray(selectedCustomTemplate.blocks) ? selectedCustomTemplate.blocks.length : 0} blocks
+                        </Badge>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/custom-templates?id=${selectedCustomTemplate.id}`, '_blank')}
+                        data-testid="button-edit-template"
+                      >
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        Edit Template
+                      </Button>
+                    </div>
+                    
+                    {/* Template Preview */}
+                    <div className="border border-slate-700 rounded-lg overflow-hidden bg-white">
+                      <ScrollArea className="h-[500px]">
+                        <div className="p-4">
+                          {renderTemplatePreview(selectedCustomTemplate.blocks as EmailBlock[])}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                    
+                    <input type="hidden" {...register("content")} />
+                  </div>
+                </DashboardCard>
+              ) : (
+                <DashboardCard
+                  title="Message Content"
+                  testId="card-message-content"
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="content" className="text-white">
+                        Message {campaignType === "sms" && `(${charCount}/${smsCharLimit})`}
+                      </Label>
+                      <Textarea
+                        id="content"
+                        {...register("content")}
+                        placeholder={
+                          campaignType === "email"
+                            ? "Write your email content here..."
+                            : "Write your SMS message here..."
+                        }
+                        rows={campaignType === "email" ? 12 : 6}
+                        className="mt-1.5 bg-slate-800 border-slate-700 text-white"
+                        data-testid="input-campaign-content"
+                      />
+                      {errors.content && (
+                        <p className="text-red-400 text-sm mt-1">{errors.content.message}</p>
+                      )}
+                      {campaignType === "sms" && charCount >= smsCharLimit && charCount <= 320 && (
+                        <Alert className="mt-2 bg-yellow-500/10 border-yellow-500/50">
+                          <AlertCircle className="h-4 w-4 text-yellow-500" />
+                          <AlertDescription className="text-yellow-200">
+                            This message will be split into {Math.ceil(charCount / 160)} SMS messages ({charCount} chars)
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  </div>
+                </DashboardCard>
+              )}
             </div>
           )}
 
