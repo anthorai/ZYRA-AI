@@ -1020,6 +1020,9 @@ export default function EmailTemplateBuilder() {
         );
       
       case "button":
+        const btnBgColor = block.styles?.backgroundColor || brandSettings.primaryColor || "#00F0FF";
+        const btnTextColor = block.styles?.textColor || "#000000";
+        const btnRadius = block.styles?.borderRadius || "8px";
         return (
           <div style={{ ...baseStyles, textAlign: "center" as const, padding: "24px 32px" }}>
             <table cellPadding="0" cellSpacing="0" style={{ margin: "0 auto" }}>
@@ -1027,9 +1030,10 @@ export default function EmailTemplateBuilder() {
                 <tr>
                   <td 
                     style={{
-                      backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
-                      borderRadius: block.styles?.borderRadius || "8px",
+                      backgroundColor: btnBgColor,
+                      borderRadius: btnRadius,
                       textAlign: "center" as const,
+                      boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15)",
                     }}
                   >
                     <a 
@@ -1037,16 +1041,17 @@ export default function EmailTemplateBuilder() {
                       onClick={(e) => e.preventDefault()}
                       style={{
                         display: "inline-block",
-                        padding: "14px 32px",
-                        backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
-                        color: block.styles?.textColor || "#000000",
+                        padding: "16px 40px",
+                        backgroundColor: btnBgColor,
+                        color: btnTextColor,
                         textDecoration: "none",
-                        borderRadius: block.styles?.borderRadius || "8px",
-                        fontWeight: "600",
+                        borderRadius: btnRadius,
+                        fontWeight: "700",
                         fontSize: block.styles?.fontSize || "16px",
-                        letterSpacing: "0.02em",
+                        letterSpacing: "0.03em",
                         border: "none",
                         cursor: "pointer",
+                        textTransform: "uppercase" as const,
                       }}
                     >
                       {block.content?.text || "Shop Now"}
@@ -3014,18 +3019,21 @@ export default function EmailTemplateBuilder() {
                       )}
                       
                       {block.type === "button" && (
-                        <div style={{ textAlign: block.styles?.textAlign || "center" }}>
+                        <div style={{ textAlign: block.styles?.textAlign || "center", padding: "8px 0" }}>
                           <span style={{
                             display: "inline-block",
-                            padding: "12px 32px",
-                            backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
-                            color: block.styles?.textColor || "#ffffff",
-                            borderRadius: "6px",
-                            fontWeight: "600",
+                            padding: "16px 40px",
+                            backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor || "#00F0FF",
+                            color: block.styles?.textColor || "#000000",
+                            borderRadius: block.styles?.borderRadius || "8px",
+                            fontWeight: "700",
                             fontSize: block.styles?.fontSize || "16px",
                             textDecoration: "none",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.03em",
+                            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15)",
                           }}>
-                            {block.content?.text || "Click Here"}
+                            {block.content?.text || "Shop Now"}
                           </span>
                         </div>
                       )}
