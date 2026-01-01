@@ -240,6 +240,9 @@ interface EmailTemplate {
   updatedAt: string;
 }
 
+// Maximum history stack size for undo/redo
+const MAX_HISTORY_SIZE = 50;
+
 export default function EmailTemplateBuilder() {
   const { toast } = useToast();
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -255,7 +258,14 @@ export default function EmailTemplateBuilder() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
   const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showTestEmailDialog, setShowTestEmailDialog] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  
+  // Undo/Redo history state
+  const [historyStack, setHistoryStack] = useState<EmailBlock[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isUndoRedoAction = useRef(false);
   
   // Editor state (for new template or local edits)
   const [templateName, setTemplateName] = useState("New Email Template");
@@ -390,12 +400,79 @@ export default function EmailTemplateBuilder() {
       const res = await apiRequest("POST", `/api/email-templates/${id}/render`);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: { htmlContent: string }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/email-templates", selectedTemplateId] });
-      toast({ title: "HTML Generated", description: "Email-safe HTML has been generated with inline CSS." });
+      
+      // Download HTML file
+      if (data.htmlContent) {
+        const blob = new Blob([data.htmlContent], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${templateName.replace(/\s+/g, "-").toLowerCase()}-email.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      
+      toast({ title: "HTML Exported", description: "Email-safe HTML has been downloaded." });
     },
     onError: (error: any) => {
-      toast({ title: "Render Failed", description: error.message || "Failed to generate HTML", variant: "destructive" });
+      toast({ title: "Export Failed", description: error.message || "Failed to generate HTML", variant: "destructive" });
+    },
+  });
+
+  // Restore version mutation
+  const restoreVersionMutation = useMutation({
+    mutationFn: async ({ templateId, versionId }: { templateId: string; versionId: string }) => {
+      const res = await apiRequest("POST", `/api/email-templates/${templateId}/versions/${versionId}/restore`);
+      return res.json();
+    },
+    onSuccess: async (data: EmailTemplate) => {
+      // Update local state with the restored template data
+      if (data) {
+        const restoredBlocks = data.blocks || [];
+        setTemplateName(data.name);
+        setSubject(data.subject || "");
+        setPreheader(data.preheader || "");
+        setWorkflowType(data.workflowType || "custom");
+        setStatus(data.status);
+        setBlocks(restoredBlocks);
+        setBrandSettings(data.brandSettings || defaultBrandSettings);
+        
+        // Reset history with restored state
+        isUndoRedoAction.current = true;
+        setHistoryStack([restoredBlocks]);
+        setHistoryIndex(0);
+      }
+      
+      // Invalidate queries to refetch fresh data
+      await queryClient.invalidateQueries({ queryKey: ["/api/email-templates"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/email-templates", selectedTemplateId] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/email-templates", selectedTemplateId, "versions"] });
+      
+      toast({ title: "Version Restored", description: "The template has been restored to the selected version." });
+      setShowVersionHistory(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Restore Failed", description: error.message || "Failed to restore version", variant: "destructive" });
+    },
+  });
+
+  // Send test email mutation
+  const sendTestEmailMutation = useMutation({
+    mutationFn: async ({ templateId, email }: { templateId: string; email: string }) => {
+      const res = await apiRequest("POST", `/api/email-templates/${templateId}/test`, { email });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Test Email Sent", description: `A test email has been sent to ${testEmailAddress}` });
+      setShowTestEmailDialog(false);
+      setTestEmailAddress("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Send Failed", description: error.message || "Failed to send test email", variant: "destructive" });
     },
   });
 
@@ -422,19 +499,26 @@ export default function EmailTemplateBuilder() {
   // Load template into editor when selected
   useEffect(() => {
     if (selectedTemplate) {
+      const templateBlocks = selectedTemplate.blocks || [
+        createDefaultBlock("logo"),
+        createDefaultBlock("heading"),
+        createDefaultBlock("text"),
+        createDefaultBlock("button"),
+      ];
+      
       setTemplateName(selectedTemplate.name);
       setSubject(selectedTemplate.subject || "");
       setPreheader(selectedTemplate.preheader || "");
       setWorkflowType(selectedTemplate.workflowType || "custom");
       setStatus(selectedTemplate.status);
-      setBlocks(selectedTemplate.blocks || [
-        createDefaultBlock("logo"),
-        createDefaultBlock("heading"),
-        createDefaultBlock("text"),
-        createDefaultBlock("button"),
-      ]);
+      setBlocks(templateBlocks);
       setBrandSettings(selectedTemplate.brandSettings || defaultBrandSettings);
       setAutoSaveStatus("saved");
+      
+      // Reset undo/redo history with the loaded template as the initial state
+      isUndoRedoAction.current = true;
+      setHistoryStack([templateBlocks]);
+      setHistoryIndex(0);
     }
   }, [selectedTemplate]);
 
@@ -488,6 +572,82 @@ export default function EmailTemplateBuilder() {
       setAutoSaveStatus("unsaved");
     }
   }, [blocks, templateName, subject, preheader, workflowType, status, brandSettings]);
+
+  // Track block changes for undo/redo
+  useEffect(() => {
+    if (isUndoRedoAction.current) {
+      isUndoRedoAction.current = false;
+      return;
+    }
+    
+    // Skip if blocks are identical to the latest history entry
+    const lastHistoryEntry = historyStack[historyIndex];
+    if (lastHistoryEntry && JSON.stringify(blocks) === JSON.stringify(lastHistoryEntry)) {
+      return;
+    }
+    
+    // Add to history stack when blocks change
+    setHistoryStack(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push([...blocks]);
+      if (newHistory.length > MAX_HISTORY_SIZE) {
+        newHistory.shift();
+      }
+      return newHistory;
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY_SIZE - 1));
+  }, [blocks]);
+
+  // Undo function
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      isUndoRedoAction.current = true;
+      const previousState = historyStack[historyIndex - 1];
+      if (previousState) {
+        setBlocks(previousState);
+        setHistoryIndex(prev => prev - 1);
+        toast({ title: "Undo", description: "Previous state restored" });
+      }
+    }
+  }, [historyIndex, historyStack, toast]);
+
+  // Redo function
+  const handleRedo = useCallback(() => {
+    if (historyIndex < historyStack.length - 1) {
+      isUndoRedoAction.current = true;
+      const nextState = historyStack[historyIndex + 1];
+      if (nextState) {
+        setBlocks(nextState);
+        setHistoryIndex(prev => prev + 1);
+        toast({ title: "Redo", description: "Change reapplied" });
+      }
+    }
+  }, [historyIndex, historyStack, toast]);
+
+  // Check if undo/redo is available
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < historyStack.length - 1;
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "y") {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   // Block operations
   const addBlock = useCallback((type: EmailBlock["type"], index?: number) => {
@@ -942,12 +1102,34 @@ export default function EmailTemplateBuilder() {
             <Separator orientation="vertical" className="h-6" />
             
             {/* Undo/Redo */}
-            <Button variant="ghost" size="icon" data-testid="button-undo">
-              <Undo2 className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" data-testid="button-redo">
-              <Redo2 className="w-4 h-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                  data-testid="button-undo"
+                >
+                  <Undo2 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                  data-testid="button-redo"
+                >
+                  <Redo2 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Redo (Ctrl+Shift+Z)</TooltipContent>
+            </Tooltip>
             
             <Separator orientation="vertical" className="h-6" />
             
@@ -974,8 +1156,16 @@ export default function EmailTemplateBuilder() {
                   <Copy className="w-4 h-4 mr-2" />
                   Duplicate Template
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Eye className="w-4 h-4 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => {
+                    if (selectedTemplateId) {
+                      setShowTestEmailDialog(true);
+                    } else {
+                      toast({ title: "Save Required", description: "Please save your template first before sending a test email.", variant: "destructive" });
+                    }
+                  }}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
                   Send Test Email
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -2198,32 +2388,113 @@ export default function EmailTemplateBuilder() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="space-y-2">
-              {[
-                { version: 3, date: "Today, 2:30 PM", note: "Updated button styles" },
-                { version: 2, date: "Yesterday, 4:15 PM", note: "Changed subject line" },
-                { version: 1, date: "Dec 28, 2025", note: "Initial version" },
-              ].map((v) => (
-                <div
-                  key={v.version}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">v{v.version}</span>
+            {versionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                <span className="text-sm text-muted-foreground">Loading version history...</span>
+              </div>
+            ) : versionHistory.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="text-sm">No version history available yet.</p>
+                <p className="text-xs mt-1">Save changes to create version snapshots.</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-2 pr-4">
+                  {versionHistory.map((v: any, index: number) => (
+                    <div
+                      key={v.id || index}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary">v{v.version || index + 1}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{v.changeNote || `Version ${v.version || index + 1}`}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {v.createdAt ? new Date(v.createdAt).toLocaleString() : "Unknown date"}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          if (selectedTemplateId && v.id) {
+                            restoreVersionMutation.mutate({ templateId: selectedTemplateId, versionId: v.id });
+                          }
+                        }}
+                        disabled={restoreVersionMutation.isPending}
+                      >
+                        {restoreVersionMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "Restore"
+                        )}
+                      </Button>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{v.note}</p>
-                      <p className="text-xs text-muted-foreground">{v.date}</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    Restore
-                  </Button>
+                  ))}
                 </div>
-              ))}
+              </ScrollArea>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Test Email Dialog */}
+      <Dialog open={showTestEmailDialog} onOpenChange={setShowTestEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Test Email</DialogTitle>
+            <DialogDescription>
+              Send a preview of this email template to test how it looks in different email clients.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <Label htmlFor="test-email">Email Address</Label>
+              <Input
+                id="test-email"
+                type="email"
+                placeholder="your@email.com"
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+                className="mt-1"
+                data-testid="input-test-email"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                We'll send a test email with sample data to this address.
+              </p>
             </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTestEmailDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const trimmedEmail = testEmailAddress.trim();
+                if (selectedTemplateId && trimmedEmail) {
+                  sendTestEmailMutation.mutate({ templateId: selectedTemplateId, email: trimmedEmail });
+                }
+              }}
+              disabled={!testEmailAddress.trim() || sendTestEmailMutation.isPending}
+            >
+              {sendTestEmailMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Test Email
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

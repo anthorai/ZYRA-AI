@@ -31,6 +31,16 @@ Automatically activates a 7-day free trial on user signup with daily welcome dia
 ### Marketing Automation System
 Enables real email/SMS delivery via SendGrid and Twilio for campaign scheduling, abandoned cart recovery, and performance tracking.
 
+### Email Template Builder
+Enterprise-grade drag-and-drop email template editor with 3-panel layout (blocks, preview, properties). Features include:
+- **Block Types**: Logo, Heading, Text, Image, Button (table-based), Divider, Spacer, Columns - all with professional email-safe rendering
+- **Undo/Redo**: 50-state history stack with keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y), proper history seeding on template load
+- **Version History**: Full version control with restore capability via dialog and API integration
+- **Send Test Email**: Email validation with SendGrid integration for production, simulation mode for development
+- **HTML Export**: Auto-download generated email-safe HTML with inline CSS and CAN-SPAM compliant footer
+- **Brand Settings**: Customizable primary/secondary colors, background, text color, font family, and footer text
+- **Desktop/Mobile Preview**: Email client simulation with responsive preview modes
+
 ### Analytics & Reporting
 A real-time dashboard tracks key metrics with PDF and CSV export, including an ROI Tracking System for end-to-end revenue attribution across various sources, integrating with Shopify sales webhooks.
 

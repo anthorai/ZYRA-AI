@@ -8701,6 +8701,109 @@ Output format: Markdown with clear section headings.`;
     }
   }
 
+  // POST /api/email-templates/:id/test - Send a test email
+  app.post('/api/email-templates/:id/test', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+      const { email } = req.body;
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'Valid email address is required' });
+      }
+
+      // Get the template
+      const [template] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Generate HTML if not already rendered
+      const brandSettings = template.brandSettings as any || {};
+      const blocks = template.blocks as any[] || [];
+
+      let htmlContent = template.htmlContent;
+      if (!htmlContent) {
+        // Generate the HTML inline
+        htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${template.subject || 'Email'}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: ${brandSettings.backgroundColor || '#f4f4f4'}; font-family: ${brandSettings.fontFamily || 'Arial, sans-serif'};">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: ${brandSettings.backgroundColor || '#f4f4f4'};">
+    <tr>
+      <td align="center" style="padding: 20px 10px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 8px;">
+`;
+        for (const block of blocks) {
+          htmlContent += renderBlockToHtml(block, brandSettings);
+        }
+        htmlContent += `
+          <tr>
+            <td style="padding: 20px; text-align: center; font-size: 12px; color: #666666; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0 0 8px 0;">${brandSettings.footerText || 'Company Address'}</p>
+              <p style="margin: 0;"><a href="#" style="color: ${brandSettings.primaryColor || '#00F0FF'}; text-decoration: underline;">Unsubscribe</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+      }
+
+      // Send the test email using SendGrid if available
+      const apiKey = process.env.SENDGRID_API_KEY;
+      const verifiedSender = process.env.SENDGRID_VERIFIED_SENDER;
+      
+      if (apiKey && verifiedSender) {
+        const sgMail = require('@sendgrid/mail');
+        sgMail.setApiKey(apiKey);
+
+        await sgMail.send({
+          to: email,
+          from: verifiedSender,
+          subject: `[TEST] ${template.subject || 'Email Template Test'}`,
+          html: htmlContent,
+        });
+
+        res.json({ 
+          success: true, 
+          message: `Test email sent to ${email}`,
+          method: 'sendgrid'
+        });
+      } else if (apiKey && !verifiedSender) {
+        // SendGrid configured but missing verified sender
+        res.status(400).json({ 
+          error: 'SendGrid verified sender not configured. Please set SENDGRID_VERIFIED_SENDER environment variable.' 
+        });
+      } else {
+        // Log that we would send the email (development mode)
+        console.log(`[DEV] Test email would be sent to: ${email}`);
+        console.log(`[DEV] Subject: ${template.subject}`);
+        
+        res.json({ 
+          success: true, 
+          message: `Test email simulated (SendGrid not configured). Email would be sent to ${email}`,
+          method: 'simulated'
+        });
+      }
+    } catch (error) {
+      console.error('Send test email error:', error);
+      res.status(500).json({ error: 'Failed to send test email' });
+    }
+  });
+
   // GET /api/admin/notification-channels - Get notification channel settings
   app.get('/api/admin/notification-channels', requireAuth, async (req, res) => {
     try {
