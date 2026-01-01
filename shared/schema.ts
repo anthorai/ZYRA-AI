@@ -463,6 +463,84 @@ export const revenueAttribution = pgTable("revenue_attribution", {
   index('revenue_attribution_source_id_idx').on(table.sourceId),
 ]);
 
+// Email Template Status Enum
+export const emailTemplateStatusEnum = pgEnum('email_template_status', ['draft', 'active', 'archived']);
+
+// Email Template Builder - Enterprise-grade drag-and-drop email templates (EMAIL ONLY)
+export const emailTemplates = pgTable("email_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  subject: text("subject").notNull(),
+  preheader: text("preheader"), // Email preheader text
+  workflowType: text("workflow_type").notNull().default("custom"), // 'onboarding' | 'abandoned_cart' | 'order_confirmation' | 'upsell' | 're_engagement' | 'newsletter' | 'custom'
+  status: emailTemplateStatusEnum("status").default("draft").notNull(),
+  
+  // Email blocks as JSON array for drag-and-drop builder
+  blocks: jsonb("blocks").notNull().default(sql`'[]'::jsonb`), // Array of email blocks
+  
+  // Brand/Design settings
+  brandSettings: jsonb("brand_settings").default(sql`'{
+    "logoUrl": "",
+    "primaryColor": "#00F0FF",
+    "secondaryColor": "#8B5CF6",
+    "backgroundColor": "#ffffff",
+    "textColor": "#1f2937",
+    "fontFamily": "Arial, sans-serif",
+    "footerText": "",
+    "socialLinks": {}
+  }'::jsonb`),
+  
+  // Rendered HTML with inline CSS (email-safe)
+  htmlContent: text("html_content"),
+  plainTextContent: text("plain_text_content"),
+  
+  // Variables used in template
+  variables: jsonb("variables").default(sql`'[]'::jsonb`),
+  
+  // Compliance
+  unsubscribeLink: text("unsubscribe_link"),
+  physicalAddress: text("physical_address"), // CAN-SPAM required
+  
+  // Metadata
+  usageCount: integer("usage_count").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  version: integer("version").default(1),
+  isActive: boolean("is_active").default(true),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('email_templates_user_id_idx').on(table.userId),
+  index('email_templates_workflow_type_idx').on(table.workflowType),
+  index('email_templates_status_idx').on(table.status),
+  index('email_templates_created_at_idx').on(table.createdAt),
+]);
+
+// Email Template Version History - Track all changes for rollback
+export const emailTemplateVersions = pgTable("email_template_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").references(() => emailTemplates.id, { onDelete: 'cascade' }).notNull(),
+  version: integer("version").notNull(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  preheader: text("preheader"),
+  blocks: jsonb("blocks").notNull(),
+  brandSettings: jsonb("brand_settings"),
+  htmlContent: text("html_content"),
+  plainTextContent: text("plain_text_content"),
+  variables: jsonb("variables"),
+  changedBy: varchar("changed_by").references(() => users.id),
+  changeNote: text("change_note"), // Description of what changed
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('email_template_versions_template_id_idx').on(table.templateId),
+  index('email_template_versions_version_idx').on(table.version),
+  index('email_template_versions_created_at_idx').on(table.createdAt),
+]);
+
+// Legacy campaign templates table - keeping for backward compatibility
 export const campaignTemplates = pgTable("campaign_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -474,6 +552,7 @@ export const campaignTemplates = pgTable("campaign_templates", {
   description: text("description"), // Template description for easier selection
   variables: jsonb("variables"), // template variable placeholders
   isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
 }, (table) => [
@@ -846,6 +925,60 @@ export const insertCampaignTemplateSchema = createInsertSchema(campaignTemplates
 }).extend({
   presetType: z.string().optional(),
   description: z.string().optional(),
+});
+
+// Email Template Builder schemas (EMAIL ONLY)
+export const emailBlockSchema = z.object({
+  id: z.string(),
+  type: z.enum(['heading', 'text', 'image', 'button', 'divider', 'spacer', 'columns', 'logo']),
+  content: z.record(z.any()).optional(),
+  styles: z.object({
+    padding: z.string().optional(),
+    margin: z.string().optional(),
+    backgroundColor: z.string().optional(),
+    textColor: z.string().optional(),
+    fontSize: z.string().optional(),
+    fontFamily: z.string().optional(),
+    textAlign: z.enum(['left', 'center', 'right']).optional(),
+    borderRadius: z.string().optional(),
+    width: z.string().optional(),
+    height: z.string().optional(),
+  }).optional(),
+});
+
+export const brandSettingsSchema = z.object({
+  logoUrl: z.string().optional(),
+  primaryColor: z.string().default('#00F0FF'),
+  secondaryColor: z.string().default('#8B5CF6'),
+  backgroundColor: z.string().default('#ffffff'),
+  textColor: z.string().default('#1f2937'),
+  fontFamily: z.string().default('Arial, sans-serif'),
+  footerText: z.string().optional(),
+  socialLinks: z.record(z.string()).optional(),
+});
+
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  usageCount: true,
+  lastUsedAt: true,
+  version: true,
+}).extend({
+  blocks: z.array(emailBlockSchema).default([]),
+  brandSettings: brandSettingsSchema.optional(),
+  variables: z.array(z.string()).optional(),
+  workflowType: z.enum(['onboarding', 'abandoned_cart', 'order_confirmation', 'upsell', 're_engagement', 'newsletter', 'custom']).default('custom'),
+  status: z.enum(['draft', 'active', 'archived']).default('draft'),
+});
+
+export const insertEmailTemplateVersionSchema = createInsertSchema(emailTemplateVersions).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  blocks: z.array(emailBlockSchema),
+  brandSettings: brandSettingsSchema.optional(),
+  variables: z.array(z.string()).optional(),
 });
 
 export const insertAbandonedCartSchema = createInsertSchema(abandonedCarts).omit({
@@ -1237,6 +1370,15 @@ export type RevenueAttribution = typeof revenueAttribution.$inferSelect;
 export type InsertRevenueAttribution = z.infer<typeof insertRevenueAttributionSchema>;
 export type CampaignTemplate = typeof campaignTemplates.$inferSelect;
 export type InsertCampaignTemplate = z.infer<typeof insertCampaignTemplateSchema>;
+
+// Email Template Builder Types (EMAIL ONLY)
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
+export type EmailTemplateVersion = typeof emailTemplateVersions.$inferSelect;
+export type InsertEmailTemplateVersion = z.infer<typeof insertEmailTemplateVersionSchema>;
+export type EmailBlock = z.infer<typeof emailBlockSchema>;
+export type BrandSettings = z.infer<typeof brandSettingsSchema>;
+
 export type AbandonedCart = typeof abandonedCarts.$inferSelect;
 export type InsertAbandonedCart = z.infer<typeof insertAbandonedCartSchema>;
 export type Analytics = typeof analytics.$inferSelect;

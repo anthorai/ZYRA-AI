@@ -55,6 +55,10 @@ import {
   aiGenerationHistory,
   productSeoHistory,
   campaignTemplates,
+  emailTemplates,
+  emailTemplateVersions,
+  insertEmailTemplateSchema,
+  insertEmailTemplateVersionSchema,
   notificationPreferences,
   notificationRules,
   notificationChannels,
@@ -8131,6 +8135,571 @@ Output format: Markdown with clear section headings.`;
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  // ===========================================
+  // EMAIL TEMPLATE BUILDER API ROUTES (EMAIL ONLY)
+  // Enterprise-grade drag-and-drop email template builder
+  // ===========================================
+
+  // GET /api/email-templates - List all email templates for the user
+  app.get('/api/email-templates', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      const templates = await db.select()
+        .from(emailTemplates)
+        .where(eq(emailTemplates.userId, user.id))
+        .orderBy(desc(emailTemplates.updatedAt));
+
+      res.json(templates);
+    } catch (error) {
+      console.error('Get email templates error:', error);
+      res.status(500).json({ error: 'Failed to get email templates' });
+    }
+  });
+
+  // POST /api/email-templates - Create a new email template
+  app.post('/api/email-templates', requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      const templateData = insertEmailTemplateSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
+
+      const [template] = await db.insert(emailTemplates)
+        .values(templateData)
+        .returning();
+
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Create email template error:', error);
+      res.status(400).json({ error: 'Failed to create email template' });
+    }
+  });
+
+  // GET /api/email-templates/:id - Get a specific email template
+  app.get('/api/email-templates/:id', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+
+      const [template] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('Get email template error:', error);
+      res.status(500).json({ error: 'Failed to get email template' });
+    }
+  });
+
+  // PATCH /api/email-templates/:id - Update an email template
+  app.patch('/api/email-templates/:id', requireAuth, sanitizeBody, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+
+      // First check if template exists and belongs to user
+      const [existing] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!existing) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Create a version snapshot before updating
+      await db.insert(emailTemplateVersions).values({
+        templateId: id,
+        version: existing.version || 1,
+        name: existing.name,
+        subject: existing.subject,
+        preheader: existing.preheader,
+        blocks: existing.blocks,
+        brandSettings: existing.brandSettings,
+        htmlContent: existing.htmlContent,
+        plainTextContent: existing.plainTextContent,
+        variables: existing.variables,
+        changedBy: user.id,
+        changeNote: req.body.changeNote || 'Updated template',
+      });
+
+      // Update the template
+      const { changeNote, ...updateData } = req.body;
+      const [template] = await db.update(emailTemplates)
+        .set({
+          ...updateData,
+          version: (existing.version || 1) + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(emailTemplates.id, id))
+        .returning();
+
+      res.json(template);
+    } catch (error) {
+      console.error('Update email template error:', error);
+      res.status(500).json({ error: 'Failed to update email template' });
+    }
+  });
+
+  // DELETE /api/email-templates/:id - Delete an email template
+  app.delete('/api/email-templates/:id', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+
+      // Check if template exists and belongs to user
+      const [existing] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!existing) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Delete the template (versions will cascade delete)
+      await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+
+      res.json({ success: true, message: 'Template deleted successfully' });
+    } catch (error) {
+      console.error('Delete email template error:', error);
+      res.status(500).json({ error: 'Failed to delete email template' });
+    }
+  });
+
+  // POST /api/email-templates/:id/duplicate - Duplicate an email template
+  app.post('/api/email-templates/:id/duplicate', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+
+      // Get the original template
+      const [original] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!original) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Create a duplicate
+      const [duplicate] = await db.insert(emailTemplates)
+        .values({
+          userId: user.id,
+          name: `${original.name} (Copy)`,
+          description: original.description,
+          subject: original.subject,
+          preheader: original.preheader,
+          workflowType: original.workflowType,
+          status: 'draft',
+          blocks: original.blocks,
+          brandSettings: original.brandSettings,
+          htmlContent: original.htmlContent,
+          plainTextContent: original.plainTextContent,
+          variables: original.variables,
+          unsubscribeLink: original.unsubscribeLink,
+          physicalAddress: original.physicalAddress,
+          version: 1,
+        })
+        .returning();
+
+      res.status(201).json(duplicate);
+    } catch (error) {
+      console.error('Duplicate email template error:', error);
+      res.status(500).json({ error: 'Failed to duplicate email template' });
+    }
+  });
+
+  // GET /api/email-templates/:id/versions - Get version history
+  app.get('/api/email-templates/:id/versions', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+
+      // Check if template exists and belongs to user
+      const [template] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      const versions = await db.select()
+        .from(emailTemplateVersions)
+        .where(eq(emailTemplateVersions.templateId, id))
+        .orderBy(desc(emailTemplateVersions.version));
+
+      res.json(versions);
+    } catch (error) {
+      console.error('Get template versions error:', error);
+      res.status(500).json({ error: 'Failed to get template versions' });
+    }
+  });
+
+  // POST /api/email-templates/:id/versions/:versionId/restore - Restore a version
+  app.post('/api/email-templates/:id/versions/:versionId/restore', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id, versionId } = req.params;
+
+      // Get the version to restore
+      const [version] = await db.select()
+        .from(emailTemplateVersions)
+        .where(eq(emailTemplateVersions.id, versionId));
+
+      if (!version || version.templateId !== id) {
+        return res.status(404).json({ error: 'Version not found' });
+      }
+
+      // Get current template to create snapshot
+      const [current] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!current) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Create snapshot of current state before restoring
+      await db.insert(emailTemplateVersions).values({
+        templateId: id,
+        version: current.version || 1,
+        name: current.name,
+        subject: current.subject,
+        preheader: current.preheader,
+        blocks: current.blocks,
+        brandSettings: current.brandSettings,
+        htmlContent: current.htmlContent,
+        plainTextContent: current.plainTextContent,
+        variables: current.variables,
+        changedBy: user.id,
+        changeNote: `Before restoring to version ${version.version}`,
+      });
+
+      // Restore the version
+      const [restored] = await db.update(emailTemplates)
+        .set({
+          name: version.name,
+          subject: version.subject,
+          preheader: version.preheader,
+          blocks: version.blocks,
+          brandSettings: version.brandSettings,
+          htmlContent: version.htmlContent,
+          plainTextContent: version.plainTextContent,
+          variables: version.variables,
+          version: (current.version || 1) + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(emailTemplates.id, id))
+        .returning();
+
+      res.json(restored);
+    } catch (error) {
+      console.error('Restore template version error:', error);
+      res.status(500).json({ error: 'Failed to restore template version' });
+    }
+  });
+
+  // POST /api/email-templates/ai/:action - AI actions for email optimization
+  app.post('/api/email-templates/ai/:action', requireAuth, sanitizeBody, aiLimiter, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { action } = req.params;
+      const { content, subject, blocks } = req.body;
+
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(503).json({ error: 'AI service not configured' });
+      }
+
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      let prompt = '';
+      let systemPrompt = 'You are an expert email marketing copywriter. You help create and optimize email content that converts while maintaining brand voice and preserving all personalization variables like {{customer.firstName}}.';
+
+      switch (action) {
+        case 'tone-improvement':
+          prompt = `Improve the tone of this email content to be more engaging and friendly while preserving all template variables ({{...}}):\n\n${content}`;
+          break;
+        case 'ctr-optimization':
+          prompt = `Optimize this email content for higher click-through rates. Improve calls-to-action, add urgency, and make the value proposition clearer. Preserve all template variables ({{...}}):\n\n${content}`;
+          break;
+        case 'professional-rewrite':
+          prompt = `Rewrite this email content to be more professional and polished while maintaining the core message. Preserve all template variables ({{...}}):\n\n${content}`;
+          break;
+        case 'spam-analysis':
+          systemPrompt = 'You are an email deliverability expert. Analyze emails for spam triggers and provide actionable recommendations.';
+          prompt = `Analyze this email for spam triggers and provide recommendations:\n\nSubject: ${subject}\n\nContent: ${content}\n\nProvide:\n1. Spam score (0-100, lower is better)\n2. List of spam trigger words found\n3. Recommendations to improve deliverability\n4. CAN-SPAM compliance issues if any`;
+          break;
+        case 'can-spam-check':
+          systemPrompt = 'You are a legal compliance expert for email marketing. Check emails for CAN-SPAM Act compliance.';
+          prompt = `Check this email for CAN-SPAM Act compliance:\n\nSubject: ${subject}\n\nContent: ${content}\n\nCheck for:\n1. Clear identification of the sender\n2. No deceptive subject lines\n3. Includes physical address\n4. Includes unsubscribe mechanism\n5. Honor opt-out requests promptly\n\nProvide a compliance report with any issues and recommendations.`;
+          break;
+        case 'generate-email':
+          const { workflowType, productInfo } = req.body;
+          prompt = `Generate a complete email for a ${workflowType || 'marketing'} campaign.\n\n${productInfo ? `Product/Context: ${productInfo}` : ''}\n\nProvide:\n1. Subject line\n2. Preheader text\n3. Email body content with sections\n4. Call-to-action text\n\nUse template variables like {{customer.firstName}}, {{store.name}}, etc. where appropriate.`;
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid AI action' });
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      });
+
+      const result = completion.choices[0]?.message?.content;
+
+      res.json({
+        action,
+        result,
+        tokensUsed: completion.usage?.total_tokens || 0,
+      });
+    } catch (error) {
+      console.error('Email AI action error:', error);
+      res.status(500).json({ error: 'AI processing failed' });
+    }
+  });
+
+  // POST /api/email-templates/:id/render - Generate inline CSS HTML for email
+  app.post('/api/email-templates/:id/render', requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
+
+      const [template] = await db.select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.id, id),
+          eq(emailTemplates.userId, user.id)
+        ));
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Generate email-safe HTML with inline CSS
+      const brandSettings = template.brandSettings as any || {};
+      const blocks = template.blocks as any[] || [];
+
+      let htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>${template.subject || 'Email'}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: ${brandSettings.backgroundColor || '#f4f4f4'}; font-family: ${brandSettings.fontFamily || 'Arial, sans-serif'};">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: ${brandSettings.backgroundColor || '#f4f4f4'};">
+    <tr>
+      <td align="center" style="padding: 20px 10px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 8px;">
+`;
+
+      // Render each block
+      for (const block of blocks) {
+        htmlContent += renderBlockToHtml(block, brandSettings);
+      }
+
+      // Add footer for CAN-SPAM compliance
+      htmlContent += `
+          <tr>
+            <td style="padding: 20px; text-align: center; font-size: 12px; color: #666666; border-top: 1px solid #e5e5e5;">
+              <p style="margin: 0 0 8px 0;">${brandSettings.footerText || template.physicalAddress || 'Company Address'}</p>
+              <p style="margin: 0;">
+                <a href="${template.unsubscribeLink || '{{unsubscribe.url}}'}" style="color: ${brandSettings.primaryColor || '#00F0FF'}; text-decoration: underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+      // Generate plain text version
+      let plainTextContent = '';
+      for (const block of blocks) {
+        plainTextContent += renderBlockToPlainText(block) + '\n\n';
+      }
+      plainTextContent += `\n---\n${brandSettings.footerText || template.physicalAddress || ''}\nUnsubscribe: ${template.unsubscribeLink || '{{unsubscribe.url}}'}`;
+
+      // Update template with rendered content
+      await db.update(emailTemplates)
+        .set({
+          htmlContent,
+          plainTextContent,
+          updatedAt: new Date(),
+        })
+        .where(eq(emailTemplates.id, id));
+
+      res.json({
+        htmlContent,
+        plainTextContent,
+      });
+    } catch (error) {
+      console.error('Render email template error:', error);
+      res.status(500).json({ error: 'Failed to render email template' });
+    }
+  });
+
+  // Helper function to render block to HTML with inline CSS
+  function renderBlockToHtml(block: any, brandSettings: any): string {
+    const styles = block.styles || {};
+    const content = block.content || {};
+
+    switch (block.type) {
+      case 'heading':
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '16px'}; text-align: ${styles.textAlign || 'center'}; background-color: ${styles.backgroundColor || 'transparent'};">
+              <h2 style="margin: 0; font-size: ${styles.fontSize || '24px'}; color: ${styles.textColor || brandSettings.textColor || '#1f2937'}; font-family: ${styles.fontFamily || brandSettings.fontFamily || 'Arial, sans-serif'};">
+                ${content.text || 'Heading'}
+              </h2>
+            </td>
+          </tr>`;
+
+      case 'text':
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '16px'}; text-align: ${styles.textAlign || 'left'}; background-color: ${styles.backgroundColor || 'transparent'};">
+              <p style="margin: 0; font-size: ${styles.fontSize || '16px'}; line-height: 1.6; color: ${styles.textColor || brandSettings.textColor || '#1f2937'}; font-family: ${styles.fontFamily || brandSettings.fontFamily || 'Arial, sans-serif'};">
+                ${content.text || ''}
+              </p>
+            </td>
+          </tr>`;
+
+      case 'image':
+        const imageHtml = content.src 
+          ? `<img src="${content.src}" alt="${content.alt || ''}" style="max-width: ${styles.width || '100%'}; height: auto; display: block; margin: 0 auto;">`
+          : '';
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '16px'}; text-align: ${styles.textAlign || 'center'}; background-color: ${styles.backgroundColor || 'transparent'};">
+              ${content.linkUrl ? `<a href="${content.linkUrl}">${imageHtml}</a>` : imageHtml}
+            </td>
+          </tr>`;
+
+      case 'button':
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '16px'}; text-align: ${styles.textAlign || 'center'}; background-color: ${styles.backgroundColor || 'transparent'};">
+              <a href="${content.url || '#'}" style="display: inline-block; padding: 12px 24px; background-color: ${styles.backgroundColor || brandSettings.primaryColor || '#00F0FF'}; color: ${styles.textColor || '#000000'}; text-decoration: none; border-radius: ${styles.borderRadius || '6px'}; font-weight: 600; font-size: ${styles.fontSize || '16px'}; font-family: ${styles.fontFamily || brandSettings.fontFamily || 'Arial, sans-serif'};">
+                ${content.text || 'Click Here'}
+              </a>
+            </td>
+          </tr>`;
+
+      case 'divider':
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '8px 16px'};">
+              <hr style="border: none; border-top: 1px ${content.style || 'solid'} ${content.color || '#e5e7eb'}; margin: 0;">
+            </td>
+          </tr>`;
+
+      case 'spacer':
+        return `
+          <tr>
+            <td style="height: ${content.height || '24px'}; line-height: ${content.height || '24px'}; font-size: 1px;">&nbsp;</td>
+          </tr>`;
+
+      case 'logo':
+        const logoUrl = content.src || brandSettings.logoUrl;
+        const logoHtml = logoUrl 
+          ? `<img src="${logoUrl}" alt="${content.alt || 'Logo'}" style="max-width: ${styles.width || '150px'}; height: auto; display: block; margin: 0 auto;">`
+          : '';
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '16px'}; text-align: ${styles.textAlign || 'center'}; background-color: ${styles.backgroundColor || 'transparent'};">
+              ${content.linkUrl ? `<a href="${content.linkUrl}">${logoHtml}</a>` : logoHtml}
+            </td>
+          </tr>`;
+
+      case 'columns':
+        return `
+          <tr>
+            <td style="padding: ${styles.padding || '16px'};">
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td width="50%" valign="top" style="padding: 8px;">${content.leftContent || ''}</td>
+                  <td width="50%" valign="top" style="padding: 8px;">${content.rightContent || ''}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+
+      default:
+        return '';
+    }
+  }
+
+  // Helper function to render block to plain text
+  function renderBlockToPlainText(block: any): string {
+    const content = block.content || {};
+
+    switch (block.type) {
+      case 'heading':
+        return content.text ? `=== ${content.text.toUpperCase()} ===` : '';
+      case 'text':
+        return content.text || '';
+      case 'button':
+        return `[${content.text || 'Click Here'}]: ${content.url || '#'}`;
+      case 'divider':
+        return '---';
+      case 'spacer':
+        return '';
+      case 'image':
+        return content.alt ? `[Image: ${content.alt}]` : '';
+      case 'logo':
+        return '[Logo]';
+      case 'columns':
+        return `${content.leftContent || ''}\n${content.rightContent || ''}`;
+      default:
+        return '';
+    }
+  }
 
   // GET /api/admin/notification-channels - Get notification channel settings
   app.get('/api/admin/notification-channels', requireAuth, async (req, res) => {

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,76 +7,408 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PageShell } from "@/components/ui/page-shell";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  FileText,
-  Edit3,
+  Type,
+  Image,
+  MousePointer2,
+  Minus,
+  Space,
+  Columns,
+  Mail,
   Eye,
-  Plus,
   Save,
   Copy,
   Trash2,
-  Mail,
-  MessageSquare,
-  Maximize2,
-  Code,
+  Plus,
   Sparkles,
   Search,
   MoreVertical,
   Clock,
   CheckCircle2,
-  Zap
+  Zap,
+  ArrowLeft,
+  Monitor,
+  Smartphone,
+  Undo2,
+  Redo2,
+  GripVertical,
+  Settings,
+  Palette,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Bold,
+  Italic,
+  Link2,
+  ChevronDown,
+  History,
+  FileText,
+  ShoppingCart,
+  Package,
+  TrendingUp,
+  UserPlus,
+  RefreshCw,
+  Wand2,
+  AlertTriangle,
+  Shield,
+  Target,
+  MessageSquare,
+  X,
+  Check,
+  Loader2,
+  ImageIcon
 } from "lucide-react";
+import { Link } from "wouter";
+import type { EmailBlock, BrandSettings } from "@shared/schema";
 
-const templateVariables = [
-  { var: "{customerName}", desc: "Customer's full name" },
-  { var: "{firstName}", desc: "First name only" },
-  { var: "{email}", desc: "Email address" },
-  { var: "{orderNumber}", desc: "Order number" },
-  { var: "{orderTotal}", desc: "Order total" },
-  { var: "{productName}", desc: "Product name" },
-  { var: "{discountCode}", desc: "Discount code" },
-  { var: "{storeName}", desc: "Store name" },
-  { var: "{date}", desc: "Current date" }
+// Email variable definitions for personalization
+const emailVariables = [
+  { var: "{{customer.firstName}}", desc: "Customer's first name", category: "customer" },
+  { var: "{{customer.lastName}}", desc: "Customer's last name", category: "customer" },
+  { var: "{{customer.email}}", desc: "Customer's email address", category: "customer" },
+  { var: "{{customer.fullName}}", desc: "Customer's full name", category: "customer" },
+  { var: "{{order.number}}", desc: "Order number", category: "order" },
+  { var: "{{order.total}}", desc: "Order total amount", category: "order" },
+  { var: "{{order.itemCount}}", desc: "Number of items", category: "order" },
+  { var: "{{order.shippingAddress}}", desc: "Shipping address", category: "order" },
+  { var: "{{cart.total}}", desc: "Cart total value", category: "cart" },
+  { var: "{{cart.itemCount}}", desc: "Items in cart", category: "cart" },
+  { var: "{{cart.recoveryUrl}}", desc: "Cart recovery link", category: "cart" },
+  { var: "{{store.name}}", desc: "Your store name", category: "store" },
+  { var: "{{store.url}}", desc: "Store URL", category: "store" },
+  { var: "{{discount.code}}", desc: "Discount code", category: "promo" },
+  { var: "{{discount.percent}}", desc: "Discount percentage", category: "promo" },
+  { var: "{{unsubscribe.url}}", desc: "Unsubscribe link", category: "compliance" },
 ];
 
-const savedTemplates = [
-  { id: 1, name: "Welcome Email", type: "email", status: "active", lastModified: "2 days ago", usageCount: 156 },
-  { id: 2, name: "Abandoned Cart Recovery", type: "email", status: "active", lastModified: "1 week ago", usageCount: 89 },
-  { id: 3, name: "Order Confirmation SMS", type: "sms", status: "draft", lastModified: "3 days ago", usageCount: 0 },
-  { id: 4, name: "Thank You Email", type: "email", status: "active", lastModified: "5 days ago", usageCount: 234 },
-  { id: 5, name: "Flash Sale Alert", type: "sms", status: "active", lastModified: "1 day ago", usageCount: 412 }
+// Workflow types for email templates
+const workflowTypes = [
+  { value: "onboarding", label: "Onboarding", icon: UserPlus, color: "text-green-400" },
+  { value: "abandoned_cart", label: "Abandoned Cart", icon: ShoppingCart, color: "text-orange-400" },
+  { value: "order_confirmation", label: "Order Confirmation", icon: Package, color: "text-blue-400" },
+  { value: "upsell", label: "Upsell / Cross-sell", icon: TrendingUp, color: "text-purple-400" },
+  { value: "re_engagement", label: "Re-engagement", icon: RefreshCw, color: "text-pink-400" },
+  { value: "newsletter", label: "Newsletter", icon: Mail, color: "text-cyan-400" },
+  { value: "custom", label: "Custom", icon: FileText, color: "text-gray-400" },
 ];
 
-export default function CustomTemplatesPage() {
+// Block type definitions
+const blockTypes = [
+  { type: "heading", label: "Heading", icon: Type, description: "Add a title or section header" },
+  { type: "text", label: "Text", icon: AlignLeft, description: "Rich text paragraph content" },
+  { type: "image", label: "Image", icon: Image, description: "Add an image with optional link" },
+  { type: "button", label: "Button", icon: MousePointer2, description: "Call-to-action button" },
+  { type: "divider", label: "Divider", icon: Minus, description: "Horizontal line separator" },
+  { type: "spacer", label: "Spacer", icon: Space, description: "Add vertical spacing" },
+  { type: "columns", label: "Columns", icon: Columns, description: "Two-column layout" },
+  { type: "logo", label: "Logo", icon: ImageIcon, description: "Brand logo with link" },
+] as const;
+
+// Font family options
+const fontFamilies = [
+  { value: "Arial, sans-serif", label: "Arial" },
+  { value: "Georgia, serif", label: "Georgia" },
+  { value: "Helvetica, Arial, sans-serif", label: "Helvetica" },
+  { value: "Times New Roman, serif", label: "Times New Roman" },
+  { value: "Verdana, sans-serif", label: "Verdana" },
+  { value: "Trebuchet MS, sans-serif", label: "Trebuchet MS" },
+];
+
+// Default brand settings
+const defaultBrandSettings: BrandSettings = {
+  logoUrl: "",
+  primaryColor: "#00F0FF",
+  secondaryColor: "#8B5CF6",
+  backgroundColor: "#ffffff",
+  textColor: "#1f2937",
+  fontFamily: "Arial, sans-serif",
+  footerText: "",
+  socialLinks: {},
+};
+
+// Generate unique ID for blocks
+const generateId = () => `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+// Create default block content based on type
+const createDefaultBlock = (type: EmailBlock["type"]): EmailBlock => {
+  const baseBlock = {
+    id: generateId(),
+    type,
+    styles: {
+      padding: "16px",
+      margin: "0",
+      textAlign: "left" as const,
+    },
+  };
+
+  switch (type) {
+    case "heading":
+      return {
+        ...baseBlock,
+        content: { text: "Your Heading Here", level: "h2" },
+        styles: { ...baseBlock.styles, fontSize: "24px", textAlign: "center" as const },
+      };
+    case "text":
+      return {
+        ...baseBlock,
+        content: { text: "Add your email content here. You can use {{customer.firstName}} and other variables to personalize your message." },
+        styles: { ...baseBlock.styles, fontSize: "16px" },
+      };
+    case "image":
+      return {
+        ...baseBlock,
+        content: { src: "", alt: "Image description", linkUrl: "" },
+        styles: { ...baseBlock.styles, textAlign: "center" as const, width: "100%" },
+      };
+    case "button":
+      return {
+        ...baseBlock,
+        content: { text: "Click Here", url: "{{cart.recoveryUrl}}" },
+        styles: { 
+          ...baseBlock.styles, 
+          textAlign: "center" as const, 
+          backgroundColor: "#00F0FF", 
+          textColor: "#000000",
+          borderRadius: "6px",
+          padding: "12px 24px",
+        },
+      };
+    case "divider":
+      return {
+        ...baseBlock,
+        content: { style: "solid", color: "#e5e7eb" },
+        styles: { ...baseBlock.styles, padding: "8px 0" },
+      };
+    case "spacer":
+      return {
+        ...baseBlock,
+        content: { height: "24px" },
+        styles: { ...baseBlock.styles, padding: "0" },
+      };
+    case "columns":
+      return {
+        ...baseBlock,
+        content: { 
+          leftContent: "Left column content",
+          rightContent: "Right column content",
+          ratio: "50-50"
+        },
+        styles: baseBlock.styles,
+      };
+    case "logo":
+      return {
+        ...baseBlock,
+        content: { src: "", alt: "Company Logo", linkUrl: "{{store.url}}" },
+        styles: { ...baseBlock.styles, textAlign: "center" as const, width: "150px" },
+      };
+    default:
+      return baseBlock;
+  }
+};
+
+// Sample templates for different workflow types
+const sampleTemplates = [
+  { 
+    id: "1", 
+    name: "Welcome Series - Day 1", 
+    workflowType: "onboarding",
+    status: "active" as const,
+    usageCount: 156,
+    lastUsedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  { 
+    id: "2", 
+    name: "Cart Recovery - First Reminder", 
+    workflowType: "abandoned_cart",
+    status: "active" as const,
+    usageCount: 89,
+    lastUsedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  { 
+    id: "3", 
+    name: "Order Confirmation", 
+    workflowType: "order_confirmation",
+    status: "draft" as const,
+    usageCount: 0,
+    lastUsedAt: null,
+  },
+  { 
+    id: "4", 
+    name: "Post-Purchase Upsell", 
+    workflowType: "upsell",
+    status: "active" as const,
+    usageCount: 234,
+    lastUsedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  { 
+    id: "5", 
+    name: "Win-back Campaign", 
+    workflowType: "re_engagement",
+    status: "active" as const,
+    usageCount: 412,
+    lastUsedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+export default function EmailTemplateBuilder() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("editor");
-  const [templateName, setTemplateName] = useState("Welcome Email");
-  const [subjectLine, setSubjectLine] = useState("Welcome to {storeName}!");
-  const [templateType, setTemplateType] = useState<"email" | "sms">("email");
-  const [templateContent, setTemplateContent] = useState(`Hi {firstName},
-
-Welcome to our family! We're thrilled to have you join us.
-
-Thank you for your recent order #{orderNumber}. Your order total was {orderTotal}.
-
-We've included a special discount code just for you: {discountCode}
-
-Use it on your next purchase for 15% off!
-
-Best regards,
-The {storeName} Team`);
+  
+  // Template state
+  const [templates] = useState(sampleTemplates);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
+  
+  // Editor state
+  const [templateName, setTemplateName] = useState("New Email Template");
+  const [subject, setSubject] = useState("Your subject line here");
+  const [preheader, setPreheader] = useState("");
+  const [workflowType, setWorkflowType] = useState<string>("custom");
+  const [status, setStatus] = useState<"draft" | "active" | "archived">("draft");
+  const [blocks, setBlocks] = useState<EmailBlock[]>([
+    createDefaultBlock("logo"),
+    createDefaultBlock("heading"),
+    createDefaultBlock("text"),
+    createDefaultBlock("button"),
+    createDefaultBlock("divider"),
+    createDefaultBlock("text"),
+  ]);
+  const [brandSettings, setBrandSettings] = useState<BrandSettings>(defaultBrandSettings);
+  
+  // UI state
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [leftPanelTab, setLeftPanelTab] = useState<"blocks" | "variables" | "ai">("blocks");
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedBlockType, setDraggedBlockType] = useState<EmailBlock["type"] | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
+  const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  
+  // Get the currently selected block
+  const selectedBlock = useMemo(() => 
+    blocks.find(b => b.id === selectedBlockId), 
+    [blocks, selectedBlockId]
+  );
 
-  const handleSaveTemplate = () => {
+  // Filter templates based on search
+  const filteredTemplates = useMemo(() => 
+    templates.filter(t => 
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.workflowType.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [templates, searchQuery]
+  );
+
+  // Auto-save simulation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (autoSaveStatus === "unsaved") {
+        setAutoSaveStatus("saving");
+        setTimeout(() => setAutoSaveStatus("saved"), 1000);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [blocks, templateName, subject, autoSaveStatus]);
+
+  // Mark as unsaved when content changes
+  useEffect(() => {
+    setAutoSaveStatus("unsaved");
+  }, [blocks, templateName, subject, preheader, workflowType]);
+
+  // Block operations
+  const addBlock = useCallback((type: EmailBlock["type"], index?: number) => {
+    const newBlock = createDefaultBlock(type);
+    setBlocks(prev => {
+      if (index !== undefined) {
+        const updated = [...prev];
+        updated.splice(index, 0, newBlock);
+        return updated;
+      }
+      return [...prev, newBlock];
+    });
+    setSelectedBlockId(newBlock.id);
+  }, []);
+
+  const updateBlock = useCallback((id: string, updates: Partial<EmailBlock>) => {
+    setBlocks(prev => prev.map(block => 
+      block.id === id ? { ...block, ...updates } : block
+    ));
+  }, []);
+
+  const deleteBlock = useCallback((id: string) => {
+    setBlocks(prev => prev.filter(block => block.id !== id));
+    if (selectedBlockId === id) {
+      setSelectedBlockId(null);
+    }
+  }, [selectedBlockId]);
+
+  const moveBlock = useCallback((fromIndex: number, toIndex: number) => {
+    setBlocks(prev => {
+      const updated = [...prev];
+      const [removed] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, removed);
+      return updated;
+    });
+  }, []);
+
+  const duplicateBlock = useCallback((id: string) => {
+    const blockIndex = blocks.findIndex(b => b.id === id);
+    if (blockIndex !== -1) {
+      const originalBlock = blocks[blockIndex];
+      const newBlock = { ...originalBlock, id: generateId() };
+      setBlocks(prev => {
+        const updated = [...prev];
+        updated.splice(blockIndex + 1, 0, newBlock);
+        return updated;
+      });
+      setSelectedBlockId(newBlock.id);
+    }
+  }, [blocks]);
+
+  // AI actions
+  const handleAIAction = async (action: string) => {
+    setAiLoading(action);
+    
+    // Simulate AI processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    toast({
+      title: "AI Enhancement Complete",
+      description: `Successfully applied ${action} to your email template.`,
+    });
+    
+    setAiLoading(null);
+  };
+
+  // Handle save
+  const handleSave = () => {
     toast({
       title: "Template Saved",
       description: `"${templateName}" has been saved successfully.`,
     });
+    setAutoSaveStatus("saved");
   };
 
+  // Handle duplicate template
+  const handleDuplicateTemplate = () => {
+    setTemplateName(`${templateName} (Copy)`);
+    toast({
+      title: "Template Duplicated",
+      description: "A copy of your template has been created.",
+    });
+  };
+
+  // Copy variable to clipboard
   const handleCopyVariable = (variable: string) => {
     navigator.clipboard.writeText(variable);
     toast({
@@ -85,330 +417,1365 @@ The {storeName} Team`);
     });
   };
 
-  const filteredTemplates = savedTemplates.filter(t => 
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Drag and drop handlers
+  const handleDragStart = (type: EmailBlock["type"]) => {
+    setIsDragging(true);
+    setDraggedBlockType(type);
+  };
 
-  const renderPreview = () => {
-    let preview = templateContent
-      .replace(/{customerName}/g, "John Smith")
-      .replace(/{firstName}/g, "John")
-      .replace(/{email}/g, "john@example.com")
-      .replace(/{orderNumber}/g, "ORD-12345")
-      .replace(/{orderTotal}/g, "$149.99")
-      .replace(/{productName}/g, "Premium Widget")
-      .replace(/{discountCode}/g, "WELCOME15")
-      .replace(/{storeName}/g, "Your Store")
-      .replace(/{date}/g, new Date().toLocaleDateString());
-    return preview;
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setDraggedBlockType(null);
+  };
+
+  const handleDrop = (index: number) => {
+    if (draggedBlockType) {
+      addBlock(draggedBlockType, index);
+    }
+    handleDragEnd();
+  };
+
+  // Render email block preview
+  const renderBlockPreview = (block: EmailBlock) => {
+    const styles: Record<string, string> = {
+      padding: block.styles?.padding || "16px",
+      margin: block.styles?.margin || "0",
+      textAlign: block.styles?.textAlign || "left",
+      backgroundColor: block.styles?.backgroundColor || "transparent",
+      color: block.styles?.textColor || brandSettings.textColor,
+      fontFamily: block.styles?.fontFamily || brandSettings.fontFamily,
+    };
+
+    switch (block.type) {
+      case "heading":
+        return (
+          <div style={styles}>
+            <h2 style={{ 
+              fontSize: block.styles?.fontSize || "24px", 
+              fontWeight: "bold",
+              margin: 0,
+              color: styles.color,
+            }}>
+              {block.content?.text || "Heading"}
+            </h2>
+          </div>
+        );
+      
+      case "text":
+        return (
+          <div style={{ ...styles, fontSize: block.styles?.fontSize || "16px", lineHeight: "1.6" }}>
+            {block.content?.text || "Text content"}
+          </div>
+        );
+      
+      case "image":
+        return (
+          <div style={{ ...styles, textAlign: "center" }}>
+            {block.content?.src ? (
+              <img 
+                src={block.content.src} 
+                alt={block.content?.alt || "Image"} 
+                style={{ maxWidth: block.styles?.width || "100%", height: "auto" }}
+              />
+            ) : (
+              <div className="bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 flex flex-col items-center justify-center">
+                <Image className="w-12 h-12 text-muted-foreground/50 mb-2" />
+                <span className="text-muted-foreground/50 text-sm">Add image URL</span>
+              </div>
+            )}
+          </div>
+        );
+      
+      case "button":
+        return (
+          <div style={{ ...styles, textAlign: block.styles?.textAlign || "center" }}>
+            <a 
+              href="#" 
+              onClick={(e) => e.preventDefault()}
+              style={{
+                display: "inline-block",
+                padding: block.styles?.padding || "12px 24px",
+                backgroundColor: block.styles?.backgroundColor || brandSettings.primaryColor,
+                color: block.styles?.textColor || "#000000",
+                textDecoration: "none",
+                borderRadius: block.styles?.borderRadius || "6px",
+                fontWeight: "600",
+                fontSize: block.styles?.fontSize || "16px",
+              }}
+            >
+              {block.content?.text || "Click Here"}
+            </a>
+          </div>
+        );
+      
+      case "divider":
+        return (
+          <div style={{ ...styles, textAlign: "center" }}>
+            <hr style={{ 
+              border: "none", 
+              borderTop: `1px ${block.content?.style || "solid"} ${block.content?.color || "#e5e7eb"}`,
+              margin: "8px 0",
+            }} />
+          </div>
+        );
+      
+      case "spacer":
+        return (
+          <div style={{ height: block.content?.height || "24px" }} />
+        );
+      
+      case "columns":
+        return (
+          <div style={styles}>
+            <table width="100%" cellPadding="0" cellSpacing="0">
+              <tbody>
+                <tr>
+                  <td width="50%" style={{ padding: "8px", verticalAlign: "top" }}>
+                    {block.content?.leftContent || "Left column"}
+                  </td>
+                  <td width="50%" style={{ padding: "8px", verticalAlign: "top" }}>
+                    {block.content?.rightContent || "Right column"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      
+      case "logo":
+        return (
+          <div style={{ ...styles, textAlign: "center" }}>
+            {block.content?.src || brandSettings.logoUrl ? (
+              <img 
+                src={block.content?.src || brandSettings.logoUrl} 
+                alt={block.content?.alt || "Logo"} 
+                style={{ maxWidth: block.styles?.width || "150px", height: "auto" }}
+              />
+            ) : (
+              <div className="bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 inline-flex flex-col items-center justify-center">
+                <ImageIcon className="w-8 h-8 text-muted-foreground/50 mb-1" />
+                <span className="text-muted-foreground/50 text-xs">Add logo</span>
+              </div>
+            )}
+          </div>
+        );
+      
+      default:
+        return <div style={styles}>Unknown block type</div>;
+    }
+  };
+
+  // Get workflow icon
+  const getWorkflowIcon = (type: string) => {
+    const workflow = workflowTypes.find(w => w.value === type);
+    return workflow ? workflow.icon : FileText;
   };
 
   return (
-    <PageShell
-      title="Template Editor"
-      subtitle="Create and manage your marketing templates"
-      backTo="/dashboard?tab=campaigns"
-      rightActions={
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Button variant="outline" size="sm" className="border-[rgba(0,240,255,0.3)] text-white hidden sm:flex">
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-          <Button onClick={handleSaveTemplate} className="bg-primary hover:bg-primary/90">
-            <Save className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Save Template</span>
-            <span className="sm:hidden">Save</span>
-          </Button>
-        </div>
-      }
-    >
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Left Sidebar - Template List */}
-        <div className="xl:col-span-3 space-y-6">
-          <Card className="gradient-card overflow-hidden">
-            <div className="p-4 border-b border-[rgba(0,240,255,0.15)]">
-              <div className="flex items-center gap-2 bg-[#0D0D1F] border border-[rgba(0,240,255,0.2)] rounded-md px-3 h-10">
-                <Search className="w-4 h-4 text-primary flex-shrink-0" />
-                <input 
-                  type="text"
-                  placeholder="Search templates..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-transparent text-white placeholder:text-muted-foreground flex-1 outline-none text-sm"
-                  data-testid="input-search-templates"
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="icon" data-testid="button-back">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+            <div>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="text-lg font-semibold bg-transparent border-none h-8 px-0 focus-visible:ring-0"
+                  data-testid="input-template-name"
                 />
+                <Badge 
+                  variant={status === "active" ? "default" : "secondary"}
+                  className={status === "active" ? "bg-green-500/20 text-green-400 border-green-500/30" : ""}
+                >
+                  {status}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {autoSaveStatus === "saved" && (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-green-400" />
+                    <span>Auto-saved</span>
+                  </>
+                )}
+                {autoSaveStatus === "saving" && (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                )}
+                {autoSaveStatus === "unsaved" && (
+                  <>
+                    <Clock className="w-3 h-3" />
+                    <span>Unsaved changes</span>
+                  </>
+                )}
               </div>
             </div>
-            <ScrollArea className="h-[300px] xl:h-[400px]">
-              <div className="p-2">
-                {filteredTemplates.map((template) => (
-                  <div 
-                    key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
-                    className={`p-3 rounded-lg cursor-pointer transition-all mb-2 ${
-                      selectedTemplate === template.id 
-                        ? "bg-primary/20 border border-primary/50" 
-                        : "hover:bg-[#1a1a3a] border border-transparent"
-                    }`}
-                    data-testid={`template-item-${template.id}`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {template.type === "email" ? (
-                            <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                          ) : (
-                            <MessageSquare className="w-4 h-4 text-green-400 flex-shrink-0" />
-                          )}
-                          <span className="text-white font-medium text-sm truncate">{template.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <Badge 
-                            variant={template.status === "active" ? "default" : "secondary"}
-                            className={`text-[10px] px-1.5 py-0 ${
-                              template.status === "active" 
-                                ? "bg-green-500/20 text-green-400 border-green-500/30" 
-                                : "bg-[#1a1a3a] text-muted-foreground"
-                            }`}
-                          >
-                            {template.status}
-                          </Badge>
-                          <span className="text-muted-foreground text-xs">{template.usageCount} uses</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white flex-shrink-0">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-1 mt-2 text-muted-foreground text-xs">
-                      <Clock className="w-3 h-3" />
-                      <span>{template.lastModified}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="p-3 border-t border-[rgba(0,240,255,0.15)]">
-              <Button className="w-full bg-[#1a1a3a] hover:bg-[#252550] text-white border border-[rgba(0,240,255,0.2)]" data-testid="button-new-template">
-                <Plus className="w-4 h-4 mr-2" />
-                New Template
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {/* Preview mode toggle */}
+            <div className="flex items-center bg-muted/50 rounded-lg p-1">
+              <Button
+                variant={previewMode === "desktop" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setPreviewMode("desktop")}
+                className="h-8"
+                data-testid="button-preview-desktop"
+              >
+                <Monitor className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={previewMode === "mobile" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setPreviewMode("mobile")}
+                className="h-8"
+                data-testid="button-preview-mobile"
+              >
+                <Smartphone className="w-4 h-4" />
               </Button>
             </div>
-          </Card>
-
-          {/* Quick Variables */}
-          <Card className="gradient-card p-4">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              Quick Variables
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {templateVariables.slice(0, 6).map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleCopyVariable(item.var)}
-                  className="text-left p-2 rounded-md bg-[#0D0D1F] hover:bg-[#1a1a3a] border border-[rgba(0,240,255,0.15)] hover:border-primary/50 transition-all group"
-                  data-testid={`variable-${index}`}
-                >
-                  <code className="text-primary text-xs font-mono block truncate">{item.var}</code>
-                  <span className="text-muted-foreground text-[10px] block truncate">{item.desc}</span>
-                </button>
-              ))}
-            </div>
-            <Button variant="ghost" className="w-full mt-2 text-muted-foreground hover:text-white text-xs">
-              View all variables
+            
+            <Separator orientation="vertical" className="h-6" />
+            
+            {/* Undo/Redo */}
+            <Button variant="ghost" size="icon" data-testid="button-undo">
+              <Undo2 className="w-4 h-4" />
             </Button>
-          </Card>
+            <Button variant="ghost" size="icon" data-testid="button-redo">
+              <Redo2 className="w-4 h-4" />
+            </Button>
+            
+            <Separator orientation="vertical" className="h-6" />
+            
+            {/* Version history */}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowVersionHistory(true)}
+              data-testid="button-version-history"
+            >
+              <History className="w-4 h-4 mr-2" />
+              History
+            </Button>
+            
+            {/* More actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" data-testid="button-more-actions">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDuplicateTemplate}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Duplicate Template
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Send Test Email
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setStatus(status === "active" ? "draft" : "active")}
+                >
+                  {status === "active" ? (
+                    <>
+                      <X className="w-4 h-4 mr-2" />
+                      Set as Draft
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Set as Active
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem 
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-red-400"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Template
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Template?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete "{templateName}" 
+                        and all its version history.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="bg-red-500 hover:bg-red-600">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Save button */}
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90" data-testid="button-save">
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+          </div>
         </div>
+      </header>
 
-        {/* Main Editor Area */}
-        <div className="xl:col-span-9">
-          <Card className="gradient-card overflow-hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-[rgba(0,240,255,0.15)] px-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <TabsList className="bg-transparent h-14 p-0 gap-1">
-                    <TabsTrigger 
-                      value="editor" 
-                      className="data-[state=active]:bg-[#1a1a3a] data-[state=active]:text-white text-muted-foreground rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary px-4"
-                    >
-                      <Edit3 className="w-4 h-4 mr-2" />
-                      Editor
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="preview" 
-                      className="data-[state=active]:bg-[#1a1a3a] data-[state=active]:text-white text-muted-foreground rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary px-4"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Preview
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="code" 
-                      className="data-[state=active]:bg-[#1a1a3a] data-[state=active]:text-white text-muted-foreground rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary px-4"
-                    >
-                      <Code className="w-4 h-4 mr-2" />
-                      HTML
-                    </TabsTrigger>
-                  </TabsList>
-                  <div className="flex items-center gap-2">
-                    <div className="flex bg-[#0D0D1F] rounded-lg p-1 border border-[rgba(0,240,255,0.15)]">
-                      <button
-                        onClick={() => setTemplateType("email")}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                          templateType === "email" 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-muted-foreground hover:text-white"
-                        }`}
-                      >
-                        <Mail className="w-4 h-4 inline mr-1" />
-                        Email
-                      </button>
-                      <button
-                        onClick={() => setTemplateType("sms")}
-                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                          templateType === "sms" 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-muted-foreground hover:text-white"
-                        }`}
-                      >
-                        <MessageSquare className="w-4 h-4 inline mr-1" />
-                        SMS
-                      </button>
+      {/* Main 3-Panel Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT PANEL - Blocks, Variables, AI Actions */}
+        <div className="w-80 border-r border-border bg-card/30 flex flex-col">
+          <Tabs value={leftPanelTab} onValueChange={(v) => setLeftPanelTab(v as typeof leftPanelTab)} className="flex-1 flex flex-col">
+            <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none h-12 px-2">
+              <TabsTrigger value="blocks" className="data-[state=active]:bg-primary/10">
+                <Columns className="w-4 h-4 mr-2" />
+                Blocks
+              </TabsTrigger>
+              <TabsTrigger value="variables" className="data-[state=active]:bg-primary/10">
+                <Zap className="w-4 h-4 mr-2" />
+                Variables
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="data-[state=active]:bg-primary/10">
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Blocks Tab */}
+            <TabsContent value="blocks" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-4 space-y-4">
+                  {/* Template List */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold">My Templates</h3>
+                      <Dialog open={showNewTemplateDialog} onOpenChange={setShowNewTemplateDialog}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7" data-testid="button-new-template">
+                            <Plus className="w-3 h-3 mr-1" />
+                            New
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Create New Template</DialogTitle>
+                            <DialogDescription>
+                              Start from scratch or choose a workflow type to get started with pre-built content.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid grid-cols-2 gap-3 py-4">
+                            {workflowTypes.map((wf) => {
+                              const Icon = wf.icon;
+                              return (
+                                <Button
+                                  key={wf.value}
+                                  variant="outline"
+                                  className="h-auto py-4 flex-col gap-2 hover:border-primary/50"
+                                  onClick={() => {
+                                    setWorkflowType(wf.value);
+                                    setShowNewTemplateDialog(false);
+                                    setTemplateName(`New ${wf.label} Template`);
+                                    setBlocks([
+                                      createDefaultBlock("logo"),
+                                      createDefaultBlock("heading"),
+                                      createDefaultBlock("text"),
+                                      createDefaultBlock("button"),
+                                    ]);
+                                  }}
+                                >
+                                  <Icon className={`w-6 h-6 ${wf.color}`} />
+                                  <span className="text-sm">{wf.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    
+                    <div className="relative mb-3">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search templates..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 h-9"
+                        data-testid="input-search-templates"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      {filteredTemplates.slice(0, 5).map((template) => {
+                        const WorkflowIcon = getWorkflowIcon(template.workflowType);
+                        const workflow = workflowTypes.find(w => w.value === template.workflowType);
+                        return (
+                          <div
+                            key={template.id}
+                            onClick={() => setSelectedTemplateId(template.id)}
+                            className={`p-2 rounded-md cursor-pointer transition-all ${
+                              selectedTemplateId === template.id
+                                ? "bg-primary/20 border border-primary/50"
+                                : "hover:bg-muted/50"
+                            }`}
+                            data-testid={`template-item-${template.id}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <WorkflowIcon className={`w-4 h-4 ${workflow?.color || "text-gray-400"}`} />
+                              <span className="text-sm font-medium truncate flex-1">{template.name}</span>
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-[10px] ${
+                                  template.status === "active" 
+                                    ? "bg-green-500/20 text-green-400" 
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {template.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Block Types */}
+                  <div>
+                    <h3 className="text-sm font-semibold mb-3">Email Blocks</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Drag blocks to the preview or click to add
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {blockTypes.map((block) => {
+                        const Icon = block.icon;
+                        return (
+                          <Tooltip key={block.type}>
+                            <TooltipTrigger asChild>
+                              <div
+                                draggable
+                                onDragStart={() => handleDragStart(block.type as EmailBlock["type"])}
+                                onDragEnd={handleDragEnd}
+                                onClick={() => addBlock(block.type as EmailBlock["type"])}
+                                className="flex flex-col items-center gap-1 p-3 rounded-lg border border-border bg-background hover:border-primary/50 hover:bg-primary/5 cursor-grab active:cursor-grabbing transition-all"
+                                data-testid={`block-${block.type}`}
+                              >
+                                <Icon className="w-5 h-5 text-muted-foreground" />
+                                <span className="text-xs">{block.label}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                              <p>{block.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-              </div>
+              </ScrollArea>
+            </TabsContent>
 
-              <TabsContent value="editor" className="m-0">
-                <div className="p-6 space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-white text-sm font-medium">Template Name</Label>
-                      <Input 
-                        value={templateName}
-                        onChange={(e) => setTemplateName(e.target.value)}
-                        className="bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white h-11"
-                        placeholder="Enter template name..."
-                        data-testid="input-template-name"
-                      />
-                    </div>
-                    {templateType === "email" && (
-                      <div className="space-y-2">
-                        <Label className="text-white text-sm font-medium">Subject Line</Label>
-                        <Input 
-                          value={subjectLine}
-                          onChange={(e) => setSubjectLine(e.target.value)}
-                          className="bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white h-11"
-                          placeholder="Email subject..."
-                          data-testid="input-subject-line"
-                        />
+            {/* Variables Tab */}
+            <TabsContent value="variables" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-4 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Click to copy a variable to your clipboard, then paste it in your email content.
+                  </p>
+                  
+                  {["customer", "order", "cart", "store", "promo", "compliance"].map((category) => (
+                    <div key={category}>
+                      <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2 capitalize">
+                        {category}
+                      </h4>
+                      <div className="space-y-1">
+                        {emailVariables
+                          .filter((v) => v.category === category)
+                          .map((variable, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleCopyVariable(variable.var)}
+                              className="w-full text-left p-2 rounded-md bg-muted/30 hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all group"
+                              data-testid={`variable-${category}-${idx}`}
+                            >
+                              <code className="text-primary text-xs font-mono block">
+                                {variable.var}
+                              </code>
+                              <span className="text-muted-foreground text-[10px]">
+                                {variable.desc}
+                              </span>
+                            </button>
+                          ))}
                       </div>
-                    )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            {/* AI Tab */}
+            <TabsContent value="ai" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-4 space-y-4">
+                  <div className="p-3 rounded-lg bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm font-semibold">AI Email Optimization</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Use AI to enhance your email copy, improve deliverability, and boost conversions.
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-white text-sm font-medium">Content</Label>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white h-8">
-                          <Sparkles className="w-4 h-4 mr-1" />
-                          AI Enhance
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white h-8">
-                          <Maximize2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Textarea
-                        value={templateContent}
-                        onChange={(e) => setTemplateContent(e.target.value)}
-                        className="bg-[#0D0D1F] border-[rgba(0,240,255,0.2)] text-white min-h-[300px] font-mono text-sm resize-none"
-                        placeholder="Write your template content here..."
-                        data-testid="textarea-content"
-                      />
-                      <div className="absolute bottom-3 right-3 text-muted-foreground text-xs">
-                        {templateContent.length} characters
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-[rgba(0,240,255,0.15)]">
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      <span>Auto-saved</span>
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Button variant="outline" className="border-[rgba(0,240,255,0.3)] text-white">
-                        <Copy className="w-4 h-4 mr-2" />
-                        Duplicate
-                      </Button>
-                      <Button variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-950/30 hover:text-red-300">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
-                      <Button onClick={handleSaveTemplate} className="bg-primary hover:bg-primary/90">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="preview" className="m-0">
-                <div className="p-6">
-                  <div className="bg-white rounded-lg max-w-2xl mx-auto shadow-2xl overflow-hidden">
-                    {templateType === "email" && (
-                      <div className="bg-gray-100 p-4 border-b">
-                        <div className="flex items-center gap-2 text-gray-600 text-sm">
-                          <span className="font-medium">Subject:</span>
-                          <span>{subjectLine.replace(/{storeName}/g, "Your Store")}</span>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3"
+                      onClick={() => handleAIAction("tone-improvement")}
+                      disabled={aiLoading !== null}
+                      data-testid="ai-tone-improvement"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 rounded-md bg-blue-500/10">
+                          <MessageSquare className="w-4 h-4 text-blue-400" />
                         </div>
+                        <div className="text-left flex-1">
+                          <div className="text-sm font-medium">Improve Tone</div>
+                          <div className="text-xs text-muted-foreground">Make copy more engaging</div>
+                        </div>
+                        {aiLoading === "tone-improvement" && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
                       </div>
-                    )}
-                    <div className="p-8">
-                      <pre className="whitespace-pre-wrap font-sans text-gray-800 text-base leading-relaxed">
-                        {renderPreview()}
-                      </pre>
-                    </div>
-                  </div>
-                  <div className="text-center mt-4">
-                    <p className="text-muted-foreground text-sm">Preview showing sample data</p>
-                  </div>
-                </div>
-              </TabsContent>
+                    </Button>
 
-              <TabsContent value="code" className="m-0">
-                <div className="p-6">
-                  <div className="bg-[#0D0D1F] rounded-lg p-4 font-mono text-sm overflow-x-auto border border-[rgba(0,240,255,0.15)]">
-                    <pre className="text-green-400">
-{`<!DOCTYPE html>
-<html>
-<head>
-  <title>${templateName}</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    ${templateContent.split('\n').map(line => `    <p>${line || '&nbsp;'}</p>`).join('\n')}
-  </div>
-</body>
-</html>`}
-                    </pre>
-                  </div>
-                  <div className="flex justify-end mt-4">
-                    <Button variant="outline" className="border-[rgba(0,240,255,0.3)] text-white">
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy HTML
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3"
+                      onClick={() => handleAIAction("ctr-optimization")}
+                      disabled={aiLoading !== null}
+                      data-testid="ai-ctr-optimization"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 rounded-md bg-green-500/10">
+                          <Target className="w-4 h-4 text-green-400" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <div className="text-sm font-medium">Optimize for CTR</div>
+                          <div className="text-xs text-muted-foreground">Improve click-through rates</div>
+                        </div>
+                        {aiLoading === "ctr-optimization" && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                      </div>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3"
+                      onClick={() => handleAIAction("professional-rewrite")}
+                      disabled={aiLoading !== null}
+                      data-testid="ai-professional-rewrite"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 rounded-md bg-purple-500/10">
+                          <Wand2 className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <div className="text-sm font-medium">Professional Rewrite</div>
+                          <div className="text-xs text-muted-foreground">Polish and refine copy</div>
+                        </div>
+                        {aiLoading === "professional-rewrite" && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                      </div>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3"
+                      onClick={() => handleAIAction("spam-analysis")}
+                      disabled={aiLoading !== null}
+                      data-testid="ai-spam-analysis"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 rounded-md bg-orange-500/10">
+                          <AlertTriangle className="w-4 h-4 text-orange-400" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <div className="text-sm font-medium">Spam Analysis</div>
+                          <div className="text-xs text-muted-foreground">Check deliverability risks</div>
+                        </div>
+                        {aiLoading === "spam-analysis" && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                      </div>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3"
+                      onClick={() => handleAIAction("can-spam-check")}
+                      disabled={aiLoading !== null}
+                      data-testid="ai-can-spam-check"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 rounded-md bg-cyan-500/10">
+                          <Shield className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <div className="text-sm font-medium">CAN-SPAM Compliance</div>
+                          <div className="text-xs text-muted-foreground">Verify legal requirements</div>
+                        </div>
+                        {aiLoading === "can-spam-check" && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                      </div>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-auto py-3"
+                      onClick={() => handleAIAction("generate-email")}
+                      disabled={aiLoading !== null}
+                      data-testid="ai-generate-email"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 rounded-md bg-gradient-to-r from-purple-500/20 to-cyan-500/20">
+                          <Sparkles className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <div className="text-sm font-medium">Generate Full Email</div>
+                          <div className="text-xs text-muted-foreground">Create from scratch with AI</div>
+                        </div>
+                        {aiLoading === "generate-email" && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                      </div>
                     </Button>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </Card>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* CENTER PANEL - Email Preview */}
+        <div className="flex-1 bg-muted/20 overflow-hidden flex flex-col">
+          {/* Email metadata */}
+          <div className="p-4 bg-card/50 border-b border-border space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1">Subject Line</Label>
+                <Input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Enter email subject..."
+                  className="h-9"
+                  data-testid="input-subject"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1">Preheader Text</Label>
+                <Input
+                  value={preheader}
+                  onChange={(e) => setPreheader(e.target.value)}
+                  placeholder="Preview text shown in inbox..."
+                  className="h-9"
+                  data-testid="input-preheader"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Workflow:</Label>
+                <Select value={workflowType} onValueChange={setWorkflowType}>
+                  <SelectTrigger className="h-8 w-40" data-testid="select-workflow-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workflowTypes.map((wf) => {
+                      const Icon = wf.icon;
+                      return (
+                        <SelectItem key={wf.value} value={wf.value}>
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${wf.color}`} />
+                            <span>{wf.label}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Email canvas */}
+          <ScrollArea className="flex-1">
+            <div className="p-6 flex justify-center">
+              <div 
+                className={`bg-white shadow-xl rounded-lg transition-all duration-300 ${
+                  previewMode === "mobile" ? "w-[375px]" : "w-full max-w-[600px]"
+                }`}
+                style={{ backgroundColor: brandSettings.backgroundColor }}
+              >
+                {/* Email blocks */}
+                <div 
+                  className="min-h-[400px]"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(blocks.length)}
+                >
+                  {blocks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-[400px] text-center p-8">
+                      <Columns className="w-16 h-16 text-gray-300 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-600 mb-2">
+                        Start Building Your Email
+                      </h3>
+                      <p className="text-sm text-gray-400 mb-4">
+                        Drag blocks from the left panel or click to add them here
+                      </p>
+                      <Button variant="outline" onClick={() => addBlock("heading")}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add First Block
+                      </Button>
+                    </div>
+                  ) : (
+                    blocks.map((block, index) => (
+                      <div
+                        key={block.id}
+                        onClick={() => setSelectedBlockId(block.id)}
+                        className={`group relative cursor-pointer transition-all ${
+                          selectedBlockId === block.id 
+                            ? "ring-2 ring-primary ring-inset" 
+                            : "hover:ring-1 hover:ring-primary/50 hover:ring-inset"
+                        }`}
+                        data-testid={`block-preview-${block.id}`}
+                      >
+                        {/* Block controls */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-8 flex flex-col items-center justify-center gap-1 bg-primary/10 transition-opacity ${
+                          selectedBlockId === block.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}>
+                          <GripVertical className="w-4 h-4 text-primary cursor-grab" />
+                        </div>
+                        
+                        {/* Block actions */}
+                        <div className={`absolute right-2 top-2 flex items-center gap-1 transition-opacity ${
+                          selectedBlockId === block.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              duplicateBlock(block.id);
+                            }}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-6 w-6 hover:bg-red-500/20 hover:text-red-400"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteBlock(block.id);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        
+                        {/* Block content */}
+                        <div className="pl-8">
+                          {renderBlockPreview(block)}
+                        </div>
+                        
+                        {/* Drop zone indicator */}
+                        {isDragging && (
+                          <div
+                            className="absolute inset-x-0 bottom-0 h-2 bg-primary/30"
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.stopPropagation();
+                              handleDrop(index + 1);
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+                
+                {/* Footer for CAN-SPAM compliance */}
+                <div 
+                  className="text-center p-4 text-xs border-t"
+                  style={{ 
+                    color: brandSettings.textColor, 
+                    backgroundColor: brandSettings.backgroundColor,
+                    opacity: 0.7 
+                  }}
+                >
+                  <p>{brandSettings.footerText || "Your Company Name | 123 Street, City, State ZIP"}</p>
+                  <p className="mt-1">
+                    <a href="#" className="underline" style={{ color: brandSettings.primaryColor }}>
+                      Unsubscribe
+                    </a>
+                    {" | "}
+                    <a href="#" className="underline" style={{ color: brandSettings.primaryColor }}>
+                      Update Preferences
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* RIGHT PANEL - Styling Controls */}
+        <div className="w-80 border-l border-border bg-card/30 flex flex-col">
+          <ScrollArea className="flex-1">
+            <div className="p-4 space-y-6">
+              {selectedBlock ? (
+                <>
+                  {/* Block-specific settings */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Settings className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold capitalize">{selectedBlock.type} Settings</h3>
+                    </div>
+                    
+                    {/* Content settings based on block type */}
+                    {selectedBlock.type === "heading" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-xs">Heading Text</Label>
+                          <Textarea
+                            value={selectedBlock.content?.text || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, text: e.target.value }
+                            })}
+                            className="mt-1"
+                            rows={2}
+                            data-testid="input-heading-text"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Heading Level</Label>
+                          <Select
+                            value={selectedBlock.content?.level || "h2"}
+                            onValueChange={(value) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, level: value }
+                            })}
+                          >
+                            <SelectTrigger className="mt-1" data-testid="select-heading-level">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="h1">H1 - Large</SelectItem>
+                              <SelectItem value="h2">H2 - Medium</SelectItem>
+                              <SelectItem value="h3">H3 - Small</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedBlock.type === "text" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-xs">Content</Label>
+                          <Textarea
+                            value={selectedBlock.content?.text || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, text: e.target.value }
+                            })}
+                            className="mt-1"
+                            rows={4}
+                            data-testid="input-text-content"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedBlock.type === "image" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-xs">Image URL</Label>
+                          <Input
+                            value={selectedBlock.content?.src || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, src: e.target.value }
+                            })}
+                            placeholder="https://..."
+                            className="mt-1"
+                            data-testid="input-image-url"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Alt Text</Label>
+                          <Input
+                            value={selectedBlock.content?.alt || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, alt: e.target.value }
+                            })}
+                            placeholder="Image description"
+                            className="mt-1"
+                            data-testid="input-image-alt"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Link URL (optional)</Label>
+                          <Input
+                            value={selectedBlock.content?.linkUrl || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, linkUrl: e.target.value }
+                            })}
+                            placeholder="https://..."
+                            className="mt-1"
+                            data-testid="input-image-link"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedBlock.type === "button" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-xs">Button Text</Label>
+                          <Input
+                            value={selectedBlock.content?.text || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, text: e.target.value }
+                            })}
+                            className="mt-1"
+                            data-testid="input-button-text"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Button URL</Label>
+                          <Input
+                            value={selectedBlock.content?.url || ""}
+                            onChange={(e) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, url: e.target.value }
+                            })}
+                            placeholder="https:// or {{variable}}"
+                            className="mt-1"
+                            data-testid="input-button-url"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Button Color</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedBlock.styles?.backgroundColor || brandSettings.primaryColor}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                styles: { ...selectedBlock.styles, backgroundColor: e.target.value }
+                              })}
+                              className="w-12 h-9 p-1 cursor-pointer"
+                              data-testid="input-button-color"
+                            />
+                            <Input
+                              value={selectedBlock.styles?.backgroundColor || brandSettings.primaryColor}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                styles: { ...selectedBlock.styles, backgroundColor: e.target.value }
+                              })}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Text Color</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedBlock.styles?.textColor || "#000000"}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                styles: { ...selectedBlock.styles, textColor: e.target.value }
+                              })}
+                              className="w-12 h-9 p-1 cursor-pointer"
+                              data-testid="input-button-text-color"
+                            />
+                            <Input
+                              value={selectedBlock.styles?.textColor || "#000000"}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                styles: { ...selectedBlock.styles, textColor: e.target.value }
+                              })}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedBlock.type === "spacer" && (
+                      <div>
+                        <Label className="text-xs">Height (px)</Label>
+                        <Input
+                          type="number"
+                          value={parseInt(selectedBlock.content?.height || "24")}
+                          onChange={(e) => updateBlock(selectedBlock.id, {
+                            content: { ...selectedBlock.content, height: `${e.target.value}px` }
+                          })}
+                          min={8}
+                          max={200}
+                          className="mt-1"
+                          data-testid="input-spacer-height"
+                        />
+                      </div>
+                    )}
+
+                    {selectedBlock.type === "divider" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-xs">Line Style</Label>
+                          <Select
+                            value={selectedBlock.content?.style || "solid"}
+                            onValueChange={(value) => updateBlock(selectedBlock.id, {
+                              content: { ...selectedBlock.content, style: value }
+                            })}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="solid">Solid</SelectItem>
+                              <SelectItem value="dashed">Dashed</SelectItem>
+                              <SelectItem value="dotted">Dotted</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Line Color</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedBlock.content?.color || "#e5e7eb"}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, color: e.target.value }
+                              })}
+                              className="w-12 h-9 p-1 cursor-pointer"
+                            />
+                            <Input
+                              value={selectedBlock.content?.color || "#e5e7eb"}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                content: { ...selectedBlock.content, color: e.target.value }
+                              })}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Common styling controls */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Palette className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold">Style</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Text alignment */}
+                      {["heading", "text", "button", "image", "logo"].includes(selectedBlock.type) && (
+                        <div>
+                          <Label className="text-xs">Alignment</Label>
+                          <div className="flex gap-1 mt-1">
+                            {[
+                              { value: "left", icon: AlignLeft },
+                              { value: "center", icon: AlignCenter },
+                              { value: "right", icon: AlignRight },
+                            ].map(({ value, icon: Icon }) => (
+                              <Button
+                                key={value}
+                                variant={selectedBlock.styles?.textAlign === value ? "secondary" : "ghost"}
+                                size="icon"
+                                onClick={() => updateBlock(selectedBlock.id, {
+                                  styles: { ...selectedBlock.styles, textAlign: value as "left" | "center" | "right" }
+                                })}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Font size */}
+                      {["heading", "text", "button"].includes(selectedBlock.type) && (
+                        <div>
+                          <Label className="text-xs">Font Size</Label>
+                          <Select
+                            value={selectedBlock.styles?.fontSize || "16px"}
+                            onValueChange={(value) => updateBlock(selectedBlock.id, {
+                              styles: { ...selectedBlock.styles, fontSize: value }
+                            })}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="12px">12px - Small</SelectItem>
+                              <SelectItem value="14px">14px - Caption</SelectItem>
+                              <SelectItem value="16px">16px - Body</SelectItem>
+                              <SelectItem value="18px">18px - Large</SelectItem>
+                              <SelectItem value="24px">24px - Heading</SelectItem>
+                              <SelectItem value="32px">32px - Display</SelectItem>
+                              <SelectItem value="48px">48px - Hero</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Padding */}
+                      <div>
+                        <Label className="text-xs">Padding</Label>
+                        <Select
+                          value={selectedBlock.styles?.padding || "16px"}
+                          onValueChange={(value) => updateBlock(selectedBlock.id, {
+                            styles: { ...selectedBlock.styles, padding: value }
+                          })}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">None</SelectItem>
+                            <SelectItem value="8px">Small (8px)</SelectItem>
+                            <SelectItem value="16px">Medium (16px)</SelectItem>
+                            <SelectItem value="24px">Large (24px)</SelectItem>
+                            <SelectItem value="32px">Extra Large (32px)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Background color */}
+                      {!["button"].includes(selectedBlock.type) && (
+                        <div>
+                          <Label className="text-xs">Background Color</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="color"
+                              value={selectedBlock.styles?.backgroundColor || "#ffffff"}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                styles: { ...selectedBlock.styles, backgroundColor: e.target.value }
+                              })}
+                              className="w-12 h-9 p-1 cursor-pointer"
+                            />
+                            <Input
+                              value={selectedBlock.styles?.backgroundColor || "transparent"}
+                              onChange={(e) => updateBlock(selectedBlock.id, {
+                                styles: { ...selectedBlock.styles, backgroundColor: e.target.value }
+                              })}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Brand Settings when no block selected */
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Palette className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold">Brand Settings</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Select a block to edit its properties, or customize your brand settings below.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-xs">Logo URL</Label>
+                      <Input
+                        value={brandSettings.logoUrl}
+                        onChange={(e) => setBrandSettings({ ...brandSettings, logoUrl: e.target.value })}
+                        placeholder="https://..."
+                        className="mt-1"
+                        data-testid="input-brand-logo"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Primary Color</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="color"
+                          value={brandSettings.primaryColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, primaryColor: e.target.value })}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                          data-testid="input-primary-color"
+                        />
+                        <Input
+                          value={brandSettings.primaryColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, primaryColor: e.target.value })}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Secondary Color</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="color"
+                          value={brandSettings.secondaryColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, secondaryColor: e.target.value })}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                          data-testid="input-secondary-color"
+                        />
+                        <Input
+                          value={brandSettings.secondaryColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, secondaryColor: e.target.value })}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Background Color</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="color"
+                          value={brandSettings.backgroundColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, backgroundColor: e.target.value })}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                          data-testid="input-bg-color"
+                        />
+                        <Input
+                          value={brandSettings.backgroundColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, backgroundColor: e.target.value })}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Text Color</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="color"
+                          value={brandSettings.textColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, textColor: e.target.value })}
+                          className="w-12 h-9 p-1 cursor-pointer"
+                          data-testid="input-text-color"
+                        />
+                        <Input
+                          value={brandSettings.textColor}
+                          onChange={(e) => setBrandSettings({ ...brandSettings, textColor: e.target.value })}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Font Family</Label>
+                      <Select
+                        value={brandSettings.fontFamily}
+                        onValueChange={(value) => setBrandSettings({ ...brandSettings, fontFamily: value })}
+                      >
+                        <SelectTrigger className="mt-1" data-testid="select-font-family">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fontFamilies.map((font) => (
+                            <SelectItem key={font.value} value={font.value}>
+                              {font.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <Label className="text-xs">Footer Text (CAN-SPAM)</Label>
+                      <Textarea
+                        value={brandSettings.footerText}
+                        onChange={(e) => setBrandSettings({ ...brandSettings, footerText: e.target.value })}
+                        placeholder="Company Name | Address"
+                        className="mt-1"
+                        rows={2}
+                        data-testid="input-footer-text"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Required for CAN-SPAM compliance
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </div>
-    </PageShell>
+
+      {/* Version History Dialog */}
+      <Dialog open={showVersionHistory} onOpenChange={setShowVersionHistory}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Version History</DialogTitle>
+            <DialogDescription>
+              View and restore previous versions of this template
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              {[
+                { version: 3, date: "Today, 2:30 PM", note: "Updated button styles" },
+                { version: 2, date: "Yesterday, 4:15 PM", note: "Changed subject line" },
+                { version: 1, date: "Dec 28, 2025", note: "Initial version" },
+              ].map((v) => (
+                <div
+                  key={v.version}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">v{v.version}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{v.note}</p>
+                      <p className="text-xs text-muted-foreground">{v.date}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    Restore
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
