@@ -433,48 +433,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
-      const { plan: planHandle } = req.query;
+      const { plan: planHandle, shop } = req.query;
 
       if (!planHandle) {
         return res.status(400).json({ message: "Plan handle is required" });
       }
 
-      // 1. Get store connection for this user
+      // 1. Get store connection
+      // Priority: 1. Explicit shop query param, 2. Database connection record
+      let shopifyDomain = shop as string;
+      let accessToken: string | undefined;
+
       let [connection] = await db.select()
         .from(storeConnections)
-        .where(eq(storeConnections.userId, user.id));
+        .where(shopifyDomain ? eq(storeConnections.shopifyDomain, shopifyDomain) : eq(storeConnections.userId, user.id));
 
-      // DEBUG: Log connection status
-      console.log(`[BILLING] Store connection check for user ${user.id}:`, {
-        hasConnection: !!connection,
-        shopifyDomain: connection?.shopifyDomain,
-        hasAccessToken: !!connection?.accessToken
-      });
+      if (connection) {
+        shopifyDomain = connection.shopifyDomain;
+        accessToken = connection.accessToken;
+      }
 
-      // CRITICAL: In development/demo or for admin users, if no connection exists, we use a fallback
-      // to ensure the billing flow can be tested or demoed.
-      if (!connection && (process.env.NODE_ENV !== 'production' || user.role === 'admin')) {
-        console.log(`[BILLING] No connection for user ${user.id}, using dev/admin fallback`);
-        // Use environment variables for the fallback store
-        const fallbackShop = process.env.SHOPIFY_SHOP_DOMAIN || "zyra-ai-dev.myshopify.com";
-        const fallbackToken = process.env.SHOPIFY_ACCESS_TOKEN;
-        
-        if (fallbackToken) {
-          connection = {
-            shopifyDomain: fallbackShop,
-            accessToken: fallbackToken,
-            userId: user.id
-          } as any;
+      // Verify session/connection exists
+      if (!shopifyDomain || !accessToken) {
+        // Fallback for admin/dev
+        if (process.env.NODE_ENV !== 'production' || user.role === 'admin') {
+          shopifyDomain = shopifyDomain || process.env.SHOPIFY_SHOP_DOMAIN || "zyra-ai-dev.myshopify.com";
+          accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
         }
       }
 
-      if (!connection || !connection.shopifyDomain || !connection.accessToken) {
-        console.error(`[BILLING] Store connection missing for user ${user.id}`);
+      if (!shopifyDomain || !accessToken) {
+        console.error(`[BILLING] Store connection missing or invalid session for shop: ${shopifyDomain}`);
+        // Redirect to re-auth if we have a shop domain but no token
+        if (shopifyDomain) {
+          return res.status(401).json({ 
+            message: "Session expired. Please re-authenticate.",
+            reauth: true,
+            reauthUrl: `/api/shopify/auth?shop=${shopifyDomain}`
+          });
+        }
         return res.status(400).json({ message: "Shopify store not connected. Please connect your store first." });
       }
-
-      const shopifyDomain = connection.shopifyDomain;
-      const accessToken = connection.accessToken;
 
       // 2. Map plan handle to specific plan details (pricing, features)
       const plans = await getSubscriptionPlans();

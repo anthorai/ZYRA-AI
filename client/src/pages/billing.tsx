@@ -396,9 +396,23 @@ export default function BillingPage() {
     }
     
     try {
-      const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}`);
+      // Get shop from URL or local storage fallback
+      const urlParams = new URLSearchParams(window.location.search);
+      const shop = urlParams.get('shop') || (user as any)?.shopifyDomain || localStorage.getItem('shopify_shop');
+
+      if (!shop) {
+        console.warn("[BILLING] No shop domain found in context");
+      }
+
+      const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}${shop ? `&shop=${shop}` : ''}`);
       if (!response.ok) {
         const errorData = await response.json();
+        // If session is missing, the backend might return 401 or a specific flag
+        if (response.status === 401 || errorData.reauth) {
+           const reauthUrl = errorData.reauthUrl || `/api/shopify/auth?shop=${shop}`;
+           window.location.href = reauthUrl;
+           return;
+        }
         throw new Error(errorData.message || "Failed to generate redirect");
       }
       const data = await response.json();
