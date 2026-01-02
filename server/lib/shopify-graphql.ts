@@ -82,7 +82,7 @@ export interface ShopifyGraphQLResponse<T> {
 export class ShopifyGraphQLClient {
   private shop: string;
   private accessToken: string;
-  private apiVersion = '2025-01';
+  private apiVersion = '2024-10';
   private requestQueue: Array<() => Promise<any>> = [];
   private lastRequestTime: number = 0;
   private readonly minRequestInterval: number = 100;

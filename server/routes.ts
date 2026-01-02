@@ -507,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const variables = {
         name: `Zyra AI ${plan.planName} Plan`,
         returnUrl: returnUrl,
-        test: process.env.NODE_ENV !== 'production',
+        test: true, // Force test mode for development
         lineItems: [{
           plan: {
             appRecurringPricingDetails: {
@@ -523,8 +523,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result = await client.query(mutation, variables);
       
+      if (!result || result.errors) {
+        console.error("[BILLING] Shopify API Error:", result?.errors);
+        throw new Error(result?.errors?.[0]?.message || "Shopify GraphQL error");
+      }
+
       if (result.appSubscriptionCreate?.userErrors?.length > 0) {
-        console.error("[BILLING] Shopify API Error:", result.appSubscriptionCreate.userErrors);
+        console.error("[BILLING] Shopify Business Error:", result.appSubscriptionCreate.userErrors);
         throw new Error(result.appSubscriptionCreate.userErrors[0].message);
       }
 
