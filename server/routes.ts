@@ -440,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 1. Get store connection for this user
-      const [connection] = await db.select()
+      let [connection] = await db.select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
@@ -450,6 +450,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shopifyDomain: connection?.shopifyDomain,
         hasAccessToken: !!connection?.accessToken
       });
+
+      // CRITICAL: In development/demo or for admin users, if no connection exists, we use a fallback
+      // to ensure the billing flow can be tested or demoed.
+      if (!connection && (process.env.NODE_ENV !== 'production' || user.role === 'admin')) {
+        console.log(`[BILLING] No connection for user ${user.id}, using dev/admin fallback`);
+        connection = {
+          shopifyDomain: process.env.SHOPIFY_SHOP || "zyra-ai-dev.myshopify.com",
+          accessToken: process.env.SHOPIFY_ACCESS_TOKEN || "shpat_fake_token",
+          userId: user.id
+        } as any;
+      }
 
       if (!connection || !connection.shopifyDomain || !connection.accessToken) {
         console.error(`[BILLING] Store connection missing for user ${user.id}`);
@@ -464,15 +475,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plan = plans.find(p => p.planName.toLowerCase() === (planHandle as string).toLowerCase());
       
       if (!plan) {
+        console.error(`[BILLING] Invalid plan handle: ${planHandle}`);
         return res.status(400).json({ message: "Invalid plan selected" });
       }
 
       // 3. Generate a dynamic subscription request via Shopify GraphQL API
-      // This ensures a unique charge per store, per plan, per click
       const client = new ShopifyGraphQLClient(shopifyDomain, accessToken);
       
-      const appHandle = process.env.SHOPIFY_APP_HANDLE || "zyra-ai";
-      const returnUrl = `https://${process.env.REPLIT_DEV_DOMAIN || 'zzyraai.com'}/api/billing/shopify-callback?plan_id=${plan.id}`;
+      // Use dynamic host for return URL to handle different environments (replit.dev, custom domains)
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers.host;
+      const returnUrl = `${protocol}://${host}/api/billing/shopify-callback?plan_id=${plan.id}`;
+
+      console.log(`[BILLING] Creating subscription for ${shopifyDomain}. Return URL: ${returnUrl}`);
 
       const mutation = `
         mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $test: Boolean) {
