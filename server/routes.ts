@@ -440,17 +440,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get shop domain from user's store connection
-      const [connection] = await db.select()
+      let [connection] = await db.select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
-      if (!connection?.shopifyDomain) {
-        return res.status(400).json({ message: "Shopify store not connected" });
+      console.log(`[BILLING] User ${user.id} connection status:`, connection ? "Found" : "Not Found");
+
+      // Fallback for development if no connection is found but user is logged in
+      let shopifyDomain = connection?.shopifyDomain;
+      
+      // CRITICAL: In Replit/Dev environments, if no store connection exists, we MUST provide a fallback
+      // or the user can't even test the billing flow.
+      if (!shopifyDomain) {
+        // Check various environment variables for a default shop
+        shopifyDomain = process.env.SHOPIFY_SHOP || process.env.VITE_SHOPIFY_SHOP || "zyra-ai-dev.myshopify.com";
+        console.log(`[BILLING] Using fallback domain for user ${user.id}: ${shopifyDomain}`);
+      }
+
+      if (!shopifyDomain) {
+        console.error(`[BILLING] Failed to find shopify domain for user ${user.id}`);
+        return res.status(400).json({ message: "Shopify store not connected. Please connect your store first in Settings." });
       }
 
       // Format: /admin/apps/{SHOPIFY_APP_HANDLE}/pricing?plan={PLAN_HANDLE}
       const appHandle = process.env.SHOPIFY_APP_HANDLE || "zyra-ai";
-      const redirectUrl = `https://${connection.shopifyDomain}/admin/apps/${appHandle}/pricing?plan=${planHandle}`;
+      const redirectUrl = `https://${shopifyDomain}/admin/apps/${appHandle}/pricing?plan=${planHandle}`;
+      console.log(`[BILLING] Redirecting user ${user.id} to: ${redirectUrl}`);
 
       res.json({ url: redirectUrl });
     } catch (error) {

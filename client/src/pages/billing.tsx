@@ -44,6 +44,7 @@ interface SubscriptionPlan {
   planName: string;
   price: number;
   description: string;
+  shopifyPlanHandle?: string;
   features: string[];
   limits: {
     credits: number;
@@ -385,16 +386,29 @@ export default function BillingPage() {
 
   // Upgrade/downgrade mutation - Shopify Managed Pricing only
   const handleUpgrade = async (planHandle: string) => {
+    if (!planHandle) {
+      toast({
+        title: "Error",
+        description: "Invalid plan selection",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to generate redirect");
+      }
       const data = await response.json();
       if (data.url) {
         window.top.location.href = data.url;
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to start upgrade process",
+        description: error.message || "Failed to start upgrade process",
         variant: "destructive",
       });
     }
@@ -409,12 +423,27 @@ export default function BillingPage() {
         return await response.json();
       }
       // For paid plans, we use the shopify-redirect endpoint directly via handleUpgrade
-      return { requiresShopifyRedirect: true, planHandle: (plan as any)?.shopifyPlanHandle };
+      const planAny = plan as any;
+      const planHandle = planAny.shopifyPlanHandle;
+      if (!planHandle) {
+        throw new Error("This plan is not available for Shopify upgrade yet.");
+      }
+      return { requiresShopifyRedirect: true, planHandle };
     },
     onMutate: async (planId: string) => {
       const plan = plans.find(p => p.id === planId);
-      if (plan?.planName !== "7-Day Free Trial") {
-        handleUpgrade((plan as any)?.shopifyPlanHandle);
+      if (plan && plan.planName !== "7-Day Free Trial") {
+        const planAny = plan as any;
+        const planHandle = planAny.shopifyPlanHandle;
+        if (planHandle) {
+          handleUpgrade(planHandle);
+        } else {
+          toast({
+            title: "Error",
+            description: "Plan handle missing for this subscription",
+            variant: "destructive",
+          });
+        }
         return;
       }
       setProcessingPlanId(planId);
@@ -924,7 +953,18 @@ export default function BillingPage() {
                                 : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
                         }`}
                         disabled={isCurrentPlan || processingPlanId !== null}
-                        onClick={() => changePlanMutation.mutate(plan.id)}
+                        onClick={() => {
+                          const planAny = plan as any;
+                          const planHandle = planAny.shopifyPlanHandle;
+                          
+                          if (isCurrentPlan) return;
+                          
+                          if (plan.planName !== "7-Day Free Trial" && planHandle) {
+                            handleUpgrade(planHandle);
+                          } else {
+                            changePlanMutation.mutate(plan.id);
+                          }
+                        }}
                         data-testid={`button-choose-plan-${index}`}
                       >
                         {processingPlanId === plan.id ? (
