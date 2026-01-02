@@ -311,7 +311,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
   return withErrorHandling(async () => {
     console.log("[DB] Seeding default subscription plans...");
 
-    const defaultPlans: InsertSubscriptionPlan[] = [
+    const defaultPlans: any[] = [
       {
         planName: "7-Day Free Trial",
         price: "0",
@@ -343,6 +343,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         planName: "Starter",
         price: "49.00",
         description: "Best for new Shopify stores just getting started",
+        shopifyPlanHandle: "starter-plan", // Added Shopify handle
         features: [
           "✨ 1,000 credits / month",
           "Product Optimization & SEO:",
@@ -377,6 +378,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         planName: "Growth",
         price: "299.00",
         description: "For scaling merchants ready to grow",
+        shopifyPlanHandle: "growth-plan", // Added Shopify handle
         features: [
           "✨ 6,000 credits / month",
           "Product Optimization & SEO:",
@@ -411,6 +413,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         planName: "Pro",
         price: "999.00",
         description: "For high-revenue brands & enterprises",
+        shopifyPlanHandle: "pro-plan", // Added Shopify handle
         features: [
           "✨ 20,000 credits / month",
           "Product Optimization & SEO:",
@@ -458,6 +461,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           planName: planData.planName,
           price: planData.price,
           description: planData.description,
+          shopifyPlanHandle: planData.shopifyPlanHandle, // Update Shopify handle
           features: planData.features,
           limits: planData.limits,
           interval: planData.interval || "month",
@@ -470,6 +474,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           .set({
             price: planData.price,
             description: planData.description,
+            shopifyPlanHandle: planData.shopifyPlanHandle,
             features: planData.features,
             limits: planData.limits,
             interval: planData.interval || "month",

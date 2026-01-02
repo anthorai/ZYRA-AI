@@ -384,13 +384,39 @@ export default function BillingPage() {
   const plansErrorDetails = plansError as any;
 
   // Upgrade/downgrade mutation - Shopify Managed Pricing only
+  const handleUpgrade = async (planHandle: string) => {
+    try {
+      const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}`);
+      const data = await response.json();
+      if (data.url) {
+        window.top.location.href = data.url;
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start upgrade process",
+        variant: "destructive",
+      });
+    }
+  };
+
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const billingPeriod = isAnnual ? 'annual' : 'monthly';
-      const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, billingPeriod });
-      return await response.json();
+      const plan = plans.find(p => p.id === planId);
+      if (plan?.planName === "7-Day Free Trial") {
+        const billingPeriod = isAnnual ? 'annual' : 'monthly';
+        const response = await apiRequest('POST', '/api/subscription/change-plan', { planId, billingPeriod });
+        return await response.json();
+      }
+      // For paid plans, we use the shopify-redirect endpoint directly via handleUpgrade
+      return { requiresShopifyRedirect: true, planHandle: (plan as any)?.shopifyPlanHandle };
     },
     onMutate: async (planId: string) => {
+      const plan = plans.find(p => p.id === planId);
+      if (plan?.planName !== "7-Day Free Trial") {
+        handleUpgrade((plan as any)?.shopifyPlanHandle);
+        return;
+      }
       setProcessingPlanId(planId);
     },
     onSuccess: async (data: any) => {

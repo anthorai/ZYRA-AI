@@ -429,7 +429,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Error logs endpoints (admin only) - for production monitoring
+  // Shopify Billing Redirect
+  app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { plan: planHandle } = req.query;
+
+      if (!planHandle) {
+        return res.status(400).json({ message: "Plan handle is required" });
+      }
+
+      // Get shop domain from user's store connection
+      const [connection] = await db.select()
+        .from(storeConnections)
+        .where(eq(storeConnections.userId, user.id));
+
+      if (!connection?.shopifyDomain) {
+        return res.status(400).json({ message: "Shopify store not connected" });
+      }
+
+      // Format: /admin/apps/{SHOPIFY_APP_HANDLE}/pricing?plan={PLAN_HANDLE}
+      const appHandle = process.env.SHOPIFY_APP_HANDLE || "zyra-ai";
+      const redirectUrl = `https://${connection.shopifyDomain}/admin/apps/${appHandle}/pricing?plan=${planHandle}`;
+
+      res.json({ url: redirectUrl });
+    } catch (error) {
+      console.error("Billing redirect error:", error);
+      res.status(500).json({ message: "Failed to generate redirect" });
+    }
+  });
+
+  // Handle Shopify billing callback
+  app.get("/api/billing/shopify-callback", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const { plan_id: planId } = req.query;
+
+      if (!planId) {
+        return res.status(400).json({ message: "Plan ID is required" });
+      }
+
+      await updateUserSubscription(user.id, planId as string, user.email);
+      res.redirect("/billing?success=true");
+    } catch (error) {
+      console.error("Billing callback error:", error);
+      res.redirect("/billing?error=callback_failed");
+    }
+  });
   app.get("/api/admin/error-logs", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
