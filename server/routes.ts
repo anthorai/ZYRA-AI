@@ -455,11 +455,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // to ensure the billing flow can be tested or demoed.
       if (!connection && (process.env.NODE_ENV !== 'production' || user.role === 'admin')) {
         console.log(`[BILLING] No connection for user ${user.id}, using dev/admin fallback`);
-        connection = {
-          shopifyDomain: process.env.SHOPIFY_SHOP || "zyra-ai-dev.myshopify.com",
-          accessToken: process.env.SHOPIFY_ACCESS_TOKEN || "shpat_fake_token",
-          userId: user.id
-        } as any;
+        // Use environment variables for the fallback store
+        const fallbackShop = process.env.SHOPIFY_SHOP_DOMAIN || "zyra-ai-dev.myshopify.com";
+        const fallbackToken = process.env.SHOPIFY_ACCESS_TOKEN;
+        
+        if (fallbackToken) {
+          connection = {
+            shopifyDomain: fallbackShop,
+            accessToken: fallbackToken,
+            userId: user.id
+          } as any;
+        }
       }
 
       if (!connection || !connection.shopifyDomain || !connection.accessToken) {
