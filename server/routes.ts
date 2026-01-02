@@ -444,6 +444,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
+      // CRITICAL: In development/demo, if no connection exists, we create a temporary one
+      // or use a fallback to ensure the billing flow can be tested.
+      if (!connection && process.env.NODE_ENV !== 'production') {
+        console.log(`[BILLING] No connection for user ${user.id}, using dev fallback`);
+        connection = {
+          shopifyDomain: process.env.SHOPIFY_SHOP || "zyra-ai-dev.myshopify.com",
+          accessToken: process.env.SHOPIFY_ACCESS_TOKEN || "shpat_fake_token",
+          userId: user.id
+        } as any;
+      }
+
       if (!connection || !connection.shopifyDomain || !connection.accessToken) {
         console.error(`[BILLING] Store connection missing for user ${user.id}`);
         return res.status(400).json({ message: "Shopify store not connected. Please connect your store first." });
