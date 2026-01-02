@@ -367,29 +367,7 @@ export default function ShopifyControlsPage() {
           </CardContent>
         </Card>
 
-        {!isConnected && !isLoading && (
-          <Card className="border-yellow-500/30 bg-yellow-500/5">
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <AlertTriangle className="h-8 w-8 text-yellow-500 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">No Shopify Store Connected</h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Connect your Shopify store to sync products, manage inventory, and enable AI-powered optimizations.
-                  </p>
-                </div>
-                <Button asChild>
-                  <a href="/settings/stores" data-testid="button-connect-store">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Connect Store
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {isConnected && shopifyStores.length > 0 && (
+        {shopifyStores.length > 0 && (
           <Card data-testid="section-connected-stores">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

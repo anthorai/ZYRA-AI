@@ -10408,28 +10408,32 @@ Output format: Markdown with clear section headings.`;
 
       if (shopifyConnection) {
         console.log('  Updating existing connection:', shopifyConnection.id);
-        // Update existing connection
+        // Update existing connection with Shopify install flags
         await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
           storeName: shopName,
           storeUrl: `https://${shop}`,
           accessToken,
           status: 'active',
+          installedViaShopify: true,
+          isConnected: true,
           lastSyncAt: new Date()
         });
-        console.log('✅ Connection updated successfully');
+        console.log('✅ Connection updated successfully (installed via Shopify)');
       } else {
         console.log('  Creating new connection for user:', effectiveUserId);
-        // Create new connection
+        // Create new connection with Shopify install flags
         await supabaseStorage.createStoreConnection({
           userId: effectiveUserId,
           platform: 'shopify',
           storeName: shopName,
           storeUrl: `https://${shop}`,
           accessToken,
-          currency: storeCurrency, // Save store currency for multi-currency display
-          status: 'active'
+          currency: storeCurrency,
+          status: 'active',
+          installedViaShopify: true,
+          isConnected: true
         });
-        console.log('✅ Connection created successfully with currency:', storeCurrency);
+        console.log('✅ Connection created successfully (installed via Shopify, currency:', storeCurrency + ')');
       }
 
       // Step 8: Register mandatory Shopify webhooks for compliance
@@ -10477,21 +10481,21 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation from Shopify App Store - redirect to frontend callback
-        const redirectUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/auth/callback?shopify=connected`
-          : `${req.protocol}://${req.get('host')}/auth/callback?shopify=connected`;
+        // Direct installation from Shopify App Store - redirect back to Shopify admin (rule 2.3.1 compliance)
+        // This keeps the user inside Shopify's app surface after install
+        const shopifyAdminUrl = `https://${shop}/admin/apps/zyra-ai`;
+        console.log('  Redirecting to Shopify admin:', shopifyAdminUrl);
         
         res.send(`
           <html>
             <head>
-              <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+              <meta http-equiv="refresh" content="0;url=${shopifyAdminUrl}">
             </head>
             <body>
               <script>
-                window.location.href = '${redirectUrl}';
+                window.location.href = '${shopifyAdminUrl}';
               </script>
-              <p>Connection successful! Redirecting...</p>
+              <p>Installation successful! Redirecting to Shopify admin...</p>
             </body>
           </html>
         `);
