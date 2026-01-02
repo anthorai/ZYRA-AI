@@ -403,7 +403,25 @@ export default function BillingPage() {
       }
       const data = await response.json();
       if (data.url) {
-        window.top.location.href = data.url;
+        // Redirect to the billing page. In a Shopify embedded app, we must
+        // redirect the top-level window.
+        if (window.top !== window.self) {
+          // Inside iframe: post message to parent to redirect
+          // or use window.top directly if permitted (often blocked by browsers)
+          try {
+            window.top!.location.href = data.url;
+          } catch (e) {
+            // Fallback for cross-origin security
+            console.error("Failed to redirect top window directly:", e);
+            window.parent.postMessage(JSON.stringify({
+              type: 'shopify_redirect',
+              url: data.url
+            }), '*');
+          }
+        } else {
+          // Not in iframe
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       toast({
