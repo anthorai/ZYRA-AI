@@ -440,39 +440,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 1. Get store connection
-      // Priority: 1. Explicit shop query param, 2. Database connection record
-      let shopifyDomain = shop as string;
-      let accessToken: string | undefined;
-
+      // Source of truth: active store connections table linked to user
       let [connection] = await db.select()
         .from(storeConnections)
-        .where(shopifyDomain ? eq(storeConnections.shopifyDomain, shopifyDomain) : eq(storeConnections.userId, user.id));
+        .where(eq(storeConnections.userId, user.id));
 
-      if (connection) {
-        shopifyDomain = connection.shopifyDomain;
-        accessToken = connection.accessToken;
-      }
+      let shopifyDomain = shop as string || connection?.shopifyDomain;
+      let accessToken = connection?.accessToken;
 
-      // Verify session/connection exists
+      // Verify live session/connection exists via token
       if (!shopifyDomain || !accessToken) {
-        // Fallback for admin/dev
+        // Fallback for admin/dev environments ONLY
         if (process.env.NODE_ENV !== 'production' || user.role === 'admin') {
+          console.log(`[BILLING] No session for user ${user.id}, using dev/admin fallback`);
           shopifyDomain = shopifyDomain || process.env.SHOPIFY_SHOP_DOMAIN || "zyra-ai-dev.myshopify.com";
-          accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+          accessToken = accessToken || process.env.SHOPIFY_ACCESS_TOKEN;
         }
       }
 
+      // CRITICAL: If no valid Shopify token exists, we MUST re-authenticate
       if (!shopifyDomain || !accessToken) {
-        console.error(`[BILLING] Store connection missing or invalid session for shop: ${shopifyDomain}`);
-        // Redirect to re-auth if we have a shop domain but no token
+        console.error(`[BILLING] Shopify session missing for user ${user.id}`);
+        
+        // If we know the shop domain but don't have a token, trigger re-auth
         if (shopifyDomain) {
           return res.status(401).json({ 
-            message: "Session expired. Please re-authenticate.",
+            message: "Shopify session expired. Please re-authenticate.",
             reauth: true,
             reauthUrl: `/api/shopify/auth?shop=${shopifyDomain}`
           });
         }
-        return res.status(400).json({ message: "Shopify store not connected. Please connect your store first." });
+        
+        // If we don't even have a shop domain, we can't do anything
+        return res.status(400).json({ 
+          message: "Shopify session not found. Please open the app from your Shopify admin to reconnect." 
+        });
       }
 
       // 2. Map plan handle to specific plan details (pricing, features)

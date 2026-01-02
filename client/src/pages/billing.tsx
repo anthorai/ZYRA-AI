@@ -396,24 +396,26 @@ export default function BillingPage() {
     }
     
     try {
-      // Get shop from URL or local storage fallback
+      // Get shop from context/session
       const urlParams = new URLSearchParams(window.location.search);
       const shop = urlParams.get('shop') || (user as any)?.shopifyDomain || localStorage.getItem('shopify_shop');
-
-      if (!shop) {
-        console.warn("[BILLING] No shop domain found in context");
-      }
 
       const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}${shop ? `&shop=${shop}` : ''}`);
       if (!response.ok) {
         const errorData = await response.json();
-        // If session is missing, the backend might return 401 or a specific flag
+        
+        // MANDATORY: If session is missing/expired, automatically re-authenticate
         if (response.status === 401 || errorData.reauth) {
            const reauthUrl = errorData.reauthUrl || `/api/shopify/auth?shop=${shop}`;
-           window.location.href = reauthUrl;
+           // Redirect the parent window to Shopify auth
+           if (window.top !== window.self) {
+             window.top!.location.href = reauthUrl;
+           } else {
+             window.location.href = reauthUrl;
+           }
            return;
         }
-        throw new Error(errorData.message || "Failed to generate redirect");
+        throw new Error(errorData.message || "Failed to generate billing redirect");
       }
       const data = await response.json();
       if (data.url) {
