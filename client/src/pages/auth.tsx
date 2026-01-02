@@ -130,20 +130,31 @@ export default function Auth() {
     }
   };
 
-  // Check for Shopify installation flow parameters
+  // Check for Shopify installation flow parameters - must run before any redirect
+  // Using layout effect to ensure this runs synchronously before render
+  const shopifyInstallRef = useRef<string | null>(null);
+  
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const shopifyInstall = params.get('shopify_install');
     const shop = params.get('shop');
     
+    console.log('Auth page URL params:', { 
+      shopifyInstall, 
+      shop, 
+      fullSearch: window.location.search,
+      hasUser: !!user
+    });
+    
     if (shopifyInstall) {
       console.log('Shopify installation flow detected:', { shopifyInstall, shop });
+      shopifyInstallRef.current = shopifyInstall;
       setShopifyInstallState(shopifyInstall);
       setShopifyShopName(shop);
       // Default to register for new Shopify installations
       setMode('register');
     }
-  }, []);
+  }, [user]);
 
   // Show messages based on URL params
   useEffect(() => {
@@ -178,15 +189,29 @@ export default function Auth() {
     const associateAndRedirect = async () => {
       if (!user || hasAssociatedRef.current) return;
       
+      // Check for shopify_install param directly from URL (in case state wasn't set yet)
+      const params = new URLSearchParams(window.location.search);
+      const urlShopifyInstall = params.get('shopify_install');
+      const pendingState = shopifyInstallState || urlShopifyInstall || shopifyInstallRef.current;
+      
+      console.log('Associate check:', { 
+        user: user?.email, 
+        shopifyInstallState, 
+        urlShopifyInstall,
+        refValue: shopifyInstallRef.current,
+        pendingState,
+        hasAssociated: hasAssociatedRef.current
+      });
+      
       // If we have a pending Shopify installation, associate it first
-      if (shopifyInstallState && !isAssociatingShopify) {
+      if (pendingState && !isAssociatingShopify) {
         hasAssociatedRef.current = true;
         setIsAssociatingShopify(true);
-        console.log('Associating pending Shopify connection:', shopifyInstallState);
+        console.log('Associating pending Shopify connection:', pendingState);
         
         try {
           const response = await apiRequest('POST', '/api/shopify/associate-pending', {
-            pendingState: shopifyInstallState
+            pendingState: pendingState
           });
           
           if (response.ok) {
@@ -220,8 +245,9 @@ export default function Auth() {
         } finally {
           setIsAssociatingShopify(false);
         }
-      } else if (!shopifyInstallState) {
+      } else if (!pendingState) {
         // No pending Shopify installation, just redirect
+        console.log('No pending Shopify installation, redirecting to dashboard');
         setLocation("/dashboard");
       }
     };
