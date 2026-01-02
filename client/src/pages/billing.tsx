@@ -403,23 +403,20 @@ export default function BillingPage() {
       }
       const data = await response.json();
       if (data.url) {
-        // Redirect to the billing page. In a Shopify embedded app, we must
-        // redirect the top-level window.
+        // Shopify dynamic billing returns the confirmation_url. 
+        // We must redirect the top window to this URL.
         if (window.top !== window.self) {
-          // Inside iframe: post message to parent to redirect
-          // or use window.top directly if permitted (often blocked by browsers)
           try {
             window.top!.location.href = data.url;
           } catch (e) {
-            // Fallback for cross-origin security
             console.error("Failed to redirect top window directly:", e);
+            // Fallback for Shopify App Bridge / postMessage
             window.parent.postMessage(JSON.stringify({
               type: 'shopify_redirect',
               url: data.url
             }), '*');
           }
         } else {
-          // Not in iframe
           window.location.href = data.url;
         }
       }

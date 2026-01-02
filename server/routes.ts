@@ -439,38 +439,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Plan handle is required" });
       }
 
-      // Get shop domain from user's store connection
+      // 1. Get store connection for this user
       let [connection] = await db.select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
-      console.log(`[BILLING] User ${user.id} connection status:`, connection ? "Found" : "Not Found");
+      if (!connection || !connection.shopifyDomain || !connection.accessToken) {
+        console.error(`[BILLING] Store connection missing for user ${user.id}`);
+        return res.status(400).json({ message: "Shopify store not connected. Please connect your store first." });
+      }
 
-      // Fallback for development if no connection is found but user is logged in
-      let shopifyDomain = connection?.shopifyDomain;
+      const shopifyDomain = connection.shopifyDomain;
+      const accessToken = connection.accessToken;
+
+      // 2. Map plan handle to specific plan details (pricing, features)
+      const plans = await getSubscriptionPlans();
+      const plan = plans.find(p => p.planName.toLowerCase() === (planHandle as string).toLowerCase());
       
-      // CRITICAL: In Replit/Dev environments, if no store connection exists, we MUST provide a fallback
-      // or the user can't even test the billing flow.
-      if (!shopifyDomain) {
-        // Check various environment variables for a default shop
-        shopifyDomain = process.env.SHOPIFY_SHOP || process.env.VITE_SHOPIFY_SHOP || "zyra-ai-dev.myshopify.com";
-        console.log(`[BILLING] Using fallback domain for user ${user.id}: ${shopifyDomain}`);
+      if (!plan) {
+        return res.status(400).json({ message: "Invalid plan selected" });
       }
 
-      if (!shopifyDomain) {
-        console.error(`[BILLING] Failed to find shopify domain for user ${user.id}`);
-        return res.status(400).json({ message: "Shopify store not connected. Please connect your store first in Settings." });
-      }
-
-      // Format: /admin/apps/{SHOPIFY_APP_HANDLE}/pricing?plan={PLAN_HANDLE}
+      // 3. Generate a dynamic subscription request via Shopify GraphQL API
+      // This ensures a unique charge per store, per plan, per click
+      const client = new ShopifyGraphQLClient(shopifyDomain, accessToken);
+      
       const appHandle = process.env.SHOPIFY_APP_HANDLE || "zyra-ai";
-      const redirectUrl = `https://${shopifyDomain}/admin/apps/${appHandle}/pricing?plan=${planHandle}`;
-      console.log(`[BILLING] Redirecting user ${user.id} to: ${redirectUrl}`);
+      const returnUrl = `https://${process.env.REPLIT_DEV_DOMAIN || 'zzyraai.com'}/api/billing/shopify-callback?plan_id=${plan.id}`;
 
-      res.json({ url: redirectUrl });
-    } catch (error) {
+      const mutation = `
+        mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $test: Boolean) {
+          appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test) {
+            appSubscription {
+              id
+            }
+            confirmationUrl
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const variables = {
+        name: `Zyra AI ${plan.planName} Plan`,
+        returnUrl: returnUrl,
+        test: process.env.NODE_ENV !== 'production',
+        lineItems: [{
+          plan: {
+            appRecurringPricingDetails: {
+              price: {
+                amount: plan.price,
+                currencyCode: 'USD'
+              },
+              interval: 'EVERY_30_DAYS'
+            }
+          }
+        }]
+      };
+
+      const result = await client.query(mutation, variables);
+      
+      if (result.appSubscriptionCreate?.userErrors?.length > 0) {
+        console.error("[BILLING] Shopify API Error:", result.appSubscriptionCreate.userErrors);
+        throw new Error(result.appSubscriptionCreate.userErrors[0].message);
+      }
+
+      const confirmationUrl = result.appSubscriptionCreate?.confirmationUrl;
+      if (!confirmationUrl) {
+        throw new Error("Failed to generate Shopify confirmation URL");
+      }
+
+      console.log(`[BILLING] Created dynamic charge for ${shopifyDomain}, redirecting to: ${confirmationUrl}`);
+      res.json({ url: confirmationUrl });
+
+    } catch (error: any) {
       console.error("Billing redirect error:", error);
-      res.status(500).json({ message: "Failed to generate redirect" });
+      res.status(500).json({ message: error.message || "Failed to generate dynamic Shopify billing request" });
     }
   });
 
