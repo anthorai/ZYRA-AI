@@ -723,6 +723,8 @@ export const storeConnections = pgTable("store_connections", {
   refreshToken: text("refresh_token"),
   currency: text("currency").default("USD"), // Store's currency code (USD, INR, EUR, GBP, etc.)
   status: text("status").notNull().default("active"), // 'active' | 'inactive' | 'error'
+  installedViaShopify: boolean("installed_via_shopify").default(false), // True if installed from Shopify App Store
+  isConnected: boolean("is_connected").default(true), // Connection status for dashboard auto-attach
   lastSyncAt: timestamp("last_sync_at"),
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),

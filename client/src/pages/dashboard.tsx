@@ -326,28 +326,6 @@ export default function Dashboard() {
       default:
         return (
           <div className="space-y-6">
-            {shouldShowShopifyBanner && (
-              <Card className="border-yellow-500/30 bg-yellow-500/5">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <AlertTriangle className="h-8 w-8 text-yellow-500 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg" data-testid="text-no-store-title">No Shopify Store Connected</h3>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        Install Zyra AI from the Shopify App Store to sync products and enable AI-powered optimizations.
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={() => window.open('https://apps.shopify.com', '_blank')}
-                      data-testid="button-connect-store-dashboard"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Install from Shopify
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
             <GrowthDashboard />
           </div>
         );
