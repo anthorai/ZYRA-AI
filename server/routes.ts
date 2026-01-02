@@ -10033,12 +10033,18 @@ Output format: Markdown with clear section headings.`;
       const { code, state, shop, hmac, timestamp } = req.query;
       
       // Step 1: Validate required parameters
+      // NOTE: 'state' is optional for Shopify-initiated installs (from App Store or Partner Dashboard)
       console.log('📋 Step 1: Validating required parameters...');
-      if (!code || !state || !shop) {
-        console.log('❌ FAILED: Missing required parameters');
+      if (!code || !shop) {
+        console.log('❌ FAILED: Missing required parameters (code or shop)');
+        console.log('  code present:', !!code);
+        console.log('  shop present:', !!shop);
         return res.status(400).send('Missing required parameters');
       }
-      console.log('✅ All required parameters present');
+      
+      const isShopifyInitiatedInstall = !state;
+      console.log('✅ Required parameters present');
+      console.log('  Install type:', isShopifyInitiatedInstall ? 'Shopify-initiated (no state)' : 'App-initiated (with state)');
 
       // Step 2: Sanitize and validate shop parameter
       console.log('📋 Step 2: Sanitizing shop domain...');
@@ -10055,43 +10061,53 @@ Output format: Markdown with clear section headings.`;
       }
       console.log('✅ Shop domain validated');
 
-      // Step 3: Validate state parameter from database
-      console.log('📋 Step 3: Validating OAuth state...');
-      const stateRecords = await db
-        .select()
-        .from(oauthStates)
-        .where(eq(oauthStates.state, state as string))
-        .limit(1);
+      // Step 3: Validate state parameter from database (only for app-initiated installs)
+      let stateData: { userId: string | null; shopDomain: string } | null = null;
       
-      if (stateRecords.length === 0) {
-        console.log('❌ FAILED: Invalid or expired state parameter');
-        return res.status(403).send('Invalid or expired state parameter');
-      }
-      
-      const stateData = stateRecords[0];
-      console.log('  State found, userId:', stateData.userId || 'none (fresh install)');
+      if (isShopifyInitiatedInstall) {
+        // For Shopify-initiated installs (from App Store/Partner Dashboard), no state is present
+        // Security is verified via HMAC instead
+        console.log('📋 Step 3: Skipping state validation (Shopify-initiated install)');
+        console.log('  Will rely on HMAC verification for security');
+        stateData = { userId: null, shopDomain };
+      } else {
+        console.log('📋 Step 3: Validating OAuth state...');
+        const stateRecords = await db
+          .select()
+          .from(oauthStates)
+          .where(eq(oauthStates.state, state as string))
+          .limit(1);
+        
+        if (stateRecords.length === 0) {
+          console.log('❌ FAILED: Invalid or expired state parameter');
+          return res.status(403).send('Invalid or expired state parameter');
+        }
+        
+        stateData = stateRecords[0];
+        console.log('  State found, userId:', stateData.userId || 'none (fresh install)');
 
-      // Check if state is expired
-      const now = new Date();
-      if (now > stateData.expiresAt) {
-        console.log('❌ FAILED: State parameter expired');
-        console.log('  Expired at:', stateData.expiresAt);
-        await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
-        return res.status(403).send('State parameter expired');
-      }
-      
-      const stateAge = now.getTime() - (stateData.createdAt || new Date()).getTime();
-      console.log('  State age:', Math.floor(stateAge / 1000), 'seconds');
+        // Check if state is expired
+        const now = new Date();
+        if (now > stateData.expiresAt) {
+          console.log('❌ FAILED: State parameter expired');
+          console.log('  Expired at:', stateData.expiresAt);
+          await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          return res.status(403).send('State parameter expired');
+        }
+        
+        const stateAge = now.getTime() - (stateData.createdAt || new Date()).getTime();
+        console.log('  State age:', Math.floor(stateAge / 1000), 'seconds');
 
-      // Validate shop domain matches the one from initiation
-      if (shopDomain !== stateData.shopDomain) {
-        console.log('❌ FAILED: Shop domain mismatch');
-        console.log('  Expected:', stateData.shopDomain);
-        console.log('  Got:', shopDomain);
-        await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
-        return res.status(403).send('Shop domain mismatch');
+        // Validate shop domain matches the one from initiation
+        if (shopDomain !== stateData.shopDomain) {
+          console.log('❌ FAILED: Shop domain mismatch');
+          console.log('  Expected:', stateData.shopDomain);
+          console.log('  Got:', shopDomain);
+          await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          return res.status(403).send('Shop domain mismatch');
+        }
+        console.log('✅ State validated successfully');
       }
-      console.log('✅ State validated successfully');
 
       // Step 4: Verify HMAC if present (Shopify includes this for security)
       if (hmac) {
@@ -10102,7 +10118,9 @@ Output format: Markdown with clear section headings.`;
         
         if (!apiSecret) {
           console.error('❌ SHOPIFY_API_SECRET not configured');
-          await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          if (state) {
+            await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          }
           return res.status(500).send('Server configuration error');
         }
         
@@ -10236,12 +10254,18 @@ Output format: Markdown with clear section headings.`;
           console.error('  All verification methods failed. Check SHOPIFY_API_SECRET.');
           console.error('  Provided HMAC (full):', hmac);
           console.error('  Best computed HMAC (full):', callbackHmacResult.computed);
-          await db!.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          if (state) {
+            await db!.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          }
           return res.status(403).send('HMAC verification failed');
         }
         console.log('✅ HMAC verified successfully for callback (method:', callbackHmacResult.method + ')');
+      } else if (isShopifyInitiatedInstall) {
+        // For Shopify-initiated installs, HMAC is required for security since we don't have state validation
+        console.log('❌ HMAC required for Shopify-initiated installs but not provided');
+        return res.status(403).send('HMAC verification required');
       } else {
-        console.log('ℹ️  No HMAC in request (optional)');
+        console.log('ℹ️  No HMAC in request (optional for app-initiated flows)');
       }
 
       // Get userId from validated state (may be empty for fresh installations)
@@ -10251,8 +10275,12 @@ Output format: Markdown with clear section headings.`;
       console.log('  Installation type:', isNewInstallation ? 'New installation' : 'Existing user');
       
       // Delete state after single use (ensures state can only be used once)
-      await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
-      console.log('  State deleted (single-use)');
+      if (state) {
+        await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+        console.log('  State deleted (single-use)');
+      } else {
+        console.log('  No state to delete (Shopify-initiated install)');
+      }
 
       // Step 5: Exchange code for access token
       console.log('📋 Step 5: Exchanging authorization code for access token...');
