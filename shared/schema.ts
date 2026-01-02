@@ -591,6 +591,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   isActive: boolean("is_active").notNull().default(true),
   currency: text("currency").notNull().default("USD"),
   description: text("description"),
+  shopifyPlanHandle: text("shopify_plan_handle"), // Shopify Managed Pricing plan handle (e.g., 'starter', 'growth', 'pro')
   createdAt: timestamp("created_at").default(sql`NOW()`),
 });
 

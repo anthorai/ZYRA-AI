@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
@@ -285,6 +285,7 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("plans");
+  const [syncingSubscription, setSyncingSubscription] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
 
   const scrollToPlans = useCallback(() => {
@@ -294,6 +295,49 @@ export default function BillingPage() {
     }, 100);
   }, []);
   const [isAnnual, setIsAnnual] = useState(false);
+
+  // Sync subscription from Shopify when returning from pricing page
+  useEffect(() => {
+    const syncSubscriptionFromShopify = async () => {
+      // Check if we're returning from Shopify (URL might have shopify-related params or referrer)
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasShopifyReturn = urlParams.has('shop') || 
+                               urlParams.has('charge_id') || 
+                               document.referrer.includes('shopify') ||
+                               document.referrer.includes('admin');
+      
+      if (hasShopifyReturn) {
+        setSyncingSubscription(true);
+        try {
+          const response = await apiRequest('POST', '/api/shopify/billing/sync', {});
+          const result = await response.json();
+          
+          if (result.synced && result.hasActiveSubscription) {
+            // Subscription was synced - refresh data
+            queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+            
+            toast({
+              title: "Plan Activated",
+              description: `Your ${result.plan?.planName || 'subscription'} has been activated successfully.`,
+            });
+          }
+          
+          // Clean up URL params
+          if (urlParams.has('shop') || urlParams.has('charge_id')) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        } catch (error) {
+          console.error('Failed to sync subscription:', error);
+        } finally {
+          setSyncingSubscription(false);
+        }
+      }
+    };
+    
+    syncSubscriptionFromShopify();
+  }, [toast]);
 
   // Fetch real subscription plans from API
   const { 

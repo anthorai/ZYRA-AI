@@ -5784,7 +5784,7 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Change subscription plan - Shopify Managed Pricing only
-  // All payments are handled through Shopify's billing system
+  // All payments are handled through Shopify's billing system (rules 1.2.1 and 4.2.1)
   app.post("/api/subscription/change-plan", requireAuth, sanitizeBody, async (req, res) => {
     try {
       const { planId, billingPeriod = 'monthly' } = req.body;
@@ -5825,94 +5825,68 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      // For paid plans, create Shopify billing subscription
-      // NOTE: All paid subscriptions must go through Shopify's billing system
-      console.log("[SUBSCRIPTION] Paid plan selected, creating Shopify billing subscription");
+      // For paid plans, use Shopify Managed Pricing (rules 1.2.1 and 4.2.1)
+      // Redirect user to /admin/apps/{APP_HANDLE}/pricing?plan={PLAN_HANDLE}
+      console.log("[SUBSCRIPTION] Paid plan selected, using Shopify Managed Pricing");
       
       // Get user's Shopify connection
       const connections = await supabaseStorage.getStoreConnections(userId);
       const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
       
-      if (!shopifyConnection || !shopifyConnection.accessToken || !shopifyConnection.storeUrl) {
+      if (!shopifyConnection || !shopifyConnection.storeUrl) {
         return res.status(400).json({
           error: "Shopify not connected",
           message: "Please connect your Shopify store first to upgrade your plan."
         });
       }
       
-      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '');
-      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '').replace(/\/$/, '');
       
-      // Build return URL for after billing approval
-      const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
-      const returnUrl = `${baseUrl}/billing/confirm?planId=${planId}&billingPeriod=${billingPeriod}`;
-      
-      // Determine if this is a test charge (for development/review)
-      const isTestCharge = process.env.NODE_ENV !== 'production' || process.env.SHOPIFY_TEST_CHARGES === 'true';
-      
-      try {
-        // Calculate price based on billing period (preserve 2 decimal places)
-        const monthlyPrice = Number(selectedPlan.price);
-        const priceAmount = billingPeriod === 'annual' 
-          ? Number((monthlyPrice * 12 * 0.8).toFixed(2)) // 20% discount for annual, keep 2 decimals
-          : monthlyPrice;
-        const interval = billingPeriod === 'annual' ? 'ANNUAL' : 'EVERY_30_DAYS';
-        const currency = selectedPlan.currency || 'USD';
-        
-        // Create subscription using Shopify Billing API with Managed Pricing
-        const subscriptionResult = await graphqlClient.createAppSubscription(
-          selectedPlan.planName,
-          returnUrl,
-          priceAmount,
-          currency,
-          interval as 'EVERY_30_DAYS' | 'ANNUAL',
-          isTestCharge
-        );
-        
-        if (!subscriptionResult) {
-          throw new Error("Failed to create Shopify subscription");
-        }
-        
-        console.log("[SUBSCRIPTION] Shopify subscription created:", subscriptionResult.subscriptionId);
-        console.log("[SUBSCRIPTION] Confirmation URL:", subscriptionResult.confirmationUrl);
-        
-        // Return the confirmation URL for redirect
-        return res.json({
-          success: true,
-          requiresShopifyBilling: true,
-          confirmationUrl: subscriptionResult.confirmationUrl,
-          subscriptionId: subscriptionResult.subscriptionId,
-          plan: selectedPlan,
-          billingPeriod: billingPeriod
-        });
-      } catch (billingError: any) {
-        console.error("[SUBSCRIPTION] Shopify billing error:", billingError);
-        
-        // Check if this is a Managed Pricing error
-        const errorMessage = billingError.message || '';
-        if (errorMessage.includes('Managed Pricing') || errorMessage.includes('cannot use the Billing API')) {
-          // For Managed Pricing apps, redirect to Shopify admin billing page
-          console.log("[SUBSCRIPTION] Managed Pricing detected - redirecting to Shopify admin");
-          
-          // Build Shopify admin URL for the merchant to manage their subscription
-          const shopifyAdminUrl = `https://${shopUrl}/admin/settings/billing`;
-          
-          return res.json({
-            success: true,
-            requiresShopifyBilling: true,
-            useManagedPricing: true,
-            confirmationUrl: shopifyAdminUrl,
-            plan: selectedPlan,
-            billingPeriod: billingPeriod,
-            message: "Your app uses Shopify Managed Pricing. You'll be redirected to Shopify to complete the upgrade."
-          });
-        }
-        
+      // Get Shopify App Handle from environment (required for Managed Pricing)
+      const shopifyAppHandle = process.env.SHOPIFY_APP_HANDLE;
+      if (!shopifyAppHandle) {
+        console.error("[SUBSCRIPTION] SHOPIFY_APP_HANDLE environment variable not set");
         return res.status(500).json({
-          error: "Shopify billing error",
-          message: billingError.message || "Failed to create billing subscription. Please try again."
+          error: "Configuration error",
+          message: "Shopify app configuration is incomplete. Please contact support."
         });
       }
+      
+      // Map Zyra plan to Shopify Managed Pricing plan handle
+      // Use shopifyPlanHandle from database if available, otherwise derive from plan name
+      const planHandleMap: Record<string, string> = {
+        'Starter': 'starter',
+        'Growth': 'growth',
+        'Pro': 'pro',
+        'Enterprise': 'enterprise'
+      };
+      
+      const shopifyPlanHandle = (selectedPlan as any).shopifyPlanHandle || planHandleMap[selectedPlan.planName];
+      
+      if (!shopifyPlanHandle) {
+        console.error("[SUBSCRIPTION] No Shopify plan handle mapping for plan:", selectedPlan.planName);
+        return res.status(400).json({
+          error: "Plan not available",
+          message: "This plan is not available for Shopify billing. Please contact support."
+        });
+      }
+      
+      // Build Shopify Managed Pricing URL
+      // Format: https://{shop}/admin/apps/{app_handle}/pricing?plan={plan_handle}
+      const shopifyPricingUrl = `https://${shopUrl}/admin/apps/${shopifyAppHandle}/pricing?plan=${shopifyPlanHandle}`;
+      
+      console.log("[SUBSCRIPTION] Redirecting to Shopify Managed Pricing URL:", shopifyPricingUrl);
+      
+      return res.json({
+        success: true,
+        requiresShopifyBilling: true,
+        useManagedPricing: true,
+        confirmationUrl: shopifyPricingUrl,
+        shopifyPlanHandle: shopifyPlanHandle,
+        plan: selectedPlan,
+        billingPeriod: billingPeriod,
+        message: "Redirecting to Shopify to complete the upgrade."
+      });
     } catch (error: any) {
       console.error("Error changing subscription plan:", error);
       res.status(500).json({ 
@@ -6027,6 +6001,93 @@ Output format: Markdown with clear section headings.`;
     } catch (error: any) {
       console.error("Error checking Shopify billing status:", error);
       res.status(500).json({ error: "Failed to check billing status" });
+    }
+  });
+
+  // Sync subscription status from Shopify - call after returning from Shopify pricing page
+  // This endpoint queries Shopify to check if a new subscription was approved
+  app.post("/api/shopify/billing/sync", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      console.log(`[Shopify Billing Sync] Syncing subscription for user ${user.id}`);
+      
+      // Get user's Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(user.id);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection || !shopifyConnection.accessToken || !shopifyConnection.storeUrl) {
+        return res.status(400).json({
+          error: "Shopify not connected",
+          synced: false
+        });
+      }
+      
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '').replace(/\/$/, '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+      
+      // Query Shopify for current active subscription
+      const activeSubscription = await graphqlClient.getCurrentActiveSubscription();
+      
+      console.log(`[Shopify Billing Sync] Active subscription from Shopify:`, activeSubscription);
+      
+      if (!activeSubscription) {
+        // No active subscription found
+        return res.json({
+          synced: true,
+          hasActiveSubscription: false,
+          message: "No active subscription found"
+        });
+      }
+      
+      if (activeSubscription.status === 'ACTIVE') {
+        // Find matching plan by name
+        const subscriptionName = activeSubscription.name;
+        const plans = await getSubscriptionPlans();
+        
+        const matchedPlan = plans.find(p => 
+          p.planName.toLowerCase() === subscriptionName?.toLowerCase() ||
+          (p as any).shopifyPlanHandle?.toLowerCase() === subscriptionName?.toLowerCase()
+        );
+        
+        if (matchedPlan) {
+          // Update user subscription to the matched plan
+          await updateUserSubscription(user.id, matchedPlan.id, user.email);
+          await initializeUserCredits(user.id, matchedPlan.id);
+          await NotificationService.notifySubscriptionChanged(user.id, matchedPlan.id);
+          
+          console.log(`[Shopify Billing Sync] Activated plan ${matchedPlan.planName} for user ${user.id}`);
+          
+          return res.json({
+            synced: true,
+            hasActiveSubscription: true,
+            plan: matchedPlan,
+            status: 'active',
+            message: "Subscription synced successfully"
+          });
+        } else {
+          console.warn(`[Shopify Billing Sync] No matching plan found for: ${subscriptionName}`);
+          return res.json({
+            synced: true,
+            hasActiveSubscription: true,
+            shopifyPlanName: subscriptionName,
+            message: "Active subscription found but no matching plan in system"
+          });
+        }
+      } else {
+        return res.json({
+          synced: true,
+          hasActiveSubscription: false,
+          status: activeSubscription.status,
+          message: `Subscription status: ${activeSubscription.status}`
+        });
+      }
+    } catch (error: any) {
+      console.error("[Shopify Billing Sync] Error:", error);
+      res.status(500).json({ 
+        error: "Failed to sync subscription",
+        message: error.message 
+      });
     }
   });
 
@@ -14095,6 +14156,93 @@ Output format: Markdown with clear section headings.`;
       console.error('Error handling app uninstalled webhook:', error);
       // Still return 200 to prevent Shopify retries
       res.status(200).json({ success: false });
+    }
+  });
+
+  // APP_SUBSCRIPTIONS_UPDATE Webhook - Handle subscription changes from Shopify Managed Pricing
+  // Triggered when merchant approves, declines, or changes subscription via Shopify admin
+  app.post('/api/webhooks/shopify/app_subscriptions/update', verifyShopifyWebhook, async (req, res) => {
+    // CRITICAL: Respond immediately to prevent 503 timeout
+    res.status(200).json({ success: true });
+    
+    try {
+      const subscriptionData = req.body;
+      const shopDomain = req.get('X-Shopify-Shop-Domain') || '';
+      
+      console.log('💳 [APP_SUBSCRIPTIONS_UPDATE] Webhook received:', {
+        shop: shopDomain,
+        subscription_id: subscriptionData.app_subscription?.admin_graphql_api_id,
+        status: subscriptionData.app_subscription?.status,
+        name: subscriptionData.app_subscription?.name
+      });
+      
+      const appSubscription = subscriptionData.app_subscription;
+      if (!appSubscription) {
+        console.error('❌ [APP_SUBSCRIPTIONS_UPDATE] Missing app_subscription in payload');
+        return;
+      }
+      
+      // Find the store connection by shop domain
+      const connections = await supabaseStorage.getStoreConnections('');
+      const shopifyConnection = connections.find(c => 
+        c.platform === 'shopify' && 
+        c.storeUrl?.includes(shopDomain)
+      );
+      
+      if (!shopifyConnection || !shopifyConnection.userId) {
+        console.error('❌ [APP_SUBSCRIPTIONS_UPDATE] No connection found for shop:', shopDomain);
+        return;
+      }
+      
+      const userId = shopifyConnection.userId;
+      const subscriptionStatus = appSubscription.status; // ACTIVE, CANCELLED, DECLINED, EXPIRED, FROZEN, PENDING
+      const subscriptionName = appSubscription.name; // Plan name from Shopify
+      
+      console.log(`💳 [APP_SUBSCRIPTIONS_UPDATE] Processing for user ${userId}:`, {
+        status: subscriptionStatus,
+        planName: subscriptionName
+      });
+      
+      // Map Shopify subscription name to our plan
+      const plans = await getSubscriptionPlans();
+      let matchedPlan = plans.find(p => 
+        p.planName.toLowerCase() === subscriptionName?.toLowerCase() ||
+        (p as any).shopifyPlanHandle?.toLowerCase() === subscriptionName?.toLowerCase()
+      );
+      
+      // Handle subscription status changes
+      if (subscriptionStatus === 'ACTIVE' && matchedPlan) {
+        // Subscription approved - activate the plan
+        console.log(`✅ [APP_SUBSCRIPTIONS_UPDATE] Activating plan ${matchedPlan.planName} for user ${userId}`);
+        
+        const user = await supabaseStorage.getUserById(userId);
+        if (user) {
+          await updateUserSubscription(userId, matchedPlan.id, user.email);
+          await initializeUserCredits(userId, matchedPlan.id);
+          await NotificationService.notifySubscriptionChanged(userId, matchedPlan.id);
+        }
+      } else if (subscriptionStatus === 'CANCELLED' || subscriptionStatus === 'EXPIRED') {
+        // Subscription cancelled - downgrade to free tier
+        console.log(`⚠️ [APP_SUBSCRIPTIONS_UPDATE] Subscription ${subscriptionStatus} for user ${userId}`);
+        
+        const freePlan = plans.find(p => Number(p.price) === 0 || p.planName === '7-Day Free Trial');
+        if (freePlan) {
+          const user = await supabaseStorage.getUserById(userId);
+          if (user) {
+            await updateUserSubscription(userId, freePlan.id, user.email);
+            await initializeUserCredits(userId, freePlan.id);
+          }
+        }
+      } else if (subscriptionStatus === 'DECLINED') {
+        console.log(`❌ [APP_SUBSCRIPTIONS_UPDATE] Subscription declined by merchant for user ${userId}`);
+        // No action needed - user stays on current plan
+      } else if (subscriptionStatus === 'FROZEN') {
+        console.log(`🔒 [APP_SUBSCRIPTIONS_UPDATE] Subscription frozen for user ${userId}`);
+        // Subscription frozen due to payment issues - could limit features
+      }
+      
+    } catch (error) {
+      console.error('❌ [APP_SUBSCRIPTIONS_UPDATE] Error handling webhook:', error);
     }
   });
 
