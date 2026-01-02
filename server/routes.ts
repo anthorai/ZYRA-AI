@@ -314,9 +314,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               console.warn(`⚠️ [AUTO TRIAL] Failed to grant trial: ${trialResult.message}`);
             }
-          } catch (error) {
-            console.error('Failed to auto-provision user profile:', error);
-            return res.status(500).json({ message: "Failed to create user profile" });
+          } catch (error: any) {
+            console.error('Failed to auto-provision user profile:', {
+              error: error?.message,
+              userId: user.id,
+              email: user.email,
+              stack: error?.stack
+            });
+            // Check if this is a duplicate key error - user might already exist
+            if (error?.message?.includes('duplicate') || error?.message?.includes('unique')) {
+              // Try to get the existing user
+              try {
+                userProfile = await supabaseStorage.getUser(user.id);
+                if (!userProfile) {
+                  userProfile = await supabaseStorage.getUserByEmail(user.email!);
+                }
+                if (userProfile) {
+                  console.log('Found existing user after duplicate error:', userProfile.email);
+                  // Continue with existing profile
+                }
+              } catch (retryError) {
+                console.error('Retry lookup failed:', retryError);
+              }
+            }
+            if (!userProfile) {
+              return res.status(500).json({ message: "Failed to create user profile" });
+            }
           }
         }
       }
@@ -9970,8 +9993,8 @@ Output format: Markdown with clear section headings.`;
       // Generate secure nonce (reuse crypto module from above)
       const state = crypto.randomBytes(32).toString('hex');
       
-      // Store state in database with expiration (10 minutes)
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      // Store state in database with expiration (30 minutes - gives time for email verification)
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
       await db.insert(oauthStates).values({
         state,
         userId: null, // Will be filled after user logs in/signs up
@@ -10354,10 +10377,10 @@ Output format: Markdown with clear section headings.`;
       // Handle new installation without userId AND no existing connection (fresh from App Store)
       if (isNewInstallation && !resolvedUserId) {
         console.log('📋 NEW INSTALLATION FLOW: User not logged in');
-        // Store pending connection in database temporarily (10 minutes expiration)
+        // Store pending connection in database temporarily (30 minutes - gives time for email verification)
         const cryptoModule = await import('crypto');
         const pendingState = cryptoModule.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
         
         // Store with metadata JSON for pending installation data
         await db.insert(oauthStates).values({
