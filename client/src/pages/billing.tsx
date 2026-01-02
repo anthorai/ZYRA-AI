@@ -434,13 +434,17 @@ export default function BillingPage() {
       const plan = plans.find(p => p.id === planId);
       if (plan && plan.planName !== "7-Day Free Trial") {
         const planAny = plan as any;
-        const planHandle = planAny.shopifyPlanHandle;
+        const planHandle = planAny.shopifyPlanHandle || (plan.planName.toLowerCase() === 'starter' ? 'starter' : plan.planName.toLowerCase() === 'growth' ? 'growth' : plan.planName.toLowerCase() === 'pro' ? 'pro' : undefined);
+        
+        // Log for debugging
+        console.log(`[BILLING] Upgrading to plan: ${plan.planName}, Shopify handle: ${planHandle}`);
+        
         if (planHandle) {
           handleUpgrade(planHandle);
         } else {
           toast({
-            title: "Error",
-            description: "Plan handle missing for this subscription",
+            title: "Plan unavailable",
+            description: "Shopify plan handle is missing. Please contact support.",
             variant: "destructive",
           });
         }
@@ -955,7 +959,7 @@ export default function BillingPage() {
                         disabled={isCurrentPlan || processingPlanId !== null}
                         onClick={() => {
                           const planAny = plan as any;
-                          const planHandle = planAny.shopifyPlanHandle;
+                          const planHandle = planAny.shopifyPlanHandle || (plan.planName.toLowerCase() === 'starter' ? 'starter' : plan.planName.toLowerCase() === 'growth' ? 'growth' : plan.planName.toLowerCase() === 'pro' ? 'pro' : undefined);
                           
                           if (isCurrentPlan) return;
                           
