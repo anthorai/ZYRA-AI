@@ -10481,21 +10481,22 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation from Shopify App Store - redirect back to Shopify admin (rule 2.3.1 compliance)
-        // This keeps the user inside Shopify's app surface after install
-        const shopifyAdminUrl = `https://${shop}/admin/apps/zyra-ai`;
-        console.log('  Redirecting to Shopify admin:', shopifyAdminUrl);
+        // Direct installation from Shopify - redirect to ZYRA AI dashboard (standalone app)
+        const dashboardUrl = process.env.PRODUCTION_DOMAIN 
+          ? `${process.env.PRODUCTION_DOMAIN}/dashboard?shopify=connected`
+          : `${req.protocol}://${req.get('host')}/dashboard?shopify=connected`;
+        console.log('  Redirecting to dashboard:', dashboardUrl);
         
         res.send(`
           <html>
             <head>
-              <meta http-equiv="refresh" content="0;url=${shopifyAdminUrl}">
+              <meta http-equiv="refresh" content="0;url=${dashboardUrl}">
             </head>
             <body>
               <script>
-                window.location.href = '${shopifyAdminUrl}';
+                window.location.href = '${dashboardUrl}';
               </script>
-              <p>Installation successful! Redirecting to Shopify admin...</p>
+              <p>Installation successful! Redirecting to your dashboard...</p>
             </body>
           </html>
         `);
@@ -11244,12 +11245,32 @@ Output format: Markdown with clear section headings.`;
       console.error('❌ [SHOPIFY SYNC] Sync failed:', error);
       console.error('❌ [SHOPIFY SYNC] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Check if this is a 401 (invalid/revoked token) error - mark connection as inactive
+      if (errorMessage.includes('401') || errorMessage.includes('Invalid API key') || errorMessage.includes('unrecognized login')) {
+        console.warn('⚠️  [SHOPIFY SYNC] Token appears invalid or revoked - marking connection as inactive');
+        try {
+          const connections = await supabaseStorage.getStoreConnections(userId);
+          const shopifyConnection = connections.find(c => c.platform === 'shopify');
+          if (shopifyConnection) {
+            await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
+              status: 'inactive',
+              isConnected: false
+            });
+            console.log('✅ [SHOPIFY SYNC] Connection marked as inactive due to invalid token');
+          }
+        } catch (updateError) {
+          console.error('⚠️  [SHOPIFY SYNC] Failed to mark connection as inactive:', updateError);
+        }
+      }
+      
       // Update sync history with error (only if sync record was successfully created)
       if (syncHistoryAvailable && syncRecord) {
         try {
           await supabaseStorage.updateSyncHistory(syncRecord.id, {
             status: 'failed',
-            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            errorMessage,
             completedAt: new Date() as any
           });
           console.log('✅ [SHOPIFY SYNC] Updated sync history with error status');
@@ -11262,7 +11283,7 @@ Output format: Markdown with clear section headings.`;
       
       res.status(500).json({ 
         error: 'Failed to sync Shopify products',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: errorMessage
       });
     }
   });
