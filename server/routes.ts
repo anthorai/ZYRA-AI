@@ -10329,10 +10329,30 @@ Output format: Markdown with clear section headings.`;
       const shopInfo = await shopInfoResponse.json();
       const shopName = shopInfo.shop?.name || shop;
       const storeCurrency = shopInfo.shop?.currency || 'USD'; // Extract store currency (INR, USD, EUR, etc.)
-      console.log('✅ Shop info received:', { shopName, currency: storeCurrency });
+      const shopOwnerEmail = shopInfo.shop?.email || null;
+      console.log('✅ Shop info received:', { shopName, currency: storeCurrency, ownerEmail: shopOwnerEmail ? 'present' : 'none' });
 
-      // Handle new installation without userId (fresh from App Store)
+      // For Shopify-initiated installs without userId, try to find existing connection by shop domain
+      let resolvedUserId = userId;
       if (isNewInstallation) {
+        console.log('📋 Shopify-initiated install: Checking for existing connection by shop domain...');
+        
+        // Check if this shop is already connected to any user
+        const existingConnectionResult = await db.select()
+          .from(storeConnections)
+          .where(eq(storeConnections.storeUrl, `https://${shop}`))
+          .limit(1);
+        
+        if (existingConnectionResult.length > 0) {
+          resolvedUserId = existingConnectionResult[0].userId;
+          console.log('✅ Found existing connection for shop, using userId:', resolvedUserId);
+        } else {
+          console.log('  No existing connection found for this shop');
+        }
+      }
+
+      // Handle new installation without userId AND no existing connection (fresh from App Store)
+      if (isNewInstallation && !resolvedUserId) {
         console.log('📋 NEW INSTALLATION FLOW: User not logged in');
         // Store pending connection in database temporarily (10 minutes expiration)
         const cryptoModule = await import('crypto');
@@ -10378,8 +10398,12 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Step 7: Store connection in database
+      // Use resolvedUserId which may have been found from existing connection for Shopify-initiated installs
+      const effectiveUserId = resolvedUserId || userId;
       console.log('📋 Step 7: Saving connection to database...');
-      const existingConnections = await supabaseStorage.getStoreConnections(userId);
+      console.log('  Effective userId:', effectiveUserId);
+      
+      const existingConnections = await supabaseStorage.getStoreConnections(effectiveUserId);
       const shopifyConnection = existingConnections.find(conn => conn.platform === 'shopify');
 
       if (shopifyConnection) {
@@ -10394,10 +10418,10 @@ Output format: Markdown with clear section headings.`;
         });
         console.log('✅ Connection updated successfully');
       } else {
-        console.log('  Creating new connection for user:', userId);
+        console.log('  Creating new connection for user:', effectiveUserId);
         // Create new connection
         await supabaseStorage.createStoreConnection({
-          userId,
+          userId: effectiveUserId,
           platform: 'shopify',
           storeName: shopName,
           storeUrl: `https://${shop}`,
