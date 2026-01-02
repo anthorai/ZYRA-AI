@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,10 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { FcGoogle } from "react-icons/fc";
+import { Store } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
 const loginSchema = z.object({
@@ -36,6 +39,12 @@ export default function Auth() {
   // Use loading states from auth hook
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Shopify installation flow state
+  const [shopifyInstallState, setShopifyInstallState] = useState<string | null>(null);
+  const [shopifyShopName, setShopifyShopName] = useState<string | null>(null);
+  const [isAssociatingShopify, setIsAssociatingShopify] = useState(false);
+  const hasAssociatedRef = useRef(false);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -121,6 +130,21 @@ export default function Auth() {
     }
   };
 
+  // Check for Shopify installation flow parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shopifyInstall = params.get('shopify_install');
+    const shop = params.get('shop');
+    
+    if (shopifyInstall) {
+      console.log('Shopify installation flow detected:', { shopifyInstall, shop });
+      setShopifyInstallState(shopifyInstall);
+      setShopifyShopName(shop);
+      // Default to register for new Shopify installations
+      setMode('register');
+    }
+  }, []);
+
   // Show messages based on URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -142,23 +166,109 @@ export default function Auth() {
       });
     }
     
-    // Clean up the URL parameters
+    // Clean up the URL parameters (but keep shopify_install for association)
     if (redirectReason || confirmed) {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
   }, [toast]);
 
-  // Redirect if user is already logged in
+  // Handle user authentication - associate Shopify if needed, then redirect
   useEffect(() => {
-    if (user) {
-      setLocation("/dashboard");
-    }
-  }, [user, setLocation]);
+    const associateAndRedirect = async () => {
+      if (!user || hasAssociatedRef.current) return;
+      
+      // If we have a pending Shopify installation, associate it first
+      if (shopifyInstallState && !isAssociatingShopify) {
+        hasAssociatedRef.current = true;
+        setIsAssociatingShopify(true);
+        console.log('Associating pending Shopify connection:', shopifyInstallState);
+        
+        try {
+          const response = await apiRequest('POST', '/api/shopify/associate-pending', {
+            pendingState: shopifyInstallState
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Shopify connection associated successfully:', data);
+            toast({
+              title: "Store Connected!",
+              description: `${data.shopName || 'Your Shopify store'} has been connected to Zyra AI.`,
+            });
+            // Redirect to dashboard with success indicator
+            setLocation("/dashboard?shopify=connected");
+          } else {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('Failed to associate Shopify connection:', errorData);
+            toast({
+              title: "Store Connection Issue",
+              description: errorData.error || "Your store connection may have expired. Please try reinstalling from Shopify.",
+              variant: "destructive",
+            });
+            // Still redirect to dashboard, store connection can be done manually
+            setLocation("/dashboard");
+          }
+        } catch (error) {
+          console.error('Error associating Shopify connection:', error);
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect your store. Please try again from the integrations page.",
+            variant: "destructive",
+          });
+          setLocation("/dashboard");
+        } finally {
+          setIsAssociatingShopify(false);
+        }
+      } else if (!shopifyInstallState) {
+        // No pending Shopify installation, just redirect
+        setLocation("/dashboard");
+      }
+    };
+    
+    associateAndRedirect();
+  }, [user, shopifyInstallState, isAssociatingShopify, toast, setLocation]);
+
+  // Show loading state while associating Shopify
+  if (isAssociatingShopify) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+        <div className="max-w-sm sm:max-w-md w-full">
+          <Card className="gradient-card border-0">
+            <CardContent className="p-6 sm:p-8 text-center">
+              <div className="mx-auto mb-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
+                  <Store className="w-8 h-8 text-primary animate-pulse" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Connecting Your Store</h2>
+              <p className="text-muted-foreground mb-4">
+                Setting up {shopifyShopName || 'your Shopify store'} with Zyra AI...
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                <span className="text-sm text-muted-foreground">Please wait</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
       <div className="max-w-sm sm:max-w-md w-full">
+        {/* Shopify Installation Banner */}
+        {shopifyInstallState && (
+          <Alert className="mb-4 bg-primary/10 border-primary/30">
+            <Store className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Almost there!</strong> {shopifyShopName ? `Sign up to connect ${shopifyShopName}` : 'Create an account to complete your Shopify store connection'}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Card className="gradient-card border-0" data-testid="card-auth">
           <CardContent className="p-6 sm:p-8">
             <div className="text-center mb-6 sm:mb-8">
@@ -166,10 +276,14 @@ export default function Auth() {
                 <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold" data-testid="text-auth-title">
-                {mode === 'login' ? 'Welcome Back' : 'Get Started'}
+                {shopifyInstallState 
+                  ? 'Complete Setup' 
+                  : (mode === 'login' ? 'Welcome Back' : 'Get Started')}
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground" data-testid="text-auth-subtitle">
-                {mode === 'login' ? 'Sign in to your Zyra AI account' : 'Create your free Zyra AI account'}
+                {shopifyInstallState 
+                  ? 'Sign in or create an account to connect your store'
+                  : (mode === 'login' ? 'Sign in to your Zyra AI account' : 'Create your free Zyra AI account')}
               </p>
             </div>
 
