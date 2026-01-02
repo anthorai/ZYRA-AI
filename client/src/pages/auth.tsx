@@ -208,15 +208,30 @@ export default function Auth() {
     const associateAndRedirect = async () => {
       if (!user || hasAssociatedRef.current) return;
       
-      // Check for shopify_install param directly from URL (in case state wasn't set yet)
+      // Check for shopify_install param from multiple sources:
+      // 1. React state (set from URL on initial load)
+      // 2. URL params (in case state wasn't set yet)
+      // 3. Ref value (backup)
+      // 4. localStorage (CRITICAL: survives page reloads from email confirmation)
       const params = new URLSearchParams(window.location.search);
       const urlShopifyInstall = params.get('shopify_install');
-      const pendingState = shopifyInstallState || urlShopifyInstall || shopifyInstallRef.current;
+      const storedInstall = localStorage.getItem('pending_shopify_install');
+      const storedShop = localStorage.getItem('pending_shopify_shop');
+      
+      // Priority: URL param > React state > ref > localStorage
+      const pendingState = urlShopifyInstall || shopifyInstallState || shopifyInstallRef.current || storedInstall;
+      
+      // Update shop name if we have stored value
+      if (storedShop && !shopifyShopName) {
+        setShopifyShopName(storedShop);
+      }
       
       console.log('Associate check:', { 
         user: user?.email, 
         shopifyInstallState, 
         urlShopifyInstall,
+        storedInstall,
+        storedShop,
         refValue: shopifyInstallRef.current,
         pendingState,
         hasAssociated: hasAssociatedRef.current
@@ -287,7 +302,7 @@ export default function Auth() {
     };
     
     associateAndRedirect();
-  }, [user, shopifyInstallState, isAssociatingShopify, toast, setLocation]);
+  }, [user, shopifyInstallState, shopifyShopName, isAssociatingShopify, toast, setLocation]);
 
   // Show loading state while associating Shopify
   if (isAssociatingShopify) {
