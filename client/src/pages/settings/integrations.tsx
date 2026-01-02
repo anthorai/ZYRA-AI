@@ -36,9 +36,9 @@ export default function IntegrationsPage() {
       type: "E-Commerce Platform",
       icon: <ShoppingBag className="w-5 h-5" />,
       isConnected: false,
-      description: "Sync your Shopify products, collections, and analytics with Zyra AI to enable real-time optimization, auto publishing, and sales automation.",
-      label: "For Shopify Sellers 🛒",
-      tooltip: "Required to sync products, analytics, and automation between Zyra AI & your Shopify store.",
+      description: "Install Zyra AI from the Shopify App Store to sync your products, collections, and analytics. Authentication is handled securely through Shopify.",
+      label: "For Shopify Sellers",
+      tooltip: "Install from the Shopify App Store to connect your store. This ensures secure authentication compliant with Shopify policies.",
       labelType: "recommended"
     },
     {
@@ -127,7 +127,6 @@ export default function IntegrationsPage() {
 
   const [showApiKeyInput, setShowApiKeyInput] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
-  const [shopDomain, setShopDomain] = useState("");
   const [emailProvider, setEmailProvider] = useState<"sendgrid" | "brevo">("sendgrid");
   const [fromEmail, setFromEmail] = useState("");
   
@@ -141,28 +140,12 @@ export default function IntegrationsPage() {
   const [showShopifySetup, setShowShopifySetup] = useState(false);
   const [shopifyValidation, setShopifyValidation] = useState<any>(null);
   const [isValidating, setIsValidating] = useState(false);
-  
-  // Shopify connect modal state
-  const [showShopifyConnectModal, setShowShopifyConnectModal] = useState(false);
-  const [shopifyConnectDomain, setShopifyConnectDomain] = useState("");
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Check for success/error query parameters on mount (from Shopify OAuth redirect)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const shopifyConnected = urlParams.get('shopify');
-    const connectParam = urlParams.get('connect');
-    
-    // Auto-open Shopify connect modal if ?connect=shopify is in URL
-    if (connectParam === 'shopify') {
-      setShowShopifyConnectModal(true);
-      // Clean up the URL
-      urlParams.delete('connect');
-      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-      window.history.replaceState({}, '', newUrl);
-    }
     
     if (shopifyConnected === 'connected') {
       toast({
@@ -430,184 +413,18 @@ export default function IntegrationsPage() {
     });
   };
 
-  const initiateShopifyOAuth = async (shop: string) => {
-    // Validate input before processing
-    const trimmedShop = shop.trim();
-    if (!trimmedShop) {
-      toast({
-        title: "Store Domain Required",
-        description: "Please enter your Shopify store domain",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return;
-    }
-    
-    // Remove protocol and trailing slash for validation
-    let cleanedForValidation = trimmedShop.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
-    
-    // Extract store name from domain (remove .myshopify.com if present)
-    const storeName = cleanedForValidation.replace(/\.myshopify\.com$/, '');
-    
-    console.log('🔵 [VALIDATION] Input:', trimmedShop);
-    console.log('🔵 [VALIDATION] Cleaned:', cleanedForValidation);
-    console.log('🔵 [VALIDATION] Store name to validate:', storeName);
-    
-    // Validate store name contains only alphanumeric characters, hyphens, and underscores
-    // Shopify allows: letters, numbers, hyphens, and underscores
-    const validStoreNamePattern = /^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$/;
-    if (!validStoreNamePattern.test(storeName)) {
-      console.error('🔴 [VALIDATION] Pattern test FAILED for:', storeName);
-      toast({
-        title: "Invalid Store Domain",
-        description: "Store name must contain only lowercase letters, numbers, hyphens, and underscores (e.g., 'my-store', 'my_store', or 'mystore123')",
-        variant: "destructive",
-        duration: 5000,
-      });
-      return;
-    }
-    
-    console.log('✅ [VALIDATION] Pattern test PASSED for:', storeName);
-    
-    setIsConnecting(true);
-    try {
-        // Sanitize shop domain: remove protocol, trailing slashes, and whitespace
-        let cleanShop = trimmedShop;
-        cleanShop = cleanShop.replace(/^https?:\/\//, ''); // Remove http:// or https://
-        cleanShop = cleanShop.replace(/\/$/, ''); // Remove trailing slash
-        cleanShop = cleanShop.toLowerCase(); // Normalize to lowercase
-        
-        // If user just entered the store name (e.g., "mystore"), append .myshopify.com
-        if (!cleanShop.includes('.')) {
-          cleanShop = `${cleanShop}.myshopify.com`;
-        }
-        
-        console.log('🔵 [SHOPIFY] Starting OAuth flow for shop:', cleanShop);
-        console.log('🔵 [SHOPIFY] Original input:', shop, '→ Cleaned:', cleanShop);
-        
-        const { supabase } = await import('@/lib/supabaseClient');
-        const { data: sessionData } = await supabase.auth.getSession();
-        let token = sessionData.session?.access_token || '';
-
-        console.log('🔵 [SHOPIFY] Session token status:', !!token);
-
-        // If no token, try refreshing the session
-        if (!token) {
-          console.log('🔵 [SHOPIFY] No token found, refreshing session...');
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          token = refreshData.session?.access_token || '';
-          console.log('🔵 [SHOPIFY] After refresh, token status:', !!token);
-        }
-
-        if (!token) {
-          console.error('🔴 [SHOPIFY] No valid token available');
-          toast({
-            title: "Authentication Required",
-            description: "Please log in again to connect Shopify",
-            variant: "destructive",
-            duration: 3000,
-          });
-          // Reset loading state to allow retry after re-authentication
-          setIsConnecting(false);
-          return;
-        }
-
-        console.log('🔵 [SHOPIFY] Making POST request to /api/shopify/auth...');
-        console.log('🔵 [SHOPIFY] Request details:', {
-          url: '/api/shopify/auth',
-          method: 'POST',
-          shop: cleanShop,
-          hasToken: !!token,
-          tokenLength: token.length
-        });
-
-        const response = await fetch('/api/shopify/auth', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ shop: cleanShop }),
-          credentials: 'include'
-        });
-
-        console.log('🔵 [SHOPIFY] Response received:', {
-          ok: response.ok,
-          status: response.status,
-          statusText: response.statusText
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('🔴 [SHOPIFY] Server error response:', errorData);
-          throw new Error(errorData.error || 'Failed to initiate Shopify OAuth');
-        }
-
-        const data = await response.json();
-        
-        // Diagnostic logging for troubleshooting
-        console.log('\n🔵 ========================================');
-        console.log('🔵 SHOPIFY OAUTH INITIATED');
-        console.log('🔵 ========================================');
-        console.log('📍 Shop domain (cleaned):', cleanShop);
-        console.log('🔗 Redirect URI:', data.redirectUri);
-        console.log('🚀 Full auth URL:', data.authUrl);
-        console.log('========================================\n');
-        
-        // Direct redirect to Shopify authorization (no popup)
-        // After authorization, Shopify will redirect back to our callback
-        // which will then redirect to settings page with success/error status
-        console.log('🔄 Redirecting to Shopify authorization...');
-        
-        // Close modal and reset state before redirect
-        setShowShopifyConnectModal(false);
-        setShopifyConnectDomain("");
-        setIsConnecting(false);
-        setConnectionError(null); // Clear any previous errors
-        
-        // Small delay to allow state updates before redirect
-        setTimeout(() => {
-          window.location.href = data.authUrl;
-        }, 100);
-      } catch (error: any) {
-        console.error('🔴 [SHOPIFY ERROR] Full error object:', error);
-        console.error('🔴 [SHOPIFY ERROR] Error message:', error.message);
-        console.error('🔴 [SHOPIFY ERROR] Error stack:', error.stack);
-        
-        const errorMessage = error.message || "Failed to connect to Shopify";
-        const isRedirectUriError = errorMessage.includes('redirect_uri') || errorMessage.includes('invalid_request') || errorMessage.includes('not whitelisted');
-        
-        // Store error in state for persistent display
-        const displayError = isRedirectUriError
-          ? "Redirect URI mismatch. Click 'Setup Guide' to get the correct URL for your Shopify app."
-          : `Error: ${errorMessage}`;
-        
-        setConnectionError(displayError);
-        
-        // Also show alert that won't disappear
-        alert(`SHOPIFY CONNECTION ERROR:\n\n${displayError}\n\nCheck browser console for details.`);
-        
-        toast({
-          title: "Connection Failed",
-          description: displayError,
-          variant: "destructive",
-          duration: 60000, // 60 seconds
-        });
-        
-        if (isRedirectUriError) {
-          // Auto-open setup guide after a short delay
-          setTimeout(() => validateShopifySetup(), 1000);
-        }
-        
-        // Reset loading state but KEEP modal open for immediate retry
-        setIsConnecting(false);
-      }
-  };
 
   const handleConnect = async (id: string) => {
-    // Special handling for Shopify OAuth
+    // Shopify 2.3.1 Compliance: Installation must be initiated only from Shopify-owned surfaces
+    // Users must install the app from the Shopify App Store, not by entering a store URL here
     if (id === 'shopify') {
-      setShowShopifyConnectModal(true);
+      toast({
+        title: "Install from Shopify App Store",
+        description: "To connect your store, please install Zyra AI from the Shopify App Store. This ensures secure authentication and compliance with Shopify policies.",
+        duration: 8000,
+      });
+      // Open Shopify App Store in new tab (replace with actual app listing URL when published)
+      window.open('https://apps.shopify.com', '_blank');
       return;
     }
 
@@ -1523,105 +1340,6 @@ export default function IntegrationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Shopify Connect Modal */}
-      <Dialog open={showShopifyConnectModal} onOpenChange={setShowShopifyConnectModal}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md pointer-events-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5" />
-              Connect Shopify Store
-            </DialogTitle>
-            <DialogDescription className="text-slate-300">
-              Enter your Shopify store domain to connect your store to Zyra AI
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {connectionError && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Connection Error</AlertTitle>
-                <AlertDescription className="text-sm">
-                  {connectionError}
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="shopify-domain" className="text-white">
-                Store Domain
-              </Label>
-              <Input
-                id="shopify-domain"
-                type="text"
-                value={shopifyConnectDomain}
-                onChange={(e) => {
-                  setShopifyConnectDomain(e.target.value);
-                  setConnectionError(null); // Clear error when user types
-                }}
-                placeholder="mystore.myshopify.com or just mystore"
-                className="bg-slate-800 border-slate-600 text-white placeholder:text-slate-400"
-                disabled={isConnecting}
-                data-testid="input-shopify-domain"
-              />
-              <p className="text-xs text-slate-400">
-                Enter your store name (e.g., "mystore") or full domain (e.g., "mystore.myshopify.com")
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowShopifyConnectModal(false);
-                setShopifyConnectDomain("");
-              }}
-              disabled={isConnecting}
-              className="border-slate-600 text-slate-300 hover:bg-slate-800"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                console.log('🔵 [BUTTON CLICK] Connect Store button clicked');
-                console.log('🔵 [BUTTON CLICK] Domain value:', shopifyConnectDomain);
-                console.log('🔵 [BUTTON CLICK] Trimmed value:', shopifyConnectDomain.trim());
-                console.log('🔵 [BUTTON CLICK] Is connecting:', isConnecting);
-                console.log('🔵 [BUTTON CLICK] Button disabled?:', !shopifyConnectDomain.trim() || isConnecting);
-                initiateShopifyOAuth(shopifyConnectDomain);
-              }}
-              disabled={!shopifyConnectDomain.trim() || isConnecting}
-              className="gradient-button"
-              data-testid="button-connect-shopify-confirm"
-            >
-              {isConnecting ? (
-                <>
-                  <span className="animate-spin mr-2">⏳</span>
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Link2 className="w-4 h-4 mr-2" />
-                  Connect Store
-                </>
-              )}
-            </Button>
-          </div>
-          
-          {/* Debug info below button */}
-          {shopifyConnectDomain && !shopifyConnectDomain.trim() && (
-            <p className="text-xs text-yellow-400 mt-2">
-              ⚠️ Input contains only whitespace
-            </p>
-          )}
-          {!shopifyConnectDomain && (
-            <p className="text-xs text-slate-400 mt-2">
-              Please enter your store domain above
-            </p>
-          )}
-        </DialogContent>
-      </Dialog>
     </PageShell>
   );
 }

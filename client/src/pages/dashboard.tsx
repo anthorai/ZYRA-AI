@@ -334,15 +334,15 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg" data-testid="text-no-store-title">No Shopify Store Connected</h3>
                       <p className="text-muted-foreground text-sm mt-1">
-                        Connect your Shopify store to sync products, manage inventory, and enable AI-powered optimizations.
+                        Install Zyra AI from the Shopify App Store to sync products and enable AI-powered optimizations.
                       </p>
                     </div>
                     <Button 
-                      onClick={() => setLocation("/settings/integrations?connect=shopify")}
+                      onClick={() => window.open('https://apps.shopify.com', '_blank')}
                       data-testid="button-connect-store-dashboard"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Connect Store
+                      Install from Shopify
                     </Button>
                   </div>
                 </CardContent>

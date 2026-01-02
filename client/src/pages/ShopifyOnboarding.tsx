@@ -3,34 +3,31 @@ import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PageShell } from "@/components/ui/page-shell";
-import { Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Sparkles, ExternalLink, Store } from "lucide-react";
 
 export default function ShopifyOnboarding() {
   const [, setLocation] = useLocation();
-  const [status, setStatus] = useState<'detecting' | 'authenticating' | 'error' | 'manual'>('detecting');
+  const [status, setStatus] = useState<'detecting' | 'authenticating' | 'error' | 'install_required'>('detecting');
   const [error, setError] = useState<string>('');
-  const [shopDomain, setShopDomain] = useState('');
 
   useEffect(() => {
     // Check if we were redirected from Shopify installation
     const params = new URLSearchParams(window.location.search);
     const shop = params.get('shop');
-    const host = params.get('host');
     
     if (shop) {
       // Shopify installation detected - auto-initiate OAuth
       console.log('Shopify installation detected:', shop);
       setStatus('authenticating');
-      initiateShopifyOAuth(shop);
+      initiateShopifyOAuth();
     } else {
-      // Manual setup - redirect to integrations page
-      console.log('No shop parameter detected - manual setup required');
-      setStatus('manual');
+      // No shop parameter - installation must come from Shopify App Store (Policy 2.3.1)
+      console.log('No shop parameter detected - must install from Shopify App Store');
+      setStatus('install_required');
     }
   }, []);
 
-  const initiateShopifyOAuth = async (shop: string) => {
+  const initiateShopifyOAuth = async () => {
     try {
       // Forward ALL query parameters from Shopify for proper HMAC verification
       // This includes shop, hmac, timestamp, host, and any other parameters Shopify sends
@@ -58,12 +55,17 @@ export default function ShopifyOnboarding() {
     } catch (err: any) {
       console.error('OAuth initiation error:', err);
       setStatus('error');
-      setError(err.message || 'Failed to connect to Shopify. Please try again.');
+      setError(err.message || 'Failed to connect to Shopify. Please try again from the Shopify App Store.');
     }
   };
 
-  const handleManualSetup = () => {
-    setLocation('/settings/integrations');
+  const handleGoToDashboard = () => {
+    setLocation('/dashboard');
+  };
+
+  const handleOpenShopifyAppStore = () => {
+    // Open Shopify App Store (replace with actual app listing URL when published)
+    window.open('https://apps.shopify.com', '_blank');
   };
 
   if (status === 'detecting') {
@@ -132,51 +134,75 @@ export default function ShopifyOnboarding() {
               </p>
             </div>
             
-            <Button
-              onClick={handleManualSetup}
-              className="gradient-button w-full"
-              data-testid="button-manual-setup"
-            >
-              Go to Settings
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={handleOpenShopifyAppStore}
+                className="gradient-button w-full"
+                data-testid="button-retry-from-app-store"
+              >
+                <Store className="w-4 h-4 mr-2" />
+                Try Again from Shopify App Store
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+              <Button
+                onClick={handleGoToDashboard}
+                variant="outline"
+                className="w-full border-slate-600 text-slate-300"
+                data-testid="button-go-to-dashboard"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Manual setup
+  // Install required - Shopify 2.3.1 Compliance
+  // Installation must be initiated from Shopify-owned surfaces only
   return (
-    <PageShell
-      title="Welcome to Zyra AI!"
-      subtitle="Connect your Shopify store to get started with AI-powered optimization"
-      
-      maxWidth="md"
-      spacing="normal"
-    >
-      <div className="flex items-center justify-center py-8">
-        <Card className="w-full max-w-md gradient-card border-0">
-          <CardContent className="p-8 text-center">
-            <div className="mb-6">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-                <Sparkles className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Get Started</h2>
-              <p className="text-slate-400 mb-6">
-                Connect your Shopify store to unlock AI-powered optimization
-              </p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md gradient-card border-0">
+        <CardContent className="p-8 text-center">
+          <div className="mb-6">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+              <Store className="w-10 h-10 text-primary" />
             </div>
-            
+            <h2 className="text-2xl font-bold text-white mb-2">Install from Shopify</h2>
+            <p className="text-slate-400 mb-6">
+              To connect your store, please install Zyra AI directly from the Shopify App Store. This ensures secure authentication and compliance with Shopify policies.
+            </p>
+          </div>
+          
+          <Alert className="bg-slate-800/50 border-primary/20 mb-6">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-slate-300 text-left">
+              After installing from the Shopify App Store, you'll be automatically connected and redirected to your dashboard.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="space-y-3">
             <Button
-              onClick={handleManualSetup}
+              onClick={handleOpenShopifyAppStore}
               className="gradient-button w-full"
-              data-testid="button-go-to-integrations"
+              data-testid="button-install-from-shopify"
             >
-              Connect Shopify Store
+              <Store className="w-4 h-4 mr-2" />
+              Open Shopify App Store
+              <ExternalLink className="w-4 h-4 ml-2" />
             </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </PageShell>
+            <Button
+              onClick={handleGoToDashboard}
+              variant="outline"
+              className="w-full border-slate-600 text-slate-300"
+              data-testid="button-go-to-dashboard"
+            >
+              Go to Dashboard
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
