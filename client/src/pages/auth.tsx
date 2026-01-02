@@ -131,7 +131,7 @@ export default function Auth() {
   };
 
   // Check for Shopify installation flow parameters - must run before any redirect
-  // Using layout effect to ensure this runs synchronously before render
+  // Also check localStorage for persisted state (survives email confirmation flow)
   const shopifyInstallRef = useRef<string | null>(null);
   
   useEffect(() => {
@@ -139,18 +139,37 @@ export default function Auth() {
     const shopifyInstall = params.get('shopify_install');
     const shop = params.get('shop');
     
+    // Also check localStorage for persisted Shopify install state
+    const storedInstall = localStorage.getItem('pending_shopify_install');
+    const storedShop = localStorage.getItem('pending_shopify_shop');
+    
     console.log('Auth page URL params:', { 
       shopifyInstall, 
       shop, 
+      storedInstall,
+      storedShop,
       fullSearch: window.location.search,
       hasUser: !!user
     });
     
-    if (shopifyInstall) {
-      console.log('Shopify installation flow detected:', { shopifyInstall, shop });
-      shopifyInstallRef.current = shopifyInstall;
-      setShopifyInstallState(shopifyInstall);
-      setShopifyShopName(shop);
+    // Prefer URL params over localStorage (fresh install takes precedence)
+    const pendingInstall = shopifyInstall || storedInstall;
+    const pendingShop = shop || storedShop;
+    
+    if (pendingInstall) {
+      console.log('Shopify installation flow detected:', { pendingInstall, pendingShop, source: shopifyInstall ? 'URL' : 'localStorage' });
+      
+      // Persist to localStorage so it survives email confirmation redirect
+      if (shopifyInstall) {
+        localStorage.setItem('pending_shopify_install', shopifyInstall);
+        if (shop) {
+          localStorage.setItem('pending_shopify_shop', shop);
+        }
+      }
+      
+      shopifyInstallRef.current = pendingInstall;
+      setShopifyInstallState(pendingInstall);
+      setShopifyShopName(pendingShop);
       // Default to register for new Shopify installations
       setMode('register');
     }
@@ -217,6 +236,11 @@ export default function Auth() {
           if (response.ok) {
             const data = await response.json();
             console.log('Shopify connection associated successfully:', data);
+            
+            // Clear localStorage since association was successful
+            localStorage.removeItem('pending_shopify_install');
+            localStorage.removeItem('pending_shopify_shop');
+            
             toast({
               title: "Store Connected!",
               description: `${data.shopName || 'Your Shopify store'} has been connected to Zyra AI.`,
@@ -226,6 +250,11 @@ export default function Auth() {
           } else {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
             console.error('Failed to associate Shopify connection:', errorData);
+            
+            // Clear localStorage on error too
+            localStorage.removeItem('pending_shopify_install');
+            localStorage.removeItem('pending_shopify_shop');
+            
             toast({
               title: "Store Connection Issue",
               description: errorData.error || "Your store connection may have expired. Please try reinstalling from Shopify.",
@@ -236,6 +265,11 @@ export default function Auth() {
           }
         } catch (error) {
           console.error('Error associating Shopify connection:', error);
+          
+          // Clear localStorage on error too
+          localStorage.removeItem('pending_shopify_install');
+          localStorage.removeItem('pending_shopify_shop');
+          
           toast({
             title: "Connection Error",
             description: "Failed to connect your store. Please try again from the integrations page.",
