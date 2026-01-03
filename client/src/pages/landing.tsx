@@ -422,25 +422,28 @@ export default function Landing() {
               <span className="text-sm font-medium">Built for Shopify Merchants</span>
             </div>
 
-            {/* Modern Professional Headline */}
+            {/* Premium Enterprise Hero Section */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-8 leading-[1.1] tracking-tight">
-              <span className="block mb-2">
-                AI-Powered Tools for
+              <span className="block mb-2 text-foreground">
+                AI-Powered Growth Tools for Shopify Stores
               </span>
               <span className="block bg-gradient-to-r from-[#00D4FF] via-[#00E5CC] to-[#7C3AED] bg-clip-text text-transparent bg-[length:150%_auto] animate-[gradient_8s_ease_infinite]">
-                Shopify Stores
-              </span>
-              <span className="block mt-3 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-muted-foreground/80 tracking-normal">
-                Optimize with AI
+                Optimize. Automate. Scale — with AI.
               </span>
             </h1>
 
             {/* Benefit-focused subheadline */}
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-              Streamline your product descriptions and cart recovery with AI tools. 
-              Zyra helps you optimize your store—so you can focus 
-              on what matters: <span className="text-foreground font-semibold">growing your business</span>.
-            </p>
+            <div className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-4xl mx-auto space-y-6">
+              <p>
+                ZYRA AI is a Shopify-native optimization platform built to help merchants create better-performing product pages, improve on-page SEO, and streamline store operations using AI — all directly inside the Shopify admin.
+              </p>
+              <p>
+                With intelligent product optimization, automated content updates, and smart recovery workflows, ZYRA AI eliminates repetitive manual work while giving users full visibility, control, and rollback at every step.
+              </p>
+              <p className="font-semibold text-foreground">
+                Built exclusively for Shopify merchants who want sustainable, long-term growth — without complexity.
+              </p>
+            </div>
 
             {/* 3 Key Benefits */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 max-w-3xl mx-auto">
