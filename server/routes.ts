@@ -448,6 +448,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let shopifyDomain = shop as string || connection?.shopifyDomain;
       let accessToken = connection?.accessToken;
 
+      // MANDATORY SESSION VALIDATION
+      if (shopifyDomain && accessToken) {
+        try {
+          const client = new ShopifyGraphQLClient(shopifyDomain, accessToken);
+          const isConnected = await client.testConnection();
+          if (!isConnected) {
+            console.log(`[BILLING] Shopify session invalid for ${shopifyDomain}, forcing re-auth`);
+            accessToken = undefined;
+          }
+        } catch (e) {
+          console.error(`[BILLING] Session validation error for ${shopifyDomain}:`, e);
+          accessToken = undefined;
+        }
+      }
+
       // Verify live session/connection exists via token
       if (!shopifyDomain || !accessToken) {
         // Fallback for admin/dev environments ONLY
@@ -460,9 +475,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // CRITICAL: If no valid Shopify token exists, we MUST re-authenticate
       if (!shopifyDomain || !accessToken) {
-        console.error(`[BILLING] Shopify session missing for user ${user.id}`);
+        console.error(`[BILLING] Shopify session missing or invalid for user ${user.id}`);
         
-        // If we know the shop domain but don't have a token, trigger re-auth
+        // If we know the shop domain but don't have a valid token, trigger re-auth
         if (shopifyDomain) {
           return res.status(401).json({ 
             message: "Shopify session expired. Please re-authenticate.",
