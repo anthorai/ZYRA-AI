@@ -30,7 +30,21 @@ export function clearTokenCache() {
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
+    let text = "";
+    try {
+      const clonedRes = res.clone();
+      text = await clonedRes.text();
+      
+      // If the response is the specific 401 Shopify reauth JSON, don't throw as a generic error
+      // so that components can handle it gracefully. However, apiRequest currently handles 401
+      // globally for Supabase, so we need to be careful.
+      if (res.status === 401 && text.includes('"reauth":true')) {
+        // Special case: caller should handle this redirect
+        return;
+      }
+    } catch (e) {
+      text = res.statusText;
+    }
     throw new Error(`${res.status}: ${text}`);
   }
 }

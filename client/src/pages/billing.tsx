@@ -402,11 +402,19 @@ export default function BillingPage() {
 
       const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}${shop ? `&shop=${shop}` : ''}`);
       if (!response.ok) {
-        const errorData = await response.json();
+        // Handle 401 and other errors gracefully
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: "An unexpected error occurred" };
+        }
         
         // MANDATORY: If session is missing/expired, automatically re-authenticate
         if (response.status === 401 || errorData.reauth) {
            const reauthUrl = errorData.reauthUrl || `/api/shopify/auth?shop=${shop}`;
+           console.log(`[BILLING] Shopify session expired, redirecting to: ${reauthUrl}`);
+           
            // Redirect the parent window to Shopify auth
            if (window.top !== window.self) {
              window.top!.location.href = reauthUrl;
