@@ -432,9 +432,10 @@ export default function BillingPage() {
         console.log(`[BILLING] Redirecting to Shopify billing: ${data.url}`);
         
         // Use Shopify App Bridge if available (standard for embedded apps)
-        if (window.shopify && typeof window.shopify.dispatch === 'function') {
+        const shopifyWindow = window as any;
+        if (shopifyWindow.shopify && typeof shopifyWindow.shopify.dispatch === 'function') {
           console.log('[BILLING] Using Shopify App Bridge for redirect');
-          window.shopify.dispatch(window.shopify.actions.Redirect.toRemote({
+          shopifyWindow.shopify.dispatch(shopifyWindow.shopify.actions.Redirect.toRemote({
             url: data.url,
           }));
         } else if (window.top !== window.self) {

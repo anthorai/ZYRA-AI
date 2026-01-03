@@ -36,10 +36,9 @@ async function throwIfResNotOk(res: Response) {
       text = await clonedRes.text();
       
       // If the response is the specific 401 Shopify reauth JSON, don't throw as a generic error
-      // so that components can handle it gracefully. However, apiRequest currently handles 401
-      // globally for Supabase, so we need to be careful.
+      // so that components can handle it gracefully.
       if (res.status === 401 && text.includes('"reauth":true')) {
-        // Special case: caller should handle this redirect
+        // Return without throwing to allow the caller to handle JSON parsing and redirect
         return;
       }
     } catch (e) {
