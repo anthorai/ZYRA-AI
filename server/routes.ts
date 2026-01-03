@@ -11202,14 +11202,18 @@ Output format: Markdown with clear section headings.`;
       // Create sync history record
       // IMPORTANT: This will fail until Supabase schema cache is reloaded
       try {
-        syncRecord = await supabaseStorage.createSyncHistory({
-          userId,
-          storeConnectionId: shopifyConnection.id,
-          syncType,
-          status: 'started'
-        });
-        syncHistoryAvailable = true;
-        console.log('✅ [SHOPIFY SYNC] Created sync history record:', syncRecord.id);
+        if (typeof supabaseStorage.createSyncHistory === 'function') {
+          syncRecord = await supabaseStorage.createSyncHistory({
+            userId,
+            storeConnectionId: shopifyConnection.id,
+            syncType,
+            status: 'started'
+          });
+          syncHistoryAvailable = true;
+          console.log('✅ [SHOPIFY SYNC] Created sync history record:', syncRecord.id);
+        } else {
+          console.warn('⚠️  [SHOPIFY SYNC] syncHistory not available in current storage implementation');
+        }
       } catch (historyError) {
         console.error('⚠️  [SHOPIFY SYNC] CRITICAL: Failed to create sync history record');
         console.error('⚠️  [SHOPIFY SYNC] Reason:', historyError instanceof Error ? historyError.message : historyError);

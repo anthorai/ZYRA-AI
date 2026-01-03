@@ -1277,6 +1277,7 @@ export class MemStorage {
       refreshToken: storeConnection.refreshToken || null,
       lastSyncAt: storeConnection.lastSyncAt || null,
       currency: storeConnection.currency || null,
+      installedViaShopify: storeConnection.installedViaShopify ?? false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -2583,6 +2584,8 @@ export class MemStorage {
       tokensUsed: data.tokensUsed || 0,
       processingTimeMs: data.processingTimeMs || null,
       retryCount: data.retryCount || 0,
+      maxRetries: data.maxRetries || 3,
+      imageCount: data.imageCount || 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -2630,9 +2633,9 @@ export class MemStorage {
       productName: data.productName,
       shopifyProductId: data.shopifyProductId || null,
       shopifyImageId: data.shopifyImageId || null,
-      imageUrl: data.imageUrl || null,
-      oldAltText: data.oldAltText || null,
-      newAltText: data.newAltText || null,
+      imageUrl: data.imageUrl || '',
+      oldAltText: data.oldAltText || '',
+      newAltText: data.newAltText || '',
       aiAnalysis: data.aiAnalysis || null,
       appliedToShopify: data.appliedToShopify || false,
       jobId: data.jobId || null,
