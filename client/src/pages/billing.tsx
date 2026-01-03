@@ -439,17 +439,8 @@ export default function BillingPage() {
             url: data.url,
           }));
         } else if (window.top !== window.self) {
-          // Standard iframe escape
-          try {
-            window.top!.location.href = data.url;
-          } catch (e) {
-            console.error("[BILLING] Failed to redirect top window directly:", e);
-            // Fallback for Shopify App Bridge / postMessage
-            window.parent.postMessage(JSON.stringify({
-              type: 'shopify_redirect',
-              url: data.url
-            }), '*');
-          }
+          // Standard iframe escape for Shopify Admin
+          window.top!.location.href = data.url;
         } else {
           window.location.href = data.url;
         }

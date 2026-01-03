@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const host = req.headers.host;
       const returnUrl = `${protocol}://${host}/api/billing/shopify-callback?plan_id=${plan.id}`;
 
-      console.log(`[BILLING] Creating subscription for ${shopifyDomain}. Return URL: ${returnUrl}`);
+      console.log(`[BILLING] Creating Shopify Managed Subscription for ${shopifyDomain}. Return URL: ${returnUrl}`);
 
       const mutation = `
         mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $test: Boolean) {
@@ -529,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const variables = {
         name: `Zyra AI ${plan.planName} Plan`,
         returnUrl: returnUrl,
-        test: true, // Force test mode for development
+        test: process.env.NODE_ENV !== 'production', // Use test mode in non-production
         lineItems: [{
           plan: {
             appRecurringPricingDetails: {
