@@ -11487,18 +11487,23 @@ Output format: Markdown with clear section headings.`;
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
+      // Get userId from req safely even in catch block
+      const currentUserId = (req as AuthenticatedRequest).user?.id;
+
       // Check if this is a 401 (invalid/revoked token) error - mark connection as inactive
       if (errorMessage.includes('401') || errorMessage.includes('Invalid API key') || errorMessage.includes('unrecognized login')) {
         console.warn('⚠️  [SHOPIFY SYNC] Token appears invalid or revoked - marking connection as inactive');
         try {
-          const connections = await supabaseStorage.getStoreConnections(userId);
-          const shopifyConnection = connections.find(c => c.platform === 'shopify');
-          if (shopifyConnection) {
-            await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
-              status: 'inactive',
-              isConnected: false
-            });
-            console.log('✅ [SHOPIFY SYNC] Connection marked as inactive due to invalid token');
+          if (currentUserId) {
+            const connections = await supabaseStorage.getStoreConnections(currentUserId);
+            const shopifyConnection = connections.find(c => c.platform === 'shopify');
+            if (shopifyConnection) {
+              await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
+                status: 'inactive',
+                isConnected: false
+              });
+              console.log('✅ [SHOPIFY SYNC] Connection marked as inactive due to invalid token');
+            }
           }
         } catch (updateError) {
           console.error('⚠️  [SHOPIFY SYNC] Failed to mark connection as inactive:', updateError);
