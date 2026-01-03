@@ -1185,6 +1185,7 @@ export class MemStorage {
         role: "user",
         plan: "trial",
         trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        lastTrialWelcomeAt: null,
         imageUrl: null,
         preferredLanguage: "en",
         createdAt: new Date(),
@@ -1214,6 +1215,7 @@ export class MemStorage {
       role: "user",
       plan: "trial",
       trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      lastTrialWelcomeAt: null,
       imageUrl: null,
       preferredLanguage: "en",
       createdAt: new Date(),
@@ -1274,6 +1276,7 @@ export class MemStorage {
       storeUrl: storeConnection.storeUrl || null,
       refreshToken: storeConnection.refreshToken || null,
       lastSyncAt: storeConnection.lastSyncAt || null,
+      currency: storeConnection.currency || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -1314,6 +1317,7 @@ export class MemStorage {
       category: product.category, // Required field, no fallback to null
       price: product.price, // Required field from new schema
       stock: product.stock || 0, // Default to 0 if not provided
+      sku: product.sku || null,
       image: product.image || null, // Optional field
       features: product.features || null,
       tags: product.tags || null,
@@ -2457,6 +2461,7 @@ export class MemStorage {
       productId: data.productId || null,
       productName: data.productName,
       category: data.category || null,
+      mainDescription: data.mainDescription || null,
       keyFeatures: data.keyFeatures || null,
       targetAudience: data.targetAudience || null,
       status: data.status || 'pending',
@@ -2526,7 +2531,12 @@ export class MemStorage {
       totalTokensUsed: data.totalTokensUsed || 0,
       estimatedCost: data.estimatedCost || '0',
       errorMessage: data.errorMessage || null,
+      metadata: data.metadata || null,
+      startedAt: data.startedAt || null,
+      estimatedCompletionTime: data.estimatedCompletionTime || null,
+      aiModel: data.aiModel || null,
       createdAt: new Date(),
+      updatedAt: new Date(),
       completedAt: data.completedAt || null,
     };
     this.bulkImageJobsData.set(id, newJob);
@@ -2564,10 +2574,10 @@ export class MemStorage {
     const newItem: BulkImageJobItem = {
       id,
       jobId: data.jobId,
-      productId: data.productId,
+      productId: data.productId || null,
       productName: data.productName,
       shopifyProductId: data.shopifyProductId || null,
-      images: data.images || [],
+      imageList: data.imageList || [],
       status: data.status || 'pending',
       errorMessage: data.errorMessage || null,
       tokensUsed: data.tokensUsed || 0,
@@ -2616,14 +2626,14 @@ export class MemStorage {
     const newHistory: ImageOptimizationHistory = {
       id,
       userId: data.userId,
-      productId: data.productId,
+      productId: data.productId || null,
       productName: data.productName,
       shopifyProductId: data.shopifyProductId || null,
-      shopifyImageId: data.shopifyImageId,
-      imageUrl: data.imageUrl,
+      shopifyImageId: data.shopifyImageId || null,
+      imageUrl: data.imageUrl || null,
       oldAltText: data.oldAltText || null,
-      newAltText: data.newAltText,
-      aiAnalysis: data.aiAnalysis,
+      newAltText: data.newAltText || null,
+      aiAnalysis: data.aiAnalysis || null,
       appliedToShopify: data.appliedToShopify || false,
       jobId: data.jobId || null,
       createdAt: new Date(),
