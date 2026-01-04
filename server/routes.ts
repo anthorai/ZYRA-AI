@@ -4669,7 +4669,7 @@ Output format: Markdown with clear section headings.`;
             seoDescription: metaDescription || '',
             metaTitle: seoTitle || '',
             metaDescription: metaDescription || '',
-            keywords: keywordsArray,
+            keywords: keywordsArray || [],
             seoScore: seoScore || 75
           });
         }
