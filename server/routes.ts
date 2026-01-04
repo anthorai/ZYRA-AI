@@ -278,6 +278,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasUser: !!user,
           tokenLength: token.length
         });
+        
+        // Check if token is expired specifically
+        if (error?.message?.toLowerCase().includes('expired') || error?.status === 401) {
+          return res.status(401).json({ 
+            message: "Token expired", 
+            code: "TOKEN_EXPIRED" 
+          });
+        }
+        
         return res.status(401).json({ message: "Invalid token - please log in again" });
       }
       

@@ -224,7 +224,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Start initialization
+    // normal path
     initializeAuth();
 
     // Listen for auth changes
@@ -235,6 +235,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           setSession(session);
           setUser(session?.user ?? null);
+          
+          if (event === 'TOKEN_REFRESHED' && session) {
+            console.log('🔄 Token refreshed successfully');
+            // Update appUser cache
+            if (appUser) {
+              sessionCache.set('auth_state', { user: session.user, appUser });
+            }
+          }
           
           // Fetch app user profile after sign in or initial session restore (pass token directly to avoid state race condition)
           if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user && session?.access_token && mounted) {
