@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
   HelpCircle,
   Store
 } from "lucide-react";
+import { StoreConnection, IntegrationSettings, SecuritySettings, UserPreferences } from "@shared/schema";
 
 interface SettingsCard {
   id: string;
@@ -34,70 +35,22 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  // Mock settings data for UI-only mode
-  const mockUserPreferences = {
-    id: "1",
-    userId: "1",
-    aiSettings: {
-      defaultBrandVoice: "professional",
-      contentStyle: "seo",
-      autoSaveOutputs: true,
-      scheduledUpdates: true,
-      brandMemory: true
-    },
-    notificationSettings: {
-      email: true,
-      inApp: true,
-      push: false,
-      sms: false,
-      campaignAlerts: true,
-      performanceAlerts: true,
-      billingAlerts: true,
-      aiRecommendations: true
-    },
-    uiPreferences: {
-      language: "en",
-      timezone: "UTC",
-      theme: "dark",
-      dashboardLayout: "default"
-    },
-    privacySettings: {
-      analyticsOptOut: false,
-      dataSharing: true,
-      marketingEmails: true
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  // Fetch live data
+  const { data: storeConnections, isLoading: storesLoading } = useQuery<StoreConnection[]>({
+    queryKey: ['/api/store-connections'],
+  });
 
-  const mockSecuritySettings = {
-    id: "1",
-    twoFactorEnabled: false,
-    lastPasswordChange: new Date(Date.now() - 2592000000).toISOString(),
-    activeSessions: 1,
-    passwordStrength: "strong"
-  };
+  const { data: integrations, isLoading: integrationsLoading } = useQuery<IntegrationSettings[]>({
+    queryKey: ['/api/integration-settings'],
+  });
 
-  const mockIntegrations = [
-    {
-      id: "1",
-      name: "Shopify",
-      type: "ecommerce",
-      isConnected: true,
-      lastSync: new Date(Date.now() - 3600000).toISOString()
-    }
-  ];
+  const { data: securitySettings, isLoading: securityLoading } = useQuery<SecuritySettings>({
+    queryKey: ['/api/security-settings'],
+  });
 
-  // Use mock data instead of API calls
-  const userPreferences = mockUserPreferences;
-  const preferencesLoading = false;
-  const preferencesError = null;
-  const securitySettings = mockSecuritySettings;
-  const securityLoading = false;
-  const securityError = null;
-  const integrations = mockIntegrations;
-  const integrationsLoading = false;
-  const integrationsError = null;
+  const { data: userPreferences, isLoading: preferencesLoading } = useQuery<UserPreferences>({
+    queryKey: ['/api/user/preferences'],
+  });
 
   const settingsCards: SettingsCard[] = [
     {
@@ -273,7 +226,9 @@ export default function Settings() {
               <Store className="w-5 h-5 stroke-2 text-primary" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">2 Stores</h3>
+              <h3 className="text-white font-bold text-lg" data-testid="text-stores-count">
+                {storesLoading ? <Skeleton className="h-6 w-16" /> : `${storeConnections?.length || 0} Store${(storeConnections?.length || 0) !== 1 ? 's' : ''}`}
+              </h3>
               <p className="text-slate-300 text-sm">Connected</p>
             </div>
           </div>
@@ -285,7 +240,9 @@ export default function Settings() {
               <Zap className="w-5 h-5 stroke-2 text-primary" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">8 Active</h3>
+              <h3 className="text-white font-bold text-lg" data-testid="text-integrations-count">
+                {integrationsLoading ? <Skeleton className="h-6 w-16" /> : `${integrations?.length || 0} Active`}
+              </h3>
               <p className="text-slate-300 text-sm">Integrations</p>
             </div>
           </div>
@@ -297,8 +254,12 @@ export default function Settings() {
               <Shield className="w-5 h-5 stroke-2 text-primary" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">Secure</h3>
-              <p className="text-slate-300 text-sm">2FA Enabled</p>
+              <h3 className="text-white font-bold text-lg" data-testid="text-security-status">
+                {securityLoading ? <Skeleton className="h-6 w-16" /> : (securitySettings?.twoFactorEnabled ? 'Secure' : 'Unsecured')}
+              </h3>
+              <p className="text-slate-300 text-sm">
+                {securityLoading ? <Skeleton className="h-4 w-24" /> : (securitySettings?.twoFactorEnabled ? '2FA Enabled' : '2FA Disabled')}
+              </p>
             </div>
           </div>
         </Card>

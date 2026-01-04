@@ -5369,6 +5369,92 @@ Output format: Markdown with clear section headings.`;
 
   // Advanced Notification Preference Routes
   
+  // Store connections endpoint
+  app.get("/api/store-connections", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const connections = await storage.getStoreConnections(userId);
+      res.json(connections);
+    } catch (error: any) {
+      console.error("Get store connections error:", error);
+      res.status(500).json({ message: "Failed to fetch store connections" });
+    }
+  });
+
+  // Integration settings endpoint
+  app.get("/api/integration-settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const settings = await storage.getIntegrationSettings(userId);
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Get integration settings error:", error);
+      res.status(500).json({ message: "Failed to fetch integration settings" });
+    }
+  });
+
+  // Security settings endpoint
+  app.get("/api/security-settings", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      let settings = await storage.getSecuritySettings(userId);
+      
+      if (!settings) {
+        settings = await storage.createSecuritySettings({
+          userId,
+          twoFactorEnabled: false,
+          twoFactorMethod: 'email',
+          emailNotifications: true,
+          securityAlerts: true,
+          loginActivityLogging: true
+        });
+      }
+      
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Get security settings error:", error);
+      res.status(500).json({ message: "Failed to fetch security settings" });
+    }
+  });
+
+  // User preferences endpoint
+  app.get("/api/user/preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      let preferences = await storage.getUserPreferences(userId);
+      
+      if (!preferences) {
+        preferences = await storage.createUserPreferences({
+          userId,
+          aiSettings: {
+            defaultBrandVoice: "professional",
+            contentStyle: "seo",
+            autoSaveOutputs: true,
+            scheduledUpdates: true,
+            brandMemory: true
+          },
+          notificationSettings: {
+            email: true,
+            inApp: true,
+            push: false,
+            sms: false
+          },
+          uiPreferences: {
+            language: "en",
+            timezone: "UTC",
+            theme: "dark",
+            dashboardLayout: "default"
+          }
+        });
+      }
+      
+      res.json(preferences);
+    } catch (error: any) {
+      console.error("Get user preferences error:", error);
+      res.status(500).json({ message: "Failed to fetch user preferences" });
+    }
+  });
+
   // Get user's notification preferences
   app.get("/api/notification-preferences", requireAuth, async (req, res) => {
     try {
