@@ -50,6 +50,20 @@ async function throwIfResNotOk(res: Response) {
 
 // Helper function to refresh the session token
 async function refreshSessionToken(): Promise<string | null> {
+  // Prevent concurrent refresh attempts
+  if ((window as any)._isRefreshingToken) {
+    console.log('🔄 Token refresh already in progress, waiting...');
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (!(window as any)._isRefreshingToken) {
+          clearInterval(checkInterval);
+          getCachedToken().then(resolve);
+        }
+      }, 100);
+    });
+  }
+
+  (window as any)._isRefreshingToken = true;
   console.log('🔄 Attempting to refresh session token...');
   
   try {
@@ -77,6 +91,8 @@ async function refreshSessionToken(): Promise<string | null> {
     cachedToken = null;
     tokenExpiry = 0;
     return null;
+  } finally {
+    (window as any)._isRefreshingToken = false;
   }
 }
 

@@ -492,7 +492,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         .single();
       
       if (error) {
-        if (error.message.includes('schema cache')) {
+        if (error.message.includes('schema cache') || error.code === 'PGRST102') {
           console.warn('⚠️ Supabase schema cache issue detected. Sync history not recorded, but proceeding with sync.');
           return {
             id: syncData.id,
@@ -524,7 +524,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         productsAdded: sync.productsAdded,
         productsUpdated: sync.productsUpdated,
         productsDeleted: sync.productsDeleted,
-        errorMessage: sync.errorMessage,
+        errorMessage: typeof err === 'object' && err !== null && 'message' in err ? (err as any).message : String(err),
         startedAt: new Date(),
         completedAt: sync.completedAt ? new Date(sync.completedAt) : null,
         metadata: sync.metadata
@@ -552,7 +552,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         .single();
       
       if (error) {
-        if (error.message.includes('schema cache')) {
+        if (error.message.includes('schema cache') || error.code === 'PGRST102') {
           console.warn('⚠️ Supabase schema cache issue detected. Sync history update skipped.');
           return { id, ...updates } as SyncHistory;
         }
