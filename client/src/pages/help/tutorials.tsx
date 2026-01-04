@@ -118,6 +118,7 @@ export default function TutorialsPage() {
       subtitle="Watch step-by-step guides to master Zyra AI"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings/support"
     >
       {/* Featured Video */}
       <DashboardCard

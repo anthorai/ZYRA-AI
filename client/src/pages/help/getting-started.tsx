@@ -57,6 +57,7 @@ export default function GettingStartedPage() {
       subtitle="Follow these steps to set up your account and start boosting sales"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings/support"
     >
       {/* Quick Start Checklist */}
       <DashboardCard

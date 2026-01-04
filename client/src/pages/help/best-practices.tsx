@@ -67,6 +67,7 @@ export default function BestPracticesPage() {
       subtitle="Expert tips and strategies to maximize your ROI with Zyra AI"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings/support"
     >
       {/* Quick Wins */}
       <DashboardCard

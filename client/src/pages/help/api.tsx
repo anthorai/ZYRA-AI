@@ -118,6 +118,7 @@ fetch('https://api.zyra.ai/api/ai/generate-description', {
       subtitle="Integrate Zyra AI with your applications and workflows"
       maxWidth="xl"
       spacing="normal"
+      backTo="/settings/support"
     >
       {/* Coming Soon Notice */}
       <DashboardCard className="bg-blue-500/10 border border-blue-500/30" testId="card-api-preview-notice">
