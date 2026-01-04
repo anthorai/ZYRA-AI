@@ -209,15 +209,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             imageUrl: null
           } as any;
         }
-        
-        (req as AuthenticatedRequest).user = {
-          id: testUser.id,
-          email: testUser.email,
-          fullName: testUser.fullName,
-          role: testUser.role,
-          plan: testUser.plan,
-          imageUrl: testUser.imageUrl ?? undefined
-        };
+
+        if (testUser) {
+          (req as AuthenticatedRequest).user = {
+            id: testUser.id,
+            email: testUser.email,
+            fullName: testUser.fullName,
+            role: testUser.role,
+            plan: testUser.plan,
+            imageUrl: testUser.imageUrl ?? undefined
+          };
+        }
         
         return next();
       }
@@ -453,7 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const [connectionRaw] = await db.select()
         .from(storeConnections)
-        .where(eq(storeConnections.userId, user.id));
+        .where(eq((storeConnections as any).userId, user.id));
 
       const connection = connectionRaw as any;
       let shopifyDomain = shop as string || connection?.storeUrl;
@@ -508,6 +510,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // 2. Map plan handle to specific plan details (pricing, features)
       const plans = await getSubscriptionPlans();
+      if (!plans) {
+        return res.status(500).json({ message: "Failed to fetch subscription plans" });
+      }
       const plan = plans.find(p => p.planName.toLowerCase() === (planHandle as string).toLowerCase());
       
       if (!plan) {
@@ -630,6 +635,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Build query with combined filters
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
+      }
       let query = db.select().from(errorLogs);
       if (filters.length > 0) {
         query = query.where(and(...filters)) as any;
@@ -665,7 +673,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { id } = req.params;
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
+      }
 
       await db.update(errorLogs)
         .set({
@@ -707,6 +717,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offset = (page - 1) * limit;
 
       // Get total count for pagination
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
+      }
       const [{ count: totalCount }] = await db.select({ count: sql<number>`count(*)` }).from(users);
       
       // Get paginated users from database
