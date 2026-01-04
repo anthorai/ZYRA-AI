@@ -3210,33 +3210,23 @@ Respond with JSON:
       }
 
       // Import orchestration service
-      const { generateWithOrchestration } = await import('./lib/seo-orchestration-service');
+      const { orchestrateSEOGeneration } = await import('./lib/seo-orchestration-service');
 
       // Generate SEO with full orchestration
-      const result = await generateWithOrchestration({
+      const result = await orchestrateSEOGeneration({
         userId,
-        productInput: {
-          productName,
-          productDescription,
-          category,
-          price,
-          tags,
-          currentKeywords,
-          targetAudience,
-          uniqueSellingPoints,
-        },
+        productName,
+        currentDescription: productDescription,
+        category,
+        price: price ? parseFloat(String(price)) : undefined,
+        targetAudience,
         options: {
-          autoDetectFramework,
-          frameworkId,
+          enableFrameworkAutoSelection: autoDetectFramework,
           enableBrandDNA,
-          enableSerpPatterns,
-          shopifyHtmlFormatting,
-          preferredModel,
-          creativityLevel,
+          enableSERPAnalysis: enableSerpPatterns,
+          shopifyFormatting: shopifyHtmlFormatting,
         },
-        openaiClient: openai,
-        db,
-      });
+      }, openai, db);
 
       // Track SEO usage
       await trackSEOUsage(userId);
@@ -3478,17 +3468,15 @@ Respond with JSON:
       // Import orchestration service
       const { getFrameworkRecommendation } = await import('./lib/seo-orchestration-service');
 
-      const recommendation = await getFrameworkRecommendation(
+      const recommendation = getFrameworkRecommendation(
         {
           productName,
-          productDescription,
+          currentDescription: productDescription,
           category,
-          price,
+          price: price ? parseFloat(String(price)) : undefined,
           tags,
           targetAudience,
-        },
-        userId,
-        db
+        }
       );
 
       res.json({
@@ -4672,15 +4660,19 @@ Output format: Markdown with clear section headings.`;
 
       // Track in SEO history with actual score from AI
       try {
-        await db.insert(productSeoHistory).values({
-          userId,
-          productId,
-          productName: existingProduct.name,
-          seoTitle: seoTitle || null,
-          metaDescription: metaDescription || null,
-          keywords: keywordsArray,
-          seoScore: seoScore || 75
-        });
+        if (db) {
+          await db.insert(productSeoHistory).values({
+            userId,
+            productId,
+            productName: existingProduct.name,
+            seoTitle: seoTitle || '',
+            seoDescription: metaDescription || '',
+            metaTitle: seoTitle || '',
+            metaDescription: metaDescription || '',
+            keywords: keywordsArray,
+            seoScore: seoScore || 75
+          });
+        }
       } catch (historyError) {
         console.error("SEO history insert error (non-critical):", historyError);
       }
@@ -9285,11 +9277,10 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Get campaigns from database
-      const campaignList = await db.select({
+      const campaignList = await db!.select({
         id: campaigns.id,
         name: campaigns.name,
         status: campaigns.status,
-        scheduledDate: campaigns.scheduledDate,
       }).from(campaigns)
         .orderBy(desc(campaigns.createdAt))
         .limit(20);
@@ -10328,7 +10319,7 @@ Output format: Markdown with clear section headings.`;
           return res.status(403).send('Invalid or expired state parameter');
         }
         
-        stateData = stateRecords[0];
+        stateData = stateRecords[0] as { userId: string | null; shopDomain: string; expiresAt: Date; createdAt: Date };
         console.log('  State found, userId:', stateData.userId || 'none (fresh install)');
 
         // Check if state is expired
@@ -10336,7 +10327,7 @@ Output format: Markdown with clear section headings.`;
         if (now > stateData.expiresAt) {
           console.log('❌ FAILED: State parameter expired');
           console.log('  Expired at:', stateData.expiresAt);
-          await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
+          await db!.delete(oauthStates).where(eq(oauthStates.state, state as string));
           return res.status(403).send('State parameter expired');
         }
         
