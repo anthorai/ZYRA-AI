@@ -360,10 +360,12 @@ export class SupabaseStorage implements ISupabaseStorage {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
       status: data.status,
-      currency: data.currency || null, // ISO 4217 currency code (USD, INR, EUR, etc.)
-      lastSyncAt: data.last_sync_at,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
+      currency: data.currency || null,
+      lastSyncAt: data.last_sync_at ? new Date(data.last_sync_at) : null,
+      createdAt: data.created_at ? new Date(data.created_at) : null,
+      updatedAt: data.updated_at ? new Date(data.updated_at) : null,
+      installedViaShopify: data.installed_via_shopify || false,
+      isConnected: data.is_connected ?? true
     };
   }
 
@@ -492,15 +494,41 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (error) {
         if (error.message.includes('schema cache')) {
           console.warn('⚠️ Supabase schema cache issue detected. Sync history not recorded, but proceeding with sync.');
-          return { ...syncData, status: 'started' } as SyncHistory;
+          return {
+            id: syncData.id,
+            status: syncData.status,
+            userId: syncData.user_id,
+            storeConnectionId: syncData.store_connection_id,
+            syncType: syncData.sync_type,
+            productsAdded: syncData.products_added,
+            productsUpdated: syncData.products_updated,
+            productsDeleted: syncData.products_deleted,
+            errorMessage: syncData.error_message,
+            startedAt: new Date(syncData.started_at),
+            completedAt: syncData.completed_at ? new Date(syncData.completed_at) : null,
+            metadata: syncData.metadata
+          } as SyncHistory;
         }
         throw new Error(`Failed to create sync history: ${error.message}`);
       }
-      return data;
+      return this.snakeToCamelSyncHistory(data);
     } catch (err) {
       console.error('Error in createSyncHistory:', err);
       // Return a mock object to prevent breaking the sync process
-      return { id: randomUUID(), ...sync, startedAt: new Date() } as any;
+      return { 
+        id: randomUUID(), 
+        status: sync.status,
+        userId: sync.userId,
+        storeConnectionId: sync.storeConnectionId,
+        syncType: sync.syncType,
+        productsAdded: sync.productsAdded,
+        productsUpdated: sync.productsUpdated,
+        productsDeleted: sync.productsDeleted,
+        errorMessage: sync.errorMessage,
+        startedAt: new Date(),
+        completedAt: sync.completedAt ? new Date(sync.completedAt) : null,
+        metadata: sync.metadata
+      } as SyncHistory;
     }
   }
 
@@ -530,11 +558,28 @@ export class SupabaseStorage implements ISupabaseStorage {
         }
         throw new Error(`Failed to update sync history: ${error.message}`);
       }
-      return data;
+      return this.snakeToCamelSyncHistory(data);
     } catch (err) {
       console.error('Error in updateSyncHistory:', err);
-      return { id, ...updates } as any;
+      return { id, ...updates } as SyncHistory;
     }
+  }
+
+  private snakeToCamelSyncHistory(data: any): SyncHistory {
+    return {
+      id: data.id,
+      status: data.status,
+      userId: data.user_id,
+      storeConnectionId: data.store_connection_id,
+      syncType: data.sync_type,
+      productsAdded: data.products_added,
+      productsUpdated: data.products_updated,
+      productsDeleted: data.products_deleted,
+      errorMessage: data.error_message,
+      startedAt: data.started_at ? new Date(data.started_at) : null,
+      completedAt: data.completed_at ? new Date(data.completed_at) : null,
+      metadata: data.metadata
+    };
   }
 
   // Product methods
