@@ -74,8 +74,6 @@ import {
   priceChanges,
   pricingSettings,
   sessions,
-  customerSegmentMembers,
-  segmentAnalytics,
   productSnapshots,
   upsellReceiptSettings
 } from "@shared/schema";
@@ -441,11 +439,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // 1. Get store connection
       // Source of truth: active store connections table linked to user
-      let [connection] = await db.select()
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
+      }
+      const [connectionRaw] = await db.select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
-      let shopifyDomain = shop as string || connection?.shopifyDomain;
+      const connection = connectionRaw as any;
+      let shopifyDomain = shop as string || connection?.storeUrl;
       let accessToken = connection?.accessToken;
 
       // MANDATORY SESSION VALIDATION
@@ -492,6 +494,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      if (!db) {
+        throw new Error("Database connection unavailable");
+      }
       // 2. Map plan handle to specific plan details (pricing, features)
       const plans = await getSubscriptionPlans();
       const plan = plans.find(p => p.planName.toLowerCase() === (planHandle as string).toLowerCase());
@@ -543,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }]
       };
 
-      const result = await client.query(mutation, variables);
+      const result = await client.query(mutation, variables) as any;
       
       if (!result || result.errors) {
         console.error("[BILLING] Shopify API Error:", result?.errors);
