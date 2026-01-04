@@ -720,6 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!db) {
         return res.status(500).json({ message: "Database connection unavailable" });
       }
+
       const [{ count: totalCount }] = await db.select({ count: sql<number>`count(*)` }).from(users);
       
       // Get paginated users from database
@@ -727,6 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get subscription and credit details for each user
       const usersWithDetails = await Promise.all(allUsers.map(async (u) => {
+        if (!db) return null;
         // Get subscription with expiration dates
         const [subscription] = await db.select({
           planId: subscriptions.planId,
@@ -792,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Return paginated response
       res.json({
-        users: usersWithDetails,
+        users: usersWithDetails.filter(u => u !== null),
         pagination: {
           page,
           limit,
@@ -821,6 +823,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!userId || !planId) {
         return res.status(400).json({ message: "userId and planId are required" });
+      }
+
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
       }
 
       // Get the plan details
@@ -892,6 +898,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!userId) {
         return res.status(400).json({ message: "userId is required" });
+      }
+
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
       }
 
       // Get user's subscription
@@ -1014,8 +1024,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const { name, table } of tablesToClean) {
         try {
-          await db.delete(table).where(eq(table.userId, userId));
-          console.log(`[ADMIN] Deleted ${name} records for user ${userId}`);
+          if (!db) continue;
+          // Check if table has userId column
+          const tableConfig = (table as any)[Symbol.for('drizzle:Columns')];
+          if (tableConfig && 'userId' in tableConfig) {
+            await db.delete(table).where(eq((table as any).userId, userId));
+            console.log(`[ADMIN] Deleted ${name} records for user ${userId}`);
+          } else {
+            console.log(`[ADMIN] Table ${name} does not have userId column, skipping delete by userId`);
+          }
         } catch (e: any) {
           // Some tables may not have data for this user, that's okay
           if (!e.message?.includes('column "user_id" does not exist')) {
