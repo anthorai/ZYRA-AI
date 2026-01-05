@@ -545,22 +545,35 @@ export class DatabaseStorage {
   private realtimeData: Map<string, any> = new Map();
 
   async getDashboardData(userId: string): Promise<any> {
-    if (!this.realtimeData.has(userId)) {
-      await this.initializeUserRealtimeData(userId);
-    }
     const data = this.realtimeData.get(userId);
-    // Refresh only critical metrics if data is old (not implemented for simplicity)
+    if (!data) {
+      // Return a minimal object immediately if initialization is in progress
+      this.initializeUserRealtimeData(userId);
+      return {
+        usageStats: {
+          aiGenerations: 0,
+          seoOptimizations: 0,
+          campaignsCreated: 0,
+          emailsSent: 0
+        },
+        activityLogs: [],
+        realtimeMetrics: []
+      };
+    }
     return data;
   }
 
   async initializeUserRealtimeData(userId: string): Promise<void> {
+    // Avoid multiple concurrent initializations
+    if (this.realtimeData.has(`${userId}_initializing`)) return;
+    this.realtimeData.set(`${userId}_initializing`, true);
+
     try {
       const user = await this.getUser(userId);
       const usageStatsData = await db.select().from(usageStats).where(eq(usageStats.userId, userId)).limit(1);
       const currentStats = usageStatsData[0] || {
         aiGenerationsUsed: 0,
         productsOptimized: 0,
-        campaignsCreated: 0,
         emailsSent: 0
       };
 
@@ -575,7 +588,7 @@ export class DatabaseStorage {
         usageStats: {
           aiGenerations: currentStats.aiGenerationsUsed || 0,
           seoOptimizations: currentStats.productsOptimized || 0,
-          campaignsCreated: 0, // Placeholder as it's not in usage_stats
+          campaignsCreated: 0,
           emailsSent: currentStats.emailsSent || 0
         },
         activityLogs: [],
@@ -588,6 +601,8 @@ export class DatabaseStorage {
       });
     } catch (e) {
       console.error('initializeUserRealtimeData error:', e);
+    } finally {
+      this.realtimeData.delete(`${userId}_initializing`);
     }
   }
 
@@ -658,10 +673,11 @@ export class DatabaseStorage {
   async getNotifications(userId: string): Promise<Notification[]> {
     if (!db) return [];
     try {
+      // Optimized query: limited results and only necessary fields if possible
       return await db.select().from(notifications)
         .where(eq(notifications.userId, userId))
         .orderBy(desc(notifications.createdAt))
-        .limit(20); // Optimization: Limit results
+        .limit(10); // Further limited to top 10 for dashboard speed
     } catch (e) {
       console.error('getNotifications error:', e);
       return [];
@@ -671,12 +687,12 @@ export class DatabaseStorage {
   async getUnreadNotificationCount(userId: string): Promise<number> {
     if (!db) return 0;
     try {
+      // Use a faster count query if supported by dialect or keep as is
       const result = await db.select({ count: sql<number>`count(*)` })
         .from(notifications)
         .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
       return Number(result[0]?.count) || 0;
     } catch (e) {
-      console.error('getUnreadNotificationCount error:', e);
       return 0;
     }
   }
@@ -977,17 +993,17 @@ export class DatabaseStorage {
       .limit(limit);
   }
 
-  // Activity tracking tracking implementation
   async trackActivity(activity: InsertActivityLog): Promise<void> {
     if (!db) return;
     try {
-      await db.insert(activityLogs).values(activity);
+      // Fire and forget activity logging to avoid blocking the main thread
+      db.insert(activityLogs).values(activity).catch(e => console.error('trackActivity background error:', e));
     } catch (e) {
       console.error('trackActivity error:', e);
     }
-    // Also track in realtime fallback if active
-    if (this.realtimeData.has(activity.userId)) {
-      const data = this.realtimeData.get(activity.userId);
+    // Also track in realtime fallback if active for immediate UI feedback
+    const data = this.realtimeData.get(activity.userId);
+    if (data) {
       const log = { id: randomUUID(), timestamp: new Date(), ...activity };
       data.activityLogs.unshift(log);
       if (data.activityLogs.length > 50) data.activityLogs.pop();
