@@ -1010,7 +1010,15 @@ export default function BillingPage() {
                             // Use a plain anchor tag behavior to trigger server-side redirect
                             // and avoid the "Did you forget to add the page to the router?" error.
                             const shopParam = (window as any).shopifyShopDomain ? `?shop=${(window as any).shopifyShopDomain}` : "";
-                            window.location.assign(`/billing/upgrade${shopParam}`);
+                            const billingUrl = `/billing/upgrade${shopParam}`;
+                            
+                            // Create a temporary anchor element to force a real page navigation
+                            const link = document.createElement('a');
+                            link.href = billingUrl;
+                            link.target = '_self';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
                           } else {
                             changePlanMutation.mutate(plan.id);
                           }
