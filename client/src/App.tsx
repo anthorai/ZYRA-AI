@@ -338,6 +338,13 @@ function Router() {
           </SettingsLayout>
         </ProtectedRoute>
       )} />
+      <Route path="/billing/upgrade">
+        {() => {
+          const shop = localStorage.getItem('shopify_shop') || "";
+          window.location.href = `/billing/upgrade?shop=${shop}`;
+          return null;
+        }}
+      </Route>
       <Route path="/api/billing/shopify-callback" component={() => (
         <ProtectedRoute>
           <SettingsLayout>
