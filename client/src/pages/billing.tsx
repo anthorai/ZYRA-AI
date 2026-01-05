@@ -396,7 +396,7 @@ export default function BillingPage() {
     }
 
     try {
-      const response = await apiRequest('GET', `/api/shopify/billing/managed-url?plan=${planHandle}`);
+      const response = await apiRequest('GET', `/api/shopify/billing/managed-url`);
       const data = await response.json();
       
       if (data.url) {

@@ -213,6 +213,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract shop name if domain is provided
       const shopName = shopifyDomain.replace(".myshopify.com", "").replace("https://", "").replace("http://", "");
+      
+      // If a specific plan is requested, we can optionally append it as a query param if Shopify supports it,
+      // but the requirement says redirect to the Admin pricing page URL for the app.
       const managedPricingUrl = `https://${shopName}.myshopify.com/admin/settings/apps/${apiKey}/pricing`;
 
       res.json({ url: managedPricingUrl });
@@ -220,6 +223,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("[BILLING] Managed URL error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
+  });
+
+  // Ensure /billing/upgrade is NOT blocked by middleware
+  app.get("/billing/upgrade", (req, res) => {
+    // Redirect to the managed pricing page instead of local logic
+    res.redirect("/api/shopify/billing/managed-url");
   });
 
   // Ensure /billing/upgrade is NOT blocked by middleware

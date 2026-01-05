@@ -292,12 +292,64 @@ export default function AdminSubscriptions() {
     }
   };
 
+  useEffect(() => {
+    const redirectToShopifyPricing = async () => {
+      try {
+        const response = await fetch('/api/shopify/billing/managed-url');
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          // Stay on page if redirect fails, but we don't need a custom PageShell
+          toast({
+            title: "Redirect Failed",
+            description: data.message || "Could not generate Shopify pricing URL",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Redirect error:", error);
+      }
+    };
+
+    // Only redirect if explicitly asked or if this is the intended behavior for this admin page
+    // For now, we'll keep the UI but add a button to trigger the redirect
+  }, [toast]);
+
+  const handleShopifyRedirect = async () => {
+    try {
+      const response = await fetch('/api/shopify/billing/managed-url');
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast({
+          title: "Redirect Failed",
+          description: data.message || "Could not generate Shopify pricing URL",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="p-6 bg-[#0D0D1F]">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold" data-testid="heading-admin-subscriptions">Users & Subscriptions</h1>
-          <p className="text-muted-foreground">Manage merchant subscriptions and credits</p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold" data-testid="heading-admin-subscriptions">Users & Subscriptions</h1>
+            <p className="text-muted-foreground">Manage merchant subscriptions and credits</p>
+          </div>
+          <Button onClick={handleShopifyRedirect} variant="outline" className="gap-2">
+            <ExternalLink className="w-4 h-4" />
+            Shopify Managed Pricing
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
