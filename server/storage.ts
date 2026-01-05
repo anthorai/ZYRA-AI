@@ -552,29 +552,36 @@ export class DatabaseStorage {
   }
 
   async initializeUserRealtimeData(userId: string): Promise<void> {
-    const user = await this.getUser(userId);
-    this.realtimeData.set(userId, {
-      user,
-      profile: {
-        fullName: user?.fullName || 'User',
-        email: user?.email || '',
-        plan: user?.plan || 'trial',
-        role: user?.role || 'user'
-      },
-      usageStats: {
+    try {
+      const user = await this.getUser(userId);
+      const usageStatsData = await db.select().from(usageStats).where(eq(usageStats.userId, userId)).limit(1);
+      const currentStats = usageStatsData[0] || {
         aiGenerations: 0,
         seoOptimizations: 0,
         campaignsCreated: 0,
         emailsSent: 0
-      },
-      activityLogs: [],
-      toolsAccess: [],
-      realtimeMetrics: [
-        { name: 'Active Users', value: 124, change: '+12%' },
-        { name: 'Avg. Response Time', value: '1.2s', change: '-5%' },
-        { name: 'Success Rate', value: '99.9%', change: '+0.1%' }
-      ]
-    });
+      };
+
+      this.realtimeData.set(userId, {
+        user,
+        profile: {
+          fullName: user?.fullName || 'User',
+          email: user?.email || '',
+          plan: user?.plan || 'trial',
+          role: user?.role || 'user'
+        },
+        usageStats: currentStats,
+        activityLogs: [],
+        toolsAccess: [],
+        realtimeMetrics: [
+          { name: 'Active Users', value: 124, change: '+12%' },
+          { name: 'Avg. Response Time', value: '1.2s', change: '-5%' },
+          { name: 'Success Rate', value: '99.9%', change: '+0.1%' }
+        ]
+      });
+    } catch (e) {
+      console.error('initializeUserRealtimeData error:', e);
+    }
   }
 
   async trackToolAccess(userId: string, toolName: string): Promise<any> {
@@ -642,31 +649,63 @@ export class DatabaseStorage {
   }
 
   async getNotifications(userId: string): Promise<Notification[]> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) return [];
+    try {
+      return await db.select().from(notifications)
+        .where(eq(notifications.userId, userId))
+        .orderBy(desc(notifications.createdAt));
+    } catch (e) {
+      console.error('getNotifications error:', e);
+      return [];
+    }
   }
 
   async getUnreadNotificationCount(userId: string): Promise<number> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) return 0;
+    try {
+      const result = await db.select({ count: sql<number>`count(*)` })
+        .from(notifications)
+        .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+      return Number(result[0]?.count) || 0;
+    } catch (e) {
+      console.error('getUnreadNotificationCount error:', e);
+      return 0;
+    }
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) throw new Error("Database not configured");
+    const result = await db.insert(notifications).values(notification).returning();
+    return result[0];
   }
 
   async markNotificationAsRead(userId: string, notificationId: string): Promise<Notification | null> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) throw new Error("Database not configured");
+    const result = await db.update(notifications)
+      .set({ read: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)))
+      .returning();
+    return result[0] || null;
   }
 
   async markAllNotificationsAsRead(userId: string): Promise<void> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) throw new Error("Database not configured");
+    await db.update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.userId, userId));
   }
 
   async deleteNotification(userId: string, notificationId: string): Promise<boolean> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) throw new Error("Database not configured");
+    const result = await db.delete(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)))
+      .returning();
+    return result.length > 0;
   }
 
   async clearAllNotifications(userId: string): Promise<void> {
-    throw new Error("Notification data not available in DatabaseStorage - use MemStorage");
+    if (!db) throw new Error("Database not configured");
+    await db.delete(notifications).where(eq(notifications.userId, userId));
   }
 
   // UserPreferences implementation for DatabaseStorage
@@ -930,10 +969,21 @@ export class DatabaseStorage {
       .limit(limit);
   }
 
-  // Track activity tracking implementation
+  // Activity tracking tracking implementation
   async trackActivity(activity: InsertActivityLog): Promise<void> {
-    if (!db) throw new Error("Database not configured");
-    await db.insert(activityLogs).values(activity);
+    if (!db) return;
+    try {
+      await db.insert(activityLogs).values(activity);
+    } catch (e) {
+      console.error('trackActivity error:', e);
+    }
+    // Also track in realtime fallback if active
+    if (this.realtimeData.has(activity.userId)) {
+      const data = this.realtimeData.get(activity.userId);
+      const log = { id: randomUUID(), timestamp: new Date(), ...activity };
+      data.activityLogs.unshift(log);
+      if (data.activityLogs.length > 50) data.activityLogs.pop();
+    }
   }
 
   // Payment transaction methods implementation
