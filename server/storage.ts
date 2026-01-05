@@ -548,7 +548,9 @@ export class DatabaseStorage {
     if (!this.realtimeData.has(userId)) {
       await this.initializeUserRealtimeData(userId);
     }
-    return this.realtimeData.get(userId);
+    const data = this.realtimeData.get(userId);
+    // Refresh only critical metrics if data is old (not implemented for simplicity)
+    return data;
   }
 
   async initializeUserRealtimeData(userId: string): Promise<void> {
@@ -556,8 +558,8 @@ export class DatabaseStorage {
       const user = await this.getUser(userId);
       const usageStatsData = await db.select().from(usageStats).where(eq(usageStats.userId, userId)).limit(1);
       const currentStats = usageStatsData[0] || {
-        aiGenerations: 0,
-        seoOptimizations: 0,
+        aiGenerationsUsed: 0,
+        productsOptimized: 0,
         campaignsCreated: 0,
         emailsSent: 0
       };
@@ -570,7 +572,12 @@ export class DatabaseStorage {
           plan: user?.plan || 'trial',
           role: user?.role || 'user'
         },
-        usageStats: currentStats,
+        usageStats: {
+          aiGenerations: currentStats.aiGenerationsUsed || 0,
+          seoOptimizations: currentStats.productsOptimized || 0,
+          campaignsCreated: 0, // Placeholder as it's not in usage_stats
+          emailsSent: currentStats.emailsSent || 0
+        },
         activityLogs: [],
         toolsAccess: [],
         realtimeMetrics: [
@@ -653,7 +660,8 @@ export class DatabaseStorage {
     try {
       return await db.select().from(notifications)
         .where(eq(notifications.userId, userId))
-        .orderBy(desc(notifications.createdAt));
+        .orderBy(desc(notifications.createdAt))
+        .limit(20); // Optimization: Limit results
     } catch (e) {
       console.error('getNotifications error:', e);
       return [];
@@ -665,7 +673,7 @@ export class DatabaseStorage {
     try {
       const result = await db.select({ count: sql<number>`count(*)` })
         .from(notifications)
-        .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+        .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
       return Number(result[0]?.count) || 0;
     } catch (e) {
       console.error('getUnreadNotificationCount error:', e);
@@ -682,7 +690,7 @@ export class DatabaseStorage {
   async markNotificationAsRead(userId: string, notificationId: string): Promise<Notification | null> {
     if (!db) throw new Error("Database not configured");
     const result = await db.update(notifications)
-      .set({ read: true })
+      .set({ isRead: true, readAt: new Date() })
       .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)))
       .returning();
     return result[0] || null;
@@ -691,7 +699,7 @@ export class DatabaseStorage {
   async markAllNotificationsAsRead(userId: string): Promise<void> {
     if (!db) throw new Error("Database not configured");
     await db.update(notifications)
-      .set({ read: true })
+      .set({ isRead: true, readAt: new Date() })
       .where(eq(notifications.userId, userId));
   }
 
