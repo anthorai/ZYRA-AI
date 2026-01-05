@@ -101,14 +101,15 @@ export default function SubscriptionManagement() {
   // Change plan mutation
   const changePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      return await apiRequest("POST", "/api/subscription/change-plan", { planId });
+      const plan = (plans as any[]).find(p => p.id === planId);
+      const planHandle = plan?.planName.toLowerCase();
+      window.location.href = `/billing/upgrade?plan=${planHandle}`;
+      return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/subscription/current"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/payments/transactions"] });
       toast({
-        title: "Plan Updated",
-        description: "Your subscription plan has been successfully changed.",
+        title: "Redirecting",
+        description: "Taking you to the upgrade page...",
       });
     },
     onError: (error: any) => {

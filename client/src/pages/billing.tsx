@@ -384,7 +384,7 @@ export default function BillingPage() {
 
   const plansErrorDetails = plansError as any;
 
-  // Upgrade/downgrade mutation - Shopify Managed Pricing only
+  // Upgrade/downgrade mutation
   const handleUpgrade = async (planHandle: string) => {
     if (!planHandle) {
       toast({
@@ -394,15 +394,10 @@ export default function BillingPage() {
       });
       return;
     }
-    
+
     try {
-      // Get shop from context/session
-      const shop = (user as any)?.shopifyDomain || localStorage.getItem('shopify_shop');
-      const billingUrl = `/billing/upgrade?shop=${shop || ''}`;
-      
-      console.log(`[BILLING] Directing to server billing route: ${billingUrl}`);
-      
-      // Standard non-embedded redirect to escape router
+      const billingUrl = `/billing/upgrade?plan=${planHandle}`;
+      console.log(`[BILLING] Directing to upgrade: ${billingUrl}`);
       window.location.href = billingUrl;
       return;
     } catch (error: any) {
@@ -457,12 +452,8 @@ export default function BillingPage() {
       
       const confirmationUrl = data.confirmationUrl || data.url;
       
-      if ((data.requiresShopifyBilling || data.requiresShopifyRedirect) && confirmationUrl) {
-        // Standard non-embedded redirect
-        console.log(`[BILLING] Redirecting to Shopify billing (Standard): ${confirmationUrl}`);
-        const shop = localStorage.getItem('shopify_shop') || '';
-        const billingUrl = `/billing/upgrade?shop=${shop}`;
-        window.location.href = billingUrl;
+      if (confirmationUrl) {
+        window.location.href = confirmationUrl;
         return;
       } else if (data.requiresShopifyBilling === false) {
         // Free plan activated directly

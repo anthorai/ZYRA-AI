@@ -443,64 +443,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Shopify Managed App Pricing Upgrade (Public route for Shopify review compliance)
-  // Alias for /billing/upgrade as requested
-  const handleBillingUpgrade = async (req: any, res: any) => {
+  // Subscription Upgrade Route
+  app.get("/billing/upgrade", async (req: any, res: any) => {
     try {
-      // 1. Identify shop domain (query param first, then session/last-installed)
-      let shopDomain = req.query.shop as string;
-      
-      if (!shopDomain && req.user) {
-        const user = req.user;
-        const [connectionRaw] = await db.select()
-          .from(storeConnections)
-          .where(eq(storeConnections.userId, user.id));
-        shopDomain = (connectionRaw as any)?.storeUrl;
+      const planHandle = req.query.plan as string;
+      const plans = await getSubscriptionPlans();
+      const plan = plans.find(p => p.planName.toLowerCase() === planHandle?.toLowerCase());
+
+      if (!plan) {
+        return res.status(400).send("Invalid plan selected");
       }
 
-      // 2. Fallback to the most recently connected store if still missing
-      if (!shopDomain) {
-        const [lastConnection] = await db.select()
-          .from(storeConnections)
-          .orderBy(desc(storeConnections.id))
-          .limit(1);
-        shopDomain = (lastConnection as any)?.storeUrl;
+      // If user is authenticated, update their subscription
+      if (req.user) {
+        await updateUserSubscription(req.user.id, plan.id, 'active');
       }
 
-      if (!shopDomain) {
-        console.warn("[BILLING] No shop domain identified, redirecting to Shopify Admin");
-        return res.redirect("https://admin.shopify.com/store");
-      }
-
-      // 3. Compute store_handle (strip .myshopify.com)
-      const storeHandle = shopDomain.replace(".myshopify.com", "").replace(/^https?:\/\//, "");
-      
-      // 4. App handle (EXACT as specified: zyra-ai-1)
-      const appHandle = "zyra-ai-1"; 
-
-      // 5. Build the Managed Pricing URL (EXACT as specified)
-      const pricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
-
-      console.log(`[BILLING] Redirecting to Managed Pricing: ${pricingUrl}`);
-      
-      // Ensure we clear any buffers and send a clean 302
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      return res.redirect(302, pricingUrl);
-
-    } catch (error: any) {
-      console.error("[BILLING] Critical error:", error);
-      return res.redirect("https://admin.shopify.com/store");
+      res.redirect("/billing?success=true");
+    } catch (error) {
+      console.error("[BILLING] Upgrade error:", error);
+      res.redirect("/billing?error=true");
     }
-  };
-
-  app.get("/billing/upgrade", handleBillingUpgrade);
-  app.get("/api/billing/shopify-upgrade", handleBillingUpgrade);
-
-  // Add a fallback for common Shopify app mistakes (directing to a UI page that doesn't exist)
-  app.get("/billing/upgrade/*", handleBillingUpgrade);
+  });
 
   // Shopify Billing Redirect (Legacy/Backup - keep for now but we'll prioritize Managed Pricing)
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
