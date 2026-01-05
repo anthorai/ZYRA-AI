@@ -184,6 +184,252 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(statusCode).json(status);
   });
 
+  // Supabase authentication middleware
+  const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Development mode bypass: When Supabase is not configured, use test user
+      if (isDevelopmentMode && !hasRealSupabaseCredentials) {
+        // Get or create test user for development
+        let testUser = await supabaseStorage.getUserByEmail('test@example.com');
+        if (!testUser) {
+          testUser = {
+            id: 'dev-test-user-id',
+            email: 'test@example.com',
+            fullName: 'Test User',
+            role: 'user',
+            plan: 'trial',
+            imageUrl: null
+          } as any;
+        }
+
+        if (testUser) {
+          (req as AuthenticatedRequest).user = {
+            id: testUser.id,
+            email: testUser.email,
+            fullName: testUser.fullName,
+            role: testUser.role,
+            plan: testUser.plan,
+            imageUrl: testUser.imageUrl ?? undefined
+          };
+        }
+        
+        return next();
+      }
+      
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('🔐 Auth failed: No authorization header');
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const token = authHeader.split(' ')[1];
+      console.log('🔐 Auth attempt:', { 
+        path: req.path,
+        tokenLength: token?.length,
+        tokenPreview: token?.substring(0, 20) + '...'
+      });
+      
+      // Check for internal service token (for background jobs and cron)
+      // SECURITY: INTERNAL_SERVICE_TOKEN is a secret only known to internal services
+      // Accepts from any source when paired with x-internal-user-id header
+      const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
+      
+      if (token === INTERNAL_SERVICE_TOKEN && INTERNAL_SERVICE_TOKEN) {
+        const internalUserId = req.headers['x-internal-user-id'];
+        if (!internalUserId) {
+          return res.status(401).json({ message: "Internal user ID required for service token" });
+        }
+        
+        // Get user profile for internal service requests
+        const userProfile = await supabaseStorage.getUser(internalUserId as string);
+        if (!userProfile) {
+          return res.status(401).json({ message: "User not found" });
+        }
+        
+        (req as AuthenticatedRequest).user = {
+          id: userProfile.id,
+          email: userProfile.email,
+          fullName: userProfile.fullName,
+          role: userProfile.role,
+          plan: userProfile.plan,
+          imageUrl: userProfile.imageUrl ?? undefined
+        };
+        
+        return next();
+      }
+      
+      // Normal Supabase auth
+      // Verify JWT token using service role admin methods
+      console.log('🔐 Verifying JWT token...');
+      
+      // Use the service role client to verify the JWT
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        console.error('🔐 Token verification failed:', { 
+          error: error?.message,
+          errorCode: error?.code,
+          hasUser: !!user,
+          tokenLength: token.length
+        });
+        
+        // Check if token is expired specifically
+        if (error?.message?.toLowerCase().includes('expired') || error?.status === 401) {
+          return res.status(401).json({ 
+            message: "Token expired", 
+            code: "TOKEN_EXPIRED" 
+          });
+        }
+        
+        return res.status(401).json({ message: "Invalid token - please log in again" });
+      }
+      
+      console.log('✅ Token verified successfully:', { userId: user.id, email: user.email });
+
+      // Get user profile from Supabase storage by ID first, then email fallback
+      let userProfile = await supabaseStorage.getUser(user.id);
+      console.log('🔍 DB userProfile from getUser:', userProfile);
+      
+      if (!userProfile) {
+        // Try email lookup (for backwards compatibility)
+        userProfile = await supabaseStorage.getUserByEmail(user.email!);
+        console.log('🔍 DB userProfile from getUserByEmail:', userProfile);
+        
+        if (!userProfile) {
+          // Auto-provision profile for Supabase user using Supabase storage
+          try {
+            userProfile = await supabaseStorage.createUser({
+              id: user.id, // Use Supabase user ID
+              email: user.email!,
+              password: null, // No password for Supabase users
+              fullName: user.user_metadata?.full_name || user.user_metadata?.name || 'User'
+            });
+            console.log(`Auto-provisioned profile for user: ${user.email}`);
+            
+            // Automatically grant 7-day free trial to new users
+            const trialResult = await grantFreeTrial(user.id);
+            if (trialResult.success) {
+              console.log(`🎉 [AUTO TRIAL] Granted 7-day free trial to new user ${user.email}`);
+              // Refresh user profile to get updated trial info
+              userProfile = await supabaseStorage.getUser(user.id) || userProfile;
+            } else {
+              console.warn(`⚠️ [AUTO TRIAL] Failed to grant trial: ${trialResult.message}`);
+            }
+          } catch (error: any) {
+            console.error('Failed to auto-provision user profile:', {
+              error: error?.message,
+              userId: user.id,
+              email: user.email,
+              stack: error?.stack
+            });
+            // Check if this is a duplicate key error - user might already exist
+            if (error?.message?.includes('duplicate') || error?.message?.includes('unique')) {
+              // Try to get the existing user
+              try {
+                userProfile = await supabaseStorage.getUser(user.id);
+                if (!userProfile) {
+                  userProfile = await supabaseStorage.getUserByEmail(user.email!);
+                }
+                if (userProfile) {
+                  console.log('Found existing user after duplicate error:', userProfile.email);
+                  // Continue with existing profile
+                }
+              } catch (retryError) {
+                console.error('Retry lookup failed:', retryError);
+              }
+            }
+            if (!userProfile) {
+              return res.status(500).json({ message: "Failed to create user profile" });
+            }
+          }
+        }
+      }
+
+      // CRITICAL FIX: Ensure user exists in Neon database for foreign key constraints
+      // oauth_states table (and others) in Neon require users to exist there
+      // Use retry logic for transient database failures
+      // Also sync admin role from Neon (source of truth for admin status)
+      const syncUserToNeon = async (maxRetries = 3) => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const neonUser = await getUserById(userProfile.id);
+            if (!neonUser) {
+              console.log(`🔧 [AUTH SYNC] User ${userProfile.id} not found in Neon (attempt ${attempt}/${maxRetries}), creating...`);
+              await createUserInNeon({
+                id: userProfile.id,
+                email: userProfile.email,
+                fullName: userProfile.fullName,
+                password: null // No password for Supabase Auth users
+                // plan and role will use database defaults: 'trial' and 'user'
+              });
+              console.log(`✅ [AUTH SYNC] User ${userProfile.id} synced to Neon successfully`);
+              
+              // Grant free trial to new Neon user (idempotent - won't duplicate if already granted)
+              const trialResult = await grantFreeTrial(userProfile.id);
+              if (trialResult.success && trialResult.trialEndDate) {
+                console.log(`🎉 [AUTH SYNC] Trial activated for ${userProfile.email}, ends ${trialResult.trialEndDate.toISOString()}`);
+              }
+            } else {
+              // User already exists in Neon - check for admin role
+              // Neon database is source of truth for admin role
+              if (neonUser.role === 'admin' && userProfile.role !== 'admin') {
+                console.log(`👑 [AUTH SYNC] User ${userProfile.id} has admin role in Neon, upgrading session`);
+                userProfile.role = 'admin';
+              }
+              console.log(`✓ [AUTH SYNC] User ${userProfile.id} already exists in Neon (role: ${neonUser.role})`);
+            }
+            return true; // Success
+          } catch (error: any) {
+            const isLastAttempt = attempt === maxRetries;
+            const errorMessage = error?.message || 'Unknown error';
+            
+            if (isLastAttempt) {
+              // Final attempt failed - log detailed error
+              console.error(`❌ [AUTH SYNC] Failed to sync user ${userProfile.id} to Neon after ${maxRetries} attempts:`, {
+                error: errorMessage,
+                stack: error?.stack,
+                userId: userProfile.id,
+                email: userProfile.email
+              });
+              return false; // Failed
+            } else {
+              // Retry with exponential backoff
+              const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+              console.warn(`⚠️ [AUTH SYNC] Attempt ${attempt} failed, retrying in ${backoffMs}ms:`, errorMessage);
+              await new Promise(resolve => setTimeout(resolve, backoffMs));
+            }
+          }
+        }
+        return false;
+      };
+      
+      await syncUserToNeon();
+
+      console.log('🔍 Final userProfile being attached to request:', {
+        id: userProfile.id,
+        email: userProfile.email,
+        fullName: userProfile.fullName,
+        role: userProfile.role,
+        plan: userProfile.plan
+      });
+
+      // Attach user to request
+      (req as AuthenticatedRequest).user = {
+        id: userProfile.id,
+        email: userProfile.email,
+        fullName: userProfile.fullName,
+        role: userProfile.role,
+        plan: userProfile.plan,
+        imageUrl: userProfile.imageUrl ?? undefined
+      };
+      
+      next();
+    } catch (error) {
+      console.error('Auth middleware error:', error);
+      res.status(401).json({ message: "Authentication failed" });
+    }
+  };
+
   // Shopify Managed Pricing URL
   app.get("/api/shopify/billing/managed-url", requireAuth, async (req, res) => {
     try {
@@ -229,11 +475,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/billing/upgrade", (req, res) => {
     // Redirect to the managed pricing page instead of local logic
     res.redirect("/api/shopify/billing/managed-url");
-  });
-
-  // Ensure /billing/upgrade is NOT blocked by middleware
-  app.get("/billing/upgrade", (req, res, next) => {
-    next();
   });
 
   // Check if Supabase is properly configured
