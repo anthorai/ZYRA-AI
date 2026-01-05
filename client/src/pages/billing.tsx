@@ -397,54 +397,14 @@ export default function BillingPage() {
     
     try {
       // Get shop from context/session
-      const urlParams = new URLSearchParams(window.location.search);
-      const shop = urlParams.get('shop') || (user as any)?.shopifyDomain || localStorage.getItem('shopify_shop');
-
-      const response = await apiRequest("GET", `/api/billing/shopify-redirect?plan=${planHandle}${shop ? `&shop=${shop}` : ''}`);
-      if (!response.ok) {
-        // Handle 401 and other errors gracefully
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (e) {
-          errorData = { message: "An unexpected error occurred" };
-        }
-        
-        // MANDATORY: If session is missing/expired, automatically re-authenticate
-        if (response.status === 401 || errorData.reauth) {
-           const reauthUrl = errorData.reauthUrl || `/api/shopify/auth?shop=${shop}`;
-           console.log(`[BILLING] Shopify session expired, redirecting to: ${reauthUrl}`);
-           
-           // Redirect the parent window to Shopify auth
-           if (window.top !== window.self) {
-             window.top!.location.href = reauthUrl;
-           } else {
-             window.location.href = reauthUrl;
-           }
-           return;
-        }
-        throw new Error(errorData.message || "Failed to generate billing redirect");
-      }
-      const data = await response.json();
-      if (data.url) {
-        // Shopify dynamic billing returns the confirmation_url. 
-        // We must use App Bridge Redirect for proper embedded app handling
-        console.log(`[BILLING] Redirecting to Shopify billing: ${data.url}`);
-        
-        // Use Shopify App Bridge if available (standard for embedded apps)
-        const shopifyWindow = window as any;
-        if (shopifyWindow.shopify && typeof shopifyWindow.shopify.dispatch === 'function') {
-          console.log('[BILLING] Using Shopify App Bridge for redirect');
-          shopifyWindow.shopify.dispatch(shopifyWindow.shopify.actions.Redirect.toRemote({
-            url: data.url,
-          }));
-        } else if (window.top !== window.self) {
-          // Standard iframe escape for Shopify Admin
-          window.top!.location.href = data.url;
-        } else {
-          window.location.href = data.url;
-        }
-      }
+      const shop = (user as any)?.shopifyDomain || localStorage.getItem('shopify_shop');
+      const billingUrl = `/billing/upgrade?shop=${shop || ''}`;
+      
+      console.log(`[BILLING] Directing to server billing route: ${billingUrl}`);
+      
+      // Standard non-embedded redirect to escape router
+      window.location.href = billingUrl;
+      return;
     } catch (error: any) {
       toast({
         title: "Error",
@@ -500,7 +460,8 @@ export default function BillingPage() {
       if ((data.requiresShopifyBilling || data.requiresShopifyRedirect) && confirmationUrl) {
         // Standard non-embedded redirect
         console.log(`[BILLING] Redirecting to Shopify billing (Standard): ${confirmationUrl}`);
-        const billingUrl = `/billing/upgrade?shop=${localStorage.getItem('shopify_shop') || ''}`;
+        const shop = localStorage.getItem('shopify_shop') || '';
+        const billingUrl = `/billing/upgrade?shop=${shop}`;
         window.location.href = billingUrl;
         return;
       } else if (data.requiresShopifyBilling === false) {

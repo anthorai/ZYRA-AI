@@ -499,6 +499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/billing/upgrade", handleBillingUpgrade);
   app.get("/api/billing/shopify-upgrade", handleBillingUpgrade);
 
+  // Add a fallback for common Shopify app mistakes (directing to a UI page that doesn't exist)
+  app.get("/billing/upgrade/*", handleBillingUpgrade);
+
   // Shopify Billing Redirect (Legacy/Backup - keep for now but we'll prioritize Managed Pricing)
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
     try {
