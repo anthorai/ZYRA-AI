@@ -482,6 +482,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
 
       console.log(`[BILLING] Redirecting to Managed Pricing: ${pricingUrl}`);
+      // Ensure we clear any buffers and send a clean 302
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.redirect(302, pricingUrl);
 
     } catch (error: any) {
