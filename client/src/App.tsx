@@ -338,6 +338,15 @@ function Router() {
           </SettingsLayout>
         </ProtectedRoute>
       )} />
+      <Route path="/api/billing/shopify-callback" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <Billing />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
       <Route path="/billing/confirm" component={() => (
         <ProtectedRoute>
           <SettingsLayout>
