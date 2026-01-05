@@ -1,0 +1,118 @@
+You are a senior Shopify app engineer.
+
+ZYRA AI is a NON-EMBEDDED (external) Shopify app using Shopify Managed App Pricing.
+
+Fixed facts (do not change)
+
+App is NOT embedded
+
+No iframes, no _top redirects
+
+Managed App Pricing is enabled in Partner Dashboard
+
+Real app handle: zyra-ai-1
+
+Billing must happen ONLY inside Shopify Admin
+
+REQUIRED IMPLEMENTATION (STRICT)
+1. Partner Dashboard
+
+Managed App Pricing enabled
+
+At least one public plan configured
+
+Optional welcome link set (e.g. https://zyraai.com/welcome)
+
+2. Store handling
+
+During OAuth, capture shop (example: anthor-ai-settings.myshopify.com)
+
+Persist shop domain in database
+
+Never ask user to manually enter store URL
+
+3. Billing redirect (MOST IMPORTANT)
+
+/billing/upgrade is NOT a UI page
+
+It must be a server-only redirect endpoint.
+
+If using Next.js App Router:
+
+Create:
+
+/app/billing/upgrade/route.ts
+
+Behavior of /billing/upgrade
+
+Must NOT render UI
+
+Must NOT return JSON
+
+Must NOT require user authentication
+
+Must:
+
+Resolve merchant shop from DB or query
+
+Derive store_handle by removing .myshopify.com
+
+Redirect with HTTP 302 to:
+
+https://admin.shopify.com/store/{store_handle}/charges/zyra-ai-1/pricing_plans
+
+4. Frontend button (CRITICAL)
+
+DO NOT use SPA routing
+
+❌ Link, router.push, client navigation
+✅ Plain browser navigation only
+
+Correct:
+
+<a href="/billing/upgrade?shop=anthor-ai-settings.myshopify.com">
+  Upgrade with Shopify
+</a>
+
+
+This must bypass the frontend router completely.
+
+5. After payment (optional but recommended)
+
+Use Managed Pricing welcome link
+
+Shopify redirects back with shop and charge_id
+
+Verify active plan via webhook or Admin API (read-only)
+
+Unlock features based on approved plan
+
+STRICTLY FORBIDDEN
+
+❌ Shopify Billing API
+
+❌ Custom checkout
+
+❌ JSON errors on billing routes
+
+❌ Auth-protected /billing/upgrade
+
+❌ Hardcoded store handles
+
+❌ Rendering /billing/upgrade as a page
+
+ACCEPTANCE CRITERIA
+
+Clicking Upgrade with Shopify:
+
+Does NOT show router error
+
+Does NOT show 404
+
+Opens Shopify Admin pricing page
+
+Works for any store
+
+Passes Shopify App Review
+
+Deliver a clean, production-ready solution.
