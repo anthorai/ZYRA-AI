@@ -396,9 +396,15 @@ export default function BillingPage() {
     }
 
     try {
-      const billingUrl = `/billing/upgrade?plan=${planHandle}`;
-      console.log(`[BILLING] Directing to upgrade: ${billingUrl}`);
-      window.location.href = billingUrl;
+      const response = await apiRequest('GET', `/api/shopify/billing/managed-url?plan=${planHandle}`);
+      const data = await response.json();
+      
+      if (data.url) {
+        console.log(`[BILLING] Directing to Shopify Admin pricing: ${data.url}`);
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.message || "Failed to get upgrade URL");
+      }
       return;
     } catch (error: any) {
       toast({

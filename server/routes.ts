@@ -184,6 +184,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(statusCode).json(status);
   });
 
+  // Shopify Managed Pricing URL
+  app.get("/api/shopify/billing/managed-url", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      const planHandle = req.query.plan as string;
+      
+      if (!planHandle) {
+        return res.status(400).json({ message: "Plan handle is required" });
+      }
+
+      // Get store connection to find the shop domain
+      const [connection] = await db.select()
+        .from(storeConnections)
+        .where(eq(storeConnections.userId, user.id));
+
+      const shopifyDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+
+      if (!shopifyDomain) {
+        return res.status(400).json({ message: "Shopify domain not found for this user" });
+      }
+
+      // Format: https://{shop}.myshopify.com/admin/settings/apps/{api_key}/pricing
+      const apiKey = process.env.SHOPIFY_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ message: "Shopify API Key not configured" });
+      }
+
+      // Extract shop name if domain is provided
+      const shopName = shopifyDomain.replace(".myshopify.com", "").replace("https://", "").replace("http://", "");
+      const managedPricingUrl = `https://${shopName}.myshopify.com/admin/settings/apps/${apiKey}/pricing`;
+
+      res.json({ url: managedPricingUrl });
+    } catch (error) {
+      console.error("[BILLING] Managed URL error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Ensure /billing/upgrade is NOT blocked by middleware
   app.get("/billing/upgrade", (req, res, next) => {
     next();
