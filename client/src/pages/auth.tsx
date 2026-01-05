@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { FcGoogle } from "react-icons/fc";
-import { Store } from "lucide-react";
+import { Store, Eye, EyeOff } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
@@ -55,6 +55,9 @@ export default function Auth() {
     resolver: zodResolver(registerSchema), 
     defaultValues: { email: "", password: "", fullName: "", terms: false },
   });
+
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   const onLoginSubmit = async (data: LoginForm) => {
     try {
@@ -405,16 +408,30 @@ export default function Auth() {
                 </div>
 
                 <div>
-                  <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    className="form-input mt-1 sm:mt-2 text-sm sm:text-base"
-                    placeholder="Enter your password"
-                    {...loginForm.register("password")}
-                    data-testid="input-password"
-                  />
+                  <Label htmlFor="password" data-testid="label-password">Password</Label>
+                  <div className="relative mt-1 sm:mt-2">
+                    <Input
+                      id="password"
+                      type={showLoginPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      className="form-input pr-10 text-sm sm:text-base"
+                      placeholder="Enter your password"
+                      {...loginForm.register("password")}
+                      data-testid="input-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      data-testid="button-toggle-password-visibility"
+                    >
+                      {showLoginPassword ? (
+                        <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
+                      ) : (
+                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                      )}
+                    </button>
+                  </div>
                   {loginForm.formState.errors.password && (
                     <p className="text-destructive text-xs sm:text-sm mt-1">{loginForm.formState.errors.password.message}</p>
                   )}
@@ -479,16 +496,30 @@ export default function Auth() {
                 </div>
 
                 <div>
-                  <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="new-password"
-                    className="form-input mt-1 sm:mt-2 text-sm sm:text-base"
-                    placeholder="Create a password"
-                    {...registerForm.register("password")}
-                    data-testid="input-password"
-                  />
+                  <Label htmlFor="password" data-testid="label-password">Password</Label>
+                  <div className="relative mt-1 sm:mt-2">
+                    <Input
+                      id="password"
+                      type={showRegisterPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      className="form-input pr-10 text-sm sm:text-base"
+                      placeholder="Create a password"
+                      {...registerForm.register("password")}
+                      data-testid="input-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      data-testid="button-toggle-password-visibility"
+                    >
+                      {showRegisterPassword ? (
+                        <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
+                      ) : (
+                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                      )}
+                    </button>
+                  </div>
                   {registerForm.formState.errors.password && (
                     <p className="text-destructive text-xs sm:text-sm mt-1">{registerForm.formState.errors.password.message}</p>
                   )}
