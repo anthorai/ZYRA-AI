@@ -184,6 +184,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(statusCode).json(status);
   });
 
+  // Ensure /billing/upgrade is NOT blocked by middleware
+  app.get("/billing/upgrade", (req, res, next) => {
+    next();
+  });
+
   // Check if Supabase is properly configured
   const hasRealSupabaseCredentials = !!(
     process.env.SUPABASE_URL && 

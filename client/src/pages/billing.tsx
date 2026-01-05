@@ -500,7 +500,8 @@ export default function BillingPage() {
       if ((data.requiresShopifyBilling || data.requiresShopifyRedirect) && confirmationUrl) {
         // Standard non-embedded redirect
         console.log(`[BILLING] Redirecting to Shopify billing (Standard): ${confirmationUrl}`);
-        window.location.href = confirmationUrl;
+        const billingUrl = `/billing/upgrade?shop=${localStorage.getItem('shopify_shop') || ''}`;
+        window.location.href = billingUrl;
         return;
       } else if (data.requiresShopifyBilling === false) {
         // Free plan activated directly
