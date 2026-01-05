@@ -21,15 +21,12 @@ export default function SupportPage() {
 
   const submitTicketMutation = useMutation({
     mutationFn: async (data: { subject: string; message: string }) => {
-      return await apiRequest('/api/settings/support', {
-        method: 'POST',
-        body: JSON.stringify({
-          subject: data.subject,
-          message: data.message,
-          category: 'general',
-          priority: 'medium',
-          status: 'open'
-        })
+      return await apiRequest('POST', '/api/settings/support', {
+        subject: data.subject,
+        message: data.message,
+        category: 'general',
+        priority: 'medium',
+        status: 'open'
       });
     },
     onSuccess: () => {
