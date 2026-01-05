@@ -580,7 +580,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`[BILLING] Created dynamic charge for ${shopifyDomain}, redirecting to: ${confirmationUrl}`);
-      res.json({ url: confirmationUrl });
+      
+      // Ensure the client knows this is a Shopify Managed Pricing redirect
+      res.json({ 
+        url: confirmationUrl,
+        requiresShopifyBilling: true,
+        confirmationUrl: confirmationUrl 
+      });
 
     } catch (error: any) {
       console.error("Billing redirect error:", error);

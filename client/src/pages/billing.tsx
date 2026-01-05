@@ -495,9 +495,26 @@ export default function BillingPage() {
     onSuccess: async (data: any) => {
       console.log('Subscription change response:', data);
       
-      if (data.requiresShopifyBilling && data.confirmationUrl) {
-        // Redirect to Shopify billing confirmation page
-        window.location.href = data.confirmationUrl;
+      const confirmationUrl = data.confirmationUrl || data.url;
+      
+      if ((data.requiresShopifyBilling || data.requiresShopifyRedirect) && confirmationUrl) {
+        // Shopify dynamic billing returns the confirmation_url. 
+        // We must use App Bridge Redirect for proper embedded app handling
+        console.log(`[BILLING] Redirecting to Shopify billing: ${confirmationUrl}`);
+        
+        // Use Shopify App Bridge if available (standard for embedded apps)
+        const shopifyWindow = window as any;
+        if (shopifyWindow.shopify && typeof shopifyWindow.shopify.dispatch === 'function') {
+          console.log('[BILLING] Using Shopify App Bridge for redirect');
+          shopifyWindow.shopify.dispatch(shopifyWindow.shopify.actions.Redirect.toRemote({
+            url: confirmationUrl,
+          }));
+        } else if (window.top !== window.self) {
+          // Standard iframe escape for Shopify Admin
+          window.top!.location.href = confirmationUrl;
+        } else {
+          window.location.href = confirmationUrl;
+        }
         return;
       } else if (data.requiresShopifyBilling === false) {
         // Free plan activated directly
