@@ -1006,8 +1006,9 @@ export default function BillingPage() {
                           
                           if (isCurrentPlan) return;
                           
-                          if (plan.planName !== "7-Day Free Trial" && planHandle) {
-                            handleUpgrade(planHandle);
+                          if (plan.planName !== "7-Day Free Trial") {
+                            // Redirect to the new backend endpoint for Managed App Pricing
+                            window.location.href = "/api/billing/shopify-upgrade";
                           } else {
                             changePlanMutation.mutate(plan.id);
                           }
