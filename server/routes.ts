@@ -442,11 +442,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Alias for /billing/upgrade as requested
   const handleBillingUpgrade = async (req: any, res: any) => {
     try {
-      if (!db) {
-        console.error("[BILLING] Database connection unavailable");
-        return res.redirect("https://admin.shopify.com/store");
-      }
-
       // 1. Identify shop domain (query param first, then session/last-installed)
       let shopDomain = req.query.shop as string;
       
@@ -496,8 +491,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  app.get("/api/billing/shopify-upgrade", handleBillingUpgrade);
   app.get("/billing/upgrade", handleBillingUpgrade);
+  app.get("/api/billing/shopify-upgrade", handleBillingUpgrade);
 
   // Shopify Billing Redirect (Legacy/Backup - keep for now but we'll prioritize Managed Pricing)
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
