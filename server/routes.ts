@@ -438,7 +438,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Shopify Billing Redirect
+  // Shopify Managed App Pricing Upgrade
+  app.get("/api/billing/shopify-upgrade", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+      
+      if (!db) {
+        return res.status(500).json({ message: "Database connection unavailable" });
+      }
+
+      // 1. Fetch the merchant's stored shopDomain
+      const [connectionRaw] = await db.select()
+        .from(storeConnections)
+        .where(eq((storeConnections as any).userId, user.id));
+
+      const connection = connectionRaw as any;
+      const shopDomain = connection?.storeUrl;
+
+      if (!shopDomain) {
+        return res.status(400).json({ 
+          message: "No connected Shopify store found. Please connect your store first." 
+        });
+      }
+
+      // 2. Compute store_handle (strip .myshopify.com)
+      const storeHandle = shopDomain.replace(".myshopify.com", "");
+      
+      // 3. App handle from shopify.app.toml / Partner Dashboard
+      // Based on shopify.app.toml, name is "Zyra AI". Handle is usually slugified name.
+      const appHandle = "zyra-ai"; 
+
+      // 4. Build the Managed Pricing URL
+      const pricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
+
+      console.log(`[BILLING] Redirecting user ${user.id} to Shopify Managed Pricing: ${pricingUrl}`);
+      
+      // Respond with a 302 redirect to Shopify Admin
+      res.redirect(302, pricingUrl);
+
+    } catch (error: any) {
+      console.error("Billing upgrade error:", error);
+      res.status(500).json({ message: error.message || "Failed to redirect to Shopify pricing" });
+    }
+  });
+
+  // Shopify Billing Redirect (Legacy/Backup - keep for now but we'll prioritize Managed Pricing)
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
