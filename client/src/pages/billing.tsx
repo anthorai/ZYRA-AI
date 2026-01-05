@@ -1010,7 +1010,7 @@ export default function BillingPage() {
                             // Redirect to the new backend endpoint for Managed App Pricing
                             // Passing current store URL if available for more reliable identification
                             const shopParam = (window as any).shopifyShopDomain ? `?shop=${(window as any).shopifyShopDomain}` : "";
-                            window.location.href = `/api/billing/shopify-upgrade${shopParam}`;
+                            window.location.href = `/billing/upgrade${shopParam}`;
                           } else {
                             changePlanMutation.mutate(plan.id);
                           }

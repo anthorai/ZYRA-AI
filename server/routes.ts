@@ -439,7 +439,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Shopify Managed App Pricing Upgrade (Public route for Shopify review compliance)
-  app.get("/api/billing/shopify-upgrade", async (req, res) => {
+  // Alias for /billing/upgrade as requested
+  const handleBillingUpgrade = async (req: any, res: any) => {
     try {
       if (!db) {
         console.error("[BILLING] Database connection unavailable");
@@ -449,11 +450,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 1. Identify shop domain (query param first, then session/last-installed)
       let shopDomain = req.query.shop as string;
       
-      if (!shopDomain && (req as any).user) {
-        const user = (req as any).user;
+      if (!shopDomain && req.user) {
+        const user = req.user;
         const [connectionRaw] = await db.select()
           .from(storeConnections)
-          .where(eq((storeConnections as any).userId, user.id));
+          .where(eq(storeConnections.userId, user.id));
         shopDomain = (connectionRaw as any)?.storeUrl;
       }
 
@@ -461,7 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!shopDomain) {
         const [lastConnection] = await db.select()
           .from(storeConnections)
-          .orderBy(desc((storeConnections as any).id))
+          .orderBy(desc(storeConnections.id))
           .limit(1);
         shopDomain = (lastConnection as any)?.storeUrl;
       }
@@ -474,10 +475,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 3. Compute store_handle (strip .myshopify.com)
       const storeHandle = shopDomain.replace(".myshopify.com", "").replace(/^https?:\/\//, "");
       
-      // 4. App handle (slugified name from shopify.app.toml)
-      const appHandle = "zyra-ai"; 
+      // 4. App handle (EXACT as specified: zyra-ai-1)
+      const appHandle = "zyra-ai-1"; 
 
-      // 5. Build the Managed Pricing URL
+      // 5. Build the Managed Pricing URL (EXACT as specified)
       const pricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
 
       console.log(`[BILLING] Redirecting to Managed Pricing: ${pricingUrl}`);
@@ -487,7 +488,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("[BILLING] Critical error:", error);
       return res.redirect("https://admin.shopify.com/store");
     }
-  });
+  };
+
+  app.get("/api/billing/shopify-upgrade", handleBillingUpgrade);
+  app.get("/billing/upgrade", handleBillingUpgrade);
 
   // Shopify Billing Redirect (Legacy/Backup - keep for now but we'll prioritize Managed Pricing)
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
