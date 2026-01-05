@@ -1008,7 +1008,9 @@ export default function BillingPage() {
                           
                           if (plan.planName !== "7-Day Free Trial") {
                             // Redirect to the new backend endpoint for Managed App Pricing
-                            window.location.href = "/api/billing/shopify-upgrade";
+                            // Passing current store URL if available for more reliable identification
+                            const shopParam = (window as any).shopifyShopDomain ? `?shop=${(window as any).shopifyShopDomain}` : "";
+                            window.location.href = `/api/billing/shopify-upgrade${shopParam}`;
                           } else {
                             changePlanMutation.mutate(plan.id);
                           }
