@@ -11071,7 +11071,7 @@ Output format: Markdown with clear section headings.`;
       const metadata = JSON.parse(metaRecord[0].shopDomain); // Temporary storage in shopDomain field
       const { shopName, accessToken, storeUrl, currency } = metadata;
       
-      // Create Shopify connection
+      // Create Shopify connection in Supabase
       await supabaseStorage.createStoreConnection({
         userId,
         platform: 'shopify',
@@ -11079,8 +11079,68 @@ Output format: Markdown with clear section headings.`;
         storeUrl,
         accessToken,
         currency: currency || 'USD', // Save currency for multi-currency display
-        status: 'active'
+        status: 'active',
+        installedViaShopify: true,
+        isConnected: true
       });
+
+      // CRITICAL: Also save to local PostgreSQL database via Drizzle ORM
+      // This is required because billing routes query the local DB, not Supabase
+      console.log('📋 Saving pending Shopify connection to local PostgreSQL database...');
+      try {
+        // Check if connection already exists in local DB for this user AND platform
+        const existingLocalConnection = await db
+          .select()
+          .from(storeConnections)
+          .where(
+            and(
+              eq(storeConnections.userId, userId),
+              eq(storeConnections.platform, 'shopify')
+            )
+          )
+          .limit(1);
+
+        if (existingLocalConnection.length > 0) {
+          // Update existing record
+          await db
+            .update(storeConnections)
+            .set({
+              storeName: shopName,
+              storeUrl: storeUrl,
+              accessToken: accessToken,
+              status: 'active',
+              currency: currency || 'USD',
+              isConnected: true,
+              lastSyncAt: new Date(),
+              updatedAt: new Date()
+            })
+            .where(
+              and(
+                eq(storeConnections.userId, userId),
+                eq(storeConnections.platform, 'shopify')
+              )
+            );
+          console.log('✅ Local DB connection updated for pending install, user:', userId);
+        } else {
+          // Insert new record with all required fields
+          await db.insert(storeConnections).values({
+            userId: userId,
+            platform: 'shopify',
+            storeName: shopName,
+            storeUrl: storeUrl,
+            accessToken: accessToken,
+            status: 'active',
+            currency: currency || 'USD',
+            isConnected: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          console.log('✅ Local DB connection created for pending install, user:', userId);
+        }
+      } catch (localDbError) {
+        console.error('⚠️ Failed to save pending connection to local DB:', localDbError);
+        // Continue - Supabase storage is the primary source, but billing will be affected
+      }
 
       // Register mandatory Shopify webhooks
       const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
@@ -11114,6 +11174,23 @@ Output format: Markdown with clear section headings.`;
       }
 
       await supabaseStorage.deleteStoreConnection(shopifyConnection.id);
+      
+      // Also remove from local PostgreSQL database for consistency
+      try {
+        await db
+          .delete(storeConnections)
+          .where(
+            and(
+              eq(storeConnections.userId, userId),
+              eq(storeConnections.platform, 'shopify')
+            )
+          );
+        console.log('✅ Local DB Shopify connection removed for user:', userId);
+      } catch (localDbError) {
+        console.error('⚠️ Failed to remove Shopify connection from local DB:', localDbError);
+        // Continue - Supabase is the primary source
+      }
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Shopify disconnect error:', error);
