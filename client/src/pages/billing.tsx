@@ -384,8 +384,8 @@ export default function BillingPage() {
 
   const plansErrorDetails = plansError as any;
 
-  // Upgrade via Shopify Managed Pricing - redirect to backend route
-  const handleUpgrade = (planHandle: string) => {
+  // Upgrade via Shopify Managed Pricing - call API and redirect to Shopify Admin
+  const handleUpgrade = async (planHandle: string) => {
     if (!planHandle) {
       toast({
         title: "Error",
@@ -396,11 +396,19 @@ export default function BillingPage() {
     }
 
     try {
-      console.log(`[BILLING] Navigating to Shopify Managed Pricing for plan: ${planHandle}`);
-      // Backend handles all logic & redirects to Shopify Admin pricing page
-      window.location.href = "/billing/upgrade";
+      console.log(`[BILLING] Fetching Shopify Managed Pricing URL for plan: ${planHandle}`);
+      
+      const response = await apiRequest("GET", "/api/shopify/billing/managed-url");
+      const data = await response.json();
+
+      if (data.url) {
+        console.log(`[BILLING] Redirecting to Shopify Admin pricing: ${data.url}`);
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.message || "Failed to get upgrade URL");
+      }
     } catch (error: any) {
-      console.error("[BILLING] Upgrade navigation error:", error);
+      console.error("[BILLING] Upgrade error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to start upgrade process",

@@ -1,0 +1,170 @@
+✅ Sentry frontend monitoring initialized
+index-DsB4kb2C.js:18 ⚙️  Service Worker disabled in development mode
+index-DsB4kb2C.js:18 Password Recovery Handler - Full URL check: {fullUrl: 'https://zzyraai.com/billing/upgrade?shop=...', currentPath: '/billing/upgrade', hashLength: 0, type: null, hasAccessToken: false, …}
+index-DsB4kb2C.js:18 🎯 First user activity detected - starting session timers  This tells us:
+
+The browser is going to /billing/upgrade?shop=..., not to /api/shopify/billing/managed-url.
+That path is being handled by your frontend SPA/router (“Password Recovery Handler”), not by the backend Express route we wrote.
+So the browser never reaches your server’s /billing/upgrade → never gets the 302 redirect → you stay in your own app and see “half-loading”.
+In other words: your frontend router is hijacking /billing/upgrade.
+
+To fix this cleanly and simply:
+
+Stop navigating to /billing/upgrade from the frontend.
+Instead, call /api/shopify/billing/managed-url and then send the browser directly to the Shopify Admin URL it returns.
+You already have all the pieces; we just need to wire them the right way and remove the old /billing/upgrade navigation.  1. Backend: keep /api/shopify/billing/managed-url as your single source
+Make sure this route is present and correct (you already showed very similar code; this is the finalized version for your app): app.get("/api/shopify/billing/managed-url", requireAuth, async (req, res) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+
+    const [connection] = await db
+      .select()
+      .from(storeConnections)
+      .where(eq(storeConnections.userId, user.id));
+
+    const rawDomain =
+      connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+
+    if (!rawDomain) {
+      console.log(
+        `[BILLING] No Shopify store connected for user ${user.id}`
+      );
+      return res
+        .status(400)
+        .json({ message: "Shopify domain not found for this user" });
+    }
+
+    let storeHandle = rawDomain.trim();
+    storeHandle = storeHandle.replace(/^https?:\/\//i, "");
+
+    const adminMatch = storeHandle.match(
+      /^admin\.shopify\.com\/store\/([^\/\?]+)/
+    );
+    if (adminMatch) {
+      storeHandle = adminMatch[1];
+    } else {
+      storeHandle = storeHandle
+        .replace(/\.myshopify\.com.*/i, "")
+        .replace(/\/$/, "");
+    }
+
+    if (!storeHandle) {
+      console.error(
+        `[BILLING] Could not derive storeHandle from domain "${rawDomain}" for user ${user.id}`
+      );
+      return res.status(500).json({
+        message: "Invalid Shopify store URL; unable to derive store handle",
+      });
+    }
+
+    // From your URL: /app/zyra-ai-1 → handle = "zyra-ai-1"
+    const appHandle = process.env.SHOPIFY_APP_HANDLE || "zyra-ai-1";
+
+    const managedPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
+
+    console.log(
+      `[BILLING] Managed Pricing URL for user ${user.id}, storeHandle "${storeHandle}": ${managedPricingUrl}`
+    );
+
+    return res.json({ url: managedPricingUrl });
+  } catch (error: any) {
+    console.error("[BILLING] Managed URL error:", error);
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal server error" });
+  }
+}); You already confirmed that for your store, this URL works:  https://admin.shopify.com/store/anthor-ai/charges/zyra-ai-1/pricing_plans  So if /api/shopify/billing/managed-url returns that URL and the frontend just does window.location.href = data.url, you’ll see the same pricing page you saw when you pasted it manually.
+
+2. Frontend: change the button to not go to /billing/upgrade
+Your console log showed some “Password Recovery Handler” inspecting /billing/upgrade – that’s likely a global route handler in your app catching that URL and never letting it reach Express.
+
+You need to:
+
+Remove the manual building of /billing/upgrade?shop=... from the button.
+Use your handleUpgrade that calls /api/shopify/billing/managed-url instead.
+2.1 handleUpgrade – updated version (goes via API only)  const handleUpgrade = async (planHandle: string) => {
+  if (!planHandle) {
+    toast({
+      title: "Error",
+      description: "Invalid plan selection",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    const response = await apiRequest(
+      "GET",
+      "/api/shopify/billing/managed-url"
+    );
+    const data = await response.json();
+
+    if (data.url) {
+      console.log(`[BILLING] Directing to Shopify Admin pricing: ${data.url}`);
+
+      // Non-embedded app:
+      window.location.href = data.url;
+
+      // If you discover the app is still inside an iframe, use:
+      // window.top!.location.href = data.url;
+
+    } else {
+      throw new Error(data.message || "Failed to get upgrade URL");
+    }
+  } catch (error: any) {
+    console.error("[BILLING] Managed URL error:", error);
+    toast({
+      title: "Error",
+      description: error.message || "Failed to start upgrade process",
+      variant: "destructive",
+    });
+  }
+};  2.2 Button onClick – remove /billing/upgrade anchor hack
+Right now you showed this earlier (simplified):  if (plan.planName !== "7-Day Free Trial") {
+  // Use a plain anchor tag behavior to trigger server-side redirect
+  const shopParam = ...;
+  const billingUrl = `/billing/upgrade${shopParam}`;
+  const link = document.createElement('a');
+  link.href = billingUrl;
+  link.target = '_self';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+} You must remove this piece and instead just call handleUpgrade.
+
+Here is the updated onClick:  onClick={() => {
+  if (isCurrentPlan) return;
+
+  const planAny = plan as any;
+  const planHandle =
+    planAny.shopifyPlanHandle ||
+    (plan.planName.toLowerCase() === "starter"
+      ? "starter"
+      : plan.planName.toLowerCase() === "growth"
+      ? "growth"
+      : plan.planName.toLowerCase() === "pro"
+      ? "pro"
+      : undefined);
+
+  if (plan.planName === "7-Day Free Trial") {
+    // Your internal non-Shopify trial logic
+    changePlanMutation.mutate(plan.id);
+    return;
+  }
+
+  // For paid plans, use Managed Pricing via API → direct Admin URL
+  handleUpgrade(planHandle || "");
+}} No more creating <a> tag, no more /billing/upgrade, no ?shop=.... Just:
+
+API → /api/shopify/billing/managed-url
+Browser → https://admin.shopify.com/store/anthor-ai/charges/zyra-ai-1/pricing_plans  3. Why your old /billing/upgrade behavior caused the issue
+The console line: Password Recovery Handler - Full URL check: {fullUrl: 'https://zzyraai.com/billing/upgrade?shop=...', currentPath: '/billing/upgrade', ...} means:
+
+Some global client-side handler (your router, or a route guard) is intercepting the navigation to /billing/upgrade.
+It never lets the browser actually do a full HTTP request to your Express /billing/upgrade route.
+So your res.redirect(...) on the backend is never triggered.
+By switching to:
+
+/api/shopify/billing/managed-url (an API call), and
+window.location.href = data.url (direct to Shopify Admin),
+you bypass your SPA routing completely and remove this problem. 
