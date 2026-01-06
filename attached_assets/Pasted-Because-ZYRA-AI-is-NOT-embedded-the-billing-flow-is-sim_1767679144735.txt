@@ -1,0 +1,129 @@
+Because ZYRA AI is NOT embedded, the billing flow is simpler and cleaner.
+
+When user clicks “Upgrade with Shopify”
+
+➡️ Redirect the browser directly to Shopify Admin’s pricing page for YOUR app
+
+No iframes
+No _top redirects
+No Billing API calls
+No custom checkout
+
+🔗 EXACT REDIRECT URL (THIS IS THE KEY)
+https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
+
+Replace:
+
+{store_handle} → shop name without .myshopify.com
+
+{app_handle} → your exact app handle (from shopify.app.toml / Partner Dashboard)
+
+Example
+
+If:
+
+Shop = awesome-store.myshopify.com
+
+App handle = zyra-ai
+
+✅ Redirect to:
+
+https://admin.shopify.com/store/awesome-store/charges/zyra-ai/pricing_plans
+
+
+This opens Shopify’s official plan selection UI for ZYRA AI.
+
+🧠 HOW SHOPIFY KNOWS WHICH PLAN
+
+Shopify does NOT read your UI plan cards.
+
+It shows:
+
+Plans configured in Partner Dashboard → Pricing
+
+Public + private plans
+
+Trial info
+
+Billing interval
+
+User selects the plan inside Shopify, not your app.
+
+✔ This is exactly how Klaviyo-style pricing works.
+
+🧩 WHAT YOU MUST STORE (MANDATORY)
+
+During OAuth install, Shopify sends:
+
+?shop=awesome-store.myshopify.com
+
+
+You must:
+
+Save shopDomain
+
+Derive store_handle
+
+Associate it with the logged-in Zyra account
+
+This is the only data needed to build the pricing URL.
+
+🧱 BUTTON IMPLEMENTATION (CORRECT)
+Option A — Direct link (simplest)
+<a href="https://admin.shopify.com/store/awesome-store/charges/zyra-ai/pricing_plans">
+  Upgrade with Shopify
+</a>
+
+Option B — Backend redirect (recommended)
+
+Frontend:
+
+<a href="/billing/upgrade">Upgrade with Shopify</a>
+
+
+Backend:
+
+Look up merchant shop
+
+Build pricing URL
+
+Return 302 redirect
+
+✔ Works for any store
+✔ Works in dev + production
+✔ Shopify-review compliant
+
+🔁 AFTER PAYMENT (WELCOME LINK)
+
+Configure Welcome Link in Partner Dashboard:
+
+https://zyra.ai/welcome
+
+
+Shopify will redirect back with:
+
+shop
+
+charge_id
+
+You then:
+
+Verify subscription (webhook or Admin API)
+
+Activate plan in ZYRA AI
+
+Show “Plan activated” UI
+
+❌ COMMON MISTAKES (CAUSE 90% OF ERRORS)
+
+❌ Using a copied charge confirmation URL
+❌ Hardcoding store name
+❌ Wrong app handle
+❌ Redirecting to your own pricing page
+❌ Expecting Shopify to read your plan cards
+
+🧠 ONE-LINE RULE (MEMORIZE THIS)
+
+Non-embedded app + Managed Pricing = always redirect to
+
+https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
