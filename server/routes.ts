@@ -439,14 +439,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Shopify Managed Pricing URL
+  // Non-embedded app + Managed Pricing = redirect to:
+  // https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
   app.get("/api/shopify/billing/managed-url", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
-      const planHandle = req.query.plan as string;
-      
-      if (!planHandle) {
-        return res.status(400).json({ message: "Plan handle is required" });
-      }
 
       // Get store connection to find the shop domain
       const [connection] = await db.select()
@@ -459,23 +456,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Shopify domain not found for this user" });
       }
 
-      // Format: https://{shop}.myshopify.com/admin/settings/apps/{api_key}/pricing
-      const apiKey = process.env.SHOPIFY_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({ message: "Shopify API Key not configured" });
+      // Get Shopify App Handle from environment (required for Managed Pricing)
+      const appHandle = process.env.SHOPIFY_APP_HANDLE;
+      if (!appHandle) {
+        return res.status(500).json({ message: "Shopify App Handle not configured" });
       }
 
-      // Extract shop name if domain is provided
-      const shopName = shopifyDomain.replace(".myshopify.com", "").replace("https://", "").replace("http://", "");
+      // Extract store_handle (shop name without .myshopify.com)
+      const storeHandle = shopifyDomain
+        .replace("https://", "")
+        .replace("http://", "")
+        .replace(".myshopify.com", "")
+        .replace(/\/$/, "");
       
-      // If a specific plan is requested, we can optionally append it as a query param if Shopify supports it,
-      // but the requirement says redirect to the Admin pricing page URL for the app.
-      const managedPricingUrl = `https://${shopName}.myshopify.com/admin/settings/apps/${apiKey}/pricing`;
+      // Correct Managed Pricing URL format for non-embedded apps:
+      // https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
+      const managedPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
 
+      console.log(`[BILLING] Managed Pricing URL for ${storeHandle}: ${managedPricingUrl}`);
       res.json({ url: managedPricingUrl });
     } catch (error) {
       console.error("[BILLING] Managed URL error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Backend redirect for "Upgrade with Shopify" button (recommended approach)
+  // This looks up the merchant shop and redirects to Shopify's pricing page
+  app.get("/billing/upgrade", requireAuth, async (req, res) => {
+    try {
+      const user = (req as AuthenticatedRequest).user;
+
+      // Get store connection to find the shop domain
+      const [connection] = await db.select()
+        .from(storeConnections)
+        .where(eq(storeConnections.userId, user.id));
+
+      const shopifyDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+
+      if (!shopifyDomain) {
+        console.log(`[BILLING] No Shopify store connected for user ${user.id}`);
+        return res.redirect("/billing?error=no_store_connected");
+      }
+
+      // Get Shopify App Handle from environment
+      const appHandle = process.env.SHOPIFY_APP_HANDLE;
+      if (!appHandle) {
+        console.error("[BILLING] SHOPIFY_APP_HANDLE not configured");
+        return res.redirect("/billing?error=configuration_error");
+      }
+
+      // Extract store_handle (shop name without .myshopify.com)
+      const storeHandle = shopifyDomain
+        .replace("https://", "")
+        .replace("http://", "")
+        .replace(".myshopify.com", "")
+        .replace(/\/$/, "");
+
+      // Redirect to Shopify Managed Pricing URL
+      const managedPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
+      
+      console.log(`[BILLING] Redirecting user ${user.id} to Shopify Managed Pricing: ${managedPricingUrl}`);
+      res.redirect(managedPricingUrl);
+    } catch (error) {
+      console.error("[BILLING] Upgrade redirect error:", error);
+      res.redirect("/billing?error=redirect_failed");
+    }
+  });
+
+  // Welcome Link - Post-payment callback from Shopify after merchant approves subscription
+  // Configure this URL in Partner Dashboard as the Welcome Link
+  // Shopify redirects here with: ?shop=awesome-store.myshopify.com&charge_id=123
+  app.get("/welcome", async (req, res) => {
+    try {
+      const { shop, charge_id } = req.query;
+      
+      console.log(`[WELCOME] Payment callback received - shop: ${shop}, charge_id: ${charge_id}`);
+      
+      if (!shop) {
+        console.error("[WELCOME] Missing shop parameter");
+        return res.redirect("/billing?error=missing_shop");
+      }
+
+      // Extract store handle for logging
+      const storeHandle = (shop as string)
+        .replace("https://", "")
+        .replace("http://", "")
+        .replace(".myshopify.com", "")
+        .replace(/\/$/, "");
+
+      console.log(`[WELCOME] Processing payment confirmation for store: ${storeHandle}, charge_id: ${charge_id}`);
+
+      // Redirect to billing page with success message
+      // The frontend will show the "Plan activated" UI
+      // Actual subscription verification happens via APP_SUBSCRIPTIONS_UPDATE webhook
+      res.redirect(`/billing?success=true&shop=${encodeURIComponent(shop as string)}${charge_id ? `&charge_id=${charge_id}` : ''}`);
+    } catch (error) {
+      console.error("[WELCOME] Error processing welcome callback:", error);
+      res.redirect("/billing?error=callback_failed");
     }
   });
 
@@ -6196,9 +6274,10 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      // Build Shopify Managed Pricing URL
-      // Format: https://{shop}/admin/apps/{app_handle}/pricing?plan={plan_handle}
-      const shopifyPricingUrl = `https://${shopUrl}/admin/apps/${shopifyAppHandle}/pricing?plan=${shopifyPlanHandle}`;
+      // Build Shopify Managed Pricing URL for non-embedded apps
+      // Correct format: https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
+      const storeHandle = shopUrl.replace(".myshopify.com", "").replace(/\/$/, "");
+      const shopifyPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${shopifyAppHandle}/pricing_plans`;
       
       console.log("[SUBSCRIPTION] Redirecting to Shopify Managed Pricing URL:", shopifyPricingUrl);
       
