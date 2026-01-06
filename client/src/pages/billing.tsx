@@ -384,8 +384,8 @@ export default function BillingPage() {
 
   const plansErrorDetails = plansError as any;
 
-  // Upgrade/downgrade mutation
-  const handleUpgrade = async (planHandle: string) => {
+  // Upgrade via Shopify Managed Pricing - redirect to backend route
+  const handleUpgrade = (planHandle: string) => {
     if (!planHandle) {
       toast({
         title: "Error",
@@ -396,17 +396,11 @@ export default function BillingPage() {
     }
 
     try {
-      const response = await apiRequest('GET', `/api/shopify/billing/managed-url`);
-      const data = await response.json();
-      
-      if (data.url) {
-        console.log(`[BILLING] Directing to Shopify Admin pricing: ${data.url}`);
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.message || "Failed to get upgrade URL");
-      }
-      return;
+      console.log(`[BILLING] Navigating to Shopify Managed Pricing for plan: ${planHandle}`);
+      // Backend handles all logic & redirects to Shopify Admin pricing page
+      window.location.href = "/billing/upgrade";
     } catch (error: any) {
+      console.error("[BILLING] Upgrade navigation error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to start upgrade process",
@@ -960,27 +954,28 @@ export default function BillingPage() {
                         }`}
                         disabled={isCurrentPlan || processingPlanId !== null}
                         onClick={() => {
-                          const planAny = plan as any;
-                          const planHandle = planAny.shopifyPlanHandle || (plan.planName.toLowerCase() === 'starter' ? 'starter' : plan.planName.toLowerCase() === 'growth' ? 'growth' : plan.planName.toLowerCase() === 'pro' ? 'pro' : undefined);
-                          
                           if (isCurrentPlan) return;
-                          
-                          if (plan.planName !== "7-Day Free Trial") {
-                            // Use a plain anchor tag behavior to trigger server-side redirect
-                            // and avoid the "Did you forget to add the page to the router?" error.
-                            const shopParam = (window as any).shopifyShopDomain ? `?shop=${(window as any).shopifyShopDomain}` : "";
-                            const billingUrl = `/billing/upgrade${shopParam}`;
-                            
-                            // Create a temporary anchor element to force a real page navigation
-                            const link = document.createElement('a');
-                            link.href = billingUrl;
-                            link.target = '_self';
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          } else {
+
+                          // Derive a "handle" for logging purposes
+                          const planAny = plan as any;
+                          const planHandle =
+                            planAny.shopifyPlanHandle ||
+                            (plan.planName.toLowerCase() === 'starter'
+                              ? 'starter'
+                              : plan.planName.toLowerCase() === 'growth'
+                              ? 'growth'
+                              : plan.planName.toLowerCase() === 'pro'
+                              ? 'pro'
+                              : undefined);
+
+                          if (plan.planName === "7-Day Free Trial") {
+                            // Internal app logic – no Shopify billing redirect
                             changePlanMutation.mutate(plan.id);
+                            return;
                           }
+
+                          // Paid plan → go to Managed Pricing page
+                          handleUpgrade(planHandle || "");
                         }}
                         data-testid={`button-choose-plan-${index}`}
                       >

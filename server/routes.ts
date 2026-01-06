@@ -438,89 +438,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Shopify Managed Pricing URL
+  // Shopify Managed Pricing URL - JSON API version
   // Non-embedded app + Managed Pricing = redirect to:
   // https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
   app.get("/api/shopify/billing/managed-url", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
 
-      // Get store connection to find the shop domain
-      const [connection] = await db.select()
+      const [connection] = await db
+        .select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
-      const shopifyDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+      const rawDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
 
-      if (!shopifyDomain) {
+      if (!rawDomain) {
+        console.log(`[BILLING] No Shopify store connected for user ${user.id}`);
         return res.status(400).json({ message: "Shopify domain not found for this user" });
       }
 
-      // Get Shopify App Handle from environment (required for Managed Pricing)
+      // Normalize into a store handle usable in:
+      // https://admin.shopify.com/store/:store_handle/charges/:app_handle/pricing_plans
+      let storeHandle = rawDomain.trim();
+      storeHandle = storeHandle.replace(/^https?:\/\//i, "");
+
+      // If this is an admin.shopify.com URL, extract /store/<handle>
+      const adminMatch = storeHandle.match(/^admin\.shopify\.com\/store\/([^\/\?]+)/);
+      if (adminMatch) {
+        storeHandle = adminMatch[1];
+      } else {
+        // Otherwise treat it as a classic myshopify domain
+        storeHandle = storeHandle.replace(/\.myshopify\.com.*/i, "").replace(/\/$/, "");
+      }
+
+      if (!storeHandle) {
+        console.error(`[BILLING] Could not derive storeHandle from domain "${rawDomain}" for user ${user.id}`);
+        return res.status(500).json({ message: "Invalid Shopify store URL; unable to derive store handle" });
+      }
+
       const appHandle = process.env.SHOPIFY_APP_HANDLE;
       if (!appHandle) {
+        console.error("[BILLING] SHOPIFY_APP_HANDLE not configured");
         return res.status(500).json({ message: "Shopify App Handle not configured" });
       }
 
-      // Extract store_handle (shop name without .myshopify.com)
-      const storeHandle = shopifyDomain
-        .replace("https://", "")
-        .replace("http://", "")
-        .replace(".myshopify.com", "")
-        .replace(/\/$/, "");
-      
-      // Correct Managed Pricing URL format for non-embedded apps:
-      // https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
       const managedPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
 
-      console.log(`[BILLING] Managed Pricing URL for ${storeHandle}: ${managedPricingUrl}`);
-      res.json({ url: managedPricingUrl });
-    } catch (error) {
+      console.log(`[BILLING] Managed Pricing URL for user ${user.id}, storeHandle "${storeHandle}": ${managedPricingUrl}`);
+      return res.json({ url: managedPricingUrl });
+    } catch (error: any) {
       console.error("[BILLING] Managed URL error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ message: error.message || "Internal server error" });
     }
   });
 
-  // Backend redirect for "Upgrade with Shopify" button (recommended approach)
-  // This looks up the merchant shop and redirects to Shopify's pricing page
+  // Backend redirect for "Upgrade via Shopify" button (Managed Pricing only)
+  // Docs: https://shopify.dev/docs/apps/launch/billing/managed-pricing#plan-selection-page
   app.get("/billing/upgrade", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
 
-      // Get store connection to find the shop domain
-      const [connection] = await db.select()
+      // 1. Get store connection to find the shop domain
+      const [connection] = await db
+        .select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
-      const shopifyDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+      const rawDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
 
-      if (!shopifyDomain) {
+      if (!rawDomain) {
         console.log(`[BILLING] No Shopify store connected for user ${user.id}`);
         return res.redirect("/billing?error=no_store_connected");
       }
 
-      // Get Shopify App Handle from environment
+      // 2. Normalize into a store handle usable in:
+      //    https://admin.shopify.com/store/:store_handle/charges/:app_handle/pricing_plans
+      let storeHandle = rawDomain.trim();
+      storeHandle = storeHandle.replace(/^https?:\/\//i, "");
+
+      // If this is an admin.shopify.com URL, extract /store/<handle>
+      const adminMatch = storeHandle.match(/^admin\.shopify\.com\/store\/([^\/\?]+)/);
+      if (adminMatch) {
+        storeHandle = adminMatch[1];
+      } else {
+        // Otherwise treat it as a classic myshopify domain
+        storeHandle = storeHandle.replace(/\.myshopify\.com.*/i, "").replace(/\/$/, "");
+      }
+
+      if (!storeHandle) {
+        console.error(`[BILLING] Could not derive storeHandle from domain "${rawDomain}" for user ${user.id}`);
+        return res.redirect("/billing?error=invalid_store_handle");
+      }
+
+      // 3. Get Shopify App Handle from environment
       const appHandle = process.env.SHOPIFY_APP_HANDLE;
       if (!appHandle) {
         console.error("[BILLING] SHOPIFY_APP_HANDLE not configured");
         return res.redirect("/billing?error=configuration_error");
       }
 
-      // Extract store_handle (shop name without .myshopify.com)
-      const storeHandle = shopifyDomain
-        .replace("https://", "")
-        .replace("http://", "")
-        .replace(".myshopify.com", "")
-        .replace(/\/$/, "");
-
-      // Redirect to Shopify Managed Pricing URL
+      // 4. Build Managed Pricing page URL
       const managedPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
-      
+
       console.log(`[BILLING] Redirecting user ${user.id} to Shopify Managed Pricing: ${managedPricingUrl}`);
-      res.redirect(managedPricingUrl);
+      return res.redirect(302, managedPricingUrl);
     } catch (error) {
       console.error("[BILLING] Upgrade redirect error:", error);
-      res.redirect("/billing?error=redirect_failed");
+      return res.redirect("/billing?error=redirect_failed");
     }
   });
 
@@ -557,159 +581,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Shopify Billing Redirect (Legacy/Backup - keep for now but we'll prioritize Managed Pricing)
+  // LEGACY endpoint: previously used Billing API (appSubscriptionCreate)
+  // Now just forwards to Managed Pricing flow.
   app.get("/api/billing/shopify-redirect", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
       const { plan: planHandle, shop } = req.query;
 
-      if (!planHandle) {
-        return res.status(400).json({ message: "Plan handle is required" });
-      }
+      console.log(
+        `[BILLING][LEGACY] /api/billing/shopify-redirect called by user ${user.id} with plan=${planHandle}, shop=${shop}. Redirecting to /billing/upgrade.`
+      );
 
-      // 1. Get store connection
-      // Source of truth: active store connections table linked to user
-      if (!db) {
-        return res.status(500).json({ message: "Database connection unavailable" });
-      }
-      const [connectionRaw] = await db.select()
-        .from(storeConnections)
-        .where(eq((storeConnections as any).userId, user.id));
-
-      const connection = connectionRaw as any;
-      let shopifyDomain = shop as string || connection?.storeUrl;
-      let accessToken = connection?.accessToken;
-
-      // MANDATORY SESSION VALIDATION
-      if (shopifyDomain && accessToken) {
-        try {
-          const client = new ShopifyGraphQLClient(shopifyDomain, accessToken);
-          const isConnected = await client.testConnection();
-          if (!isConnected) {
-            console.log(`[BILLING] Shopify session invalid for ${shopifyDomain}, forcing re-auth`);
-            accessToken = undefined;
-          }
-        } catch (e) {
-          console.error(`[BILLING] Session validation error for ${shopifyDomain}:`, e);
-          accessToken = undefined;
-        }
-      }
-
-      // Verify live session/connection exists via token
-      if (!shopifyDomain || !accessToken) {
-        // Fallback for admin/dev environments ONLY
-        if (process.env.NODE_ENV !== 'production' || user.role === 'admin') {
-          console.log(`[BILLING] No session for user ${user.id}, using dev/admin fallback`);
-          shopifyDomain = shopifyDomain || process.env.SHOPIFY_SHOP_DOMAIN || "zyra-ai-dev.myshopify.com";
-          accessToken = accessToken || process.env.SHOPIFY_ACCESS_TOKEN;
-        }
-      }
-
-      // CRITICAL: If no valid Shopify token exists, we MUST re-authenticate
-      if (!shopifyDomain || !accessToken) {
-        console.error(`[BILLING] Shopify session missing or invalid for user ${user.id}`);
-        
-        // If we know the shop domain but don't have a valid token, trigger re-auth
-        if (shopifyDomain) {
-          return res.status(401).json({ 
-            message: "Shopify session expired. Please re-authenticate.",
-            reauth: true,
-            reauthUrl: `/api/shopify/auth?shop=${shopifyDomain}`
-          });
-        }
-        
-        // If we don't even have a shop domain, we can't do anything
-        return res.status(400).json({ 
-          message: "Shopify session not found. Please open the app from your Shopify admin to reconnect." 
-        });
-      }
-
-      if (!db) {
-        throw new Error("Database connection unavailable");
-      }
-      // 2. Map plan handle to specific plan details (pricing, features)
-      const plans = await getSubscriptionPlans();
-      if (!plans) {
-        return res.status(500).json({ message: "Failed to fetch subscription plans" });
-      }
-      const plan = plans.find(p => p.planName.toLowerCase() === (planHandle as string).toLowerCase());
-      
-      if (!plan) {
-        console.error(`[BILLING] Invalid plan handle: ${planHandle}`);
-        return res.status(400).json({ message: "Invalid plan selected" });
-      }
-
-      // 3. Generate a dynamic subscription request via Shopify GraphQL API
-      const client = new ShopifyGraphQLClient(shopifyDomain, accessToken);
-      
-      // Use dynamic host for return URL to handle different environments (replit.dev, custom domains)
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      const host = req.headers.host;
-      const returnUrl = `${protocol}://${host}/api/billing/shopify-callback?plan_id=${plan.id}`;
-
-      console.log(`[BILLING] Creating Shopify Managed Subscription for ${shopifyDomain}. Return URL: ${returnUrl}`);
-
-      const mutation = `
-        mutation appSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $test: Boolean) {
-          appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test) {
-            appSubscription {
-              id
-            }
-            confirmationUrl
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const variables = {
-        name: `Zyra AI ${plan.planName} Plan`,
-        returnUrl: returnUrl,
-        test: process.env.NODE_ENV !== 'production', // Use test mode in non-production
-        lineItems: [{
-          plan: {
-            appRecurringPricingDetails: {
-              price: {
-                amount: plan.price,
-                currencyCode: 'USD'
-              },
-              interval: 'EVERY_30_DAYS'
-            }
-          }
-        }]
-      };
-
-      const result = await client.query(mutation, variables) as any;
-      
-      if (!result || result.errors) {
-        console.error("[BILLING] Shopify API Error:", result?.errors);
-        throw new Error(result?.errors?.[0]?.message || "Shopify GraphQL error");
-      }
-
-      if (result.appSubscriptionCreate?.userErrors?.length > 0) {
-        console.error("[BILLING] Shopify Business Error:", result.appSubscriptionCreate.userErrors);
-        throw new Error(result.appSubscriptionCreate.userErrors[0].message);
-      }
-
-      const confirmationUrl = result.appSubscriptionCreate?.confirmationUrl;
-      if (!confirmationUrl) {
-        throw new Error("Failed to generate Shopify confirmation URL");
-      }
-
-      console.log(`[BILLING] Created dynamic charge for ${shopifyDomain}, redirecting to: ${confirmationUrl}`);
-      
-      // Ensure the client knows this is a Shopify Managed Pricing redirect
-      res.json({ 
-        url: confirmationUrl,
-        requiresShopifyBilling: true,
-        confirmationUrl: confirmationUrl 
-      });
-
+      return res.redirect(302, "/billing/upgrade");
     } catch (error: any) {
-      console.error("Billing redirect error:", error);
-      res.status(500).json({ message: error.message || "Failed to generate dynamic Shopify billing request" });
+      console.error("[BILLING][LEGACY] Redirect error:", error);
+      return res.status(500).json({
+        message: error.message || "Failed to redirect to Shopify managed pricing from legacy billing endpoint",
+      });
     }
   });
 
