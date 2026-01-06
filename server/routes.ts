@@ -10820,6 +10820,54 @@ Output format: Markdown with clear section headings.`;
         console.log('✅ Connection created successfully (installed via Shopify, currency:', storeCurrency + ')');
       }
 
+      // Step 7b: Also save to local PostgreSQL database via Drizzle ORM
+      // This is needed because billing routes query the local DB, not Supabase
+      console.log('📋 Step 7b: Saving connection to local PostgreSQL database...');
+      try {
+        const storeUrl = `https://${shop}`;
+        
+        // Check if connection already exists in local DB
+        const existingLocalConnection = await db
+          .select()
+          .from(storeConnections)
+          .where(eq(storeConnections.userId, effectiveUserId))
+          .limit(1);
+
+        if (existingLocalConnection.length > 0) {
+          // Update existing record
+          await db
+            .update(storeConnections)
+            .set({
+              storeName: shopName,
+              storeUrl: storeUrl,
+              accessToken: accessToken,
+              status: 'active',
+              currency: storeCurrency,
+              isConnected: true,
+              lastSyncAt: new Date(),
+              updatedAt: new Date()
+            })
+            .where(eq(storeConnections.userId, effectiveUserId));
+          console.log('✅ Local DB connection updated for user:', effectiveUserId);
+        } else {
+          // Insert new record
+          await db.insert(storeConnections).values({
+            userId: effectiveUserId,
+            platform: 'shopify',
+            storeName: shopName,
+            storeUrl: storeUrl,
+            accessToken: accessToken,
+            status: 'active',
+            currency: storeCurrency,
+            isConnected: true
+          });
+          console.log('✅ Local DB connection created for user:', effectiveUserId);
+        }
+      } catch (localDbError) {
+        console.error('⚠️ Failed to save to local DB (non-critical):', localDbError);
+        // Continue - Supabase storage is the primary source
+      }
+
       // Step 8: Register mandatory Shopify webhooks for compliance
       console.log('📋 Step 8: Registering GDPR webhooks...');
       const { registerShopifyWebhooks } = await import('./lib/shopify-webhooks');
