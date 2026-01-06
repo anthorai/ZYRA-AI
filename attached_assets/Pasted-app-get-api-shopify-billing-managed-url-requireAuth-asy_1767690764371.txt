@@ -1,0 +1,71 @@
+app.get("/api/shopify/billing/managed-url", requireAuth, async (req, res) => {
+  try {
+    const user = (req as AuthenticatedRequest).user;
+
+    // 1. Try DB connection
+    const [connection] = await db
+      .select()
+      .from(storeConnections)
+      .where(eq(storeConnections.userId, user.id));
+
+    // 2. Try query param ?shop=... (e.g., anthor-ai.myshopify.com)
+    const shopFromQuery = (req.query.shop as string | undefined)?.trim();
+
+    // 3. Try env fallback for dev / single-store apps
+    const shopFromEnv = process.env.SHOPIFY_SHOP_DOMAIN?.trim();
+
+    const rawDomain =
+      connection?.storeUrl || shopFromQuery || shopFromEnv;
+
+    if (!rawDomain) {
+      console.log(
+        `[BILLING] No Shopify store connected or provided for user ${user.id}`
+      );
+      return res.status(400).json({
+        message:
+          "Shopify domain not found for this user. Please open the app from your Shopify admin to connect a store.",
+      });
+    }
+
+    // 4. Derive store_handle from the URL or domain
+    let storeHandle = rawDomain;
+    storeHandle = storeHandle.replace(/^https?:\/\//i, "");
+
+    const adminMatch = storeHandle.match(
+      /^admin\.shopify\.com\/store\/([^\/\?]+)/
+    );
+    if (adminMatch) {
+      storeHandle = adminMatch[1];
+    } else {
+      // classic myshopify domain: my-store.myshopify.com
+      storeHandle = storeHandle
+        .replace(/\.myshopify\.com.*/i, "")
+        .replace(/\/$/, "");
+    }
+
+    if (!storeHandle) {
+      console.error(
+        `[BILLING] Could not derive storeHandle from domain "${rawDomain}" for user ${user.id}`
+      );
+      return res.status(500).json({
+        message: "Invalid Shopify store URL; unable to derive store handle",
+      });
+    }
+
+    // 5. App handle (we know it's zyra-ai-1 from your URL)
+    const appHandle = process.env.SHOPIFY_APP_HANDLE || "zyra-ai-1";
+
+    const managedPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`;
+
+    console.log(
+      `[BILLING] Managed Pricing URL for user ${user.id}, storeHandle "${storeHandle}": ${managedPricingUrl}`
+    );
+
+    return res.json({ url: managedPricingUrl });
+  } catch (error: any) {
+    console.error("[BILLING] Managed URL error:", error);
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal server error" });
+  }
+});

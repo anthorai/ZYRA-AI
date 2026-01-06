@@ -398,7 +398,18 @@ export default function BillingPage() {
     try {
       console.log(`[BILLING] Fetching Shopify Managed Pricing URL for plan: ${planHandle}`);
       
-      const response = await apiRequest("GET", "/api/shopify/billing/managed-url");
+      // Try to get shop domain from various sources
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopFromUrl = urlParams.get('shop');
+      const shopFromWindow = (window as any).shopifyShopDomain;
+      const shop = shopFromUrl || shopFromWindow;
+      
+      // Build API URL with optional shop parameter
+      const apiUrl = shop 
+        ? `/api/shopify/billing/managed-url?shop=${encodeURIComponent(shop)}`
+        : "/api/shopify/billing/managed-url";
+      
+      const response = await apiRequest("GET", apiUrl);
       const data = await response.json();
 
       if (data.url) {

@@ -445,16 +445,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as AuthenticatedRequest).user;
 
+      // 1. Try DB connection first
       const [connection] = await db
         .select()
         .from(storeConnections)
         .where(eq(storeConnections.userId, user.id));
 
-      const rawDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+      // 2. Try query param ?shop=... (e.g., anthor-ai.myshopify.com)
+      const shopFromQuery = (req.query.shop as string | undefined)?.trim();
+
+      // 3. Try env fallback for dev / single-store apps
+      const shopFromEnv = process.env.SHOPIFY_SHOP_DOMAIN?.trim();
+
+      const rawDomain = connection?.storeUrl || shopFromQuery || shopFromEnv;
 
       if (!rawDomain) {
-        console.log(`[BILLING] No Shopify store connected for user ${user.id}`);
-        return res.status(400).json({ message: "Shopify domain not found for this user" });
+        console.log(`[BILLING] No Shopify store connected or provided for user ${user.id}`);
+        return res.status(400).json({ 
+          message: "Shopify domain not found. Please open the app from your Shopify admin to connect a store." 
+        });
       }
 
       // Normalize into a store handle usable in:

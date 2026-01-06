@@ -1,0 +1,110 @@
+Failed to load resource: the server responded with a status of 400 ()Understand this error
+index-BQ574Bl8.js:18 [BILLING] Upgrade error: Error: 400: {"message":"Shopify domain not found for this user"}
+    at ag (index-BQ574Bl8.js:33:43374)
+    at async Il (index-BQ574Bl8.js:33:44777)
+    at async O (billing-Bcb7DlU1.js:6:5523)   Now we’re seeing the real problem in the logs: [BILLING] Upgrade error: Error: 400: {"message":"Shopify domain not found for this user"} That 400 is coming from your backend /api/shopify/billing/managed-url route: if (!rawDomain) {
+  console.log(
+    `[BILLING] No Shopify store connected for user ${user.id}`
+  );
+  return res
+    .status(400)
+    .json({ message: "Shopify domain not found for this user" });
+} So the redirect logic is now fine, but for this user your backend does not know which shop they’re connected to.
+
+We need to fix one of these:
+
+Make sure every authenticated user has a storeConnections row with a valid storeUrl, or
+For this route, fall back to a known shop domain (for dev / single‑shop scenario), e.g. SHOPIFY_SHOP_DOMAIN, or
+Accept a shop parameter and use that if there’s no DB connection.
+Below I’ll show you a safe, practical fix that:
+
+Uses the DB connection when it exists (correct for production).
+Fallbacks to SHOPIFY_SHOP_DOMAIN (useful for development / single‑store setups).
+Optionally uses a shop query param as an override. 1. Fix /api/shopify/billing/managed-url to be more robust
+Right now your code roughly does: const [connection] = await db.select().from(storeConnections)....
+const rawDomain = connection?.storeUrl || process.env.SHOPIFY_SHOP_DOMAIN;
+
+if (!rawDomain) {
+  return res.status(400).json({ message: "Shopify domain not found for this user" });
+} But in your logs, rawDomain is ending up undefined (no DB row, no env), so you get 400.
+
+Let’s update the route to:
+
+Check DB
+If missing, check req.query.shop
+If still missing, fall back to SHOPIFY_SHOP_DOMAIN (for dev / simple setup)
+Only 400 if literally nothing is available    Important:
+In production, you really want storeConnections to be filled when the user installs/opens the app from Shopify. That’s an installation/auth flow issue, but the above gives you a safety net.
+For now, this will at least prevent the 400 if:
+You pass ?shop=anthor-ai.myshopify.com from the frontend, or
+You set SHOPIFY_SHOP_DOMAIN=anthor-ai.myshopify.com.
+2. Either pass shop from the frontend or set SHOPIFY_SHOP_DOMAIN
+Option A: Set SHOPIFY_SHOP_DOMAIN
+If this app is effectively for one store during development, set: Then restart your backend. With the updated route, that alone will satisfy rawDomain and make the Managed Pricing URL work.
+
+Option B: Pass shop in the request
+If you already know the shop domain in the browser (you mentioned earlier window.shopifyShopDomain), you can pass it: const handleUpgrade = async (planHandle: string) => {
+  if (!planHandle) {
+    toast({
+      title: "Error",
+      description: "Invalid plan selection",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    const shop = (window as any).shopifyShopDomain; // e.g., "anthor-ai.myshopify.com"
+
+    const url = shop
+      ? `/api/shopify/billing/managed-url?shop=${encodeURIComponent(shop)}`
+      : "/api/shopify/billing/managed-url";
+
+    const response = await apiRequest("GET", url);
+    const data = await response.json();
+
+    if (data.url) {
+      console.log(`[BILLING] Directing to Shopify Admin pricing: ${data.url}`);
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.message || "Failed to get upgrade URL");
+    }
+  } catch (error: any) {
+    console.error("[BILLING] Managed URL error:", error);
+    toast({
+      title: "Error",
+      description: error.message || "Failed to start upgrade process",
+      variant: "destructive",
+    });
+  }
+}; Now, even if there’s no DB row, the backend can use ?shop=anthor-ai.myshopify.com. 3. Double-check your install / store connection logic
+The error: "Shopify domain not found for this user" "Shopify domain not found for this user" also hints that for this logged‑in user, your storeConnections table has no row, or no storeUrl. Long‑term fix:
+
+In your Shopify OAuth/install callback (where you get shop and access token), ensure you:    // Pseudocode
+  await db.insert(storeConnections).values({
+    userId: user.id,
+    storeUrl: `https://${shop}`, // or full admin URL if you prefer
+    accessToken: shopAccessToken,
+    // ...
+  });  Or update existing row for that userId.
+That will make the billing flows work without extra query params or env hacks.
+
+4. Summary of what to change right now
+Update /api/shopify/billing/managed-url to use:
+
+DB storeConnections
+req.query.shop
+SHOPIFY_SHOP_DOMAIN
+instead of immediately 400’ing.
+Either:
+
+Set SHOPIFY_SHOP_DOMAIN=anthor-ai.myshopify.com, or
+Pass ?shop=anthor-ai.myshopify.com from the frontend as shown.
+Keep handleUpgrade doing:     const response = await apiRequest("GET", "/api/shopify/billing/managed-url?..."); 
+   const data = await response.json();
+   window.location.href = data.url;  Once rawDomain resolves correctly, your backend will produce the exact URL that you already tested manually:  https://admin.shopify.com/store/anthor-ai/charges/zyra-ai-1/pricing_plans  …and your front‑end will successfully redirect the browser there.
+
+If you paste:
+
+Your current storeConnections row for this user (just fields, you can mask tokens), and/or
+The exact request URL you see in Network for /api/shopify/billing/managed-url 
