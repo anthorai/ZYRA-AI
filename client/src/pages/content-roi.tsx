@@ -6,6 +6,8 @@ import { UnifiedHeader } from "@/components/ui/unified-header";
 import { DashboardCard, MetricCard } from "@/components/ui/dashboard-card";
 import { PageShell } from "@/components/ui/page-shell";
 import { useToast } from "@/hooks/use-toast";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 import { 
   TrendingUp, 
   DollarSign, 
@@ -19,6 +21,7 @@ import {
 export default function ContentROI() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { currency } = useStoreCurrency();
 
   // Mock ROI tracking data
   const roiData = [
@@ -88,7 +91,7 @@ export default function ContentROI() {
         <MetricCard
           icon={<DollarSign className="w-6 h-6" />}
           title="Revenue Impact"
-          value={`$${totalImpact.toFixed(0)}`}
+          value={formatCurrency(totalImpact, currency)}
           testId="card-revenue-impact"
         />
         <MetricCard
@@ -152,12 +155,12 @@ export default function ContentROI() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-900/50 p-3 rounded-lg">
                       <p className="text-slate-400 text-sm">Before</p>
-                      <p className="text-xl font-bold text-white">${item.beforeRevenue.toFixed(0)}</p>
+                      <p className="text-xl font-bold text-white">{formatCurrency(item.beforeRevenue, currency)}</p>
                       <p className="text-slate-400 text-xs">{item.ordersBefore} orders</p>
                     </div>
                     <div className="bg-slate-800/50 p-3 rounded-lg border border-primary/20">
                       <p className="text-slate-400 text-sm">After</p>
-                      <p className="text-xl font-bold text-white">${item.afterRevenue.toFixed(0)}</p>
+                      <p className="text-xl font-bold text-white">{formatCurrency(item.afterRevenue, currency)}</p>
                       <p className="text-slate-400 text-xs">{item.ordersAfter} orders</p>
                     </div>
                   </div>
@@ -184,7 +187,7 @@ export default function ContentROI() {
                 <div className="flex items-center justify-between">
                   <span className="text-green-400 font-medium">Revenue Increase</span>
                   <span className="text-green-400 font-bold text-lg">
-                    +${(item.afterRevenue - item.beforeRevenue).toFixed(0)} ({item.uplift}%)
+                    +{formatCurrency(item.afterRevenue - item.beforeRevenue, currency)} ({item.uplift}%)
                   </span>
                 </div>
               </div>

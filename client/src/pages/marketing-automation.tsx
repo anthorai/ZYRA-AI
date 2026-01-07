@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import {
@@ -20,6 +22,7 @@ import {
 
 export default function MarketingAutomation() {
   const { toast } = useToast();
+  const { currency } = useStoreCurrency();
 
   // Fetch marketing overview
   const { data: overview, isLoading: loadingOverview } = useQuery({
@@ -167,7 +170,7 @@ export default function MarketingAutomation() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-revenue">
-              ${overviewData?.totalRevenue?.toFixed(2) || 0}
+              {formatCurrency(overviewData?.totalRevenue || 0, currency)}
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               {(overviewData?.overallROI || 0) >= 0 ? (
@@ -247,7 +250,7 @@ export default function MarketingAutomation() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Min Cart Value</span>
-                  <span className="font-medium">${settingsData?.minCartValue || 0}</span>
+                  <span className="font-medium">{formatCurrency(settingsData?.minCartValue || 0, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Max Attempts</span>

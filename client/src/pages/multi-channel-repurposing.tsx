@@ -10,6 +10,8 @@ import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   Loader2,
@@ -48,6 +50,7 @@ interface Product {
 export default function MultiChannelRepurposingPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { currency } = useStoreCurrency();
 
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [productDescription, setProductDescription] = useState("");
@@ -68,7 +71,7 @@ export default function MultiChannelRepurposingPage() {
       const descriptionParts = [
         product.name,
         product.description ? `\n\n${product.description}` : '',
-        `\n\nPrice: $${Number(product.price).toFixed(2)}`,
+        `\n\nPrice: ${formatCurrency(Number(product.price), currency)}`,
         product.category ? `\nCategory: ${product.category}` : ''
       ];
       setProductDescription(descriptionParts.join(''));
@@ -242,7 +245,7 @@ export default function MultiChannelRepurposingPage() {
                         </div>
                       )}
                       <span className="truncate">{product.name}</span>
-                      <span className="text-primary ml-auto">${Number(product.price).toFixed(2)}</span>
+                      <span className="text-primary ml-auto">{formatCurrency(Number(product.price), currency)}</span>
                     </div>
                   </SelectItem>
                 ))}

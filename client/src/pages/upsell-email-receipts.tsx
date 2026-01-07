@@ -14,6 +14,8 @@ import { Slider } from "@/components/ui/slider";
 import { PageShell } from "@/components/ui/page-shell";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { useToast } from "@/hooks/use-toast";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   Mail,
@@ -139,6 +141,7 @@ const RULE_TYPES = [
 export default function UpsellEmailReceiptsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currency } = useStoreCurrency();
   
   const [activeTab, setActiveTab] = useState("settings");
   const [newRuleName, setNewRuleName] = useState("");
@@ -341,7 +344,7 @@ export default function UpsellEmailReceiptsPage() {
               <span className="text-sm text-muted-foreground">Revenue</span>
             </div>
             <div className="text-2xl font-bold mt-2" data-testid="text-revenue">
-              ${Number(analytics?.summary.total_revenue || 0).toFixed(2)}
+              {formatCurrency(Number(analytics?.summary.total_revenue || 0), currency)}
             </div>
           </CardContent>
         </Card>
@@ -754,7 +757,7 @@ export default function UpsellEmailReceiptsPage() {
                     <div className="flex justify-between mb-2">
                       <span className="text-sm text-muted-foreground">Avg. Order Value</span>
                       <span className="font-medium">
-                        ${Number(analytics?.summary.avg_order_value || 0).toFixed(2)}
+                        {formatCurrency(Number(analytics?.summary.avg_order_value || 0), currency)}
                       </span>
                     </div>
                   </div>
@@ -784,7 +787,7 @@ export default function UpsellEmailReceiptsPage() {
                         <div className="flex gap-4 text-sm">
                           <span>{day.sent} sent</span>
                           <span>{day.clicks} clicks</span>
-                          <span className="text-green-600">${day.revenue}</span>
+                          <span className="text-green-600">{formatCurrency(day.revenue, currency)}</span>
                         </div>
                       </div>
                     ))}
@@ -821,7 +824,7 @@ export default function UpsellEmailReceiptsPage() {
                           <div>Sent: {activeTest.controlSent}</div>
                           <div>Clicks: {activeTest.controlClicks}</div>
                           <div>Conversions: {activeTest.controlConversions}</div>
-                          <div className="text-green-600">Revenue: ${activeTest.controlRevenue}</div>
+                          <div className="text-green-600">Revenue: {formatCurrency(Number(activeTest.controlRevenue) || 0, currency)}</div>
                         </div>
                       </CardContent>
                     </Card>
@@ -833,7 +836,7 @@ export default function UpsellEmailReceiptsPage() {
                           <div>Sent: {activeTest.variantASent}</div>
                           <div>Clicks: {activeTest.variantAClicks}</div>
                           <div>Conversions: {activeTest.variantAConversions}</div>
-                          <div className="text-green-600">Revenue: ${activeTest.variantARevenue}</div>
+                          <div className="text-green-600">Revenue: {formatCurrency(Number(activeTest.variantARevenue) || 0, currency)}</div>
                         </div>
                       </CardContent>
                     </Card>
@@ -845,7 +848,7 @@ export default function UpsellEmailReceiptsPage() {
                           <div>Sent: {activeTest.variantBSent}</div>
                           <div>Clicks: {activeTest.variantBClicks}</div>
                           <div>Conversions: {activeTest.variantBConversions}</div>
-                          <div className="text-green-600">Revenue: ${activeTest.variantBRevenue}</div>
+                          <div className="text-green-600">Revenue: {formatCurrency(Number(activeTest.variantBRevenue) || 0, currency)}</div>
                         </div>
                       </CardContent>
                     </Card>

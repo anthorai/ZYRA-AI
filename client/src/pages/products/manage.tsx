@@ -11,6 +11,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { ShopifyPublishDialog } from '@/components/shopify/publish-dialog';
 import { PublishContent, useShopifyBulkPublish, useShopifyConnection } from '@/hooks/use-shopify-publish';
 import { useProductRealtime } from '@/hooks/use-product-realtime';
+import { useStoreCurrency } from '@/hooks/use-store-currency';
+import { formatCurrency } from '@/lib/utils';
 import { CardGrid } from '@/components/ui/standardized-layout';
 import { PageShell } from '@/components/ui/page-shell';
 import { GradientPageHeader } from '@/components/ui/page-hero';
@@ -45,7 +47,8 @@ function ProductCard({
   isSelected, 
   onToggleSelection,
   onPublishClick,
-  onGenerateAI
+  onGenerateAI,
+  currency
 }: { 
   product: Product;
   canBeSelected: boolean;
@@ -53,6 +56,7 @@ function ProductCard({
   onToggleSelection: (id: string) => void;
   onPublishClick: (product: Product) => void;
   onGenerateAI: (productId: string) => void;
+  currency: string;
 }) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -111,7 +115,7 @@ function ProductCard({
           <div className="space-y-1 sm:space-y-2">
             <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="text-slate-400">Price:</span>
-              <span className="font-semibold text-primary">${product.price}</span>
+              <span className="font-semibold text-primary">{formatCurrency(parseFloat(product.price) || 0, currency)}</span>
             </div>
             <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="text-slate-400">Category:</span>
@@ -182,6 +186,7 @@ export default function ManageProducts() {
   const bulkPublishMutation = useShopifyBulkPublish();
   const { data: shopifyStatus } = useShopifyConnection();
   const isStoreConnected = shopifyStatus?.isConnected === true;
+  const { currency } = useStoreCurrency();
 
   // Enable real-time product updates
   useProductRealtime();
@@ -546,6 +551,7 @@ export default function ManageProducts() {
               onToggleSelection={toggleProductSelection}
               onPublishClick={handlePublishClick}
               onGenerateAI={handleGenerateAI}
+              currency={currency}
             />
           ))}
         </CardGrid>
