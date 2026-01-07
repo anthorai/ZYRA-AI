@@ -1,0 +1,108 @@
+1. Keep your app subscription plans in USD only
+This is handled by your app’s billing implementation, not by the merchant’s store currency.
+
+If you’re using app subscriptions via the Admin API, you simply:
+
+Set all your amount values in USD
+Pass currencyCode: USD in your billing mutation (for example, appSubscriptionCreate or appUsageRecordCreate)
+Because this is your app’s billing, you are free to standardize everything in USD regardless of the store’s local currency.
+
+If you want, I can generate the exact GraphQL mutation you’re using for billing and show how to hardcode USD there.
+
+2. Show prices & revenue in the merchant’s store currency
+To show data in the store’s own currency, your app should:
+
+Fetch the shop’s base currency (currencyCode)
+Optionally fetch enabled presentment currencies and currency settings if you need them
+Format and/or convert your own data to that currency before rendering
+You can do this with the Admin GraphQL shop query.
+
+GraphQL query to fetch the store currency
+Here is a minimal query that:
+
+Gets the shop name
+Gets the base currency (currencyCode)
+Gets all presentment currencies the shop has enabled (enabledPresentmentCurrencies)
+Gets a list of currencies that have conversion rates configured (currencySettings)query ShopCurrency {
+  shop {
+    name
+    currencyCode
+    enabledPresentmentCurrencies
+    currencySettings(first: 5) {
+      edges {
+        node {
+          currencyCode
+          rateUpdatedAt
+        }
+      }
+    }
+  }
+}  This query has been validated against the latest Admin GraphQL schema with the validation tool and is valid.
+
+Docs:
+
+shop query and currencyCode / enabledPresentmentCurrencies / currencySettings example:
+Shop query – Admin GraphQL API How to use this in your app
+Typical flow in your backend (Node.js example, but the logic is the same for any language):
+
+During or right after OAuth, call this query with the store’s Admin access token.
+Save the currencyCode in your app’s DB as part of your shop record.
+Use that saved currencyCode for:
+Displaying revenues in store currency (e.g., “1000 EUR”)
+Displaying product-based metrics in store currency
+Any time you show money to the merchant, use their store currency
+Example (Node with @shopify/shopify-api): const client = new shopify.clients.Graphql({ session });
+
+const result = await client.query({
+  data: {
+    query: `query ShopCurrency {
+      shop {
+        name
+        currencyCode
+        enabledPresentmentCurrencies
+      }
+    }`,
+  },
+});
+
+const shopData = result.body.data.shop;
+const storeCurrency = shopData.currencyCode; // e.g. "EUR", "INR", "GBP"
+
+// Save storeCurrency in your DB, e.g. shops table:
+// shops[shopDomain].storeCurrency = storeCurrency; 3. How to handle the “only USD for subscription” vs “store currency for UI” difference
+You essentially have two currency layers:
+
+Billing layer (your app plans): always USD
+
+Mutation values like amount: 10.0, currencyCode: USD
+Merchants see “$10.00 USD/month” in the standard Shopify billing UI
+Data/UI layer (metrics, revenues, product prices): shop’s currencyCode
+
+You get this from the shop query above
+If your data source is already in shop currency (e.g., you read totalPriceSet.shopMoney from orders via Admin API), just display it
+If your data source is in USD, convert to shop.currencyCode using your own FX rates or the currencySettings list to know what currencies are configured
+4. Common mistakes that cause “only dollars” in your app
+From your description, your app is always showing dollars even for non‑USD shops. That usually happens because:
+
+You hardcoded “USD” in your formatting logic:
+e.g., "$" + amount or currencyCode = "USD" in code
+You never fetched the shop currency from the Admin API
+You show raw values in USD without converting or labeling them clearly
+To fix this:
+
+Replace any hardcoded "USD" in your UI logic with the storeCurrency you fetched from shop.currencyCode
+If your internal numbers are in USD, either:
+Convert them to the shop’s currencyCode before display; or
+At least label them clearly as “USD” (but if your requirement is “display in store currency,” you should convert)
+5. What I can help you with next
+If you paste:
+
+Your current billing mutation (for subscriptions), and/or
+Your current query + code where you show prices/revenue
+I can:
+
+Add currencyCode: USD properly to your billing mutation
+Adjust your queries and code so they:
+Fetch shop.currencyCode
+Use it in your UI to display amounts in the store’s currency
+Right now, the main fix you need at the API level is to start using the shop query above and then wire that value into your frontend instead of hardcoding USD.

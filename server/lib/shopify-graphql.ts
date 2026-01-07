@@ -538,20 +538,42 @@ export class ShopifyGraphQLClient {
     }
   }
 
-  async getShopInfo(): Promise<{ name: string; email: string } | null> {
+  async getShopInfo(): Promise<{ name: string; email: string; currencyCode: string; enabledPresentmentCurrencies: string[] } | null> {
     const response = await this.query<{
-      shop: { name: string; email: string };
+      shop: { name: string; email: string; currencyCode: string; enabledPresentmentCurrencies: string[] };
     }>(`
       query getShopInfo {
         shop {
           name
           email
+          currencyCode
+          enabledPresentmentCurrencies
         }
       }
     `);
 
     if (response.errors?.length) {
       console.error('GraphQL errors fetching shop info:', response.errors);
+      return null;
+    }
+
+    return response.data?.shop || null;
+  }
+
+  async getShopCurrency(): Promise<{ currencyCode: string; enabledPresentmentCurrencies: string[] } | null> {
+    const response = await this.query<{
+      shop: { currencyCode: string; enabledPresentmentCurrencies: string[] };
+    }>(`
+      query ShopCurrency {
+        shop {
+          currencyCode
+          enabledPresentmentCurrencies
+        }
+      }
+    `);
+
+    if (response.errors?.length) {
+      console.error('GraphQL errors fetching shop currency:', response.errors);
       return null;
     }
 

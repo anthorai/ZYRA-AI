@@ -13847,6 +13847,51 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Sync store currency from Shopify - fetches the latest currency from Shopify and updates the store connection
+  app.post('/api/store/currency/sync', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get the Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (!shopifyConnection || !shopifyConnection.accessToken || !shopifyConnection.storeUrl) {
+        return res.status(400).json({ 
+          error: 'Shopify not connected',
+          message: 'Please connect your Shopify store first'
+        });
+      }
+      
+      const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '').replace(/\/$/, '');
+      const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+      
+      // Fetch the shop currency from Shopify
+      const shopCurrency = await graphqlClient.getShopCurrency();
+      
+      if (!shopCurrency) {
+        return res.status(500).json({ error: 'Failed to fetch currency from Shopify' });
+      }
+      
+      // Update the store connection with the new currency
+      await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
+        currency: shopCurrency.currencyCode,
+        updatedAt: new Date()
+      });
+      
+      console.log(`[Currency] Synced store currency for user ${userId}: ${shopCurrency.currencyCode}`);
+      
+      res.json({ 
+        currency: shopCurrency.currencyCode,
+        enabledCurrencies: shopCurrency.enabledPresentmentCurrencies,
+        message: 'Currency synced successfully'
+      });
+    } catch (error) {
+      console.error('[Currency] Sync store currency error:', error);
+      res.status(500).json({ error: 'Failed to sync store currency' });
+    }
+  });
+
   // Get ROI summary - aggregates revenue from all sources
   app.get('/api/analytics/roi-summary', requireAuth, async (req, res) => {
     try {
