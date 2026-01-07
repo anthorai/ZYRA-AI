@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UnifiedHeader } from "@/components/ui/unified-header";
 import { DashboardCard, MetricCard } from "@/components/ui/dashboard-card";
 import { PageShell } from "@/components/ui/page-shell";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency, getCurrencySymbol } from "@/lib/utils";
 import { 
   ShoppingCart, 
   TrendingUp, 
@@ -30,6 +32,8 @@ import {
 
 export default function CartRecovery() {
   const [, setLocation] = useLocation();
+  const { currency } = useStoreCurrency();
+  const currencySymbol = getCurrencySymbol(currency);
 
   const { data: cartRecoveryData, isLoading } = useQuery<{
     overview: {
@@ -97,7 +101,7 @@ export default function CartRecovery() {
           <MetricCard
             icon={<DollarSign className="w-6 h-6" />}
             title="Recovered Value"
-            value={isLoading ? "..." : `$${overview.recoveredValue}`}
+            value={isLoading ? "..." : formatCurrency(overview.recoveredValue, currency)}
             testId="card-recovered-value"
           />
         </div>
@@ -216,9 +220,9 @@ export default function CartRecovery() {
                           borderRadius: '8px',
                           color: '#f1f5f9'
                         }}
-                        formatter={(value: any) => [`$${value}`, 'Amount']}
+                        formatter={(value: any) => [formatCurrency(value, currency), 'Amount']}
                       />
-                      <Bar dataKey="value" name="Revenue ($)">
+                      <Bar dataKey="value" name={`Revenue (${currencySymbol})`}>
                         {revenuePotentialData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={
                             entry.category === 'Recovered' ? '#00F0FF' : 
@@ -233,19 +237,19 @@ export default function CartRecovery() {
                     <div className="text-center p-4 bg-slate-800/30 rounded-lg">
                       <p className="text-slate-400 text-sm">Total Cart Value</p>
                       <p className="text-white font-bold text-lg mt-1">
-                        ${overview.totalValue}
+                        {formatCurrency(overview.totalValue, currency)}
                       </p>
                     </div>
                     <div className="text-center p-4 bg-slate-800/30 rounded-lg">
                       <p className="text-slate-400 text-sm">Recovered Revenue</p>
                       <p className="text-white font-bold text-lg mt-1">
-                        ${overview.recoveredValue}
+                        {formatCurrency(overview.recoveredValue, currency)}
                       </p>
                     </div>
                     <div className="text-center p-4 bg-slate-800/30 rounded-lg">
                       <p className="text-slate-400 text-sm">Potential Revenue</p>
                       <p className="text-white font-bold text-lg mt-1">
-                        ${overview.potentialRevenue}
+                        {formatCurrency(overview.potentialRevenue, currency)}
                       </p>
                     </div>
                   </div>
