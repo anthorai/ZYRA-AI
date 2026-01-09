@@ -140,6 +140,9 @@ export default function IntegrationsPage() {
   const [showShopifySetup, setShowShopifySetup] = useState(false);
   const [shopifyValidation, setShopifyValidation] = useState<any>(null);
   const [isValidating, setIsValidating] = useState(false);
+  
+  // Success banner state - shows when store is connected
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   // Check for success/error query parameters on mount (from Shopify OAuth redirect)
   useEffect(() => {
@@ -150,10 +153,14 @@ export default function IntegrationsPage() {
     
     // Handle both legacy and new success parameters
     if (shopifyConnected === 'connected' || shopifyConnectedNew === 'true') {
+      // Show visible success banner
+      setShowSuccessBanner(true);
+      
+      // Also show toast notification
       toast({
         title: "Store Connected Successfully",
         description: "Your Shopify store has been connected to Zyra AI! You can now sync products and access all features.",
-        duration: 5000,
+        duration: 8000,
       });
       
       // Update the integration status
@@ -170,6 +177,9 @@ export default function IntegrationsPage() {
       urlParams.delete('shopify_connected');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
       window.history.replaceState({}, '', newUrl);
+      
+      // Auto-hide banner after 10 seconds
+      setTimeout(() => setShowSuccessBanner(false), 10000);
     }
     
     // Handle specific Shopify error codes with helpful messages
@@ -892,6 +902,26 @@ export default function IntegrationsPage() {
       spacing="normal"
       backTo="/settings"
     >
+      {/* Success Banner - Shows when store is connected */}
+      {showSuccessBanner && (
+        <Alert className="mb-6 bg-green-500/20 border-green-500/50" data-testid="alert-shopify-success">
+          <CheckCircle2 className="h-5 w-5 text-green-400" />
+          <AlertTitle className="text-green-400 text-lg font-semibold">Store Connected Successfully!</AlertTitle>
+          <AlertDescription className="text-green-300">
+            Your Shopify store has been connected to Zyra AI. You can now sync products, optimize listings, and access all e-commerce features.
+          </AlertDescription>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="absolute top-2 right-2 text-green-400 hover:text-green-300"
+            onClick={() => setShowSuccessBanner(false)}
+            data-testid="button-dismiss-success"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </Alert>
+      )}
+
       {/* Connected Summary */}
       <DashboardCard 
         className="bg-primary/10"
