@@ -1133,12 +1133,38 @@ export default function BillingPage() {
                 </p>
                 <Button 
                   variant="outline"
-                  onClick={() => {
+                  onClick={async () => {
                     if (!isStoreConnected) {
                       setShowConnectStoreDialog(true);
                       return;
                     }
-                    window.open('https://admin.shopify.com/store', '_blank');
+                    
+                    try {
+                      // Use the same API as Upgrade via Shopify to get the correct Shopify Admin URL
+                      const urlParams = new URLSearchParams(window.location.search);
+                      const shopFromUrl = urlParams.get('shop');
+                      const shopFromWindow = (window as any).shopifyShopDomain;
+                      const shop = shopFromUrl || shopFromWindow;
+                      
+                      const apiUrl = shop 
+                        ? `/api/shopify/billing/managed-url?shop=${encodeURIComponent(shop)}`
+                        : "/api/shopify/billing/managed-url";
+                      
+                      const response = await apiRequest("GET", apiUrl);
+                      const data = await response.json();
+
+                      if (data.url) {
+                        window.location.href = data.url;
+                      } else {
+                        throw new Error(data.message || "Failed to get Shopify Admin URL");
+                      }
+                    } catch (error: any) {
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to open Shopify Admin",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                   className="border-slate-600 text-slate-300 hover:bg-white/10"
                   data-testid="button-shopify-admin"
@@ -1198,7 +1224,6 @@ export default function BillingPage() {
                 </p>
               </div>
             </div>
-            
           </div>
         </DialogContent>
       </Dialog>
