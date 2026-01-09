@@ -36,7 +36,9 @@ import {
   Image,
   Mail,
   MessageSquare,
-  Search
+  Search,
+  ShoppingBag,
+  Link2
 } from "lucide-react";
 
 interface SubscriptionPlan {
@@ -287,6 +289,7 @@ export default function BillingPage() {
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("plans");
   const [syncingSubscription, setSyncingSubscription] = useState(false);
+  const [showConnectStoreDialog, setShowConnectStoreDialog] = useState(false);
   const plansRef = useRef<HTMLDivElement>(null);
 
   const scrollToPlans = useCallback(() => {
@@ -296,6 +299,13 @@ export default function BillingPage() {
     }, 100);
   }, []);
   const [isAnnual, setIsAnnual] = useState(false);
+  
+  // Check Shopify store connection status
+  const { data: shopifyStatus } = useQuery<{ isConnected: boolean; storeName?: string }>({
+    queryKey: ['/api/shopify/status'],
+  });
+  
+  const isStoreConnected = shopifyStatus?.isConnected ?? false;
 
   // Sync subscription from Shopify when returning from pricing page
   useEffect(() => {
@@ -392,6 +402,12 @@ export default function BillingPage() {
         description: "Invalid plan selection",
         variant: "destructive",
       });
+      return;
+    }
+    
+    // Check if store is connected before proceeding
+    if (!isStoreConnected) {
+      setShowConnectStoreDialog(true);
       return;
     }
 
@@ -1117,7 +1133,13 @@ export default function BillingPage() {
                 </p>
                 <Button 
                   variant="outline"
-                  onClick={() => window.open('https://admin.shopify.com/store', '_blank')}
+                  onClick={() => {
+                    if (!isStoreConnected) {
+                      setShowConnectStoreDialog(true);
+                      return;
+                    }
+                    window.open('https://admin.shopify.com/store', '_blank');
+                  }}
                   className="border-slate-600 text-slate-300 hover:bg-white/10"
                   data-testid="button-shopify-admin"
                 >
@@ -1154,6 +1176,52 @@ export default function BillingPage() {
           </DashboardCard>
         </TabsContent>
       </Tabs>
+      
+      {/* Connect Store Dialog */}
+      <Dialog open={showConnectStoreDialog} onOpenChange={setShowConnectStoreDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-primary" />
+              Connect Your Shopify Store
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              To purchase a plan, first connect your Shopify store.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="flex items-start gap-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+              <Link2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-slate-300">
+                  Connect your store to unlock Shopify billing and manage your subscription directly through Shopify's secure payment system.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowConnectStoreDialog(false)}
+                className="flex-1"
+                data-testid="button-cancel-connect-store"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowConnectStoreDialog(false);
+                  setLocation('/settings/integrations');
+                }}
+                className="flex-1"
+                data-testid="button-go-to-integrations"
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Connect Store
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
