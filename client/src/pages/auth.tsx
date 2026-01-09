@@ -259,12 +259,8 @@ export default function Auth() {
             localStorage.removeItem('pending_shopify_install');
             localStorage.removeItem('pending_shopify_shop');
             
-            toast({
-              title: "Store Connected!",
-              description: `${data.shopName || 'Your Shopify store'} has been connected to Zyra AI.`,
-            });
-            // Redirect to dashboard with success indicator
-            setLocation("/dashboard?shopify=connected");
+            // Redirect to integrations page with success indicator (toast will show there)
+            setLocation("/settings/integrations?shopify_connected=true");
           } else {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
             console.error('Failed to associate Shopify connection:', errorData);
