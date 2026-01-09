@@ -415,16 +415,63 @@ export default function IntegrationsPage() {
 
 
   const handleConnect = async (id: string) => {
-    // Shopify 2.3.1 Compliance: Installation must be initiated only from Shopify-owned surfaces
-    // Users must install the app from the Shopify App Store, not by entering a store URL here
+    // Shopify connection - redirect to OAuth flow via backend
+    // Uses Shopify's centralized OAuth (no shop domain required - Shopify prompts for store selection)
     if (id === 'shopify') {
-      toast({
-        title: "Install from Shopify App Store",
-        description: "To connect your store, please install Zyra AI from the Shopify App Store. This ensures secure authentication and compliance with Shopify policies.",
-        duration: 8000,
-      });
-      // Open Shopify App Store in new tab (replace with actual app listing URL when published)
-      window.open('https://apps.shopify.com', '_blank');
+      try {
+        const { supabase } = await import('@/lib/supabaseClient');
+        const { data: sessionData } = await supabase.auth.getSession();
+        let token = sessionData.session?.access_token || '';
+
+        if (!token) {
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          token = refreshData.session?.access_token || '';
+        }
+
+        if (!token) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to connect your Shopify store",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Connecting to Shopify",
+          description: "Redirecting to Shopify for authorization...",
+        });
+
+        // First, call the API to initiate OAuth and get the redirect URL
+        // Token is sent securely via Authorization header
+        const response = await fetch('/api/shopify/connect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to initiate connection');
+        }
+
+        const data = await response.json();
+        if (data.authUrl) {
+          // Redirect to Shopify OAuth URL
+          window.location.href = data.authUrl;
+        } else {
+          throw new Error('No authorization URL received');
+        }
+      } catch (error) {
+        console.error('Shopify connect error:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Failed to initiate Shopify connection. Please try again.",
+          variant: "destructive",
+        });
+      }
       return;
     }
 

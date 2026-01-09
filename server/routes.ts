@@ -10372,11 +10372,59 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // REMOVED: POST /api/shopify/auth endpoint
-  // Shopify Policy 2.3.1 Compliance: Installation must be initiated only from Shopify-owned surfaces
-  // The /api/shopify/install endpoint (GET) is the only valid entry point, which receives
-  // the shop domain from Shopify query parameters, not user input.
-  // Any request to connect a store must originate from the Shopify App Store.
+  // Connect Store endpoint - initiates Shopify's centralized OAuth flow
+  // This allows users who already have the app installed (but not connected) to initiate OAuth
+  // without requiring shop domain input - Shopify will prompt for store selection
+  app.post('/api/shopify/connect', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const apiKey = (process.env.SHOPIFY_API_KEY || '').trim();
+      if (!apiKey) {
+        console.error('❌ SHOPIFY_API_KEY not configured');
+        return res.status(500).json({ error: 'Shopify integration not configured' });
+      }
+
+      // Get base URL using helper function (handles production domain)
+      const baseUrl = getBaseUrl();
+      const redirectUri = `${baseUrl}/api/shopify/callback`;
+      
+      // Comprehensive scopes for AI-powered features
+      const scopes = 'read_products,write_products,read_inventory,read_customers,read_orders,read_checkouts,read_marketing_events,write_marketing_events,read_analytics,read_reports,read_locales';
+      
+      // Generate secure state nonce
+      const crypto = await import('crypto');
+      const state = crypto.randomBytes(32).toString('hex');
+      
+      // Store state in database with expiration (30 minutes)
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      await db.insert(oauthStates).values({
+        state,
+        userId, // Associate with logged-in user
+        shopDomain: '', // Will be filled by Shopify during callback
+        expiresAt
+      });
+
+      console.log('🔗 [SHOPIFY CONNECT] Initiating OAuth for user:', userId);
+      console.log('  Redirect URI:', redirectUri);
+      console.log('  State generated:', state.substring(0, 16) + '...');
+
+      // Use Shopify's centralized OAuth URL - no shop domain required
+      // Shopify will prompt the user to select their store
+      const authUrl = `https://admin.shopify.com/oauth/authorize?client_id=${apiKey}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+      
+      console.log('  Auth URL generated for Shopify OAuth');
+      
+      // Return the auth URL for frontend to redirect
+      res.json({ authUrl });
+    } catch (error) {
+      console.error('Shopify connect OAuth error:', error);
+      res.status(500).json({ error: 'Failed to initiate Shopify connection' });
+    }
+  });
 
   // Handle Shopify OAuth callback
   app.get('/api/shopify/callback', async (req, res) => {
@@ -10483,13 +10531,23 @@ Output format: Markdown with clear section headings.`;
         console.log('  State age:', Math.floor(stateAge / 1000), 'seconds');
 
         // Validate shop domain matches the one from initiation
-        if (shopDomain !== stateData.shopDomain) {
+        // EXCEPTION: If shopDomain is empty (from /api/shopify/connect flow), 
+        // accept any shop domain from Shopify - the user selected it in Shopify's UI
+        if (stateData.shopDomain && stateData.shopDomain !== '' && shopDomain !== stateData.shopDomain) {
           console.log('❌ FAILED: Shop domain mismatch');
           console.log('  Expected:', stateData.shopDomain);
           console.log('  Got:', shopDomain);
           await db.delete(oauthStates).where(eq(oauthStates.state, state as string));
           return res.status(403).send('Shop domain mismatch');
         }
+        
+        // If the stored shopDomain was empty (from /api/shopify/connect flow),
+        // use the shop domain that Shopify returned
+        if (!stateData.shopDomain || stateData.shopDomain === '') {
+          console.log('  Using shop domain from Shopify callback:', shopDomain);
+          stateData.shopDomain = shopDomain;
+        }
+        
         console.log('✅ State validated successfully');
       }
 
