@@ -1198,21 +1198,13 @@ export default function BillingPage() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowConnectStoreDialog(false)}
-                className="flex-1"
-                data-testid="button-cancel-connect-store"
-              >
-                Cancel
-              </Button>
+            <div className="pt-2">
               <Button
                 onClick={() => {
                   setShowConnectStoreDialog(false);
                   setLocation('/settings/integrations');
                 }}
-                className="flex-1"
+                className="w-full"
                 data-testid="button-go-to-integrations"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
