@@ -53,6 +53,17 @@ export default function IntegrationsPage() {
       labelType: "recommended"
     },
     {
+      id: "twilio",
+      name: "Twilio",
+      type: "SMS Service",
+      icon: <SiTwilio className="w-5 h-5" />,
+      isConnected: false,
+      description: "Send SMS campaigns, abandoned cart recovery, and order notifications via Twilio. Track delivery and engagement rates.",
+      label: "For Ecom Sellers & Marketers 📲",
+      tooltip: "Send SMS campaigns, abandoned cart alerts, and promotions to boost sales.",
+      labelType: "recommended"
+    },
+    {
       id: "gmail",
       name: "Gmail",
       type: "Email Provider",
@@ -75,17 +86,6 @@ export default function IntegrationsPage() {
       tooltip: "Sync Outlook accounts for enterprise-level communication.",
       labelType: "optional",
       comingSoon: true
-    },
-    {
-      id: "twilio",
-      name: "Twilio",
-      type: "SMS Service",
-      icon: <SiTwilio className="w-5 h-5" />,
-      isConnected: false,
-      description: "Send SMS campaigns, abandoned cart recovery, and order notifications via Twilio. Track delivery and engagement rates.",
-      label: "For Ecom Sellers & Marketers 📲",
-      tooltip: "Send SMS campaigns, abandoned cart alerts, and promotions to boost sales.",
-      labelType: "recommended"
     },
     {
       id: "analytics",
