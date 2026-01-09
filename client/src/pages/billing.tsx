@@ -1198,19 +1198,7 @@ export default function BillingPage() {
                 </p>
               </div>
             </div>
-            <div className="pt-2">
-              <Button
-                onClick={() => {
-                  setShowConnectStoreDialog(false);
-                  setLocation('/settings/integrations');
-                }}
-                className="w-full"
-                data-testid="button-go-to-integrations"
-              >
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                Connect Store
-              </Button>
-            </div>
+            
           </div>
         </DialogContent>
       </Dialog>
