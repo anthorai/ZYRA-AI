@@ -146,11 +146,13 @@ export default function IntegrationsPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const shopifyConnected = urlParams.get('shopify');
+    const shopifyConnectedNew = urlParams.get('shopify_connected');
     
-    if (shopifyConnected === 'connected') {
+    // Handle both legacy and new success parameters
+    if (shopifyConnected === 'connected' || shopifyConnectedNew === 'true') {
       toast({
-        title: "Shopify Connected",
-        description: "Your Shopify store has been successfully connected to Zyra AI!",
+        title: "Store Connected Successfully",
+        description: "Your Shopify store has been connected to Zyra AI! You can now sync products and access all features.",
         duration: 5000,
       });
       
@@ -165,6 +167,7 @@ export default function IntegrationsPage() {
       
       // Clean up the URL
       urlParams.delete('shopify');
+      urlParams.delete('shopify_connected');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
       window.history.replaceState({}, '', newUrl);
     }

@@ -10989,22 +10989,22 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation from Shopify - redirect to ZYRA AI dashboard (standalone app)
-        const dashboardUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/dashboard?shopify=connected`
-          : `${req.protocol}://${req.get('host')}/dashboard?shopify=connected`;
-        console.log('  Redirecting to dashboard:', dashboardUrl);
+        // Direct installation from Shopify - redirect to integrations page with success indicator
+        const successUrl = process.env.PRODUCTION_DOMAIN 
+          ? `${process.env.PRODUCTION_DOMAIN}/settings/integrations?shopify_connected=true`
+          : `${req.protocol}://${req.get('host')}/settings/integrations?shopify_connected=true`;
+        console.log('  Redirecting to integrations:', successUrl);
         
         res.send(`
           <html>
             <head>
-              <meta http-equiv="refresh" content="0;url=${dashboardUrl}">
+              <meta http-equiv="refresh" content="0;url=${successUrl}">
             </head>
             <body>
               <script>
-                window.location.href = '${dashboardUrl}';
+                window.location.href = '${successUrl}';
               </script>
-              <p>Installation successful! Redirecting to your dashboard...</p>
+              <p>Store connected successfully! Redirecting...</p>
             </body>
           </html>
         `);
