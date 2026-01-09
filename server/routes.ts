@@ -8230,21 +8230,16 @@ Output format: Markdown with clear section headings.`;
         return;
       }
       
-      // Fallback: Check environment variables (platform-level config)
-      const hasTwilioAccountSid = !!process.env.TWILIO_ACCOUNT_SID;
-      const hasTwilioAuthToken = !!process.env.TWILIO_AUTH_TOKEN;
-      const hasTwilioPhoneNumber = !!process.env.TWILIO_PHONE_NUMBER;
-      
-      const isConfigured = hasTwilioAccountSid && hasTwilioAuthToken && hasTwilioPhoneNumber;
-      
+      // No merchant-specific Twilio credentials found in database
+      // Platform environment variables are for internal use, not merchant connection status
       res.json({
-        isConnected: isConfigured,
-        isConfigured,
-        hasAccountSid: hasTwilioAccountSid,
-        hasAuthToken: hasTwilioAuthToken,
-        hasPhoneNumber: hasTwilioPhoneNumber,
-        phoneNumber: hasTwilioPhoneNumber ? process.env.TWILIO_PHONE_NUMBER?.replace(/\d(?=\d{4})/g, '*') : null,
-        source: isConfigured ? 'environment' : 'none'
+        isConnected: false,
+        isConfigured: false,
+        hasAccountSid: false,
+        hasAuthToken: false,
+        hasPhoneNumber: false,
+        phoneNumber: null,
+        source: 'none'
       });
     } catch (error: any) {
       console.error('Twilio status check error:', error);
