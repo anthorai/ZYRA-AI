@@ -257,9 +257,9 @@ export default function Settings() {
               <h3 className="text-white font-bold text-lg" data-testid="text-security-status">
                 {securityLoading ? <Skeleton className="h-6 w-16" /> : (securitySettings?.twoFactorEnabled ? 'Secure' : 'Unsecured')}
               </h3>
-              <p className="text-slate-300 text-sm">
+              <span className="text-slate-300 text-sm block">
                 {securityLoading ? <Skeleton className="h-4 w-24" /> : (securitySettings?.twoFactorEnabled ? '2FA Enabled' : '2FA Disabled')}
-              </p>
+              </span>
             </div>
           </div>
         </Card>

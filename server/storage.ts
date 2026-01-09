@@ -101,6 +101,7 @@ import {
   imageOptimizationHistory,
   productSeoHistory,
   syncHistory,
+  usageStats,
   type SyncHistory,
   type InsertSyncHistory
 } from "@shared/schema";
@@ -997,7 +998,7 @@ export class DatabaseStorage {
     if (!db) return;
     try {
       // Fire and forget activity logging to avoid blocking the main thread
-      db.insert(activityLogs).values(activity).catch(e => console.error('trackActivity background error:', e));
+      db.insert(activityLogs).values(activity).catch((e: Error) => console.error('trackActivity background error:', e));
     } catch (e) {
       console.error('trackActivity error:', e);
     }
