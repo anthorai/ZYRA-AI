@@ -733,6 +733,123 @@ export class ShopifyGraphQLClient {
     const subscriptions = response.data?.currentAppInstallation?.activeSubscriptions;
     return subscriptions?.[0] || null;
   }
+
+  async getAllActiveSubscriptions(): Promise<Array<{
+    id: string;
+    status: string;
+    name: string;
+    currentPeriodEnd: string | null;
+    lineItems: Array<{
+      id: string;
+      plan: {
+        pricingDetails: {
+          price: { amount: string; currencyCode: string } | null;
+          interval: string | null;
+        } | null;
+      };
+    }>;
+  }>> {
+    const response = await this.query<{
+      currentAppInstallation: {
+        activeSubscriptions: Array<{
+          id: string;
+          status: string;
+          name: string;
+          currentPeriodEnd: string | null;
+          lineItems: Array<{
+            id: string;
+            plan: {
+              pricingDetails: {
+                __typename: string;
+                price?: { amount: string; currencyCode: string };
+                interval?: string;
+              };
+            };
+          }>;
+        }>;
+      };
+    }>(`
+      query getAllActiveSubscriptions {
+        currentAppInstallation {
+          activeSubscriptions {
+            id
+            status
+            name
+            currentPeriodEnd
+            lineItems {
+              id
+              plan {
+                pricingDetails {
+                  __typename
+                  ... on AppRecurringPricing {
+                    price {
+                      amount
+                      currencyCode
+                    }
+                    interval
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    if (response.errors?.length) {
+      console.error('GraphQL errors fetching all active subscriptions:', response.errors);
+      return [];
+    }
+
+    const subscriptions = response.data?.currentAppInstallation?.activeSubscriptions || [];
+    return subscriptions.map(sub => ({
+      ...sub,
+      lineItems: sub.lineItems.map(item => ({
+        id: item.id,
+        plan: {
+          pricingDetails: item.plan.pricingDetails ? {
+            price: item.plan.pricingDetails.price || null,
+            interval: item.plan.pricingDetails.interval || null
+          } : null
+        }
+      }))
+    }));
+  }
+
+  async cancelAppSubscription(subscriptionId: string): Promise<boolean> {
+    const response = await this.query<{
+      appSubscriptionCancel: {
+        appSubscription: { id: string; status: string } | null;
+        userErrors: Array<{ field: string[]; message: string }>;
+      };
+    }>(`
+      mutation appSubscriptionCancel($id: ID!) {
+        appSubscriptionCancel(id: $id) {
+          appSubscription {
+            id
+            status
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `, { id: subscriptionId });
+
+    if (response.errors?.length) {
+      console.error('GraphQL errors cancelling subscription:', response.errors);
+      return false;
+    }
+
+    const userErrors = response.data?.appSubscriptionCancel.userErrors;
+    if (userErrors?.length) {
+      console.error('User errors cancelling subscription:', userErrors);
+      return false;
+    }
+
+    return !!response.data?.appSubscriptionCancel.appSubscription;
+  }
 }
 
 export function graphqlProductToRest(product: ShopifyGraphQLProduct): {

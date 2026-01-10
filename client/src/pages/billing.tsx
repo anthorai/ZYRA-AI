@@ -490,6 +490,14 @@ export default function BillingPage() {
       if (confirmationUrl) {
         window.location.href = confirmationUrl;
         return;
+      } else if (data.alreadyActive) {
+        // User already has this plan active
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
+        toast({
+          title: "Plan Already Active",
+          description: data.message || `You already have the ${data.currentPlan || 'selected'} plan active.`,
+        });
       } else if (data.requiresShopifyBilling === false) {
         // Free plan activated directly
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });

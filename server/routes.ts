@@ -6187,7 +6187,6 @@ Output format: Markdown with clear section headings.`;
       }
       
       // For paid plans, use Shopify Managed Pricing (rules 1.2.1 and 4.2.1)
-      // Redirect user to /admin/apps/{APP_HANDLE}/pricing?plan={PLAN_HANDLE}
       console.log("[SUBSCRIPTION] Paid plan selected, using Shopify Managed Pricing");
       
       // Get user's Shopify connection
@@ -6214,7 +6213,6 @@ Output format: Markdown with clear section headings.`;
       }
       
       // Map Zyra plan to Shopify Managed Pricing plan handle
-      // Use shopifyPlanHandle from database if available, otherwise derive from plan name
       const planHandleMap: Record<string, string> = {
         'Starter': 'starter',
         'Growth': 'growth',
@@ -6232,8 +6230,72 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
+      // Check for existing active Shopify subscription before redirecting
+      if (shopifyConnection.accessToken) {
+        try {
+          const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+          const activeSubscriptions = await graphqlClient.getAllActiveSubscriptions();
+          
+          if (activeSubscriptions.length > 0) {
+            console.log("[SUBSCRIPTION] User has", activeSubscriptions.length, "active Shopify subscription(s)");
+            
+            const requestedPlanName = (selectedPlan.planName || '').toLowerCase().trim();
+            const requestedPlanHandle = (shopifyPlanHandle || '').toLowerCase().trim();
+            
+            // Check ALL active subscriptions for a matching plan
+            for (const currentSub of activeSubscriptions) {
+              const currentPlanName = (currentSub.name || '').toLowerCase().trim();
+              console.log("[SUBSCRIPTION] Checking subscription:", currentSub.name, "Status:", currentSub.status);
+              
+              // Match if names align (e.g., "Starter" matches "starter")
+              const isSamePlan = currentPlanName && (
+                currentPlanName === requestedPlanName || 
+                currentPlanName === requestedPlanHandle ||
+                currentPlanName.includes(requestedPlanName) ||
+                requestedPlanName.includes(currentPlanName)
+              );
+              
+              if (currentSub.status === 'ACTIVE' && isSamePlan) {
+                console.log("[SUBSCRIPTION] User already has this plan active:", currentSub.name);
+                
+                // Sync the subscription to our database if not already synced
+                const periodEnd = currentSub.currentPeriodEnd 
+                  ? new Date(currentSub.currentPeriodEnd) 
+                  : undefined;
+                const periodStart = periodEnd 
+                  ? new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000)
+                  : undefined;
+                  
+                const shopifyOptions: ShopifySubscriptionOptions = {
+                  shopifySubscriptionId: currentSub.id,
+                  currentPeriodStart: periodStart,
+                  currentPeriodEnd: periodEnd
+                };
+                
+                await updateUserSubscription(userId, planId, userEmail, 'monthly', shopifyOptions);
+                await initializeUserCredits(userId, planId);
+                
+                return res.json({
+                  success: true,
+                  requiresShopifyBilling: false,
+                  alreadyActive: true,
+                  currentPlan: selectedPlan.planName,
+                  message: `You already have the ${selectedPlan.planName} plan active.`
+                });
+              }
+            }
+            
+            // User has different plan(s) active - they're changing plans
+            const currentPlanNames = activeSubscriptions.map(s => s.name).join(', ');
+            console.log("[SUBSCRIPTION] User changing from", currentPlanNames, "to", requestedPlanName);
+          }
+        } catch (subError) {
+          console.error("[SUBSCRIPTION] Error checking active subscriptions:", subError);
+          // Continue to pricing page if check fails
+        }
+      }
+      
       // Build Shopify Managed Pricing URL for non-embedded apps
-      // Correct format: https://admin.shopify.com/store/{store_handle}/charges/{app_handle}/pricing_plans
       const storeHandle = shopUrl.replace(".myshopify.com", "").replace(/\/$/, "");
       const shopifyPricingUrl = `https://admin.shopify.com/store/${storeHandle}/charges/${shopifyAppHandle}/pricing_plans`;
       
