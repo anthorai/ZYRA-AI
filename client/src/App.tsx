@@ -363,6 +363,27 @@ function Router() {
           </SettingsLayout>
         </ProtectedRoute>
       )} />
+      {/* Welcome route - Shopify redirects here after plan approval */}
+      <Route path="/welcome">
+        {() => {
+          // Redirect to billing page with success flag
+          const params = new URLSearchParams(window.location.search);
+          const shop = params.get('shop') || '';
+          const chargeId = params.get('charge_id') || '';
+          window.location.href = `/billing?success=true${shop ? `&shop=${encodeURIComponent(shop)}` : ''}${chargeId ? `&charge_id=${chargeId}` : ''}`;
+          return null;
+        }}
+      </Route>
+      {/* Shopify billing callback routes */}
+      <Route path="/api/shopify/billing/callback" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <Billing />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
       <Route path="/subscription" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
