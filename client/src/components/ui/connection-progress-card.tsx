@@ -11,7 +11,6 @@ import {
   Shield, 
   RefreshCw,
   Sparkles,
-  ExternalLink,
   ArrowRight,
   Link2
 } from "lucide-react";
@@ -35,11 +34,11 @@ interface ConnectionProgressCardProps {
 }
 
 const STEPS = [
-  { key: 'initializing', label: 'Initializing', icon: Link2, description: 'Preparing secure connection...' },
-  { key: 'authenticating', label: 'Authenticating', icon: Shield, description: 'Connecting with Shopify...' },
-  { key: 'verifying', label: 'Verifying', icon: Store, description: 'Verifying store credentials...' },
-  { key: 'syncing', label: 'Syncing', icon: RefreshCw, description: 'Syncing store data...' },
-  { key: 'complete', label: 'Connected', icon: CheckCircle2, description: 'Your store is ready!' },
+  { key: 'initializing', label: 'Initializing', icon: Link2 },
+  { key: 'authenticating', label: 'Authenticating', icon: Shield },
+  { key: 'verifying', label: 'Verifying', icon: Store },
+  { key: 'syncing', label: 'Syncing', icon: RefreshCw },
+  { key: 'complete', label: 'Connected', icon: CheckCircle2 },
 ];
 
 const getStepIndex = (step: ConnectionStep): number => {
@@ -68,7 +67,6 @@ export function ConnectionProgressCard({
   const isError = currentStep === 'error';
   const isComplete = currentStep === 'complete';
 
-  // Animate progress bar
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimatedProgress(targetProgress);
@@ -76,200 +74,120 @@ export function ConnectionProgressCard({
     return () => clearTimeout(timer);
   }, [targetProgress]);
 
-  // Get current step details
-  const getCurrentStepDetails = () => {
-    if (isError) {
-      return {
-        icon: AlertCircle,
-        label: 'Connection Failed',
-        description: errorMessage || 'Unable to connect to your Shopify store'
-      };
-    }
-    const step = STEPS[currentStepIndex];
-    return step || STEPS[0];
-  };
-
-  const stepDetails = getCurrentStepDetails();
-  const StepIcon = stepDetails.icon;
-
   return (
-    <Card className={`w-full max-w-md gradient-card border-0 overflow-visible ${className}`}>
-      <CardContent className="p-6 sm:p-8">
-        {/* Header with animated icon */}
-        <div className="text-center mb-6">
-          <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center transition-all duration-500 ${
-            isError 
-              ? 'bg-red-500/20' 
-              : isComplete 
-                ? 'bg-green-500/20' 
-                : 'bg-primary/20'
+    <Card className={`w-full max-w-sm gradient-card border-0 ${className}`}>
+      <CardContent className="p-4">
+        {/* Header */}
+        <div className="text-center mb-4">
+          <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
+            isError ? 'bg-red-500/20' : isComplete ? 'bg-green-500/20' : 'bg-primary/20'
           }`}>
             {isError ? (
-              <AlertCircle className="w-10 h-10 text-red-400" />
+              <AlertCircle className="w-6 h-6 text-red-400" />
             ) : isComplete ? (
-              <Sparkles className="w-10 h-10 text-green-400 animate-pulse" />
+              <Sparkles className="w-6 h-6 text-green-400" />
             ) : (
-              <StepIcon className={`w-10 h-10 text-primary ${!isComplete ? 'animate-pulse' : ''}`} />
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
             )}
           </div>
           
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2" data-testid="text-connection-title">
-            {isError ? 'Connection Failed' : isComplete ? 'Store Connected!' : 'Connecting to Shopify'}
-          </h2>
+          <h3 className="text-base font-semibold text-white mb-1" data-testid="text-connection-title">
+            {isError ? 'Connection Failed' : isComplete ? 'Store Connected!' : 'Connecting...'}
+          </h3>
           
           {storeName && isComplete && (
-            <p className="text-primary font-medium mb-2" data-testid="text-store-name">
-              {storeName}
-            </p>
+            <p className="text-primary text-sm font-medium" data-testid="text-store-name">{storeName}</p>
           )}
-          
-          <p className="text-slate-400 text-sm" data-testid="text-connection-description">
-            {stepDetails.description}
-          </p>
         </div>
 
-        {/* Progress bar - only show when not error/complete */}
+        {/* Progress bar */}
         {!isError && !isComplete && (
-          <div className="mb-6">
-            <Progress 
-              value={animatedProgress} 
-              className="h-2 bg-slate-700"
-            />
-            <div className="flex justify-between text-xs text-slate-500 mt-2">
-              <span>Connecting...</span>
-              <span>{Math.round(animatedProgress)}%</span>
-            </div>
+          <div className="mb-4">
+            <Progress value={animatedProgress} className="h-1.5 bg-slate-700" />
+            <p className="text-xs text-slate-500 text-center mt-1">{Math.round(animatedProgress)}%</p>
           </div>
         )}
 
-        {/* Step indicators */}
-        <div className="space-y-3 mb-6">
+        {/* Compact step indicators */}
+        <div className="flex justify-between mb-4">
           {STEPS.map((step, index) => {
-            const isCurrentStep = index === currentStepIndex;
             const isCompletedStep = index < currentStepIndex || isComplete;
-            const isPendingStep = index > currentStepIndex && !isError;
+            const isCurrentStep = index === currentStepIndex && !isError && !isComplete;
             const Icon = step.icon;
 
             return (
-              <div 
-                key={step.key}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
-                  isCurrentStep && !isError
-                    ? 'bg-primary/10 border border-primary/30' 
-                    : isCompletedStep 
-                      ? 'bg-green-500/10 border border-green-500/20' 
-                      : isError && index === 0
-                        ? 'bg-red-500/10 border border-red-500/20'
-                        : 'bg-slate-800/30 border border-slate-700/30'
-                }`}
-                data-testid={`step-${step.key}`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+              <div key={step.key} className="flex flex-col items-center" data-testid={`step-${step.key}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1 ${
                   isCompletedStep 
                     ? 'bg-green-500/20' 
-                    : isCurrentStep && !isError
-                      ? 'bg-primary/20'
+                    : isCurrentStep 
+                      ? 'bg-primary/20 ring-2 ring-primary/40'
                       : 'bg-slate-700/50'
                 }`}>
                   {isCompletedStep ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-400" />
-                  ) : isCurrentStep && !isError ? (
-                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+                  ) : isCurrentStep ? (
+                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                   ) : (
-                    <Icon className={`w-4 h-4 ${isPendingStep ? 'text-slate-500' : 'text-slate-400'}`} />
+                    <Icon className="w-3.5 h-3.5 text-slate-500" />
                   )}
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${
-                    isCompletedStep 
-                      ? 'text-green-400' 
-                      : isCurrentStep && !isError
-                        ? 'text-primary'
-                        : 'text-slate-400'
-                  }`}>
-                    {step.label}
-                  </p>
-                </div>
-
-                {isCurrentStep && !isError && !isComplete && (
-                  <div className="flex items-center gap-1 text-xs text-primary">
-                    <span>In progress</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </div>
-                )}
+                <span className={`text-[9px] ${
+                  isCompletedStep ? 'text-green-400' : isCurrentStep ? 'text-primary' : 'text-slate-500'
+                }`}>
+                  {step.label}
+                </span>
               </div>
             );
           })}
         </div>
 
-        {/* Error state with retry */}
+        {/* Error message */}
         {isError && (
-          <Alert className="bg-red-500/10 border-red-500/30 mb-4">
-            <AlertCircle className="h-4 w-4 text-red-400" />
-            <AlertDescription className="text-red-300 text-sm">
+          <Alert className="bg-red-500/10 border-red-500/30 mb-3 py-2">
+            <AlertCircle className="h-3.5 w-3.5 text-red-400" />
+            <AlertDescription className="text-red-300 text-xs">
               {errorMessage || 'Connection failed. Please try again.'}
             </AlertDescription>
           </Alert>
         )}
 
+        {/* Success message */}
+        {isComplete && (
+          <Alert className="bg-green-500/10 border-green-500/30 mb-3 py-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+            <AlertDescription className="text-green-300 text-xs">
+              Your store is connected and ready!
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Action buttons */}
-        <div className="space-y-3">
-          {isError && (
-            <>
-              <Button
-                onClick={onRetry}
-                className="w-full gradient-button"
-                data-testid="button-retry-connection"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
-              </Button>
-              <Button
-                onClick={onCancel}
-                variant="outline"
-                className="w-full border-slate-600 text-slate-300"
-                data-testid="button-cancel-connection"
-              >
-                Cancel
-              </Button>
-            </>
-          )}
+        {isError && (
+          <div className="flex gap-2">
+            <Button onClick={onCancel} variant="outline" size="sm" className="flex-1 border-slate-600 text-slate-300" data-testid="button-cancel-connection">
+              Cancel
+            </Button>
+            <Button onClick={onRetry} size="sm" className="flex-1 gradient-button" data-testid="button-retry-connection">
+              <RefreshCw className="w-3 h-3 mr-1" /> Retry
+            </Button>
+          </div>
+        )}
 
-          {isComplete && (
-            <>
-              <Alert className="bg-green-500/10 border-green-500/30">
-                <CheckCircle2 className="h-4 w-4 text-green-400" />
-                <AlertDescription className="text-green-300 text-sm">
-                  Your Shopify store is now connected! You can start using all Zyra AI features.
-                </AlertDescription>
-              </Alert>
-              <Button
-                onClick={onComplete}
-                className="w-full gradient-button"
-                data-testid="button-go-to-dashboard"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Go to Dashboard
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </>
-          )}
+        {isComplete && (
+          <Button onClick={onComplete} size="sm" className="w-full gradient-button" data-testid="button-go-to-dashboard">
+            Continue <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
+        )}
 
-          {!isError && !isComplete && (
-            <div className="text-center">
-              <p className="text-xs text-slate-500">
-                Please wait while we securely connect your store...
-              </p>
-            </div>
-          )}
-        </div>
+        {!isError && !isComplete && (
+          <p className="text-xs text-slate-500 text-center">Please wait...</p>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-// Hook for managing connection progress state
 export function useConnectionProgress() {
   const [step, setStep] = useState<ConnectionStep>('initializing');
   const [error, setError] = useState<string | null>(null);
@@ -283,9 +201,7 @@ export function useConnectionProgress() {
 
   const setConnectionStep = (newStep: ConnectionStep) => {
     setStep(newStep);
-    if (newStep !== 'error') {
-      setError(null);
-    }
+    if (newStep !== 'error') setError(null);
   };
 
   const setConnectionError = (errorMsg: string) => {
