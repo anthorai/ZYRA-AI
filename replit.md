@@ -54,7 +54,7 @@ Ensures production-ready security with multi-tier rate limiting, input sanitizat
 Offers advanced multi-channel notification preferences (Email, SMS, In-App, Push) with granular control and proactive trial expiration notifications.
 
 ### Shopify Integration
-Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing.
+Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing. The connection flow uses a shared ConnectionProgressCard component (`client/src/components/ui/connection-progress-card.tsx`) with 5-step visual progress (Initializing, Authenticating, Verifying, Syncing, Complete), consistent UX across both manual connects and App Store installations, and comprehensive error handling with specific error codes for Shopify review compliance.
 
 ### Automation Tools
 Includes comprehensive bulk SEO optimization tools like "Smart Bulk Suggestions" (AI-powered fixes with previews) and "One-Click Shopify Publish." Also includes CSV Import/Export and per-product rollback.
