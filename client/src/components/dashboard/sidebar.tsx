@@ -63,6 +63,39 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Fetch current subscription to get the actual plan name
+  const { data: subscriptionData } = useQuery<{
+    planId: string;
+    planName: string;
+    status: string;
+  }>({
+    queryKey: ['/api/subscription/current'],
+    enabled: !!supabaseUser,
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  // Get the display name for the current plan
+  const getCurrentPlanDisplay = () => {
+    // If we have subscription data with a plan name, use it
+    if (subscriptionData?.planName) {
+      return subscriptionData.planName;
+    }
+    // Fall back to appUser plan
+    if (appUser?.plan) {
+      // Format common plan values nicely
+      const planMap: Record<string, string> = {
+        'trial': 'Free Trial',
+        'free': 'Free',
+        'starter': 'Starter',
+        'growth': 'Growth',
+        'pro': 'Pro',
+        'enterprise': 'Enterprise'
+      };
+      return planMap[appUser.plan.toLowerCase()] || appUser.plan;
+    }
+    return 'Free Trial';
+  };
+
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -216,10 +249,10 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
                 <div className="flex items-center gap-2 mt-0.5">
                   <Badge 
                     variant="outline" 
-                    className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 border-primary/30 text-primary capitalize"
+                    className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 border-primary/30 text-primary"
                     data-testid="badge-user-plan"
                   >
-                    {appUser?.plan || "trial"}
+                    {getCurrentPlanDisplay()}
                   </Badge>
                   <span 
                     className={`text-[10px] flex items-center gap-0.5 ${
