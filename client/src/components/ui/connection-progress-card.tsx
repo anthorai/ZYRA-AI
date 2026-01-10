@@ -154,12 +154,10 @@ export function ConnectionProgressCard({
 
         {/* Success message */}
         {isComplete && (
-          <Alert className="bg-green-500/10 border-green-500/30 mb-3 py-2">
-            <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-            <AlertDescription className="text-green-300 text-xs">
-              Your store is connected and ready!
-            </AlertDescription>
-          </Alert>
+          <div className="flex items-center gap-2 bg-green-500/10 rounded-md px-3 py-2 mb-3">
+            <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+            <span className="text-green-300 text-xs">Your store is connected and ready!</span>
+          </div>
         )}
 
         {/* Action buttons */}
