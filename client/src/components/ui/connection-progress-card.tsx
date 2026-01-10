@@ -75,7 +75,7 @@ export function ConnectionProgressCard({
   }, [targetProgress]);
 
   return (
-    <Card className={`w-full max-w-sm gradient-card border-0 ${className}`}>
+    <Card className={`w-full max-w-sm bg-slate-900/95 border border-slate-700/50 shadow-lg ${className}`}>
       <CardContent className="p-4">
         {/* Header */}
         <div className="text-center mb-4">
