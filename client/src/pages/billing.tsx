@@ -314,6 +314,7 @@ export default function BillingPage() {
       const urlParams = new URLSearchParams(window.location.search);
       const hasShopifyReturn = urlParams.has('shop') || 
                                urlParams.has('charge_id') || 
+                               urlParams.has('success') ||
                                document.referrer.includes('shopify') ||
                                document.referrer.includes('admin');
       
@@ -324,10 +325,11 @@ export default function BillingPage() {
           const result = await response.json();
           
           if (result.synced && result.hasActiveSubscription) {
-            // Subscription was synced - refresh data
+            // Subscription was synced - refresh data including invoices
             queryClient.invalidateQueries({ queryKey: ['/api/subscription/current'] });
             queryClient.invalidateQueries({ queryKey: ['/api/usage-stats'] });
             queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
             
             toast({
               title: "Plan Activated",
@@ -336,7 +338,7 @@ export default function BillingPage() {
           }
           
           // Clean up URL params
-          if (urlParams.has('shop') || urlParams.has('charge_id')) {
+          if (urlParams.has('shop') || urlParams.has('charge_id') || urlParams.has('success')) {
             window.history.replaceState({}, '', window.location.pathname);
           }
         } catch (error) {
