@@ -11166,7 +11166,11 @@ Output format: Markdown with clear section headings.`;
             <body>
               <script>
                 if (window.opener) {
-                  window.opener.postMessage({ type: 'shopify-connected', success: true }, window.opener.location.origin);
+                  window.opener.postMessage({ 
+                    type: 'shopify-connected', 
+                    success: true,
+                    storeName: '${(shopName || shop as string).replace(/'/g, "\\'")}' 
+                  }, window.opener.location.origin);
                   window.close();
                 }
               </script>
@@ -11176,9 +11180,11 @@ Output format: Markdown with clear section headings.`;
         `);
       } else {
         // Direct installation from Shopify - redirect to integrations page with success indicator
+        // Include store name in URL for display in the connection success modal
+        const encodedStoreName = encodeURIComponent(shopName || shop as string);
         const successUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/settings/integrations?shopify_connected=true`
-          : `${req.protocol}://${req.get('host')}/settings/integrations?shopify_connected=true`;
+          ? `${process.env.PRODUCTION_DOMAIN}/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`
+          : `${req.protocol}://${req.get('host')}/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`;
         console.log('  Redirecting to integrations:', successUrl);
         
         res.send(`

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
-import { Zap, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info } from "lucide-react";
+import { ConnectionProgressCard, useConnectionProgress } from "@/components/ui/connection-progress-card";
+import { Zap, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info, Loader2 } from "lucide-react";
 import { SiSendgrid, SiTwilio } from "react-icons/si";
 
 interface Integration {
@@ -143,6 +145,11 @@ export default function IntegrationsPage() {
   
   // Success banner state - shows when store is connected
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  
+  // Shopify connection progress modal state
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const connectionProgress = useConnectionProgress();
+  const [, setLocation] = useLocation();
 
   // Check for success/error query parameters on mount (from Shopify OAuth redirect)
   useEffect(() => {
@@ -150,77 +157,92 @@ export default function IntegrationsPage() {
     const error = urlParams.get('error');
     const shopifyConnected = urlParams.get('shopify');
     const shopifyConnectedNew = urlParams.get('shopify_connected');
+    const storeName = urlParams.get('store_name');
+    
+    // Check if we were in the middle of connecting (returning from Shopify OAuth)
+    const wasConnecting = sessionStorage.getItem('shopify_connecting');
     
     // Handle both legacy and new success parameters
     if (shopifyConnected === 'connected' || shopifyConnectedNew === 'true') {
-      // Show visible success banner
-      setShowSuccessBanner(true);
+      // Clear the connecting state
+      sessionStorage.removeItem('shopify_connecting');
+      sessionStorage.removeItem('shopify_connect_time');
       
-      // Also show toast notification
-      toast({
-        title: "Store Connected Successfully",
-        description: "Your Shopify store has been connected to Zyra AI! You can now sync products and access all features.",
-        duration: 8000,
-      });
+      // Show the connection progress modal with complete state
+      setShowConnectionModal(true);
+      connectionProgress.setStep('syncing');
       
-      // Update the integration status
-      setIntegrations(prev =>
-        prev.map(integration =>
-          integration.id === 'shopify'
-            ? { ...integration, isConnected: true }
-            : integration
-        )
-      );
+      // Animate through final steps
+      setTimeout(() => {
+        connectionProgress.setComplete(storeName || 'Your Shopify Store');
+        
+        // Update the integration status
+        setIntegrations(prev =>
+          prev.map(integration =>
+            integration.id === 'shopify'
+              ? { ...integration, isConnected: true }
+              : integration
+          )
+        );
+        
+        // Show visible success banner too
+        setShowSuccessBanner(true);
+        
+        // Auto-hide banner after 10 seconds
+        setTimeout(() => setShowSuccessBanner(false), 10000);
+      }, 1200);
       
       // Clean up the URL
       urlParams.delete('shopify');
       urlParams.delete('shopify_connected');
+      urlParams.delete('store_name');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
       window.history.replaceState({}, '', newUrl);
-      
-      // Auto-hide banner after 10 seconds
-      setTimeout(() => setShowSuccessBanner(false), 10000);
     }
     
     // Handle specific Shopify error codes with helpful messages
     if (error) {
-      let title = "Connection Failed";
-      let description = "Please try again or click 'Setup Guide' for help.";
+      // Clear the connecting state
+      sessionStorage.removeItem('shopify_connecting');
+      sessionStorage.removeItem('shopify_connect_time');
+      
+      let errorMessage = "Please try again or click 'Setup Guide' for help.";
       
       switch (error) {
         case 'state_expired':
-          title = "Session Expired";
-          description = "Your connection attempt took too long and expired. Please try connecting again.";
+          errorMessage = "Your connection attempt took too long and expired. Please try connecting again.";
           break;
         case 'hmac_failed':
-          title = "Security Verification Failed";
-          description = "Shopify security verification failed. This might indicate a configuration issue. Please check the Setup Guide.";
+          errorMessage = "Shopify security verification failed. This might indicate a configuration issue.";
           break;
         case 'token_exchange_failed':
-          title = "Authentication Failed";
-          description = "Failed to authenticate with Shopify. Please verify your Shopify app credentials are correct.";
+          errorMessage = "Failed to authenticate with Shopify. Please verify your Shopify app credentials are correct.";
           break;
         case 'shop_info_failed':
-          title = "Store Information Error";
-          description = "Could not fetch your store information from Shopify. Please try again.";
+          errorMessage = "Could not fetch your store information from Shopify. Please try again.";
           break;
         case 'db_save_failed':
-          title = "Database Error";
-          description = "Successfully connected to Shopify but couldn't save the connection. Please try again.";
+          errorMessage = "Successfully connected to Shopify but couldn't save the connection. Please try again.";
           break;
         case 'shopify_connection_failed':
         default:
-          title = "Shopify Connection Failed";
-          description = "We couldn't connect to your Shopify store. Please try again or click 'Setup Guide' for help.";
+          errorMessage = "We couldn't connect to your Shopify store. Please try again.";
           break;
       }
       
-      toast({
-        title,
-        description,
-        variant: "destructive",
-        duration: 8000,
-      });
+      // Show error in connection modal if we were connecting
+      if (wasConnecting) {
+        setShowConnectionModal(true);
+        connectionProgress.setError(errorMessage);
+      } else {
+        // Show toast as fallback
+        toast({
+          title: "Connection Failed",
+          description: errorMessage,
+          variant: "destructive",
+          duration: 8000,
+        });
+      }
       
       // Clean up the URL by removing the error parameter
       urlParams.delete('error');
@@ -427,64 +449,72 @@ export default function IntegrationsPage() {
   };
 
 
-  const handleConnect = async (id: string) => {
-    // Shopify connection - redirect to OAuth flow via backend
-    // Uses Shopify's centralized OAuth (no shop domain required - Shopify prompts for store selection)
-    if (id === 'shopify') {
-      try {
-        const { supabase } = await import('@/lib/supabaseClient');
-        const { data: sessionData } = await supabase.auth.getSession();
-        let token = sessionData.session?.access_token || '';
+  // Initiate Shopify connection with progress modal
+  const initiateShopifyConnection = async () => {
+    // Reset and show the connection modal
+    connectionProgress.reset();
+    setShowConnectionModal(true);
+    connectionProgress.setStep('initializing');
 
-        if (!token) {
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          token = refreshData.session?.access_token || '';
-        }
+    try {
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { data: sessionData } = await supabase.auth.getSession();
+      let token = sessionData.session?.access_token || '';
 
-        if (!token) {
-          toast({
-            title: "Authentication Required",
-            description: "Please log in to connect your Shopify store",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        toast({
-          title: "Connecting to Shopify",
-          description: "Redirecting to Shopify for authorization...",
-        });
-
-        // First, call the API to initiate OAuth and get the redirect URL
-        // Token is sent securely via Authorization header
-        const response = await fetch('/api/shopify/connect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to initiate connection');
-        }
-
-        const data = await response.json();
-        if (data.authUrl) {
-          // Redirect to Shopify OAuth URL
-          window.location.href = data.authUrl;
-        } else {
-          throw new Error('No authorization URL received');
-        }
-      } catch (error) {
-        console.error('Shopify connect error:', error);
-        toast({
-          title: "Connection Failed",
-          description: "Failed to initiate Shopify connection. Please try again.",
-          variant: "destructive",
-        });
+      if (!token) {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        token = refreshData.session?.access_token || '';
       }
+
+      if (!token) {
+        connectionProgress.setError("Please log in to connect your Shopify store");
+        return;
+      }
+
+      // Step 1: Authenticating
+      connectionProgress.setStep('authenticating');
+      await new Promise(resolve => setTimeout(resolve, 800)); // Brief delay for UX
+
+      // Call the API to initiate OAuth and get the redirect URL
+      const response = await fetch('/api/shopify/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to initiate connection');
+      }
+
+      const data = await response.json();
+      
+      if (data.authUrl) {
+        // Step 2: Verifying - about to redirect
+        connectionProgress.setStep('verifying');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Store connection state in sessionStorage for when user returns
+        sessionStorage.setItem('shopify_connecting', 'true');
+        sessionStorage.setItem('shopify_connect_time', Date.now().toString());
+        
+        // Redirect to Shopify OAuth URL
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('No authorization URL received');
+      }
+    } catch (error: any) {
+      console.error('Shopify connect error:', error);
+      connectionProgress.setError(error.message || "Failed to initiate Shopify connection. Please try again.");
+    }
+  };
+
+  const handleConnect = async (id: string) => {
+    // Shopify connection - show progress modal and redirect to OAuth flow
+    if (id === 'shopify') {
+      initiateShopifyConnection();
       return;
     }
 
@@ -1251,6 +1281,33 @@ export default function IntegrationsPage() {
         </div>
       </TooltipProvider>
       
+      {/* Shopify Connection Progress Modal */}
+      <Dialog open={showConnectionModal} onOpenChange={(open) => {
+        // Only allow closing if not in progress (error or complete state)
+        if (!open && (connectionProgress.step === 'error' || connectionProgress.step === 'complete')) {
+          setShowConnectionModal(false);
+        }
+      }}>
+        <DialogContent className="max-w-md bg-transparent border-0 shadow-none p-0 [&>button]:hidden">
+          <ConnectionProgressCard
+            currentStep={connectionProgress.step}
+            errorMessage={connectionProgress.error || undefined}
+            storeName={connectionProgress.storeName || undefined}
+            onRetry={() => {
+              initiateShopifyConnection();
+            }}
+            onCancel={() => {
+              setShowConnectionModal(false);
+              connectionProgress.reset();
+            }}
+            onComplete={() => {
+              setShowConnectionModal(false);
+              setLocation('/dashboard');
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Shopify Setup Guide Dialog */}
       <Dialog open={showShopifySetup} onOpenChange={setShowShopifySetup}>
         <DialogContent className="max-w-2xl bg-slate-900 border-slate-700 max-h-[80vh] overflow-y-auto">
