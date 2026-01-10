@@ -82,7 +82,7 @@ import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon } from "./db";
+import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, type ShopifySubscriptionOptions } from "./db";
 import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -5744,9 +5744,47 @@ Output format: Markdown with clear section headings.`;
   app.get("/api/subscription/current", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
+      
+      // First check drizzle DB for subscription record (includes Shopify subscriptions)
+      try {
+        const dbSubscription = await getUserSubscriptionRecord(userId);
+        if (dbSubscription && dbSubscription.status === 'active') {
+          // Get plan details
+          const plans = await getSubscriptionPlans();
+          const plan = plans.find(p => p.id === dbSubscription.planId);
+          
+          if (plan) {
+            const subscriptionResponse = {
+              id: dbSubscription.id,
+              userId: dbSubscription.userId,
+              planId: dbSubscription.planId,
+              planName: plan.planName,
+              status: dbSubscription.status,
+              currentPeriodStart: dbSubscription.currentPeriodStart,
+              currentPeriodEnd: dbSubscription.currentPeriodEnd,
+              cancelAtPeriodEnd: dbSubscription.cancelAtPeriodEnd,
+              shopifySubscriptionId: dbSubscription.shopifySubscriptionId,
+              billingPeriod: dbSubscription.billingPeriod,
+              price: plan.price,
+              currency: plan.currency,
+              features: plan.features,
+              isTrial: false,
+              isExpired: false,
+            };
+            
+            console.log(`[API] Returning subscription from drizzle DB for user ${userId}: ${plan.planName}`);
+            res.json(subscriptionResponse);
+            return;
+          }
+        }
+      } catch (dbError) {
+        console.log("[API] Could not fetch subscription from drizzle DB, falling back to supabase");
+      }
+      
+      // Fallback to supabase storage
       const subscription = await supabaseStorage.getUserSubscription(userId);
       
-      // If user has an active subscription, return it
+      // If user has an active subscription from supabase, return it
       if (subscription) {
         res.json(subscription);
         return;
@@ -6026,17 +6064,40 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Get invoices (returns payment transaction history)
+  // Get invoices (returns invoice/billing history)
   app.get("/api/invoices", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      // Get real payment transactions from database
+      
+      // First try to get invoices from drizzle DB (includes Shopify billing invoices)
+      try {
+        const dbInvoices = await getUserInvoices(userId);
+        if (dbInvoices && dbInvoices.length > 0) {
+          // Format invoices to match frontend expectations
+          const formattedInvoices = dbInvoices.map(inv => ({
+            id: inv.id,
+            invoiceNumber: inv.invoiceNumber,
+            amount: parseFloat(inv.amount),
+            currency: inv.currency,
+            status: inv.status,
+            pdfUrl: inv.pdfUrl,
+            createdAt: inv.createdAt,
+            paidAt: inv.paidAt,
+          }));
+          res.json(formattedInvoices);
+          return;
+        }
+      } catch (dbError) {
+        console.log("[API] Could not fetch invoices from drizzle, trying supabase");
+      }
+      
+      // Fallback to payment transactions from supabase storage
       const invoices = await supabaseStorage.getPaymentTransactions(userId);
       res.json(invoices || []);
     } catch (error: any) {
-      // If payment_transactions table doesn't exist, return empty array instead of error
-      if (error.message?.includes('payment_transactions') || error.message?.includes('schema cache')) {
-        console.log("[API] Payment transactions table not found, returning empty invoices");
+      // If tables don't exist, return empty array instead of error
+      if (error.message?.includes('payment_transactions') || error.message?.includes('schema cache') || error.message?.includes('invoices')) {
+        console.log("[API] Invoice/payment tables not found, returning empty invoices");
         res.json([]);
         return;
       }
@@ -6352,18 +6413,86 @@ Output format: Markdown with clear section headings.`;
         );
         
         if (matchedPlan) {
-          // Update user subscription to the matched plan
-          await updateUserSubscription(user.id, matchedPlan.id, user.email);
+          // Calculate period start from period end (approximately 30 days before)
+          const periodEnd = activeSubscription.currentPeriodEnd 
+            ? new Date(activeSubscription.currentPeriodEnd) 
+            : undefined;
+          const periodStart = periodEnd 
+            ? new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000)
+            : undefined;
+            
+          // Prepare Shopify subscription options
+          const shopifyOptions: ShopifySubscriptionOptions = {
+            shopifySubscriptionId: activeSubscription.id,
+            currentPeriodStart: periodStart,
+            currentPeriodEnd: periodEnd
+          };
+          
+          // Update user subscription with Shopify data
+          await updateUserSubscription(user.id, matchedPlan.id, user.email, 'monthly', shopifyOptions);
           await initializeUserCredits(user.id, matchedPlan.id);
+          
+          // Get the subscription record for invoice creation
+          const subscriptionRecord = await getUserSubscriptionRecord(user.id);
+          
+          // Idempotency check: Create unique key using subscription ID + billing period start
+          // This allows new renewal invoices while preventing duplicates for the same period
+          const invoicePeriodKey = periodStart 
+            ? periodStart.toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0];
+          const gatewayInvoiceId = `shopify_${activeSubscription.id}_${invoicePeriodKey}`;
+          try {
+            const { getInvoiceByGatewayId } = await import('./db');
+            const existingInvoice = await getInvoiceByGatewayId(gatewayInvoiceId);
+            
+            if (!existingInvoice) {
+              // Create invoice for the subscription activation/renewal
+              const invoice = await createInvoice({
+                userId: user.id,
+                subscriptionId: subscriptionRecord?.id,
+                amount: matchedPlan.price,  // Use numeric value directly
+                currency: matchedPlan.currency || 'USD',
+                status: 'paid',
+                gatewayInvoiceId: gatewayInvoiceId,
+                paidAt: new Date(),
+              });
+              
+              // Create billing history entry
+              await createBillingHistoryEntry({
+                userId: user.id,
+                subscriptionId: subscriptionRecord?.id,
+                invoiceId: invoice.id,
+                action: 'subscription_activated',
+                amount: matchedPlan.price.toString(),
+                currency: matchedPlan.currency || 'USD',
+                status: 'completed',
+                description: `Activated ${matchedPlan.planName} plan via Shopify`,
+                metadata: {
+                  shopifySubscriptionId: activeSubscription.id,
+                  planName: matchedPlan.planName,
+                  storeName: shopifyConnection.storeName
+                }
+              });
+              
+              console.log(`[Shopify Billing Sync] Created invoice ${invoice.invoiceNumber} for user ${user.id}`);
+            } else {
+              console.log(`[Shopify Billing Sync] Invoice already exists for Shopify subscription ${activeSubscription.id}, skipping duplicate creation`);
+            }
+          } catch (invoiceError) {
+            console.error(`[Shopify Billing Sync] Failed to create invoice:`, invoiceError);
+            // Continue even if invoice creation fails - subscription is still valid
+          }
+          
           await NotificationService.notifySubscriptionChanged(user.id, matchedPlan.id);
           
-          console.log(`[Shopify Billing Sync] Activated plan ${matchedPlan.planName} for user ${user.id}`);
+          console.log(`[Shopify Billing Sync] Activated plan ${matchedPlan.planName} for user ${user.id}, Shopify ID: ${activeSubscription.id}`);
           
           return res.json({
             synced: true,
             hasActiveSubscription: true,
             plan: matchedPlan,
             status: 'active',
+            shopifySubscriptionId: activeSubscription.id,
             message: "Subscription synced successfully"
           });
         } else {

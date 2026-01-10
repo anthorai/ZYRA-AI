@@ -830,11 +830,10 @@ export default function BillingPage() {
         </DashboardCard>
       )}
       <Tabs ref={plansRef} value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="inline-flex flex-nowrap w-full sm:grid sm:grid-cols-4 gradient-surface overflow-x-auto gap-2">
+        <TabsList className="inline-flex flex-nowrap w-full sm:grid sm:grid-cols-3 gradient-surface overflow-x-auto gap-2">
           <TabsTrigger value="plans" data-testid="tab-plans" className="flex-none min-w-max sm:flex-auto">Plans</TabsTrigger>
           <TabsTrigger value="billing" data-testid="tab-billing" className="flex-none min-w-max sm:flex-auto">Billing History</TabsTrigger>
           <TabsTrigger value="payment" data-testid="tab-payment" className="flex-none min-w-max sm:flex-auto">Shopify Billing</TabsTrigger>
-          <TabsTrigger value="settings" data-testid="tab-settings" className="flex-none min-w-max sm:flex-auto">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="plans" className="space-y-6">
@@ -1176,31 +1175,6 @@ export default function BillingPage() {
           </DashboardCard>
         </TabsContent>
 
-        <TabsContent value="settings" className="space-y-6">
-          <DashboardCard
-            title="Billing Settings"
-            description="Configure your billing preferences and notifications"
-            headerAction={<Settings className="w-5 h-5 mr-2 text-primary" />}
-            testId="card-billing-settings"
-          >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
-                  <div>
-                    <p className="text-white font-medium">Email Receipts</p>
-                    <p className="text-sm text-slate-300">Receive email confirmation for all payments</p>
-                  </div>
-                  <Badge>Enabled</Badge>
-                </div>
-                <div className="flex items-center justify-between p-4 border border-slate-700/50 rounded-xl">
-                  <div>
-                    <p className="text-white font-medium">Auto-Renew</p>
-                    <p className="text-sm text-slate-300">Automatically renew subscription at period end</p>
-                  </div>
-                  <Badge>Active</Badge>
-                </div>
-              </div>
-          </DashboardCard>
-        </TabsContent>
       </Tabs>
       
       {/* Connect Store Dialog */}

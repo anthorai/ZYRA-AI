@@ -14,6 +14,8 @@ import {
   activityLogs,
   toolsAccess,
   realtimeMetrics,
+  invoices,
+  billingHistory,
   type User,
   type InsertUser,
   type Profile,
@@ -30,7 +32,11 @@ import {
   type ToolsAccess,
   type InsertToolsAccess,
   type RealtimeMetrics,
-  type InsertRealtimeMetrics
+  type InsertRealtimeMetrics,
+  type Invoice,
+  type InsertInvoice,
+  type BillingHistory,
+  type InsertBillingHistory
 } from "@shared/schema";
 
 // Database connection
@@ -117,7 +123,19 @@ export async function getUserById(userId: string): Promise<User | undefined> {
   }, "getUserById");
 }
 
-export async function updateUserSubscription(userId: string, planId: string, userEmail?: string, billingPeriod: 'monthly' | 'annual' = 'monthly'): Promise<User> {
+export interface ShopifySubscriptionOptions {
+  shopifySubscriptionId?: string;
+  currentPeriodStart?: Date;
+  currentPeriodEnd?: Date;
+}
+
+export async function updateUserSubscription(
+  userId: string, 
+  planId: string, 
+  userEmail?: string, 
+  billingPeriod: 'monthly' | 'annual' = 'monthly',
+  shopifyOptions?: ShopifySubscriptionOptions
+): Promise<User> {
   return withErrorHandling(async () => {
     // Get the subscription plan details
     const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, planId));
@@ -130,14 +148,12 @@ export async function updateUserSubscription(userId: string, planId: string, use
     
     if (!existingUser) {
       console.log(`[DB] User ${userId} not found in PostgreSQL, creating...`);
-      // Create user in PostgreSQL if they don't exist
-      // This handles users authenticated via Supabase
-      const fullName = userEmail?.split('@')[0] || 'User'; // Extract name from email or use default
+      const fullName = userEmail?.split('@')[0] || 'User';
       [existingUser] = await db.insert(users).values({
         id: userId,
-        email: userEmail || 'user@example.com', // Use provided email or placeholder
+        email: userEmail || 'user@example.com',
         fullName: fullName,
-        password: null, // No password for Supabase users
+        password: null,
         plan: plan.planName,
       }).returning();
       
@@ -152,44 +168,162 @@ export async function updateUserSubscription(userId: string, planId: string, use
 
     // Calculate subscription period dates based on billing period
     const now = new Date();
-    const periodEnd = new Date(now);
-    if (billingPeriod === 'annual') {
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1); // 1 year from now
+    let periodEnd = new Date(now);
+    
+    // Use Shopify's period end if provided, otherwise calculate based on billing period
+    if (shopifyOptions?.currentPeriodEnd) {
+      periodEnd = shopifyOptions.currentPeriodEnd;
+    } else if (billingPeriod === 'annual') {
+      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
     } else {
-      periodEnd.setMonth(periodEnd.getMonth() + 1); // 1 month from now
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
     }
 
     // Create or update subscription record
-    // Check if subscription already exists
     const [existingSubscription] = await db.select().from(subscriptions)
       .where(eq(subscriptions.userId, userId));
     
+    let subscriptionId: string;
+    
     if (existingSubscription) {
-      // Update existing subscription
-      await db.update(subscriptions)
-        .set({ 
-          planId, 
-          status: "active",
-          currentPeriodStart: now,
-          currentPeriodEnd: periodEnd,
-          startDate: now,
-        })
-        .where(eq(subscriptions.userId, userId));
-    } else {
-      // Create new subscription
-      await db.insert(subscriptions).values({
-        userId,
-        planId,
-        status: "active",
-        currentPeriodStart: now,
+      // For existing subscriptions, only update periodEnd and preserve start dates
+      // unless the plan is changing (then reset period start)
+      const isPlanChange = existingSubscription.planId !== planId;
+      
+      const updateData: Record<string, any> = {
+        planId, 
+        status: "active" as const,
         currentPeriodEnd: periodEnd,
-        startDate: now,
-      });
+        shopifySubscriptionId: shopifyOptions?.shopifySubscriptionId || existingSubscription.shopifySubscriptionId,
+        billingPeriod: billingPeriod,
+        updatedAt: now,
+      };
+      
+      // Use Shopify's period start if provided, otherwise reset if plan is changing
+      if (shopifyOptions?.currentPeriodStart) {
+        updateData.currentPeriodStart = shopifyOptions.currentPeriodStart;
+      } else if (isPlanChange) {
+        updateData.currentPeriodStart = now;
+      }
+      // Never reset startDate - that's the original subscription start
+      
+      await db.update(subscriptions)
+        .set(updateData)
+        .where(eq(subscriptions.userId, userId));
+      subscriptionId = existingSubscription.id;
+    } else {
+      // New subscription - set all dates (use Shopify values if available)
+      const subscriptionData = {
+        planId, 
+        status: "active" as const,
+        currentPeriodStart: shopifyOptions?.currentPeriodStart || now,
+        currentPeriodEnd: periodEnd,
+        startDate: shopifyOptions?.currentPeriodStart || now,
+        shopifySubscriptionId: shopifyOptions?.shopifySubscriptionId || null,
+        billingPeriod: billingPeriod,
+        updatedAt: now,
+      };
+      
+      const [newSubscription] = await db.insert(subscriptions).values({
+        userId,
+        ...subscriptionData,
+      }).returning();
+      subscriptionId = newSubscription.id;
     }
 
-    console.log(`[DB] User ${userId} subscription updated to ${plan.planName} (${billingPeriod}), expires: ${periodEnd.toISOString()}`);
+    console.log(`[DB] User ${userId} subscription updated to ${plan.planName} (${billingPeriod}), shopifyId: ${shopifyOptions?.shopifySubscriptionId || 'none'}, expires: ${periodEnd.toISOString()}`);
     return updatedUser;
   }, "updateUserSubscription");
+}
+
+export async function createInvoice(invoiceData: {
+  userId: string;
+  subscriptionId?: string;
+  amount: string;
+  currency?: string;
+  status: string;
+  invoiceNumber?: string;
+  paidAt?: Date;
+  gatewayInvoiceId?: string;
+}): Promise<Invoice> {
+  return withErrorHandling(async () => {
+    const now = new Date();
+    const invoiceNumber = invoiceData.invoiceNumber || `INV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    
+    const [invoice] = await db.insert(invoices).values({
+      userId: invoiceData.userId,
+      subscriptionId: invoiceData.subscriptionId || null,
+      gatewayInvoiceId: invoiceData.gatewayInvoiceId || null,
+      amount: invoiceData.amount,
+      currency: invoiceData.currency || 'USD',
+      status: invoiceData.status,
+      invoiceNumber: invoiceNumber,
+      paidAt: invoiceData.paidAt || (invoiceData.status === 'paid' ? now : null),
+    }).returning();
+
+    console.log(`[DB] Invoice created: ${invoiceNumber} for user ${invoiceData.userId}, amount: $${invoiceData.amount}`);
+    return invoice;
+  }, "createInvoice");
+}
+
+export async function createBillingHistoryEntry(historyData: {
+  userId: string;
+  subscriptionId?: string;
+  invoiceId?: string;
+  action: string;
+  amount?: string;
+  currency?: string;
+  status: string;
+  description?: string;
+  metadata?: any;
+}): Promise<BillingHistory> {
+  return withErrorHandling(async () => {
+    const [entry] = await db.insert(billingHistory).values({
+      userId: historyData.userId,
+      subscriptionId: historyData.subscriptionId || null,
+      invoiceId: historyData.invoiceId || null,
+      action: historyData.action,
+      amount: historyData.amount || null,
+      currency: historyData.currency || 'USD',
+      status: historyData.status,
+      description: historyData.description || null,
+      metadata: historyData.metadata || null,
+    }).returning();
+
+    console.log(`[DB] Billing history entry created: ${historyData.action} for user ${historyData.userId}`);
+    return entry;
+  }, "createBillingHistoryEntry");
+}
+
+export async function getUserSubscriptionRecord(userId: string): Promise<Subscription | undefined> {
+  return withErrorHandling(async () => {
+    const [subscription] = await db.select().from(subscriptions)
+      .where(and(
+        eq(subscriptions.userId, userId),
+        eq(subscriptions.status, 'active')
+      ))
+      .orderBy(desc(subscriptions.createdAt))
+      .limit(1);
+    return subscription || undefined;
+  }, "getUserSubscriptionRecord");
+}
+
+export async function getInvoiceByGatewayId(gatewayInvoiceId: string): Promise<Invoice | undefined> {
+  return withErrorHandling(async () => {
+    const [invoice] = await db.select().from(invoices)
+      .where(eq(invoices.gatewayInvoiceId, gatewayInvoiceId))
+      .limit(1);
+    return invoice || undefined;
+  }, "getInvoiceByGatewayId");
+}
+
+export async function getUserInvoices(userId: string): Promise<Invoice[]> {
+  return withErrorHandling(async () => {
+    const userInvoices = await db.select().from(invoices)
+      .where(eq(invoices.userId, userId))
+      .orderBy(desc(invoices.createdAt));
+    return userInvoices;
+  }, "getUserInvoices");
 }
 
 // Profile operations

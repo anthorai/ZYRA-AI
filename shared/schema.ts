@@ -573,12 +573,15 @@ export const subscriptions = pgTable("subscriptions", {
   trialEnd: timestamp("trial_end"),
   startDate: timestamp("start_date").default(sql`NOW()`),
   endDate: timestamp("end_date"),
+  shopifySubscriptionId: text("shopify_subscription_id"), // Shopify App Subscription ID
+  billingPeriod: text("billing_period").default("monthly"), // 'monthly' or 'annual'
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
 }, (table) => [
   index('subscriptions_user_id_idx').on(table.userId),
   index('subscriptions_status_idx').on(table.status),
   index('subscriptions_current_period_end_idx').on(table.currentPeriodEnd),
+  index('subscriptions_shopify_id_idx').on(table.shopifySubscriptionId),
 ]);
 
 export const subscriptionPlans = pgTable("subscription_plans", {
