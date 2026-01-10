@@ -1288,7 +1288,7 @@ export default function IntegrationsPage() {
           setShowConnectionModal(false);
         }
       }}>
-        <DialogContent className="max-w-md bg-transparent border-0 shadow-none p-0 [&>button]:hidden">
+        <DialogContent className="!max-w-sm !bg-transparent !border-none !shadow-none !p-0 !outline-none !ring-0 [&>button]:hidden">
           <ConnectionProgressCard
             currentStep={connectionProgress.step}
             errorMessage={connectionProgress.error || undefined}
