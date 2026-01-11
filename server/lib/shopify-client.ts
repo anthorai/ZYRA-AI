@@ -1,6 +1,23 @@
 import fetch from 'node-fetch';
 import { ShopifyGraphQLClient, graphqlProductToRest } from './shopify-graphql';
 
+/**
+ * Custom error class for Shopify app uninstalled detection
+ * Thrown when API returns 401/403, indicating the app was uninstalled
+ * and the access token is no longer valid
+ */
+export class ShopifyAppUninstalledError extends Error {
+  public readonly shop: string;
+  public readonly statusCode: number;
+  
+  constructor(shop: string, statusCode: number, message?: string) {
+    super(message || `Shopify app appears to be uninstalled from ${shop}. Access token is invalid.`);
+    this.name = 'ShopifyAppUninstalledError';
+    this.shop = shop;
+    this.statusCode = statusCode;
+  }
+}
+
 export interface ShopifyProduct {
   id: number;
   title: string;
@@ -168,6 +185,13 @@ export class ShopifyClient {
 
         if (!response.ok) {
           const errorText = await response.text();
+          
+          // Handle 401/403 - indicates app was uninstalled or access token revoked
+          // This is a fallback detection mechanism for when webhooks fail
+          if (response.status === 401 || response.status === 403) {
+            console.error(`🔴 [SHOPIFY_CLIENT] Access denied (${response.status}) for shop ${this.shop}. App may be uninstalled.`);
+            throw new ShopifyAppUninstalledError(this.shop, response.status, errorText);
+          }
           
           // Handle 429 Too Many Requests with in-place retry
           if (response.status === 429 && retries < maxRetries) {
@@ -365,4 +389,63 @@ export async function getShopifyClient(shop: string, accessToken: string): Promi
   }
   
   return client;
+}
+
+/**
+ * Helper function to handle ShopifyAppUninstalledError and mark the store as disconnected
+ * Call this in catch blocks when handling Shopify API errors
+ * 
+ * @param error - The error that was caught
+ * @param storage - The storage instance to update the connection
+ * @returns true if the error was a ShopifyAppUninstalledError and was handled, false otherwise
+ */
+export async function handleShopifyUninstallError(
+  error: unknown,
+  storage: { 
+    getStoreConnections: (userId: string) => Promise<Array<{ id: string; platform: string; storeUrl?: string | null; storeName?: string | null }>>;
+    updateStoreConnection: (id: string, updates: any) => Promise<any>;
+  }
+): Promise<boolean> {
+  if (!(error instanceof ShopifyAppUninstalledError)) {
+    return false;
+  }
+  
+  const shopDomain = error.shop;
+  const shopNameToMatch = shopDomain.replace('.myshopify.com', '').toLowerCase();
+  console.log(`🔄 [FALLBACK_UNINSTALL] Detected uninstalled app for shop: ${shopDomain}. Marking as disconnected...`);
+  
+  try {
+    // Find and disconnect all connections for this shop
+    const connections = await storage.getStoreConnections('');
+    const shopConnections = connections.filter(conn => {
+      if (conn.platform !== 'shopify') return false;
+      
+      // Match by storeUrl (primary method)
+      if (conn.storeUrl && conn.storeUrl.includes(shopDomain)) {
+        return true;
+      }
+      
+      // Match by storeName as fallback (safely handle null/undefined)
+      if (conn.storeName && conn.storeName.toLowerCase().includes(shopNameToMatch)) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    for (const connection of shopConnections) {
+      await storage.updateStoreConnection(connection.id, {
+        status: 'disconnected',
+        isConnected: false,
+        accessToken: 'REVOKED_VIA_API_ERROR',
+        updatedAt: new Date()
+      });
+      console.log(`✅ [FALLBACK_UNINSTALL] Store disconnected via fallback: ${connection.id}`);
+    }
+    
+    return true;
+  } catch (dbError) {
+    console.error('❌ [FALLBACK_UNINSTALL] Failed to mark store as disconnected:', dbError);
+    return false;
+  }
 }

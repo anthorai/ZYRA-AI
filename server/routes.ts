@@ -114,6 +114,7 @@ import { extractProductFeatures } from "./lib/shopify-features-extractor";
 import { BulkOptimizationService } from "./lib/bulk-optimization-service";
 import { upsellRecommendationEngine } from "./lib/upsell-recommendation-engine";
 import { ShopifyGraphQLClient, graphqlProductToRest } from "./lib/shopify-graphql";
+import { ShopifyAppUninstalledError, handleShopifyUninstallError } from "./lib/shopify-client";
 import { upsellRecommendationRules } from "@shared/schema";
 import { grantFreeTrial } from "./lib/trial-expiration-service";
 
@@ -11652,6 +11653,17 @@ Output format: Markdown with clear section headings.`;
       res.json(products);
     } catch (error) {
       console.error('Shopify products fetch error:', error);
+      
+      // Fallback detection: if access token is invalid, mark store as disconnected
+      if (error instanceof ShopifyAppUninstalledError) {
+        await handleShopifyUninstallError(error, supabaseStorage);
+        return res.status(401).json({ 
+          error: 'Shopify store disconnected',
+          message: 'The Shopify app has been uninstalled. Please reconnect your store.',
+          disconnected: true
+        });
+      }
+      
       res.status(500).json({ error: 'Failed to fetch Shopify products' });
     }
   });
@@ -11707,6 +11719,17 @@ Output format: Markdown with clear section headings.`;
       });
     } catch (error) {
       console.error('Shopify product details fetch error:', error);
+      
+      // Fallback detection: if access token is invalid, mark store as disconnected
+      if (error instanceof ShopifyAppUninstalledError) {
+        await handleShopifyUninstallError(error, supabaseStorage);
+        return res.status(401).json({ 
+          error: 'Shopify store disconnected',
+          message: 'The Shopify app has been uninstalled. Please reconnect your store.',
+          disconnected: true
+        });
+      }
+      
       res.status(500).json({ error: 'Failed to fetch Shopify product details' });
     }
   });
@@ -12031,23 +12054,49 @@ Output format: Markdown with clear section headings.`;
       // Get userId from req safely even in catch block
       const currentUserId = (req as AuthenticatedRequest).user?.id;
 
-      // Check if this is a 401 (invalid/revoked token) error - mark connection as inactive
+      // Check for ShopifyAppUninstalledError - mark connection as disconnected
+      if (error instanceof ShopifyAppUninstalledError) {
+        console.warn('⚠️  [SHOPIFY SYNC] App uninstalled detected via API error - marking connection as disconnected');
+        await handleShopifyUninstallError(error, supabaseStorage);
+        
+        // Update sync history and return early with disconnected status
+        if (syncHistoryAvailable && syncRecord) {
+          try {
+            await supabaseStorage.updateSyncHistory(syncRecord.id, {
+              status: 'failed',
+              errorMessage: 'Shopify store disconnected - app was uninstalled',
+              completedAt: new Date() as any
+            });
+          } catch (historyUpdateError) {
+            console.error('⚠️  [SHOPIFY SYNC] Failed to update sync history:', historyUpdateError);
+          }
+        }
+        
+        return res.status(401).json({ 
+          error: 'Shopify store disconnected',
+          message: 'The Shopify app has been uninstalled. Please reconnect your store.',
+          disconnected: true
+        });
+      }
+      
+      // Fallback: Check if this is a 401 (invalid/revoked token) error via string matching
       if (errorMessage.includes('401') || errorMessage.includes('Invalid API key') || errorMessage.includes('unrecognized login')) {
-        console.warn('⚠️  [SHOPIFY SYNC] Token appears invalid or revoked - marking connection as inactive');
+        console.warn('⚠️  [SHOPIFY SYNC] Token appears invalid or revoked - marking connection as disconnected');
         try {
           if (currentUserId) {
             const connections = await supabaseStorage.getStoreConnections(currentUserId);
             const shopifyConnection = connections.find(c => c.platform === 'shopify');
             if (shopifyConnection) {
               await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
-                status: 'inactive',
-                isConnected: false
+                status: 'disconnected',
+                isConnected: false,
+                accessToken: 'REVOKED_VIA_SYNC_ERROR'
               });
-              console.log('✅ [SHOPIFY SYNC] Connection marked as inactive due to invalid token');
+              console.log('✅ [SHOPIFY SYNC] Connection marked as disconnected due to invalid token');
             }
           }
         } catch (updateError) {
-          console.error('⚠️  [SHOPIFY SYNC] Failed to mark connection as inactive:', updateError);
+          console.error('⚠️  [SHOPIFY SYNC] Failed to mark connection as disconnected:', updateError);
         }
       }
       
@@ -14875,34 +14924,75 @@ Output format: Markdown with clear section headings.`;
   });
 
   // 1. App Uninstalled Webhook
-  // Triggered when merchant uninstalls the app
+  // Triggered when merchant uninstalls the app from Shopify Admin
+  // CRITICAL: Must properly disconnect store to meet Shopify requirements
   app.post('/api/webhooks/shopify/app_uninstalled', verifyShopifyWebhook, async (req, res) => {
+    // CRITICAL: Respond immediately with 200 to prevent Shopify retries
+    // Shopify expects a quick response; we process cleanup asynchronously
+    res.status(200).json({ success: true });
+    
     try {
       const { shop_domain, shop_id } = req.body;
+      const shopDomainFromHeader = req.get('X-Shopify-Shop-Domain') || shop_domain;
       
-      console.log('📦 Shopify app uninstalled:', { shop_domain, shop_id });
+      console.log('🔴 [APP_UNINSTALLED] Webhook received:', { 
+        shop_domain: shopDomainFromHeader, 
+        shop_id,
+        timestamp: new Date().toISOString()
+      });
 
-      // Find and deactivate the store connection
+      // Find all connections for this shop (there might be multiple)
       const connections = await supabaseStorage.getStoreConnections('');
-      const connection = connections.find(conn => 
-        conn.platform === 'shopify' && 
-        conn.storeUrl?.includes(shop_domain)
-      );
+      const shopNameToMatch = shopDomainFromHeader.replace('.myshopify.com', '').toLowerCase();
+      const shopConnections = connections.filter(conn => {
+        if (conn.platform !== 'shopify') return false;
+        
+        // Match by storeUrl (primary method)
+        if (conn.storeUrl && conn.storeUrl.includes(shopDomainFromHeader)) {
+          return true;
+        }
+        
+        // Match by storeName as fallback (safely handle null/undefined)
+        if (conn.storeName && conn.storeName.toLowerCase().includes(shopNameToMatch)) {
+          return true;
+        }
+        
+        return false;
+      });
 
-      if (connection) {
-        await supabaseStorage.updateStoreConnection(connection.id, {
-          status: 'inactive',
-          updatedAt: new Date()
-        });
-        console.log('✅ Deactivated store connection:', connection.id);
+      if (shopConnections.length === 0) {
+        console.warn('⚠️ [APP_UNINSTALLED] No store connection found for shop:', shopDomainFromHeader);
+        return;
       }
 
-      // Respond with 200 OK as required by Shopify
-      res.status(200).json({ success: true });
+      // Process each connection (usually just one)
+      for (const connection of shopConnections) {
+        console.log(`🔄 [APP_UNINSTALLED] Disconnecting store connection: ${connection.id} (${connection.storeName})`);
+        
+        // CRITICAL: Mark store as fully disconnected per Shopify requirements
+        // 1. Set status to 'disconnected' (not just 'inactive')
+        // 2. Set isConnected to false
+        // 3. Invalidate access token (set to placeholder indicating revoked)
+        await supabaseStorage.updateStoreConnection(connection.id, {
+          status: 'disconnected',
+          isConnected: false,
+          accessToken: 'REVOKED_ON_UNINSTALL', // Token is invalid anyway after uninstall
+          updatedAt: new Date()
+        });
+        
+        console.log(`✅ [APP_UNINSTALLED] Store disconnected successfully: ${connection.id}`);
+        
+        // Log user impact for debugging
+        if (connection.userId) {
+          console.log(`📋 [APP_UNINSTALLED] Affected user: ${connection.userId}`);
+        }
+      }
+      
+      console.log(`✅ [APP_UNINSTALLED] Completed uninstall processing for: ${shopDomainFromHeader}`);
+      
     } catch (error) {
-      console.error('Error handling app uninstalled webhook:', error);
-      // Still return 200 to prevent Shopify retries
-      res.status(200).json({ success: false });
+      // Log error but don't throw - response already sent
+      console.error('❌ [APP_UNINSTALLED] Error processing uninstall webhook:', error);
     }
   });
 

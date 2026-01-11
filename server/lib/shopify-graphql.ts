@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { ShopifyAppUninstalledError } from './shopify-client';
 
 export interface ShopifyGraphQLProduct {
   id: string;
@@ -158,6 +159,13 @@ export class ShopifyGraphQLClient {
 
         if (!response.ok) {
           const errorText = await response.text();
+          
+          // Handle 401/403 - indicates app was uninstalled or access token revoked
+          // This is a fallback detection mechanism for when webhooks fail
+          if (response.status === 401 || response.status === 403) {
+            console.error(`🔴 [SHOPIFY_GRAPHQL] Access denied (${response.status}) for shop ${this.shop}. App may be uninstalled.`);
+            throw new ShopifyAppUninstalledError(this.shop, response.status, errorText);
+          }
           
           if (response.status === 429 && retries < maxRetries) {
             const retryAfter = parseInt(response.headers.get('Retry-After') || '2');
