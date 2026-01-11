@@ -76,6 +76,9 @@ export interface ISupabaseStorage {
 
   // Store connections methods
   getStoreConnections(userId: string): Promise<StoreConnection[]>;
+  getStoreConnectionByShopDomain(shopDomain: string): Promise<StoreConnection | undefined>;
+  getStoreConnectionsByShopDomain(shopDomain: string): Promise<StoreConnection[]>;
+  getAllActiveStoreConnections(): Promise<StoreConnection[]>;
   createStoreConnection(storeConnection: InsertStoreConnection): Promise<StoreConnection>;
   updateStoreConnection(id: string, updates: Partial<StoreConnection>): Promise<StoreConnection>;
   deleteStoreConnection(id: string): Promise<void>;
@@ -377,6 +380,59 @@ export class SupabaseStorage implements ISupabaseStorage {
       .eq('user_id', userId);
     
     if (error) throw new Error(`Failed to get store connections: ${error.message}`);
+    return (data || []).map(connection => this.snakeToCamelStoreConnection(connection));
+  }
+
+  async getStoreConnectionByShopDomain(shopDomain: string): Promise<StoreConnection | undefined> {
+    // Use the array method and return the first match for backwards compatibility
+    const connections = await this.getStoreConnectionsByShopDomain(shopDomain);
+    return connections.length > 0 ? connections[0] : undefined;
+  }
+
+  async getStoreConnectionsByShopDomain(shopDomain: string): Promise<StoreConnection[]> {
+    // Normalize the shop domain - handle various formats
+    const normalizedDomain = shopDomain
+      .replace('https://', '')
+      .replace('http://', '')
+      .replace(/\/$/, '')
+      .toLowerCase();
+    
+    const shopNameToMatch = normalizedDomain.replace('.myshopify.com', '');
+    const shopifyDomain = normalizedDomain.includes('.myshopify.com') 
+      ? normalizedDomain 
+      : `${shopNameToMatch}.myshopify.com`;
+    
+    console.log(`🔍 [STORAGE] Looking up store connections by domain: ${normalizedDomain}`);
+    
+    // Use SQL-level filtering with OR conditions for efficiency
+    // This avoids fetching all connections and scales with tenant count
+    const { data: matchingConnections, error } = await supabase
+      .from('store_connections')
+      .select('*')
+      .eq('platform', 'shopify')
+      .or(`store_url.ilike.%${normalizedDomain}%,store_url.ilike.%${shopifyDomain}%,store_name.ilike.%${shopNameToMatch}%`);
+    
+    if (error) {
+      console.error(`❌ [STORAGE] Failed to fetch store connections:`, error.message);
+      return [];
+    }
+    
+    if (matchingConnections && matchingConnections.length > 0) {
+      console.log(`✅ [STORAGE] Found ${matchingConnections.length} store connection(s) for domain: ${normalizedDomain}`);
+      return matchingConnections.map(conn => this.snakeToCamelStoreConnection(conn));
+    }
+    
+    console.log(`⚠️ [STORAGE] No store connections found for domain: ${normalizedDomain}`);
+    return [];
+  }
+
+  async getAllActiveStoreConnections(): Promise<StoreConnection[]> {
+    const { data, error } = await supabase
+      .from('store_connections')
+      .select('*')
+      .eq('status', 'active');
+    
+    if (error) throw new Error(`Failed to get active store connections: ${error.message}`);
     return (data || []).map(connection => this.snakeToCamelStoreConnection(connection));
   }
 

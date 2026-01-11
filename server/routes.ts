@@ -14889,20 +14889,19 @@ Output format: Markdown with clear section headings.`;
             case 'shop/redact':
               console.log('🗑️ GDPR shop redaction:', { shop_domain, shop_id });
               
-              // Find and delete all shop data (non-blocking)
+              // Find and delete ALL shop data using the dedicated lookup (non-blocking)
               try {
-                const connections = await supabaseStorage.getStoreConnections('');
-                const shopConnections = connections.filter(conn => 
-                  conn.platform === 'shopify' && 
-                  conn.storeUrl?.includes(shop_domain)
-                );
+                const shopConnections = await supabaseStorage.getStoreConnectionsByShopDomain(shop_domain);
 
-                for (const connection of shopConnections) {
-                  await supabaseStorage.deleteStoreConnection(connection.id);
-                  console.log('✅ Deleted store connection:', connection.id);
+                if (shopConnections.length > 0) {
+                  for (const connection of shopConnections) {
+                    await supabaseStorage.deleteStoreConnection(connection.id);
+                    console.log('✅ Deleted store connection:', connection.id);
+                  }
+                  console.log(`✅ Shop data redaction completed for: ${shop_domain} (${shopConnections.length} connection(s))`);
+                } else {
+                  console.log('⚠️ No connections found for shop redaction:', shop_domain);
                 }
-                
-                console.log('✅ Shop data redaction completed for:', shop_domain);
               } catch (dbError) {
                 console.error('Error processing shop redaction:', dbError);
               }
@@ -14941,31 +14940,17 @@ Output format: Markdown with clear section headings.`;
         timestamp: new Date().toISOString()
       });
 
-      // Find all connections for this shop (there might be multiple)
-      const connections = await supabaseStorage.getStoreConnections('');
-      const shopNameToMatch = shopDomainFromHeader.replace('.myshopify.com', '').toLowerCase();
-      const shopConnections = connections.filter(conn => {
-        if (conn.platform !== 'shopify') return false;
-        
-        // Match by storeUrl (primary method)
-        if (conn.storeUrl && conn.storeUrl.includes(shopDomainFromHeader)) {
-          return true;
-        }
-        
-        // Match by storeName as fallback (safely handle null/undefined)
-        if (conn.storeName && conn.storeName.toLowerCase().includes(shopNameToMatch)) {
-          return true;
-        }
-        
-        return false;
-      });
+      // Find ALL connections for this shop (handle duplicates/historical reconnects)
+      const shopConnections = await supabaseStorage.getStoreConnectionsByShopDomain(shopDomainFromHeader);
 
       if (shopConnections.length === 0) {
         console.warn('⚠️ [APP_UNINSTALLED] No store connection found for shop:', shopDomainFromHeader);
         return;
       }
 
-      // Process each connection (usually just one)
+      console.log(`🔄 [APP_UNINSTALLED] Found ${shopConnections.length} connection(s) to disconnect`);
+
+      // Process each connection (handle duplicates properly)
       for (const connection of shopConnections) {
         console.log(`🔄 [APP_UNINSTALLED] Disconnecting store connection: ${connection.id} (${connection.storeName})`);
         
@@ -14988,7 +14973,7 @@ Output format: Markdown with clear section headings.`;
         }
       }
       
-      console.log(`✅ [APP_UNINSTALLED] Completed uninstall processing for: ${shopDomainFromHeader}`);
+      console.log(`✅ [APP_UNINSTALLED] Completed uninstall processing for: ${shopDomainFromHeader} (${shopConnections.length} connection(s))`);
       
     } catch (error) {
       // Log error but don't throw - response already sent
@@ -15019,12 +15004,8 @@ Output format: Markdown with clear section headings.`;
         return;
       }
       
-      // Find the store connection by shop domain
-      const connections = await supabaseStorage.getStoreConnections('');
-      const shopifyConnection = connections.find(c => 
-        c.platform === 'shopify' && 
-        c.storeUrl?.includes(shopDomain)
-      );
+      // Find the store connection by shop domain using the dedicated lookup
+      const shopifyConnection = await supabaseStorage.getStoreConnectionByShopDomain(shopDomain);
       
       if (!shopifyConnection || !shopifyConnection.userId) {
         console.error('❌ [APP_SUBSCRIPTIONS_UPDATE] No connection found for shop:', shopDomain);

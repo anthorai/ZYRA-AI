@@ -402,7 +402,7 @@ export async function getShopifyClient(shop: string, accessToken: string): Promi
 export async function handleShopifyUninstallError(
   error: unknown,
   storage: { 
-    getStoreConnections: (userId: string) => Promise<Array<{ id: string; platform: string; storeUrl?: string | null; storeName?: string | null }>>;
+    getStoreConnectionsByShopDomain: (shopDomain: string) => Promise<Array<{ id: string; platform: string; storeUrl?: string | null; storeName?: string | null }>>;
     updateStoreConnection: (id: string, updates: any) => Promise<any>;
   }
 ): Promise<boolean> {
@@ -411,39 +411,27 @@ export async function handleShopifyUninstallError(
   }
   
   const shopDomain = error.shop;
-  const shopNameToMatch = shopDomain.replace('.myshopify.com', '').toLowerCase();
   console.log(`🔄 [FALLBACK_UNINSTALL] Detected uninstalled app for shop: ${shopDomain}. Marking as disconnected...`);
   
   try {
-    // Find and disconnect all connections for this shop
-    const connections = await storage.getStoreConnections('');
-    const shopConnections = connections.filter(conn => {
-      if (conn.platform !== 'shopify') return false;
-      
-      // Match by storeUrl (primary method)
-      if (conn.storeUrl && conn.storeUrl.includes(shopDomain)) {
-        return true;
+    // Find ALL connections for this shop (handle duplicates properly)
+    const connections = await storage.getStoreConnectionsByShopDomain(shopDomain);
+    
+    if (connections.length > 0) {
+      for (const connection of connections) {
+        await storage.updateStoreConnection(connection.id, {
+          status: 'disconnected',
+          isConnected: false,
+          accessToken: 'REVOKED_VIA_API_ERROR',
+          updatedAt: new Date()
+        });
+        console.log(`✅ [FALLBACK_UNINSTALL] Store disconnected via fallback: ${connection.id} (${connection.storeName || shopDomain})`);
       }
-      
-      // Match by storeName as fallback (safely handle null/undefined)
-      if (conn.storeName && conn.storeName.toLowerCase().includes(shopNameToMatch)) {
-        return true;
-      }
-      
+      return true;
+    } else {
+      console.warn(`⚠️ [FALLBACK_UNINSTALL] No connection found for shop: ${shopDomain}`);
       return false;
-    });
-    
-    for (const connection of shopConnections) {
-      await storage.updateStoreConnection(connection.id, {
-        status: 'disconnected',
-        isConnected: false,
-        accessToken: 'REVOKED_VIA_API_ERROR',
-        updatedAt: new Date()
-      });
-      console.log(`✅ [FALLBACK_UNINSTALL] Store disconnected via fallback: ${connection.id}`);
     }
-    
-    return true;
   } catch (dbError) {
     console.error('❌ [FALLBACK_UNINSTALL] Failed to mark store as disconnected:', dbError);
     return false;
