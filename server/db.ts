@@ -236,6 +236,55 @@ export async function updateUserSubscription(
   }, "updateUserSubscription");
 }
 
+export async function cancelUserSubscription(
+  userId: string,
+  reason: string = 'uninstalled',
+  supabaseStorage?: any
+): Promise<boolean> {
+  return withErrorHandling(async () => {
+    const now = new Date();
+    
+    const [existingSubscription] = await db.select().from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
+    
+    if (existingSubscription) {
+      await db.update(subscriptions)
+        .set({
+          status: "cancelled",
+          cancelAtPeriodEnd: true,
+          shopifySubscriptionId: null,
+          updatedAt: now,
+        })
+        .where(eq(subscriptions.userId, userId));
+      
+      console.log(`[DB] Neon/Postgres subscription cancelled for user ${userId}`);
+    } else {
+      console.log(`[DB] No Neon/Postgres subscription found for user ${userId}`);
+    }
+    
+    await db.update(users)
+      .set({ plan: null })
+      .where(eq(users.id, userId));
+    
+    // Also cancel in Supabase if storage is provided (to sync both data stores)
+    if (supabaseStorage) {
+      try {
+        await supabaseStorage.updateUserSubscription(userId, { 
+          status: 'cancelled',
+          cancelAtPeriodEnd: true
+        });
+        console.log(`[DB] Supabase subscription also cancelled for user ${userId}`);
+      } catch (supabaseError: any) {
+        // Log but don't fail - Supabase might not have this subscription
+        console.log(`[DB] Could not cancel Supabase subscription for user ${userId}: ${supabaseError.message}`);
+      }
+    }
+    
+    console.log(`[DB] User ${userId} subscription cancelled (reason: ${reason})`);
+    return true;
+  }, "cancelUserSubscription");
+}
+
 export async function createInvoice(invoiceData: {
   userId: string;
   subscriptionId?: string;

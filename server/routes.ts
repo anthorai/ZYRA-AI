@@ -82,7 +82,7 @@ import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, getSubscriptionPlans, updateUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, type ShopifySubscriptionOptions } from "./db";
+import { db, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, type ShopifySubscriptionOptions } from "./db";
 import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -5742,53 +5742,152 @@ Output format: Markdown with clear section headings.`;
   });
 
   // Get current user subscription
+  // CRITICAL: Always verify with Shopify first if user has a Shopify connection
   app.get("/api/subscription/current", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
+      let shopifyVerified = false; // Track if we successfully verified with Shopify
       
-      // First check drizzle DB for subscription record (includes Shopify subscriptions)
+      // Step 1: Check if user has an active Shopify connection
+      // If so, verify subscription status with Shopify FIRST (source of truth)
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (shopifyConnection?.accessToken && shopifyConnection?.storeUrl && 
+          shopifyConnection.accessToken !== 'REVOKED_ON_UNINSTALL') {
+        try {
+          const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '').replace(/\/$/, '');
+          const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+          
+          // Query Shopify for REAL active subscription status
+          const shopifySubscription = await graphqlClient.getCurrentActiveSubscription();
+          
+          console.log(`[API] Shopify subscription check for user ${userId}:`, shopifySubscription);
+          shopifyVerified = true; // We successfully queried Shopify
+          
+          // If Shopify says NO active subscription, but our DB says there IS one, sync them
+          const dbSubscription = await getUserSubscriptionRecord(userId);
+          
+          if (!shopifySubscription || shopifySubscription.status !== 'ACTIVE') {
+            // Shopify has no active subscription
+            if (dbSubscription && dbSubscription.status === 'active' && dbSubscription.shopifySubscriptionId) {
+              // DB thinks there's an active Shopify subscription but Shopify disagrees - cancel it
+              console.log(`[API] Shopify shows no active subscription, but DB shows active. Syncing...`);
+              await cancelUserSubscription(userId, 'shopify_sync_no_subscription', supabaseStorage);
+            }
+            // Continue to check for trial or return empty
+          } else {
+            // Shopify HAS an active subscription - use it as source of truth
+            const subscriptionName = shopifySubscription.name;
+            const plans = await getSubscriptionPlans();
+            
+            const matchedPlan = plans.find(p => 
+              p.planName.toLowerCase() === subscriptionName?.toLowerCase() ||
+              (p as any).shopifyPlanHandle?.toLowerCase() === subscriptionName?.toLowerCase()
+            );
+            
+            if (matchedPlan) {
+              // If DB is out of sync, update it
+              if (!dbSubscription || dbSubscription.status !== 'active' || dbSubscription.planId !== matchedPlan.id) {
+                console.log(`[API] Syncing DB subscription to match Shopify active subscription: ${matchedPlan.planName}`);
+                const periodEnd = shopifySubscription.currentPeriodEnd 
+                  ? new Date(shopifySubscription.currentPeriodEnd) 
+                  : undefined;
+                const periodStart = periodEnd 
+                  ? new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000)
+                  : undefined;
+                
+                await updateUserSubscription(userId, matchedPlan.id, (req as AuthenticatedRequest).user.email, 'monthly', {
+                  shopifySubscriptionId: shopifySubscription.id,
+                  currentPeriodStart: periodStart,
+                  currentPeriodEnd: periodEnd
+                });
+              }
+              
+              const subscriptionResponse = {
+                id: dbSubscription?.id || `shopify_${shopifySubscription.id}`,
+                userId: userId,
+                planId: matchedPlan.id,
+                planName: matchedPlan.planName,
+                status: 'active',
+                currentPeriodStart: dbSubscription?.currentPeriodStart || null,
+                currentPeriodEnd: shopifySubscription.currentPeriodEnd,
+                cancelAtPeriodEnd: false,
+                shopifySubscriptionId: shopifySubscription.id,
+                billingPeriod: 'monthly',
+                price: matchedPlan.price,
+                currency: matchedPlan.currency,
+                features: matchedPlan.features,
+                isTrial: false,
+                isExpired: false,
+                verifiedWithShopify: true,
+              };
+              
+              console.log(`[API] Returning Shopify-verified subscription for user ${userId}: ${matchedPlan.planName}`);
+              res.json(subscriptionResponse);
+              return;
+            }
+          }
+        } catch (shopifyError: any) {
+          // If Shopify API fails (e.g., token revoked), log but continue to DB check
+          console.warn(`[API] Failed to verify subscription with Shopify for user ${userId}:`, shopifyError.message);
+          // If it's an uninstalled error, mark the subscription as cancelled
+          if (shopifyError.name === 'ShopifyAppUninstalledError' || shopifyError.message?.includes('401') || shopifyError.message?.includes('403')) {
+            console.log(`[API] Shopify access revoked, cancelling subscription for user ${userId}`);
+            await cancelUserSubscription(userId, 'shopify_access_revoked', supabaseStorage);
+          }
+        }
+      }
+      
+      // Step 2: Check drizzle DB for subscription record (non-Shopify or fallback)
       try {
         const dbSubscription = await getUserSubscriptionRecord(userId);
         if (dbSubscription && dbSubscription.status === 'active') {
-          // Get plan details
-          const plans = await getSubscriptionPlans();
-          const plan = plans.find(p => p.id === dbSubscription.planId);
-          
-          if (plan) {
-            const subscriptionResponse = {
-              id: dbSubscription.id,
-              userId: dbSubscription.userId,
-              planId: dbSubscription.planId,
-              planName: plan.planName,
-              status: dbSubscription.status,
-              currentPeriodStart: dbSubscription.currentPeriodStart,
-              currentPeriodEnd: dbSubscription.currentPeriodEnd,
-              cancelAtPeriodEnd: dbSubscription.cancelAtPeriodEnd,
-              shopifySubscriptionId: dbSubscription.shopifySubscriptionId,
-              billingPeriod: dbSubscription.billingPeriod,
-              price: plan.price,
-              currency: plan.currency,
-              features: plan.features,
-              isTrial: false,
-              isExpired: false,
-            };
+          // Only return DB subscription if it's NOT a Shopify subscription
+          // (Shopify subscriptions should have been verified above)
+          if (!dbSubscription.shopifySubscriptionId) {
+            const plans = await getSubscriptionPlans();
+            const plan = plans.find(p => p.id === dbSubscription.planId);
             
-            console.log(`[API] Returning subscription from drizzle DB for user ${userId}: ${plan.planName}`);
-            res.json(subscriptionResponse);
-            return;
+            if (plan) {
+              const subscriptionResponse = {
+                id: dbSubscription.id,
+                userId: dbSubscription.userId,
+                planId: dbSubscription.planId,
+                planName: plan.planName,
+                status: dbSubscription.status,
+                currentPeriodStart: dbSubscription.currentPeriodStart,
+                currentPeriodEnd: dbSubscription.currentPeriodEnd,
+                cancelAtPeriodEnd: dbSubscription.cancelAtPeriodEnd,
+                shopifySubscriptionId: dbSubscription.shopifySubscriptionId,
+                billingPeriod: dbSubscription.billingPeriod,
+                price: plan.price,
+                currency: plan.currency,
+                features: plan.features,
+                isTrial: false,
+                isExpired: false,
+              };
+              
+              console.log(`[API] Returning non-Shopify subscription from DB for user ${userId}: ${plan.planName}`);
+              res.json(subscriptionResponse);
+              return;
+            }
           }
         }
       } catch (dbError) {
         console.log("[API] Could not fetch subscription from drizzle DB, falling back to supabase");
       }
       
-      // Fallback to supabase storage
-      const subscription = await supabaseStorage.getUserSubscription(userId);
-      
-      // If user has an active subscription from supabase, return it
-      if (subscription) {
-        res.json(subscription);
-        return;
+      // Fallback to supabase storage - BUT ONLY if we didn't already verify with Shopify
+      // If Shopify was verified and showed no subscription, don't trust Supabase (it may have stale data)
+      if (!shopifyVerified) {
+        const subscription = await supabaseStorage.getUserSubscription(userId);
+        
+        // If user has an active subscription from supabase, return it
+        if (subscription) {
+          res.json(subscription);
+          return;
+        }
       }
       
       // If no subscription, check if user is on trial and create virtual subscription
@@ -6409,19 +6508,71 @@ Output format: Markdown with clear section headings.`;
   });
   
   // Check Shopify subscription status
+  // CRITICAL: Always verify with Shopify first (source of truth)
   app.get("/api/shopify/billing/status", requireAuth, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
       
-      // Check if user has an active Shopify subscription
-      // This would be stored in the user's subscription record
+      // Check if user has a Shopify connection
+      const connections = await supabaseStorage.getStoreConnections(user.id);
+      const shopifyConnection = connections.find(c => c.platform === 'shopify' && c.status === 'active');
+      
+      if (shopifyConnection?.accessToken && shopifyConnection?.storeUrl && 
+          shopifyConnection.accessToken !== 'REVOKED_ON_UNINSTALL') {
+        try {
+          const shopUrl = shopifyConnection.storeUrl.replace('https://', '').replace('http://', '').replace(/\/$/, '');
+          const graphqlClient = new ShopifyGraphQLClient(shopUrl, shopifyConnection.accessToken);
+          
+          // Query Shopify for REAL active subscription status
+          const shopifySubscription = await graphqlClient.getCurrentActiveSubscription();
+          const dbSubscription = await getUserSubscriptionRecord(user.id);
+          
+          if (!shopifySubscription || shopifySubscription.status !== 'ACTIVE') {
+            // No active Shopify subscription - sync DB if needed
+            if (dbSubscription && dbSubscription.status === 'active' && dbSubscription.shopifySubscriptionId) {
+              console.log(`[Billing Status] Shopify shows no active subscription, syncing DB...`);
+              await cancelUserSubscription(user.id, 'shopify_billing_status_check', supabaseStorage);
+            }
+            
+            return res.json({
+              hasActiveSubscription: false,
+              plan: null,
+              status: 'none',
+              currentPeriodEnd: null,
+              verifiedWithShopify: true
+            });
+          }
+          
+          // Shopify has active subscription
+          const plans = await getSubscriptionPlans();
+          const matchedPlan = plans.find(p => 
+            p.planName.toLowerCase() === shopifySubscription.name?.toLowerCase() ||
+            (p as any).shopifyPlanHandle?.toLowerCase() === shopifySubscription.name?.toLowerCase()
+          );
+          
+          return res.json({
+            hasActiveSubscription: true,
+            plan: matchedPlan?.id || null,
+            planName: matchedPlan?.planName || shopifySubscription.name,
+            status: 'active',
+            currentPeriodEnd: shopifySubscription.currentPeriodEnd,
+            verifiedWithShopify: true
+          });
+        } catch (shopifyError: any) {
+          console.warn(`[Billing Status] Failed to verify with Shopify:`, shopifyError.message);
+          // Fall through to DB check
+        }
+      }
+      
+      // Fallback to DB check (for non-Shopify subscriptions or when Shopify API fails)
       const currentSubscription = await supabaseStorage.getUserSubscription(user.id);
       
       res.json({
         hasActiveSubscription: currentSubscription?.status === 'active',
         plan: currentSubscription?.planId || null,
         status: currentSubscription?.status || 'none',
-        currentPeriodEnd: currentSubscription?.currentPeriodEnd || null
+        currentPeriodEnd: currentSubscription?.currentPeriodEnd || null,
+        verifiedWithShopify: false
       });
     } catch (error: any) {
       console.error("Error checking Shopify billing status:", error);
@@ -6456,12 +6607,19 @@ Output format: Markdown with clear section headings.`;
       
       console.log(`[Shopify Billing Sync] Active subscription from Shopify:`, activeSubscription);
       
-      if (!activeSubscription) {
-        // No active subscription found
+      if (!activeSubscription || activeSubscription.status !== 'ACTIVE') {
+        // No active subscription found from Shopify
+        // CRITICAL: Cancel any active subscription in our DB that thinks it's from Shopify
+        const dbSubscription = await getUserSubscriptionRecord(user.id);
+        if (dbSubscription && dbSubscription.status === 'active' && dbSubscription.shopifySubscriptionId) {
+          console.log(`[Shopify Billing Sync] Shopify shows no active subscription, cancelling DB subscription...`);
+          await cancelUserSubscription(user.id, 'shopify_sync_no_active', supabaseStorage);
+        }
+        
         return res.json({
           synced: true,
           hasActiveSubscription: false,
-          message: "No active subscription found"
+          message: "No active subscription found from Shopify"
         });
       }
       
@@ -14967,9 +15125,20 @@ Output format: Markdown with clear section headings.`;
         
         console.log(`✅ [APP_UNINSTALLED] Store disconnected successfully: ${connection.id}`);
         
-        // Log user impact for debugging
+        // CRITICAL: Cancel user subscription when app is uninstalled
+        // This ensures that on reinstall, the user doesn't falsely appear to have an active plan
         if (connection.userId) {
-          console.log(`📋 [APP_UNINSTALLED] Affected user: ${connection.userId}`);
+          console.log(`📋 [APP_UNINSTALLED] Cancelling subscription for user: ${connection.userId}`);
+          try {
+            const cancelled = await cancelUserSubscription(connection.userId, 'app_uninstalled', supabaseStorage);
+            if (cancelled) {
+              console.log(`✅ [APP_UNINSTALLED] Subscription cancelled for user: ${connection.userId}`);
+            } else {
+              console.log(`ℹ️ [APP_UNINSTALLED] No active subscription found for user: ${connection.userId}`);
+            }
+          } catch (subError) {
+            console.error(`⚠️ [APP_UNINSTALLED] Failed to cancel subscription for user ${connection.userId}:`, subError);
+          }
         }
       }
       
