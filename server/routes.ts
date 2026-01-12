@@ -5763,7 +5763,6 @@ Output format: Markdown with clear section headings.`;
           const shopifySubscription = await graphqlClient.getCurrentActiveSubscription();
           
           console.log(`[API] Shopify subscription check for user ${userId}:`, shopifySubscription);
-          shopifyVerified = true; // We successfully queried Shopify
           
           // If Shopify says NO active subscription, but our DB says there IS one, sync them
           const dbSubscription = await getUserSubscriptionRecord(userId);
@@ -5824,18 +5823,23 @@ Output format: Markdown with clear section headings.`;
               };
               
               console.log(`[API] Returning Shopify-verified subscription for user ${userId}: ${matchedPlan.planName}`);
+              shopifyVerified = true; // Only set when we ACTUALLY return a Shopify subscription
               res.json(subscriptionResponse);
               return;
+            } else {
+              console.log(`[API] Shopify has subscription "${subscriptionName}" but no matching plan found in DB`);
             }
           }
         } catch (shopifyError: any) {
-          // If Shopify API fails (e.g., token revoked), log but continue to DB check
+          // If Shopify API fails, log but continue to DB/fallback check
+          // DON'T cancel subscriptions here - the token might just be temporarily invalid during reinstall
           console.warn(`[API] Failed to verify subscription with Shopify for user ${userId}:`, shopifyError.message);
-          // If it's an uninstalled error, mark the subscription as cancelled
-          if (shopifyError.name === 'ShopifyAppUninstalledError' || shopifyError.message?.includes('401') || shopifyError.message?.includes('403')) {
-            console.log(`[API] Shopify access revoked, cancelling subscription for user ${userId}`);
+          // Only mark as app uninstalled if it's a specific uninstall error (not just 401/403)
+          if (shopifyError.name === 'ShopifyAppUninstalledError') {
+            console.log(`[API] Shopify app explicitly uninstalled, cancelling subscription for user ${userId}`);
             await cancelUserSubscription(userId, 'shopify_access_revoked', supabaseStorage);
           }
+          // For 401/403, don't cancel - might be a temporary token issue during reinstall
         }
       }
       
