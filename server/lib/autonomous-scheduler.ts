@@ -1010,6 +1010,183 @@ async function runMarketingCampaignScan(): Promise<void> {
 }
 
 /**
+ * Run Revenue Loop Scan
+ * Executes the complete DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle
+ */
+async function runRevenueLoopScan(): Promise<void> {
+  const jobId = 'revenue-loop-scan';
+  if (runningJobs.has(jobId)) {
+    console.log(`⏭️  [Revenue Loop] Skipping - already running`);
+    return;
+  }
+
+  runningJobs.add(jobId);
+  console.log('🔄 [Revenue Loop] Starting revenue loop scan...');
+
+  try {
+    const { RevenueDetectionEngine } = await import('./revenue-detection-engine');
+    const { RevenuePriorityService } = await import('./revenue-priority-service');
+    const { RevenueExecutionEngine } = await import('./revenue-execution-engine');
+    const { RevenueAttributionService } = await import('./revenue-attribution-service');
+    const { StoreLearningService } = await import('./store-learning-service');
+
+    const settings = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.autopilotEnabled, true));
+
+    console.log(`📊 [Revenue Loop] Found ${settings.length} users with autopilot enabled`);
+
+    for (const setting of settings) {
+      if (!setting.globalAutopilotEnabled) {
+        console.log(`⏭️  [Revenue Loop] Skipping user ${setting.userId} - global autopilot disabled`);
+        continue;
+      }
+
+      try {
+        const detectionEngine = new RevenueDetectionEngine();
+        const priorityService = new RevenuePriorityService();
+        const executionEngine = new RevenueExecutionEngine();
+        const attributionService = new RevenueAttributionService();
+        const learningService = new StoreLearningService();
+
+        console.log(`🔍 [Revenue Loop] DETECT phase for user ${setting.userId}`);
+        const defaultTypes = ['seo_optimization', 'description_enhancement', 'general_optimization'];
+        const enabledTypes = (setting.enabledActionTypes as string[]) || defaultTypes;
+        
+        await detectionEngine.detectSignals(setting.userId);
+        
+        const activeSignals = await detectionEngine.getActiveSignals(setting.userId, 20);
+        const { revenueOpportunities } = await import('@shared/schema');
+        console.log(`   Found ${activeSignals.length} active signals`);
+
+        const signalTypeToOpportunityType: Record<string, string> = {
+          'poor_seo_score': 'seo_optimization',
+          'high_traffic_low_conversion': 'description_enhancement',
+        };
+
+        for (const signal of activeSignals) {
+          if (signal.status !== 'detected') continue;
+          
+          const predictedOppType = signalTypeToOpportunityType[signal.signalType] || 'general_optimization';
+          if (!enabledTypes.includes(predictedOppType)) {
+            console.log(`   ⏭️  Signal ${signal.id} would create disabled type ${predictedOppType}`);
+            continue;
+          }
+          
+          const [existingOpp] = await db
+            .select({ id: revenueOpportunities.id })
+            .from(revenueOpportunities)
+            .where(eq(revenueOpportunities.signalId, signal.id))
+            .limit(1);
+          
+          if (existingOpp) {
+            console.log(`   ⏭️  Signal ${signal.id} already has opportunity ${existingOpp.id}`);
+            continue;
+          }
+          
+          try {
+            const oppId = await priorityService.createOpportunityFromSignal(signal.id);
+            if (oppId) {
+              console.log(`   📋 Created opportunity ${oppId} from signal ${signal.id}`);
+            }
+          } catch (error) {
+            console.log(`   ⚠️  Failed to create opportunity from signal ${signal.id}:`, error);
+          }
+        }
+
+        console.log(`⚡ [Revenue Loop] EXECUTE phase for user ${setting.userId}`);
+        const maxActions = setting.maxDailyActions || 5;
+        const pendingOpportunities = await priorityService.getPendingOpportunities(setting.userId, maxActions * 2);
+        
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const executedToday = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(autonomousActions)
+          .where(and(
+            eq(autonomousActions.userId, setting.userId),
+            eq(autonomousActions.status, 'completed'),
+            sql`${autonomousActions.completedAt} >= ${todayStart.toISOString()}`
+          ));
+        const todayCount = executedToday[0]?.count || 0;
+        const remainingToday = Math.max(0, maxActions - todayCount);
+        console.log(`   Daily limit: ${maxActions}, executed today: ${todayCount}, remaining: ${remainingToday}`);
+        
+        let executedCount = 0;
+        for (const opp of pendingOpportunities) {
+          if (executedCount >= remainingToday) {
+            console.log(`   ⏭️  Daily limit reached, stopping execution`);
+            break;
+          }
+          if (!enabledTypes.includes(opp.opportunityType || 'seo_optimization')) {
+            console.log(`   ⏭️  Skipping ${opp.id} - type ${opp.opportunityType} not enabled`);
+            continue;
+          }
+          const result = await executionEngine.executeOpportunity(opp.id);
+          if (result.success) {
+            console.log(`   ✅ Executed opportunity ${opp.id} (${result.creditsUsed} credits)`);
+            executedCount++;
+          }
+        }
+
+        console.log(`📏 [Revenue Loop] PROVE phase for user ${setting.userId}`);
+        const { revenueLoopProof } = await import('@shared/schema');
+        const provingOpportunities = await attributionService.getOpportunitiesReadyForProving(20);
+        const provenOpportunityIds: string[] = [];
+        
+        for (const opp of provingOpportunities) {
+          if (opp.userId !== setting.userId) continue;
+          const attribution = await attributionService.measureOpportunityImpact(opp.id);
+          if (attribution) {
+            provenOpportunityIds.push(opp.id);
+            if (attribution.verdict === 'success') {
+              console.log(`   ✅ Proven success: ${opp.id} with $${attribution.revenueDelta.toFixed(2)} revenue delta`);
+            } else if (attribution.verdict === 'negative') {
+              console.log(`   ⚠️  Proven negative: ${opp.id} (rollback: ${attribution.shouldRollback})`);
+            } else {
+              console.log(`   📊 Proven ${attribution.verdict}: ${opp.id}`);
+            }
+          }
+        }
+
+        console.log(`🧠 [Revenue Loop] LEARN phase for user ${setting.userId}`);
+        
+        for (const oppId of provenOpportunityIds) {
+          const [proof] = await db
+            .select()
+            .from(revenueLoopProof)
+            .where(eq(revenueLoopProof.opportunityId, oppId))
+            .orderBy(sql`${revenueLoopProof.createdAt} DESC`)
+            .limit(1);
+          
+          if (proof) {
+            try {
+              await learningService.learnFromAttribution(proof.id);
+              console.log(`   📚 Learned from proof ${proof.id} (verdict: ${proof.verdict})`);
+            } catch (error) {
+              console.log(`   ⚠️  Error learning from proof ${proof.id}:`, error);
+            }
+          }
+        }
+        
+        const stats = await learningService.getStoreLearningStats(setting.userId);
+        console.log(`   Store learning stats: ${stats.totalInsights || 0} insights, ${stats.successfulPatterns || 0} successful patterns`);
+
+      } catch (error) {
+        console.error(`❌ [Revenue Loop] Error processing user ${setting.userId}:`, error);
+      }
+    }
+
+    console.log('✅ [Revenue Loop] Completed revenue loop scan');
+  } catch (error) {
+    console.error('❌ [Revenue Loop] Error during revenue loop scan:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
+}
+
+/**
  * Initialize autonomous scheduler
  * Sets up cron jobs for various autonomous tasks
  */
@@ -1040,11 +1217,11 @@ export function initializeAutonomousScheduler(): void {
     await runMarketingCampaignScan();
   });
 
-  // For testing, also run every 5 minutes (comment out in production)
-  // cron.schedule('*/5 * * * *', async () => {
-  //   console.log('⏰ [Scheduler] Running test SEO audit...');
-  //   await runDailySEOAudit();
-  // });
+  // Revenue Loop Scan - runs every 30 minutes
+  cron.schedule('*/30 * * * *', async () => {
+    console.log('⏰ [Scheduler] Running revenue loop scan...');
+    await runRevenueLoopScan();
+  });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), and Marketing Campaigns (Hourly at :15)');
+  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Revenue Loop (Every 30 min)');
 }
