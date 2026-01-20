@@ -18,6 +18,7 @@ import NotificationCenter from "@/components/dashboard/notification-center";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
 import ManageProducts from "@/pages/products/manage";
+import ZyraAtWork from "@/components/dashboard/zyra-at-work";
 import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
@@ -311,6 +312,8 @@ export default function Dashboard() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "zyra-at-work":
+        return <ZyraAtWork />;
       case "ai-tools":
         return <AITools />;
       case "automate":

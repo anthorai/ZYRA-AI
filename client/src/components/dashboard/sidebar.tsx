@@ -21,7 +21,8 @@ import {
   X,
   Cog,
   Coins,
-  Shield
+  Shield,
+  Activity
 } from "lucide-react";
 
 interface SidebarProps {
@@ -157,6 +158,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   // Build navigation items based on user role
   const navItems = [
     { id: "overview", label: "Dashboard", icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
+    { id: "zyra-at-work", label: "ZYRA at Work", icon: <Activity className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "zyra-at-work" },
     { id: "ai-tools", label: "AI Tools", icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "ai-tools" },
     { id: "automate", label: "Automate", icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "analytics" },
     { id: "campaigns", label: "Campaigns", icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "campaigns" },
