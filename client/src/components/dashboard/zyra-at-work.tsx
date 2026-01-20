@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Activity, 
   Search, 
@@ -11,7 +13,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  Brain
+  Brain,
+  RefreshCw,
+  Play
 } from "lucide-react";
 
 interface ZyraEvent {
@@ -21,6 +25,17 @@ interface ZyraEvent {
   message: string;
   status: 'in_progress' | 'completed' | 'warning';
   details?: string;
+}
+
+interface ActivityFeedResponse {
+  activities: {
+    id: string;
+    timestamp: string;
+    phase: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
+    message: string;
+    status: 'in_progress' | 'completed' | 'warning';
+    details?: string;
+  }[];
 }
 
 const PHASE_CONFIG = {
@@ -136,20 +151,35 @@ function EventItem({ event, isTyping, onTypingComplete }: {
 }
 
 export default function ZyraAtWork() {
-  const [events, setEvents] = useState<ZyraEvent[]>([]);
+  const [demoEvents, setDemoEvents] = useState<ZyraEvent[]>([]);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(true);
+  const [showDemo, setShowDemo] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
 
+  const { data: activityData, isLoading, refetch, isRefetching } = useQuery<ActivityFeedResponse>({
+    queryKey: ['/api/revenue-loop/activity-feed'],
+    refetchInterval: 30000,
+  });
+
+  const realEvents: ZyraEvent[] = (activityData?.activities?.map(a => ({
+    ...a,
+    timestamp: new Date(a.timestamp),
+  })) || []).reverse();
+
+  const hasRealData = realEvents.length > 0;
+  const events = showDemo ? demoEvents : realEvents;
+
   useEffect(() => {
+    if (!showDemo) return;
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
 
     const addNextEvent = () => {
       if (currentEventIndex >= SIMULATED_EVENTS.length) {
         setCurrentEventIndex(0);
-        setEvents([]);
+        setDemoEvents([]);
         return;
       }
 
@@ -160,15 +190,15 @@ export default function ZyraAtWork() {
         timestamp: new Date(),
       };
 
-      setEvents(prev => [...prev.slice(-15), newEvent]);
+      setDemoEvents(prev => [...prev.slice(-15), newEvent]);
       setIsTypingComplete(false);
     };
 
     addNextEvent();
-  }, []);
+  }, [showDemo]);
 
   useEffect(() => {
-    if (!isTypingComplete) return;
+    if (!showDemo || !isTypingComplete) return;
 
     const delay = SIMULATED_EVENTS[currentEventIndex]?.status === 'completed' ? 2000 : 1500;
     
@@ -176,7 +206,7 @@ export default function ZyraAtWork() {
       const nextIndex = (currentEventIndex + 1) % SIMULATED_EVENTS.length;
       
       if (nextIndex === 0) {
-        setEvents([]);
+        setDemoEvents([]);
       }
       
       const eventTemplate = SIMULATED_EVENTS[nextIndex];
@@ -186,13 +216,13 @@ export default function ZyraAtWork() {
         timestamp: new Date(),
       };
 
-      setEvents(prev => [...prev.slice(-15), newEvent]);
+      setDemoEvents(prev => [...prev.slice(-15), newEvent]);
       setCurrentEventIndex(nextIndex);
       setIsTypingComplete(false);
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [isTypingComplete, currentEventIndex]);
+  }, [showDemo, isTypingComplete, currentEventIndex]);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -205,19 +235,47 @@ export default function ZyraAtWork() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6" data-testid="zyra-at-work-container">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2" data-testid="text-page-title">
             ZYRA at Work
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
-            Watch ZYRA autonomously optimize your store's revenue in real-time
+            {showDemo ? 'Demo mode - See how ZYRA optimizes your store' : 
+             hasRealData ? 'Live activity from your revenue optimization loop' :
+             'No activity yet - Enable autopilot in Automation settings'}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-emerald-400 font-medium">Active</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            data-testid="button-refresh-activity"
+          >
+            <RefreshCw className={`w-4 h-4 mr-1 ${isRefetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            variant={showDemo ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setShowDemo(!showDemo);
+              isInitializedRef.current = false;
+            }}
+            data-testid="button-toggle-demo"
+          >
+            <Play className="w-4 h-4 mr-1" />
+            {showDemo ? 'Show Live' : 'Demo Mode'}
+          </Button>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+            hasRealData || showDemo ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-500/10 border border-slate-500/20'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${hasRealData || showDemo ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+            <span className={`text-xs font-medium ${hasRealData || showDemo ? 'text-emerald-400' : 'text-slate-400'}`}>
+              {showDemo ? 'Demo' : hasRealData ? 'Active' : 'Waiting'}
+            </span>
           </div>
         </div>
       </div>
@@ -240,19 +298,30 @@ export default function ZyraAtWork() {
             className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
             data-testid="activity-feed"
           >
-            {events.length === 0 ? (
+            {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Search className="w-6 h-6 text-primary animate-pulse" />
+                  <RefreshCw className="w-6 h-6 text-primary animate-spin" />
                 </div>
-                <p className="text-slate-400">Initializing ZYRA...</p>
+                <p className="text-slate-400">Loading activity...</p>
+              </div>
+            ) : events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Search className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-slate-400 mb-2">No activity yet</p>
+                <p className="text-slate-500 text-sm max-w-sm">
+                  {showDemo ? 'Starting demo mode...' : 
+                   'Enable autopilot in your Automation settings to see ZYRA working for you, or try Demo Mode to see how it works.'}
+                </p>
               </div>
             ) : (
               events.map((event, index) => (
                 <EventItem 
                   key={event.id} 
                   event={event}
-                  isTyping={index === events.length - 1 && !isTypingComplete}
+                  isTyping={showDemo && index === events.length - 1 && !isTypingComplete}
                   onTypingComplete={() => setIsTypingComplete(true)}
                 />
               ))

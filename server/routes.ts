@@ -15759,6 +15759,161 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  app.get("/api/revenue-loop/activity-feed", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueSignals, revenueOpportunities, revenueLoopProof, storeLearningInsights, products } = await import('@shared/schema');
+      
+      interface ActivityEvent {
+        id: string;
+        timestamp: string;
+        phase: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
+        message: string;
+        status: 'in_progress' | 'completed' | 'warning';
+        details?: string;
+      }
+      
+      const activities: ActivityEvent[] = [];
+      
+      const signals = await db
+        .select({
+          id: revenueSignals.id,
+          signalType: revenueSignals.signalType,
+          status: revenueSignals.status,
+          createdAt: revenueSignals.createdAt,
+          entityId: revenueSignals.entityId,
+        })
+        .from(revenueSignals)
+        .where(eq(revenueSignals.userId, userId))
+        .orderBy(desc(revenueSignals.createdAt))
+        .limit(15);
+
+      for (const signal of signals) {
+        const signalTypeLabels: Record<string, string> = {
+          'poor_seo_score': 'low SEO score',
+          'high_traffic_low_conversion': 'high traffic with low conversion',
+          'price_optimization_needed': 'price optimization opportunity',
+        };
+        const label = signalTypeLabels[signal.signalType] || signal.signalType;
+        
+        activities.push({
+          id: `signal-${signal.id}`,
+          timestamp: signal.createdAt?.toISOString() || new Date().toISOString(),
+          phase: 'detect',
+          message: `Detected ${label} for product`,
+          status: signal.status === 'queued' ? 'completed' : 'in_progress',
+          details: signal.status === 'queued' ? 'Signal queued for prioritization' : undefined,
+        });
+      }
+
+      const opportunities = await db
+        .select({
+          id: revenueOpportunities.id,
+          opportunityType: revenueOpportunities.opportunityType,
+          status: revenueOpportunities.status,
+          priorityScore: revenueOpportunities.priorityScore,
+          estimatedRevenueLift: revenueOpportunities.estimatedRevenueLift,
+          createdAt: revenueOpportunities.createdAt,
+          entityId: revenueOpportunities.entityId,
+        })
+        .from(revenueOpportunities)
+        .where(eq(revenueOpportunities.userId, userId))
+        .orderBy(desc(revenueOpportunities.createdAt))
+        .limit(15);
+
+      for (const opp of opportunities) {
+        const score = opp.priorityScore || 0;
+        const revenue = opp.estimatedRevenueLift || 0;
+        
+        if (opp.status === 'pending') {
+          activities.push({
+            id: `decide-${opp.id}`,
+            timestamp: opp.createdAt?.toISOString() || new Date().toISOString(),
+            phase: 'decide',
+            message: `Evaluating ${opp.opportunityType?.replace(/_/g, ' ')} - Priority Score: ${score}`,
+            status: 'completed',
+            details: revenue > 0 ? `Estimated revenue lift: $${revenue.toFixed(2)}` : undefined,
+          });
+        } else if (opp.status === 'executing') {
+          activities.push({
+            id: `execute-${opp.id}`,
+            timestamp: opp.createdAt?.toISOString() || new Date().toISOString(),
+            phase: 'execute',
+            message: `Executing ${opp.opportunityType?.replace(/_/g, ' ')} optimization`,
+            status: 'in_progress',
+            details: 'Creating snapshot and applying changes...',
+          });
+        } else if (opp.status === 'proving' || opp.status === 'completed') {
+          activities.push({
+            id: `execute-done-${opp.id}`,
+            timestamp: opp.createdAt?.toISOString() || new Date().toISOString(),
+            phase: 'execute',
+            message: `Completed ${opp.opportunityType?.replace(/_/g, ' ')} optimization`,
+            status: 'completed',
+            details: 'Original preserved for rollback',
+          });
+        }
+      }
+
+      const proofs = await db
+        .select({
+          id: revenueLoopProof.id,
+          opportunityId: revenueLoopProof.opportunityId,
+          verdict: revenueLoopProof.verdict,
+          revenueDelta: revenueLoopProof.revenueDelta,
+          createdAt: revenueLoopProof.createdAt,
+        })
+        .from(revenueLoopProof)
+        .where(eq(revenueLoopProof.userId, userId))
+        .orderBy(desc(revenueLoopProof.createdAt))
+        .limit(10);
+
+      for (const proof of proofs) {
+        const delta = proof.revenueDelta || 0;
+        const isPositive = delta > 0;
+        
+        activities.push({
+          id: `prove-${proof.id}`,
+          timestamp: proof.createdAt?.toISOString() || new Date().toISOString(),
+          phase: 'prove',
+          message: `Revenue impact measured: ${isPositive ? '+' : ''}$${delta.toFixed(2)}`,
+          status: proof.verdict === 'success' ? 'completed' : proof.verdict === 'negative' ? 'warning' : 'in_progress',
+          details: proof.verdict === 'success' ? 'Positive impact confirmed' : proof.verdict === 'negative' ? 'Triggering rollback' : 'Monitoring continues',
+        });
+      }
+
+      const insights = await db
+        .select({
+          id: storeLearningInsights.id,
+          insightType: storeLearningInsights.insightType,
+          pattern: storeLearningInsights.pattern,
+          createdAt: storeLearningInsights.createdAt,
+        })
+        .from(storeLearningInsights)
+        .where(eq(storeLearningInsights.userId, userId))
+        .orderBy(desc(storeLearningInsights.createdAt))
+        .limit(8);
+
+      for (const insight of insights) {
+        activities.push({
+          id: `learn-${insight.id}`,
+          timestamp: insight.createdAt?.toISOString() || new Date().toISOString(),
+          phase: 'learn',
+          message: `Pattern learned: ${insight.insightType?.replace(/_/g, ' ')}`,
+          status: 'completed',
+          details: 'Store intelligence updated',
+        });
+      }
+
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      res.json({ activities: activities.slice(0, 30) });
+    } catch (error) {
+      console.error("Error fetching revenue loop activity feed:", error);
+      res.status(500).json({ error: "Failed to fetch activity feed" });
+    }
+  });
+
   // ===== PENDING APPROVALS (Manual Mode) =====
   
   // Get pending approvals for review
