@@ -123,6 +123,7 @@ const CSVImportExport = lazy(() => import("@/pages/automation/csv-import-export"
 const ShopifyPublish = lazy(() => import("@/pages/automation/shopify-publish"));
 const SmartBulkSuggestions = lazy(() => import("@/pages/automation/smart-bulk-suggestions"));
 const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes"));
+const RevenueLoopControls = lazy(() => import("@/pages/automation/revenue-loop-controls"));
 const PendingApprovals = lazy(() => import("@/pages/pending-approvals"));
 
 
@@ -884,6 +885,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <RollbackChanges />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/automation/revenue-loop" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <RevenueLoopControls />
           </Suspense>
         </ProtectedRoute>
       )} />

@@ -15667,6 +15667,98 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== REVENUE LOOP API =====
+  
+  app.get("/api/revenue-loop/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueSignals, revenueOpportunities, storeLearningInsights } = await import('@shared/schema');
+      
+      const [signalsResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(revenueSignals)
+        .where(eq(revenueSignals.userId, userId));
+      
+      const [pendingResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'pending')
+        ));
+      
+      const [executingResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'executing')
+        ));
+      
+      const [provingResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'proving')
+        ));
+      
+      const [successfulResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'completed')
+        ));
+      
+      const [insightsResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(storeLearningInsights)
+        .where(eq(storeLearningInsights.userId, userId));
+
+      res.json({
+        signalsDetected: signalsResult?.count || 0,
+        opportunitiesPending: pendingResult?.count || 0,
+        opportunitiesExecuting: executingResult?.count || 0,
+        opportunitiesProving: provingResult?.count || 0,
+        successfulOptimizations: successfulResult?.count || 0,
+        totalRevenueLift: 0,
+        insightsLearned: insightsResult?.count || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching revenue loop stats:", error);
+      res.status(500).json({ error: "Failed to fetch revenue loop stats" });
+    }
+  });
+
+  app.get("/api/revenue-loop/opportunities", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueOpportunities } = await import('@shared/schema');
+      
+      const opportunities = await db
+        .select({
+          id: revenueOpportunities.id,
+          opportunityType: revenueOpportunities.opportunityType,
+          entityId: revenueOpportunities.entityId,
+          entityType: revenueOpportunities.entityType,
+          status: revenueOpportunities.status,
+          priorityScore: revenueOpportunities.priorityScore,
+          estimatedRevenueLift: revenueOpportunities.estimatedRevenueLift,
+          createdAt: revenueOpportunities.createdAt,
+        })
+        .from(revenueOpportunities)
+        .where(eq(revenueOpportunities.userId, userId))
+        .orderBy(desc(revenueOpportunities.createdAt))
+        .limit(20);
+
+      res.json(opportunities);
+    } catch (error) {
+      console.error("Error fetching revenue loop opportunities:", error);
+      res.status(500).json({ error: "Failed to fetch opportunities" });
+    }
+  });
+
   // ===== PENDING APPROVALS (Manual Mode) =====
   
   // Get pending approvals for review
