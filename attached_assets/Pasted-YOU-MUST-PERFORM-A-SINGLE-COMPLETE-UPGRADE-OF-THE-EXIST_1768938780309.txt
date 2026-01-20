@@ -1,0 +1,240 @@
+YOU MUST PERFORM A SINGLE, COMPLETE UPGRADE OF THE EXISTING ZYRA AI SYSTEM
+FROM THE OLD FEATURE-BASED MODEL TO THE NEW AUTONOMOUS REVENUE LOOP MODEL
+IN ONE PASS.
+
+⚠️⚠️⚠️ CRITICAL NON-NEGOTIABLE WARNING ⚠️⚠️⚠️
+THIS IS A LIVE SHOPIFY APP, ALREADY PUBLISHED AND USED BY REAL MERCHANTS.
+
+YOU ARE STRICTLY FORBIDDEN TO:
+- CHANGE
+- MODIFY
+- REFACTOR
+- TOUCH
+- MOVE
+- RENAME
+- DELETE
+- OPTIMIZE
+
+ANYTHING RELATED TO SHOPIFY, INCLUDING BUT NOT LIMITED TO:
+- Shopify OAuth / Auth
+- Store connection logic
+- Billing / subscriptions / trials
+- Shopify webhooks
+- Product sync
+- Inventory sync
+- Order sync
+- Customer sync
+- Shopify API scopes & limits
+- Shopify App Bridge
+- Shopify review-approved flows
+- Existing Shopify-related database schemas
+- Existing background jobs related to Shopify
+
+TREAT ALL SHOPIFY-RELATED CODE AS READ-ONLY AND LOCKED.
+
+ANY VIOLATION IS A CRITICAL FAILURE.
+
+────────────────────────────────────────────
+
+YOU ARE ALLOWED TO DO ONLY ADDITIVE CHANGES:
+- Add new AI decision logic
+- Add new internal revenue loop logic
+- Add new read-only UI
+- Add new safe, reversible optimization behavior
+- Add new copy / narration / visualization
+
+NO BREAKING CHANGES.
+NO REMOVALS.
+NO REFACTORING.
+
+────────────────────────────────────────────
+
+SYSTEM IDENTITY UPDATE (REQUIRED)
+
+Update ZYRA AI so it behaves as:
+- An autonomous revenue optimization system
+- NOT a chatbot
+- NOT an analytics dashboard
+- NOT an SEO tool
+- NOT a recommendation engine
+
+ZYRA NEVER gives advice.
+ZYRA NEVER asks merchants what to do.
+ZYRA NEVER guarantees results.
+
+────────────────────────────────────────────
+
+IMPLEMENT THIS SINGLE OPERATING LOOP ACROSS THE ENTIRE SYSTEM:
+
+DETECT → DECIDE → EXECUTE → PROVE → LEARN → REPEAT
+
+NO FEATURE, LOGIC, OR UI MAY EXIST OUTSIDE THIS LOOP.
+
+────────────────────────────────────────────
+
+DETECT (Revenue Signals Only)
+
+Add logic to detect ONLY revenue-linked signals using existing synced data:
+- High-traffic, low-conversion products
+- Sudden product-level revenue drops
+- Content correlated with revenue decline
+- Visitor intent mismatch
+- Demand quality waste (wrong visitors)
+
+DO NOT use:
+- CTR
+- Engagement metrics
+- Vanity analytics
+- Generic SEO scoring
+
+Detection runs continuously and consumes NO credits.
+
+────────────────────────────────────────────
+
+DECIDE (Autonomous & Conservative)
+
+For each detected issue:
+- Calculate a Revenue Priority Score using:
+  - Estimated revenue impact
+  - Confidence level
+  - Execution safety
+
+Rules:
+- Select ONLY ONE product or very small product group at a time
+- Select ONLY ONE action OR NO ACTION
+- If confidence is below threshold → DO NOTHING
+- NEVER bulk optimize products
+
+────────────────────────────────────────────
+
+EXECUTE (Safe & Reversible Only)
+
+Allowed actions ONLY:
+PRIMARY (Conversion First):
+- Product title optimization
+- Product description optimization
+- Value framing improvements
+
+SECONDARY (Demand Quality Control – Conditional):
+- Meta title updates
+- Meta description updates
+- Product tag alignment
+
+Meta & tag updates are allowed ONLY IF:
+- Conversion optimization already applied
+- Traffic exists but revenue per visitor is weak
+- Language comes from previously proven converting copy
+
+Execution rules:
+- Always save before-state snapshot
+- Apply changes atomically
+- Auto-rollback on revenue loss
+- Never delete merchant data
+- Never block merchant access
+
+────────────────────────────────────────────
+
+PROVE (Money Only)
+
+Measure outcomes ONLY using revenue data:
+- Revenue before
+- Revenue after
+- Net revenue delta
+
+Rules:
+- Negative impact → rollback automatically
+- Neutral → deprioritize pattern
+- Positive → reinforce pattern
+
+DO NOT show proxy metrics.
+DO NOT claim guarantees.
+
+────────────────────────────────────────────
+
+LEARN (Store-Specific Intelligence)
+
+Persist private store-specific learning:
+- Language that converts
+- Product sensitivity patterns
+- Safe vs risky actions
+
+Learning must be:
+- Non-exportable
+- Non-transferable
+- Used only to improve future decisions
+
+────────────────────────────────────────────
+
+CREDIT SYSTEM (SAFETY)
+
+Credits represent REVENUE DECISIONS, not usage.
+
+Examples:
+- $49 → 1,000 credits (Revenue Safety Net)
+- $299 → 6,000 credits (Growth Insurance)
+- $999 → 20,000 credits (Executive Decision Engine)
+
+Rules:
+- Credits consumed ONLY on execution
+- Detection & rollback are free
+- Credits exhausted → execution stops, detection continues
+
+────────────────────────────────────────────
+
+MERCHANT MANUAL CONTROLS (LIMITED)
+
+Add ONLY these controls:
+- Global ON / OFF
+- Safe Mode (risk level)
+- Product / collection exclusions
+- Execution timing window
+- Emergency rollback
+- Credit visibility
+
+DO NOT allow merchants to:
+- Choose products
+- Edit AI content
+- Approve actions
+- Tune AI logic
+- Trigger execution
+
+────────────────────────────────────────────
+
+ADD A NEW READ-ONLY UI SCREEN (MANDATORY)
+
+Name: “ZYRA at Work”
+
+Requirements:
+- Read-only
+- No inputs
+- No controls
+- Live written narration with typing animation (ChatGPT-style)
+- Shows:
+  - Detecting revenue issues
+  - Selecting product
+  - Choosing action
+  - Executing safely
+  - Monitoring revenue
+  - Rolling back if needed
+
+This screen must make merchants feel ZYRA is actively working on their revenue.
+
+────────────────────────────────────────────
+
+FINAL ABSOLUTE RULES
+
+- DO NOT TOUCH SHOPIFY AUTH
+- DO NOT TOUCH SHOPIFY BILLING
+- DO NOT TOUCH SHOPIFY SYNC
+- DO NOT TOUCH SHOPIFY DATA MODELS
+- DO NOT TOUCH REVIEW-APPROVED FLOWS
+
+THIS UPDATE IS AI BEHAVIOR + UI VISIBILITY ONLY.
+
+If unsure → DO NOTHING.
+If confident → EXECUTE ONCE, MEASURE, LEARN.
+
+ZYRA MUST FEEL LIKE:
+“A QUIET, ALWAYS-ON REVENUE OPERATOR THAT MERCHANTS TRUST WITH REAL MONEY.”
+
+EXECUTE THIS UPDATE AS A SINGLE COHESIVE CHANGE.

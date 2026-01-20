@@ -3291,5 +3291,267 @@ export const insertBrandVoiceTransformationSchema = createInsertSchema(brandVoic
 export type BrandVoiceTransformation = typeof brandVoiceTransformations.$inferSelect;
 export type InsertBrandVoiceTransformation = z.infer<typeof insertBrandVoiceTransformationSchema>;
 
+// ============================================
+// REVENUE LOOP SYSTEM TABLES
+// DETECT → DECIDE → EXECUTE → PROVE → LEARN
+// ============================================
+
+// Revenue Signal Types for detection
+export const revenueSignalTypeEnum = pgEnum('revenue_signal_type', [
+  'high_traffic_low_conversion',
+  'revenue_drop',
+  'poor_seo_score',
+  'competitor_opportunity',
+  'price_optimization',
+  'abandoned_cart_pattern',
+  'seasonal_trend',
+  'inventory_alert'
+]);
+
+// Revenue Signal Status
+export const revenueSignalStatusEnum = pgEnum('revenue_signal_status', [
+  'detected',
+  'queued',
+  'executing',
+  'proving',
+  'completed',
+  'rolled_back',
+  'ignored'
+]);
+
+// Revenue Signals - Detected revenue-linked opportunities
+export const revenueSignals = pgTable("revenue_signals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  signalType: revenueSignalTypeEnum("signal_type").notNull(),
+  entityType: text("entity_type").notNull(), // 'product' | 'category' | 'store'
+  entityId: varchar("entity_id"), // Product ID or category identifier
+  
+  // Signal Data
+  signalData: jsonb("signal_data").notNull(), // Raw metrics that triggered signal
+  estimatedRevenueDelta: numeric("estimated_revenue_delta", { precision: 12, scale: 2 }), // Predicted revenue impact
+  confidenceScore: integer("confidence_score"), // 0-100 confidence in the signal
+  
+  // Priority Score (calculated by DECIDE phase)
+  priorityScore: integer("priority_score"), // 0-100 priority score
+  priorityFactors: jsonb("priority_factors"), // Breakdown of scoring factors
+  
+  // Status tracking
+  status: revenueSignalStatusEnum("status").notNull().default("detected"),
+  
+  // Timing
+  detectedAt: timestamp("detected_at").default(sql`NOW()`),
+  expiresAt: timestamp("expires_at"), // Signals can expire if not acted upon
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('revenue_signals_user_id_idx').on(table.userId),
+  index('revenue_signals_signal_type_idx').on(table.signalType),
+  index('revenue_signals_status_idx').on(table.status),
+  index('revenue_signals_priority_score_idx').on(table.priorityScore),
+  index('revenue_signals_entity_id_idx').on(table.entityId),
+  index('revenue_signals_detected_at_idx').on(table.detectedAt),
+]);
+
+// Revenue Opportunities - Prioritized and ready for execution
+export const revenueOpportunities = pgTable("revenue_opportunities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  signalId: varchar("signal_id").references(() => revenueSignals.id),
+  
+  // Opportunity Details
+  opportunityType: text("opportunity_type").notNull(), // 'seo_optimization' | 'title_rewrite' | 'description_enhancement' | 'price_adjustment'
+  entityType: text("entity_type").notNull(),
+  entityId: varchar("entity_id"),
+  
+  // AI-Generated Action Plan
+  actionPlan: jsonb("action_plan").notNull(), // Proposed changes
+  originalContent: jsonb("original_content"), // Snapshot before changes
+  proposedContent: jsonb("proposed_content"), // What will be applied
+  
+  // Revenue Metrics
+  estimatedRevenueLift: numeric("estimated_revenue_lift", { precision: 12, scale: 2 }),
+  estimatedRevenuePercentage: numeric("estimated_revenue_percentage", { precision: 5, scale: 2 }), // e.g., 3.5%
+  confidenceLevel: text("confidence_level"), // 'high' | 'medium' | 'low'
+  
+  // Safety & Rollback
+  rollbackData: jsonb("rollback_data"), // Everything needed to undo
+  safetyScore: integer("safety_score"), // 0-100 how safe this change is
+  
+  // Execution tracking
+  status: text("status").notNull().default("pending"), // 'pending' | 'approved' | 'executing' | 'proving' | 'completed' | 'rolled_back' | 'failed'
+  executedAt: timestamp("executed_at"),
+  proveStartedAt: timestamp("prove_started_at"),
+  proveWindowHours: integer("prove_window_hours").default(72), // Default 72h observation
+  completedAt: timestamp("completed_at"),
+  
+  // Attribution Link
+  autonomousActionId: varchar("autonomous_action_id").references(() => autonomousActions.id),
+  
+  // Credit consumption
+  creditsUsed: integer("credits_used").default(0),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('revenue_opportunities_user_id_idx').on(table.userId),
+  index('revenue_opportunities_signal_id_idx').on(table.signalId),
+  index('revenue_opportunities_status_idx').on(table.status),
+  index('revenue_opportunities_entity_id_idx').on(table.entityId),
+  index('revenue_opportunities_created_at_idx').on(table.createdAt),
+]);
+
+// Revenue Loop Proof - Prove phase metrics (measures before/after optimization impact)
+export const revenueLoopProof = pgTable("revenue_loop_proof", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  opportunityId: varchar("opportunity_id").references(() => revenueOpportunities.id).notNull(),
+  
+  // Baseline Metrics (before change)
+  baselineMetrics: jsonb("baseline_metrics").notNull(), // views, conversions, revenue, etc.
+  baselinePeriodStart: timestamp("baseline_period_start"),
+  baselinePeriodEnd: timestamp("baseline_period_end"),
+  
+  // Post-Change Metrics
+  postChangeMetrics: jsonb("post_change_metrics"),
+  postChangePeriodStart: timestamp("post_change_period_start"),
+  postChangePeriodEnd: timestamp("post_change_period_end"),
+  
+  // Calculated Impact
+  revenueDelta: numeric("revenue_delta", { precision: 12, scale: 2 }), // Actual revenue change
+  conversionDelta: numeric("conversion_delta", { precision: 5, scale: 4 }), // Conversion rate change
+  trafficDelta: integer("traffic_delta"), // Page view change
+  
+  // Statistical Confidence
+  statisticalConfidence: integer("statistical_confidence"), // 0-100
+  isSignificant: boolean("is_significant").default(false), // Statistical significance
+  
+  // Verdict
+  verdict: text("verdict"), // 'success' | 'neutral' | 'negative' | 'inconclusive'
+  shouldRollback: boolean("should_rollback").default(false),
+  rolledBackAt: timestamp("rolled_back_at"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('revenue_loop_proof_user_id_idx').on(table.userId),
+  index('revenue_loop_proof_opportunity_id_idx').on(table.opportunityId),
+  index('revenue_loop_proof_verdict_idx').on(table.verdict),
+]);
+
+// Store Learning Insights - LEARN phase persistent patterns
+export const storeLearningInsights = pgTable("store_learning_insights", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Insight Type
+  insightType: text("insight_type").notNull(), // 'effective_pattern' | 'ineffective_pattern' | 'store_preference' | 'audience_behavior'
+  category: text("category"), // Product category or 'global'
+  
+  // Pattern Data
+  patternData: jsonb("pattern_data").notNull(), // What the pattern is
+  examplesCount: integer("examples_count").default(1), // How many times this pattern was observed
+  
+  // Effectiveness Metrics
+  averageRevenueLift: numeric("average_revenue_lift", { precision: 12, scale: 2 }),
+  successRate: numeric("success_rate", { precision: 5, scale: 2 }), // Percentage of successful applications
+  
+  // Confidence
+  confidenceScore: integer("confidence_score").default(50), // 0-100 grows with more data
+  lastValidatedAt: timestamp("last_validated_at"),
+  
+  // Usage tracking
+  timesApplied: integer("times_applied").default(0),
+  lastAppliedAt: timestamp("last_applied_at"),
+  
+  // Active status
+  isActive: boolean("is_active").default(true),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('store_learning_insights_user_id_idx').on(table.userId),
+  index('store_learning_insights_insight_type_idx').on(table.insightType),
+  index('store_learning_insights_category_idx').on(table.category),
+  index('store_learning_insights_confidence_idx').on(table.confidenceScore),
+  index('store_learning_insights_is_active_idx').on(table.isActive),
+]);
+
+// Revenue Loop Run - Track each execution of the loop
+export const revenueLoopRuns = pgTable("revenue_loop_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Run Phase
+  currentPhase: text("current_phase").notNull().default("detect"), // 'detect' | 'decide' | 'execute' | 'prove' | 'learn'
+  
+  // Phase Metrics
+  signalsDetected: integer("signals_detected").default(0),
+  opportunitiesCreated: integer("opportunities_created").default(0),
+  actionsExecuted: integer("actions_executed").default(0),
+  actionsProving: integer("actions_proving").default(0),
+  insightsLearned: integer("insights_learned").default(0),
+  
+  // Timing
+  startedAt: timestamp("started_at").default(sql`NOW()`),
+  completedAt: timestamp("completed_at"),
+  
+  // Status
+  status: text("status").notNull().default("running"), // 'running' | 'completed' | 'failed' | 'paused'
+  errorMessage: text("error_message"),
+  
+  // Credits consumed in this run
+  creditsConsumed: integer("credits_consumed").default(0),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('revenue_loop_runs_user_id_idx').on(table.userId),
+  index('revenue_loop_runs_status_idx').on(table.status),
+  index('revenue_loop_runs_started_at_idx').on(table.startedAt),
+]);
+
+// Insert Schemas for Revenue Loop Tables
+export const insertRevenueSignalSchema = createInsertSchema(revenueSignals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRevenueOpportunitySchema = createInsertSchema(revenueOpportunities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRevenueLoopProofSchema = createInsertSchema(revenueLoopProof).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStoreLearningInsightSchema = createInsertSchema(storeLearningInsights).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRevenueLoopRunSchema = createInsertSchema(revenueLoopRuns).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Revenue Loop Types
+export type RevenueSignal = typeof revenueSignals.$inferSelect;
+export type InsertRevenueSignal = z.infer<typeof insertRevenueSignalSchema>;
+export type RevenueOpportunity = typeof revenueOpportunities.$inferSelect;
+export type InsertRevenueOpportunity = z.infer<typeof insertRevenueOpportunitySchema>;
+export type RevenueLoopProof = typeof revenueLoopProof.$inferSelect;
+export type InsertRevenueLoopProof = z.infer<typeof insertRevenueLoopProofSchema>;
+export type StoreLearningInsight = typeof storeLearningInsights.$inferSelect;
+export type InsertStoreLearningInsight = z.infer<typeof insertStoreLearningInsightSchema>;
+export type RevenueLoopRun = typeof revenueLoopRuns.$inferSelect;
+export type InsertRevenueLoopRun = z.infer<typeof insertRevenueLoopRunSchema>;
+
 // Re-export chat models for AI integrations
 export * from "./models/chat";
