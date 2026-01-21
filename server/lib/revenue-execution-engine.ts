@@ -12,6 +12,7 @@ import { eq, and } from 'drizzle-orm';
 import { consumeAIToolCredits, checkAIToolCredits } from './credits';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
+import { PowerModeService } from './power-mode-service';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -57,15 +58,32 @@ export class RevenueExecutionEngine {
       };
     }
 
-    const creditCheck = await checkAIToolCredits(opportunity.userId, 'product-seo-engine', 1);
+    const creditToolId = settings.powerModeEnabled ? 'power-mode' : 'product-seo-engine';
+    const creditCost = settings.powerModeEnabled ? 5 : 1;
+    const creditCheck = await checkAIToolCredits(opportunity.userId, creditToolId, creditCost);
     if (!creditCheck.hasEnoughCredits) {
-      return {
-        success: false,
-        opportunityId,
-        creditsUsed: 0,
-        changes: null,
-        error: 'Insufficient credits',
-      };
+      if (settings.powerModeEnabled) {
+        console.log(`⚠️ [Revenue Execution] Insufficient Power Mode credits, checking standard credits`);
+        const fallbackCheck = await checkAIToolCredits(opportunity.userId, 'product-seo-engine', 1);
+        if (!fallbackCheck.hasEnoughCredits) {
+          return {
+            success: false,
+            opportunityId,
+            creditsUsed: 0,
+            changes: null,
+            error: 'Insufficient credits for both Power Mode and standard optimization',
+          };
+        }
+        settings.powerModeEnabled = false;
+      } else {
+        return {
+          success: false,
+          opportunityId,
+          creditsUsed: 0,
+          changes: null,
+          error: 'Insufficient credits',
+        };
+      }
     }
 
     try {
@@ -80,10 +98,13 @@ export class RevenueExecutionEngine {
 
       await this.createSnapshot(opportunity);
 
-      const result = await this.performOptimization(opportunity);
+      const result = await this.performOptimization(opportunity, settings.powerModeEnabled);
 
-      const creditResult = await consumeAIToolCredits(opportunity.userId, 'product-seo-engine', 1);
-      const creditsUsed = creditResult.creditsConsumed;
+      let creditsUsed = result.creditsUsed || 0;
+      if (creditsUsed === 0) {
+        const creditResult = await consumeAIToolCredits(opportunity.userId, 'product-seo-engine', 1);
+        creditsUsed = creditResult.creditsConsumed;
+      }
 
       const [action] = await db
         .insert(autonomousActions)
@@ -158,7 +179,7 @@ export class RevenueExecutionEngine {
     }
   }
 
-  private async checkUserSettings(userId: string): Promise<{ enabled: boolean; reason?: string }> {
+  private async checkUserSettings(userId: string): Promise<{ enabled: boolean; powerModeEnabled: boolean; reason?: string }> {
     const db = requireDb();
     const [settings] = await db
       .select()
@@ -167,18 +188,18 @@ export class RevenueExecutionEngine {
       .limit(1);
 
     if (!settings) {
-      return { enabled: false, reason: 'No automation settings found' };
+      return { enabled: false, powerModeEnabled: false, reason: 'No automation settings found' };
     }
 
     if (!settings.globalAutopilotEnabled) {
-      return { enabled: false, reason: 'Global autopilot disabled' };
+      return { enabled: false, powerModeEnabled: false, reason: 'Global autopilot disabled' };
     }
 
     if (!settings.autopilotEnabled) {
-      return { enabled: false, reason: 'Autopilot disabled' };
+      return { enabled: false, powerModeEnabled: false, reason: 'Autopilot disabled' };
     }
 
-    return { enabled: true };
+    return { enabled: true, powerModeEnabled: settings.powerModeEnabled || false };
   }
 
   private async createSnapshot(opportunity: typeof revenueOpportunities.$inferSelect): Promise<void> {
@@ -223,17 +244,134 @@ export class RevenueExecutionEngine {
   }
 
   private async performOptimization(
-    opportunity: typeof revenueOpportunities.$inferSelect
-  ): Promise<{ changes: any }> {
+    opportunity: typeof revenueOpportunities.$inferSelect,
+    powerModeEnabled: boolean = false
+  ): Promise<{ changes: any; creditsUsed?: number }> {
     if (opportunity.opportunityType === 'seo_optimization' && opportunity.entityId) {
+      if (powerModeEnabled) {
+        return this.optimizeSEOWithPowerMode(opportunity.entityId, opportunity.userId);
+      }
       return this.optimizeSEO(opportunity.entityId, opportunity.userId);
     }
 
     if (opportunity.opportunityType === 'description_enhancement' && opportunity.entityId) {
+      if (powerModeEnabled) {
+        return this.optimizeSEOWithPowerMode(opportunity.entityId, opportunity.userId);
+      }
       return this.enhanceDescription(opportunity.entityId, opportunity.userId);
     }
 
     return { changes: { type: 'no_op', reason: 'Unknown opportunity type' } };
+  }
+
+  private async optimizeSEOWithPowerMode(productId: string, userId: string): Promise<{ changes: any; creditsUsed: number }> {
+    const db = requireDb();
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1);
+
+    if (!product) {
+      return { changes: { error: 'Product not found' }, creditsUsed: 0 };
+    }
+
+    const powerModeService = new PowerModeService();
+    const health = await powerModeService.checkHealth();
+    
+    if (!health.serpApiAvailable || !health.openaiAvailable) {
+      console.log(`⚠️ [Power Mode] Not available (${health.message}), falling back to standard optimization`);
+      const fallbackResult = await this.optimizeSEO(productId, userId);
+      await consumeAIToolCredits(userId, 'product-seo-engine', 1);
+      return { changes: { ...fallbackResult.changes, fallbackReason: 'power_mode_unavailable' }, creditsUsed: 1 };
+    }
+
+    const creditCheck = await checkAIToolCredits(userId, 'power-mode', 5);
+    if (!creditCheck.hasEnoughCredits) {
+      console.log(`⚠️ [Power Mode] Insufficient credits, falling back to standard optimization`);
+      const fallbackResult = await this.optimizeSEO(productId, userId);
+      await consumeAIToolCredits(userId, 'product-seo-engine', 1);
+      return { changes: { ...fallbackResult.changes, fallbackReason: 'insufficient_power_mode_credits' }, creditsUsed: 1 };
+    }
+
+    try {
+      console.log(`🚀 [Power Mode] Starting SERP analysis for product ${product.name}`);
+      
+      const powerModeResult = await powerModeService.analyzeAndOptimize({
+        productName: product.name,
+        productDescription: product.description || undefined,
+        currentTitle: product.name,
+        category: product.category || undefined,
+        price: product.price ? Number(product.price) : undefined,
+      });
+
+      const [existingSeo] = await db
+        .select()
+        .from(seoMeta)
+        .where(eq(seoMeta.productId, productId))
+        .limit(1);
+
+      if (existingSeo) {
+        await db.update(seoMeta)
+          .set({
+            seoTitle: powerModeResult.optimizedContent.metaTitle,
+            metaDescription: powerModeResult.optimizedContent.metaDescription,
+            seoScore: powerModeResult.competitiveInsights.confidenceScore,
+          })
+          .where(eq(seoMeta.productId, productId));
+      } else {
+        await db.insert(seoMeta).values({
+          productId,
+          seoTitle: powerModeResult.optimizedContent.metaTitle,
+          metaDescription: powerModeResult.optimizedContent.metaDescription,
+          seoScore: powerModeResult.competitiveInsights.confidenceScore,
+        });
+      }
+
+      await db.update(products)
+        .set({
+          name: powerModeResult.optimizedContent.title,
+          description: powerModeResult.optimizedContent.productDescription,
+          isOptimized: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, productId));
+
+      await consumeAIToolCredits(userId, 'power-mode', 5);
+
+      console.log(`✅ [Power Mode] Completed optimization for ${product.name}`);
+
+      return {
+        changes: {
+          type: 'power_mode_seo_optimization',
+          previous: {
+            title: product.name,
+            description: product.description,
+            metaTitle: existingSeo?.seoTitle,
+            metaDescription: existingSeo?.metaDescription,
+          },
+          optimized: {
+            title: powerModeResult.optimizedContent.title,
+            description: powerModeResult.optimizedContent.productDescription,
+            metaTitle: powerModeResult.optimizedContent.metaTitle,
+            metaDescription: powerModeResult.optimizedContent.metaDescription,
+          },
+          serpAnalysis: {
+            competitorCount: powerModeResult.serpAnalysis.competitorInsights.totalAnalyzed,
+            searchIntent: powerModeResult.competitiveInsights.searchIntent,
+            confidenceScore: powerModeResult.competitiveInsights.confidenceScore,
+            difficultyScore: powerModeResult.competitiveInsights.difficultyScore,
+          },
+          expectedImpact: powerModeResult.expectedImpact,
+        },
+        creditsUsed: 5,
+      };
+    } catch (error) {
+      console.error(`❌ [Power Mode] Error:`, error);
+      const fallbackResult = await this.optimizeSEO(productId, userId);
+      await consumeAIToolCredits(userId, 'product-seo-engine', 1);
+      return { changes: { ...fallbackResult.changes, fallbackReason: 'power_mode_error' }, creditsUsed: 1 };
+    }
   }
 
   private async optimizeSEO(productId: string, userId: string): Promise<{ changes: any }> {

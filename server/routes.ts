@@ -15914,6 +15914,177 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== POWER MODE API =====
+  
+  app.get("/api/power-mode/health", requireAuth, async (req, res) => {
+    try {
+      const { PowerModeService } = await import('./lib/power-mode-service');
+      const service = new PowerModeService();
+      const health = await service.checkHealth();
+      res.json(health);
+    } catch (error) {
+      console.error("Error checking Power Mode health:", error);
+      res.status(500).json({ 
+        serpApiAvailable: false, 
+        openaiAvailable: false, 
+        message: 'Error checking Power Mode status' 
+      });
+    }
+  });
+
+  app.post("/api/power-mode/analyze", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId, targetKeyword } = req.body;
+
+      if (!productId || typeof productId !== 'string') {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      const { checkAIToolCredits } = await import('./lib/credits');
+      const POWER_MODE_CREDIT_COST = 5;
+      const creditCheck = await checkAIToolCredits(userId, 'power-mode', POWER_MODE_CREDIT_COST);
+      
+      if (!creditCheck.hasEnoughCredits) {
+        return res.status(403).json({ 
+          error: "Insufficient credits",
+          message: creditCheck.message,
+          creditsRequired: creditCheck.creditCost,
+          creditsRemaining: creditCheck.creditsRemaining
+        });
+      }
+
+      const product = await db
+        .select()
+        .from(products)
+        .where(and(
+          eq(products.id, productId),
+          eq(products.userId, userId)
+        ))
+        .limit(1);
+
+      if (!product[0]) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const { PowerModeService } = await import('./lib/power-mode-service');
+      const service = new PowerModeService();
+
+      const result = await service.analyzeAndOptimize({
+        productName: product[0].title,
+        productDescription: product[0].description || undefined,
+        currentTitle: product[0].title,
+        currentMetaDescription: product[0].metaDescription || undefined,
+        category: product[0].productType || undefined,
+        price: product[0].price ? parseFloat(product[0].price) : undefined,
+        targetKeyword: targetKeyword || product[0].title,
+      });
+
+      res.json({
+        productId,
+        productName: product[0].title,
+        creditCost: 5,
+        ...result,
+      });
+    } catch (error) {
+      console.error("Error in Power Mode analysis:", error);
+      res.status(500).json({ error: "Power Mode analysis failed" });
+    }
+  });
+
+  app.post("/api/power-mode/execute", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId, optimizedContent } = req.body;
+
+      if (!productId || typeof productId !== 'string') {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      if (!optimizedContent || typeof optimizedContent !== 'object') {
+        return res.status(400).json({ error: "Optimized content is required" });
+      }
+
+      const { title, metaTitle, metaDescription, productDescription } = optimizedContent;
+      if (!title || typeof title !== 'string' || !metaTitle || typeof metaTitle !== 'string') {
+        return res.status(400).json({ error: "Invalid optimized content format" });
+      }
+
+      const { consumeAIToolCredits } = await import('./lib/credits');
+      const creditResult = await consumeAIToolCredits(userId, 'power-mode', 1);
+      
+      if (!creditResult.success) {
+        return res.status(403).json({ 
+          error: "Insufficient credits",
+          message: creditResult.message
+        });
+      }
+
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(and(
+          eq(products.id, productId),
+          eq(products.userId, userId)
+        ))
+        .limit(1);
+
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const { productHistory } = await import('@shared/schema');
+      
+      await db.insert(productHistory).values({
+        id: crypto.randomUUID(),
+        productId: product.id,
+        userId,
+        previousTitle: product.title,
+        newTitle: title,
+        previousDescription: product.description,
+        newDescription: productDescription || product.description,
+        previousMetaTitle: product.metaTitle,
+        newMetaTitle: metaTitle,
+        previousMetaDescription: product.metaDescription,
+        newMetaDescription: metaDescription || product.metaDescription,
+        source: 'power_mode',
+        createdAt: new Date(),
+      });
+
+      await db
+        .update(products)
+        .set({
+          title: title,
+          description: productDescription || product.description,
+          metaTitle: metaTitle,
+          metaDescription: metaDescription || product.metaDescription,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, productId));
+
+      const { creditLedger } = await import('@shared/schema');
+      await db.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId,
+        amount: -creditResult.creditsConsumed,
+        type: 'usage',
+        description: `Power Mode optimization: ${product.title}`,
+        metadata: { productId, mode: 'power_mode' },
+        createdAt: new Date(),
+      });
+
+      res.json({
+        success: true,
+        productId,
+        creditsUsed: creditResult.creditsConsumed,
+        message: 'Power Mode optimization applied successfully',
+      });
+    } catch (error) {
+      console.error("Error executing Power Mode optimization:", error);
+      res.status(500).json({ error: "Power Mode execution failed" });
+    }
+  });
+
   // ===== PENDING APPROVALS (Manual Mode) =====
   
   // Get pending approvals for review

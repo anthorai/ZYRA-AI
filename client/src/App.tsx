@@ -124,6 +124,7 @@ const ShopifyPublish = lazy(() => import("@/pages/automation/shopify-publish"));
 const SmartBulkSuggestions = lazy(() => import("@/pages/automation/smart-bulk-suggestions"));
 const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes"));
 const RevenueLoopControls = lazy(() => import("@/pages/automation/revenue-loop-controls"));
+const PowerModePage = lazy(() => import("@/pages/automation/power-mode"));
 const PendingApprovals = lazy(() => import("@/pages/pending-approvals"));
 
 
@@ -892,6 +893,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <RevenueLoopControls />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/automation/power-mode" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <PowerModePage />
           </Suspense>
         </ProtectedRoute>
       )} />

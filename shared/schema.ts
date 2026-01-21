@@ -168,6 +168,7 @@ export const automationSettings = pgTable("automation_settings", {
   globalAutopilotEnabled: boolean("global_autopilot_enabled").default(true), // Master toggle: true = Autonomous, false = Manual (requires approval)
   autopilotEnabled: boolean("autopilot_enabled").default(false),
   autopilotMode: text("autopilot_mode").default("safe"), // 'safe' | 'balanced' | 'aggressive'
+  powerModeEnabled: boolean("power_mode_enabled").default(false), // Use Power Mode (SERP + GPT-4o) for premium optimizations
   dryRunMode: boolean("dry_run_mode").default(false), // Preview mode - creates actions but doesn't execute
   autoPublishEnabled: boolean("auto_publish_enabled").default(false),
   maxDailyActions: integer("max_daily_actions").default(10),
@@ -825,6 +826,7 @@ export const updateAutomationSettingsSchema = z.object({
   globalAutopilotEnabled: z.boolean().optional(), // MASTER TOGGLE
   autopilotEnabled: z.boolean().optional(),
   autopilotMode: z.enum(['safe', 'balanced', 'aggressive']).optional(),
+  powerModeEnabled: z.boolean().optional(), // Use Power Mode for premium optimizations
   dryRunMode: z.boolean().optional(),
   autoPublishEnabled: z.boolean().optional(),
   maxDailyActions: z.number().int().min(1).max(100).optional(),

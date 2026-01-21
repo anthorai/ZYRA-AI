@@ -83,6 +83,11 @@ export const AI_TOOL_CREDITS = {
     credits: 2,
     description: 'AI-generated SMS content',
   },
+  'power-mode': {
+    name: 'Power Mode',
+    credits: 5,
+    description: 'Real-time Google SERP competitive intelligence + GPT-4o optimization',
+  },
 } as const;
 
 export type AIToolId = keyof typeof AI_TOOL_CREDITS;

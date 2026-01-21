@@ -30,6 +30,7 @@ interface RevenueLoopSettings {
   globalAutopilotEnabled: boolean;
   autopilotEnabled: boolean;
   autopilotMode: 'safe' | 'balanced' | 'aggressive';
+  powerModeEnabled: boolean;
   autoPublishEnabled: boolean;
   maxDailyActions: number;
 }
@@ -99,6 +100,10 @@ export default function RevenueLoopControls() {
 
   const handleModeChange = async (mode: string) => {
     await updateSettings.mutateAsync({ autopilotMode: mode as 'safe' | 'balanced' | 'aggressive' });
+  };
+
+  const handleTogglePowerMode = async (enabled: boolean) => {
+    await updateSettings.mutateAsync({ powerModeEnabled: enabled });
   };
 
   if (loadingSettings) {
@@ -357,6 +362,55 @@ export default function RevenueLoopControls() {
               </CardContent>
             </Card>
 
+            <Card data-testid="card-power-mode-settings">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  Power Mode
+                  <Badge variant="secondary" className="ml-2">Premium</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Use real-time Google SERP analysis + GPT-4o for advanced optimizations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <Label htmlFor="power-mode-toggle">Enable Power Mode</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Analyze top-ranking competitors and generate content to outrank them (5 credits per optimization)
+                    </p>
+                  </div>
+                  <Switch
+                    id="power-mode-toggle"
+                    data-testid="switch-power-mode"
+                    checked={settings?.powerModeEnabled || false}
+                    onCheckedChange={handleTogglePowerMode}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
+                    <Target className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5" />
+                    <div>
+                      <div className="font-medium text-sm">SERP Intelligence</div>
+                      <div className="text-xs text-muted-foreground">
+                        Analyzes top 10 Google results in real-time
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
+                    <Brain className="w-5 h-5 text-purple-500 dark:text-purple-400 mt-0.5" />
+                    <div>
+                      <div className="font-medium text-sm">GPT-4o Analysis</div>
+                      <div className="text-xs text-muted-foreground">
+                        Premium AI generates competitive content
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -369,7 +423,7 @@ export default function RevenueLoopControls() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
                     <div>
                       <Label>Store Pattern Learning</Label>
                       <p className="text-sm text-muted-foreground">
@@ -378,7 +432,7 @@ export default function RevenueLoopControls() {
                     </div>
                     <Badge variant="secondary">Always On</Badge>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
                     <div>
                       <Label>Avoid Failed Patterns</Label>
                       <p className="text-sm text-muted-foreground">
