@@ -346,7 +346,7 @@ export default function Landing() {
               </Card>
             </div>
 
-            <div className="text-center bg-primary/5 border border-primary/20 rounded-xl p-8">
+            <div className="text-center border border-primary/20 rounded-xl p-8 bg-[#16162c]">
               <p className="text-lg font-medium">
                 <span className="text-primary">ZYRA does the work.</span> You supervise.
               </p>
