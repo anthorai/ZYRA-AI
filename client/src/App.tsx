@@ -85,7 +85,6 @@ const CreateCampaignPage = lazy(() => import("@/pages/campaigns/create"));
 const CampaignListPage = lazy(() => import("@/pages/campaigns/list"));
 const CampaignDetailPage = lazy(() => import("@/pages/campaigns/detail"));
 const CampaignEditPage = lazy(() => import("@/pages/campaigns/edit"));
-const TemplatesPage = lazy(() => import("@/pages/templates"));
 
 // AI Tools pages
 const ProductSeoEngine = lazy(() => import("@/pages/ai-tools/product-seo-engine"));
@@ -95,9 +94,6 @@ const BrandVoiceMemory = lazy(() => import("@/pages/ai-tools/brand-voice-memory"
 const ScheduledRefresh = lazy(() => import("@/pages/ai-tools/scheduled-refresh"));
 const AutopilotSettings = lazy(() => import("@/pages/ai-tools/autopilot"));
 const ActivityTimeline = lazy(() => import("@/pages/ai-tools/activity-timeline"));
-const PricingSettings = lazy(() => import("@/pages/ai-tools/pricing-settings"));
-const CompetitorsPage = lazy(() => import("@/pages/ai-tools/competitors"));
-const StrategyInsights = lazy(() => import("@/pages/strategy-insights"));
 
 // Comparison/SEO marketing pages
 const ShopifySeoToolsComparison = lazy(() => import("@/pages/compare/shopify-seo-tools"));
@@ -645,14 +641,6 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/templates" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <TemplatesPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-
       {/* Feature routes */}
       <Route path="/ai-upsell-suggestions" component={() => (
         <ProtectedRoute>
@@ -726,28 +714,6 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/ai-tools/pricing-settings" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <PricingSettings />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/ai-tools/competitors" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CompetitorsPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/strategy-insights" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <StrategyInsights />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      
       {/* Automation routes */}
       <Route path="/automation/shopify-publish" component={() => (
         <ProtectedRoute>
