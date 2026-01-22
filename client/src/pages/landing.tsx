@@ -507,47 +507,49 @@ export default function Landing() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-                    <Check className="w-4 h-4 text-primary" />
+              <Card className="bg-card/50 border">
+                <CardContent className="p-6 space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">ZYRA tracks real revenue impact</h3>
+                      <p className="text-sm text-muted-foreground">Not vanity metrics — actual dollars attributed to each action</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">ZYRA tracks real revenue impact</h3>
-                    <p className="text-sm text-muted-foreground">Not vanity metrics — actual dollars attributed to each action</p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-                    <Check className="w-4 h-4 text-primary" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Shows which product was changed</h3>
+                      <p className="text-sm text-muted-foreground">Clear visibility into every optimization made</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">Shows which product was changed</h3>
-                    <p className="text-sm text-muted-foreground">Clear visibility into every optimization made</p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-                    <Check className="w-4 h-4 text-primary" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Shows why the change was made</h3>
+                      <p className="text-sm text-muted-foreground">Understand ZYRA's reasoning for every decision</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">Shows why the change was made</h3>
-                    <p className="text-sm text-muted-foreground">Understand ZYRA's reasoning for every decision</p>
-                  </div>
-                </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-                    <Check className="w-4 h-4 text-primary" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Shows how much money it generated</h3>
+                      <p className="text-sm text-muted-foreground">Revenue attribution you can actually trust</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">Shows how much money it generated</h3>
-                    <p className="text-sm text-muted-foreground">Revenue attribution you can actually trust</p>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
               <Card className="bg-gradient-to-br from-primary/10 to-emerald-500/10 border-primary/20">
                 <CardContent className="p-8 text-center">
