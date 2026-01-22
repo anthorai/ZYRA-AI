@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
 import { ConnectionProgressCard, useConnectionProgress } from "@/components/ui/connection-progress-card";
-import { Zap, Mail, MessageSquare, BarChart3, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info, Loader2 } from "lucide-react";
-import { SiSendgrid, SiTwilio } from "react-icons/si";
+import { Mail, Link2, Plus, X, ShoppingBag, CreditCard, Send, CheckCircle2, AlertCircle, Copy, ExternalLink, Info, Loader2 } from "lucide-react";
+import { SiSendgrid } from "react-icons/si";
 
 interface Integration {
   id: string;
@@ -50,80 +50,9 @@ export default function IntegrationsPage() {
       icon: <Mail className="w-5 h-5" />,
       isConnected: false,
       description: "Connect SendGrid or Brevo to send marketing emails, abandoned cart recovery, and transactional emails. Choose your preferred provider.",
-      label: "For Email Marketers 📧",
+      label: "For Email Marketers",
       tooltip: "Send AI-powered email campaigns, cart recovery emails, and track performance with detailed analytics.",
       labelType: "recommended"
-    },
-    {
-      id: "twilio",
-      name: "Twilio",
-      type: "SMS Service",
-      icon: <SiTwilio className="w-5 h-5" />,
-      isConnected: false,
-      description: "Send SMS campaigns, abandoned cart recovery, and order notifications via Twilio. Track delivery and engagement rates.",
-      label: "For Ecom Sellers & Marketers 📲",
-      tooltip: "Send SMS campaigns, abandoned cart alerts, and promotions to boost sales.",
-      labelType: "recommended"
-    },
-    {
-      id: "gmail",
-      name: "Gmail",
-      type: "Email Provider",
-      icon: <Mail className="w-5 h-5" />,
-      isConnected: false,
-      description: "Send marketing emails via Gmail",
-      label: "For All Businesses 💼",
-      tooltip: "Send AI-powered marketing & upsell emails directly from Zyra AI.",
-      labelType: "optional",
-      comingSoon: true
-    },
-    {
-      id: "outlook",
-      name: "Outlook",
-      type: "Email Provider",
-      icon: <Mail className="w-5 h-5" />,
-      isConnected: false,
-      description: "Microsoft email integration",
-      label: "For B2B & Corporate Teams 🧾",
-      tooltip: "Sync Outlook accounts for enterprise-level communication.",
-      labelType: "optional",
-      comingSoon: true
-    },
-    {
-      id: "analytics",
-      name: "Google Analytics",
-      type: "Analytics",
-      icon: <BarChart3 className="w-5 h-5" />,
-      isConnected: false,
-      description: "Track campaign performance",
-      label: "Recommended for All Users 📈",
-      tooltip: "Track website traffic, product performance, and conversions.",
-      labelType: "recommended",
-      comingSoon: true
-    },
-    {
-      id: "meta-pixel",
-      name: "Meta Pixel",
-      type: "Analytics",
-      icon: <BarChart3 className="w-5 h-5" />,
-      isConnected: false,
-      description: "Facebook & Instagram tracking",
-      label: "For Social Ad Sellers 🎯",
-      tooltip: "Connect to Facebook & Instagram for retargeting and ad tracking.",
-      labelType: "optional",
-      comingSoon: true
-    },
-    {
-      id: "zapier",
-      name: "Zapier",
-      type: "Automation",
-      icon: <Zap className="w-5 h-5" />,
-      isConnected: false,
-      description: "Connect with 5000+ apps",
-      label: "For Agencies & Power Users ⚙️",
-      tooltip: "Automate workflows across 5000+ apps and marketing tools.",
-      labelType: "advanced",
-      comingSoon: true
     }
   ]);
 
@@ -131,12 +60,6 @@ export default function IntegrationsPage() {
   const [apiKey, setApiKey] = useState("");
   const [emailProvider, setEmailProvider] = useState<"sendgrid" | "brevo">("sendgrid");
   const [fromEmail, setFromEmail] = useState("");
-  
-  // Twilio credentials state
-  const [twilioAccountSid, setTwilioAccountSid] = useState("");
-  const [twilioAuthToken, setTwilioAuthToken] = useState("");
-  const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
-  const [twilioConnecting, setTwilioConnecting] = useState(false);
   
   // Shopify setup state
   const [showShopifySetup, setShowShopifySetup] = useState(false);
@@ -619,118 +542,6 @@ export default function IntegrationsPage() {
       return;
     }
 
-    // Validate and save credentials for Twilio
-    if (id === 'twilio') {
-      if (!twilioAccountSid.trim() || !twilioAuthToken.trim() || !twilioPhoneNumber.trim()) {
-        toast({
-          title: "All Fields Required",
-          description: "Please enter your Twilio Account SID, Auth Token, and Phone Number",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
-
-      setTwilioConnecting(true);
-
-      try {
-        const { supabase } = await import('@/lib/supabaseClient');
-        const { data: sessionData } = await supabase.auth.getSession();
-        let token = sessionData.session?.access_token || '';
-
-        if (!token) {
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          token = refreshData.session?.access_token || '';
-        }
-
-        if (!token) {
-          toast({
-            title: "Authentication Required",
-            description: "Please log in again to connect Twilio",
-            variant: "destructive",
-            duration: 3000,
-          });
-          setTwilioConnecting(false);
-          return;
-        }
-
-        // First verify the credentials with Twilio
-        const verifyResponse = await fetch('/api/twilio/verify', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            accountSid: twilioAccountSid.trim(),
-            authToken: twilioAuthToken.trim(),
-            phoneNumber: twilioPhoneNumber.trim()
-          }),
-          credentials: 'include'
-        });
-
-        const verifyResult = await verifyResponse.json();
-
-        if (!verifyResponse.ok || !verifyResult.valid) {
-          throw new Error(verifyResult.error || 'Invalid Twilio credentials');
-        }
-
-        // Save credentials to database
-        const response = await fetch('/api/settings/integrations', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            integrationType: 'sms',
-            provider: 'twilio',
-            credentials: {
-              accountSid: twilioAccountSid.trim(),
-              authToken: twilioAuthToken.trim(),
-              phoneNumber: twilioPhoneNumber.trim()
-            },
-            isActive: true
-          }),
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to save Twilio credentials');
-        }
-
-        setIntegrations(prev =>
-          prev.map(integration =>
-            integration.id === 'twilio'
-              ? { ...integration, isConnected: true }
-              : integration
-          )
-        );
-        
-        toast({
-          title: "Twilio Connected",
-          description: "Your Twilio account has been securely connected. You can now send SMS campaigns!",
-          duration: 5000,
-        });
-        
-        setShowApiKeyInput(null);
-        setTwilioAccountSid("");
-        setTwilioAuthToken("");
-        setTwilioPhoneNumber("");
-      } catch (error: any) {
-        console.error('Twilio connection error:', error);
-        toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to connect Twilio. Please check your credentials.",
-          variant: "destructive",
-          duration: 5000,
-        });
-      } finally {
-        setTwilioConnecting(false);
-      }
-      return;
-    }
-
     // Generic API key flow for other integrations
     if (!apiKey.trim()) {
       toast({
@@ -1149,90 +960,6 @@ export default function IntegrationsPage() {
                             setFromEmail("");
                           }}
                           className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </>
-                  ) : integration.id === 'twilio' ? (
-                    <>
-                      <p className="text-slate-300 text-sm mb-3">
-                        Get your Twilio credentials from <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Twilio Console</a>
-                      </p>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="twilio-account-sid" className="text-white">
-                            Account SID
-                          </Label>
-                          <Input
-                            id="twilio-account-sid"
-                            type="text"
-                            value={twilioAccountSid}
-                            onChange={(e) => setTwilioAccountSid(e.target.value)}
-                            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                            className="bg-slate-900/50 border-slate-600 text-white"
-                            data-testid="input-twilio-account-sid"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="twilio-auth-token" className="text-white">
-                            Auth Token
-                          </Label>
-                          <Input
-                            id="twilio-auth-token"
-                            type="password"
-                            value={twilioAuthToken}
-                            onChange={(e) => setTwilioAuthToken(e.target.value)}
-                            placeholder="Your Auth Token"
-                            className="bg-slate-900/50 border-slate-600 text-white"
-                            data-testid="input-twilio-auth-token"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="twilio-phone-number" className="text-white">
-                            Twilio Phone Number
-                          </Label>
-                          <Input
-                            id="twilio-phone-number"
-                            type="text"
-                            value={twilioPhoneNumber}
-                            onChange={(e) => setTwilioPhoneNumber(e.target.value)}
-                            placeholder="+1234567890"
-                            className="bg-slate-900/50 border-slate-600 text-white"
-                            data-testid="input-twilio-phone-number"
-                          />
-                          <p className="text-xs text-slate-400">Include country code (e.g., +1 for US)</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-4">
-                        <Button
-                          onClick={() => handleConnect(integration.id)}
-                          className="gradient-button"
-                          disabled={!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber || twilioConnecting}
-                          data-testid="button-connect-twilio"
-                        >
-                          {twilioConnecting ? (
-                            <>
-                              <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              Verifying...
-                            </>
-                          ) : (
-                            <>
-                              <MessageSquare className="w-4 h-4 mr-2" />
-                              Connect Twilio
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowApiKeyInput(null);
-                            setTwilioAccountSid("");
-                            setTwilioAuthToken("");
-                            setTwilioPhoneNumber("");
-                          }}
-                          className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                          disabled={twilioConnecting}
                         >
                           Cancel
                         </Button>
