@@ -117,6 +117,14 @@ import { ShopifyGraphQLClient, graphqlProductToRest } from "./lib/shopify-graphq
 import { ShopifyAppUninstalledError, handleShopifyUninstallError } from "./lib/shopify-client";
 import { upsellRecommendationRules } from "@shared/schema";
 import { grantFreeTrial } from "./lib/trial-expiration-service";
+import { getUserPlanCapabilities } from "./middleware/plan-middleware";
+import { 
+  getPlanCapabilities, 
+  checkActionAccess, 
+  getExecutionMessage,
+  shouldAutoExecute,
+  type ActionType 
+} from "./lib/plan-access-controller";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -5715,6 +5723,50 @@ Output format: Markdown with clear section headings.`;
     } catch (error: any) {
       console.error("Update profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // ============================================
+  // PLAN CAPABILITIES API
+  // Returns user's plan features, limits, and autonomy settings
+  // ============================================
+  app.get("/api/plan-capabilities", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const capabilities = await getUserPlanCapabilities(userId);
+      
+      if (!capabilities) {
+        return res.status(500).json({ error: "Unable to fetch plan capabilities" });
+      }
+      
+      res.json(capabilities);
+    } catch (error: any) {
+      console.error("Get plan capabilities error:", error);
+      res.status(500).json({ error: "Failed to fetch plan capabilities" });
+    }
+  });
+
+  // Check if a specific action is allowed on user's plan
+  app.post("/api/plan-capabilities/check-action", requireAuth, async (req, res) => {
+    try {
+      const { actionType, productCount, isAutoExecution } = req.body;
+      const userId = (req as AuthenticatedRequest).user.id;
+      const userPlan = (req as AuthenticatedRequest).user.plan || 'trial';
+      
+      const accessResult = checkActionAccess(
+        userPlan,
+        actionType as ActionType,
+        { productCount, isAutoExecution }
+      );
+      
+      res.json({
+        ...accessResult,
+        shouldAutoExecute: shouldAutoExecute(userPlan, actionType as ActionType),
+        executionMessage: getExecutionMessage(userPlan, isAutoExecution || false),
+      });
+    } catch (error: any) {
+      console.error("Check action access error:", error);
+      res.status(500).json({ error: "Failed to check action access" });
     }
   });
 

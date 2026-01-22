@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { autonomousActions, products, seoMeta, productSnapshots, abandonedCarts, pricingSnapshots, priceChanges } from '@shared/schema';
+import { autonomousActions, products, seoMeta, productSnapshots, abandonedCarts, pricingSnapshots, priceChanges, users } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
@@ -7,6 +7,11 @@ import sgMail from '@sendgrid/mail';
 import twilio from 'twilio';
 import { priceCalculator } from './price-calculator';
 import { getShopifyClient } from './shopify-client';
+import { 
+  validatePlanAccess,
+  getExecutionSpeedMultiplier,
+  type ActionType 
+} from './plan-access-controller';
 
 // Initialize email and SMS clients
 if (process.env.SENDGRID_API_KEY) {
@@ -948,6 +953,69 @@ export async function processAutonomousAction(action: any): Promise<void> {
   // Dry-run actions are preview-only and should never be executed
   if (action.status === 'dry_run') {
     console.log(`⏭️  [Action Processor] Skipping dry-run action ${action.id} (preview only)`);
+    return;
+  }
+
+  // ============================================
+  // PLAN-BASED ACCESS CHECK (ENFORCED FIRST)
+  // ============================================
+  try {
+    // Get user's current plan
+    const [user] = await db
+      .select({ plan: users.plan })
+      .from(users)
+      .where(eq(users.id, action.userId))
+      .limit(1);
+    
+    const planName = user?.plan || 'trial';
+    const isAutoExecution = action.metadata?.approvalMode !== 'manual';
+    
+    // Validate action against user's plan
+    const planValidation = await validatePlanAccess(
+      action.userId,
+      planName,
+      action.actionType,
+      { isAutoExecution }
+    );
+    
+    if (!planValidation.allowed) {
+      console.log(`⛔ [Action Processor] Plan restriction: ${action.actionType} blocked for ${planName}`);
+      
+      // Mark as cancelled with plan restriction reason
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'cancelled' as any,
+          completedAt: new Date(),
+          result: { 
+            reason: 'plan_restriction', 
+            details: planValidation,
+            message: planValidation.reason || 'Action not available on current plan'
+          } as any,
+        })
+        .where(eq(autonomousActions.id, action.id));
+      
+      return;
+    }
+    
+    // Store execution speed multiplier for scheduling priority
+    const executionSpeedMultiplier = getExecutionSpeedMultiplier(planName);
+    console.log(`✅ [Action Processor] Plan check passed (${planName}, speed: ${executionSpeedMultiplier}x)`);
+    
+  } catch (error) {
+    console.error('❌ [Action Processor] Error checking plan access:', error);
+    // Fail closed - cancel action if plan check fails
+    await db
+      .update(autonomousActions)
+      .set({
+        status: 'cancelled' as any,
+        completedAt: new Date(),
+        result: { 
+          reason: 'plan_check_failed', 
+          message: 'Unable to verify plan access'
+        } as any,
+      })
+      .where(eq(autonomousActions.id, action.id));
     return;
   }
 
