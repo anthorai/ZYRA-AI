@@ -147,7 +147,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#12121f]">
+    <div className="min-h-screen bg-[#0000001f]">
       <Helmet>
         <title>ZYRA AI: Let AI Run Your Shopify Growth</title>
         <meta name="description" content="ZYRA automatically detects, fixes, and proves what's blocking your store's revenue — from product SEO to cart recovery — while you stay in control." />
