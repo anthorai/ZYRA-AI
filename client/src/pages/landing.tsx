@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { SiShopify } from "react-icons/si";
 import ResponsiveNavbar from "@/components/responsive-navbar";
+import Footer from "@/components/ui/footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
@@ -733,24 +734,7 @@ export default function Landing() {
         </section>
 
         {/* FOOTER */}
-        <footer className="py-12 px-4 sm:px-6 border-t">
-          <div className="container mx-auto max-w-5xl">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <img src={zyraLogoUrl} alt="ZYRA AI" className="w-8 h-8" />
-                <span className="font-bold text-lg">ZYRA AI</span>
-              </div>
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-                <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-                <a href="mailto:support@zyraai.com" className="hover:text-foreground transition-colors">Support</a>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} ZYRA AI. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </main>
     </div>
   );
