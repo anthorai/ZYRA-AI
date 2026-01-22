@@ -163,7 +163,7 @@ export default function RevenueImpact() {
           ))}
         </div>
         <div className="mt-6 text-center">
-          <Button className="gradient-button">
+          <Button className="gradient-button" onClick={() => setLocation('/ai-tools/activity-timeline')}>
             <BarChart3 className="w-4 h-4 mr-2" />
             View Detailed Analytics
           </Button>
