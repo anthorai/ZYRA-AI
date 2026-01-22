@@ -10,7 +10,6 @@ import { DashboardContentSkeleton } from "@/components/ui/skeleton";
 import Sidebar from "@/components/dashboard/sidebar";
 import AITools from "@/components/dashboard/ai-tools";
 import AutomationTools from "@/components/dashboard/automation-tools";
-import Campaigns from "@/components/dashboard/campaigns";
 import GrowthDashboard from "@/components/dashboard/growth-dashboard";
 import Settings from "@/components/dashboard/settings";
 import Profile from "@/components/dashboard/profile";
@@ -131,7 +130,7 @@ export default function Dashboard() {
   
 
 
-  // Handle navigation source from sessionStorage or URL query params (for back button from AI tools, automation, campaigns, and settings)
+  // Handle navigation source from sessionStorage or URL query params (for back button from AI tools, automation, and settings)
   useEffect(() => {
     // First check URL query parameter
     const urlParams = new URLSearchParams(window.location.search);
@@ -143,8 +142,6 @@ export default function Dashboard() {
         setActiveTab('ai-tools');
       } else if (tabParam === 'automate' || tabParam === 'automation') {
         setActiveTab('automate');
-      } else if (tabParam === 'campaigns') {
-        setActiveTab('campaigns');
       } else if (tabParam === 'settings') {
         setActiveTab('settings');
       } else if (tabParam === 'overview') {
@@ -162,9 +159,6 @@ export default function Dashboard() {
       sessionStorage.removeItem('navigationSource'); // Clean up after use
     } else if (navigationSource === 'automation') {
       setActiveTab('automate');
-      sessionStorage.removeItem('navigationSource'); // Clean up after use
-    } else if (navigationSource === 'campaigns') {
-      setActiveTab('campaigns');
       sessionStorage.removeItem('navigationSource'); // Clean up after use
     } else if (navigationSource === 'settings') {
       setActiveTab('settings');
@@ -227,21 +221,10 @@ export default function Dashboard() {
       updateUsageStats("aiGenerationsUsed", 0); // Just tracking access, not usage
     } else if (toolName === "automate") {
       updateUsageStats("automationActionsUsed", 0);
-    } else if (toolName === "campaigns") {
-      updateUsageStats("campaignsUsed", 0);
     }
   };
 
   const quickActions = [
-    {
-      icon: <Sparkles className="w-5 h-5" />,
-      title: "Strategy AI",
-      description: "Deep insights & campaign strategies powered by GPT-4o",
-      action: () => setLocation("/strategy-insights"),
-      primary: true,
-      toolName: "strategy-ai",
-      premium: true,
-    },
     {
       icon: <Zap className="w-5 h-5" />,
       title: "AI Product Generator",
@@ -257,14 +240,6 @@ export default function Dashboard() {
       action: () => handleToolNavigation("automate", "Automation Tools"),
       primary: false,
       toolName: "automate",
-    },
-    {
-      icon: <ShoppingCart className="w-5 h-5" />,
-      title: "AI Campaigns",
-      description: "Automated email & SMS growth engine with AI targeting",
-      action: () => handleToolNavigation("campaigns", "AI Campaigns"),
-      primary: false,
-      toolName: "campaigns",
     },
   ];
 
@@ -318,8 +293,6 @@ export default function Dashboard() {
         return <AITools />;
       case "automate":
         return <AutomationTools />;
-      case "campaigns":
-        return <Campaigns />;
       case "products":
         return <ManageProducts />;
       case "profile":

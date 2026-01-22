@@ -14,7 +14,6 @@ const routeQueries: Record<string, string[]> = {
   '/ai-tools/product-seo-engine': ['/api/products', '/api/credits/balance', '/api/store/currency'],
   '/ai-tools/bulk-optimization': ['/api/products', '/api/bulk-jobs'],
   '/settings/integrations': ['/api/shopify/status', '/api/settings/integrations'],
-  '/campaigns': ['/api/campaigns', '/api/credits/balance'],
   '/admin': ['/api/admin/users-with-subscriptions', '/api/admin/analytics'],
 };
 

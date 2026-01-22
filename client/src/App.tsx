@@ -80,12 +80,6 @@ const AIUpsellSuggestionsPage = lazy(() => import("@/pages/ai-upsell-suggestions
 const UpsellEmailReceiptsPage = lazy(() => import("@/pages/upsell-email-receipts"));
 const AbandonedCartSMSPage = lazy(() => import("@/pages/abandoned-cart-sms"));
 
-// Campaign pages
-const CreateCampaignPage = lazy(() => import("@/pages/campaigns/create"));
-const CampaignListPage = lazy(() => import("@/pages/campaigns/list"));
-const CampaignDetailPage = lazy(() => import("@/pages/campaigns/detail"));
-const CampaignEditPage = lazy(() => import("@/pages/campaigns/edit"));
-
 // AI Tools pages
 const ProductSeoEngine = lazy(() => import("@/pages/ai-tools/product-seo-engine"));
 const BulkOptimization = lazy(() => import("@/pages/ai-tools/bulk-optimization"));
@@ -612,35 +606,6 @@ function Router() {
         </ProtectedRoute>
       )} />
       
-      {/* Campaign routes */}
-      <Route path="/campaigns" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CampaignListPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/campaigns/create" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CreateCampaignPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/campaigns/:id/edit" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CampaignEditPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/campaigns/:id" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CampaignDetailPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       {/* Feature routes */}
       <Route path="/ai-upsell-suggestions" component={() => (
         <ProtectedRoute>

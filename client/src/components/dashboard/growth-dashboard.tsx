@@ -67,22 +67,6 @@ export default function GrowthDashboard() {
   const queryClient = useQueryClient();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   
-  // Fetch real campaign stats with auto-refresh every 30 seconds
-  const { data: campaignStats, isLoading: campaignStatsLoading, error: campaignStatsError } = useQuery<{
-    totalCampaigns: number;
-    emailCampaigns: number;
-    smsCampaigns: number;
-    sentCampaigns: number;
-    totalSent: number;
-    avgOpenRate: number;
-    avgClickRate: number;
-    avgConversionRate: number;
-  }>({
-    queryKey: ['/api/campaigns/stats'],
-    enabled: !!dashboardData?.user,
-    refetchInterval: 30000,
-  });
-
   // Fetch real growth summary stats with auto-refresh every 30 seconds
   const { data: growthSummary, isLoading: growthSummaryLoading } = useQuery<{
     overallGrowth: number;
@@ -171,17 +155,12 @@ export default function GrowthDashboard() {
     enabled: showDailyReport && !!dashboardData?.user,
   });
 
-  // Log campaign stats errors
-  if (campaignStatsError) {
-    console.error('Failed to fetch campaign stats:', campaignStatsError);
-  }
-  
   // Debug logging for GrowthDashboard
-  console.log('🎯 GrowthDashboard state:', { isLoading, dashboardData: !!dashboardData, error, campaignStats });
+  console.log('🎯 GrowthDashboard state:', { isLoading, dashboardData: !!dashboardData, error });
 
   // Use real data from API or show loading skeletons
   const getAnalyticsCards = (): AnalyticsCard[] => {
-    // Use real campaign and usage stats
+    // Use real usage stats
     const usageStats = dashboardData?.usageStats || {
       productsOptimized: 0,
       conversionRate: 0,
@@ -191,20 +170,8 @@ export default function GrowthDashboard() {
       totalOrders: 0
     };
 
-    const campaigns = campaignStats || {
-      totalCampaigns: 0,
-      emailCampaigns: 0,
-      smsCampaigns: 0,
-      sentCampaigns: 0,
-      totalSent: 0,
-      avgOpenRate: 0,
-      avgClickRate: 0,
-      avgConversionRate: 0
-    };
-
     // Revenue data from ROI summary with safe defaults during loading
     const cartRecoveryRevenue = roiSummary?.currentMonth?.breakdown?.cartRecovery ?? 0;
-    const campaignRevenue = roiSummary?.currentMonth?.breakdown?.campaigns ?? 0;
     const aiOptimizationRevenue = roiSummary?.currentMonth?.breakdown?.aiOptimization ?? 0;
     const recoveredCarts = cartRecoveryData?.overview?.recoveredCarts ?? 0;
 
@@ -212,7 +179,7 @@ export default function GrowthDashboard() {
       {
         id: 'cart-recovery',
         title: 'Cart Recovery',
-        description: 'Revenue recovered from abandoned cart campaigns this month',
+        description: 'Revenue recovered from abandoned cart recovery this month',
         icon: <ShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
         value: `$${(cartRecoveryRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         change: recoveredCarts > 0 ? `${recoveredCarts} carts recovered` : 'No recoveries yet',
@@ -242,17 +209,6 @@ export default function GrowthDashboard() {
         actionText: 'View Breakdown',
         category: 'growth'
       },
-      {
-        id: 'total-campaigns',
-        title: 'Total Campaigns',
-        description: 'All marketing campaigns across email and SMS channels',
-        icon: <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: `${campaigns.totalCampaigns || 0}`,
-        change: campaigns.sentCampaigns > 0 ? `${campaigns.sentCampaigns} sent, ${campaigns.totalSent} recipients` : 'Create first campaign',
-        trend: campaigns.totalCampaigns > 0 ? 'up' : 'neutral',
-        actionText: 'View Campaigns',
-        category: 'growth'
-      }
     ];
   };
 
@@ -265,8 +221,7 @@ export default function GrowthDashboard() {
       'cart-recovery': '/analytics/cart-recovery',
       'ai-optimization': '/analytics/optimized-products',
       'optimized-products': '/analytics/optimized-products',
-      'revenue-impact': '/analytics/revenue-impact',
-      'total-campaigns': '/campaigns'
+      'revenue-impact': '/analytics/revenue-impact'
     };
 
     const route = routeMapping[cardId as keyof typeof routeMapping];
@@ -283,14 +238,13 @@ export default function GrowthDashboard() {
 
   // Update last updated timestamp when data refreshes
   useEffect(() => {
-    if (campaignStats || growthSummary || revenueTrends || cartRecoveryData) {
+    if (growthSummary || revenueTrends || cartRecoveryData) {
       setLastUpdated(new Date());
     }
-  }, [campaignStats, growthSummary, revenueTrends, cartRecoveryData]);
+  }, [growthSummary, revenueTrends, cartRecoveryData]);
 
   // Manual refresh function
   const handleManualRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['/api/campaigns/stats'] });
     queryClient.invalidateQueries({ queryKey: ['/api/analytics/growth-summary'] });
     queryClient.invalidateQueries({ queryKey: ['/api/analytics/revenue-trends'] });
     queryClient.invalidateQueries({ queryKey: ['/api/analytics/cart-recovery'] });
@@ -308,7 +262,7 @@ export default function GrowthDashboard() {
       <GradientPageHeader
         icon={<TrendingUp className="w-8 h-8 text-primary" />}
         title="Growth Command Center"
-        subtitle="Monitor your business performance, track AI-powered optimizations, and analyze marketing campaigns in real-time"
+        subtitle="Monitor your business performance and track AI-powered revenue optimizations in real-time"
       />
 
       {/* Daily Report Button */}
@@ -440,7 +394,7 @@ export default function GrowthDashboard() {
                       <Send className="w-5 h-5 text-purple-500" />
                       <div>
                         <div className="font-medium">{dailyReport.breakdown.campaignsSent}</div>
-                        <div className="text-xs text-muted-foreground">Campaigns Sent</div>
+                        <div className="text-xs text-muted-foreground">Recovery Messages</div>
                       </div>
                     </div>
                   </div>
@@ -622,12 +576,9 @@ export default function GrowthDashboard() {
         <Tabs defaultValue="revenue" className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
             <h2 className="text-base sm:text-xl md:text-2xl font-bold text-white">Performance Analytics</h2>
-            <TabsList className="bg-slate-800/50 w-full sm:w-auto grid grid-cols-3 sm:flex">
+            <TabsList className="bg-slate-800/50 w-full sm:w-auto grid grid-cols-2 sm:flex">
               <TabsTrigger value="revenue" className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
                 Revenue
-              </TabsTrigger>
-              <TabsTrigger value="campaigns" className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-                Campaigns
               </TabsTrigger>
               <TabsTrigger value="funnel" className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
                 Funnel
@@ -761,70 +712,6 @@ export default function GrowthDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="campaigns">
-            <Card className="gradient-card rounded-xl sm:rounded-2xl">
-              <CardHeader className="p-3 sm:p-6">
-                <CardTitle className="text-white text-sm sm:text-base md:text-lg">Campaign Performance</CardTitle>
-                <CardDescription className="text-slate-300 text-xs sm:text-sm">
-                  Email and SMS campaign metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                {campaignStatsLoading ? (
-                  <div className="h-48 sm:h-80 flex items-center justify-center">
-                    <Skeleton className="h-full w-full bg-slate-700" />
-                  </div>
-                ) : campaignStats ? (
-                  <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 200 : 320}>
-                    <BarChart data={[
-                      { metric: 'Open Rate', value: campaignStats.avgOpenRate, color: '#00F0FF' },
-                      { metric: 'Click Rate', value: campaignStats.avgClickRate, color: '#8b5cf6' },
-                      { metric: 'Conversion', value: campaignStats.avgConversionRate, color: '#10b981' }
-                    ]}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="metric" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
-                      <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#f1f5f9'
-                        }}
-                        formatter={(value: any) => `${value.toFixed(1)}%`}
-                      />
-                      <Bar dataKey="value" fill="#00F0FF" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-80 flex items-center justify-center text-slate-400">
-                    No campaign data available
-                  </div>
-                )}
-                {campaignStats && (
-                  <div className="mt-3 sm:mt-6 grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-[10px] sm:text-sm">Total</p>
-                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.totalCampaigns}</p>
-                    </div>
-                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-[10px] sm:text-sm">Sent</p>
-                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.sentCampaigns}</p>
-                    </div>
-                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-[10px] sm:text-sm">Email</p>
-                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.emailCampaigns}</p>
-                    </div>
-                    <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
-                      <p className="text-slate-400 text-[10px] sm:text-sm">SMS</p>
-                      <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">{campaignStats.smsCampaigns}</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="funnel">
             <Card className="gradient-card rounded-xl sm:rounded-2xl">
               <CardHeader className="p-3 sm:p-6">
@@ -848,7 +735,7 @@ export default function GrowthDashboard() {
                           percentage: 100 
                         },
                         { 
-                          stage: 'Recovery Campaign Sent', 
+                          stage: 'Recovery Message Sent', 
                           value: cartRecoveryData.overview.campaignsSent,
                           percentage: cartRecoveryData.overview.totalCarts > 0 
                             ? (cartRecoveryData.overview.campaignsSent / cartRecoveryData.overview.totalCarts * 100).toFixed(1)
