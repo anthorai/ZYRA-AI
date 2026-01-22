@@ -28,8 +28,7 @@ import {
   Mail,
   DollarSign,
   Eye,
-  Trophy,
-  Timer
+  Trophy
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -489,13 +488,10 @@ export default function ZyraAtWork() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-white mb-1">Fast Mode</h3>
-                  <p className="text-sm text-slate-400 mb-4">AI-powered SEO using proven patterns</p>
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-primary/20 text-primary border-0">5 credits</Badge>
-                    <div className="flex items-center gap-1 text-slate-400 text-sm">
-                      <Timer className="w-4 h-4" />
-                      2-3 sec
-                    </div>
+                  <p className="text-sm text-slate-400 mb-3">AI-powered SEO using proven patterns</p>
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-primary/20 text-primary border-0">Lower Cost</Badge>
+                    <span className="text-slate-500 text-xs">Faster processing</span>
                   </div>
                 </div>
                 {optimizationMode === 'fast' && (
@@ -521,13 +517,10 @@ export default function ZyraAtWork() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-white mb-1">Competitive Intelligence</h3>
-                  <p className="text-sm text-slate-400 mb-4">Real-time Google SERP analysis + AI</p>
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-amber-500/20 text-amber-400 border-0">15 credits</Badge>
-                    <div className="flex items-center gap-1 text-slate-400 text-sm">
-                      <Timer className="w-4 h-4" />
-                      5-8 sec
-                    </div>
+                  <p className="text-sm text-slate-400 mb-3">Real-time Google SERP analysis + AI</p>
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-amber-500/20 text-amber-400 border-0">Premium</Badge>
+                    <span className="text-slate-500 text-xs">Uses DataForSEO API</span>
                   </div>
                 </div>
                 {optimizationMode === 'competitive' && (
@@ -539,7 +532,7 @@ export default function ZyraAtWork() {
         </div>
         <p className="text-xs text-slate-500 flex items-center gap-2">
           <AlertCircle className="w-3 h-3" />
-          Competitive Intelligence uses DataForSEO for real-time Google search data. Choose Fast Mode to save credits.
+          Credit usage varies based on the actions ZYRA takes. Competitive Intelligence costs more per action due to real-time SERP analysis.
         </p>
       </div>
 
