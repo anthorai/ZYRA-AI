@@ -688,7 +688,7 @@ export default function ZyraAtWork() {
                   <p className="text-sm text-slate-400">See all decisions, affected products, and actual revenue impact</p>
                 </div>
               </div>
-              <Button variant="outline" className="border-primary/30 text-primary" data-testid="button-view-zyra-decisions">
+              <Button variant="outline" className="border-primary/30 text-primary" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="button-view-zyra-decisions">
                 <Eye className="w-4 h-4 mr-2" />
                 View ZYRA Decisions
               </Button>
