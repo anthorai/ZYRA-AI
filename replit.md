@@ -39,7 +39,7 @@ Supports PayPal-only payment processing (USD globally) with secure webhook handl
 Automatically activates a 7-day free trial on user signup with daily welcome dialog reminders, managing trial state and displaying contextual messages.
 
 ### Marketing Automation System
-Enables real email/SMS delivery via SendGrid and Twilio for campaign scheduling, abandoned cart recovery, and performance tracking.
+ZYRA operates as an autonomous marketing brain rather than a campaign-building tool. Marketing functionality (abandoned cart recovery, post-purchase upsells, follow-ups) is presented as AI-detected revenue actions requiring user approval, not as user-created campaigns. Email/SMS delivery via SendGrid and Twilio enables automated recovery messages and upsell notifications with full performance tracking.
 
 ### Email Template Builder
 Enterprise-grade drag-and-drop email template editor with 3-panel layout (blocks, preview, properties). Features include:
