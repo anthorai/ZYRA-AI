@@ -1,0 +1,177 @@
+You are a world-class SaaS growth copywriter and product marketer.
+Your task is to redesign the landing page for ZYRA AI — an AI-powered
+Shopify growth platform — to maximize merchant trust, clarity, and conversion.
+
+ZYRA must be positioned like Klaviyo or other category-leading SaaS companies:
+clean, professional, revenue-focused, and enterprise-grade.
+
+IMPORTANT RULES:
+- Do NOT position ZYRA as multiple tools.
+- Do NOT use words like “SEO tool”, “campaign builder”, or “analytics dashboard”.
+- Do NOT promise guaranteed results.
+- Do NOT include anything that violates Shopify App Store policies.
+- Keep language professional, transparent, and merchant-friendly.
+
+ZYRA must be presented as ONE intelligent system that runs a continuous revenue loop.
+
+=====================================
+HERO SECTION (ABOVE THE FOLD)
+=====================================
+
+Headline:
+“Let AI Run Your Shopify Growth — With Full Control”
+
+Subheadline:
+“ZYRA automatically detects, fixes, and proves what’s blocking your store’s revenue — 
+from product SEO to cart recovery — while you stay in control.”
+
+Primary CTA:
+“Start Free with Your Shopify Store”
+
+Secondary CTA:
+“See How ZYRA Works”
+
+Trust Signals:
+- Built for Shopify stores
+- No code required
+- Safe automation with approval & rollback
+
+=====================================
+PROBLEM SECTION (MERCHANT PAIN)
+=====================================
+
+Headline:
+“Most Shopify Stores Don’t Fail — They Leak Revenue”
+
+Explain clearly:
+- Traffic doesn’t convert
+- Products rank but don’t sell
+- Carts get abandoned
+- Upsell opportunities are missed
+- Merchants rely on too many disconnected tools
+
+Position this as:
+• Complexity
+• Guesswork
+• Manual work
+• No clear revenue proof
+
+=====================================
+THE ZYRA SOLUTION (ONE BRAIN)
+=====================================
+
+Headline:
+“One AI System. One Revenue Loop.”
+
+Explain ZYRA’s core loop visually and in simple language:
+
+DETECT → DECIDE → EXECUTE → PROVE → LEARN
+
+Explain each step in 1–2 lines:
+- Detects revenue leaks automatically
+- Decides the next best growth action
+- Executes changes safely
+- Proves real revenue impact (₹ / $)
+- Learns and improves over time
+
+Make it clear:
+ZYRA does the work. Merchants supervise.
+
+=====================================
+WHAT ZYRA DOES (OUTCOMES, NOT TOOLS)
+=====================================
+
+Section title:
+“What ZYRA Automatically Runs for Your Store”
+
+List outcomes (NOT tools):
+
+• Cart recovery actions to bring shoppers back  
+• Post-purchase upsells to increase order value  
+• Product SEO improvements that drive converting traffic  
+• Bulk product optimizations when patterns repeat  
+• Brand-consistent content updates  
+• Smart content refresh when performance drops  
+• Competitive SEO improvements (optional power mode)  
+
+Each item should feel like an action ZYRA takes, not a feature the user configures.
+
+=====================================
+CONTROL & SAFETY (TRUST BUILDER)
+=====================================
+
+Headline:
+“Automation You Can Trust”
+
+Explain clearly:
+- Manual approval by default
+- Autonomy only when merchant allows
+- Full visibility into every change
+- One-click rollback anytime
+- No silent actions
+
+Reassure merchants:
+ZYRA never changes your store without your control.
+
+=====================================
+REVENUE PROOF (KEY DIFFERENTIATOR)
+=====================================
+
+Headline:
+“See Exactly What Changed — And What It Made”
+
+Explain:
+- ZYRA tracks real revenue impact
+- Shows which product was changed
+- Shows why the change was made
+- Shows how much money it generated
+- No vanity metrics, only business outcomes
+
+Position this as:
+“Not more dashboards — just clarity.”
+
+=====================================
+WHO ZYRA IS FOR
+=====================================
+
+Short sections:
+- Solo founders who want AI to handle growth
+- Growing brands replacing multiple tools
+- Teams that want automation without losing control
+
+=====================================
+FINAL CTA
+=====================================
+
+Headline:
+“Stop Managing Growth. Start Supervising It.”
+
+CTA:
+“Install ZYRA for Shopify”
+
+Supporting text:
+• No credit card required  
+• Safe, reversible automation  
+• Built for long-term growth  
+
+=====================================
+TONE & STYLE GUIDELINES
+=====================================
+
+- Clean
+- Confident
+- Calm
+- Enterprise-ready
+- No hype
+- No guarantees
+- No buzzword overload
+
+ZYRA should feel like:
+“An intelligent growth system I can trust with my store.”
+
+OUTPUT REQUIREMENTS:
+- Professional SaaS copy
+- Clear hierarchy
+- Conversion-focused language
+- No policy-breaking claims
+- No tool-based framing
