@@ -371,6 +371,83 @@ export default function ZyraAtWork() {
         </Card>
       </div>
 
+      {/* Live Activity Feed */}
+      <Card className="bg-slate-900/50 border-slate-700/50">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Activity className={`w-5 h-5 ${currentConfig.color}`} />
+              <span className="text-white">Live Activity Feed</span>
+            </CardTitle>
+            <Badge variant="outline" className={`${currentConfig.color} border-current/30`}>
+              {currentConfig.label}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div 
+            ref={scrollContainerRef}
+            className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+            data-testid="activity-feed"
+          >
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <RefreshCw className="w-6 h-6 text-primary animate-spin" />
+                </div>
+                <p className="text-slate-400">Loading activity...</p>
+              </div>
+            ) : events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Search className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-slate-400 mb-2">No activity yet</p>
+                <p className="text-slate-500 text-sm max-w-sm">
+                  {showDemo ? 'Starting demo mode...' : 
+                   'Enable autopilot in your Automation settings to see ZYRA working for you, or try Demo Mode to see how it works.'}
+                </p>
+              </div>
+            ) : (
+              events.map((event, index) => (
+                <EventItem 
+                  key={event.id} 
+                  event={event}
+                  isTyping={showDemo && index === events.length - 1 && !isTypingComplete}
+                  onTypingComplete={() => setIsTypingComplete(true)}
+                />
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {Object.entries(PHASE_CONFIG).map(([phase, config]) => {
+          const Icon = config.icon;
+          const isActive = currentPhase === phase;
+          return (
+            <Card 
+              key={phase}
+              className={`${config.bgColor} border-slate-700/50 transition-all duration-300 ${
+                isActive ? 'ring-2 ring-offset-2 ring-offset-slate-900' : ''
+              }`}
+              style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
+              data-testid={`phase-indicator-${phase}`}
+            >
+              <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+                <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
+                  <Icon className={`w-5 h-5 ${config.color}`} />
+                </div>
+                <span className={`text-xs font-medium ${isActive ? config.color : 'text-slate-400'}`}>
+                  {config.label}
+                </span>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
       {/* ZYRA Core Capabilities */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -618,83 +695,6 @@ export default function ZyraAtWork() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Live Activity Feed */}
-      <Card className="bg-slate-900/50 border-slate-700/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className={`w-5 h-5 ${currentConfig.color}`} />
-              <span className="text-white">Live Activity Feed</span>
-            </CardTitle>
-            <Badge variant="outline" className={`${currentConfig.color} border-current/30`}>
-              {currentConfig.label}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div 
-            ref={scrollContainerRef}
-            className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
-            data-testid="activity-feed"
-          >
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <RefreshCw className="w-6 h-6 text-primary animate-spin" />
-                </div>
-                <p className="text-slate-400">Loading activity...</p>
-              </div>
-            ) : events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Search className="w-6 h-6 text-primary" />
-                </div>
-                <p className="text-slate-400 mb-2">No activity yet</p>
-                <p className="text-slate-500 text-sm max-w-sm">
-                  {showDemo ? 'Starting demo mode...' : 
-                   'Enable autopilot in your Automation settings to see ZYRA working for you, or try Demo Mode to see how it works.'}
-                </p>
-              </div>
-            ) : (
-              events.map((event, index) => (
-                <EventItem 
-                  key={event.id} 
-                  event={event}
-                  isTyping={showDemo && index === events.length - 1 && !isTypingComplete}
-                  onTypingComplete={() => setIsTypingComplete(true)}
-                />
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {Object.entries(PHASE_CONFIG).map(([phase, config]) => {
-          const Icon = config.icon;
-          const isActive = currentPhase === phase;
-          return (
-            <Card 
-              key={phase}
-              className={`${config.bgColor} border-slate-700/50 transition-all duration-300 ${
-                isActive ? 'ring-2 ring-offset-2 ring-offset-slate-900' : ''
-              }`}
-              style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
-              data-testid={`phase-indicator-${phase}`}
-            >
-              <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
-                <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${config.color}`} />
-                </div>
-                <span className={`text-xs font-medium ${isActive ? config.color : 'text-slate-400'}`}>
-                  {config.label}
-                </span>
-              </CardContent>
-            </Card>
-          );
-        })}
       </div>
 
       <Card className="bg-slate-900/30 border-slate-700/50">
