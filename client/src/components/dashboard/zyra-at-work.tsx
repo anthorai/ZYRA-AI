@@ -456,7 +456,7 @@ export default function ZyraAtWork() {
           <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">What ZYRA Can Do</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/product-seo-engine')} data-testid="card-seo-optimization">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-seo-optimization">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -475,7 +475,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/bulk-optimization')} data-testid="card-bulk-optimization">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-bulk-optimization">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-blue-500/10">
@@ -494,7 +494,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/ai-image-alt-text')} data-testid="card-image-seo">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-image-seo">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/10">
@@ -513,7 +513,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/brand-voice-memory')} data-testid="card-brand-voice">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-brand-voice">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-purple-500/10">
@@ -532,7 +532,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/scheduled-refresh')} data-testid="card-smart-refresh">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-smart-refresh">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-amber-500/10">
@@ -561,7 +561,7 @@ export default function ZyraAtWork() {
           <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">How ZYRA Executes</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/automation/shopify-publish')} data-testid="card-shopify-publishing">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-shopify-publishing">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-green-500/10">
@@ -579,7 +579,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/automation/smart-bulk-suggestions')} data-testid="card-optimization-patterns">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-optimization-patterns">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-cyan-500/10">
@@ -597,7 +597,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/automation/rollback-changes')} data-testid="card-safety-rollback">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-safety-rollback">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-red-500/10">
