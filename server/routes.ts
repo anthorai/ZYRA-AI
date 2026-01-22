@@ -75,7 +75,11 @@ import {
   pricingSettings,
   sessions,
   productSnapshots,
-  upsellReceiptSettings
+  upsellReceiptSettings,
+  revenueSignals,
+  revenueOpportunities,
+  revenueLoopProof,
+  storeLearningInsights
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -15863,7 +15867,6 @@ Output format: Markdown with clear section headings.`;
   app.get("/api/revenue-loop/activity-feed", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const { revenueSignals, revenueOpportunities, revenueLoopProof, storeLearningInsights, products } = await import('@shared/schema');
       
       interface ActivityEvent {
         id: string;
