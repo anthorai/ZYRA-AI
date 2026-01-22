@@ -646,7 +646,7 @@ export default function ZyraAtWork() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/upsell-email-receipts')} data-testid="card-upsell-actions">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="card-upsell-actions">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-pink-500/10">
