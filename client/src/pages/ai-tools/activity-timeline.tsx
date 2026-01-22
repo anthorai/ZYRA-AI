@@ -99,6 +99,10 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
   upsell: {
     title: "Post-Purchase Upsell Actions",
     subtitle: "Product recommendations sent after orders"
+  },
+  cart: {
+    title: "Cart Recovery Actions",
+    subtitle: "Abandoned carts detected and revenue recovered"
   }
 };
 
