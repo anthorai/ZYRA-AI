@@ -676,7 +676,7 @@ export default function ZyraAtWork() {
           <h2 className="text-lg font-semibold text-white">Revenue Impact Overview</h2>
           <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Proof</Badge>
         </div>
-        <Card className="bg-gradient-to-r from-primary/10 to-emerald-500/10 border-primary/20 hover-elevate cursor-pointer" onClick={() => setLocation('/revenue-impact')} data-testid="card-revenue-overview">
+        <Card className="bg-gradient-to-r from-primary/10 to-emerald-500/10 border-primary/20 hover-elevate cursor-pointer" onClick={() => setLocation('/analytics/revenue-impact')} data-testid="card-revenue-overview">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-4">
