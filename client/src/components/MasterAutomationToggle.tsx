@@ -146,69 +146,67 @@ export function MasterAutomationToggle() {
 
   return (
     <>
-      <div className="flex items-center gap-1.5 sm:gap-3">
-        <Switch
-          checked={globalEnabled}
-          onCheckedChange={handleToggle}
-          disabled={toggleMutation.isPending}
-          className="data-[state=checked]:bg-emerald-600 scale-90 sm:scale-100"
-          data-testid="switch-global-autopilot"
-        />
+      <Switch
+        checked={globalEnabled}
+        onCheckedChange={handleToggle}
+        disabled={toggleMutation.isPending}
+        className="data-[state=checked]:bg-emerald-600 scale-90 sm:scale-100"
+        data-testid="switch-global-autopilot"
+      />
 
-        <Popover open={showSettings} onOpenChange={setShowSettings}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9"
-              data-testid="button-autonomous-settings"
-            >
-              <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72" align="end">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm flex items-center gap-2">
-                  <Coins className="h-4 w-4" />
-                  Autonomous Credit Limit
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  Maximum credits that autonomous mode can use per day. This helps control costs while AI works automatically.
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="credit-limit" className="text-xs">
-                  Daily credit limit (1-1000)
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="credit-limit"
-                    type="number"
-                    min={1}
-                    max={1000}
-                    value={creditLimit ?? currentCreditLimit}
-                    onChange={(e) => setCreditLimit(parseInt(e.target.value) || 0)}
-                    className="bg-background"
-                    data-testid="input-credit-limit"
-                  />
-                  <Button 
-                    onClick={handleSaveCreditLimit}
-                    disabled={creditLimitMutation.isPending}
-                    data-testid="button-save-credit-limit"
-                  >
-                    {creditLimitMutation.isPending ? 'Saving...' : 'Save'}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Current: {currentCreditLimit} credits/day
-                </p>
-              </div>
+      <Popover open={showSettings} onOpenChange={setShowSettings}>
+        <PopoverTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9"
+            data-testid="button-autonomous-settings"
+          >
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72" align="end">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <Coins className="h-4 w-4" />
+                Autonomous Credit Limit
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Maximum credits that autonomous mode can use per day. This helps control costs while AI works automatically.
+              </p>
             </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="credit-limit" className="text-xs">
+                Daily credit limit (1-1000)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="credit-limit"
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={creditLimit ?? currentCreditLimit}
+                  onChange={(e) => setCreditLimit(parseInt(e.target.value) || 0)}
+                  className="bg-background"
+                  data-testid="input-credit-limit"
+                />
+                <Button 
+                  onClick={handleSaveCreditLimit}
+                  disabled={creditLimitMutation.isPending}
+                  data-testid="button-save-credit-limit"
+                >
+                  {creditLimitMutation.isPending ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Current: {currentCreditLimit} credits/day
+              </p>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
