@@ -58,10 +58,61 @@ interface AutopilotStats {
   }[];
 }
 
+// Page config based on filter type
+const pageConfig: Record<string, { title: string; subtitle: string }> = {
+  all: {
+    title: "ZYRA Execution Log",
+    subtitle: "Every decision made, action taken, and result measured"
+  },
+  seo: {
+    title: "SEO Optimization Actions",
+    subtitle: "Titles, descriptions & meta improved for revenue upside"
+  },
+  bulk: {
+    title: "Bulk Optimization Actions",
+    subtitle: "Pattern-based updates across multiple products"
+  },
+  image: {
+    title: "Image SEO Updates",
+    subtitle: "Alt-text generated to boost discoverability"
+  },
+  voice: {
+    title: "Brand Voice Applications",
+    subtitle: "Your brand tone applied across content"
+  },
+  refresh: {
+    title: "Content Refresh History",
+    subtitle: "Stale content detected and refreshed"
+  },
+  publish: {
+    title: "Shopify Publish Log",
+    subtitle: "Approved changes pushed to your store"
+  },
+  patterns: {
+    title: "Optimization Pattern Usage",
+    subtitle: "Repeated improvements applied across products"
+  },
+  rollback: {
+    title: "Change & Rollback History",
+    subtitle: "Every change tracked with instant revert capability"
+  },
+  upsell: {
+    title: "Post-Purchase Upsell Actions",
+    subtitle: "Product recommendations sent after orders"
+  }
+};
+
 export default function ActivityTimeline() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [actionFilter, setActionFilter] = useState<string>("all");
+  
+  // Get filter from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const filterParam = urlParams.get('filter') || 'all';
+  const [actionFilter, setActionFilter] = useState<string>(filterParam);
+  
+  // Get page title/subtitle based on filter
+  const currentConfig = pageConfig[filterParam] || pageConfig.all;
 
   // Fetch autopilot statistics
   const { data: stats, isLoading: statsLoading } = useQuery<AutopilotStats>({
@@ -180,8 +231,8 @@ export default function ActivityTimeline() {
 
   return (
     <PageShell
-      title="ZYRA Execution Log"
-      subtitle="Every decision made, action taken, and result measured"
+      title={currentConfig.title}
+      subtitle={currentConfig.subtitle}
       backTo="/dashboard"
     >
 
