@@ -159,17 +159,6 @@ export default function AITools() {
       gradient: 'from-violet-500 to-purple-400',
       actionText: 'Schedule Updates',
       comingSoon: false
-    },
-    {
-      id: 'power-mode',
-      title: 'Power Mode',
-      description: 'Real-time Google SERP competitive intelligence + GPT-4o powered rewrites',
-      icon: <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-      category: 'new',
-      gradient: 'from-orange-500 via-red-500 to-pink-500',
-      actionText: 'Launch Power Mode',
-      comingSoon: false,
-      featured: true
     }
   ];
 
@@ -207,9 +196,6 @@ export default function AITools() {
         break;
       case 'scheduled-refresh':
         setLocation('/ai-tools/scheduled-refresh');
-        break;
-      case 'power-mode':
-        setLocation('/automation/power-mode');
         break;
       default:
         toast({

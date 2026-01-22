@@ -19,16 +19,6 @@ Utilizes a multi-model AI system (GPT-4o, GPT-4o-mini) with a centralized prompt
 ### SEO & Competitive Intelligence
 Provides a comprehensive SEO Health Dashboard for monitoring and improving Shopify store SEO, including store health scores, issue detection, per-product audits, keyword ranking, schema markup generation, and AI recommendations. SERP Competitive Intelligence offers real-time Google search analysis via DataForSEO API, extracting patterns from top-ranking competitors and using an AI prompt system (ZYRA GOOGLE ECOMMERCE RANKING ANALYZER) to generate content for competitive advantage.
 
-### Power Mode
-Premium competitive intelligence feature accessible from AI Tools menu at `/automation/power-mode`. Uses real-time Google SERP analysis (DataForSEO) combined with GPT-4o AI to analyze top-ranking competitors and generate optimized product content. Features include:
-- **Real-time SERP Analysis**: Fetches and analyzes top 10 Google search results for target keywords
-- **Competitor Insights**: Extracts title patterns, keyword gaps, and content opportunities from competitors
-- **AI-Powered Optimization**: GPT-4o generates optimized title, meta title, meta description, and product description
-- **Confidence/Difficulty Scoring**: Assesses optimization success likelihood and competitor strength
-- **Credit System**: 5 credits per analysis with server-side credit checking via `checkAIToolCredits`/`consumeAIToolCredits`
-- **Rollback Support**: All changes saved to `product_history` table for instant rollback
-- **Manual Approval Required**: Users must review and approve all optimizations before applying
-
 ### Authentication & Authorization
 Uses Supabase Auth for email/password authentication, password reset, JWT-based session management, Row Level Security (RLS), RBAC for admin endpoints, and TOTP-based Two-Factor Authentication.
 
