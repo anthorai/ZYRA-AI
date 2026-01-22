@@ -154,7 +154,6 @@ export default function Landing() {
         <meta property="og:title" content="ZYRA AI: Let AI Run Your Shopify Growth" />
         <meta property="og:description" content="One AI system that runs your revenue loop. ZYRA detects opportunities, executes safely, and proves real revenue impact." />
       </Helmet>
-
       <ResponsiveNavbar
         navItems={[
           { label: "How It Works", href: "#how-it-works", external: true },
@@ -166,7 +165,6 @@ export default function Landing() {
         ]}
         actionButton={{ label: "Start Free", href: "/auth" }}
       />
-
       <main className="pt-16">
         {/* HERO SECTION */}
         <section className="relative py-20 sm:py-28 px-4 sm:px-6 overflow-hidden">
@@ -486,7 +484,7 @@ export default function Landing() {
               </Card>
             </div>
 
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-8 text-center">
+            <div className="border border-primary/20 rounded-xl p-8 text-center bg-[#16162c]">
               <Shield className="w-8 h-8 text-primary mx-auto mb-4" />
               <p className="text-lg font-medium mb-2">Autonomy only when you allow it.</p>
               <p className="text-muted-foreground">Turn on autonomous mode when you're ready. Until then, ZYRA waits for your approval.</p>
