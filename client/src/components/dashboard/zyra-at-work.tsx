@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RevenueDelta } from "@/components/ui/revenue-delta";
 import { 
   Activity, 
   Search, 
@@ -15,8 +16,20 @@ import {
   Clock,
   Brain,
   RefreshCw,
-  Play
+  Play,
+  Settings
 } from "lucide-react";
+import { useLocation } from "wouter";
+
+interface ZyraStats {
+  activePhase: string;
+  currentAction: string | null;
+  todayRevenueDelta: number;
+  todayOptimizations: number;
+  pendingApprovals: number;
+  successRate: number;
+  lastActionAt: string | null;
+}
 
 interface ZyraEvent {
   id: string;
@@ -157,11 +170,18 @@ export default function ZyraAtWork() {
   const [showDemo, setShowDemo] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
+  const [, setLocation] = useLocation();
+
+  const { data: stats } = useQuery<ZyraStats>({
+    queryKey: ['/api/zyra/live-stats'],
+    refetchInterval: 10000,
+  });
 
   const { data: activityData, isLoading, refetch, isRefetching } = useQuery<ActivityFeedResponse>({
     queryKey: ['/api/revenue-loop/activity-feed'],
     refetchInterval: 30000,
   });
+
 
   const realEvents: ZyraEvent[] = (activityData?.activities?.map(a => ({
     ...a,
@@ -257,18 +277,20 @@ export default function ZyraAtWork() {
             <RefreshCw className={`w-4 h-4 mr-1 ${isRefetching ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button
-            variant={showDemo ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              setShowDemo(!showDemo);
-              isInitializedRef.current = false;
-            }}
-            data-testid="button-toggle-demo"
-          >
-            <Play className="w-4 h-4 mr-1" />
-            {showDemo ? 'Show Live' : 'Demo Mode'}
-          </Button>
+          {import.meta.env.DEV && (
+            <Button
+              variant={showDemo ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setShowDemo(!showDemo);
+                isInitializedRef.current = false;
+              }}
+              data-testid="button-toggle-demo"
+            >
+              <Play className="w-4 h-4 mr-1" />
+              {showDemo ? 'Show Live' : 'Demo Mode'}
+            </Button>
+          )}
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
             hasRealData || showDemo ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-500/10 border border-slate-500/20'
           }`}>
@@ -278,6 +300,87 @@ export default function ZyraAtWork() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="stats-grid">
+        <Card className="bg-slate-900/50 border-slate-700/50">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400">Today's Revenue Impact</p>
+                <RevenueDelta 
+                  value={stats?.todayRevenueDelta || 0} 
+                  size="lg"
+                  showSign={true}
+                  data-testid="stat-revenue-impact"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-900/50 border-slate-700/50">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400">Optimizations Today</p>
+                <p className="text-xl font-bold text-white">{stats?.todayOptimizations || 0}</p>
+              </div>
+              <div className="p-2 rounded-full bg-blue-500/10">
+                <Zap className="w-4 h-4 text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-900/50 border-slate-700/50">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400">Pending Approvals</p>
+                <p className="text-xl font-bold text-white">{stats?.pendingApprovals || 0}</p>
+              </div>
+              <div className="p-2 rounded-full bg-amber-500/10">
+                <Clock className="w-4 h-4 text-amber-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-900/50 border-slate-700/50">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400">Success Rate</p>
+                <p className="text-xl font-bold text-white">{stats?.successRate || 0}%</p>
+              </div>
+              <div className="p-2 rounded-full bg-emerald-500/10">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setLocation('/automation/product-autonomy')}
+          data-testid="button-product-autonomy"
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Per-Product Autonomy
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setLocation('/automation/revenue-loop')}
+          data-testid="button-revenue-loop-settings"
+        >
+          <Target className="w-4 h-4 mr-2" />
+          Revenue Loop Settings
+        </Button>
       </div>
 
       <Card className="bg-slate-900/50 border-slate-700/50">

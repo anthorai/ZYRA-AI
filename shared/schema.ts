@@ -3555,5 +3555,39 @@ export type InsertStoreLearningInsight = z.infer<typeof insertStoreLearningInsig
 export type RevenueLoopRun = typeof revenueLoopRuns.$inferSelect;
 export type InsertRevenueLoopRun = z.infer<typeof insertRevenueLoopRunSchema>;
 
+// Product Autonomy Settings - Per-product granular autonomy control
+export const productAutonomySettings = pgTable("product_autonomy_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  
+  // Autonomy Level: 'full' | 'approve_only' | 'disabled'
+  autonomyLevel: text("autonomy_level").notNull().default("approve_only"),
+  
+  // Enabled action types for this product
+  enabledActions: jsonb("enabled_actions").default(sql`'["optimize_seo", "rewrite_description", "update_images"]'::jsonb`),
+  
+  // Risk tolerance for this product
+  riskTolerance: text("risk_tolerance").notNull().default("low"), // 'low' | 'medium' | 'high'
+  
+  // Cumulative revenue impact from optimizations
+  totalRevenueLift: numeric("total_revenue_lift", { precision: 12, scale: 2 }).default("0"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('product_autonomy_user_id_idx').on(table.userId),
+  uniqueIndex('product_autonomy_user_product_unique').on(table.userId, table.productId),
+]);
+
+export const insertProductAutonomySettingsSchema = createInsertSchema(productAutonomySettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ProductAutonomySettings = typeof productAutonomySettings.$inferSelect;
+export type InsertProductAutonomySettings = z.infer<typeof insertProductAutonomySettingsSchema>;
+
 // Re-export chat models for AI integrations
 export * from "./models/chat";

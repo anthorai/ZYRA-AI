@@ -125,6 +125,7 @@ const SmartBulkSuggestions = lazy(() => import("@/pages/automation/smart-bulk-su
 const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes"));
 const RevenueLoopControls = lazy(() => import("@/pages/automation/revenue-loop-controls"));
 const PowerModePage = lazy(() => import("@/pages/automation/power-mode"));
+const ProductAutonomy = lazy(() => import("@/pages/automation/product-autonomy"));
 const PendingApprovals = lazy(() => import("@/pages/pending-approvals"));
 
 
@@ -900,6 +901,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <PowerModePage />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/automation/product-autonomy" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <ProductAutonomy />
           </Suspense>
         </ProtectedRoute>
       )} />

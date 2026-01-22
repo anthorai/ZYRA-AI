@@ -18991,6 +18991,456 @@ Return JSON array of segments only, no explanation text.`;
     }
   });
 
+  // ===== ZYRA AT WORK API =====
+  
+  app.get("/api/zyra/live-stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueOpportunities, revenueLoopProof, pendingApprovals, autonomousActions } = await import('@shared/schema');
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const [todayProofs] = await db.select({ 
+        total: sql<number>`COALESCE(SUM(CAST(revenue_delta AS DECIMAL)), 0)` 
+      })
+        .from(revenueLoopProof)
+        .where(and(
+          eq(revenueLoopProof.userId, userId),
+          gte(revenueLoopProof.createdAt, today)
+        ));
+      
+      const [todayOptimizations] = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'completed'),
+          gte(revenueOpportunities.completedAt, today)
+        ));
+      
+      const [pendingCount] = await db.select({ count: sql<number>`count(*)` })
+        .from(pendingApprovals)
+        .where(and(
+          eq(pendingApprovals.userId, userId),
+          eq(pendingApprovals.status, 'pending')
+        ));
+      
+      const [totalSuccess] = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueLoopProof)
+        .where(and(
+          eq(revenueLoopProof.userId, userId),
+          eq(revenueLoopProof.verdict, 'success')
+        ));
+      
+      const [totalProofs] = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueLoopProof)
+        .where(eq(revenueLoopProof.userId, userId));
+      
+      const successRate = totalProofs.count > 0 
+        ? Math.round((totalSuccess.count / totalProofs.count) * 100) 
+        : 0;
+      
+      const [lastAction] = await db.select({ completedAt: autonomousActions.completedAt })
+        .from(autonomousActions)
+        .where(eq(autonomousActions.userId, userId))
+        .orderBy(desc(autonomousActions.completedAt))
+        .limit(1);
+      
+      res.json({
+        activePhase: 'detect',
+        currentAction: null,
+        todayRevenueDelta: Number(todayProofs.total) || 0,
+        todayOptimizations: Number(todayOptimizations.count) || 0,
+        pendingApprovals: Number(pendingCount.count) || 0,
+        successRate,
+        lastActionAt: lastAction?.completedAt?.toISOString() || null,
+      });
+    } catch (error) {
+      console.error("Error fetching ZYRA live stats:", error);
+      res.status(500).json({ error: "Failed to fetch live stats" });
+    }
+  });
+
+  app.get("/api/zyra/live-actions", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueOpportunities, revenueSignals, products, automationSettings } = await import('@shared/schema');
+      
+      const actions: any[] = [];
+      
+      const [settings] = await db.select({ globalAutopilotEnabled: automationSettings.globalAutopilotEnabled })
+        .from(automationSettings)
+        .where(eq(automationSettings.userId, userId))
+        .limit(1);
+      
+      const isAutonomous = settings?.globalAutopilotEnabled || false;
+      
+      const recentSignals = await db.select({
+        id: revenueSignals.id,
+        signalType: revenueSignals.signalType,
+        entityId: revenueSignals.entityId,
+        createdAt: revenueSignals.createdAt,
+      })
+        .from(revenueSignals)
+        .where(eq(revenueSignals.userId, userId))
+        .orderBy(desc(revenueSignals.createdAt))
+        .limit(5);
+      
+      for (const signal of recentSignals) {
+        let productName = 'Unknown Product';
+        if (signal.entityId) {
+          const [product] = await db.select({ name: products.name })
+            .from(products)
+            .where(eq(products.id, signal.entityId))
+            .limit(1);
+          if (product) productName = product.name;
+        }
+        
+        actions.push({
+          id: `detect-${signal.id}`,
+          type: 'detect',
+          status: 'completed',
+          productName,
+          description: `Detected ${signal.signalType?.replace(/_/g, ' ')} opportunity`,
+          isAutonomous,
+          timestamp: signal.createdAt?.toISOString(),
+        });
+      }
+      
+      const recentOpps = await db.select({
+        id: revenueOpportunities.id,
+        opportunityType: revenueOpportunities.opportunityType,
+        entityId: revenueOpportunities.entityId,
+        status: revenueOpportunities.status,
+        estimatedRevenueLift: revenueOpportunities.estimatedRevenueLift,
+        createdAt: revenueOpportunities.createdAt,
+      })
+        .from(revenueOpportunities)
+        .where(eq(revenueOpportunities.userId, userId))
+        .orderBy(desc(revenueOpportunities.createdAt))
+        .limit(5);
+      
+      for (const opp of recentOpps) {
+        let productName = 'Unknown Product';
+        if (opp.entityId) {
+          const [product] = await db.select({ name: products.name })
+            .from(products)
+            .where(eq(products.id, opp.entityId))
+            .limit(1);
+          if (product) productName = product.name;
+        }
+        
+        const status = opp.status === 'completed' ? 'completed' : opp.status === 'executing' ? 'running' : 'pending';
+        const type = opp.status === 'proving' ? 'prove' : opp.status === 'completed' ? 'execute' : 'decide';
+        
+        actions.push({
+          id: `opp-${opp.id}`,
+          type,
+          status,
+          productName,
+          actionType: opp.opportunityType,
+          description: `${opp.opportunityType?.replace(/_/g, ' ')} optimization`,
+          estimatedImpact: opp.estimatedRevenueLift ? `+$${Number(opp.estimatedRevenueLift).toFixed(2)}` : undefined,
+          isAutonomous,
+          timestamp: opp.createdAt?.toISOString(),
+        });
+      }
+      
+      actions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      res.json(actions.slice(0, 15));
+    } catch (error) {
+      console.error("Error fetching ZYRA live actions:", error);
+      res.status(500).json({ error: "Failed to fetch live actions" });
+    }
+  });
+
+  app.get("/api/zyra/recent-proofs", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueLoopProof, revenueOpportunities, products } = await import('@shared/schema');
+      
+      const proofs = await db.select({
+        id: revenueLoopProof.id,
+        opportunityId: revenueLoopProof.opportunityId,
+        revenueDelta: revenueLoopProof.revenueDelta,
+        verdict: revenueLoopProof.verdict,
+        createdAt: revenueLoopProof.createdAt,
+      })
+        .from(revenueLoopProof)
+        .where(eq(revenueLoopProof.userId, userId))
+        .orderBy(desc(revenueLoopProof.createdAt))
+        .limit(10);
+      
+      const result: any[] = [];
+      
+      for (const proof of proofs) {
+        let productName = 'Unknown Product';
+        
+        if (proof.opportunityId) {
+          const [opp] = await db.select({ entityId: revenueOpportunities.entityId })
+            .from(revenueOpportunities)
+            .where(eq(revenueOpportunities.id, proof.opportunityId))
+            .limit(1);
+          
+          if (opp?.entityId) {
+            const [product] = await db.select({ name: products.name })
+              .from(products)
+              .where(eq(products.id, opp.entityId))
+              .limit(1);
+            if (product) productName = product.name;
+          }
+        }
+        
+        result.push({
+          id: proof.id,
+          productName,
+          revenueDelta: Number(proof.revenueDelta) || 0,
+          verdict: proof.verdict || 'neutral',
+          completedAt: proof.createdAt?.toISOString(),
+        });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching ZYRA recent proofs:", error);
+      res.status(500).json({ error: "Failed to fetch recent proofs" });
+    }
+  });
+
+  // ===== PRODUCT AUTONOMY API =====
+  
+  app.get("/api/product-autonomy", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { products, productAutonomySettings, seoMeta, revenueLoopProof, revenueOpportunities } = await import('@shared/schema');
+      
+      const userProducts = await db.select({
+        id: products.id,
+        name: products.name,
+        image: products.image,
+        category: products.category,
+      })
+        .from(products)
+        .where(eq(products.userId, userId))
+        .orderBy(products.name);
+      
+      const result: any[] = [];
+      
+      for (const product of userProducts) {
+        const [autonomy] = await db.select()
+          .from(productAutonomySettings)
+          .where(and(
+            eq(productAutonomySettings.userId, userId),
+            eq(productAutonomySettings.productId, product.id)
+          ))
+          .limit(1);
+        
+        const [seo] = await db.select({ seoScore: seoMeta.seoScore })
+          .from(seoMeta)
+          .where(eq(seoMeta.productId, product.id))
+          .limit(1);
+        
+        result.push({
+          productId: product.id,
+          productName: product.name,
+          productImage: product.image,
+          category: product.category,
+          seoScore: seo?.seoScore,
+          autonomyLevel: autonomy?.autonomyLevel || 'approve_only',
+          enabledActions: autonomy?.enabledActions || ['optimize_seo', 'rewrite_description', 'update_images'],
+          riskTolerance: autonomy?.riskTolerance || 'low',
+          lastOptimized: undefined,
+          totalRevenueLift: autonomy?.totalRevenueLift ? Number(autonomy.totalRevenueLift) : 0,
+        });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching product autonomy:", error);
+      res.status(500).json({ error: "Failed to fetch product autonomy settings" });
+    }
+  });
+
+  app.get("/api/product-autonomy/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { products, productAutonomySettings } = await import('@shared/schema');
+      
+      const [totalProducts] = await db.select({ count: sql<number>`count(*)` })
+        .from(products)
+        .where(eq(products.userId, userId));
+      
+      const [fullAutonomy] = await db.select({ count: sql<number>`count(*)` })
+        .from(productAutonomySettings)
+        .where(and(
+          eq(productAutonomySettings.userId, userId),
+          eq(productAutonomySettings.autonomyLevel, 'full')
+        ));
+      
+      const [approveOnly] = await db.select({ count: sql<number>`count(*)` })
+        .from(productAutonomySettings)
+        .where(and(
+          eq(productAutonomySettings.userId, userId),
+          eq(productAutonomySettings.autonomyLevel, 'approve_only')
+        ));
+      
+      const [disabled] = await db.select({ count: sql<number>`count(*)` })
+        .from(productAutonomySettings)
+        .where(and(
+          eq(productAutonomySettings.userId, userId),
+          eq(productAutonomySettings.autonomyLevel, 'disabled')
+        ));
+      
+      const productsWithSettings = Number(fullAutonomy.count) + Number(approveOnly.count) + Number(disabled.count);
+      const defaultApproveOnly = Number(totalProducts.count) - productsWithSettings;
+      
+      res.json({
+        totalProducts: Number(totalProducts.count),
+        fullAutonomy: Number(fullAutonomy.count),
+        approveOnly: Number(approveOnly.count) + defaultApproveOnly,
+        disabled: Number(disabled.count),
+      });
+    } catch (error) {
+      console.error("Error fetching product autonomy stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  app.get("/api/products/categories", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { products } = await import('@shared/schema');
+      
+      const categories = await db.selectDistinct({ category: products.category })
+        .from(products)
+        .where(eq(products.userId, userId));
+      
+      res.json(categories.map(c => c.category).filter(Boolean));
+    } catch (error) {
+      console.error("Error fetching product categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.put("/api/product-autonomy/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      const { autonomyLevel, enabledActions, riskTolerance } = req.body;
+      const { products, productAutonomySettings } = await import('@shared/schema');
+      
+      const [product] = await db.select()
+        .from(products)
+        .where(and(eq(products.id, productId), eq(products.userId, userId)))
+        .limit(1);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      
+      const [existing] = await db.select()
+        .from(productAutonomySettings)
+        .where(and(
+          eq(productAutonomySettings.userId, userId),
+          eq(productAutonomySettings.productId, productId)
+        ))
+        .limit(1);
+      
+      const updates: any = { updatedAt: new Date() };
+      if (autonomyLevel) updates.autonomyLevel = autonomyLevel;
+      if (enabledActions) updates.enabledActions = enabledActions;
+      if (riskTolerance) updates.riskTolerance = riskTolerance;
+      
+      if (existing) {
+        await db.update(productAutonomySettings)
+          .set(updates)
+          .where(eq(productAutonomySettings.id, existing.id));
+      } else {
+        await db.insert(productAutonomySettings)
+          .values({
+            userId,
+            productId,
+            autonomyLevel: autonomyLevel || 'approve_only',
+            enabledActions: enabledActions || ['optimize_seo', 'rewrite_description', 'update_images'],
+            riskTolerance: riskTolerance || 'low',
+          });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating product autonomy:", error);
+      res.status(500).json({ error: "Failed to update autonomy settings" });
+    }
+  });
+
+  app.put("/api/product-autonomy/bulk", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { level, productIds, enabledActions, riskTolerance } = req.body;
+      const { products, productAutonomySettings } = await import('@shared/schema');
+      
+      if (!level || !['full', 'approve_only', 'disabled'].includes(level)) {
+        return res.status(400).json({ error: "Invalid autonomy level" });
+      }
+      
+      if (riskTolerance && !['low', 'medium', 'high'].includes(riskTolerance)) {
+        return res.status(400).json({ error: "Invalid risk tolerance" });
+      }
+      
+      let targetProducts: { id: string }[];
+      if (productIds && productIds.length > 0) {
+        targetProducts = await db.select({ id: products.id })
+          .from(products)
+          .where(and(
+            eq(products.userId, userId),
+            inArray(products.id, productIds)
+          ));
+      } else {
+        targetProducts = await db.select({ id: products.id })
+          .from(products)
+          .where(eq(products.userId, userId));
+      }
+      
+      for (const product of targetProducts) {
+        const [existing] = await db.select()
+          .from(productAutonomySettings)
+          .where(and(
+            eq(productAutonomySettings.userId, userId),
+            eq(productAutonomySettings.productId, product.id)
+          ))
+          .limit(1);
+        
+        const updateData: Record<string, unknown> = { 
+          autonomyLevel: level, 
+          updatedAt: new Date() 
+        };
+        if (enabledActions) updateData.enabledActions = enabledActions;
+        if (riskTolerance) updateData.riskTolerance = riskTolerance;
+        
+        if (existing) {
+          await db.update(productAutonomySettings)
+            .set(updateData)
+            .where(eq(productAutonomySettings.id, existing.id));
+        } else {
+          await db.insert(productAutonomySettings)
+            .values({
+              userId,
+              productId: product.id,
+              autonomyLevel: level,
+              enabledActions: enabledActions || ['seo', 'pricing', 'content'],
+              riskTolerance: riskTolerance || 'medium',
+            });
+        }
+      }
+      
+      res.json({ success: true, updatedCount: targetProducts.length });
+    } catch (error) {
+      console.error("Error bulk updating product autonomy:", error);
+      res.status(500).json({ error: "Failed to bulk update autonomy settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
