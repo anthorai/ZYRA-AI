@@ -573,21 +573,21 @@ export default function Landing() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate border-border">
                 <CardContent className="p-6">
                   <h3 className="font-bold text-lg mb-3">Solo Founders</h3>
                   <p className="text-muted-foreground">Who want AI to handle growth while they focus on what matters</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate border-border">
                 <CardContent className="p-6">
                   <h3 className="font-bold text-lg mb-3">Growing Brands</h3>
                   <p className="text-muted-foreground">Replacing multiple disconnected tools with one intelligent system</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate border-border">
                 <CardContent className="p-6">
                   <h3 className="font-bold text-lg mb-3">Teams</h3>
                   <p className="text-muted-foreground">That want automation without losing control or visibility</p>
