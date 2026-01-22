@@ -625,7 +625,7 @@ export default function ZyraAtWork() {
           <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Marketing Running Now</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/cart-recovery')} data-testid="card-cart-recovery">
+          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/analytics/cart-recovery')} data-testid="card-cart-recovery">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-orange-500/10">
