@@ -17,7 +17,17 @@ import {
   Brain,
   RefreshCw,
   Play,
-  Settings
+  Settings,
+  ImageIcon,
+  MessageSquare,
+  Calendar,
+  Upload,
+  Layers,
+  History,
+  ShoppingCart,
+  Mail,
+  DollarSign,
+  Eye
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -309,10 +319,9 @@ export default function ZyraAtWork() {
               <div>
                 <p className="text-xs text-slate-400">Today's Revenue Impact</p>
                 <RevenueDelta 
-                  value={stats?.todayRevenueDelta || 0} 
+                  amount={stats?.todayRevenueDelta || 0} 
                   size="lg"
                   showSign={true}
-                  data-testid="stat-revenue-impact"
                 />
               </div>
             </div>
@@ -362,27 +371,256 @@ export default function ZyraAtWork() {
         </Card>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setLocation('/automation/product-autonomy')}
-          data-testid="button-product-autonomy"
-        >
-          <Settings className="w-4 h-4 mr-2" />
-          Per-Product Autonomy
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setLocation('/automation/revenue-loop')}
-          data-testid="button-revenue-loop-settings"
-        >
-          <Target className="w-4 h-4 mr-2" />
-          Revenue Loop Settings
-        </Button>
+      {/* ZYRA Core Capabilities */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Brain className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold text-white">ZYRA Core Capabilities</h2>
+          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">What ZYRA Can Do</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/product-seo-engine')} data-testid="card-seo-optimization">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Search className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Product SEO Optimization</h3>
+                  <p className="text-xs text-slate-400 mb-3">AI improves titles, descriptions & meta when revenue upside is detected</p>
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30">Used by ZYRA</Badge>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-see-seo-actions">
+                <Eye className="w-4 h-4 mr-2" />
+                See SEO Actions by ZYRA
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/bulk-optimization')} data-testid="card-bulk-optimization">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Layers className="w-5 h-5 text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Bulk Product Optimization</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA updates multiple products when patterns repeat</p>
+                  <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-400/30">Automated</Badge>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-bulk-actions">
+                <Eye className="w-4 h-4 mr-2" />
+                View Bulk Actions
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/ai-image-alt-text')} data-testid="card-image-seo">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10">
+                  <ImageIcon className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Image SEO Enhancement</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA auto-generates alt-text to improve discoverability</p>
+                  <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-400/30">Active</Badge>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-image-updates">
+                <Eye className="w-4 h-4 mr-2" />
+                View Image Updates
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/brand-voice-memory')} data-testid="card-brand-voice">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <MessageSquare className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Brand Voice Intelligence</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA applies your brand tone automatically</p>
+                  <Badge variant="outline" className="text-[10px] text-purple-400 border-purple-400/30">Learning</Badge>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-applied-voice">
+                <Eye className="w-4 h-4 mr-2" />
+                View Applied Voice
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/scheduled-refresh')} data-testid="card-smart-refresh">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Calendar className="w-5 h-5 text-amber-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Smart Content Refresh</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA refreshes content when decay is detected</p>
+                  <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-400/30">Scheduled</Badge>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-refresh-history">
+                <Eye className="w-4 h-4 mr-2" />
+                View Refresh History
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
+      {/* ZYRA Automation & Execution */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Settings className="w-5 h-5 text-blue-400" />
+          <h2 className="text-lg font-semibold text-white">Automation & Execution</h2>
+          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">How ZYRA Executes</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/automation/shopify-publish')} data-testid="card-shopify-publishing">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Upload className="w-5 h-5 text-green-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Shopify Publishing Engine</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA publishes approved changes automatically</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-publish-log">
+                <Eye className="w-4 h-4 mr-2" />
+                View Publish Log
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/automation/smart-bulk-suggestions')} data-testid="card-optimization-patterns">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-cyan-500/10">
+                  <Layers className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Optimization Patterns</h3>
+                  <p className="text-xs text-slate-400 mb-3">Repeated improvements ZYRA applies across products</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-pattern-usage">
+                <Eye className="w-4 h-4 mr-2" />
+                View Pattern Usage
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/automation/rollback-changes')} data-testid="card-safety-rollback">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-red-500/10">
+                  <History className="w-5 h-5 text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Safety & Rollback System</h3>
+                  <p className="text-xs text-slate-400 mb-3">Instantly revert any ZYRA action</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-change-history">
+                <Eye className="w-4 h-4 mr-2" />
+                View Change History
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Revenue Actions */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-lg font-semibold text-white">Active Revenue Actions</h2>
+          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Marketing Running Now</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/cart-recovery')} data-testid="card-cart-recovery">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <ShoppingCart className="w-5 h-5 text-orange-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Cart Recovery Actions</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA recovers lost revenue automatically</p>
+                  <div className="flex items-center gap-2">
+                    <Badge className="text-[10px] bg-emerald-500/20 text-emerald-400 border-0">Active</Badge>
+                  </div>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-active-recoveries">
+                <Eye className="w-4 h-4 mr-2" />
+                View Active Recoveries
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900/50 border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/upsell-email-receipts')} data-testid="card-upsell-actions">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-pink-500/10">
+                  <Mail className="w-5 h-5 text-pink-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-white mb-1">Post-Purchase Upsell Actions</h3>
+                  <p className="text-xs text-slate-400 mb-3">ZYRA recommends products after purchase</p>
+                  <div className="flex items-center gap-2">
+                    <Badge className="text-[10px] bg-emerald-500/20 text-emerald-400 border-0">Active</Badge>
+                  </div>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-upsell-actions">
+                <Eye className="w-4 h-4 mr-2" />
+                View Upsell Actions
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Revenue Impact Overview (Proof) */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-chart-2" />
+          <h2 className="text-lg font-semibold text-white">Revenue Impact Overview</h2>
+          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Proof</Badge>
+        </div>
+        <Card className="bg-gradient-to-r from-primary/10 to-emerald-500/10 border-primary/20 hover-elevate cursor-pointer" onClick={() => setLocation('/revenue-impact')} data-testid="card-revenue-overview">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-lg bg-primary/20">
+                  <DollarSign className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-white mb-1">What ZYRA Changed & Revenue Made</h3>
+                  <p className="text-sm text-slate-400">See all decisions, affected products, and actual revenue impact</p>
+                </div>
+              </div>
+              <Button variant="outline" className="border-primary/30 text-primary" data-testid="button-view-zyra-decisions">
+                <Eye className="w-4 h-4 mr-2" />
+                View ZYRA Decisions
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Live Activity Feed */}
       <Card className="bg-slate-900/50 border-slate-700/50">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">

@@ -9,17 +9,10 @@ import { useLogout } from "@/hooks/useLogout";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Zap, 
-  Home, 
-  Search, 
-  BarChart3, 
-  Mail, 
   Package, 
   Settings, 
   LogOut,
-  User,
   X,
-  Cog,
   Coins,
   Shield,
   Activity
@@ -155,12 +148,9 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   // Check if user is admin
   const isAdmin = appUser?.role === 'admin';
 
-  // Build navigation items based on user role
+  // Build navigation items - simplified "one-brain" navigation
   const navItems = [
-    { id: "overview", label: "Dashboard", icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "dashboard" },
     { id: "zyra-at-work", label: "ZYRA at Work", icon: <Activity className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "zyra-at-work" },
-    { id: "ai-tools", label: "AI Tools", icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "ai-tools" },
-    { id: "automate", label: "Automate", icon: <Cog className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "analytics" },
     { id: "products", label: "Products", icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
     { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
     // Admin-only items
