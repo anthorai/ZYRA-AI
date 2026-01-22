@@ -102,11 +102,11 @@ export default function Landing() {
       badge: "For Beginners",
       features: [
         "1,000 credits / month",
+        "Manual approval mode",
+        "Standard execution speed",
         "Product SEO optimization",
         "Cart recovery actions",
-        "Post-purchase upsells",
-        "Brand voice memory",
-        "Revenue tracking"
+        "Brand voice memory"
       ],
       popular: false
     },
@@ -119,27 +119,27 @@ export default function Landing() {
       badge: "Most Popular",
       features: [
         "6,000 credits / month",
-        "Everything in Starter +",
-        "Autonomous mode",
+        "Semi-autonomous mode",
+        "Fast execution speed",
         "Bulk optimization",
         "Competitive intelligence",
-        "Priority processing"
+        "Priority support"
       ],
       popular: true
     },
     {
-      name: "Pro",
+      name: "Scale",
       price: "$999",
       annualPrice: "$799",
       period: "per month",
       icon: <Crown className="w-8 h-8" />,
-      badge: "Enterprise",
+      badge: "Full Power",
       features: [
-        "20,000 credits / month",
-        "Everything in Growth +",
+        "15,000 credits / month",
+        "Full autonomous mode",
+        "Priority execution speed",
         "White-glove onboarding",
         "Dedicated support",
-        "Custom integrations",
         "Enterprise SLA"
       ],
       popular: false
