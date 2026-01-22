@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageShell } from "@/components/ui/page-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,6 +59,7 @@ interface AutopilotStats {
 }
 
 export default function ActivityTimeline() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [actionFilter, setActionFilter] = useState<string>("all");
 
@@ -176,13 +179,11 @@ export default function ActivityTimeline() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Activity Timeline</h1>
-        <p className="text-muted-foreground">
-          View all autonomous actions performed by your AI Store Manager
-        </p>
-      </div>
+    <PageShell
+      title="ZYRA Activity Timeline"
+      subtitle="View all autonomous actions performed by ZYRA"
+      backTo="/dashboard"
+    >
 
       {/* Stats Overview */}
       {stats && !statsLoading && stats.totalActions > 0 && (
@@ -607,6 +608,6 @@ export default function ActivityTimeline() {
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
