@@ -71,24 +71,14 @@ const BestPracticesPage = lazy(() => import("@/pages/help/best-practices"));
 
 // Analytics pages
 const OptimizedProducts = lazy(() => import("@/pages/optimized-products"));
-const EmailPerformance = lazy(() => import("@/pages/email-performance"));
-const SmsConversion = lazy(() => import("@/pages/sms-conversion"));
 const CartRecovery = lazy(() => import("@/pages/cart-recovery"));
-const SeoKeywordDensity = lazy(() => import("@/pages/seo-keyword-density"));
-const ContentROI = lazy(() => import("@/pages/content-roi"));
 const RevenueImpact = lazy(() => import("@/pages/revenue-impact"));
-const SeoRankingTracker = lazy(() => import("@/pages/seo-ranking-tracker"));
 const SeoHealthDashboard = lazy(() => import("@/pages/seo-health-dashboard"));
-const ABTestResults = lazy(() => import("@/pages/ab-test-results"));
 
 // Feature pages
 const AIUpsellSuggestionsPage = lazy(() => import("@/pages/ai-upsell-suggestions"));
-const DynamicSegmentationPage = lazy(() => import("@/pages/dynamic-segmentation"));
-const MultiChannelRepurposingPage = lazy(() => import("@/pages/multi-channel-repurposing"));
 const UpsellEmailReceiptsPage = lazy(() => import("@/pages/upsell-email-receipts"));
 const AbandonedCartSMSPage = lazy(() => import("@/pages/abandoned-cart-sms"));
-const CustomTemplatesPage = lazy(() => import("@/pages/custom-templates"));
-const BehavioralTriggersPage = lazy(() => import("@/pages/behavioral-triggers"));
 
 // Campaign pages
 const CreateCampaignPage = lazy(() => import("@/pages/campaigns/create"));
@@ -101,16 +91,12 @@ const TemplatesPage = lazy(() => import("@/pages/templates"));
 const ProductSeoEngine = lazy(() => import("@/pages/ai-tools/product-seo-engine"));
 const BulkOptimization = lazy(() => import("@/pages/ai-tools/bulk-optimization"));
 const AIImageAltText = lazy(() => import("@/pages/ai-tools/ai-image-alt-text"));
-const DynamicTemplates = lazy(() => import("@/pages/ai-tools/dynamic-templates"));
 const BrandVoiceMemory = lazy(() => import("@/pages/ai-tools/brand-voice-memory"));
-const MultimodalAI = lazy(() => import("@/pages/ai-tools/multimodal-ai"));
-const ABTestingCopy = lazy(() => import("@/pages/ai-tools/ab-testing-copy"));
 const ScheduledRefresh = lazy(() => import("@/pages/ai-tools/scheduled-refresh"));
 const AutopilotSettings = lazy(() => import("@/pages/ai-tools/autopilot"));
 const ActivityTimeline = lazy(() => import("@/pages/ai-tools/activity-timeline"));
 const PricingSettings = lazy(() => import("@/pages/ai-tools/pricing-settings"));
 const CompetitorsPage = lazy(() => import("@/pages/ai-tools/competitors"));
-const PricingAnalytics = lazy(() => import("@/pages/ai-tools/pricing-analytics"));
 const StrategyInsights = lazy(() => import("@/pages/strategy-insights"));
 
 // Comparison/SEO marketing pages
@@ -119,7 +105,6 @@ const ShopifyAiAppsComparison = lazy(() => import("@/pages/compare/shopify-ai-ap
 const CartRecoveryAppsComparison = lazy(() => import("@/pages/compare/cart-recovery-apps"));
 
 // Automation pages
-const CSVImportExport = lazy(() => import("@/pages/automation/csv-import-export"));
 const ShopifyPublish = lazy(() => import("@/pages/automation/shopify-publish"));
 const SmartBulkSuggestions = lazy(() => import("@/pages/automation/smart-bulk-suggestions"));
 const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes"));
@@ -609,38 +594,10 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/analytics/email-performance" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <EmailPerformance />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/analytics/sms-conversion" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <SmsConversion />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       <Route path="/analytics/cart-recovery" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <CartRecovery />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/analytics/seo-keyword-density" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <SeoKeywordDensity />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/analytics/content-roi" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <ContentROI />
           </Suspense>
         </ProtectedRoute>
       )} />
@@ -651,24 +608,10 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/analytics/seo-ranking-tracker" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <SeoRankingTracker />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       <Route path="/seo-health" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <SeoHealthDashboard />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/analytics/ab-test-results" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <ABTestResults />
           </Suspense>
         </ProtectedRoute>
       )} />
@@ -718,20 +661,6 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/dynamic-segmentation" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <DynamicSegmentationPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/multi-channel-repurposing" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <MultiChannelRepurposingPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       <Route path="/upsell-email-receipts" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
@@ -743,20 +672,6 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <AbandonedCartSMSPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/custom-templates" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CustomTemplatesPage />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/behavioral-triggers" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <BehavioralTriggersPage />
           </Suspense>
         </ProtectedRoute>
       )} />
@@ -783,31 +698,10 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/ai-tools/dynamic-templates" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <DynamicTemplates />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       <Route path="/ai-tools/brand-voice-memory" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <BrandVoiceMemory />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/ai-tools/multimodal-ai" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <MultimodalAI />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
-      <Route path="/ai-tools/ab-testing-copy" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <ABTestingCopy />
           </Suspense>
         </ProtectedRoute>
       )} />
@@ -846,13 +740,6 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
-      <Route path="/ai-tools/pricing-analytics" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <PricingAnalytics />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       <Route path="/strategy-insights" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
@@ -862,13 +749,6 @@ function Router() {
       )} />
       
       {/* Automation routes */}
-      <Route path="/automation/csv-import-export" component={() => (
-        <ProtectedRoute>
-          <Suspense fallback={<PageLoader />}>
-            <CSVImportExport />
-          </Suspense>
-        </ProtectedRoute>
-      )} />
       <Route path="/automation/shopify-publish" component={() => (
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>

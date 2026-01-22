@@ -141,16 +141,6 @@ export default function AITools() {
       comingSoon: false
     },
     {
-      id: 'dynamic-templates',
-      title: 'Dynamic Templates',
-      description: 'Pre-built tones: Luxury, Gen Z, Eco, Minimalist, and more',
-      icon: <Palette className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-      category: 'new',
-      gradient: 'from-pink-500 to-rose-400',
-      actionText: 'Choose Template',
-      comingSoon: false
-    },
-    {
       id: 'brand-voice',
       title: 'Brand Voice Memory',
       description: 'Set your brand tone once, Zyra AI applies it everywhere automatically',
@@ -158,26 +148,6 @@ export default function AITools() {
       category: 'new',
       gradient: 'from-indigo-500 to-blue-400',
       actionText: 'Setup Voice',
-      comingSoon: false
-    },
-    {
-      id: 'multimodal-ai',
-      title: 'Multimodal AI',
-      description: 'Upload product images + tags for richer, more accurate copy generation',
-      icon: <Camera className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-      category: 'new',
-      gradient: 'from-teal-500 to-cyan-400',
-      actionText: 'Upload & Generate',
-      comingSoon: false
-    },
-    {
-      id: 'ab-testing',
-      title: 'A/B Testing Copy',
-      description: 'Auto-generate multiple versions, track CTR/conversions, keep the winner',
-      icon: <FlaskConical className="w-8 h-8" />,
-      category: 'new',
-      gradient: 'from-red-500 to-pink-400',
-      actionText: 'Start A/B Test',
       comingSoon: false
     },
     {
@@ -232,17 +202,8 @@ export default function AITools() {
       case 'image-alt-text':
         setLocation('/ai-tools/ai-image-alt-text');
         break;
-      case 'dynamic-templates':
-        setLocation('/ai-tools/dynamic-templates');
-        break;
       case 'brand-voice':
         setLocation('/ai-tools/brand-voice-memory');
-        break;
-      case 'multimodal-ai':
-        setLocation('/ai-tools/multimodal-ai');
-        break;
-      case 'ab-testing':
-        setLocation('/ai-tools/ab-testing-copy');
         break;
       case 'scheduled-refresh':
         setLocation('/ai-tools/scheduled-refresh');

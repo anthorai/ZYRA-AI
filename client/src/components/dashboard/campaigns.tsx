@@ -72,26 +72,6 @@ export default function Campaigns() {
       tooltip: 'Send targeted SMS campaigns to recover lost sales from abandoned shopping carts'
     },
     {
-      id: 'custom-templates',
-      title: 'Custom Templates',
-      description: 'Create and edit email & SMS workflow templates with drag-and-drop builder',
-      icon: <FileText className="w-6 h-6 stroke-2 text-primary" />,
-      category: 'existing',
-      actionText: 'Edit Templates',
-      comingSoon: false,
-      tooltip: 'Design custom email and SMS templates for all your marketing workflows'
-    },
-    {
-      id: 'behavioral-triggers',
-      title: 'Behavioral Triggers',
-      description: 'AI decides optimal timing & channel - email for active users, SMS for inactive ones',
-      icon: <Brain className="w-6 h-6 stroke-2 text-primary" />,
-      category: 'new',
-      actionText: 'Setup Triggers',
-      comingSoon: false,
-      tooltip: 'Let AI automatically choose the best communication channel and timing for each customer'
-    },
-    {
       id: 'ai-upsell-suggestions',
       title: 'AI Upsell Suggestions',
       description: 'Auto-pick the most relevant products to recommend from your entire catalog',
@@ -101,26 +81,6 @@ export default function Campaigns() {
       comingSoon: false,
       tooltip: 'AI analyzes purchase history and product relationships to suggest perfect upsells'
     },
-    {
-      id: 'dynamic-segmentation',
-      title: 'Dynamic Segmentation',
-      description: 'Auto-segment customers into groups: first-timers, loyal buyers, discount seekers',
-      icon: <Users className="w-6 h-6 stroke-2 text-primary" />,
-      category: 'new',
-      actionText: 'Setup Segments',
-      comingSoon: false,
-      tooltip: 'Automatically group customers based on behavior patterns for targeted messaging'
-    },
-    {
-      id: 'multi-channel-repurposing',
-      title: 'Multi-Channel Repurposing',
-      description: 'Convert one product copy into multiple formats: ad copy → social → email → SMS',
-      icon: <RotateCcw className="w-6 h-6 stroke-2 text-primary" />,
-      category: 'new',
-      actionText: 'Generate Variants',
-      comingSoon: false,
-      tooltip: 'Transform one piece of content into optimized versions for all marketing channels'
-    }
   ];
 
 
@@ -128,11 +88,7 @@ export default function Campaigns() {
     const legacyRoutes: Record<string, string> = {
       'upsell-receipts': '/upsell-email-receipts',
       'abandoned-cart-sms': '/abandoned-cart-sms',
-      'custom-templates': '/custom-templates',
-      'ai-upsell-suggestions': '/ai-upsell-suggestions',
-      'dynamic-segmentation': '/dynamic-segmentation',
-      'multi-channel-repurposing': '/multi-channel-repurposing',
-      'behavioral-triggers': '/behavioral-triggers'
+      'ai-upsell-suggestions': '/ai-upsell-suggestions'
     };
 
     sessionStorage.setItem('navigationSource', 'campaigns');

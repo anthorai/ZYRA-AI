@@ -35,16 +35,6 @@ export default function AutomationTools() {
 
   const automationTools: AutomationTool[] = [
     {
-      id: 'csv-import-export',
-      title: 'CSV Import/Export',
-      description: 'Upload or download CSV files for bulk product management and data synchronization',
-      icon: <FileSpreadsheet className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-      category: 'existing',
-      actionText: 'Upload CSV',
-      comingSoon: false,
-      tooltip: 'Bulk upload products from CSV or export your existing products for external management'
-    },
-    {
       id: 'shopify-publish',
       title: 'One-Click Shopify Publish',
       description: 'Push optimized product copy directly to your Shopify store listings instantly',
@@ -82,9 +72,6 @@ export default function AutomationTools() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const mockResponses = {
-        'csv-import-export': {
-          message: `Successfully processed CSV file. ${Math.floor(Math.random() * 100) + 50} products updated.`
-        },
         'shopify-publish': {
           message: `Published ${Math.floor(Math.random() * 25) + 10} optimized products to your Shopify store.`
         },
@@ -129,7 +116,6 @@ export default function AutomationTools() {
 
     // Navigate to the specific automation tool page
     const routeMap = {
-      'csv-import-export': '/automation/csv-import-export',
       'shopify-publish': '/automation/shopify-publish',
       'bulk-suggestions': '/automation/smart-bulk-suggestions',
       'rollback-changes': '/automation/rollback-changes'

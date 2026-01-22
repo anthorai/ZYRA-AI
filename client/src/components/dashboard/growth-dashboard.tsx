@@ -221,17 +221,6 @@ export default function GrowthDashboard() {
         category: 'metric'
       },
       {
-        id: 'email-performance',
-        title: 'Email Campaigns',
-        description: 'Revenue generated from email marketing campaigns',
-        icon: <Mail className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: `$${(campaignRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        change: campaigns.emailCampaigns > 0 ? `${campaigns.avgOpenRate.toFixed(1)}% open rate, ${campaigns.emailCampaigns} sent` : 'No campaigns yet',
-        trend: campaignRevenue > 0 ? 'up' : 'neutral',
-        actionText: 'View Analytics',
-        category: 'performance'
-      },
-      {
         id: 'ai-optimization',
         title: 'AI Optimization',
         description: 'Revenue lift from AI-enhanced product descriptions and SEO',
@@ -241,17 +230,6 @@ export default function GrowthDashboard() {
         trend: aiOptimizationRevenue > 0 ? 'up' : 'neutral',
         actionText: 'View Optimized',
         category: 'performance'
-      },
-      {
-        id: 'seo-keyword-density',
-        title: 'SEO Keyword Density',
-        description: 'Keyword optimization and search ranking improvements',
-        icon: <Search className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: `${usageStats.seoOptimizationsUsed || 0}`,
-        change: usageStats.seoOptimizationsUsed > 0 ? `+${usageStats.seoOptimizationsUsed} optimizations` : 'No SEO yet',
-        trend: usageStats.seoOptimizationsUsed > 0 ? 'up' : 'neutral',
-        actionText: 'View Keywords',
-        category: 'growth'
       },
       {
         id: 'revenue-impact',
@@ -287,13 +265,7 @@ export default function GrowthDashboard() {
       'cart-recovery': '/analytics/cart-recovery',
       'ai-optimization': '/analytics/optimized-products',
       'optimized-products': '/analytics/optimized-products',
-      'email-performance': '/analytics/email-performance',
-      'sms-conversion': '/analytics/sms-conversion',
-      'seo-keyword-density': '/analytics/seo-keyword-density',
-      'content-roi': '/analytics/content-roi',
       'revenue-impact': '/analytics/revenue-impact',
-      'seo-ranking-tracker': '/analytics/seo-ranking-tracker',
-      'ab-test-results': '/analytics/ab-test-results',
       'total-campaigns': '/campaigns'
     };
 
