@@ -8,9 +8,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DashboardContentSkeleton } from "@/components/ui/skeleton";
 import Sidebar from "@/components/dashboard/sidebar";
-import AITools from "@/components/dashboard/ai-tools";
-import AutomationTools from "@/components/dashboard/automation-tools";
-import GrowthDashboard from "@/components/dashboard/growth-dashboard";
 import Settings from "@/components/dashboard/settings";
 import Profile from "@/components/dashboard/profile";
 import NotificationCenter from "@/components/dashboard/notification-center";
@@ -130,39 +127,27 @@ export default function Dashboard() {
   
 
 
-  // Handle navigation source from sessionStorage or URL query params (for back button from AI tools, automation, and settings)
+  // Handle navigation source from URL query params (for back button navigation)
   useEffect(() => {
-    // First check URL query parameter
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
     
-    if (tabParam) {
-      // Handle tab query parameter
-      if (tabParam === 'ai-tools') {
-        setActiveTab('ai-tools');
-      } else if (tabParam === 'automate' || tabParam === 'automation') {
-        setActiveTab('automate');
-      } else if (tabParam === 'settings') {
-        setActiveTab('settings');
-      } else if (tabParam === 'overview') {
-        setActiveTab('overview');
-      }
-      // Clean up the URL by removing the query param
+    // Only allow valid tabs in the simplified navigation
+    const validTabs = ['zyra-at-work', 'products', 'settings'];
+    
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
       window.history.replaceState({}, '', '/dashboard');
       return;
     }
     
-    // Fallback to sessionStorage for backward compatibility
+    // Clean up legacy sessionStorage navigation
     const navigationSource = sessionStorage.getItem('navigationSource');
-    if (navigationSource === 'ai-tools') {
-      setActiveTab('ai-tools');
-      sessionStorage.removeItem('navigationSource'); // Clean up after use
-    } else if (navigationSource === 'automation') {
-      setActiveTab('automate');
-      sessionStorage.removeItem('navigationSource'); // Clean up after use
-    } else if (navigationSource === 'settings') {
-      setActiveTab('settings');
-      sessionStorage.removeItem('navigationSource'); // Clean up after use
+    if (navigationSource) {
+      sessionStorage.removeItem('navigationSource');
+      if (navigationSource === 'settings') {
+        setActiveTab('settings');
+      }
     }
   }, []);
 
@@ -199,49 +184,6 @@ export default function Dashboard() {
       icon: iconMap[stat.icon as keyof typeof iconMap] || <TrendingUp className="w-6 h-6" />,
     };
   });
-
-  // Quick actions with optimistic UI updates
-  const handleToolNavigation = async (toolName: string, displayName: string) => {
-    // Optimistic UI update - navigate immediately
-    setActiveTab(toolName);
-    
-    // Track tool access in the background
-    trackToolAccess(toolName);
-    
-    // Log activity
-    logActivity(
-      "tool_navigation",
-      `Navigated to ${displayName}`,
-      toolName,
-      { timestamp: new Date().toISOString(), optimistic: true }
-    );
-    
-    // Update usage stats based on tool type
-    if (toolName === "ai-tools") {
-      updateUsageStats("aiGenerationsUsed", 0); // Just tracking access, not usage
-    } else if (toolName === "automate") {
-      updateUsageStats("automationActionsUsed", 0);
-    }
-  };
-
-  const quickActions = [
-    {
-      icon: <Zap className="w-5 h-5" />,
-      title: "AI Product Generator",
-      description: "Generate compelling product descriptions in seconds",
-      action: () => handleToolNavigation("ai-tools", "AI Tools"),
-      primary: true,
-      toolName: "ai-tools",
-    },
-    {
-      icon: <TrendingUp className="w-5 h-5" />,
-      title: "Automation Tools", 
-      description: "Streamline bulk operations and intelligent optimizations",
-      action: () => handleToolNavigation("automate", "Automation Tools"),
-      primary: false,
-      toolName: "automate",
-    },
-  ];
 
   // Format real-time activities
   const activities = dashboardData?.activityLogs?.map((log) => {
@@ -287,24 +229,15 @@ export default function Dashboard() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "zyra-at-work":
-        return <ZyraAtWork />;
-      case "ai-tools":
-        return <AITools />;
-      case "automate":
-        return <AutomationTools />;
       case "products":
         return <ManageProducts />;
       case "profile":
         return <Profile />;
       case "settings":
         return <Settings />;
+      case "zyra-at-work":
       default:
-        return (
-          <div className="space-y-6">
-            <GrowthDashboard />
-          </div>
-        );
+        return <ZyraAtWork />;
     }
   };
 
@@ -338,7 +271,7 @@ export default function Dashboard() {
 
         {/* Dashboard Content */}
         <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
-          {showSkeleton && activeTab === "overview" ? (
+          {showSkeleton && activeTab === "zyra-at-work" ? (
             <DashboardContentSkeleton />
           ) : (
             renderTabContent()
