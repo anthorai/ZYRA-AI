@@ -147,30 +147,6 @@ export function MasterAutomationToggle() {
   return (
     <>
       <div className="flex items-center gap-1.5 sm:gap-3">
-        <Badge 
-          variant={globalEnabled ? "default" : "secondary"}
-          className={`
-            flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-0.5 sm:py-1
-            ${globalEnabled 
-              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
-              : 'bg-slate-700 text-slate-300 border-slate-600'
-            }
-          `}
-        >
-          {globalEnabled ? (
-            <>
-              <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-[10px] sm:text-sm font-medium sm:hidden">Auto</span>
-              <span className="text-sm font-medium hidden sm:inline">Autonomous</span>
-            </>
-          ) : (
-            <>
-              <User className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-[10px] sm:text-sm font-medium">Manual</span>
-            </>
-          )}
-        </Badge>
-        
         <Switch
           checked={globalEnabled}
           onCheckedChange={handleToggle}
