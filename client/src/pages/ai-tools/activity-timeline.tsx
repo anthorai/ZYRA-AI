@@ -180,8 +180,8 @@ export default function ActivityTimeline() {
 
   return (
     <PageShell
-      title="ZYRA Activity Timeline"
-      subtitle="View all autonomous actions performed by ZYRA"
+      title="ZYRA Execution Log"
+      subtitle="Every decision made, action taken, and result measured"
       backTo="/dashboard"
     >
 
