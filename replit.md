@@ -67,25 +67,16 @@ Offers advanced multi-channel notification preferences (Email, SMS, In-App, Push
 Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing. The connection flow uses a shared ConnectionProgressCard component (`client/src/components/ui/connection-progress-card.tsx`) with 5-step visual progress (Initializing, Authenticating, Verifying, Syncing, Complete), consistent UX across both manual connects and App Store installations, and comprehensive error handling with specific error codes for Shopify review compliance.
 
 ### Automation Tools
-Includes comprehensive bulk SEO optimization tools like "Smart Bulk Suggestions" (AI-powered fixes with previews) and "One-Click Shopify Publish." Also includes CSV Import/Export and per-product rollback.
+Includes comprehensive bulk SEO optimization tools like "Smart Bulk Suggestions" (AI-powered fixes with previews) and "One-Click Shopify Publish" with per-product rollback.
 
 ### Upsell Email Receipts
-An AI-powered post-purchase upsell system sending personalized product recommendations after Shopify orders, featuring a product recommendation engine, A/B test tracking, and conversion attribution.
+An AI-powered post-purchase upsell system sending personalized product recommendations after Shopify orders, featuring a product recommendation engine and conversion attribution.
 
 ### Autonomous AI Store Manager
-This system transforms manual optimization into autonomous, AI-driven processes, including Autonomous SEO (daily audits, AI-powered action processing), Dynamic Pricing AI, and Autonomous Marketing (multi-channel automation, A/B testing orchestration, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system.
+This system transforms manual optimization into autonomous, AI-driven processes, including Autonomous SEO (daily audits, AI-powered action processing), Dynamic Pricing AI, and Autonomous Marketing (multi-channel automation, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system.
 
-### Multimodal AI Optimization Orchestrator
-An intelligent orchestration system that automatically analyzes product data (images, content, SEO context, store intent) and applies optimal SEO optimizations with zero manual input. It selects from four optimization strategies (search-intent-focused, image-led-conversion, balanced-organic-growth, trust-clarity-priority), dynamically configures engine intensity, supports bulk processing, and provides full rollback protection via product history snapshots.
-
-### Behavioral Triggers System
-AI-powered behavioral automation that tracks customer actions across eight event types (e.g., product_view, cart_add) and triggers marketing responses based on five condition types (e.g., time_elapsed, cart_value) through eight action types (e.g., send_email, show_popup). It includes AI-powered trigger recommendations, Shopify webhook handlers, cooldown management, and analytics.
-
-### Dynamic Customer Segmentation
-AI-powered customer segmentation system that automatically categorizes customers into predefined and custom groups based on purchase behavior. It features AI-powered segment analysis, automatic member population, segment recalculation, and default segment seeding.
-
-### Strategy-Based A/B Testing Copy
-Automates A/B testing of copy variants based on four conversion strategies (seo_clarity, benefit_first, trust_reassurance, urgency_light) with zero manual writing. It uses smart success signals (add-to-cart, time on page, scroll depth, bounce rate inverse), zero-risk testing rules (limited traffic, auto-stop underperforming variants), and winner detection with statistical confidence.
+### Revenue Loop System
+Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. The system continuously monitors products for optimization opportunities, automatically applies AI-powered improvements, and tracks revenue impact without manual intervention.
 
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
