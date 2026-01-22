@@ -3,6 +3,7 @@
  * 
  * Before executing an approved action, this module validates that it doesn't violate
  * any of the safety guardrails that autonomous schedulers enforce:
+ * - Plan-based access restrictions (ENFORCED FIRST)
  * - Daily action limits
  * - Catalog change percentage limits
  * - Frequency caps (for marketing/cart recovery)
@@ -14,8 +15,13 @@
  */
 
 import { requireDb } from '../db';
-import { automationSettings, autonomousActions, autonomousRules } from '@shared/schema';
+import { automationSettings, autonomousActions, autonomousRules, users } from '@shared/schema';
 import { eq, and, gte, sql } from 'drizzle-orm';
+import { 
+  validatePlanAccess, 
+  getDailyActionLimit,
+  type ActionType 
+} from './plan-access-controller';
 
 export interface SafetyValidationResult {
   allowed: boolean;
@@ -25,17 +31,85 @@ export interface SafetyValidationResult {
 
 /**
  * Validate an approval against all applicable safety guardrails
+ * 
+ * VALIDATION ORDER:
+ * 1. Plan-based access restrictions (ENFORCED FIRST)
+ * 2. Action-specific safety checks (limits, cooldowns, etc.)
  */
 export async function validateApproval(
   userId: string,
   actionType: string,
-  actionPayload: any
+  actionPayload: any,
+  options?: {
+    isAutoExecution?: boolean;  // True if triggered automatically (scheduler/autonomous)
+    productCount?: number;      // For bulk actions
+  }
 ): Promise<SafetyValidationResult> {
+  const db = requireDb();
   
+  // ============================================
+  // STEP 1: PLAN-BASED ACCESS CHECK (MANDATORY)
+  // ============================================
+  try {
+    // Get user's current plan
+    const [user] = await db
+      .select({ plan: users.plan })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user) {
+      return {
+        allowed: false,
+        reason: 'User not found',
+        violationType: 'user_not_found'
+      };
+    }
+    
+    const planName = user.plan || 'trial';
+    
+    // Validate action against user's plan
+    const planValidation = await validatePlanAccess(
+      userId,
+      planName,
+      actionType,
+      {
+        productCount: options?.productCount,
+        isAutoExecution: options?.isAutoExecution,
+      }
+    );
+    
+    if (!planValidation.allowed) {
+      console.log(`⛔ [Plan Access] Action blocked for plan ${planName}: ${actionType}`);
+      return {
+        allowed: false,
+        reason: planValidation.reason || 'Action not available on your current plan',
+        violationType: planValidation.violationType || 'plan_restriction'
+      };
+    }
+    
+    console.log(`✅ [Plan Access] Action allowed for plan ${planName}: ${actionType}`);
+    
+  } catch (error) {
+    console.error('❌ [Plan Access] Error checking plan access:', error);
+    // Fail closed - block action if plan check fails
+    return {
+      allowed: false,
+      reason: 'Unable to verify plan access',
+      violationType: 'plan_check_failed'
+    };
+  }
+  
+  // ============================================
+  // STEP 2: ACTION-SPECIFIC SAFETY CHECKS
+  // ============================================
   // Route to appropriate validator based on action type
   switch (actionType) {
     case 'optimize_seo':
       return await validateSEOAction(userId, actionPayload);
+      
+    case 'bulk_optimize_seo':
+      return await validateBulkSEOAction(userId, actionPayload, options?.productCount);
       
     case 'adjust_price':
       return await validatePricingAction(userId, actionPayload);
@@ -47,9 +121,33 @@ export async function validateApproval(
     case 'send_cart_recovery':
       return await validateCartRecoveryAction(userId, actionPayload);
       
+    case 'competitive_intelligence':
+      // SERP access already validated in plan check
+      return { allowed: true };
+      
     default:
       return { allowed: true }; // Unknown action types pass through
   }
+}
+
+/**
+ * Validate bulk SEO optimization action
+ */
+async function validateBulkSEOAction(
+  userId: string, 
+  payload: any,
+  productCount?: number
+): Promise<SafetyValidationResult> {
+  // First run standard SEO validation
+  const seoResult = await validateSEOAction(userId, payload);
+  if (!seoResult.allowed) {
+    return seoResult;
+  }
+  
+  // Additional bulk-specific checks can be added here
+  // (plan limits for bulk are already checked in validatePlanAccess)
+  
+  return { allowed: true };
 }
 
 /**
@@ -298,7 +396,8 @@ async function checkSEOCooldown(
 
     if (recentActions.length > 0) {
       const lastAction = recentActions[0];
-      const timeSince = Date.now() - lastAction.createdAt.getTime();
+      const createdAt = lastAction.createdAt || new Date();
+      const timeSince = Date.now() - createdAt.getTime();
       const hoursRemaining = Math.ceil((cooldownSeconds * 1000 - timeSince) / (1000 * 60 * 60));
       
       return {
