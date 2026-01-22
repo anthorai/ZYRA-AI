@@ -508,7 +508,7 @@ export default function Landing() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <Card className="bg-card/50 border">
-                <CardContent className="sm:p-6 p-6 space-y-5 bg-[#16162c]">
+                <CardContent className="sm:p-6 p-6 space-y-5 bg-[#16162c] rounded-xl">
                   <div className="flex items-start gap-4">
                     <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
                       <Check className="w-4 h-4 text-primary" />
