@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanExperience } from "@/hooks/use-plan-experience";
+import { ZyraNudge } from "@/components/ui/zyra-nudge";
 import { Check, X, Bot, TrendingUp, Mail, ShoppingCart, DollarSign, AlertCircle, Sparkles, Info, Sun, Shield, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 
@@ -56,6 +58,16 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function PendingApprovals() {
   const { toast } = useToast();
+  
+  /**
+   * Plan Experience Hook
+   * Provides plan-aware UX behavior:
+   * - Starter+: Approval-focused, safety-first, preview-oriented
+   * - Growth: Semi-autonomous, faster feedback, fewer interruptions  
+   * - Scale: Full autonomy, revenue-focused, minimal prompts
+   */
+  const { tier, language } = usePlanExperience();
+  
   const [activeTab, setActiveTab] = useState<ActionTypeFilter>("all");
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -247,7 +259,7 @@ export default function PendingApprovals() {
   // Morning Summary Component
   const MorningSummary = () => (
     <div className="mb-6 space-y-4">
-      {/* Greeting and Safety Banner */}
+      {/* Greeting and Safety Banner - Plan-aware messaging */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-4 sm:p-6 border border-primary/20">
         <div className="flex items-start gap-4 flex-wrap">
           <div className="p-3 bg-primary/20 rounded-full">
@@ -255,7 +267,13 @@ export default function PendingApprovals() {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold mb-1" data-testid="text-greeting">
-              {getGreeting()}! Here's Your AI Report
+              {/* Plan-aware greeting language */}
+              {tier === 'scale' 
+                ? `${getGreeting()}! Quick Review`
+                : tier === 'growth'
+                  ? `${getGreeting()}! ZYRA Found Opportunities`
+                  : `${getGreeting()}! Here's Your AI Report`
+              }
             </h2>
             <p className="text-muted-foreground text-sm" data-testid="text-report-date">
               {format(new Date(), "EEEE, MMMM d, yyyy")}
@@ -263,13 +281,36 @@ export default function PendingApprovals() {
           </div>
         </div>
 
-        {/* Safety Assurance */}
-        <div className="mt-4 flex items-center gap-2 bg-emerald-500/10 rounded-md p-3 border border-emerald-500/20">
-          <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-          <p className="text-sm text-emerald-400" data-testid="text-safety-message">
-            <strong>Protected Mode:</strong> Nothing is pushed to your Shopify store without your explicit approval below.
-          </p>
-        </div>
+        {/* Safety Assurance - Plan-aware emphasis */}
+        {tier === 'scale' ? (
+          <div className="mt-4 flex items-center gap-2 bg-primary/10 rounded-md p-3 border border-primary/20">
+            <Sparkles className="w-5 h-5 text-primary flex-shrink-0" />
+            <p className="text-sm text-muted-foreground" data-testid="text-safety-message">
+              High-impact actions requiring confirmation. Low-risk optimizations run automatically.
+            </p>
+          </div>
+        ) : tier === 'growth' ? (
+          <div className="mt-4 flex items-center gap-2 bg-emerald-500/10 rounded-md p-3 border border-emerald-500/20">
+            <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-sm text-emerald-400" data-testid="text-safety-message">
+              <strong>Smart Protection:</strong> Low-risk actions auto-apply. Review medium and high-impact changes below.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center gap-2 bg-emerald-500/10 rounded-md p-3 border border-emerald-500/20">
+            <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-sm text-emerald-400" data-testid="text-safety-message">
+              <strong>Protected Mode:</strong> {language.rollbackAvailable}. Review each action before applying.
+            </p>
+          </div>
+        )}
+        
+        {/* Soft upgrade nudge for automation */}
+        {tier === 'starter' || tier === 'trial' ? (
+          <div className="mt-3">
+            <ZyraNudge context="automation" showLink />
+          </div>
+        ) : null}
       </div>
 
       {/* Summary Stats Grid */}
@@ -368,7 +409,7 @@ export default function PendingApprovals() {
                 <Button
                   onClick={handleBulkApprove}
                   disabled={bulkApproveMutation.isPending || bulkRejectMutation.isPending}
-                  className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="flex-1 sm:flex-none bg-emerald-600 text-white"
                   data-testid="button-bulk-approve"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -548,7 +589,7 @@ export default function PendingApprovals() {
                     <Button
                       onClick={() => handleAction("approve", approval.id, approval.actionType)}
                       disabled={approveMutation.isPending || rejectMutation.isPending}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="flex-1 bg-emerald-600 text-white"
                       data-testid={`button-approve-${approval.id}`}
                     >
                       <Check className="w-4 h-4 mr-2" />
@@ -572,19 +613,39 @@ export default function PendingApprovals() {
         </Tabs>
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Confirmation Dialog - Plan-aware language */}
       <AlertDialog open={confirmDialog.open} onOpenChange={(open) => !open && handleCancel()}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDialog.type === "approve" ? "Approve Action" : "Reject Action"}
+              {/* Plan-aware dialog title */}
+              {confirmDialog.type === "approve" 
+                ? (tier === 'scale' ? "Confirm" : tier === 'growth' ? "Approve" : "Apply Change")
+                : (tier === 'scale' ? "Skip" : "Decline")
+              }
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDialog.type === "approve" ? (
                 <>
-                  Are you sure you want to approve this{" "}
-                  <strong>{confirmDialog.actionType && getActionLabel(confirmDialog.actionType)}</strong> recommendation?
-                  The AI will execute this action automatically.
+                  {/* Plan-aware approval description */}
+                  {tier === 'scale' ? (
+                    <>
+                      Confirm this{" "}
+                      <strong>{confirmDialog.actionType && getActionLabel(confirmDialog.actionType)}</strong>?
+                    </>
+                  ) : tier === 'growth' ? (
+                    <>
+                      Approve this{" "}
+                      <strong>{confirmDialog.actionType && getActionLabel(confirmDialog.actionType)}</strong> recommendation?
+                      ZYRA will apply it immediately.
+                    </>
+                  ) : (
+                    <>
+                      Ready to apply this{" "}
+                      <strong>{confirmDialog.actionType && getActionLabel(confirmDialog.actionType)}</strong> recommendation?
+                      You can undo this change anytime.
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -596,16 +657,24 @@ export default function PendingApprovals() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel}>
+              {/* Plan-aware cancel button text */}
+              {tier === 'scale' ? 'Back' : language.cancelButton}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
               className={
                 confirmDialog.type === "approve"
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-destructive hover:bg-destructive/90"
+                  ? "bg-emerald-600"
+                  : "bg-destructive"
               }
+              data-testid={confirmDialog.type === "approve" ? "button-confirm-approve" : "button-confirm-reject"}
             >
-              {confirmDialog.type === "approve" ? "Approve" : "Reject"}
+              {/* Plan-aware action button text */}
+              {confirmDialog.type === "approve" 
+                ? language.confirmButton
+                : (tier === 'scale' ? 'Skip' : 'Decline')
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
