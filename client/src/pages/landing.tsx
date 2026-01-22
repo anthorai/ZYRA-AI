@@ -230,7 +230,7 @@ export default function Landing() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-card/50 border-destructive/20">
+              <Card className="bg-[#16162c] border-destructive/20">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-destructive/10 rounded-lg flex items-center justify-center">
                     <Target className="w-6 h-6 text-destructive" />
@@ -240,7 +240,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 border-destructive/20">
+              <Card className="bg-[#16162c] border-destructive/20">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-destructive/10 rounded-lg flex items-center justify-center">
                     <ShoppingCart className="w-6 h-6 text-destructive" />
@@ -250,7 +250,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 border-destructive/20">
+              <Card className="bg-[#16162c] border-destructive/20">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-destructive/10 rounded-lg flex items-center justify-center">
                     <DollarSign className="w-6 h-6 text-destructive" />
@@ -260,7 +260,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 border-destructive/20">
+              <Card className="bg-[#16162c] border-destructive/20">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-destructive/10 rounded-lg flex items-center justify-center">
                     <Layers className="w-6 h-6 text-destructive" />
@@ -297,7 +297,7 @@ export default function Landing() {
 
             {/* Revenue Loop Visualization */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-3 bg-blue-500/10 rounded-lg flex items-center justify-center">
                     <Search className="w-6 h-6 text-blue-400" />
@@ -307,7 +307,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-3 bg-purple-500/10 rounded-lg flex items-center justify-center">
                     <Brain className="w-6 h-6 text-purple-400" />
@@ -317,7 +317,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-3 bg-green-500/10 rounded-lg flex items-center justify-center">
                     <Zap className="w-6 h-6 text-green-400" />
@@ -327,7 +327,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-3 bg-amber-500/10 rounded-lg flex items-center justify-center">
                     <TrendingUp className="w-6 h-6 text-amber-400" />
@@ -337,7 +337,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate col-span-2 md:col-span-1">
+              <Card className="bg-[#16162c] hover-elevate col-span-2 md:col-span-1">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-3 bg-pink-500/10 rounded-lg flex items-center justify-center">
                     <RefreshCw className="w-6 h-6 text-pink-400" />
@@ -455,7 +455,7 @@ export default function Landing() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-10">
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-primary/10 rounded-lg flex items-center justify-center">
                     <CheckCircle2 className="w-6 h-6 text-primary" />
@@ -465,7 +465,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-primary/10 rounded-lg flex items-center justify-center">
                     <Eye className="w-6 h-6 text-primary" />
@@ -475,7 +475,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card/50 hover-elevate">
+              <Card className="bg-[#16162c] hover-elevate">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 bg-primary/10 rounded-lg flex items-center justify-center">
                     <RotateCcw className="w-6 h-6 text-primary" />
@@ -507,7 +507,7 @@ export default function Landing() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
-              <Card className="bg-card/50 border">
+              <Card className="bg-[#16162c] border">
                 <CardContent className="sm:p-6 p-6 space-y-5 bg-[#16162c] rounded-xl">
                   <div className="flex items-start gap-4">
                     <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
@@ -551,7 +551,7 @@ export default function Landing() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-primary/10 to-emerald-500/10 border-primary/20">
+              <Card className="bg-[#16162c] border-primary/20">
                 <CardContent className="p-8 text-center">
                   <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
                   <p className="text-2xl font-bold mb-2">Track Attributable Revenue</p>
@@ -627,7 +627,7 @@ export default function Landing() {
               {plans.map((plan, index) => (
                 <Card 
                   key={index} 
-                  className={`relative hover-elevate transition-all ${plan.popular ? 'ring-2 ring-primary md:scale-105' : ''}`}
+                  className={`relative bg-[#16162c] hover-elevate transition-all ${plan.popular ? 'ring-2 ring-primary md:scale-105' : ''}`}
                   data-testid={`card-plan-${index}`}
                 >
                   {plan.badge && (
@@ -690,7 +690,7 @@ export default function Landing() {
 
             <div className="space-y-4">
               {faqs.map((faq, index) => (
-                <Card key={index} className="hover-elevate cursor-pointer" onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}>
+                <Card key={index} className="bg-[#16162c] hover-elevate cursor-pointer" onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold pr-4">{faq.question}</h3>
