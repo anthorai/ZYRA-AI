@@ -23,6 +23,10 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
+  CircleDot,
+  Target,
+  BadgeCheck,
+  Lightbulb,
 } from "lucide-react";
 
 interface UserWithSubscription {
@@ -85,6 +89,31 @@ interface AnalyticsSummaryResponse {
   aiUsage: {
     totalGenerations: number;
     totalTokensUsed: number;
+  };
+}
+
+interface RevenueLoopStatsResponse {
+  timestamp: string;
+  engineStatus: 'operational' | 'idle' | 'error';
+  signals: {
+    total: number;
+    today: number;
+  };
+  opportunities: {
+    total: number;
+    executed: number;
+    pendingApproval: number;
+  };
+  proofs: {
+    total: number;
+    totalRevenue: number;
+    weekRevenue: number;
+  };
+  stores: {
+    active: number;
+  };
+  insights: {
+    total: number;
   };
 }
 
@@ -339,6 +368,10 @@ export default function AdminDashboard() {
     },
   });
 
+  const { data: revenueLoopStats, isLoading: revenueLoopLoading } = useQuery<RevenueLoopStatsResponse>({
+    queryKey: ["/api/admin/revenue-loop-stats"],
+  });
+
   const totalUsers = usersResponse?.pagination?.total || usersResponse?.users?.length || 0;
   const users = usersResponse?.users || [];
 
@@ -383,6 +416,14 @@ export default function AdminDashboard() {
   const shopifyStatus = healthLoading 
     ? "checking" 
     : mapApiStatusToComponentStatus(systemHealth?.services?.shopifyIntegration?.status || "");
+
+  const revenueLoopStatus = revenueLoopLoading 
+    ? "checking" 
+    : mapApiStatusToComponentStatus(revenueLoopStats?.engineStatus === 'operational' ? 'operational' : revenueLoopStats?.engineStatus === 'idle' ? 'degraded' : 'error');
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
 
   return (
     <AdminLayout>
@@ -431,11 +472,12 @@ export default function AdminDashboard() {
             testId="stat-open-tickets"
           />
           <StatCard
-            title="Revenue This Month"
-            value="Coming soon"
+            title="Proven Revenue"
+            value={formatCurrency(revenueLoopStats?.proofs?.totalRevenue || 0)}
             icon={DollarSign}
-            description="Payment analytics pending"
-            testId="stat-revenue"
+            description={`${formatCurrency(revenueLoopStats?.proofs?.weekRevenue || 0)} this week`}
+            isLoading={revenueLoopLoading}
+            testId="stat-proven-revenue"
           />
           <StatCard
             title="Error Rate"
@@ -444,6 +486,42 @@ export default function AdminDashboard() {
             description={`${unresolvedErrors} unresolved`}
             isLoading={errorsLoading}
             testId="stat-error-rate"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            title="Revenue Signals"
+            value={revenueLoopStats?.signals?.total || 0}
+            icon={CircleDot}
+            trend={`+${revenueLoopStats?.signals?.today || 0} today`}
+            trendDirection="up"
+            isLoading={revenueLoopLoading}
+            testId="stat-revenue-signals"
+          />
+          <StatCard
+            title="Opportunities"
+            value={revenueLoopStats?.opportunities?.total || 0}
+            icon={Target}
+            description={`${revenueLoopStats?.opportunities?.pendingApproval || 0} pending approval`}
+            isLoading={revenueLoopLoading}
+            testId="stat-opportunities"
+          />
+          <StatCard
+            title="Executed Actions"
+            value={revenueLoopStats?.opportunities?.executed || 0}
+            icon={BadgeCheck}
+            description="Autonomous optimizations"
+            isLoading={revenueLoopLoading}
+            testId="stat-executed-actions"
+          />
+          <StatCard
+            title="Store Insights"
+            value={revenueLoopStats?.insights?.total || 0}
+            icon={Lightbulb}
+            description={`${revenueLoopStats?.stores?.active || 0} active stores`}
+            isLoading={revenueLoopLoading}
+            testId="stat-store-insights"
           />
         </div>
 
@@ -523,6 +601,12 @@ export default function AdminDashboard() {
                 icon={ShoppingBag}
                 testId="health-shopify"
               />
+              <SystemHealthItem
+                name="Revenue Loop Engine"
+                status={revenueLoopStatus}
+                icon={CircleDot}
+                testId="health-revenue-loop"
+              />
             </CardContent>
           </Card>
         </div>
@@ -536,7 +620,7 @@ export default function AdminDashboard() {
             <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               <a
                 href="/admin/subscriptions"
                 className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/30 hover-elevate text-center"
@@ -568,6 +652,14 @@ export default function AdminDashboard() {
               >
                 <TrendingUp className="h-6 w-6 text-primary" />
                 <span className="text-sm font-medium">Analytics</span>
+              </a>
+              <a
+                href="/admin/revenue-loop"
+                className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/30 hover-elevate text-center"
+                data-testid="action-revenue-loop"
+              >
+                <CircleDot className="h-6 w-6 text-primary" />
+                <span className="text-sm font-medium">Revenue Loop</span>
               </a>
             </div>
           </CardContent>

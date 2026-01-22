@@ -17,6 +17,7 @@ import {
   FolderOpen,
   Database,
   ArrowLeft,
+  CircleDot,
 } from "lucide-react";
 import zyraLogo from "@assets/zyra logo_1758518826550.png";
 import {
@@ -77,6 +78,12 @@ const adminNavGroups = [
         url: "/admin/ai-engine",
         icon: Brain,
         testId: "nav-admin-ai-engine",
+      },
+      {
+        title: "Revenue Loop",
+        url: "/admin/revenue-loop",
+        icon: CircleDot,
+        testId: "nav-admin-revenue-loop",
       },
     ],
   },

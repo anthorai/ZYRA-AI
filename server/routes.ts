@@ -7548,6 +7548,113 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Admin Revenue Loop Stats - Platform-wide revenue loop monitoring
+  app.get("/api/admin/revenue-loop-stats", requireAuth, async (req, res) => {
+    try {
+      if ((req as AuthenticatedRequest).user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      if (!db) {
+        return res.status(503).json({ message: "Database not available" });
+      }
+
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - 7);
+
+      // Total signals detected
+      const totalSignalsResult = await db.select({ count: sql<number>`count(*)` }).from(revenueSignals);
+      const totalSignals = Number(totalSignalsResult[0]?.count || 0);
+
+      // Signals detected today
+      const todaySignalsResult = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueSignals)
+        .where(gte(revenueSignals.detectedAt, todayStart));
+      const signalsToday = Number(todaySignalsResult[0]?.count || 0);
+
+      // Total opportunities created
+      const totalOpportunitiesResult = await db.select({ count: sql<number>`count(*)` }).from(revenueOpportunities);
+      const totalOpportunities = Number(totalOpportunitiesResult[0]?.count || 0);
+
+      // Opportunities executed (approved status)
+      const executedOpportunitiesResult = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueOpportunities)
+        .where(eq(revenueOpportunities.status, 'executed'));
+      const executedOpportunities = Number(executedOpportunitiesResult[0]?.count || 0);
+
+      // Pending approvals
+      const pendingApprovalsResult = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueOpportunities)
+        .where(eq(revenueOpportunities.status, 'pending_approval'));
+      const pendingApprovals = Number(pendingApprovalsResult[0]?.count || 0);
+
+      // Total proofs generated
+      const totalProofsResult = await db.select({ count: sql<number>`count(*)` }).from(revenueLoopProof);
+      const totalProofs = Number(totalProofsResult[0]?.count || 0);
+
+      // Total proven revenue
+      const totalRevenueResult = await db.select({ 
+        total: sql<string>`COALESCE(SUM(revenue_attributed), 0)` 
+      }).from(revenueLoopProof);
+      const totalProvenRevenue = parseFloat(totalRevenueResult[0]?.total || '0');
+
+      // Revenue this week
+      const weekRevenueResult = await db.select({ 
+        total: sql<string>`COALESCE(SUM(revenue_attributed), 0)` 
+      })
+        .from(revenueLoopProof)
+        .where(gte(revenueLoopProof.provenAt, weekStart));
+      const weekProvenRevenue = parseFloat(weekRevenueResult[0]?.total || '0');
+
+      // Active stores with revenue loop activity (distinct users with signals)
+      const activeStoresResult = await db.select({ 
+        count: sql<number>`COUNT(DISTINCT user_id)` 
+      }).from(revenueSignals);
+      const activeStores = Number(activeStoresResult[0]?.count || 0);
+
+      // Learning insights count
+      const insightsResult = await db.select({ count: sql<number>`count(*)` }).from(storeLearningInsights);
+      const totalInsights = Number(insightsResult[0]?.count || 0);
+
+      // Revenue loop engine status (based on recent activity)
+      const recentActivityResult = await db.select({ count: sql<number>`count(*)` })
+        .from(revenueSignals)
+        .where(gte(revenueSignals.detectedAt, new Date(Date.now() - 30 * 60 * 1000))); // Last 30 min
+      const recentActivity = Number(recentActivityResult[0]?.count || 0);
+      const engineStatus = recentActivity > 0 ? 'operational' : 'idle';
+
+      res.json({
+        timestamp: new Date().toISOString(),
+        engineStatus,
+        signals: {
+          total: totalSignals,
+          today: signalsToday
+        },
+        opportunities: {
+          total: totalOpportunities,
+          executed: executedOpportunities,
+          pendingApproval: pendingApprovals
+        },
+        proofs: {
+          total: totalProofs,
+          totalRevenue: totalProvenRevenue,
+          weekRevenue: weekProvenRevenue
+        },
+        stores: {
+          active: activeStores
+        },
+        insights: {
+          total: totalInsights
+        }
+      });
+    } catch (error: any) {
+      console.error("Revenue loop stats error:", error);
+      res.status(500).json({ message: "Failed to fetch revenue loop stats", error: error.message });
+    }
+  });
+
   // 4. GET /api/admin/recent-activity - Real recent activity
   app.get("/api/admin/recent-activity", requireAuth, async (req, res) => {
     try {
