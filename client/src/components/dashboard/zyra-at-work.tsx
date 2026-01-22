@@ -27,7 +27,9 @@ import {
   ShoppingCart,
   Mail,
   DollarSign,
-  Eye
+  Eye,
+  Trophy,
+  Timer
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -173,6 +175,8 @@ function EventItem({ event, isTyping, onTypingComplete }: {
   );
 }
 
+type OptimizationMode = 'fast' | 'competitive';
+
 export default function ZyraAtWork() {
   const [demoEvents, setDemoEvents] = useState<ZyraEvent[]>([]);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
@@ -181,6 +185,19 @@ export default function ZyraAtWork() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInitializedRef = useRef(false);
   const [, setLocation] = useLocation();
+  
+  // Optimization mode preference (stored in localStorage)
+  const [optimizationMode, setOptimizationMode] = useState<OptimizationMode>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('zyra_optimization_mode') as OptimizationMode) || 'fast';
+    }
+    return 'fast';
+  });
+  
+  const handleModeChange = (mode: OptimizationMode) => {
+    setOptimizationMode(mode);
+    localStorage.setItem('zyra_optimization_mode', mode);
+  };
 
   const { data: stats } = useQuery<ZyraStats>({
     queryKey: ['/api/zyra/live-stats'],
@@ -446,6 +463,84 @@ export default function ZyraAtWork() {
             </Card>
           );
         })}
+      </div>
+
+      {/* Optimization Mode Selector */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Settings className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold text-white">Optimization Mode</h2>
+          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Cost Control</Badge>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card 
+            className={`bg-[#16162c] border-2 cursor-pointer transition-all ${
+              optimizationMode === 'fast' 
+                ? 'border-primary ring-2 ring-primary/20' 
+                : 'border-slate-700/50 hover-elevate'
+            }`}
+            onClick={() => handleModeChange('fast')}
+            data-testid="card-mode-fast"
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <Zap className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white mb-1">Fast Mode</h3>
+                  <p className="text-sm text-slate-400 mb-4">AI-powered SEO using proven patterns</p>
+                  <div className="flex items-center justify-between">
+                    <Badge className="bg-primary/20 text-primary border-0">5 credits</Badge>
+                    <div className="flex items-center gap-1 text-slate-400 text-sm">
+                      <Timer className="w-4 h-4" />
+                      2-3 sec
+                    </div>
+                  </div>
+                </div>
+                {optimizationMode === 'fast' && (
+                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`bg-[#16162c] border-2 cursor-pointer transition-all ${
+              optimizationMode === 'competitive' 
+                ? 'border-amber-400 ring-2 ring-amber-400/20' 
+                : 'border-slate-700/50 hover-elevate'
+            }`}
+            onClick={() => handleModeChange('competitive')}
+            data-testid="card-mode-competitive"
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-lg bg-amber-500/10">
+                  <Trophy className="w-6 h-6 text-amber-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white mb-1">Competitive Intelligence</h3>
+                  <p className="text-sm text-slate-400 mb-4">Real-time Google SERP analysis + AI</p>
+                  <div className="flex items-center justify-between">
+                    <Badge className="bg-amber-500/20 text-amber-400 border-0">15 credits</Badge>
+                    <div className="flex items-center gap-1 text-slate-400 text-sm">
+                      <Timer className="w-4 h-4" />
+                      5-8 sec
+                    </div>
+                  </div>
+                </div>
+                {optimizationMode === 'competitive' && (
+                  <CheckCircle2 className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <p className="text-xs text-slate-500 flex items-center gap-2">
+          <AlertCircle className="w-3 h-3" />
+          Competitive Intelligence uses DataForSEO for real-time Google search data. Choose Fast Mode to save credits.
+        </p>
       </div>
 
       {/* ZYRA Core Capabilities */}
