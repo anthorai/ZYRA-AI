@@ -47,7 +47,6 @@ function ProductCard({
   isSelected, 
   onToggleSelection,
   onPublishClick,
-  onGenerateAI,
   currency
 }: { 
   product: Product;
@@ -55,7 +54,6 @@ function ProductCard({
   isSelected: boolean;
   onToggleSelection: (id: string) => void;
   onPublishClick: (product: Product) => void;
-  onGenerateAI: (productId: string) => void;
   currency: string;
 }) {
   const [imageLoading, setImageLoading] = useState(true);
@@ -150,24 +148,22 @@ function ProductCard({
               <span className="truncate sm:hidden">Publish</span>
             </Button>
           ) : product.shopifyId ? (
-            <Button 
-              onClick={() => onGenerateAI(product.id)}
-              className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 text-black hover:shadow-lg hover:shadow-amber-500/30 hover:scale-105 active:scale-95"
-              data-testid={`button-optimize-${product.id}`}
+            <div 
+              className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border border-amber-500/30 font-medium rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center"
+              data-testid={`status-zyra-queue-${product.id}`}
             >
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="truncate hidden sm:inline">Optimize with AI</span>
-              <span className="truncate sm:hidden">Optimize</span>
-            </Button>
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-pulse" />
+              <span className="truncate hidden sm:inline">In ZYRA Queue</span>
+              <span className="truncate sm:hidden">Queued</span>
+            </div>
           ) : (
-            <Button 
-              disabled
-              className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg bg-primary text-primary-foreground opacity-50 cursor-not-allowed"
-              data-testid={`button-sync-first-${product.id}`}
+            <div 
+              className="w-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 text-xs sm:text-sm transition-all duration-200 border border-muted font-medium rounded-lg bg-muted/30 text-muted-foreground flex items-center justify-center"
+              data-testid={`status-pending-sync-${product.id}`}
             >
-              <span className="truncate hidden sm:inline">Sync with Shopify First</span>
-              <span className="truncate sm:hidden">Sync First</span>
-            </Button>
+              <span className="truncate hidden sm:inline">Pending Shopify Sync</span>
+              <span className="truncate sm:hidden">Pending</span>
+            </div>
           )}
         </div>
       </div>
@@ -191,10 +187,6 @@ export default function ManageProducts() {
   // Enable real-time product updates
   useProductRealtime();
 
-  // Navigate to AI content generation page
-  const handleGenerateAI = (productId: string) => {
-    setLocation(`/ai-tools/product-seo-engine?productId=${productId}`);
-  };
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['/api/products'],
@@ -389,7 +381,7 @@ export default function ManageProducts() {
       <GradientPageHeader
         icon={<Package className="w-8 h-8 text-primary" />}
         title="Product Management"
-        subtitle="Sync products from Shopify, optimize with AI, and publish updates to your store"
+        subtitle="Sync products from Shopify and let ZYRA automatically optimize them"
       />
 
       {/* Search and Action Buttons */}
@@ -550,7 +542,6 @@ export default function ManageProducts() {
               isSelected={selectedProductIds.includes(product.id)}
               onToggleSelection={toggleProductSelection}
               onPublishClick={handlePublishClick}
-              onGenerateAI={handleGenerateAI}
               currency={currency}
             />
           ))}
