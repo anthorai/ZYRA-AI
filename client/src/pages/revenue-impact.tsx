@@ -73,8 +73,8 @@ export default function RevenueImpact() {
 
   return (
     <PageShell
-      title="Revenue Impact Dashboard"
-      subtitle="See how different Zyra AI features contribute to your revenue growth"
+      title="ZYRA Revenue Proof"
+      subtitle="Track every dollar ZYRA has added through automated optimizations"
       backTo="/dashboard"
     >
       {/* Total Impact Card */}
@@ -99,7 +99,7 @@ export default function RevenueImpact() {
       {/* Revenue Breakdown */}
       <DashboardCard
         title="Revenue Breakdown by Source"
-        description="See how different Zyra AI features contribute to your revenue growth"
+        description="Revenue attributed to each ZYRA action type"
       >
         <div className="space-y-4">
           {revenueBreakdown.map((item) => (
