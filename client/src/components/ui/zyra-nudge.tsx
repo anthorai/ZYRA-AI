@@ -12,17 +12,19 @@
  * - Never block user actions
  */
 
-import { Info, Sparkles, Zap, Brain, TrendingUp } from "lucide-react";
-import { usePlanExperience } from "@/hooks/use-plan-experience";
+import { Info, Sparkles, Zap, Brain, TrendingUp, Coins } from "lucide-react";
+import { usePlanExperience, PlanTier } from "@/hooks/use-plan-experience";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 
-type NudgeContext = 'approval' | 'speed' | 'automation' | 'intelligence';
+type NudgeContext = 'approval' | 'speed' | 'automation' | 'intelligence' | 'credits_low';
 
 interface ZyraNudgeProps {
   context: NudgeContext;
   className?: string;
   showLink?: boolean;
+  softMessage?: string;
+  tier?: PlanTier;
 }
 
 const CONTEXT_ICONS: Record<NudgeContext, typeof Info> = {
@@ -30,20 +32,27 @@ const CONTEXT_ICONS: Record<NudgeContext, typeof Info> = {
   speed: Zap,
   automation: Brain,
   intelligence: TrendingUp,
+  credits_low: Coins,
 };
 
 export function ZyraNudge({ 
   context, 
   className,
-  showLink = false 
+  showLink = false,
+  softMessage,
+  tier: tierProp
 }: ZyraNudgeProps) {
-  const { getUpgradeNudge, tier } = usePlanExperience();
+  const planExperience = usePlanExperience();
+  const tier = tierProp || planExperience.tier;
   
-  const nudge = getUpgradeNudge(context);
+  const nudge = softMessage || (context !== 'credits_low' ? planExperience.getUpgradeNudge(context as any) : null);
   
-  if (!nudge) {
+  if (!nudge && !softMessage) {
     return null;
   }
+  
+  const displayMessage = nudge || softMessage;
+  if (!displayMessage) return null;
   
   const Icon = CONTEXT_ICONS[context];
   
@@ -57,7 +66,7 @@ export function ZyraNudge({
       data-testid={`nudge-${context}`}
     >
       <Icon className="h-3.5 w-3.5 text-primary/70 shrink-0" />
-      <span className="flex-1">{nudge}</span>
+      <span className="flex-1">{displayMessage}</span>
       {showLink && (
         <Link 
           href="/settings/subscription"

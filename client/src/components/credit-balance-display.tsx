@@ -60,10 +60,10 @@ export function LowCreditWarning() {
   }
 
   return (
-    <Alert variant="destructive" className="mb-4" data-testid="alert-low-credits">
-      <AlertTriangle className="h-4 w-4" />
+    <Alert className="mb-4 border-amber-500/50 bg-amber-500/10" data-testid="alert-low-credits">
+      <AlertTriangle className="h-4 w-4 text-amber-500" />
       <AlertDescription>
-        You have only {creditsRemaining} credits remaining. Consider upgrading your plan to continue using AI features.
+        You have {creditsRemaining} credits remaining. ZYRA will prioritize your highest-impact actions to maximize results.
       </AlertDescription>
     </Alert>
   );
@@ -76,11 +76,11 @@ interface InsufficientCreditsMessageProps {
 
 export function InsufficientCreditsMessage({ requiredCredits, availableCredits }: InsufficientCreditsMessageProps) {
   return (
-    <Alert variant="destructive" data-testid="alert-insufficient-credits">
-      <AlertTriangle className="h-4 w-4" />
+    <Alert className="border-amber-500/50 bg-amber-500/10" data-testid="alert-insufficient-credits">
+      <AlertTriangle className="h-4 w-4 text-amber-500" />
       <AlertDescription>
-        This operation requires {requiredCredits} credits, but you only have {availableCredits} remaining.
-        Please upgrade your plan to continue.
+        This action requires {requiredCredits} credits ({availableCredits} available). 
+        Credits reset on your next billing cycle, or you can explore plans with more monthly credits.
       </AlertDescription>
     </Alert>
   );

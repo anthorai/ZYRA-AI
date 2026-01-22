@@ -1,0 +1,126 @@
+TASK:
+Implement subscription plans, plan-based access control, and monthly credit limits
+for ZYRA AI across both backend and frontend.
+
+GOAL:
+ZYRA must change its behavior, autonomy level, feature access, and credit usage
+based on the user’s active subscription plan:
+Starter+, Growth, or Scale.
+
+Plans must FEEL different in real usage, not just in text.
+
+================================================
+SUBSCRIPTION PLANS (FINAL)
+================================================
+
+Starter+ ($49/month)
+- Monthly Credits: 1000
+- Autonomy: Very Low
+- Execution Speed: Standard
+
+Growth ($249/month)
+- Monthly Credits: 6000
+- Autonomy: Medium
+- Execution Speed: Fast
+
+Scale ($499/month)
+- Monthly Credits: 15000
+- Autonomy: High
+- Execution Speed: Priority
+
+================================================
+BACKEND IMPLEMENTATION (REQUIRED)
+================================================
+
+1. Create a subscription plan model with:
+   - plan_name (starter_plus | growth | scale)
+   - monthly_credits
+   - autonomy_level (low | medium | high)
+   - execution_priority (standard | fast | priority)
+
+2. Create a user subscription table that stores:
+   - user_id
+   - active_plan
+   - credits_remaining
+   - credits_reset_date (monthly)
+   - plan_started_at
+
+3. Implement a CREDIT MANAGER:
+   - Deduct credits on every AI action
+   - Prevent execution if credits are insufficient
+   - Allow actions to proceed only if plan allows it
+   - Reset credits automatically every billing cycle
+
+4. Enforce PLAN RULES AT RUNTIME:
+   - Starter+:
+     • Manual approval required for most actions
+     • Allow only very low-risk auto-actions
+     • Single-product optimization
+     • Limited SERP analysis depth
+   - Growth:
+     • Auto-run low-risk actions
+     • Bulk optimization allowed
+     • Standard SERP analysis depth
+   - Scale:
+     • High autonomy
+     • Advanced SERP analysis
+     • Large bulk actions
+     • Priority execution
+
+5. NEVER rely on frontend checks alone.
+   All plan and credit enforcement must be validated server-side.
+
+================================================
+FRONTEND IMPLEMENTATION (REQUIRED)
+================================================
+
+1. Display the ACTIVE PLAN clearly:
+   - Plan name
+   - Credits remaining
+   - Monthly reset date
+
+2. Show CREDIT USAGE LIVE:
+   - Deduct credits visually when ZYRA executes actions
+   - Show “credits used” per action in ZYRA At Work
+
+3. PLAN-AWARE EXPERIENCE:
+   - Starter+:
+     • Show more approval modals
+     • Language: “Prepared by ZYRA – Approval Required”
+   - Growth:
+     • Some actions auto-run
+     • Tag actions: “Auto-applied by ZYRA”
+   - Scale:
+     • Most actions auto-run
+     • Minimal interruptions
+     • Focus UI on revenue totals
+
+4. DO NOT:
+   - Show disabled buttons
+   - Show “Upgrade required” popups
+   - Block UI actions silently
+
+5. INSTEAD:
+   - Show soft upgrade nudges like:
+     “ZYRA could automate this safely”
+     “Higher plans unlock faster execution”
+
+================================================
+CREDIT CONSUMPTION RULES
+================================================
+
+- Credits are consumed per AI action
+- Larger actions (bulk, SERP analysis) consume more credits
+- Credits must be checked BEFORE execution
+- If credits are low:
+  - ZYRA should prioritize highest revenue-impact actions
+  - Suggest waiting for reset or upgrading (soft message)
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Backend models / services for plans & credits
+- Middleware or guards enforcing plan access
+- Frontend state handling for plan-aware UI
+- Clear inline comments explaining plan differences

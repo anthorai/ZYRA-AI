@@ -15,7 +15,21 @@ export const CREDIT_LIMITS = {
   [ZYRA_PLANS.FREE]: 100,
   [ZYRA_PLANS.STARTER]: 1000,
   [ZYRA_PLANS.GROWTH]: 6000,
-  [ZYRA_PLANS.SCALE]: 20000,
+  [ZYRA_PLANS.SCALE]: 15000,
+} as const;
+
+export const EXECUTION_PRIORITY = {
+  [ZYRA_PLANS.FREE]: 'standard',
+  [ZYRA_PLANS.STARTER]: 'standard',
+  [ZYRA_PLANS.GROWTH]: 'fast',
+  [ZYRA_PLANS.SCALE]: 'priority',
+} as const;
+
+export const AUTONOMY_LEVELS = {
+  [ZYRA_PLANS.FREE]: 'very_low',
+  [ZYRA_PLANS.STARTER]: 'very_low',
+  [ZYRA_PLANS.GROWTH]: 'medium',
+  [ZYRA_PLANS.SCALE]: 'high',
 } as const;
 
 export const PLAN_NAMES = {

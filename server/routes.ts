@@ -82,7 +82,7 @@ import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, type ShopifySubscriptionOptions } from "./db";
+import { db, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
 import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -125,6 +125,7 @@ import {
   shouldAutoExecute,
   type ActionType 
 } from "./lib/plan-access-controller";
+import { getPlanIdByName, AUTONOMY_LEVELS, EXECUTION_PRIORITY } from "./lib/constants/plans";
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
@@ -6215,6 +6216,54 @@ Output format: Markdown with clear section headings.`;
       console.error("Error consuming credits:", error);
       res.status(500).json({ 
         error: "Failed to consume credits",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get subscription status with credits info
+  app.get("/api/subscription/status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const subscription = await getUserSubscription(userId);
+      const balance = await getCreditBalance(userId);
+      
+      if (!subscription) {
+        return res.json({
+          planName: "Trial",
+          planId: null,
+          creditsUsed: balance.creditsUsed,
+          creditsRemaining: balance.creditsRemaining,
+          creditLimit: balance.creditLimit,
+          creditsResetDate: null,
+          autonomyLevel: "very_low",
+          executionPriority: "standard",
+        });
+      }
+      
+      const plan = await getSubscriptionPlanById(subscription.planId);
+      const planName = plan?.planName || "Trial";
+      
+      const creditsResetDate = subscription.currentPeriodEnd 
+        ? new Date(subscription.currentPeriodEnd).toISOString()
+        : null;
+      
+      const constantPlanId = getPlanIdByName(planName);
+      
+      res.json({
+        planName,
+        planId: subscription.planId,
+        creditsUsed: balance.creditsUsed,
+        creditsRemaining: balance.creditsRemaining,
+        creditLimit: balance.creditLimit,
+        creditsResetDate,
+        autonomyLevel: AUTONOMY_LEVELS[constantPlanId as keyof typeof AUTONOMY_LEVELS] || "very_low",
+        executionPriority: EXECUTION_PRIORITY[constantPlanId as keyof typeof EXECUTION_PRIORITY] || "standard",
+      });
+    } catch (error: any) {
+      console.error("Error fetching subscription status:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch subscription status",
         message: error.message 
       });
     }
