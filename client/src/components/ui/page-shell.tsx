@@ -10,6 +10,7 @@ interface PageShellProps {
   subtitle?: string;
   icon?: ReactNode;
   backTo?: string;
+  useHistoryBack?: boolean;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
   spacing?: "compact" | "normal" | "relaxed";
   className?: string;
@@ -23,6 +24,7 @@ export function PageShell({
   subtitle,
   icon,
   backTo,
+  useHistoryBack = false,
   maxWidth = "full",
   spacing = "normal",
   className,
@@ -59,17 +61,29 @@ export function PageShell({
             <div className="bg-card rounded-md border border-border py-[17px] px-4 sm:px-6 mt-[-20px] mb-6 ml-[-22px] mr-[-22px]">
               <div className="flex items-start gap-4">
                 {/* Back Button */}
-                {backTo && (
-                  <Link href={backTo}>
+                {(backTo || useHistoryBack) && (
+                  useHistoryBack ? (
                     <Button 
                       variant="ghost" 
                       size="icon"
                       className="flex-shrink-0"
                       data-testid="button-back"
+                      onClick={() => window.history.back()}
                     >
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
-                  </Link>
+                  ) : (
+                    <Link href={backTo!}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="flex-shrink-0"
+                        data-testid="button-back"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  )
                 )}
                 
                 {/* Title and Subtitle */}

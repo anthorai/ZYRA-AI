@@ -253,12 +253,94 @@ export default function ActivityTimeline() {
     );
   }
 
+  // Get filter-specific icon and styling
+  const getFilterConfig = () => {
+    switch (filterParam) {
+      case 'seo': return { 
+        icon: <Sparkles className="w-6 h-6 text-primary" />, 
+        cardClass: 'border-primary/30 bg-primary/5',
+        iconBgClass: 'bg-primary/10'
+      };
+      case 'bulk': return { 
+        icon: <Activity className="w-6 h-6 text-blue-400" />, 
+        cardClass: 'border-blue-500/30 bg-blue-500/5',
+        iconBgClass: 'bg-blue-500/10'
+      };
+      case 'image': return { 
+        icon: <Activity className="w-6 h-6 text-emerald-400" />, 
+        cardClass: 'border-emerald-500/30 bg-emerald-500/5',
+        iconBgClass: 'bg-emerald-500/10'
+      };
+      case 'voice': return { 
+        icon: <MessageSquare className="w-6 h-6 text-purple-400" />, 
+        cardClass: 'border-purple-500/30 bg-purple-500/5',
+        iconBgClass: 'bg-purple-500/10'
+      };
+      case 'refresh': return { 
+        icon: <Clock className="w-6 h-6 text-amber-400" />, 
+        cardClass: 'border-amber-500/30 bg-amber-500/5',
+        iconBgClass: 'bg-amber-500/10'
+      };
+      case 'publish': return { 
+        icon: <CheckCircle2 className="w-6 h-6 text-green-400" />, 
+        cardClass: 'border-green-500/30 bg-green-500/5',
+        iconBgClass: 'bg-green-500/10'
+      };
+      case 'patterns': return { 
+        icon: <Activity className="w-6 h-6 text-cyan-400" />, 
+        cardClass: 'border-cyan-500/30 bg-cyan-500/5',
+        iconBgClass: 'bg-cyan-500/10'
+      };
+      case 'rollback': return { 
+        icon: <Undo2 className="w-6 h-6 text-red-400" />, 
+        cardClass: 'border-red-500/30 bg-red-500/5',
+        iconBgClass: 'bg-red-500/10'
+      };
+      case 'cart': return { 
+        icon: <ShoppingCart className="w-6 h-6 text-orange-400" />, 
+        cardClass: 'border-orange-500/30 bg-orange-500/5',
+        iconBgClass: 'bg-orange-500/10'
+      };
+      case 'upsell': return { 
+        icon: <Mail className="w-6 h-6 text-pink-400" />, 
+        cardClass: 'border-pink-500/30 bg-pink-500/5',
+        iconBgClass: 'bg-pink-500/10'
+      };
+      default: return { 
+        icon: <Activity className="w-6 h-6 text-primary" />, 
+        cardClass: 'border-primary/30 bg-primary/5',
+        iconBgClass: 'bg-primary/10'
+      };
+    }
+  };
+
+  const filterConfig = getFilterConfig();
+
   return (
     <PageShell
       title={currentConfig.title}
       subtitle={currentConfig.subtitle}
-      backTo="/dashboard"
+      useHistoryBack={true}
     >
+
+      {/* Filter-Specific Banner */}
+      {filterParam !== 'all' && (
+        <Card className={`mb-6 ${filterConfig.cardClass}`}>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${filterConfig.iconBgClass}`}>
+              {filterConfig.icon}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg">{currentConfig.title}</h3>
+              <p className="text-sm text-muted-foreground">{currentConfig.subtitle}</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{filteredActions.length}</div>
+              <p className="text-xs text-muted-foreground">actions found</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Overview */}
       {stats && !statsLoading && stats.totalActions > 0 && (
