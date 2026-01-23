@@ -189,7 +189,8 @@ export async function orchestrateSEOGeneration(
 async function loadBrandDNA(userId: string, db: any): Promise<BrandDNA | undefined> {
   try {
     const { getBrandDNAProfile } = await import('../services/wave1-persistence');
-    return await getBrandDNAProfile(userId);
+    const result = await getBrandDNAProfile(userId);
+    return result || undefined;
   } catch (error) {
     console.error('[Orchestrator] Failed to load brand DNA:', error);
     return undefined;
@@ -227,6 +228,7 @@ async function trackFrameworkUsage(
       productCategory: usage.productCategory,
       pricePoint: usage.pricePoint as 'budget' | 'mid-range' | 'premium' | 'luxury' | undefined,
       wasRecommended: usage.wasRecommended,
+      wasEdited: false, // Default to false since we track this after user edits
       recommendationConfidence: usage.recommendationConfidence,
       seoScore: usage.seoScore,
       conversionScore: usage.conversionScore,

@@ -3568,17 +3568,17 @@ Respond with JSON:
         userId,
         generationType: 'wave1_unified_seo',
         inputData: { productName, category, frameworkUsed: result.frameworkUsed },
-        outputData: result.seoOutput,
+        outputData: result,
         brandVoice: result.frameworkUsed || 'auto',
         tokensUsed: 800, // Estimated
-        model: result.seoOutput.aiModel || 'gpt-4o-mini'
+        model: result.aiModel || 'gpt-4o-mini'
       });
 
       // Send notification
       await NotificationService.notifyPerformanceOptimizationComplete(
         userId,
         productName,
-        `SEO Score: ${result.seoOutput.seoScore}/100 | Framework: ${result.frameworkUsed}`
+        `SEO Score: ${result.seoScore}/100 | Framework: ${result.frameworkUsed}`
       );
 
       res.json({
@@ -3815,14 +3815,14 @@ Respond with JSON:
         success: true,
         recommendation: {
           primary: {
-            id: recommendation.primaryFramework.id,
-            name: recommendation.primaryFramework.name,
-            description: recommendation.primaryFramework.description,
-            bestFor: recommendation.primaryFramework.bestFor,
+            id: recommendation.framework.id,
+            name: recommendation.framework.name,
+            description: recommendation.framework.description,
+            bestFor: recommendation.framework.bestFor,
             confidence: recommendation.confidence,
             reason: recommendation.reason,
           },
-          alternatives: recommendation.alternatives.map(alt => ({
+          alternatives: recommendation.alternativeFrameworks.map(alt => ({
             id: alt.framework.id,
             name: alt.framework.name,
             description: alt.framework.description,
@@ -16728,7 +16728,7 @@ Output format: Markdown with clear section headings.`;
         .select({
           id: storeLearningInsights.id,
           insightType: storeLearningInsights.insightType,
-          pattern: storeLearningInsights.pattern,
+          patternData: storeLearningInsights.patternData,
           createdAt: storeLearningInsights.createdAt,
         })
         .from(storeLearningInsights)
