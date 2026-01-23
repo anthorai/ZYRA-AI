@@ -16493,23 +16493,6 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  app.post("/api/next-move/generate-demo", requireAuth, async (req, res) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user.id;
-      const { generateDemoNextMove } = await import('./lib/next-move-engine');
-      const result = await generateDemoNextMove(userId);
-      
-      if (!result.success) {
-        return res.status(400).json({ error: "Failed to generate demo opportunity" });
-      }
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Error generating demo next move:", error);
-      res.status(500).json({ error: "Failed to generate demo next move" });
-    }
-  });
-
   // ===== REVENUE LOOP API =====
   
   app.get("/api/revenue-loop/stats", requireAuth, async (req, res) => {

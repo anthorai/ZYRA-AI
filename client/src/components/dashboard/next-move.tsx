@@ -204,25 +204,6 @@ export default function NextMove() {
     },
   });
 
-  const generateDemoMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest('POST', '/api/next-move/generate-demo', {});
-    },
-    onSuccess: () => {
-      toast({
-        title: "Demo Opportunity Created",
-        description: "ZYRA has detected a new revenue opportunity.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/next-move'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to Generate Demo",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleApprove = async () => {
     if (!data?.nextMove) return;
@@ -320,27 +301,9 @@ export default function NextMove() {
               <Brain className="w-8 h-8 text-muted-foreground animate-pulse" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">ZYRA is Analyzing Your Store</h3>
-            <p className="text-muted-foreground max-w-md mb-6">
-              ZYRA continuously monitors your store for revenue opportunities. When ZYRA decides on the next best action, it will appear here ready for execution.
+            <p className="text-muted-foreground max-w-md">
+              ZYRA continuously monitors your store for revenue opportunities. When ZYRA detects a friction point blocking your revenue, the recommended action will appear here.
             </p>
-            <Button
-              variant="outline"
-              onClick={() => generateDemoMutation.mutate()}
-              disabled={generateDemoMutation.isPending}
-              data-testid="button-generate-demo"
-            >
-              {generateDemoMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ZYRA is deciding...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4 mr-2" />
-                  Simulate ZYRA Decision
-                </>
-              )}
-            </Button>
           </CardContent>
         </Card>
       </div>
