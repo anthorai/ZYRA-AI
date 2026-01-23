@@ -3340,7 +3340,17 @@ export type InsertBrandVoiceTransformation = z.infer<typeof insertBrandVoiceTran
 // ============================================
 // REVENUE LOOP SYSTEM TABLES
 // DETECT → DECIDE → EXECUTE → PROVE → LEARN
+// Friction-focused: ZYRA detects and removes REVENUE FRICTION
 // ============================================
+
+// Revenue Friction Types - Where buyer intent dies
+// These are the exact points where money is lost
+export const frictionTypeEnum = pgEnum('friction_type', [
+  'view_no_cart',         // High views, low add-to-cart (value unclear, trust missing)
+  'cart_no_checkout',     // Cart adds but no checkout (price friction, doubt, shipping anxiety)
+  'checkout_drop',        // Checkout started but dropped (final risk fear, delivery/refund concerns)
+  'purchase_no_upsell'    // Purchase complete but no secondary items (missed AOV opportunity)
+]);
 
 // Revenue Signal Types for detection
 export const revenueSignalTypeEnum = pgEnum('revenue_signal_type', [
@@ -3365,13 +3375,20 @@ export const revenueSignalStatusEnum = pgEnum('revenue_signal_status', [
   'ignored'
 ]);
 
-// Revenue Signals - Detected revenue-linked opportunities
+// Revenue Signals - Detected revenue FRICTION points
+// Friction = moment where buyer intent existed but money did not happen
 export const revenueSignals = pgTable("revenue_signals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   signalType: revenueSignalTypeEnum("signal_type").notNull(),
   entityType: text("entity_type").notNull(), // 'product' | 'category' | 'store'
   entityId: varchar("entity_id"), // Product ID or category identifier
+  
+  // FRICTION DETECTION (New friction-focused fields)
+  frictionType: frictionTypeEnum("friction_type"), // Where buyer intent died
+  whereIntentDied: text("where_intent_died"), // Human-readable description
+  frictionCause: text("friction_cause"), // value_unclear | trust_missing | price_friction | risk_fear
+  estimatedMonthlyLoss: numeric("estimated_monthly_loss", { precision: 12, scale: 2 }), // ₹/$ lost per month due to this friction
   
   // Signal Data
   signalData: jsonb("signal_data").notNull(), // Raw metrics that triggered signal
@@ -3394,6 +3411,7 @@ export const revenueSignals = pgTable("revenue_signals", {
 }, (table) => [
   index('revenue_signals_user_id_idx').on(table.userId),
   index('revenue_signals_signal_type_idx').on(table.signalType),
+  index('revenue_signals_friction_type_idx').on(table.frictionType),
   index('revenue_signals_status_idx').on(table.status),
   index('revenue_signals_priority_score_idx').on(table.priorityScore),
   index('revenue_signals_entity_id_idx').on(table.entityId),
@@ -3410,6 +3428,11 @@ export const revenueOpportunities = pgTable("revenue_opportunities", {
   opportunityType: text("opportunity_type").notNull(), // 'seo_optimization' | 'title_rewrite' | 'description_enhancement' | 'price_adjustment'
   entityType: text("entity_type").notNull(),
   entityId: varchar("entity_id"),
+  
+  // FRICTION CONTEXT (carried from signal)
+  frictionType: frictionTypeEnum("friction_type"), // What friction is being removed
+  frictionDescription: text("friction_description"), // "Money leaking between view and add-to-cart"
+  estimatedRecovery: numeric("estimated_recovery", { precision: 12, scale: 2 }), // Expected revenue recovery
   
   // AI-Generated Action Plan
   actionPlan: jsonb("action_plan").notNull(), // Proposed changes
@@ -3588,6 +3611,7 @@ export const insertRevenueLoopRunSchema = createInsertSchema(revenueLoopRuns).om
 });
 
 // Revenue Loop Types
+export type FrictionType = 'view_no_cart' | 'cart_no_checkout' | 'checkout_drop' | 'purchase_no_upsell';
 export type RevenueSignal = typeof revenueSignals.$inferSelect;
 export type InsertRevenueSignal = z.infer<typeof insertRevenueSignalSchema>;
 export type RevenueOpportunity = typeof revenueOpportunities.$inferSelect;
@@ -3598,6 +3622,21 @@ export type StoreLearningInsight = typeof storeLearningInsights.$inferSelect;
 export type InsertStoreLearningInsight = z.infer<typeof insertStoreLearningInsightSchema>;
 export type RevenueLoopRun = typeof revenueLoopRuns.$inferSelect;
 export type InsertRevenueLoopRun = z.infer<typeof insertRevenueLoopRunSchema>;
+
+// Friction type descriptions for UI display
+export const FRICTION_TYPE_LABELS: Record<FrictionType, string> = {
+  view_no_cart: 'View → No Add to Cart',
+  cart_no_checkout: 'Cart → No Checkout',
+  checkout_drop: 'Checkout Drop',
+  purchase_no_upsell: 'Purchase → No Upsell'
+};
+
+export const FRICTION_TYPE_CAUSES: Record<FrictionType, string[]> = {
+  view_no_cart: ['Value unclear', 'Trust missing', 'Information gap'],
+  cart_no_checkout: ['Price friction', 'Doubt', 'Shipping anxiety'],
+  checkout_drop: ['Final risk fear', 'Delivery concerns', 'Refund uncertainty'],
+  purchase_no_upsell: ['Missed AOV opportunity', 'Offer irrelevance']
+};
 
 // Product Autonomy Settings - Per-product granular autonomy control
 export const productAutonomySettings = pgTable("product_autonomy_settings", {

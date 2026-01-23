@@ -23,7 +23,11 @@ import {
   ChevronUp,
   Eye,
   CircleDollarSign,
-  ShieldCheck
+  ShieldCheck,
+  ShoppingCart,
+  CreditCard,
+  Package,
+  type LucideIcon
 } from "lucide-react";
 import {
   Collapsible,
@@ -57,7 +61,27 @@ interface NextMoveAction {
   opportunityCostMonthly: number;
   // Credit value justification
   creditValueRatio: number;
+  // FRICTION CONTEXT (new friction-focused fields)
+  frictionType?: 'view_no_cart' | 'cart_no_checkout' | 'checkout_drop' | 'purchase_no_upsell';
+  frictionDescription?: string;
+  whereIntentDied?: string;
+  estimatedMonthlyLoss?: number;
 }
+
+// Friction type labels for display
+const FRICTION_TYPE_LABELS: Record<string, string> = {
+  view_no_cart: 'View → No Add to Cart',
+  cart_no_checkout: 'Cart → No Checkout',
+  checkout_drop: 'Checkout Drop',
+  purchase_no_upsell: 'Purchase → No Upsell'
+};
+
+const FRICTION_TYPE_ICONS: Record<string, LucideIcon> = {
+  view_no_cart: Eye,
+  cart_no_checkout: ShoppingCart,
+  checkout_drop: CreditCard,
+  purchase_no_upsell: Package
+};
 
 interface NextMoveResponse {
   nextMove: NextMoveAction | null;
@@ -455,8 +479,8 @@ export default function NextMove() {
             <Brain className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Next Best Revenue Move</h1>
-            <p className="text-sm text-muted-foreground">ZYRA's single most important action right now</p>
+            <h1 className="text-xl font-bold text-foreground">One Friction ZYRA Will Remove</h1>
+            <p className="text-sm text-muted-foreground">Where buyer intent exists but money isn't happening</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -492,6 +516,40 @@ export default function NextMove() {
               <span className="text-sm font-medium" data-testid="text-status">{statusConfig.label}</span>
             </div>
           </div>
+          
+          {/* FRICTION CONTEXT - Show where money is leaking */}
+          {nextMove.frictionType && (
+            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20" data-testid="friction-context">
+              <div className="flex items-start gap-3">
+                <div className="text-red-400">
+                  {(() => {
+                    const Icon = FRICTION_TYPE_ICONS[nextMove.frictionType] || AlertCircle;
+                    return <Icon className="h-5 w-5" />;
+                  })()}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-red-400 border-red-500/30 text-xs">
+                      Friction Detected
+                    </Badge>
+                    <span className="text-sm font-medium text-red-400">
+                      {FRICTION_TYPE_LABELS[nextMove.frictionType] || nextMove.frictionType}
+                    </span>
+                  </div>
+                  {nextMove.whereIntentDied && (
+                    <p className="text-sm text-muted-foreground">
+                      Where intent died: <span className="text-foreground">{nextMove.whereIntentDied}</span>
+                    </p>
+                  )}
+                  {nextMove.estimatedMonthlyLoss && nextMove.estimatedMonthlyLoss > 0 && (
+                    <p className="text-sm text-red-400 mt-1 font-medium">
+                      Money leaking: ${nextMove.estimatedMonthlyLoss.toLocaleString()}/month
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-5">

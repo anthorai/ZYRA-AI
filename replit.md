@@ -68,6 +68,23 @@ This system transforms manual optimization into autonomous, AI-driven processes,
 ### Revenue Loop System
 Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. The system continuously monitors products for optimization opportunities, automatically applies AI-powered improvements, and tracks revenue impact without manual intervention.
 
+### Revenue Friction Detection System
+ZYRA detects and removes REVENUE FRICTION - moments where buyer intent exists but money doesn't happen. The friction-focused architecture identifies 4 friction types in the buyer journey:
+- **view_no_cart**: Product views but no add-to-cart (discovery friction)
+- **cart_no_checkout**: Cart additions but no checkout (consideration friction)
+- **checkout_drop**: Checkout started but abandoned (conversion friction)
+- **purchase_no_upsell**: Order completed but no additional purchase (expansion friction)
+
+**Database Schema Extensions**:
+- `frictionType` enum added to `revenueSignals` and `revenueOpportunities` tables
+- Friction-specific fields: `frictionDescription`, `estimatedRecovery`
+- All friction fields nullable for gradual rollout
+
+**Detection Engine** (`server/lib/revenue-detection-engine.ts`):
+- Detects friction from contentPerformance, abandonedCarts, and order analysis
+- Uses business language in WHY framework explanations (no technical jargon)
+- Scoring formula: `Priority = Expected_Recovery × Confidence × (1/Risk)`
+
 ### Next Move Feature
 The "Next Move" feature is ZYRA's single authoritative revenue decision interface. It surfaces exactly ONE high-priority action at a time - never a list of suggestions.
 
@@ -76,6 +93,7 @@ The "Next Move" feature is ZYRA's single authoritative revenue decision interfac
 - Selects the highest-scoring opportunity as the active Next Move
 - Converts safetyScore (0-100) to risk levels (low/medium/high)
 - Calculates credit costs per action type
+- Includes friction context: frictionType, frictionDescription, whereIntentDied, estimatedMonthlyLoss
 
 **Plan-Based Execution Rules**:
 - **Starter+ ($49)**: Always requires approval, only very low-risk auto-actions

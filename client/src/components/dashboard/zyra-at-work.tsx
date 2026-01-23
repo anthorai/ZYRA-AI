@@ -293,9 +293,9 @@ export default function ZyraAtWork() {
             ZYRA at Work
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
-            {hasRealData ? 'Live activity from your revenue optimization loop' :
-             isAutopilotEnabled ? 'Autopilot is running - activity will appear as ZYRA works' :
-             'Enable autopilot below to start ZYRA'}
+            {hasRealData ? 'Detecting and removing revenue friction in real-time' :
+             isAutopilotEnabled ? 'Scanning for friction points - activity will appear as ZYRA works' :
+             'Enable autopilot below to start friction detection'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -346,8 +346,8 @@ export default function ZyraAtWork() {
                 </div>
                 <p className="text-sm text-slate-400">
                   {isAutopilotEnabled 
-                    ? 'ZYRA is actively scanning and optimizing your store for revenue opportunities' 
-                    : 'Enable autopilot to let ZYRA automatically optimize your products and recover revenue'}
+                    ? 'ZYRA is detecting revenue friction and removing it in real-time' 
+                    : 'Enable autopilot to let ZYRA find and remove friction where money is leaking'}
                 </p>
               </div>
             </div>
@@ -462,12 +462,12 @@ export default function ZyraAtWork() {
                   )}
                 </div>
                 <p className="text-slate-400 mb-2">
-                  {isAutopilotEnabled ? 'ZYRA is working...' : 'No activity yet'}
+                  {isAutopilotEnabled ? 'ZYRA is analyzing friction...' : 'No friction detected yet'}
                 </p>
                 <p className="text-slate-500 text-sm max-w-sm">
                   {isAutopilotEnabled 
-                    ? 'Autopilot is enabled. ZYRA is scanning your store for revenue opportunities. Activity will appear here as actions are taken.'
-                    : 'Turn on the autopilot toggle above to let ZYRA start optimizing your store.'}
+                    ? 'ZYRA is scanning for revenue friction - moments where buyer intent exists but money isn\'t happening. Activity will appear as friction is detected and removed.'
+                    : 'Turn on autopilot above to let ZYRA detect and remove revenue friction from your store.'}
                 </p>
               </div>
             ) : (

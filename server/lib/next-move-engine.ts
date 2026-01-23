@@ -49,6 +49,11 @@ export interface NextMoveAction {
   opportunityCostMonthly: number;
   // Credit value justification
   creditValueRatio: number;
+  // FRICTION CONTEXT - Where money is leaking
+  frictionType: string | null;
+  frictionDescription: string | null;
+  whereIntentDied: string | null;
+  estimatedMonthlyLoss: number | null;
 }
 
 export interface NextMoveResponse {
@@ -127,11 +132,17 @@ function safetyScoreToRiskLevel(safetyScore: number | null): RiskLevel {
 }
 
 /**
- * Generate decision transparency reasons based on action type and data
- * Layer 1: Why ZYRA chose this move
+ * Generate decision transparency reasons based on FRICTION context
+ * Layer 1: Why ZYRA chose this friction to remove
  * 
- * All values are derived deterministically from input data - no random values
- * to ensure stable, trustworthy projections
+ * FRICTION-FOCUSED EXPLANATIONS (Business Language):
+ * - Why this product (where intent is dying)
+ * - Why this friction (what's causing money to leak)
+ * - Why this fix (how it removes the friction)
+ * - Why now (timing/urgency)
+ * - Why it is safe (risk context)
+ * 
+ * NO technical jargon. NO AI buzzwords.
  */
 function generateDecisionReasons(
   opportunityType: string,
@@ -139,65 +150,105 @@ function generateDecisionReasons(
   expectedRevenue: number,
   riskLevel: RiskLevel,
   productName: string | null,
-  score: number
+  score: number,
+  frictionType?: string,
+  whereIntentDied?: string,
+  estimatedMonthlyLoss?: number
 ): string[] {
   const reasons: string[] = [];
+  const monthlyLoss = estimatedMonthlyLoss || Math.round(expectedRevenue * 0.5);
   
-  // Derive percentages deterministically from confidence and score
-  const correlationPercent = Math.round(confidenceScore * 0.45);
-  const aovIncrease = Math.round(10 + (confidenceScore / 10));
-  const visibilityIncrease = Math.round(confidenceScore * 0.3);
+  // WHY THIS PRODUCT - Where intent is dying
+  if (productName) {
+    if (frictionType === 'view_no_cart') {
+      reasons.push(`WHY THIS PRODUCT: "${productName}" is getting views but buyers aren't adding to cart - value isn't clear enough`);
+    } else if (frictionType === 'cart_no_checkout') {
+      reasons.push(`WHY THIS PRODUCT: "${productName}" is being added to cart but buyers are hesitating before checkout`);
+    } else if (frictionType === 'checkout_drop') {
+      reasons.push(`WHY THIS PRODUCT: "${productName}" sales are dying at checkout - final trust barrier needs fixing`);
+    } else {
+      reasons.push(`WHY THIS PRODUCT: "${productName}" has buyer intent that isn't converting to money`);
+    }
+  }
   
+  // WHY THIS FRICTION - What's causing money to leak
+  if (frictionType) {
+    switch (frictionType) {
+      case 'view_no_cart':
+        reasons.push(`WHY THIS FRICTION: Buyers are looking but not acting - the product value or trust isn't landing`);
+        break;
+      case 'cart_no_checkout':
+        reasons.push(`WHY THIS FRICTION: Price anxiety or shipping concerns are stopping buyers after they've committed intent`);
+        break;
+      case 'checkout_drop':
+        reasons.push(`WHY THIS FRICTION: Final risk fear is killing conversions - buyers need reassurance at the finish line`);
+        break;
+      case 'purchase_no_upsell':
+        reasons.push(`WHY THIS FRICTION: Buyers are leaving money on the table - relevant offers aren't being shown`);
+        break;
+    }
+  } else {
+    switch (opportunityType) {
+      case 'upsell':
+      case 'post_purchase_upsell':
+        reasons.push(`WHY THIS FRICTION: Post-purchase window is being wasted - buyers are ready to spend more`);
+        break;
+      case 'cart_recovery':
+        reasons.push(`WHY THIS FRICTION: Intent existed but money didn't happen - these carts can be recovered`);
+        break;
+      case 'seo_optimization':
+      case 'product_seo':
+      case 'title_rewrite':
+      case 'description_enhancement':
+        reasons.push(`WHY THIS FRICTION: Product information isn't compelling enough to convert interested buyers`);
+        break;
+      default:
+        reasons.push(`WHY THIS FRICTION: Buyer intent is present but something is blocking the purchase`);
+    }
+  }
+  
+  // WHY THIS FIX - How it removes the friction
   switch (opportunityType) {
-    case 'upsell':
-    case 'post_purchase_upsell':
-      reasons.push(`Purchase patterns show strong product correlation`);
-      reasons.push(`${correlationPercent}% of buyers viewed related products`);
-      reasons.push(`Similar stores increased AOV by ${aovIncrease}%`);
-      break;
-    case 'cart_recovery':
-      reasons.push(`ZYRA detected abandoned carts with recovery potential`);
-      reasons.push(`Cart value suggests ${confidenceScore}% recovery likelihood`);
-      reasons.push(`Optimal recovery window identified based on purchase timing`);
-      break;
     case 'seo_optimization':
     case 'product_seo':
     case 'title_rewrite':
     case 'description_enhancement':
-      if (productName) {
-        reasons.push(`"${productName}" has optimization potential`);
-      }
-      reasons.push(`Keyword opportunities detected in search data`);
-      reasons.push(`Competitor analysis shows ranking gaps`);
-      reasons.push(`Expected visibility increase: ${visibilityIncrease}%`);
+      reasons.push(`WHY THIS FIX: Clearer product messaging removes doubt and builds buying confidence`);
+      break;
+    case 'cart_recovery':
+      reasons.push(`WHY THIS FIX: Targeted follow-up catches buyers while intent is still warm`);
+      break;
+    case 'upsell':
+    case 'post_purchase_upsell':
+      reasons.push(`WHY THIS FIX: Relevant product suggestion at the right moment captures additional spend`);
       break;
     case 'price_adjustment':
     case 'pricing_optimization':
-      reasons.push(`Market analysis indicates pricing opportunity`);
-      reasons.push(`Competitor pricing data analyzed`);
-      reasons.push(`Demand patterns suggest optimal adjustment`);
+      reasons.push(`WHY THIS FIX: Optimal pricing removes price-based hesitation while maintaining margins`);
       break;
     default:
-      reasons.push(`ZYRA identified revenue optimization opportunity`);
-      reasons.push(`Analysis confidence: ${confidenceScore}%`);
+      reasons.push(`WHY THIS FIX: Targeted action directly addresses the point where money is being lost`);
   }
   
-  // Add confidence-based reason
-  if (confidenceScore >= 75) {
-    reasons.push(`High confidence based on similar successful optimizations`);
+  // WHY NOW - Timing/urgency
+  if (monthlyLoss > 500) {
+    reasons.push(`WHY NOW: This friction is costing approximately $${monthlyLoss.toLocaleString()}/month in lost revenue`);
+  } else if (confidenceScore >= 70) {
+    reasons.push(`WHY NOW: High confidence (${confidenceScore}%) means this fix has a strong chance of recovering revenue`);
+  } else {
+    reasons.push(`WHY NOW: This friction is active and fixable - waiting means more lost sales`);
   }
   
-  // Add risk-based safety message
+  // WHY IT IS SAFE - Risk context
   if (riskLevel === 'low') {
-    reasons.push(`Low-risk action with proven patterns`);
+    reasons.push(`WHY IT'S SAFE: This is a low-risk action with instant rollback if revenue drops`);
+  } else if (riskLevel === 'medium') {
+    reasons.push(`WHY IT'S SAFE: Moderate change with full rollback capability - your original content is preserved`);
+  } else {
+    reasons.push(`WHY IT'S SAFE: Higher-impact change but fully reversible - ZYRA will auto-rollback if needed`);
   }
   
-  // Add score-based priority reason
-  if (score > 500) {
-    reasons.push(`Priority score of ${Math.round(score)} places this as highest-impact action`);
-  }
-  
-  return reasons.slice(0, 4); // Max 4 reasons for readability
+  return reasons.slice(0, 5); // Show all 5 reasons (why product, friction, fix, now, safe)
 }
 
 /**
@@ -285,6 +336,10 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
       safetyScore: revenueOpportunities.safetyScore,
       status: revenueOpportunities.status,
       createdAt: revenueOpportunities.createdAt,
+      // FRICTION CONTEXT fields
+      frictionType: revenueOpportunities.frictionType,
+      frictionDescription: revenueOpportunities.frictionDescription,
+      estimatedRecovery: revenueOpportunities.estimatedRecovery,
     })
     .from(revenueOpportunities)
     .where(
@@ -371,14 +426,18 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     status = 'ready';
   }
 
-  // Layer 1: Generate decision transparency reasons
+  // Layer 1: Generate decision transparency reasons (friction-focused)
+  const estimatedRecovery = parseFloat(topOpportunity.estimatedRecovery?.toString() || '0');
   const decisionReasons = generateDecisionReasons(
     topOpportunity.opportunityType || 'seo_optimization',
     topOpportunity.confidence,
     topOpportunity.expectedRevenue,
     topOpportunity.risk,
     productName,
-    topOpportunity.score
+    topOpportunity.score,
+    topOpportunity.frictionType || undefined,
+    topOpportunity.frictionDescription || undefined,
+    estimatedRecovery || undefined
   );
   
   // Layer 2: Calculate opportunity cost if skipped
@@ -416,6 +475,11 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     opportunityCostMonthly,
     // Credit value justification
     creditValueRatio,
+    // FRICTION CONTEXT - Where money is leaking
+    frictionType: topOpportunity.frictionType || null,
+    frictionDescription: topOpportunity.frictionDescription || null,
+    whereIntentDied: topOpportunity.frictionDescription || null,
+    estimatedMonthlyLoss: estimatedRecovery || null,
   };
 
   return {
