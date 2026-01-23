@@ -31,7 +31,19 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
+import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { StoreReadiness } from "@shared/schema";
+
+interface AutomationSettings {
+  globalAutopilotEnabled?: boolean;
+  autopilotEnabled?: boolean;
+  autonomousCreditLimit?: number;
+  maxDailyActions?: number;
+}
 
 interface ZyraStats {
   activePhase: string;
@@ -195,6 +207,42 @@ export default function ZyraAtWork() {
     enabled: storeReadiness?.state === 'ready',
   });
 
+  // Fetch automation settings for autopilot toggle
+  const { data: automationSettings } = useQuery<AutomationSettings>({
+    queryKey: ['/api/automation/settings'],
+    enabled: storeReadiness?.state === 'ready',
+  });
+
+  const { toast } = useToast();
+  const isAutopilotEnabled = automationSettings?.globalAutopilotEnabled ?? false;
+
+  // Toggle autopilot mutation
+  const toggleAutopilotMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const response = await apiRequest('PUT', '/api/automation/settings', { 
+        globalAutopilotEnabled: enabled 
+      });
+      return response.json();
+    },
+    onSuccess: (_, enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/automation/settings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
+      
+      toast({
+        title: enabled ? 'ZYRA Autopilot Enabled' : 'ZYRA Autopilot Disabled',
+        description: enabled 
+          ? 'ZYRA will now automatically detect and execute revenue opportunities.'
+          : 'ZYRA will create recommendations for your approval.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to update autopilot setting',
+        variant: 'destructive'
+      });
+    }
+  });
 
   const events: ZyraEvent[] = (activityData?.activities?.map(a => ({
     ...a,
@@ -246,7 +294,8 @@ export default function ZyraAtWork() {
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
             {hasRealData ? 'Live activity from your revenue optimization loop' :
-             'No activity yet - Enable autopilot in Automation settings'}
+             isAutopilotEnabled ? 'Autopilot is running - activity will appear as ZYRA works' :
+             'Enable autopilot below to start ZYRA'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -270,6 +319,53 @@ export default function ZyraAtWork() {
           </div>
         </div>
       </div>
+
+      {/* Autopilot Control - Direct toggle to start/stop ZYRA */}
+      <Card className={`border-2 transition-all ${
+        isAutopilotEnabled 
+          ? 'bg-gradient-to-r from-emerald-500/10 to-primary/10 border-emerald-500/30' 
+          : 'bg-[#16162c] border-slate-700/50'
+      }`} data-testid="card-autopilot-control">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${isAutopilotEnabled ? 'bg-emerald-500/20' : 'bg-slate-700/50'}`}>
+                <Brain className={`w-6 h-6 ${isAutopilotEnabled ? 'text-emerald-400' : 'text-slate-400'}`} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-white">ZYRA Autopilot</h3>
+                  <Badge 
+                    className={isAutopilotEnabled 
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                      : 'bg-slate-700 text-slate-400 border-slate-600'
+                    }
+                  >
+                    {isAutopilotEnabled ? 'Running' : 'Paused'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-slate-400">
+                  {isAutopilotEnabled 
+                    ? 'ZYRA is actively scanning and optimizing your store for revenue opportunities' 
+                    : 'Enable autopilot to let ZYRA automatically optimize your products and recover revenue'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-sm font-medium ${isAutopilotEnabled ? 'text-emerald-400' : 'text-slate-500'}`}>
+                {isAutopilotEnabled ? 'ON' : 'OFF'}
+              </span>
+              <Switch
+                checked={isAutopilotEnabled}
+                onCheckedChange={(checked) => toggleAutopilotMutation.mutate(checked)}
+                disabled={toggleAutopilotMutation.isPending}
+                className="data-[state=checked]:bg-emerald-600 scale-125"
+                data-testid="switch-autopilot-toggle"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="stats-grid">
         <Card className="bg-[#16162c] border-slate-700/50">
