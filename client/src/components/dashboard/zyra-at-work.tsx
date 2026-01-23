@@ -16,7 +16,6 @@ import {
   Clock,
   Brain,
   RefreshCw,
-  Play,
   Settings,
   ImageIcon,
   MessageSquare,
@@ -72,26 +71,6 @@ const PHASE_CONFIG = {
   learn: { icon: Target, label: 'Learning', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10' },
 };
 
-const SIMULATED_EVENTS: Omit<ZyraEvent, 'id' | 'timestamp'>[] = [
-  { phase: 'detect', message: 'Scanning store for revenue-impacting issues...', status: 'in_progress' },
-  { phase: 'detect', message: 'Analyzing product performance data across all categories', status: 'in_progress' },
-  { phase: 'detect', message: 'Found 3 products with high traffic but low conversion', status: 'completed', details: 'Revenue opportunity detected' },
-  { phase: 'decide', message: 'Calculating Revenue Priority Score for each candidate...', status: 'in_progress' },
-  { phase: 'decide', message: 'Evaluating "Premium Wireless Headphones" - 2,340 views, 0.8% conversion', status: 'in_progress' },
-  { phase: 'decide', message: 'Selected: Product optimization for highest revenue potential', status: 'completed', details: 'Confidence: 87%' },
-  { phase: 'execute', message: 'Creating snapshot of original product content...', status: 'in_progress' },
-  { phase: 'execute', message: 'Optimizing product title for conversion focus', status: 'in_progress' },
-  { phase: 'execute', message: 'Enhancing product description with value framing', status: 'in_progress' },
-  { phase: 'execute', message: 'Optimization applied safely - original preserved for rollback', status: 'completed', details: '1 credit used' },
-  { phase: 'prove', message: 'Monitoring revenue impact over 24-hour window...', status: 'in_progress' },
-  { phase: 'prove', message: 'Tracking conversion rate changes...', status: 'in_progress' },
-  { phase: 'prove', message: 'Revenue delta: +$127.40 in first 6 hours', status: 'completed', details: 'Positive trend confirmed' },
-  { phase: 'learn', message: 'Recording successful optimization pattern...', status: 'in_progress' },
-  { phase: 'learn', message: 'Updating store-specific intelligence model', status: 'in_progress' },
-  { phase: 'learn', message: 'Pattern saved: Value-focused descriptions increase conversions for this store', status: 'completed', details: 'Learning complete' },
-  { phase: 'detect', message: 'Continuing automated revenue monitoring...', status: 'in_progress' },
-  { phase: 'detect', message: 'Next scan scheduled in 15 minutes', status: 'completed' },
-];
 
 function TypewriterText({ text, onComplete }: { text: string; onComplete?: () => void }) {
   const [displayedText, setDisplayedText] = useState('');
@@ -179,12 +158,7 @@ function EventItem({ event, isTyping, onTypingComplete }: {
 type OptimizationMode = 'fast' | 'competitive';
 
 export default function ZyraAtWork() {
-  const [demoEvents, setDemoEvents] = useState<ZyraEvent[]>([]);
-  const [currentEventIndex, setCurrentEventIndex] = useState(0);
-  const [isTypingComplete, setIsTypingComplete] = useState(true);
-  const [showDemo, setShowDemo] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isInitializedRef = useRef(false);
   const [, setLocation] = useLocation();
   
   // Optimization mode preference (stored in localStorage)
@@ -222,66 +196,12 @@ export default function ZyraAtWork() {
   });
 
 
-  const realEvents: ZyraEvent[] = (activityData?.activities?.map(a => ({
+  const events: ZyraEvent[] = (activityData?.activities?.map(a => ({
     ...a,
     timestamp: new Date(a.timestamp),
   })) || []).reverse();
 
-  const hasRealData = realEvents.length > 0;
-  const events = showDemo ? demoEvents : realEvents;
-
-  useEffect(() => {
-    if (!showDemo) return;
-    if (isInitializedRef.current) return;
-    isInitializedRef.current = true;
-
-    const addNextEvent = () => {
-      if (currentEventIndex >= SIMULATED_EVENTS.length) {
-        setCurrentEventIndex(0);
-        setDemoEvents([]);
-        return;
-      }
-
-      const eventTemplate = SIMULATED_EVENTS[currentEventIndex];
-      const newEvent: ZyraEvent = {
-        ...eventTemplate,
-        id: `event-${Date.now()}-${currentEventIndex}`,
-        timestamp: new Date(),
-      };
-
-      setDemoEvents(prev => [...prev.slice(-15), newEvent]);
-      setIsTypingComplete(false);
-    };
-
-    addNextEvent();
-  }, [showDemo]);
-
-  useEffect(() => {
-    if (!showDemo || !isTypingComplete) return;
-
-    const delay = SIMULATED_EVENTS[currentEventIndex]?.status === 'completed' ? 2000 : 1500;
-    
-    const timer = setTimeout(() => {
-      const nextIndex = (currentEventIndex + 1) % SIMULATED_EVENTS.length;
-      
-      if (nextIndex === 0) {
-        setDemoEvents([]);
-      }
-      
-      const eventTemplate = SIMULATED_EVENTS[nextIndex];
-      const newEvent: ZyraEvent = {
-        ...eventTemplate,
-        id: `event-${Date.now()}-${nextIndex}`,
-        timestamp: new Date(),
-      };
-
-      setDemoEvents(prev => [...prev.slice(-15), newEvent]);
-      setCurrentEventIndex(nextIndex);
-      setIsTypingComplete(false);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [showDemo, isTypingComplete, currentEventIndex]);
+  const hasRealData = events.length > 0;
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -325,8 +245,7 @@ export default function ZyraAtWork() {
             ZYRA at Work
           </h1>
           <p className="text-slate-400 text-sm sm:text-base">
-            {showDemo ? 'Demo mode - See how ZYRA optimizes your store' : 
-             hasRealData ? 'Live activity from your revenue optimization loop' :
+            {hasRealData ? 'Live activity from your revenue optimization loop' :
              'No activity yet - Enable autopilot in Automation settings'}
           </p>
         </div>
@@ -341,26 +260,12 @@ export default function ZyraAtWork() {
             <RefreshCw className={`w-4 h-4 mr-1 ${isRefetching ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          {import.meta.env.DEV && (
-            <Button
-              variant={showDemo ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setShowDemo(!showDemo);
-                isInitializedRef.current = false;
-              }}
-              data-testid="button-toggle-demo"
-            >
-              <Play className="w-4 h-4 mr-1" />
-              {showDemo ? 'Show Live' : 'Demo Mode'}
-            </Button>
-          )}
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
-            hasRealData || showDemo ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-500/10 border border-slate-500/20'
+            hasRealData ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-500/10 border border-slate-500/20'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${hasRealData || showDemo ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
-            <span className={`text-xs font-medium ${hasRealData || showDemo ? 'text-emerald-400' : 'text-slate-400'}`}>
-              {showDemo ? 'Demo' : hasRealData ? 'Active' : 'Waiting'}
+            <div className={`w-2 h-2 rounded-full ${hasRealData ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+            <span className={`text-xs font-medium ${hasRealData ? 'text-emerald-400' : 'text-slate-400'}`}>
+              {hasRealData ? 'Active' : 'Waiting'}
             </span>
           </div>
         </div>
@@ -458,17 +363,15 @@ export default function ZyraAtWork() {
                 </div>
                 <p className="text-slate-400 mb-2">No activity yet</p>
                 <p className="text-slate-500 text-sm max-w-sm">
-                  {showDemo ? 'Starting demo mode...' : 
-                   'Enable autopilot in your Automation settings to see ZYRA working for you, or try Demo Mode to see how it works.'}
+                  Enable autopilot in your Automation settings to see ZYRA working for you.
                 </p>
               </div>
             ) : (
-              events.map((event, index) => (
+              events.map((event) => (
                 <EventItem 
                   key={event.id} 
                   event={event}
-                  isTyping={showDemo && index === events.length - 1 && !isTypingComplete}
-                  onTypingComplete={() => setIsTypingComplete(true)}
+                  isTyping={false}
                 />
               ))
             )}
