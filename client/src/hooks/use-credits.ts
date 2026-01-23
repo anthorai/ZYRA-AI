@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { getToolCredits, getToolCreditsPerProduct } from "@shared/ai-credits";
 
 export interface CreditBalance {
@@ -23,11 +24,14 @@ export interface CreditCheckResult {
 
 export function useCredits() {
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+  const isAuthenticated = !!user && !authLoading;
 
   const { data: balance, isLoading, refetch } = useQuery<CreditBalance>({
     queryKey: ['/api/credits/balance'],
     refetchInterval: 60000,
     staleTime: 30000,
+    enabled: isAuthenticated, // Only fetch when user is authenticated
   });
 
   const checkCreditsMutation = useMutation({

@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TrialStatus {
   isOnTrial: boolean;
@@ -16,10 +17,14 @@ interface MarkWelcomeResult {
 }
 
 export function useTrialStatus() {
+  const { user, loading: authLoading } = useAuth();
+  const isAuthenticated = !!user && !authLoading;
+  
   const { data: trialStatus, isLoading, error } = useQuery<TrialStatus>({
     queryKey: ['/api/trial/status'],
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
+    enabled: isAuthenticated, // Only fetch when user is authenticated
   });
 
   const markWelcomeShownMutation = useMutation<MarkWelcomeResult, Error>({
