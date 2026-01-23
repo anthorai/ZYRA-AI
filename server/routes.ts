@@ -4535,6 +4535,107 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== PRODUCT INTELLIGENCE API (ZYRA ONE-MODULE LOOP) =====
+  // These endpoints power the Product Revenue Intelligence system
+  
+  // Get intelligence summary for all products (top summary bar)
+  app.get("/api/products/intelligence/summary", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { getProductIntelligenceSummary } = await import('./lib/product-intelligence-engine');
+      const summary = await getProductIntelligenceSummary(userId);
+      res.json(summary);
+    } catch (error: any) {
+      console.error("Get product intelligence summary error:", error);
+      res.status(500).json({ message: "Failed to fetch product intelligence summary" });
+    }
+  });
+
+  // Get intelligence for a specific product
+  app.get("/api/products/intelligence/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      
+      const product = await supabaseStorage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      if (product.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const { getProductIntelligence } = await import('./lib/product-intelligence-engine');
+      const intelligence = await getProductIntelligence(userId, product);
+      res.json(intelligence);
+    } catch (error: any) {
+      console.error("Get product intelligence error:", error);
+      res.status(500).json({ message: "Failed to fetch product intelligence" });
+    }
+  });
+
+  // Get action history for a product (Memory Moat - read-only)
+  app.get("/api/products/actions/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      
+      // Verify product belongs to user
+      const product = await supabaseStorage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      if (product.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const history = await supabaseStorage.getProductActionHistory(userId, productId);
+      res.json(history);
+    } catch (error: any) {
+      console.error("Get product action history error:", error);
+      res.status(500).json({ message: "Failed to fetch product action history" });
+    }
+  });
+
+  // Update product autonomy level (plan-enforced)
+  app.patch("/api/products/autonomy/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { productId } = req.params;
+      const { autonomyLevel } = req.body;
+      
+      // Verify product belongs to user
+      const product = await supabaseStorage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      if (product.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      // Get user plan and enforce autonomy limits
+      const user = await supabaseStorage.getUserById(userId);
+      const userPlan = user?.plan || 'trial';
+      const { getAutonomyLevelForPlan } = await import('./lib/product-intelligence-engine');
+      const allowedLevel = getAutonomyLevelForPlan(userPlan, autonomyLevel);
+      
+      // If requested level exceeds plan, return what's allowed
+      if (allowedLevel !== autonomyLevel) {
+        return res.status(400).json({ 
+          message: `Your ${userPlan} plan only allows ${allowedLevel} autonomy. Upgrade to enable higher autonomy.`,
+          allowedLevel,
+          requestedLevel: autonomyLevel
+        });
+      }
+      
+      await supabaseStorage.updateProduct(productId, { autonomyLevel: allowedLevel });
+      res.json({ message: "Autonomy level updated", autonomyLevel: allowedLevel });
+    } catch (error: any) {
+      console.error("Update product autonomy error:", error);
+      res.status(500).json({ message: "Failed to update product autonomy" });
+    }
+  });
+
   app.get("/api/products/:id", requireAuth, async (req, res) => {
     try {
       const product = await supabaseStorage.getProduct(req.params.id);

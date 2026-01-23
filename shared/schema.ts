@@ -34,6 +34,12 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").default(sql`NOW()`),
 });
 
+// ZYRA Protection Status for product intelligence
+export const zyraProtectionStatusEnum = pgEnum('zyra_protection_status', ['protecting', 'monitoring', 'not_active']);
+
+// Autonomy level for plan-based execution
+export const productAutonomyLevelEnum = pgEnum('product_autonomy_level', ['manual', 'low_risk_auto', 'full_autonomy']);
+
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -51,6 +57,14 @@ export const products = pgTable("products", {
   tags: text("tags"),
   optimizedCopy: jsonb("optimized_copy"),
   isOptimized: boolean("is_optimized").default(false),
+  // Product Revenue Intelligence fields (ZYRA ONE-MODULE LOOP)
+  revenueHealthScore: integer("revenue_health_score").default(0), // 0-100 score
+  protectionStatus: text("protection_status").default('not_active'), // protecting, monitoring, not_active
+  revenueAdded: numeric("revenue_added", { precision: 12, scale: 2 }).default("0"), // Revenue attributed to ZYRA
+  confidenceIndex: integer("confidence_index").default(0), // 0-100 ZYRA confidence
+  autonomyLevel: text("autonomy_level").default('manual'), // manual, low_risk_auto, full_autonomy
+  lastZyraActionAt: timestamp("last_zyra_action_at"), // Last ZYRA optimization
+  zyraActionsCount: integer("zyra_actions_count").default(0), // Total ZYRA actions on this product
   createdAt: timestamp("created_at").default(sql`NOW()`),
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
 }, (table) => [
@@ -58,6 +72,8 @@ export const products = pgTable("products", {
   index('products_is_optimized_idx').on(table.isOptimized),
   index('products_created_at_idx').on(table.createdAt),
   uniqueIndex('products_user_shopify_unique').on(table.userId, table.shopifyId),
+  index('products_revenue_health_idx').on(table.revenueHealthScore),
+  index('products_protection_status_idx').on(table.protectionStatus),
 ]);
 
 export const seoMeta = pgTable("seo_meta", {
@@ -97,6 +113,34 @@ export const productSeoHistory = pgTable("product_seo_history", {
 
 export type ProductSeoHistory = typeof productSeoHistory.$inferSelect;
 export type InsertProductSeoHistory = typeof productSeoHistory.$inferInsert;
+
+// Product Action History - ZYRA's memory moat (read-only timeline of all actions)
+// This creates switching cost: leaving ZYRA resets this learned history
+export const productActionHistory = pgTable("product_action_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  actionType: text("action_type").notNull(), // seo_optimized, content_refreshed, pricing_adjusted, description_enhanced
+  actionDescription: text("action_description").notNull(), // Human-readable action description
+  expectedRevenueImpact: numeric("expected_revenue_impact", { precision: 12, scale: 2 }), // Predicted revenue impact
+  actualRevenueImpact: numeric("actual_revenue_impact", { precision: 12, scale: 2 }), // Measured revenue impact
+  confidenceBefore: integer("confidence_before"), // ZYRA confidence before action
+  confidenceAfter: integer("confidence_after"), // ZYRA confidence after action
+  status: text("status").default('completed'), // pending, executing, completed, monitoring, rolled_back
+  rollbackData: jsonb("rollback_data"), // Data needed to rollback this action
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index('product_action_history_user_id_idx').on(table.userId),
+  index('product_action_history_product_id_idx').on(table.productId),
+  index('product_action_history_created_at_idx').on(table.createdAt),
+]);
+
+export type ProductActionHistory = typeof productActionHistory.$inferSelect;
+export type InsertProductActionHistory = typeof productActionHistory.$inferInsert;
+
+export const insertProductActionHistorySchema = createInsertSchema(productActionHistory)
+  .omit({ id: true, createdAt: true });
 
 // Helper transform to coerce nullable arrays into safe string arrays
 const stringArrayFromNullable = z

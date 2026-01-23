@@ -107,6 +107,12 @@ export interface ISupabaseStorage {
   updateSeoMeta(id: string, updates: Partial<SeoMeta>): Promise<SeoMeta>;
   saveProductSEOHistory(data: InsertProductSeoHistory): Promise<ProductSeoHistory>;
   getProductSEOHistory(userId: string): Promise<ProductSeoHistory[]>;
+  
+  // Product Action History (ZYRA Memory Moat)
+  getProductActionHistory(userId: string, productId?: string): Promise<any[]>;
+  createProductActionHistory(data: any): Promise<any>;
+  updateProductActionHistory(id: string, updates: any): Promise<any>;
+  incrementProductActionsCount(productId: string): Promise<void>;
 
   // Campaign methods
   getCampaigns(userId: string): Promise<Campaign[]>;
@@ -918,6 +924,97 @@ export class SupabaseStorage implements ISupabaseStorage {
     
     if (error) throw new Error(`Failed to get product SEO history: ${error.message}`);
     return data || [];
+  }
+
+  // Product Action History (ZYRA Memory Moat)
+  async getProductActionHistory(userId: string, productId?: string): Promise<any[]> {
+    try {
+      let query = supabase
+        .from('product_action_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (productId) {
+        query = query.eq('product_id', productId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      console.error('Failed to get product action history:', error);
+      return [];
+    }
+  }
+
+  async createProductActionHistory(data: any): Promise<any> {
+    try {
+      const { data: result, error } = await supabase
+        .from('product_action_history')
+        .insert({
+          user_id: data.userId,
+          product_id: data.productId,
+          action_type: data.actionType,
+          action_description: data.actionDescription,
+          expected_revenue_impact: data.expectedRevenueImpact,
+          actual_revenue_impact: data.actualRevenueImpact,
+          status: data.status || 'pending',
+          rollback_data: data.rollbackData,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return result;
+    } catch (error: any) {
+      console.error('Failed to create product action history:', error);
+      return null;
+    }
+  }
+
+  async updateProductActionHistory(id: string, updates: any): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('product_action_history')
+        .update({
+          status: updates.status,
+          actual_revenue_impact: updates.actualRevenueImpact,
+          completed_at: updates.completedAt,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error: any) {
+      console.error('Failed to update product action history:', error);
+      return null;
+    }
+  }
+
+  async incrementProductActionsCount(productId: string): Promise<void> {
+    try {
+      const { data: product } = await supabase
+        .from('products')
+        .select('zyra_actions_count')
+        .eq('id', productId)
+        .single();
+      
+      const currentCount = product?.zyra_actions_count || 0;
+      
+      await supabase
+        .from('products')
+        .update({ 
+          zyra_actions_count: currentCount + 1,
+          last_zyra_action_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId);
+    } catch (error: any) {
+      console.error('Failed to increment product actions count:', error);
+    }
   }
 
   // Campaign methods

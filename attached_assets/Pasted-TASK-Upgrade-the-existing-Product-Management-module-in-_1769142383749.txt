@@ -1,0 +1,209 @@
+TASK:
+Upgrade the existing Product Management module in ZYRA AI to align with
+the ONE-MODULE LOOP system (DETECT → DECIDE → EXECUTE → PROVE → LEARN)
+and make it significantly more valuable than standard Shopify product dashboards.
+
+The Product Management module must become a
+“Product Revenue Intelligence & Control System”,
+not a product editor or inventory tool.
+
+================================================
+CORE PRINCIPLES (NON-NEGOTIABLE)
+================================================
+
+1. Merchants must NOT manually edit products.
+2. Product Management is for supervision, trust, and revenue visibility.
+3. Every product must show how ZYRA is protecting, optimizing,
+   and contributing revenue to it.
+4. Removing ZYRA must feel like losing product-level intelligence forever.
+
+================================================
+KEEP EXISTING FEATURES (DO NOT REMOVE)
+================================================
+
+- Product sync function
+- Push / publish function
+- Total products count
+- Synced products count
+- Optimized products count
+- Product cards with:
+  • Image
+  • Name
+  • Category
+  • Price
+
+================================================
+ADD NEW INTELLIGENCE LAYERS (MANDATORY)
+================================================
+
+------------------------------------------------
+1. PRODUCT REVENUE HEALTH SCORE
+------------------------------------------------
+
+For every product, calculate and display:
+
+Revenue Health Score (0–100)
+
+Score must be AI-generated using:
+- Conversion rate vs category average
+- Traffic vs revenue mismatch
+- SEO decay signals
+- Cart abandonment involvement
+- Upsell contribution
+- Historical ZYRA success on this product
+
+UI:
+- Display score prominently on product card
+- Color-coded:
+  • Green (Healthy)
+  • Yellow (At Risk)
+  • Red (Revenue Leak)
+
+Purpose:
+Instantly show which products are safe, risky, or leaking money.
+
+------------------------------------------------
+2. ZYRA PROTECTION STATUS (FEAR-OF-LOSS LAYER)
+------------------------------------------------
+
+Each product must show one of three statuses:
+
+- 🟢 ZYRA Protecting
+- 🟡 ZYRA Monitoring
+- 🔴 ZYRA Not Active
+
+Tooltip text:
+“Without ZYRA, this product will stop auto-optimizing and revenue monitoring.”
+
+Purpose:
+Make ZYRA’s role visible and irreplaceable.
+
+------------------------------------------------
+3. REVENUE ADDED BY ZYRA (PER PRODUCT)
+------------------------------------------------
+
+Add a column or badge:
+
+“Revenue Added by ZYRA”
+
+Value:
+- Absolute revenue amount (+$ / ₹)
+- Based only on proven attribution
+
+Rules:
+- Must show 0 for new products
+- Must never exaggerate
+
+Purpose:
+Clear proof of value and retention anchor.
+
+------------------------------------------------
+4. PRODUCT ACTION HISTORY (MEMORY MOAT)
+------------------------------------------------
+
+Each product must have a locked, read-only timeline:
+
+Example:
+- Jan 10 → SEO optimized → Expected +$180 → Actual +$147
+- Jan 22 → Content refreshed → +$90
+- Feb 02 → Monitoring → Stable
+
+Rules:
+- Cannot be edited or exported
+- Tied to ZYRA’s learning loop
+
+Purpose:
+Switching tools resets this history → high switching cost.
+
+------------------------------------------------
+5. PRODUCT CONFIDENCE INDEX
+------------------------------------------------
+
+Display:
+“ZYRA Confidence: XX% ↑ / ↓”
+
+Meaning:
+How confident ZYRA is in future decisions for this product,
+based on historical outcomes.
+
+Rules:
+- Confidence must change over time
+- Confidence resets if ZYRA is removed
+
+Purpose:
+Make learning tangible and irreplaceable.
+
+------------------------------------------------
+6. AUTONOMY CONTROL (PLAN-BASED)
+------------------------------------------------
+
+Per product autonomy setting:
+
+- Manual approval required
+- Auto-run low-risk actions
+- Full autonomy
+
+Rules:
+- Starter+ → Manual only
+- Growth → Partial autonomy
+- Scale → Full autonomy
+
+Purpose:
+Natural upgrade pressure without marketing.
+
+================================================
+PRODUCT PAGE STRUCTURE
+================================================
+
+Top Summary Bar:
+- Total Products
+- Revenue Protected by ZYRA ($)
+- Products at Risk
+- Products Fully Optimized
+
+Product Cards:
+- Image, Name, Category, Price
+- Revenue Health Score
+- ZYRA Protection Status
+- Revenue Added by ZYRA
+- Confidence %
+
+Clicking a product opens:
+- Action history
+- Revenue proof
+- Rollback button
+- Autonomy control
+
+================================================
+WHAT MUST NOT BE ADDED
+================================================
+
+DO NOT add:
+- Manual product editors
+- SEO keyword tables
+- Ranking charts
+- Template editors
+- CSV import/export
+- Custom configurations
+
+ZYRA must remain the operator, not the user.
+
+================================================
+INTEGRATION WITH LOOP
+================================================
+
+- DETECT: Revenue health scoring & risk detection
+- DECIDE: Product-level decision logging
+- EXECUTE: Auto-applied optimizations
+- PROVE: Revenue added per product
+- LEARN: Confidence index updates
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Backend logic for scoring, confidence, attribution
+- Frontend UI updates for product cards & details
+- Plan-based autonomy enforcement
+- Inline comments explaining how this builds
+  trust, retention, and switching cost
