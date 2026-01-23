@@ -113,6 +113,36 @@ The "Next Move" feature is ZYRA's single authoritative revenue decision interfac
 - Real-time status updates (Ready → Executing → Monitoring → Completed)
 - Rollback guarantee visible for every action
 
+### ZYRA Detection Engine (3-Layer Architecture)
+High-performance revenue opportunity detection with guaranteed ≤10s response time.
+
+**Layer 1 - Background Precomputation Worker** (`server/lib/detection-precompute.ts`):
+- Runs on schedule and when store data changes
+- Precomputes product funnel stats, friction scores, and revenue signals
+- Populates `detectionCache` table for fast reads
+- No Shopify API calls during detection - all data is cached
+
+**Layer 2 - Fast Detect** (`server/lib/fast-detection-engine.ts`):
+- Hard 10-second timeout with abort signal mechanism
+- Reads only from precomputed cache - no Shopify API calls
+- Detection phases: `detect_started` → `cache_loaded` → `friction_identified` → `decision_ready`
+- Abort guards after every await to prevent post-timeout writes
+- Returns `lastValidNextMoveId` on timeout for fallback messaging
+
+**Layer 3 - Deep Detect** (`server/lib/deep-detection-engine.ts`):
+- Async worker for optional accuracy improvements
+- Triggered by stale cache (>12hr) or low confidence scores
+- Does not block Fast Detect response
+
+**API Endpoints**:
+- `GET /api/zyra/detection-status` - Get current detection phase (polled at 1s intervals)
+- `POST /api/zyra/detect` - Trigger Fast Detect with timeout
+
+**Frontend Integration** (`client/src/components/dashboard/zyra-at-work.tsx`):
+- ProgressStages component synced to backend detection phases
+- UI completion tied strictly to `decision_ready` phase (not timer-based)
+- Polling stops when detection completes or times out
+
 ### Credit Consumption System
 Plan-aware credit consumption where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs.
 
