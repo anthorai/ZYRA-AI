@@ -1,0 +1,186 @@
+TASK:
+Upgrade the existing “Next Move” feature in ZYRA AI into a
+high-trust, enterprise-grade Revenue Decision Engine.
+
+The goal is to make “Next Move” feel:
+- Powerful (AI owns the decision)
+- Trustworthy (clear reasoning + safety)
+- Valuable (obvious revenue upside)
+- Unbeatable (features competitors don’t have)
+
+================================================
+CORE PRINCIPLE (NON-NEGOTIABLE)
+================================================
+
+“Next Move” is NOT a suggestion.
+
+It is:
+- A revenue decision ZYRA has already made
+- Backed by data, reasoning, and prediction
+- Executable with one click
+- Fully reversible if it fails
+
+Merchants NEVER perform manual work.
+They only approve, monitor, or rollback.
+
+================================================
+NEXT MOVE v2 — REQUIRED UPGRADE LAYERS
+================================================
+
+Add THREE intelligence layers to the existing Next Move card
+WITHOUT adding complexity or more buttons.
+
+------------------------------------------------
+LAYER 1: DECISION TRANSPARENCY (WHY THIS MOVE)
+------------------------------------------------
+
+Add a collapsible section titled:
+
+“Why ZYRA chose this move”
+
+This section must explain the decision in plain language.
+No charts. No jargon.
+
+Example bullets:
+- Purchase patterns show Product A → Product B correlation
+- 38% of buyers viewed both products
+- Similar stores increased AOV by 14–19%
+- ZYRA confidence increased after recent wins
+
+RULES:
+- This section is collapsed by default
+- Expands on click
+- Builds trust without giving control
+
+------------------------------------------------
+LAYER 2: OPPORTUNITY COST (WHAT IF YOU DO NOTHING)
+------------------------------------------------
+
+Add a small but visible line:
+
+“If skipped, estimated revenue left on table this month: $X”
+
+RULES:
+- Must be based on real projections
+- Must update dynamically
+- Must never exaggerate
+
+PURPOSE:
+This reframes the decision from:
+“Should I run this?”
+to
+“I’m losing money if I don’t.”
+
+------------------------------------------------
+LAYER 3: REVERSIBLE COMMITMENT (SAFETY PROMISE)
+------------------------------------------------
+
+Upgrade “Rollback Guarantee” into a promise:
+
+“ZYRA will automatically undo this if revenue drops.”
+
+RULES:
+- This is a SYSTEM GUARANTEE, not a tooltip
+- Rollback snapshot must be created before execution
+- Rollback must be one-click and instant
+
+This removes fear and makes one-click execution acceptable.
+
+================================================
+UPDATED NEXT MOVE CARD STRUCTURE
+================================================
+
+The page must still show ONLY ONE card.
+
+Structure:
+
+Title:
+🧠 Next Best Revenue Move
+
+Primary Info:
+- Action name
+- Product name (if applicable)
+- Expected revenue impact ($ / ₹)
+- Confidence score (%)
+- Risk level (Low / Medium / High)
+
+Middle (collapsed by default):
+- Why ZYRA chose this move
+- What happens if skipped
+
+Bottom:
+- Approve & Run (Starter+)
+- Auto-run toggle / status (Growth / Scale)
+- Rollback promise text
+
+NO additional configuration.
+NO secondary actions.
+
+================================================
+PLAN-AWARE BEHAVIOR
+================================================
+
+Starter+:
+- Always shows “Approve & Run”
+- Emphasize safety + rollback
+- No auto-execution
+
+Growth:
+- Auto-run low-risk moves
+- Approval required for medium-risk
+- Show reduced explanation text
+
+Scale:
+- Auto-run by default
+- Next Move page becomes informational
+- Emphasis on monitoring & proof
+
+================================================
+CREDIT JUSTIFICATION (IMPORTANT)
+================================================
+
+When showing credit cost, always pair it with value:
+
+Example:
+“Action cost: 350 credits
+Estimated return: $1,250
+≈ $3.57 per credit”
+
+This reframes credits as:
+Growth fuel, not a limitation.
+
+================================================
+LANGUAGE RULES
+================================================
+
+DO NOT use:
+- Suggestion
+- Recommendation
+- Configure
+- Edit
+- Tool
+
+ALWAYS use:
+- ZYRA detected
+- ZYRA decided
+- ZYRA will execute
+- ZYRA will rollback if needed
+
+================================================
+INTEGRATION RULES
+================================================
+
+- Executed Next Moves must appear in “ZYRA At Work”
+- Rollback available from both pages
+- Completion must trigger learning update
+- Next Move must auto-refresh after completion
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Updated Next Move UI logic
+- Backend support for reasoning + opportunity cost
+- Rollback promise enforcement
+- Plan-aware behavior
+- Inline comments explaining why this design builds trust

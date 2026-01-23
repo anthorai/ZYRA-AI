@@ -18,8 +18,18 @@ import {
   Loader2,
   DollarSign,
   Target,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  CircleDollarSign,
+  ShieldCheck
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface NextMoveAction {
   id: string;
@@ -39,6 +49,12 @@ interface NextMoveAction {
   score: number;
   opportunityId: string;
   rollbackAvailable: boolean;
+  // Layer 1: Decision Transparency
+  decisionReasons: string[];
+  // Layer 2: Opportunity Cost
+  opportunityCostMonthly: number;
+  // Credit value justification
+  creditValueRatio: number;
 }
 
 interface NextMoveResponse {
@@ -85,6 +101,7 @@ export default function NextMove() {
   const queryClient = useQueryClient();
   const [isApproving, setIsApproving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isReasonsOpen, setIsReasonsOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery<NextMoveResponse>({
     queryKey: ['/api/next-move'],
@@ -240,11 +257,11 @@ export default function NextMove() {
         <Card className="border-dashed border-2 border-muted-foreground/20">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-muted-foreground" />
+              <Brain className="w-8 h-8 text-muted-foreground animate-pulse" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Actions Detected Yet</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">ZYRA is Analyzing Your Store</h3>
             <p className="text-muted-foreground max-w-md mb-6">
-              ZYRA continuously monitors your store for revenue opportunities. When ZYRA detects a high-impact action, it will appear here.
+              ZYRA continuously monitors your store for revenue opportunities. When ZYRA decides on the next best action, it will appear here ready for execution.
             </p>
             <Button
               variant="outline"
@@ -255,12 +272,12 @@ export default function NextMove() {
               {generateDemoMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  ZYRA is deciding...
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Generate Demo Opportunity
+                  Simulate ZYRA Decision
                 </>
               )}
             </Button>
@@ -341,24 +358,29 @@ export default function NextMove() {
 
     if (data?.canAutoExecute && !data?.requiresApproval) {
       return (
-        <Button 
-          className="w-full"
-          onClick={handleExecute}
-          disabled={isExecuting || executeMutation.isPending}
-          data-testid="button-execute"
-        >
-          {isExecuting || executeMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Running...
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4 mr-2" />
-              Run Automatically
-            </>
-          )}
-        </Button>
+        <div className="space-y-2">
+          <Button 
+            className="w-full"
+            onClick={handleExecute}
+            disabled={isExecuting || executeMutation.isPending}
+            data-testid="button-execute"
+          >
+            {isExecuting || executeMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ZYRA is executing...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4 mr-2" />
+                ZYRA Will Execute Now
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            Auto-execution enabled for your plan
+          </p>
+        </div>
       );
     }
 
@@ -373,17 +395,17 @@ export default function NextMove() {
           {isApproving || approveMutation.isPending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Approving...
+              ZYRA is preparing...
             </>
           ) : (
             <>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Approve & Run
+              <Zap className="w-4 h-4 mr-2" />
+              Let ZYRA Execute
             </>
           )}
         </Button>
         <p className="text-xs text-center text-muted-foreground">
-          {nextMove.creditCost} credits will be used
+          ZYRA will execute this decision and monitor results
         </p>
       </div>
     );
@@ -436,11 +458,53 @@ export default function NextMove() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5">
+          {/* Main reason - ZYRA's decision statement */}
           <div className="p-4 rounded-lg bg-muted/30 border border-muted" data-testid="card-reason">
             <p className="text-sm text-foreground leading-relaxed" data-testid="text-reason">{nextMove.reason}</p>
           </div>
 
+          {/* Layer 1: Decision Transparency - Collapsible "Why ZYRA chose this move" */}
+          <Collapsible open={isReasonsOpen} onOpenChange={setIsReasonsOpen}>
+            <CollapsibleTrigger asChild>
+              <button 
+                className="flex items-center justify-between w-full p-3 rounded-lg bg-primary/5 border border-primary/20 text-left group"
+                data-testid="button-toggle-reasons"
+              >
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Why ZYRA chose this move</span>
+                </div>
+                {isReasonsOpen ? (
+                  <ChevronUp className="w-4 h-4 text-primary" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-primary" />
+                )}
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <div className="p-4 rounded-lg bg-muted/20 border border-muted space-y-2" data-testid="card-decision-reasons">
+                {nextMove.decisionReasons?.map((reason, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                    <p className="text-sm text-muted-foreground">{reason}</p>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Layer 2: Opportunity Cost - What if you do nothing */}
+          {nextMove.opportunityCostMonthly > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-500/5 border border-amber-500/20" data-testid="opportunity-cost">
+              <CircleDollarSign className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span className="text-sm text-amber-400">
+                If skipped, estimated revenue left on table this month: <span className="font-semibold">${nextMove.opportunityCostMonthly.toLocaleString()}</span>
+              </span>
+            </div>
+          )}
+
+          {/* Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" data-testid="metrics-grid">
             <div className="p-3 rounded-lg bg-muted/20 text-center" data-testid="metric-revenue">
               <DollarSign className="w-5 h-5 text-emerald-400 mx-auto mb-1" />
@@ -464,12 +528,15 @@ export default function NextMove() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-            <div className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm text-emerald-400">Rollback Guarantee</span>
+          {/* Layer 3: Reversible Commitment - System Guarantee Promise */}
+          <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20" data-testid="rollback-promise">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-emerald-400">ZYRA will automatically undo this if revenue drops</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Rollback snapshot created before execution. One-click instant recovery.</p>
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground">Instant undo available</span>
           </div>
 
           {renderActionButton()}
@@ -534,9 +601,33 @@ export default function NextMove() {
         return null;
       })()}
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground" data-testid="credits-info">
-        <span data-testid="text-credits-remaining">Credits remaining: {data?.creditsRemaining?.toLocaleString() || 0} / {data?.creditLimit?.toLocaleString() || 0}</span>
-        <span data-testid="text-action-cost">Action cost: {nextMove.creditCost} credits</span>
+      {/* Credit Justification - reframe credits as growth fuel */}
+      <div className="p-3 rounded-lg bg-muted/20 border border-muted" data-testid="credits-info">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground" data-testid="text-credits-remaining">
+              Credits available: <span className="text-foreground font-medium">{data?.creditsRemaining?.toLocaleString() || 0}</span> / {data?.creditLimit?.toLocaleString() || 0}
+            </span>
+          </div>
+          {/* Full credit value justification statement */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-testid="credit-value-statement">
+            <span className="text-muted-foreground">
+              Action cost: <span className="text-foreground font-medium">{nextMove.creditCost} credits</span>
+            </span>
+            <span className="text-muted-foreground hidden sm:inline">·</span>
+            <span className="text-muted-foreground">
+              Estimated return: <span className="text-emerald-400 font-medium">${nextMove.expectedRevenue.toLocaleString()}</span>
+            </span>
+            {nextMove.creditValueRatio > 0 && (
+              <>
+                <span className="text-muted-foreground hidden sm:inline">·</span>
+                <span className="text-emerald-400 font-medium" data-testid="text-credit-value">
+                  ≈ ${nextMove.creditValueRatio.toFixed(2)} per credit
+                </span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
