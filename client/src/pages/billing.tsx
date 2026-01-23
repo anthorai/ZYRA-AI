@@ -148,6 +148,48 @@ const planDetails: Record<string, PlanDetails> = {
       }
     ]
   },
+  "Starter": {
+    credits: "1,000 Credits / month",
+    tagline: "Smart growth with full control",
+    categories: [
+      {
+        name: "Revenue Detection & Decisions",
+        features: [
+          "ZYRA detects all revenue opportunities",
+          "Manual-approval mode (you approve)",
+          "Full revenue proof tracking"
+        ]
+      },
+      {
+        name: "Product Optimization",
+        features: [
+          "ZYRA optimizes products (one at a time)",
+          "AI-generated SEO titles & meta",
+          "Image alt-text enhancement",
+          "Basic brand voice intelligence"
+        ]
+      },
+      {
+        name: "Cart Recovery & Upsells",
+        features: [
+          "ZYRA recovers carts (SMS or email)",
+          "One post-purchase upsell rule"
+        ]
+      },
+      {
+        name: "Google Intelligence",
+        features: ["Real-time SERP analysis (basic depth)"]
+      },
+      {
+        name: "Safety & Transparency",
+        features: [
+          "Live ZYRA At Work view",
+          "One-click rollback",
+          "All actions require your approval"
+        ]
+      }
+    ]
+  },
   "Starter+": {
     credits: "1,000 Credits / month",
     tagline: "Smart growth with full control",
@@ -235,6 +277,45 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Scale": {
+    credits: "15,000 Credits / month",
+    tagline: "Hands-free revenue engine",
+    categories: [
+      {
+        name: "Full Autonomy",
+        features: [
+          "Everything in Growth",
+          "ZYRA operates with minimal supervision",
+          "Per-product & per-action autonomy controls"
+        ]
+      },
+      {
+        name: "Enterprise Optimization",
+        features: [
+          "Large-scale bulk optimizations",
+          "Advanced upsell strategies",
+          "Aggressive learning loops"
+        ]
+      },
+      {
+        name: "Deep Google Intelligence",
+        features: [
+          "Real-time SERP analysis (advanced depth)",
+          "Search intent modeling",
+          "Competitor content modeling",
+          "Outranking-focused strategies"
+        ]
+      },
+      {
+        name: "Priority Everything",
+        features: [
+          "Priority execution queue",
+          "Fastest AI processing",
+          "Premium support access"
+        ]
+      }
+    ]
+  },
+  "Pro": {
     credits: "15,000 Credits / month",
     tagline: "Hands-free revenue engine",
     categories: [
