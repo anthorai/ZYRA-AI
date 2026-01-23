@@ -84,12 +84,12 @@ export default function Landing() {
       period: "7 days",
       icon: <Gift className="w-8 h-8" />,
       badge: "Risk-Free",
-      description: "Explore ZYRA features",
+      description: "Explore ZYRA's revenue detection",
       features: [
         "100 credits included",
-        "Full ZYRA capabilities",
+        "ZYRA detects all opportunities",
         "Manual approval mode",
-        "One-click rollback",
+        "One-click rollback protection",
         "Email support"
       ],
       popular: false
@@ -100,15 +100,15 @@ export default function Landing() {
       annualPrice: "$39",
       period: "per month",
       icon: <Zap className="w-8 h-8" />,
-      badge: "For Beginners",
-      description: "Powerful but cautious assistant",
+      badge: "Smart Growth",
+      description: "Smart growth with full control",
       features: [
         "1,000 credits / month",
-        "Manual approval required",
-        "Standard execution speed",
-        "Product SEO optimization",
-        "Cart recovery actions",
-        "Brand voice memory"
+        "ZYRA detects revenue opportunities",
+        "You approve before ZYRA acts",
+        "ZYRA optimizes product SEO",
+        "ZYRA recovers abandoned carts",
+        "Basic brand voice intelligence"
       ],
       popular: false
     },
@@ -119,14 +119,14 @@ export default function Landing() {
       period: "per month",
       icon: <Award className="w-8 h-8" />,
       badge: "Most Popular",
-      description: "Trusted autonomous operator",
+      description: "Faster growth with trusted autonomy",
       features: [
         "6,000 credits / month",
-        "Semi-autonomous mode",
-        "Fast execution speed",
-        "Auto-runs low-risk actions",
-        "Competitive intelligence",
-        "Priority support"
+        "ZYRA auto-runs low-risk actions",
+        "ZYRA optimizes products in bulk",
+        "Full brand voice intelligence",
+        "Google competitor analysis",
+        "Priority execution speed"
       ],
       popular: true
     },
@@ -136,15 +136,15 @@ export default function Landing() {
       annualPrice: "$399",
       period: "per month",
       icon: <Crown className="w-8 h-8" />,
-      badge: "Full Power",
+      badge: "Full Autonomy",
       description: "Hands-free revenue engine",
       features: [
         "15,000 credits / month",
-        "Full autonomous mode",
-        "Priority execution speed",
-        "White-glove onboarding",
-        "Dedicated support",
-        "Enterprise SLA"
+        "ZYRA operates autonomously",
+        "Per-product autonomy controls",
+        "Deep Google SERP intelligence",
+        "Outranking-focused strategies",
+        "Priority everything"
       ],
       popular: false
     }
