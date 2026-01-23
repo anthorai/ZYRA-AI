@@ -51,7 +51,7 @@ function HealthScoreBadge({ score, category }: { score: number; category: string
   
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger>
         <Badge 
           variant="outline" 
           className={`${colorClass} font-semibold text-xs px-2 py-0.5`}

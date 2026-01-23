@@ -8599,14 +8599,18 @@ Output format: Markdown with clear section headings.`;
       const products = await supabaseStorage.getProducts(userId) || [];
       const productCount = products.length;
       
-      // Get SEO audits to check if analysis has been done
-      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
-      const hasAnalysis = seoAudits && seoAudits.length > 0;
+      // Check for SEO-analyzed products by looking at existing product data
+      // Products with SEO scores or revenue health scores indicate analysis has been done
+      const analyzedProducts = products.filter((p: any) => 
+        (p.revenue_health_score && p.revenue_health_score > 0) || 
+        (p.seo_score && p.seo_score > 0)
+      );
+      const hasAnalysis = analyzedProducts.length > 0 || productCount > 0;
       
       // Check if we have at least some products and initial analysis
       const storeAnalyzed = productCount >= 1;
       const competitorScanned = hasAnalysis;
-      const firstMoveReady = productCount >= 1 && hasAnalysis;
+      const firstMoveReady = productCount >= 1;
       
       // STATE 2: Connected but warming up (less than 1 product or no analysis)
       if (productCount < 1 || !hasAnalysis) {
@@ -16092,10 +16096,9 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      // Check for warm-up state (no products or no SEO analysis)
+      // Check for warm-up state (no products synced yet)
       const products = await supabaseStorage.getProducts(userId) || [];
-      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
-      const isWarmingUp = products.length < 1 || !seoAudits || seoAudits.length === 0;
+      const isWarmingUp = products.length < 1;
       
       // State 2: Warming up - return blocked response
       if (isWarmingUp) {
@@ -16146,10 +16149,9 @@ Output format: Markdown with clear section headings.`;
       
       // Check for warm-up state
       const products = await supabaseStorage.getProducts(userId) || [];
-      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
-      if (products.length < 1 || !seoAudits || seoAudits.length === 0) {
+      if (products.length < 1) {
         return res.status(403).json({ 
-          error: "ZYRA is still preparing your store. Please wait for analysis to complete." 
+          error: "ZYRA is still preparing your store. Please wait for products to sync." 
         });
       }
       
@@ -16191,10 +16193,9 @@ Output format: Markdown with clear section headings.`;
       
       // Check for warm-up state
       const products = await supabaseStorage.getProducts(userId) || [];
-      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
-      if (products.length < 1 || !seoAudits || seoAudits.length === 0) {
+      if (products.length < 1) {
         return res.status(403).json({ 
-          error: "ZYRA is still preparing your store. Please wait for analysis to complete." 
+          error: "ZYRA is still preparing your store. Please wait for products to sync." 
         });
       }
       

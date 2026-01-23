@@ -120,7 +120,7 @@ export default function ProductsPage() {
         <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           sidebarOpen ? 'lg:ml-64' : 'ml-0'
         }`}>
-          <header className="gradient-surface border-b border px-4 sm:px-6 py-3 sm:py-4">
+          <header className="gradient-surface border-b border-slate-700/50 px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-40">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
                 <Button
