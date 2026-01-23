@@ -87,7 +87,7 @@ import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
+import { db, requireDb, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
 import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -705,13 +705,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/error-logs/:id/resolve", requireAuth, apiLimiter, async (req, res) => {
     try {
       const user = (req as AuthenticatedRequest).user;
+      const { id } = req.params;
       
       if (user.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
-      }
-
-      if (!db) {
-        return res.status(500).json({ message: "Database connection unavailable" });
       }
 
       await db.update(errorLogs)
