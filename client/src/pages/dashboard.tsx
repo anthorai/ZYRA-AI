@@ -13,7 +13,7 @@ import Profile from "@/components/dashboard/profile";
 import NotificationCenter from "@/components/dashboard/notification-center";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
-import ManageProducts from "@/pages/products/manage";
+import { ProductIntelligenceTab } from "@/components/products/ProductIntelligenceTab";
 import ZyraAtWork from "@/components/dashboard/zyra-at-work";
 import NextMove from "@/components/dashboard/next-move";
 import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
@@ -233,7 +233,7 @@ export default function Dashboard() {
       case "next-move":
         return <NextMove />;
       case "products":
-        return <ManageProducts />;
+        return <ProductIntelligenceTab />;
       case "profile":
         return <Profile />;
       case "settings":
