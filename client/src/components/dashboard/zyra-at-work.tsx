@@ -120,6 +120,168 @@ const PHASE_CONFIG = {
 };
 
 
+// Business-language progress stages - clear, revenue-focused messaging
+const PROGRESS_STAGES = [
+  {
+    id: 1,
+    icon: TrendingUp,
+    title: 'Checking store performance',
+    description: 'Reviewing your recent sales data and conversion rates',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10'
+  },
+  {
+    id: 2,
+    icon: Search,
+    title: 'Identifying where buyers hesitate',
+    description: 'Finding the moments where potential customers leave without buying',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10'
+  },
+  {
+    id: 3,
+    icon: DollarSign,
+    title: 'Estimating lost revenue',
+    description: 'Calculating how much money these friction points cost your store',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10'
+  },
+  {
+    id: 4,
+    icon: Target,
+    title: 'Selecting highest-impact opportunity',
+    description: 'Prioritizing the change that will recover the most revenue',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10'
+  },
+  {
+    id: 5,
+    icon: CheckCircle2,
+    title: 'Next revenue move ready',
+    description: 'Your recommended improvement is ready for review',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10'
+  },
+  {
+    id: 6,
+    icon: Zap,
+    title: 'Applying approved improvement',
+    description: 'Publishing your optimization to the store safely',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10'
+  },
+  {
+    id: 7,
+    icon: TrendingUp,
+    title: 'Measuring revenue impact',
+    description: 'Comparing before and after performance to prove results',
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/10'
+  },
+  {
+    id: 8,
+    icon: Brain,
+    title: 'Improving future decisions',
+    description: 'Learning what works best for your specific store',
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/10'
+  }
+];
+
+// Progress stages component for empty state
+function ProgressStages({ isAutopilotEnabled }: { isAutopilotEnabled: boolean }) {
+  const [currentStage, setCurrentStage] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (!isAutopilotEnabled) {
+      setCurrentStage(0);
+      return;
+    }
+
+    // Cycle through stages every 4 seconds with smooth transition
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentStage(prev => (prev + 1) % PROGRESS_STAGES.length);
+        setIsTransitioning(false);
+      }, 300);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isAutopilotEnabled]);
+
+  const stage = PROGRESS_STAGES[currentStage];
+  const Icon = stage.icon;
+  const progress = ((currentStage + 1) / PROGRESS_STAGES.length) * 100;
+
+  if (!isAutopilotEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="w-14 h-14 rounded-full bg-slate-700/50 flex items-center justify-center mb-4">
+          <DollarSign className="w-7 h-7 text-slate-400" />
+        </div>
+        <p className="text-white font-medium mb-2">ZYRA is on standby</p>
+        <p className="text-slate-400 text-sm max-w-sm">
+          Ready to find revenue opportunities. Turn on autopilot above to start.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-6">
+      {/* Current Stage Display */}
+      <div className={`flex flex-col items-center text-center transition-all duration-300 ${
+        isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+      }`}>
+        <div className={`w-16 h-16 rounded-full ${stage.bgColor} flex items-center justify-center mb-4`}>
+          <Icon className={`w-8 h-8 ${stage.color}`} />
+        </div>
+        <p className={`font-semibold text-lg mb-2 ${stage.color}`}>
+          {stage.title}
+        </p>
+        <p className="text-slate-400 text-sm max-w-md mb-6">
+          {stage.description}
+        </p>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="max-w-md mx-auto">
+        <div className="flex justify-between mb-2 px-1">
+          <span className="text-xs text-slate-500">Step {currentStage + 1} of {PROGRESS_STAGES.length}</span>
+          <span className="text-xs text-slate-500">{Math.round(progress)}%</span>
+        </div>
+        <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        
+        {/* Stage Dots */}
+        <div className="flex justify-between mt-3">
+          {PROGRESS_STAGES.map((s, idx) => (
+            <div 
+              key={s.id}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                idx < currentStage ? 'bg-emerald-400' : 
+                idx === currentStage ? 'bg-primary scale-125' : 
+                'bg-slate-600'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Reassurance Message */}
+      <p className="text-center text-xs text-slate-500 mt-6">
+        Working in the background — no action needed from you
+      </p>
+    </div>
+  );
+}
+
 function TypewriterText({ text, onComplete }: { text: string; onComplete?: () => void }) {
   const [displayedText, setDisplayedText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
@@ -489,29 +651,7 @@ export default function ZyraAtWork() {
                 <p className="text-slate-400">Loading activity...</p>
               </div>
             ) : events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  {isAutopilotEnabled ? (
-                    <Brain className="w-6 h-6 text-primary animate-pulse" />
-                  ) : (
-                    <DollarSign className="w-6 h-6 text-primary" />
-                  )}
-                </div>
-                <p className="text-white font-medium mb-2">
-                  {isAutopilotEnabled ? 'ZYRA is identifying revenue friction' : 'ZYRA is on standby'}
-                </p>
-                <p className="text-slate-400 text-sm max-w-sm mb-4">
-                  {isAutopilotEnabled 
-                    ? 'Analyzing where buyers hesitate before purchasing. Activity will appear as friction is detected and removed.'
-                    : 'Continuously monitoring for new revenue opportunities. Turn on autopilot above to start finding and removing revenue friction.'}
-                </p>
-                {isAutopilotEnabled && (
-                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                    <Search className="w-3 h-3 mr-1" />
-                    Finding Opportunities
-                  </Badge>
-                )}
-              </div>
+              <ProgressStages isAutopilotEnabled={isAutopilotEnabled} />
             ) : (
               events.map((event) => (
                 <EventItem 
