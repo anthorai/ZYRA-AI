@@ -1,0 +1,136 @@
+TASK:
+Implement availability logic for “ZYRA At Work” and “Next Move” based on
+Shopify store connection status.
+
+ZYRA must NEVER run if a Shopify store is not connected.
+
+================================================
+CORE RULE (NON-NEGOTIABLE)
+================================================
+
+If Shopify is NOT connected:
+- ZYRA At Work must be disabled
+- Next Move must be disabled
+- No credits can be consumed
+- No AI actions can run
+
+================================================
+SYSTEM STATES (REQUIRED)
+================================================
+
+Implement exactly THREE states:
+
+------------------------------------------------
+STATE 1: SHOPIFY NOT CONNECTED
+------------------------------------------------
+
+Condition:
+- No Shopify store connected to user account
+
+Backend behavior:
+- Block DETECT, DECIDE, EXECUTE, PROVE, LEARN
+- Do not generate Next Move
+- Do not consume credits
+- Do not show fake data
+
+Frontend behavior:
+- Show a full-page gate message instead of ZYRA At Work content
+
+UI COPY:
+Title:
+“ZYRA is not connected to your Shopify store”
+
+Description:
+“Connect your Shopify store to allow ZYRA to detect revenue opportunities
+and run optimizations.”
+
+Primary CTA:
+“Connect Shopify Store”
+
+Secondary text:
+“No changes will be made without your approval.”
+
+------------------------------------------------
+STATE 2: SHOPIFY CONNECTED — WARM-UP MODE
+------------------------------------------------
+
+Condition:
+- Shopify connected
+- Data sync or analysis not complete yet
+  (new store or first connection)
+
+Backend behavior:
+- Allow data ingestion only
+- Do not execute any optimizations
+- Do not generate Next Move yet
+- Do not consume credits
+
+Frontend behavior:
+- Show Warm-Up / Preparation screen
+
+UI COPY:
+Title:
+“ZYRA is preparing your store”
+
+Description:
+“We’re analyzing your products, structure, and competitors to prepare
+your first revenue move.”
+
+Progress indicators (read-only):
+- Products synced
+- Store structure analyzed
+- Competitor SERP scanned
+- Preparing first Next Move
+
+CTA:
+“View progress” (read-only)
+
+------------------------------------------------
+STATE 3: SHOPIFY CONNECTED — READY
+------------------------------------------------
+
+Condition:
+- Shopify connected
+- Initial data analysis complete
+
+Backend behavior:
+- Enable DETECT → DECIDE → EXECUTE → PROVE → LEARN loop
+- Allow Next Move generation
+- Allow credit consumption
+- Allow execution & rollback
+
+Frontend behavior:
+- Show full ZYRA At Work
+- Show Next Move
+- Show live activity
+
+================================================
+FRONTEND LOGIC (PSEUDO)
+================================================
+
+if (!shopify_connected) {
+  showConnectionGate();
+} else if (shopify_connected && !store_ready) {
+  showWarmUpMode();
+} else {
+  showZyraAtWork();
+}
+
+================================================
+INTEGRATION RULES
+================================================
+
+- “Next Move” page must follow the SAME availability rules
+- Products page may be read-only during warm-up
+- Settings page must always be accessible
+- Credits must NEVER decrement in State 1 or State 2
+- Disconnecting Shopify immediately returns system to State 1
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Backend checks enforcing availability
+- Frontend conditional rendering
+- Clear UI messages for each state
+- Inline comments explaining why actions are blocked or allowed

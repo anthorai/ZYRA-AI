@@ -3591,3 +3591,31 @@ export type InsertProductAutonomySettings = z.infer<typeof insertProductAutonomy
 
 // Re-export chat models for AI integrations
 export * from "./models/chat";
+
+// ============================================================================
+// ZYRA Store Readiness Types
+// ============================================================================
+// Used to determine if ZYRA can operate based on Shopify connection status
+
+export const storeReadinessStateSchema = z.enum([
+  'not_connected',  // State 1: No Shopify store connected
+  'warming_up',     // State 2: Connected but preparing/syncing
+  'ready'           // State 3: Connected and ready for ZYRA operations
+]);
+
+export type StoreReadinessState = z.infer<typeof storeReadinessStateSchema>;
+
+export const storeReadinessSchema = z.object({
+  state: storeReadinessStateSchema,
+  storeConnected: z.boolean(),
+  storeName: z.string().nullable(),
+  storeUrl: z.string().nullable(),
+  productsSynced: z.number().default(0),
+  storeAnalyzed: z.boolean().default(false),
+  competitorScanned: z.boolean().default(false),
+  firstMoveReady: z.boolean().default(false),
+  lastSyncAt: z.string().nullable(),
+  message: z.string().optional(),
+});
+
+export type StoreReadiness = z.infer<typeof storeReadinessSchema>;

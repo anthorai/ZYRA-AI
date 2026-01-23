@@ -8461,6 +8461,86 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // GET /api/store-readiness - Get ZYRA store readiness state
+  // Determines if ZYRA can operate based on Shopify connection status
+  app.get('/api/store-readiness', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      // Get store connections
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyStores = connections.filter((c: any) => 
+        c.platform?.toLowerCase() === 'shopify' && 
+        (c.status === 'active' || c.status === 'connected')
+      );
+      
+      // STATE 1: No Shopify store connected
+      if (shopifyStores.length === 0) {
+        return res.json({
+          state: 'not_connected',
+          storeConnected: false,
+          storeName: null,
+          storeUrl: null,
+          productsSynced: 0,
+          storeAnalyzed: false,
+          competitorScanned: false,
+          firstMoveReady: false,
+          lastSyncAt: null,
+          message: 'Connect your Shopify store to enable ZYRA'
+        });
+      }
+      
+      const primaryStore = shopifyStores[0];
+      
+      // Get product count for this user
+      const products = await supabaseStorage.getProducts(userId) || [];
+      const productCount = products.length;
+      
+      // Get SEO audits to check if analysis has been done
+      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
+      const hasAnalysis = seoAudits && seoAudits.length > 0;
+      
+      // Check if we have at least some products and initial analysis
+      const storeAnalyzed = productCount >= 1;
+      const competitorScanned = hasAnalysis;
+      const firstMoveReady = productCount >= 1 && hasAnalysis;
+      
+      // STATE 2: Connected but warming up (less than 1 product or no analysis)
+      if (productCount < 1 || !hasAnalysis) {
+        return res.json({
+          state: 'warming_up',
+          storeConnected: true,
+          storeName: primaryStore.storeName,
+          storeUrl: primaryStore.storeUrl,
+          productsSynced: productCount,
+          storeAnalyzed,
+          competitorScanned,
+          firstMoveReady,
+          lastSyncAt: primaryStore.lastSyncAt?.toISOString() || null,
+          message: 'ZYRA is preparing your store'
+        });
+      }
+      
+      // STATE 3: Ready for ZYRA operations
+      return res.json({
+        state: 'ready',
+        storeConnected: true,
+        storeName: primaryStore.storeName,
+        storeUrl: primaryStore.storeUrl,
+        productsSynced: productCount,
+        storeAnalyzed: true,
+        competitorScanned: true,
+        firstMoveReady: true,
+        lastSyncAt: primaryStore.lastSyncAt?.toISOString() || null,
+        message: 'ZYRA is ready to optimize your store'
+      });
+      
+    } catch (error) {
+      console.error('Get store readiness error:', error);
+      res.status(500).json({ message: 'Failed to get store readiness' });
+    }
+  });
+
   // POST /api/stores/:id/connect - Connect a store
   app.post('/api/stores/:id/connect', requireAuth, async (req, res) => {
     try {
@@ -15885,6 +15965,51 @@ Output format: Markdown with clear section headings.`;
   app.get("/api/next-move", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
+      
+      // CRITICAL: Check store readiness before generating Next Move
+      // ZYRA must NEVER run if Shopify is not connected or not ready
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyStores = connections.filter((c: any) => 
+        c.platform?.toLowerCase() === 'shopify' && 
+        (c.status === 'active' || c.status === 'connected')
+      );
+      
+      // State 1: No Shopify connected - return blocked response
+      if (shopifyStores.length === 0) {
+        return res.json({
+          nextMove: null,
+          userPlan: 'trial',
+          planId: '',
+          creditsRemaining: 0,
+          creditLimit: 0,
+          canAutoExecute: false,
+          requiresApproval: true,
+          blockedReason: 'Connect your Shopify store to enable ZYRA',
+          executionSpeed: 'blocked'
+        });
+      }
+      
+      // Check for warm-up state (no products or no SEO analysis)
+      const products = await supabaseStorage.getProducts(userId) || [];
+      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
+      const isWarmingUp = products.length < 1 || !seoAudits || seoAudits.length === 0;
+      
+      // State 2: Warming up - return blocked response
+      if (isWarmingUp) {
+        return res.json({
+          nextMove: null,
+          userPlan: 'trial',
+          planId: '',
+          creditsRemaining: 0,
+          creditLimit: 0,
+          canAutoExecute: false,
+          requiresApproval: true,
+          blockedReason: 'ZYRA is preparing your store. Please wait for analysis to complete.',
+          executionSpeed: 'warming_up'
+        });
+      }
+      
+      // State 3: Ready - proceed with normal Next Move generation
       const { getNextMove } = await import('./lib/next-move-engine');
       const result = await getNextMove(userId);
       res.json(result);
@@ -15901,6 +16026,28 @@ Output format: Markdown with clear section headings.`;
       
       if (!opportunityId) {
         return res.status(400).json({ error: "Opportunity ID is required" });
+      }
+      
+      // CRITICAL: Block action if Shopify is not connected or not ready
+      // ZYRA must NEVER run if no Shopify store is connected or still warming up
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyStores = connections.filter((c: any) => 
+        c.platform?.toLowerCase() === 'shopify' && 
+        (c.status === 'active' || c.status === 'connected')
+      );
+      if (shopifyStores.length === 0) {
+        return res.status(403).json({ 
+          error: "Shopify store not connected. Connect your store to enable ZYRA actions." 
+        });
+      }
+      
+      // Check for warm-up state
+      const products = await supabaseStorage.getProducts(userId) || [];
+      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
+      if (products.length < 1 || !seoAudits || seoAudits.length === 0) {
+        return res.status(403).json({ 
+          error: "ZYRA is still preparing your store. Please wait for analysis to complete." 
+        });
       }
       
       const { approveNextMove } = await import('./lib/next-move-engine');
@@ -15924,6 +16071,28 @@ Output format: Markdown with clear section headings.`;
       
       if (!opportunityId) {
         return res.status(400).json({ error: "Opportunity ID is required" });
+      }
+      
+      // CRITICAL: Block action if Shopify is not connected or not ready
+      // ZYRA must NEVER run if no Shopify store is connected or still warming up
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const shopifyStores = connections.filter((c: any) => 
+        c.platform?.toLowerCase() === 'shopify' && 
+        (c.status === 'active' || c.status === 'connected')
+      );
+      if (shopifyStores.length === 0) {
+        return res.status(403).json({ 
+          error: "Shopify store not connected. Connect your store to enable ZYRA actions." 
+        });
+      }
+      
+      // Check for warm-up state
+      const products = await supabaseStorage.getProducts(userId) || [];
+      const seoAudits = await supabaseStorage.getProductSeoAudits(userId);
+      if (products.length < 1 || !seoAudits || seoAudits.length === 0) {
+        return res.status(403).json({ 
+          error: "ZYRA is still preparing your store. Please wait for analysis to complete." 
+        });
       }
       
       const { executeNextMove } = await import('./lib/next-move-engine');

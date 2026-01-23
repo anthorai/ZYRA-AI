@@ -30,6 +30,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
+import type { StoreReadiness } from "@shared/schema";
 
 interface NextMoveAction {
   id: string;
@@ -103,9 +105,18 @@ export default function NextMove() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [isReasonsOpen, setIsReasonsOpen] = useState(false);
 
+  // CRITICAL: Check store readiness before showing Next Move
+  // ZYRA must NEVER run if Shopify is not connected
+  const { data: storeReadiness, isLoading: isReadinessLoading } = useQuery<StoreReadiness>({
+    queryKey: ['/api/store-readiness'],
+    refetchInterval: 30000,
+  });
+
   const { data, isLoading, error } = useQuery<NextMoveResponse>({
     queryKey: ['/api/next-move'],
     refetchInterval: 10000,
+    // Only fetch next move if store is ready
+    enabled: storeReadiness?.state === 'ready',
   });
 
   const approveMutation = useMutation({
@@ -214,6 +225,31 @@ export default function NextMove() {
     rollbackMutation.mutate(data.nextMove.opportunityId);
   };
 
+  // Loading state for store readiness check
+  if (isReadinessLoading) {
+    return (
+      <div className="flex items-center justify-center h-full p-8">
+        <div className="text-center space-y-4">
+          <Brain className="w-12 h-12 text-primary animate-pulse mx-auto" />
+          <p className="text-muted-foreground">Checking store connection...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // STATE 1: Shopify not connected - show connection gate
+  // ZYRA must NEVER run if Shopify is not connected
+  if (storeReadiness?.state === 'not_connected') {
+    return <ShopifyConnectionGate readiness={storeReadiness} />;
+  }
+
+  // STATE 2: Shopify connected but warming up - show preparation screen
+  // No optimizations allowed, only data ingestion
+  if (storeReadiness?.state === 'warming_up') {
+    return <WarmUpMode readiness={storeReadiness} />;
+  }
+
+  // STATE 3: Ready - continue to show Next Move
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full p-8">
