@@ -14,6 +14,13 @@ import { db } from "../db";
 import { revenueOpportunities, autonomousActions, usageStats, subscriptions, products } from "@shared/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { ZYRA_PLANS, AUTONOMY_LEVELS, CREDIT_LIMITS, EXECUTION_PRIORITY, PLAN_NAMES } from "./constants/plans";
+import { 
+  ActionType,
+  calculateActionCreditCost,
+  getCreditCostBreakdown,
+  mapNextMoveActionToType,
+  isActionAllowedForPlan,
+} from "./constants/credit-consumption";
 
 export type RiskLevel = 'low' | 'medium' | 'high';
 export type NextMoveStatus = 'ready' | 'awaiting_approval' | 'executing' | 'monitoring' | 'completed' | 'blocked' | 'no_action';
@@ -56,18 +63,37 @@ const RISK_LEVEL_SCORES: Record<RiskLevel, number> = {
   high: 3,
 };
 
-const ACTION_CREDIT_COSTS: Record<string, number> = {
-  product_seo: 10,
-  seo_optimization: 10,
-  cart_recovery: 5,
-  upsell: 8,
-  rollback: 2,
-  refresh: 5,
-  title_rewrite: 15,
-  description_enhancement: 15,
-  price_adjustment: 20,
-  bulk_optimization: 50,
-};
+/**
+ * Calculate plan-aware credit cost for a Next Move action
+ * Uses the new credit consumption system with SERP and autonomy multipliers
+ */
+function getPlanAwareCreditCost(
+  opportunityType: string,
+  planId: string,
+  riskLevel: RiskLevel,
+  isAutoExecuted: boolean = false
+): { creditCost: number; breakdown: string[] } {
+  const actionType = mapNextMoveActionToType(opportunityType);
+  
+  // Check if action is allowed for this plan
+  if (!isActionAllowedForPlan(actionType, planId)) {
+    return { creditCost: 0, breakdown: ['Action requires higher plan'] };
+  }
+  
+  const creditCost = calculateActionCreditCost(actionType, planId, {
+    isAutoExecuted,
+    riskLevel,
+    includesSERP: true, // Next Move actions typically include SERP analysis
+  });
+  
+  const costBreakdown = getCreditCostBreakdown(actionType, planId, {
+    isAutoExecuted,
+    riskLevel,
+    includesSERP: true,
+  });
+  
+  return { creditCost, breakdown: costBreakdown.breakdown };
+}
 
 function calculateNextMoveScore(
   expectedRevenue: number,
@@ -122,10 +148,6 @@ function requiresApproval(planId: string, riskLevel: RiskLevel): boolean {
     default:
       return true;
   }
-}
-
-function getCreditCost(actionType: string): number {
-  return ACTION_CREDIT_COSTS[actionType] || 10;
 }
 
 export async function getNextMove(userId: string): Promise<NextMoveResponse> {
@@ -195,7 +217,15 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     const confidence = confidenceLevelToScore(opp.confidenceLevel);
     const risk = safetyScoreToRiskLevel(opp.safetyScore);
     const score = calculateNextMoveScore(expectedRevenue, confidence, risk);
-    const creditCost = getCreditCost(opp.opportunityType || 'seo_optimization');
+    
+    // Use plan-aware credit cost with SERP and autonomy multipliers
+    const isAutoExecutable = canAutoExecute(planId, risk);
+    const { creditCost, breakdown: creditBreakdown } = getPlanAwareCreditCost(
+      opp.opportunityType || 'seo_optimization',
+      planId,
+      risk,
+      isAutoExecutable
+    );
     
     const actionPlanData = opp.actionPlan as { description?: string } | null;
     const description = actionPlanData?.description || `ZYRA detected a ${opp.opportunityType} opportunity`;
@@ -207,6 +237,7 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
       risk,
       score,
       creditCost,
+      creditBreakdown,
       description,
     };
   });
@@ -301,11 +332,31 @@ export async function approveNextMove(userId: string, opportunityId: string): Pr
     .where(eq(usageStats.userId, userId))
     .limit(1);
 
-  const creditCost = getCreditCost(opportunity.opportunityType || 'seo_optimization');
+  // Get user's subscription plan for plan-aware credit cost
+  const [subscription] = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .limit(1);
+  
+  const planId = subscription?.planId || ZYRA_PLANS.FREE;
+  const riskLevel = safetyScoreToRiskLevel(opportunity.safetyScore);
+  
+  // Calculate plan-aware credit cost
+  const { creditCost } = getPlanAwareCreditCost(
+    opportunity.opportunityType || 'seo_optimization',
+    planId,
+    riskLevel,
+    false // Manual approval, not auto-executed
+  );
+  
   const creditsRemaining = credits?.creditsRemaining || 0;
 
   if (creditsRemaining < creditCost) {
-    return { success: false, message: 'Insufficient credits' };
+    return { 
+      success: false, 
+      message: 'ZYRA is prioritizing highest-impact actions. Some optimizations are queued for next cycle.' 
+    };
   }
 
   await db

@@ -1,0 +1,170 @@
+TASK:
+Redesign and implement the ZYRA AI credit consumption system so that
+credits are meaningfully consumed based on action depth, plan level,
+and revenue impact.
+
+GOAL:
+Credits must act as REAL fuel.
+Users should normally consume most or all credits within one billing cycle,
+creating natural upgrade pressure without frustration.
+
+================================================
+SUBSCRIPTION PLANS & CREDITS
+================================================
+
+Starter+ ($49)
+- Monthly Credits: 1,000
+
+Growth ($249)
+- Monthly Credits: 6,000
+
+Scale ($499)
+- Monthly Credits: 15,000
+
+================================================
+CORE CREDIT PHILOSOPHY (MANDATORY)
+================================================
+
+1. Credits are NOT per-click.
+2. Credits represent:
+   - AI thinking depth
+   - SERP analysis depth
+   - Execution complexity
+   - Risk & learning cost
+3. Higher plans MUST consume credits faster
+   because they:
+   - Run more actions
+   - Run deeper intelligence
+   - Auto-execute more often
+
+================================================
+CREDIT CONSUMPTION RULES
+================================================
+
+Credits are consumed at THREE stages:
+
+1. DETECTION & DECISION (AI thinking)
+2. EXECUTION (changes applied)
+3. LEARNING & MONITORING (post-execution analysis)
+
+------------------------------------------------
+BASE CREDIT COST BY ACTION TYPE
+------------------------------------------------
+
+Product SEO Optimization:
+- Starter+: 120 credits
+- Growth: 220 credits
+- Scale: 350 credits
+
+Bulk Product Optimization (per 10 products):
+- Starter+: NOT ALLOWED
+- Growth: 400 credits
+- Scale: 700 credits
+
+Image Alt-Text Optimization:
+- Starter+: 30 credits
+- Growth: 60 credits
+- Scale: 90 credits
+
+Cart Recovery Setup & Monitoring (per week):
+- Starter+: 150 credits
+- Growth: 300 credits
+- Scale: 450 credits
+
+Post-Purchase Upsell Optimization:
+- Starter+: 120 credits
+- Growth: 250 credits
+- Scale: 400 credits
+
+------------------------------------------------
+SERP INTELLIGENCE MULTIPLIER
+------------------------------------------------
+
+SERP analysis multiplies credit cost:
+
+- Starter+ (Limited SERP): ×1.2
+- Growth (Standard SERP): ×1.6
+- Scale (Advanced SERP): ×2.2
+
+Example:
+Growth SEO Optimization:
+220 × 1.6 = 352 credits
+
+------------------------------------------------
+AUTONOMY MULTIPLIER
+------------------------------------------------
+
+If an action is auto-executed (no approval):
+
+- Starter+: ×1.0 (mostly manual)
+- Growth: ×1.3
+- Scale: ×1.6
+
+Reason:
+Autonomy requires:
+- Higher confidence checks
+- More monitoring
+- Faster rollback logic
+
+------------------------------------------------
+LEARNING & MONITORING COST
+------------------------------------------------
+
+After execution, deduct ongoing credits:
+
+- 10% of execution cost per week
+- Charged for:
+  • Revenue monitoring
+  • Confidence recalibration
+  • Future decision tuning
+
+This ensures credits continue to drain naturally over time.
+
+================================================
+MONTHLY CONSUMPTION TARGET (IMPORTANT)
+================================================
+
+Design the system so that:
+
+- Starter+ users consume ~70–90% credits/month
+- Growth users consume ~80–95% credits/month
+- Scale users often reach 100% before reset
+
+If credits hit 0:
+- ZYRA pauses non-critical actions
+- Always reserves credits for:
+  • Monitoring
+  • Rollback safety
+
+================================================
+LOW CREDIT BEHAVIOR (UX)
+================================================
+
+DO NOT:
+- Block the UI
+- Show hard error messages
+- Stop all actions suddenly
+
+INSTEAD:
+- Show messages like:
+  “ZYRA is prioritizing highest-impact actions”
+  “Some optimizations are queued for next cycle”
+  “Higher plans unlock faster continuous optimization”
+
+================================================
+BACKEND ENFORCEMENT
+================================================
+
+- Credit checks MUST happen server-side
+- Credits deducted BEFORE execution
+- Actions blocked if credits insufficient
+- Credits reset monthly automatically
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Credit cost calculation logic
+- Plan-based multipliers
+- Backend enforcement rules
+- Clear inline comments explaining why costs differ

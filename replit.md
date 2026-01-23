@@ -95,6 +95,30 @@ The "Next Move" feature is ZYRA's single authoritative revenue decision interfac
 - Real-time status updates (Ready → Executing → Monitoring → Completed)
 - Rollback guarantee visible for every action
 
+### Credit Consumption System
+Plan-aware credit consumption where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs.
+
+**Monthly Credits by Plan**:
+- Starter+ ($49): 1,000 credits
+- Growth ($249): 6,000 credits
+- Scale ($499): 15,000 credits
+
+**Credit Cost Multipliers** (`server/lib/constants/credit-consumption.ts`):
+- **Base Cost**: Varies by action type and plan (higher plans = deeper AI = higher base cost)
+- **SERP Multiplier**: Starter+ ×1.2, Growth ×1.6, Scale ×2.2
+- **Autonomy Multiplier**: Starter+ ×1.0, Growth ×1.3, Scale ×1.6 (for auto-executed actions)
+- **Learning/Monitoring**: 10% of execution cost charged weekly for ongoing analysis
+
+**Low Credit Behavior** (soft nudges, not hard blocks):
+- Exhausted: "ZYRA is prioritizing highest-impact actions"
+- Very Low (10%): "Credits running low, focusing on revenue-critical actions"
+- Low (20%): "ZYRA is working efficiently, deep AI analysis consuming credits as expected"
+
+**Backend Enforcement**:
+- Credit checks happen server-side before execution
+- Credits deducted BEFORE action starts
+- 5% credit reserve maintained for monitoring and rollback safety
+
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
 

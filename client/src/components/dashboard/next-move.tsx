@@ -77,7 +77,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   executing: { label: "ZYRA is Executing...", icon: <Loader2 className="w-4 h-4 animate-spin" />, color: "text-primary" },
   monitoring: { label: "Monitoring Results", icon: <Target className="w-4 h-4" />, color: "text-blue-400" },
   completed: { label: "Completed", icon: <CheckCircle2 className="w-4 h-4" />, color: "text-emerald-400" },
-  blocked: { label: "Blocked", icon: <AlertCircle className="w-4 h-4" />, color: "text-red-400" },
+  blocked: { label: "Queued for Next Cycle", icon: <Clock className="w-4 h-4" />, color: "text-amber-400" },
 };
 
 export default function NextMove() {
@@ -475,6 +475,64 @@ export default function NextMove() {
           {renderActionButton()}
         </CardContent>
       </Card>
+
+      {/* Low Credit Soft Nudge - inspiring message, not blocking */}
+      {data && data.creditLimit > 0 && (() => {
+        const percentUsed = Math.round((1 - (data.creditsRemaining / data.creditLimit)) * 100);
+        const isLow = data.creditsRemaining <= data.creditLimit * 0.2 && data.creditsRemaining > 0;
+        const isVeryLow = data.creditsRemaining <= data.creditLimit * 0.1 && data.creditsRemaining > 0;
+        const isExhausted = data.creditsRemaining <= 0;
+        
+        if (isExhausted) {
+          return (
+            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20" data-testid="nudge-exhausted">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-amber-400 font-medium">ZYRA is prioritizing highest-impact actions</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Some optimizations are queued for next cycle. Higher plans unlock faster continuous optimization.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        if (isVeryLow) {
+          return (
+            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20" data-testid="nudge-very-low">
+              <div className="flex items-start gap-3">
+                <TrendingUp className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-amber-400 font-medium">Credits running low ({percentUsed}% used)</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ZYRA is focusing on revenue-critical actions. Your credits will refresh at the start of your next billing cycle.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        if (isLow) {
+          return (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20" data-testid="nudge-low">
+              <div className="flex items-start gap-3">
+                <Brain className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-primary font-medium">ZYRA is working efficiently ({percentUsed}% credits deployed)</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deep AI analysis is consuming credits as expected. Higher plans unlock more autonomous actions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        return null;
+      })()}
 
       <div className="flex items-center justify-between text-sm text-muted-foreground" data-testid="credits-info">
         <span data-testid="text-credits-remaining">Credits remaining: {data?.creditsRemaining?.toLocaleString() || 0} / {data?.creditLimit?.toLocaleString() || 0}</span>
