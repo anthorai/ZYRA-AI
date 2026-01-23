@@ -12,7 +12,11 @@ import { Lock, CheckCircle2 } from "lucide-react";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
 const resetPasswordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -193,7 +197,7 @@ export default function ResetPassword() {
                       type="password"
                       autoComplete="new-password"
                       className="form-input pl-10"
-                      placeholder="Enter new password (min 8 characters)"
+                      placeholder="Min 8 chars, uppercase, lowercase, number"
                       {...form.register("password")}
                       data-testid="input-password"
                     />

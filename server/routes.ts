@@ -1743,6 +1743,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (updateError) {
         console.error('Supabase password update error:', updateError);
+        // Check if it's a weak password error
+        if (updateError.message?.includes('weak') || (updateError as any).code === 'weak_password') {
+          return res.status(400).json({ 
+            message: "Password is too weak. Please include at least one uppercase letter, one lowercase letter, and one number." 
+          });
+        }
         return res.status(500).json({ message: "Failed to update password. Please try again." });
       }
 
