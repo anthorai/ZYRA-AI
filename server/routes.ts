@@ -4465,10 +4465,12 @@ Output format: Markdown with clear section headings.`;
   // Products CRUD
   app.get("/api/products", requireAuth, async (req, res) => {
     try {
-      const products = await supabaseStorage.getProducts((req as AuthenticatedRequest).user.id);
+      const userId = (req as AuthenticatedRequest).user.id;
+      const products = await supabaseStorage.getProducts(userId);
       res.json(products);
     } catch (error: any) {
-      res.status(500).json({ message: "Failed to fetch products" });
+      console.error("Get products error:", error);
+      res.status(500).json({ message: "Failed to fetch products", error: error.message });
     }
   });
 
