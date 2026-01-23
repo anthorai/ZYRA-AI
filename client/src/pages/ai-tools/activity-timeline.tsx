@@ -320,7 +320,7 @@ export default function ActivityTimeline() {
     <PageShell
       title={currentConfig.title}
       subtitle={currentConfig.subtitle}
-      useHistoryBack={true}
+      backTo="/dashboard?tab=zyra-at-work"
     >
 
       {/* Filter-Specific Banner */}
