@@ -59,50 +59,136 @@ interface AutopilotStats {
 }
 
 // Page config based on filter type
-const pageConfig: Record<string, { title: string; subtitle: string }> = {
+const pageConfig: Record<string, { 
+  title: string; 
+  subtitle: string;
+  description?: string;
+  features?: string[];
+  tip?: string;
+}> = {
   all: {
     title: "ZYRA Execution Log",
     subtitle: "Every decision made, action taken, and result measured"
   },
   seo: {
     title: "SEO Optimization Actions",
-    subtitle: "Titles, descriptions & meta improved for revenue upside"
+    subtitle: "Titles, descriptions & meta improved for revenue upside",
+    description: "ZYRA analyzes your product listings and automatically optimizes titles, descriptions, and meta tags to improve search rankings and drive more organic traffic to your store.",
+    features: [
+      "Keyword optimization for product titles",
+      "SEO-friendly meta descriptions",
+      "Search ranking improvement tracking",
+      "Revenue impact measurement per optimization"
+    ],
+    tip: "Products with optimized SEO typically see 20-40% more organic traffic within 30 days."
   },
   bulk: {
     title: "Bulk Optimization Actions",
-    subtitle: "Pattern-based updates across multiple products"
+    subtitle: "Pattern-based updates across multiple products",
+    description: "When ZYRA detects a successful optimization pattern, it automatically applies the same improvement across similar products in your catalog.",
+    features: [
+      "Pattern detection across product catalog",
+      "Batch updates for efficiency",
+      "Consistent branding across products",
+      "Time-saving automation"
+    ],
+    tip: "Bulk optimizations save hours of manual work while ensuring consistency across your store."
   },
   image: {
     title: "Image SEO Updates",
-    subtitle: "Alt-text generated to boost discoverability"
+    subtitle: "Alt-text generated to boost discoverability",
+    description: "ZYRA automatically generates descriptive alt-text for your product images, improving accessibility and helping your products appear in image search results.",
+    features: [
+      "AI-generated descriptive alt-text",
+      "Improved image search visibility",
+      "ADA accessibility compliance",
+      "Google Image search optimization"
+    ],
+    tip: "Products with proper alt-text can appear in Google Image searches, driving additional traffic."
   },
   voice: {
     title: "Brand Voice Applications",
-    subtitle: "Your brand tone applied across content"
+    subtitle: "Your brand tone applied across content",
+    description: "ZYRA learns your brand's unique voice and automatically applies it to all content updates, ensuring consistency across your entire product catalog.",
+    features: [
+      "Brand voice learning & analysis",
+      "Consistent tone across products",
+      "Automatic voice application",
+      "Custom vocabulary preservation"
+    ],
+    tip: "Consistent brand voice increases customer trust and can improve conversion rates by up to 15%."
   },
   refresh: {
     title: "Content Refresh History",
-    subtitle: "Stale content detected and refreshed"
+    subtitle: "Stale content detected and refreshed",
+    description: "ZYRA monitors your content for staleness and automatically refreshes outdated product descriptions, keeping your store fresh and relevant.",
+    features: [
+      "Stale content detection",
+      "Automatic content updates",
+      "Seasonal relevance adjustments",
+      "Performance-based refresh triggers"
+    ],
+    tip: "Fresh content signals quality to search engines and can improve your search rankings."
   },
   publish: {
     title: "Shopify Publish Log",
-    subtitle: "Approved changes pushed to your store"
+    subtitle: "Approved changes pushed to your store",
+    description: "Track all changes ZYRA has published to your Shopify store. Every update is logged with timestamps and can be reviewed or reverted.",
+    features: [
+      "Complete publish history",
+      "Timestamp tracking",
+      "Change preview before publish",
+      "Instant rollback capability"
+    ],
+    tip: "All changes are staged first and only published after approval or automation rules are met."
   },
   patterns: {
     title: "Optimization Pattern Usage",
-    subtitle: "Repeated improvements applied across products"
+    subtitle: "Repeated improvements applied across products",
+    description: "ZYRA identifies successful optimization patterns from your store data and applies them systematically to improve performance across similar products.",
+    features: [
+      "Pattern recognition from successful changes",
+      "Cross-product application",
+      "Performance tracking per pattern",
+      "Pattern effectiveness scoring"
+    ],
+    tip: "Patterns that work well are automatically prioritized for future optimizations."
   },
   rollback: {
     title: "Change & Rollback History",
-    subtitle: "Every change tracked with instant revert capability"
+    subtitle: "Every change tracked with instant revert capability",
+    description: "Every change ZYRA makes is tracked and can be instantly reverted. Your original content is always preserved and recoverable.",
+    features: [
+      "Complete change history",
+      "One-click rollback",
+      "Original content preservation",
+      "Bulk rollback options"
+    ],
+    tip: "If any change doesn't perform as expected, you can instantly revert to the original version."
   },
   upsell: {
     title: "Post-Purchase Upsell Actions",
-    subtitle: "Product recommendations sent after orders"
+    subtitle: "Product recommendations sent after orders",
+    description: "ZYRA sends personalized product recommendations to customers after they complete a purchase, increasing average order value and repeat purchases.",
+    features: [
+      "AI-powered product matching",
+      "Personalized recommendations",
+      "Order confirmation upsells",
+      "Follow-up email campaigns"
+    ],
+    tip: "Post-purchase upsells can increase revenue by 10-30% with minimal additional effort."
   },
   cart: {
     title: "Cart Recovery Actions",
-    subtitle: "Abandoned carts detected and revenue recovered"
+    subtitle: "Abandoned carts detected and revenue recovered",
+    description: "ZYRA automatically detects abandoned carts and sends personalized recovery messages via email and SMS to bring customers back to complete their purchase.",
+    features: [
+      "Abandoned cart detection",
+      "Email recovery campaigns",
+      "SMS recovery messages",
+      "Personalized incentives"
+    ],
+    tip: "Cart recovery campaigns typically recover 5-15% of abandoned carts."
   }
 };
 
@@ -323,23 +409,50 @@ export default function ActivityTimeline() {
       backTo="/dashboard?tab=zyra-at-work"
     >
 
-      {/* Filter-Specific Banner */}
-      {filterParam !== 'all' && (
-        <Card className={`mb-6 ${filterConfig.cardClass}`}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${filterConfig.iconBgClass}`}>
-              {filterConfig.icon}
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg">{currentConfig.title}</h3>
-              <p className="text-sm text-muted-foreground">{currentConfig.subtitle}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{filteredActions.length}</div>
-              <p className="text-xs text-muted-foreground">actions found</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Filter-Specific Content Section */}
+      {filterParam !== 'all' && currentConfig.description && (
+        <div className="mb-6 space-y-4">
+          {/* Header Banner */}
+          <Card className={`${filterConfig.cardClass}`}>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className={`p-3 rounded-lg ${filterConfig.iconBgClass} flex-shrink-0`}>
+                  {filterConfig.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-2">{currentConfig.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{currentConfig.description}</p>
+                  
+                  {/* Features Grid */}
+                  {currentConfig.features && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                      {currentConfig.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Tip */}
+                  {currentConfig.tip && (
+                    <Alert className="bg-primary/5 border-primary/20">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      <AlertDescription className="text-sm">
+                        <strong>Pro Tip:</strong> {currentConfig.tip}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+                <div className="text-center sm:text-right flex-shrink-0">
+                  <div className="text-3xl font-bold">{filteredActions.length}</div>
+                  <p className="text-xs text-muted-foreground">actions found</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Stats Overview */}
