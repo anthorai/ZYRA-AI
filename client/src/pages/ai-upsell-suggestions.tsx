@@ -15,10 +15,6 @@ import {
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
-function generateConfidenceScore(): number {
-  return Math.floor(Math.random() * 20) + 75;
-}
-
 export default function AIUpsellSuggestionsPage() {
   const { toast } = useToast();
 
@@ -103,9 +99,7 @@ export default function AIUpsellSuggestionsPage() {
         </DashboardCard>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {suggestedProducts.map((product) => {
-            const confidenceScore = generateConfidenceScore();
-            return (
+          {suggestedProducts.map((product) => (
               <Card 
                 key={product.id} 
                 className="shadow-lg border border-slate-700/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 rounded-xl dark-theme-bg"
@@ -137,14 +131,9 @@ export default function AIUpsellSuggestionsPage() {
                       <h4 className="text-white font-semibold text-base leading-tight line-clamp-2 min-h-[2.5rem]">
                         {product.name}
                       </h4>
-                      <div className="flex items-center justify-between">
-                        <p className="text-primary font-bold text-xl">
-                          ${Number(product.price).toFixed(2)}
-                        </p>
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-medium">
-                          {confidenceScore}% match
-                        </span>
-                      </div>
+                      <p className="text-primary font-bold text-xl">
+                        ${Number(product.price).toFixed(2)}
+                      </p>
                     </div>
                     
                     {/* Action Buttons */}
@@ -172,8 +161,7 @@ export default function AIUpsellSuggestionsPage() {
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
+          ))}
         </div>
       )}
 
