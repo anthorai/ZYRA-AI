@@ -256,7 +256,7 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'lg:ml-64' : 'ml-0'
+        sidebarOpen ? 'sm:ml-64 ml-0' : 'ml-0'
       }`}>
         {/* Persistent Header - Isolated from query refetches */}
         <DashboardHeader
