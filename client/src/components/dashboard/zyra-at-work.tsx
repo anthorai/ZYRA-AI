@@ -455,11 +455,19 @@ export default function ZyraAtWork() {
             ) : events.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Search className="w-6 h-6 text-primary" />
+                  {isAutopilotEnabled ? (
+                    <Brain className="w-6 h-6 text-primary animate-pulse" />
+                  ) : (
+                    <Search className="w-6 h-6 text-primary" />
+                  )}
                 </div>
-                <p className="text-slate-400 mb-2">No activity yet</p>
+                <p className="text-slate-400 mb-2">
+                  {isAutopilotEnabled ? 'ZYRA is working...' : 'No activity yet'}
+                </p>
                 <p className="text-slate-500 text-sm max-w-sm">
-                  Enable autopilot in your Automation settings to see ZYRA working for you.
+                  {isAutopilotEnabled 
+                    ? 'Autopilot is enabled. ZYRA is scanning your store for revenue opportunities. Activity will appear here as actions are taken.'
+                    : 'Turn on the autopilot toggle above to let ZYRA start optimizing your store.'}
                 </p>
               </div>
             ) : (
