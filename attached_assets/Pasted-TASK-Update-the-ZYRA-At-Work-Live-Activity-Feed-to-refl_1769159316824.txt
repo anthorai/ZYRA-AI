@@ -1,0 +1,163 @@
+TASK:
+Update the “ZYRA At Work” Live Activity Feed to reflect
+revenue-friction intelligence instead of generic AI scanning.
+
+The Live Activity Feed must make ZYRA feel like
+a professional growth operator working on revenue —
+not a background surveillance system.
+
+================================================
+CORE RULES (NON-NEGOTIABLE)
+================================================
+
+1. NEVER use language related to:
+   - tracking users
+   - watching customers
+   - monitoring behavior
+   - scanning everything
+   - collecting data
+
+2. ALWAYS use business-outcome language:
+   - revenue
+   - buyers
+   - opportunities
+   - improvements
+   - decisions
+
+3. Live Activity Feed must:
+   - Build trust
+   - Reduce fear
+   - Explain value
+   - Show purpose
+
+================================================
+LIVE ACTIVITY FEED STATES
+================================================
+
+Implement the following Live Activity Feed messages.
+
+------------------------------------------------
+STATE 1: ANALYZING (DEFAULT AUTOPILOT STATE)
+------------------------------------------------
+
+Primary text:
+“ZYRA is identifying revenue friction”
+
+Secondary text (smaller):
+“Analyzing where buyers hesitate before purchasing”
+
+Do NOT show technical processes.
+Do NOT mention metrics or tracking.
+
+------------------------------------------------
+STATE 2: OPPORTUNITY DETECTED
+------------------------------------------------
+
+Primary text:
+“Revenue friction detected”
+
+Secondary text:
+“Buyers are dropping before checkout on Product A”
+
+Optional badge:
+“High impact”
+
+------------------------------------------------
+STATE 3: DECISION IN PROGRESS
+------------------------------------------------
+
+Primary text:
+“ZYRA is deciding the next best revenue move”
+
+Secondary text:
+“Evaluating impact, confidence, and risk”
+
+------------------------------------------------
+STATE 4: ACTION READY (NEXT MOVE)
+------------------------------------------------
+
+Primary text:
+“Next revenue move ready”
+
+Secondary text:
+“Expected recovery: +₹4,230”
+
+Action button:
+“Review & Approve”
+
+------------------------------------------------
+STATE 5: EXECUTING (AUTOPILOT ON)
+------------------------------------------------
+
+Primary text:
+“Applying approved revenue optimization”
+
+Secondary text:
+“Changes are being published safely”
+
+Show badge:
+“Autopilot Enabled” OR “Manual Approval”
+
+------------------------------------------------
+STATE 6: PROVING RESULTS
+------------------------------------------------
+
+Primary text:
+“Measuring revenue impact”
+
+Secondary text:
+“Comparing before and after results”
+
+------------------------------------------------
+STATE 7: LEARNING
+------------------------------------------------
+
+Primary text:
+“ZYRA is improving future decisions”
+
+Secondary text:
+“Learning what converts better for your store”
+
+------------------------------------------------
+STATE 8: IDLE / STANDBY
+------------------------------------------------
+
+Primary text:
+“ZYRA is on standby”
+
+Secondary text:
+“Continuously monitoring for new revenue opportunities”
+
+================================================
+UI BEHAVIOR RULES
+================================================
+
+- Animate status changes smoothly (fade / slide)
+- Show one state at a time
+- Avoid rapid message switching
+- Keep tone calm and confident
+- Never overwhelm with logs or data
+
+================================================
+WHEN SHOPIFY IS NOT CONNECTED
+================================================
+
+Replace Live Activity Feed with:
+
+Primary text:
+“Connect your Shopify store to activate ZYRA”
+
+Secondary text:
+“ZYRA needs store data to detect revenue opportunities”
+
+CTA:
+“Connect Shopify Store”
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Updated Live Activity Feed copy
+- Conditional state rendering
+- Clean transitions
+- Inline comments explaining trust-first wording

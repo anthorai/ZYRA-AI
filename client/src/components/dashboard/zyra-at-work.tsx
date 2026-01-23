@@ -75,12 +75,48 @@ interface ActivityFeedResponse {
   }[];
 }
 
+// Revenue-friction intelligence phases - trust-first language
 const PHASE_CONFIG = {
-  detect: { icon: Search, label: 'Detecting', color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
-  decide: { icon: Brain, label: 'Deciding', color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
-  execute: { icon: Zap, label: 'Executing', color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
-  prove: { icon: TrendingUp, label: 'Measuring', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10' },
-  learn: { icon: Target, label: 'Learning', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10' },
+  detect: { 
+    icon: Search, 
+    label: 'Finding Friction', 
+    color: 'text-blue-400', 
+    bgColor: 'bg-blue-500/10',
+    primaryText: 'ZYRA is identifying revenue friction',
+    secondaryText: 'Analyzing where buyers hesitate before purchasing'
+  },
+  decide: { 
+    icon: Brain, 
+    label: 'Deciding Next Move', 
+    color: 'text-purple-400', 
+    bgColor: 'bg-purple-500/10',
+    primaryText: 'ZYRA is deciding the next best revenue move',
+    secondaryText: 'Evaluating impact, confidence, and risk'
+  },
+  execute: { 
+    icon: Zap, 
+    label: 'Applying Fix', 
+    color: 'text-amber-400', 
+    bgColor: 'bg-amber-500/10',
+    primaryText: 'Applying approved revenue optimization',
+    secondaryText: 'Changes are being published safely'
+  },
+  prove: { 
+    icon: TrendingUp, 
+    label: 'Proving Results', 
+    color: 'text-emerald-400', 
+    bgColor: 'bg-emerald-500/10',
+    primaryText: 'Measuring revenue impact',
+    secondaryText: 'Comparing before and after results'
+  },
+  learn: { 
+    icon: Target, 
+    label: 'Improving', 
+    color: 'text-cyan-400', 
+    bgColor: 'bg-cyan-500/10',
+    primaryText: 'ZYRA is improving future decisions',
+    secondaryText: 'Learning what converts better for your store'
+  },
 };
 
 
@@ -458,17 +494,23 @@ export default function ZyraAtWork() {
                   {isAutopilotEnabled ? (
                     <Brain className="w-6 h-6 text-primary animate-pulse" />
                   ) : (
-                    <Search className="w-6 h-6 text-primary" />
+                    <DollarSign className="w-6 h-6 text-primary" />
                   )}
                 </div>
-                <p className="text-slate-400 mb-2">
-                  {isAutopilotEnabled ? 'ZYRA is analyzing friction...' : 'No friction detected yet'}
+                <p className="text-white font-medium mb-2">
+                  {isAutopilotEnabled ? 'ZYRA is identifying revenue friction' : 'ZYRA is on standby'}
                 </p>
-                <p className="text-slate-500 text-sm max-w-sm">
+                <p className="text-slate-400 text-sm max-w-sm mb-4">
                   {isAutopilotEnabled 
-                    ? 'ZYRA is scanning for revenue friction - moments where buyer intent exists but money isn\'t happening. Activity will appear as friction is detected and removed.'
-                    : 'Turn on autopilot above to let ZYRA detect and remove revenue friction from your store.'}
+                    ? 'Analyzing where buyers hesitate before purchasing. Activity will appear as friction is detected and removed.'
+                    : 'Continuously monitoring for new revenue opportunities. Turn on autopilot above to start finding and removing revenue friction.'}
                 </p>
+                {isAutopilotEnabled && (
+                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                    <Search className="w-3 h-3 mr-1" />
+                    Finding Opportunities
+                  </Badge>
+                )}
               </div>
             ) : (
               events.map((event) => (
