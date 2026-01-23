@@ -1652,8 +1652,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </html>
       `;
 
-      await sendEmail(email, 'Reset Your Password - Zyra AI', emailHtml);
-      console.log(`✅ Password reset email sent to ${email}`);
+      await sendBrevoEmail({
+        to: normalizedEmail,
+        subject: 'Reset Your Password - Zyra AI',
+        htmlContent: emailHtml
+      });
+      console.log(`✅ Password reset email sent via Brevo to ${normalizedEmail}`);
 
       res.json({ message: "If an account exists with this email, a password reset link has been sent." });
     } catch (error: any) {
