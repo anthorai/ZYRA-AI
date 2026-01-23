@@ -1606,7 +1606,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Generate reset URL (use raw token in URL, it will be hashed for comparison)
-      const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
+      // In development, use the request origin; in production, use PRODUCTION_DOMAIN
+      const isDev = process.env.NODE_ENV === 'development';
+      const baseUrl = isDev 
+        ? `${req.protocol}://${req.get('host')}`
+        : (process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`);
       const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
 
       // Send email via SendGrid
