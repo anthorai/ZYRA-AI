@@ -217,10 +217,30 @@ export default function ActivityTimeline() {
     return <Sparkles className="w-4 h-4 text-primary" />;
   };
 
+  // Map URL filter params to actual action types
+  const filterToActionTypes: Record<string, string[]> = {
+    all: [], // empty means show all
+    seo: ['optimize_seo', 'seo_optimization', 'meta_update'],
+    bulk: ['bulk_update', 'bulk_optimization', 'batch_update'],
+    image: ['image_seo', 'alt_text_update', 'image_optimization'],
+    voice: ['brand_voice', 'tone_update', 'voice_application'],
+    refresh: ['content_refresh', 'stale_content_update'],
+    publish: ['shopify_publish', 'publish', 'sync_to_shopify'],
+    patterns: ['pattern_apply', 'optimization_pattern'],
+    rollback: ['rollback', 'revert', 'undo'],
+    cart: ['send_cart_recovery', 'cart_recovery', 'abandoned_cart'],
+    upsell: ['upsell', 'post_purchase', 'product_recommendation'],
+  };
+
   // Filter actions based on selected filter
   const filteredActions = actions?.filter(action => {
     if (actionFilter === "all") return true;
-    return action.actionType === actionFilter;
+    const matchingTypes = filterToActionTypes[actionFilter] || [];
+    if (matchingTypes.length === 0) return true;
+    return matchingTypes.some(type => 
+      action.actionType.toLowerCase().includes(type.toLowerCase()) ||
+      type.toLowerCase().includes(action.actionType.toLowerCase())
+    );
   }) || [];
 
   if (isLoading) {
