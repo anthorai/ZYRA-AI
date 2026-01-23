@@ -650,6 +650,9 @@ export default function Landing() {
                       {isAnnual && plan.annualPrice && index !== 0 && (
                         <p className="text-xs text-muted-foreground line-through">{plan.price}/month</p>
                       )}
+                      {plan.description && (
+                        <p className="text-sm text-primary mt-2">{plan.description}</p>
+                      )}
                     </div>
                     <ul className="space-y-3 mb-6">
                       {plan.features.map((feature, i) => (
