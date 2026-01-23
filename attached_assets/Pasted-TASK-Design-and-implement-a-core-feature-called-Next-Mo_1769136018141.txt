@@ -1,0 +1,247 @@
+TASK:
+Design and implement a core feature called “Next Move” for ZYRA AI.
+
+GOAL:
+“Next Move” must help merchants make MORE MONEY by allowing ZYRA
+to take ownership of the next best revenue decision and execute it
+with minimal human involvement.
+
+Merchants must NEVER perform manual work.
+ZYRA prepares and executes everything.
+Humans only approve, monitor, or rollback.
+
+================================================
+CORE CONCEPT
+================================================
+
+“Next Move” is NOT a tool, NOT a task list, and NOT a suggestion feed.
+
+It is:
+- A single, authoritative revenue decision made by ZYRA
+- The visible control surface of ZYRA’s revenue loop
+- Always ONE action at a time
+
+If more than one action is shown, the feature is wrong.
+
+================================================
+LOOP ENFORCEMENT (MANDATORY)
+================================================
+
+Every “Next Move” MUST follow:
+
+DETECT → DECIDE → EXECUTE → PROVE → LEARN
+
+If an action cannot be proven in revenue, it must NOT become a Next Move.
+
+================================================
+BACKEND IMPLEMENTATION
+================================================
+
+1. NEXT MOVE DECISION ENGINE
+
+Build a service that continuously evaluates all detected opportunities
+and selects exactly ONE action using this formula:
+
+NextMoveScore =
+(Expected_Revenue_Impact × Confidence_Score) ÷ Risk_Level
+
+Inputs may include:
+- Product traffic vs conversion rate
+- Abandoned cart volume
+- Revenue per SKU
+- SEO decay signals
+- Upsell performance history
+- Past ZYRA action outcomes
+- Plan limitations
+- Available credits
+
+Only the highest-scoring action becomes the active Next Move.
+All others remain queued internally and invisible.
+
+------------------------------------------------
+
+2. NEXT MOVE DATA MODEL
+
+Create a persistent data structure:
+
+- next_move_id
+- action_type
+  (product_seo, cart_recovery, upsell, rollback, refresh)
+- product_id (nullable)
+- reason (plain-language explanation)
+- expected_revenue
+- confidence_score (0–100)
+- risk_level (low / medium / high)
+- status
+  (ready | awaiting_approval | executing | monitoring | completed)
+- plan_required
+- credit_cost
+- created_at
+- executed_at
+- completed_at
+
+------------------------------------------------
+
+3. PLAN-BASED EXECUTION RULES
+
+Starter+ ($49 | 1000 credits):
+- ZYRA prepares the Next Move
+- ALWAYS requires approval
+- Only very low-risk auto-actions allowed
+- Limited SERP depth
+- Standard execution speed
+
+Growth ($249 | 6000 credits):
+- Auto-run low-risk Next Moves
+- Medium-risk requires approval
+- Standard SERP depth
+- Faster execution
+
+Scale ($499 | 15000 credits):
+- Auto-run most Next Moves
+- Approval only for high-risk actions
+- Advanced SERP depth
+- Priority execution
+
+Execution MUST stop if:
+- Credits are insufficient
+- Plan does not allow the action
+
+------------------------------------------------
+
+4. CREDIT MANAGEMENT
+
+- Each Next Move consumes credits BEFORE execution
+- Credit cost scales with:
+  • Action type
+  • SERP depth
+  • Bulk size
+- If credits are low:
+  • Prioritize highest ROI action
+  • Show soft messaging (no hard blocks)
+
+------------------------------------------------
+
+5. EXECUTION & SAFETY
+
+Before execution:
+- ZYRA must generate the full change (SEO, copy, logic)
+- Create a rollback snapshot
+
+After execution:
+- Monitor revenue impact
+- Allow instant rollback
+- Auto-rollback if revenue drops significantly (optional for Scale)
+
+------------------------------------------------
+
+6. LEARNING LOOP
+
+After completion:
+- Compare expected vs actual revenue
+- Adjust confidence scoring
+- Feed result into future Next Move decisions
+- Improve prioritization over time
+
+================================================
+FRONTEND IMPLEMENTATION
+================================================
+
+1. SIDEBAR NAVIGATION
+
+Add a new sidebar item:
+
+🧠 Next Move
+
+Sidebar order:
+- Next Move
+- ZYRA At Work
+- Products
+- Settings
+
+------------------------------------------------
+
+2. NEXT MOVE PAGE UI (STRICT RULES)
+
+The page must show ONE hero card only.
+
+Example structure:
+
+Title:
+🧠 Next Best Revenue Move
+
+Content:
+- Action name
+- Product name (if applicable)
+- Why ZYRA chose this
+- Expected revenue impact (₹ / $)
+- Confidence score
+- Risk level
+- Rollback guarantee
+
+Buttons (plan-aware):
+- Starter+: “Approve & Run”
+- Growth: “Run Automatically” OR “Approve”
+- Scale: Auto-executes, button shows status only
+
+------------------------------------------------
+
+3. UX RULES (NON-NEGOTIABLE)
+
+DO NOT:
+- Show multiple suggestions
+- Show configuration options
+- Show analytics charts
+- Show editable text fields
+- Ask the merchant to do work
+
+ALWAYS:
+- Use decisive language
+- Show revenue impact
+- Show safety & rollback
+- Make execution feel immediate
+
+------------------------------------------------
+
+4. STATUS FLOW
+
+The UI must update live:
+
+Ready → Executing → Monitoring → Proved
+
+Once completed:
+- Automatically generate the next Next Move
+
+------------------------------------------------
+
+5. LANGUAGE RULES
+
+Never say:
+- “You should do this”
+- “Configure”
+- “Edit”
+- “Create”
+
+Always say:
+- “ZYRA detected…”
+- “ZYRA decided…”
+- “ZYRA optimized…”
+
+================================================
+INTEGRATION RULES
+================================================
+
+- Executed Next Moves must appear in “ZYRA At Work”
+- Rollback must be accessible from both pages
+- Product-related moves must link to product status
+- Settings only control autonomy levels, never actions
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Backend Next Move decision engine
+- Plan-aware execution enforcement
+- Credit deduction logic
+- Frontend Next Move page UI
+- Clear inline comments explaining logic

@@ -15879,6 +15879,107 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== NEXT MOVE API =====
+  // The "Next Move" feature: ZYRA's single authoritative revenue decision
+  
+  app.get("/api/next-move", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { getNextMove } = await import('./lib/next-move-engine');
+      const result = await getNextMove(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching next move:", error);
+      res.status(500).json({ error: "Failed to fetch next move" });
+    }
+  });
+
+  app.post("/api/next-move/approve", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { opportunityId } = req.body;
+      
+      if (!opportunityId) {
+        return res.status(400).json({ error: "Opportunity ID is required" });
+      }
+      
+      const { approveNextMove } = await import('./lib/next-move-engine');
+      const result = await approveNextMove(userId, opportunityId);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error approving next move:", error);
+      res.status(500).json({ error: "Failed to approve next move" });
+    }
+  });
+
+  app.post("/api/next-move/execute", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { opportunityId } = req.body;
+      
+      if (!opportunityId) {
+        return res.status(400).json({ error: "Opportunity ID is required" });
+      }
+      
+      const { executeNextMove } = await import('./lib/next-move-engine');
+      const result = await executeNextMove(userId, opportunityId);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error executing next move:", error);
+      res.status(500).json({ error: "Failed to execute next move" });
+    }
+  });
+
+  app.post("/api/next-move/rollback", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { opportunityId } = req.body;
+      
+      if (!opportunityId) {
+        return res.status(400).json({ error: "Opportunity ID is required" });
+      }
+      
+      const { rollbackNextMove } = await import('./lib/next-move-engine');
+      const result = await rollbackNextMove(userId, opportunityId);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.message });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error rolling back next move:", error);
+      res.status(500).json({ error: "Failed to rollback next move" });
+    }
+  });
+
+  app.post("/api/next-move/generate-demo", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { generateDemoNextMove } = await import('./lib/next-move-engine');
+      const result = await generateDemoNextMove(userId);
+      
+      if (!result.success) {
+        return res.status(400).json({ error: "Failed to generate demo opportunity" });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error generating demo next move:", error);
+      res.status(500).json({ error: "Failed to generate demo next move" });
+    }
+  });
+
   // ===== REVENUE LOOP API =====
   
   app.get("/api/revenue-loop/stats", requireAuth, async (req, res) => {

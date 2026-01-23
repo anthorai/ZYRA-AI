@@ -37,6 +37,8 @@ export const DashboardHeader = memo(function DashboardHeader({
   const pageTitle = useMemo(() => {
     const titles: Record<string, { title: string; subtitle: string }> = {
       overview: { title: "Dashboard", subtitle: "Overview and quick actions" },
+      "next-move": { title: "Next Move", subtitle: "ZYRA's single most important revenue action" },
+      "zyra-at-work": { title: "ZYRA at Work", subtitle: "See what ZYRA is doing for your store" },
       "ai-tools": { title: "AI Tools", subtitle: "AI-powered content generation" },
       "automate": { title: "Automation", subtitle: "Bulk operations and workflows" },
       campaigns: { title: "Campaigns", subtitle: "Email and SMS marketing" },

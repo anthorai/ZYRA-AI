@@ -68,6 +68,33 @@ This system transforms manual optimization into autonomous, AI-driven processes,
 ### Revenue Loop System
 Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. The system continuously monitors products for optimization opportunities, automatically applies AI-powered improvements, and tracks revenue impact without manual intervention.
 
+### Next Move Feature
+The "Next Move" feature is ZYRA's single authoritative revenue decision interface. It surfaces exactly ONE high-priority action at a time - never a list of suggestions.
+
+**Decision Engine** (`server/lib/next-move-engine.ts`):
+- Scores all revenue opportunities using: `NextMoveScore = (Expected_Revenue_Impact × Confidence_Score) ÷ Risk_Level`
+- Selects the highest-scoring opportunity as the active Next Move
+- Converts safetyScore (0-100) to risk levels (low/medium/high)
+- Calculates credit costs per action type
+
+**Plan-Based Execution Rules**:
+- **Starter+ ($49)**: Always requires approval, only very low-risk auto-actions
+- **Growth ($249)**: Auto-run low-risk actions, medium-risk requires approval
+- **Scale ($499)**: Auto-run most actions, approval only for high-risk
+
+**API Endpoints**:
+- `GET /api/next-move` - Fetch the current best revenue decision
+- `POST /api/next-move/approve` - Approve and deduct credits
+- `POST /api/next-move/execute` - Start execution
+- `POST /api/next-move/rollback` - Rollback a completed action
+- `POST /api/next-move/generate-demo` - Create a demo opportunity for testing
+
+**Frontend** (`client/src/components/dashboard/next-move.tsx`):
+- Hero card UI showing action type, product, reason, expected revenue, confidence, risk level
+- Plan-aware CTA buttons (Approve & Run vs Run Automatically)
+- Real-time status updates (Ready → Executing → Monitoring → Completed)
+- Rollback guarantee visible for every action
+
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
 

@@ -15,6 +15,7 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
 import ManageProducts from "@/pages/products/manage";
 import ZyraAtWork from "@/components/dashboard/zyra-at-work";
+import NextMove from "@/components/dashboard/next-move";
 import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
@@ -39,7 +40,7 @@ interface StoreConnection {
 export default function Dashboard() {
   const { user, appUser } = useAuth();
   const { handleLogout, isLoggingOut } = useLogout();
-  const [activeTab, setActiveTab] = useState("zyra-at-work");
+  const [activeTab, setActiveTab] = useState("next-move");
   
   // Initialize sidebar state from localStorage, default to true for desktop, false for mobile
   const getInitialSidebarState = () => {
@@ -229,6 +230,8 @@ export default function Dashboard() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "next-move":
+        return <NextMove />;
       case "products":
         return <ManageProducts />;
       case "profile":
