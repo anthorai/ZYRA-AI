@@ -120,99 +120,216 @@ const PHASE_CONFIG = {
 };
 
 
-// Business-language progress stages - clear, revenue-focused messaging
+// Business-language progress stages with microcopy variations for slow detection
 const PROGRESS_STAGES = [
   {
     id: 1,
     icon: TrendingUp,
     title: 'Checking store performance',
-    description: 'Reviewing your recent sales data and conversion rates',
+    descriptions: [
+      'Reviewing your recent sales data and conversion rates',
+      'Analyzing your store\'s revenue patterns',
+      'Looking at what\'s working well in your store'
+    ],
     color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10'
+    bgColor: 'bg-blue-500/10',
+    baseTime: 3000 // 3 seconds
   },
   {
     id: 2,
     icon: Search,
     title: 'Identifying where buyers hesitate',
-    description: 'Finding the moments where potential customers leave without buying',
+    descriptions: [
+      'Finding the moments where potential customers leave without buying',
+      'Spotting drop-off points in the buying journey',
+      'Discovering where interest doesn\'t convert to sales'
+    ],
     color: 'text-purple-400',
-    bgColor: 'bg-purple-500/10'
+    bgColor: 'bg-purple-500/10',
+    baseTime: 5000 // 5 seconds
   },
   {
     id: 3,
     icon: DollarSign,
     title: 'Estimating lost revenue',
-    description: 'Calculating how much money these friction points cost your store',
+    descriptions: [
+      'Calculating how much money these friction points cost your store',
+      'Measuring the revenue impact of each issue',
+      'Quantifying the opportunity for improvement'
+    ],
     color: 'text-amber-400',
-    bgColor: 'bg-amber-500/10'
+    bgColor: 'bg-amber-500/10',
+    baseTime: 5000 // 5 seconds
   },
   {
     id: 4,
     icon: Target,
     title: 'Selecting highest-impact opportunity',
-    description: 'Prioritizing the change that will recover the most revenue',
+    descriptions: [
+      'Prioritizing the change that will recover the most revenue',
+      'Finding the quick win with the biggest payoff',
+      'Choosing the improvement that matters most'
+    ],
     color: 'text-emerald-400',
-    bgColor: 'bg-emerald-500/10'
+    bgColor: 'bg-emerald-500/10',
+    baseTime: 5000 // 5 seconds
   },
   {
     id: 5,
     icon: CheckCircle2,
     title: 'Next revenue move ready',
-    description: 'Your recommended improvement is ready for review',
+    descriptions: [
+      'Your recommended improvement is ready for review',
+      'A high-impact optimization has been prepared',
+      'Your next revenue opportunity is waiting'
+    ],
     color: 'text-primary',
-    bgColor: 'bg-primary/10'
+    bgColor: 'bg-primary/10',
+    baseTime: 4000 // 4 seconds - waits for detection
   },
   {
     id: 6,
     icon: Zap,
     title: 'Applying approved improvement',
-    description: 'Publishing your optimization to the store safely',
+    descriptions: [
+      'Publishing your optimization to the store safely',
+      'Making the approved changes live',
+      'Implementing the revenue improvement'
+    ],
     color: 'text-cyan-400',
-    bgColor: 'bg-cyan-500/10'
+    bgColor: 'bg-cyan-500/10',
+    baseTime: 4000 // 4 seconds
   },
   {
     id: 7,
     icon: TrendingUp,
     title: 'Measuring revenue impact',
-    description: 'Comparing before and after performance to prove results',
+    descriptions: [
+      'Comparing before and after performance to prove results',
+      'Tracking the improvement in real-time',
+      'Monitoring the revenue change'
+    ],
     color: 'text-green-400',
-    bgColor: 'bg-green-500/10'
+    bgColor: 'bg-green-500/10',
+    baseTime: 4000 // 4 seconds
   },
   {
     id: 8,
     icon: Brain,
     title: 'Improving future decisions',
-    description: 'Learning what works best for your specific store',
+    descriptions: [
+      'Learning what works best for your specific store',
+      'Building smarter recommendations for next time',
+      'Getting better at finding revenue opportunities'
+    ],
     color: 'text-pink-400',
-    bgColor: 'bg-pink-500/10'
+    bgColor: 'bg-pink-500/10',
+    baseTime: 3000 // 3 seconds
   }
 ];
 
-// Progress stages component for empty state
-function ProgressStages({ isAutopilotEnabled }: { isAutopilotEnabled: boolean }) {
+// Total expected time: 33 seconds (within 30-45s target)
+const TOTAL_BASE_TIME = PROGRESS_STAGES.reduce((sum, s) => sum + s.baseTime, 0);
+
+// Progress Orchestrator - synchronizes UI with detection engine
+function ProgressStages({ 
+  isAutopilotEnabled, 
+  detectionComplete = false,
+  onComplete 
+}: { 
+  isAutopilotEnabled: boolean;
+  detectionComplete?: boolean;
+  onComplete?: () => void;
+}) {
   const [currentStage, setCurrentStage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [descriptionIndex, setDescriptionIndex] = useState(0);
+  const [startTime] = useState(Date.now());
+  const [isWaitingForDetection, setIsWaitingForDetection] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Calculate dynamic timing based on detection status
+  const getStepDuration = (stageIndex: number) => {
+    const stage = PROGRESS_STAGES[stageIndex];
+    const elapsedTime = Date.now() - startTime;
+    const remainingStages = PROGRESS_STAGES.length - stageIndex;
+    
+    // If detection is complete, accelerate remaining steps
+    if (detectionComplete && stageIndex < 4) {
+      return Math.min(stage.baseTime, 1500); // Fast forward to step 5
+    }
+    
+    // Step 5 (index 4) waits for detection if needed
+    if (stageIndex === 4 && !detectionComplete) {
+      setIsWaitingForDetection(true);
+      return stage.baseTime * 2; // Extend wait time
+    }
+    
+    // Normal timing
+    return stage.baseTime;
+  };
+
+  // Cycle description variations when waiting
+  useEffect(() => {
+    if (!isWaitingForDetection || !isAutopilotEnabled) return;
+    
+    const interval = setInterval(() => {
+      setDescriptionIndex(prev => (prev + 1) % 3);
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [isWaitingForDetection, isAutopilotEnabled]);
+
+  // Handle detection completion - accelerate to step 5
+  useEffect(() => {
+    if (detectionComplete && isWaitingForDetection) {
+      setIsWaitingForDetection(false);
+      // Immediately advance if waiting
+      if (currentStage === 4) {
+        advanceStage();
+      }
+    }
+  }, [detectionComplete]);
+
+  const advanceStage = () => {
+    if (currentStage >= PROGRESS_STAGES.length - 1) {
+      onComplete?.();
+      return;
+    }
+    
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentStage(prev => prev + 1);
+      setDescriptionIndex(0);
+      setIsTransitioning(false);
+    }, 300);
+  };
+
+  // Main progress loop
   useEffect(() => {
     if (!isAutopilotEnabled) {
       setCurrentStage(0);
+      setDescriptionIndex(0);
       return;
     }
 
-    // Cycle through stages every 4 seconds with smooth transition
-    const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentStage(prev => (prev + 1) % PROGRESS_STAGES.length);
-        setIsTransitioning(false);
-      }, 300);
-    }, 4000);
+    const scheduleNext = () => {
+      const duration = getStepDuration(currentStage);
+      timeoutRef.current = setTimeout(advanceStage, duration);
+    };
 
-    return () => clearInterval(interval);
-  }, [isAutopilotEnabled]);
+    scheduleNext();
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isAutopilotEnabled, currentStage, detectionComplete]);
 
   const stage = PROGRESS_STAGES[currentStage];
   const Icon = stage.icon;
+  const description = stage.descriptions[descriptionIndex % stage.descriptions.length];
   const progress = ((currentStage + 1) / PROGRESS_STAGES.length) * 100;
 
   if (!isAutopilotEnabled) {
@@ -235,14 +352,19 @@ function ProgressStages({ isAutopilotEnabled }: { isAutopilotEnabled: boolean })
       <div className={`flex flex-col items-center text-center transition-all duration-300 ${
         isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
       }`}>
-        <div className={`w-16 h-16 rounded-full ${stage.bgColor} flex items-center justify-center mb-4`}>
+        <div className={`w-16 h-16 rounded-full ${stage.bgColor} flex items-center justify-center mb-4 relative`}>
           <Icon className={`w-8 h-8 ${stage.color}`} />
+          {isWaitingForDetection && (
+            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+          )}
         </div>
         <p className={`font-semibold text-lg mb-2 ${stage.color}`}>
           {stage.title}
         </p>
-        <p className="text-slate-400 text-sm max-w-md mb-6">
-          {stage.description}
+        <p className={`text-slate-400 text-sm max-w-md mb-6 transition-opacity duration-300 ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}>
+          {description}
         </p>
       </div>
 
@@ -254,7 +376,7 @@ function ProgressStages({ isAutopilotEnabled }: { isAutopilotEnabled: boolean })
         </div>
         <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
