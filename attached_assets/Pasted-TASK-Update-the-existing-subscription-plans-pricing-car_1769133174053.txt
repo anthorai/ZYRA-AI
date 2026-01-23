@@ -1,0 +1,147 @@
+TASK:
+Update the existing subscription plans, pricing cards, and plan descriptions
+to match ZYRA’s new revenue-brain positioning and plan structure.
+
+GOAL:
+Replace the old “tool-based” plans with plan-aware, revenue-focused plans
+that clearly communicate autonomy, intelligence depth, and monthly credits.
+
+This update must apply to:
+- Pricing page UI
+- Plan names
+- Feature descriptions
+- Credit limits
+- Marketing copy
+- Upgrade buttons
+
+================================================
+REMOVE / REPLACE OLD PLANS
+================================================
+
+REMOVE old positioning such as:
+- Tool-heavy feature lists
+- Campaign builder language
+- Analytics/dashboard-first wording
+- “Manual usage” or “configure yourself” language
+
+DO NOT reuse old plan descriptions.
+
+================================================
+NEW OFFICIAL PLANS (FINAL)
+================================================
+
+PLAN 1: Starter+
+Price: $49 / month
+Credits: 1,000 credits / month
+
+TAGLINE:
+“Smart growth with full control”
+
+WHO IT’S FOR:
+- Small & new Shopify stores
+- Solo founders and first-time sellers
+- Merchants who want AI help but prefer safety and approval
+
+WHAT THEY GET:
+- Full revenue detection & decision engine
+- Manual-approval mode (ZYRA prepares, user approves)
+- Product SEO optimization (one product at a time)
+- Image SEO enhancement (alt-text)
+- Basic Brand Voice Intelligence
+- Smart content refresh (manual approval)
+- Cart recovery (SMS OR email – basic)
+- One post-purchase upsell rule
+- Real-time Google SERP analysis (LIMITED depth)
+- Full revenue proof (₹ / $)
+- One-click rollback & safety
+- Live “ZYRA At Work” view
+
+POSITIONING NOTE:
+This plan must feel powerful but cautious.
+Language should emphasize safety, previews, and control.
+
+------------------------------------------------
+
+PLAN 2: Growth
+Price: $249 / month
+Credits: 6,000 credits / month
+Badge: “Most Popular”
+
+TAGLINE:
+“Faster growth with trusted autonomy”
+
+WHO IT’S FOR:
+- Growing Shopify stores
+- Merchants who want fewer approvals
+- Teams focused on consistent revenue growth
+
+WHAT THEY GET:
+Everything in Starter+, plus:
+- Partial autonomy (low-risk actions auto-run)
+- Bulk product optimization
+- Full Brand Voice Intelligence
+- Scheduled content refresh (automatic)
+- Advanced cart recovery
+- Unlimited post-purchase upsells
+- Faster execution speed
+- Real-time Google SERP analysis (STANDARD depth)
+  • Competitor structure & keyword gaps
+  • Used directly in content rewrites
+- Priority over Starter+ actions
+
+POSITIONING NOTE:
+This plan should feel like “ZYRA works in the background”.
+
+------------------------------------------------
+
+PLAN 3: Scale
+Price: $499 / month
+Credits: 15,000 credits / month
+
+TAGLINE:
+“Hands-free revenue engine”
+
+WHO IT’S FOR:
+- High-volume stores
+- Competitive SEO markets
+- Brands that want growth on autopilot
+
+WHAT THEY GET:
+Everything in Growth, plus:
+- Full autonomy controls (per product & per action)
+- Large-scale bulk optimizations
+- Advanced upsell strategies
+- Priority execution queue
+- Real-time Google SERP analysis (ADVANCED depth)
+  • Deep SERP scraping
+  • Search intent modeling
+  • Competitor content modeling
+  • Outranking-focused strategies
+- Aggressive learning & optimization loops
+
+POSITIONING NOTE:
+This plan should feel like ZYRA runs growth with minimal supervision.
+
+================================================
+UI & COPY RULES (MANDATORY)
+================================================
+
+- DO NOT list features as “tools”
+- DO NOT say “Create”, “Configure”, or “Build”
+- Use language like:
+  • “ZYRA detects”
+  • “ZYRA applies”
+  • “ZYRA optimizes”
+- Credits must be shown clearly on each plan
+- Upgrade buttons must say:
+  “Upgrade via Shopify”
+- Growth plan should be visually highlighted as “Most Popular”
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Updated pricing cards (title, price, credits, descriptions)
+- Updated plan comparison copy
+- Clean, revenue-focused wording
+- No references to removed features or old plans

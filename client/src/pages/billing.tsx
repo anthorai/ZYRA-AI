@@ -102,7 +102,9 @@ interface UsageStats {
 const planIcons: Record<string, JSX.Element> = {
   "7-Day Free Trial": <Rocket className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "Starter": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
+  "Starter+": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "Growth": <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
+  "Scale": <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "Pro": <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "Enterprise": <Building className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />
 };
@@ -120,165 +122,157 @@ interface PlanDetails {
 
 const planDetails: Record<string, PlanDetails> = {
   "7-Day Free Trial": {
-    credits: "100 Credit / 7 days",
-    tagline: "New users exploring Zyra features",
+    credits: "100 Credits / 7 days",
+    tagline: "Explore ZYRA's revenue detection",
     categories: [
       {
-        name: "Product Optimization & SEO",
+        name: "Revenue Detection",
         features: [
-          "Optimized Products",
-          "SEO Keyword Density Analysis"
+          "ZYRA detects optimization opportunities",
+          "Preview mode for all actions"
         ]
       },
       {
-        name: "Conversion Boosting & Sales Automation",
+        name: "Product Intelligence",
         features: [
-          "AI-Powered Growth Intelligence",
-          "Basic A/B Testing"
+          "ZYRA analyzes product SEO",
+          "Basic content suggestions"
         ]
       },
       {
-        name: "Content & Branding at Scale",
+        name: "Safety & Control",
         features: [
-          "Smart Product Descriptions",
-          "Limited Dynamic Templates"
-        ]
-      },
-      {
-        name: "Performance Tracking & ROI Insights",
-        features: ["Email Performance Analytics"]
-      },
-      {
-        name: "Workflow & Integration Tools",
-        features: [
-          "One-Click Shopify Publish",
-          "Rollback Button"
+          "One-click Shopify publish",
+          "Instant rollback protection"
         ]
       }
     ]
   },
-  "Starter": {
-    credits: "1,000 Credit / month",
-    tagline: "Best for new Shopify stores just getting started",
+  "Starter+": {
+    credits: "1,000 Credits / month",
+    tagline: "Smart growth with full control",
     categories: [
       {
-        name: "Product Optimization & SEO",
+        name: "Revenue Detection & Decisions",
         features: [
-          "Optimized Products",
-          "SEO Keyword Density Analysis",
-          "AI Image Alt-Text Generator",
-          "Smart SEO Titles & Meta Tags"
+          "ZYRA detects all revenue opportunities",
+          "Manual-approval mode (you approve)",
+          "Full revenue proof tracking"
         ]
       },
       {
-        name: "Conversion Boosting & Sales Automation",
+        name: "Product Optimization",
         features: [
-          "AI-Powered Growth Intelligence",
-          "A/B Testing",
-          "Upsell Email Receipts",
-          "Abandoned Cart SMS"
+          "ZYRA optimizes products (one at a time)",
+          "AI-generated SEO titles & meta",
+          "Image alt-text enhancement",
+          "Basic brand voice intelligence"
         ]
       },
       {
-        name: "Content & Branding at Scale",
+        name: "Cart Recovery & Upsells",
         features: [
-          "Smart Product Descriptions",
-          "Dynamic Templates",
-          "Brand Voice Memory"
+          "ZYRA recovers carts (SMS or email)",
+          "One post-purchase upsell rule"
         ]
       },
       {
-        name: "Performance Tracking & ROI Insights",
-        features: ["Email & SMS Conversion Analytics"]
+        name: "Google Intelligence",
+        features: ["Real-time SERP analysis (basic depth)"]
       },
       {
-        name: "Workflow & Integration Tools",
+        name: "Safety & Transparency",
         features: [
-          "CSV Import/Export",
-          "One-Click Shopify Publish",
-          "Rollback Button",
-          "Smart Bulk Suggestions"
+          "Live ZYRA At Work view",
+          "One-click rollback",
+          "All actions require your approval"
         ]
       }
     ]
   },
   "Growth": {
-    credits: "6,000 Credit / month",
-    tagline: "For scaling merchants ready to grow",
+    credits: "6,000 Credits / month",
+    tagline: "Faster growth with trusted autonomy",
     categories: [
       {
-        name: "Product Optimization & SEO",
+        name: "Autonomous Execution",
         features: [
-          "All Starter features +",
-          "SEO Ranking Tracker",
-          "Bulk Optimization & Smart Bulk Suggestions",
-          "Scheduled Refresh for Content & SEO Updates"
+          "Everything in Starter+",
+          "ZYRA auto-runs low-risk actions",
+          "Priority execution speed"
         ]
       },
       {
-        name: "Conversion Boosting & Sales Automation",
+        name: "Bulk Intelligence",
         features: [
-          "AI Upsell Suggestions & Triggers",
-          "Dynamic Segmentation of Customers",
-          "Behavioral Targeting",
-          "Full A/B Test Results Dashboard"
+          "ZYRA optimizes products in bulk",
+          "Full brand voice intelligence",
+          "Scheduled content refresh (automatic)"
         ]
       },
       {
-        name: "Content & Branding at Scale",
+        name: "Advanced Recovery & Upsells",
         features: [
-          "Custom Templates",
-          "Multimodal AI (text + image + insights)",
-          "Multi-Channel Content Repurposing"
+          "Advanced cart recovery sequences",
+          "Unlimited post-purchase upsells"
         ]
       },
       {
-        name: "Performance Tracking & ROI Insights",
+        name: "Google Intelligence",
         features: [
-          "Full Email & SMS tracking",
-          "Content ROI Tracking",
-          "Revenue Impact Attribution",
-          "Product Management Dashboard"
+          "Real-time SERP analysis (standard depth)",
+          "Competitor structure analysis",
+          "Keyword gap detection"
         ]
       },
       {
-        name: "Workflow & Integration Tools",
-        features: ["Unlimited Starter workflow tools"]
+        name: "Priority Processing",
+        features: [
+          "Faster AI execution",
+          "Priority over Starter+ actions"
+        ]
       }
     ]
   },
-  "Pro": {
-    credits: "20,000 Credit / month",
-    tagline: "For high-revenue brands & enterprise",
+  "Scale": {
+    credits: "15,000 Credits / month",
+    tagline: "Hands-free revenue engine",
     categories: [
       {
-        name: "Product Optimization & SEO",
-        features: ["All Growth features + priority processing"]
-      },
-      {
-        name: "Conversion Boosting & Sales Automation",
-        features: ["Full AI-driven automation for campaigns, upsells, and behavioral targeting"]
-      },
-      {
-        name: "Content & Branding at Scale",
+        name: "Full Autonomy",
         features: [
-          "Full template library, advanced brand voice memory,",
-          "multimodal AI insights, multi-channel automation"
+          "Everything in Growth",
+          "ZYRA operates with minimal supervision",
+          "Per-product & per-action autonomy controls"
         ]
       },
       {
-        name: "Performance Tracking & ROI Insights",
-        features: ["Enterprise-grade analytics and revenue attribution dashboard"]
+        name: "Enterprise Optimization",
+        features: [
+          "Large-scale bulk optimizations",
+          "Advanced upsell strategies",
+          "Aggressive learning loops"
+        ]
       },
       {
-        name: "Workflow & Integration Tools",
+        name: "Deep Google Intelligence",
         features: [
-          "Enterprise bulk management, CSV import/export,",
-          "rollback, smart bulk suggestions at scale"
+          "Real-time SERP analysis (advanced depth)",
+          "Search intent modeling",
+          "Competitor content modeling",
+          "Outranking-focused strategies"
+        ]
+      },
+      {
+        name: "Priority Everything",
+        features: [
+          "Priority execution queue",
+          "Fastest AI processing",
+          "Premium support access"
         ]
       }
     ]
-  }
+  },
 };
 
 export default function BillingPage() {
