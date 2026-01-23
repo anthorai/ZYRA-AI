@@ -3659,6 +3659,104 @@ export const FRICTION_TYPE_CAUSES: Record<FrictionType, string[]> = {
   purchase_no_upsell: ['Missed AOV opportunity', 'Offer irrelevance']
 };
 
+// Detection Cache - Precomputed data for fast detection (Layer 1)
+export const detectionCache = pgTable("detection_cache", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Product-level aggregates (precomputed)
+  productId: varchar("product_id").references(() => products.id),
+  
+  // Funnel stats (views → cart → checkout → purchase)
+  views7d: integer("views_7d").default(0),
+  views14d: integer("views_14d").default(0),
+  views30d: integer("views_30d").default(0),
+  cartsAdded7d: integer("carts_added_7d").default(0),
+  cartsAdded14d: integer("carts_added_14d").default(0),
+  cartsAdded30d: integer("carts_added_30d").default(0),
+  checkoutsStarted7d: integer("checkouts_started_7d").default(0),
+  checkoutsStarted14d: integer("checkouts_started_14d").default(0),
+  checkoutsStarted30d: integer("checkouts_started_30d").default(0),
+  purchases7d: integer("purchases_7d").default(0),
+  purchases14d: integer("purchases_14d").default(0),
+  purchases30d: integer("purchases_30d").default(0),
+  
+  // Revenue aggregates
+  revenue7d: numeric("revenue_7d", { precision: 12, scale: 2 }).default("0"),
+  revenue14d: numeric("revenue_14d", { precision: 12, scale: 2 }).default("0"),
+  revenue30d: numeric("revenue_30d", { precision: 12, scale: 2 }).default("0"),
+  
+  // Drop-off rates (precomputed)
+  viewToCartRate: numeric("view_to_cart_rate", { precision: 5, scale: 4 }).default("0"),
+  cartToCheckoutRate: numeric("cart_to_checkout_rate", { precision: 5, scale: 4 }).default("0"),
+  checkoutToPurchaseRate: numeric("checkout_to_purchase_rate", { precision: 5, scale: 4 }).default("0"),
+  
+  // Friction scores (precomputed)
+  frictionScore: integer("friction_score").default(0), // 0-100, higher = more friction
+  topFrictionType: frictionTypeEnum("top_friction_type"),
+  estimatedMonthlyLoss: numeric("estimated_monthly_loss", { precision: 12, scale: 2 }).default("0"),
+  
+  // Confidence baseline
+  confidenceScore: integer("confidence_score").default(50), // 0-100
+  
+  // Cache metadata
+  lastPrecomputedAt: timestamp("last_precomputed_at").default(sql`NOW()`),
+  cacheVersion: integer("cache_version").default(1),
+  isStale: boolean("is_stale").default(false),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('detection_cache_user_id_idx').on(table.userId),
+  index('detection_cache_product_id_idx').on(table.productId),
+  index('detection_cache_friction_score_idx').on(table.frictionScore),
+  index('detection_cache_last_precomputed_idx').on(table.lastPrecomputedAt),
+]);
+
+// Detection Status - Tracks current detection state for UI synchronization
+export const detectionStatus = pgTable("detection_status", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  
+  // Detection state
+  status: text("status").notNull().default("idle"), // 'idle' | 'detecting' | 'complete' | 'preparing'
+  phase: text("phase").default("idle"), // 'cache_loading' | 'friction_analysis' | 'decision_ready'
+  
+  // Last detection result
+  lastDetectionStartedAt: timestamp("last_detection_started_at"),
+  lastDetectionCompletedAt: timestamp("last_detection_completed_at"),
+  lastDetectionDurationMs: integer("last_detection_duration_ms"),
+  
+  // Current detection run
+  currentRunId: varchar("current_run_id"),
+  frictionDetected: boolean("friction_detected").default(false),
+  topFrictionId: varchar("top_friction_id"),
+  
+  // Failsafe tracking
+  consecutiveTimeouts: integer("consecutive_timeouts").default(0),
+  lastValidNextMoveId: varchar("last_valid_next_move_id"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+export const insertDetectionCacheSchema = createInsertSchema(detectionCache).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDetectionStatusSchema = createInsertSchema(detectionStatus).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type DetectionCache = typeof detectionCache.$inferSelect;
+export type InsertDetectionCache = z.infer<typeof insertDetectionCacheSchema>;
+export type DetectionStatus = typeof detectionStatus.$inferSelect;
+export type InsertDetectionStatus = z.infer<typeof insertDetectionStatusSchema>;
+
 // Product Autonomy Settings - Per-product granular autonomy control
 export const productAutonomySettings = pgTable("product_autonomy_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

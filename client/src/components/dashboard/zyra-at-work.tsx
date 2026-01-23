@@ -53,6 +53,12 @@ interface ZyraStats {
   pendingApprovals: number;
   successRate: number;
   lastActionAt: string | null;
+  detection?: {
+    phase: 'idle' | 'detect_started' | 'cache_loaded' | 'friction_identified' | 'decision_ready' | 'preparing';
+    complete: boolean;
+    cacheStatus: string;
+    timestamp: number;
+  };
 }
 
 interface ZyraEvent {
@@ -231,81 +237,78 @@ const PROGRESS_STAGES = [
 // Total expected time: 33 seconds (within 30-45s target)
 const TOTAL_BASE_TIME = PROGRESS_STAGES.reduce((sum, s) => sum + s.baseTime, 0);
 
-// Progress Orchestrator - synchronizes UI with detection engine
+type DetectionPhase = 'idle' | 'detect_started' | 'cache_loaded' | 'friction_identified' | 'decision_ready' | 'preparing';
+
+const phaseToMinStage: Record<DetectionPhase, number> = {
+  idle: 0,
+  detect_started: 1,
+  cache_loaded: 3,
+  friction_identified: 5,
+  decision_ready: 7,
+  preparing: 2,
+};
+
 function ProgressStages({ 
   isAutopilotEnabled, 
   detectionComplete = false,
+  detectionPhase = 'idle',
   onComplete 
 }: { 
   isAutopilotEnabled: boolean;
   detectionComplete?: boolean;
+  detectionPhase?: DetectionPhase;
   onComplete?: () => void;
 }) {
   const [currentStage, setCurrentStage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [descriptionIndex, setDescriptionIndex] = useState(0);
-  const [startTime] = useState(Date.now());
-  const [isWaitingForDetection, setIsWaitingForDetection] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPhaseRef = useRef<DetectionPhase>('idle');
 
-  // Calculate dynamic timing based on detection status
-  const getStepDuration = (stageIndex: number) => {
-    const stage = PROGRESS_STAGES[stageIndex];
-    const elapsedTime = Date.now() - startTime;
-    const remainingStages = PROGRESS_STAGES.length - stageIndex;
-    
-    // If detection is complete, accelerate remaining steps
-    if (detectionComplete && stageIndex < 4) {
-      return Math.min(stage.baseTime, 1500); // Fast forward to step 5
-    }
-    
-    // Step 5 (index 4) waits for detection if needed
-    if (stageIndex === 4 && !detectionComplete) {
-      setIsWaitingForDetection(true);
-      return stage.baseTime * 2; // Extend wait time
-    }
-    
-    // Normal timing
-    return stage.baseTime;
-  };
+  const targetStage = phaseToMinStage[detectionPhase] || 0;
 
-  // Cycle description variations when waiting
   useEffect(() => {
-    if (!isWaitingForDetection || !isAutopilotEnabled) return;
+    if (!isAutopilotEnabled) return;
     
     const interval = setInterval(() => {
       setDescriptionIndex(prev => (prev + 1) % 3);
     }, 3000);
     
     return () => clearInterval(interval);
-  }, [isWaitingForDetection, isAutopilotEnabled]);
+  }, [isAutopilotEnabled]);
 
-  // Handle detection completion - accelerate to step 5
   useEffect(() => {
-    if (detectionComplete && isWaitingForDetection) {
-      setIsWaitingForDetection(false);
-      // Immediately advance if waiting
-      if (currentStage === 4) {
-        advanceStage();
+    if (detectionPhase === 'decision_ready' && currentStage < PROGRESS_STAGES.length - 1) {
+      setCurrentStage(PROGRESS_STAGES.length - 1);
+      onComplete?.();
+    }
+  }, [detectionPhase, currentStage, onComplete]);
+
+  useEffect(() => {
+    if (detectionPhase !== lastPhaseRef.current) {
+      lastPhaseRef.current = detectionPhase;
+      
+      if (currentStage < targetStage && !isTransitioning) {
+        advanceToTarget();
       }
     }
-  }, [detectionComplete]);
+  }, [detectionPhase, targetStage]);
 
-  const advanceStage = () => {
-    if (currentStage >= PROGRESS_STAGES.length - 1) {
-      onComplete?.();
-      return;
-    }
+  const advanceToTarget = () => {
+    if (currentStage >= targetStage) return;
     
     setIsTransitioning(true);
-    setTimeout(() => {
-      setCurrentStage(prev => prev + 1);
+    timeoutRef.current = setTimeout(() => {
+      setCurrentStage(prev => Math.min(prev + 1, targetStage));
       setDescriptionIndex(0);
       setIsTransitioning(false);
-    }, 300);
+      
+      if (currentStage + 1 < targetStage) {
+        advanceToTarget();
+      }
+    }, 500);
   };
 
-  // Main progress loop
   useEffect(() => {
     if (!isAutopilotEnabled) {
       setCurrentStage(0);
@@ -313,19 +316,16 @@ function ProgressStages({
       return;
     }
 
-    const scheduleNext = () => {
-      const duration = getStepDuration(currentStage);
-      timeoutRef.current = setTimeout(advanceStage, duration);
-    };
-
-    scheduleNext();
+    if (currentStage < targetStage && !isTransitioning) {
+      advanceToTarget();
+    }
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isAutopilotEnabled, currentStage, detectionComplete]);
+  }, [isAutopilotEnabled, targetStage]);
 
   const stage = PROGRESS_STAGES[currentStage];
   const Icon = stage.icon;
@@ -354,7 +354,7 @@ function ProgressStages({
       }`}>
         <div className={`w-16 h-16 rounded-full ${stage.bgColor} flex items-center justify-center mb-4 relative`}>
           <Icon className={`w-8 h-8 ${stage.color}`} />
-          {isWaitingForDetection && (
+          {detectionPhase !== 'idle' && detectionPhase !== 'decision_ready' && (
             <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
           )}
         </div>
@@ -516,9 +516,31 @@ export default function ZyraAtWork() {
   const { data: stats } = useQuery<ZyraStats>({
     queryKey: ['/api/zyra/live-stats'],
     refetchInterval: 10000,
-    // Only fetch stats if store is ready
     enabled: storeReadiness?.state === 'ready',
   });
+
+  const [isDetecting, setIsDetecting] = useState(false);
+  
+  const { data: detectionStatusData } = useQuery<{
+    phase: DetectionPhase;
+    status: string;
+    complete: boolean;
+    timestamp: number;
+    lastValidNextMoveId?: string;
+  }>({
+    queryKey: ['/api/zyra/detection-status'],
+    refetchInterval: isDetecting ? 1000 : false,
+    enabled: storeReadiness?.state === 'ready' && isDetecting,
+  });
+
+  useEffect(() => {
+    if (detectionStatusData?.complete) {
+      setIsDetecting(false);
+    }
+  }, [detectionStatusData?.complete]);
+
+  const detectionPhase = detectionStatusData?.phase || stats?.detection?.phase || 'idle';
+  const detectionComplete = detectionStatusData?.complete || stats?.detection?.complete || false;
 
   const { data: activityData, isLoading, refetch, isRefetching } = useQuery<ActivityFeedResponse>({
     queryKey: ['/api/revenue-loop/activity-feed'],
@@ -536,6 +558,20 @@ export default function ZyraAtWork() {
   const { toast } = useToast();
   const isAutopilotEnabled = automationSettings?.globalAutopilotEnabled ?? false;
 
+  const triggerDetectionMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/zyra/detect', {});
+      return response.json();
+    },
+    onMutate: () => {
+      setIsDetecting(true);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+    },
+  });
+
   // Toggle autopilot mutation
   const toggleAutopilotMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
@@ -547,6 +583,10 @@ export default function ZyraAtWork() {
     onSuccess: (_, enabled) => {
       queryClient.invalidateQueries({ queryKey: ['/api/automation/settings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
+      
+      if (enabled) {
+        triggerDetectionMutation.mutate();
+      }
       
       toast({
         title: enabled ? 'ZYRA Autopilot Enabled' : 'ZYRA Autopilot Disabled',
@@ -773,7 +813,11 @@ export default function ZyraAtWork() {
                 <p className="text-slate-400">Loading activity...</p>
               </div>
             ) : events.length === 0 ? (
-              <ProgressStages isAutopilotEnabled={isAutopilotEnabled} />
+              <ProgressStages 
+                isAutopilotEnabled={isAutopilotEnabled} 
+                detectionComplete={detectionComplete}
+                detectionPhase={detectionPhase as DetectionPhase}
+              />
             ) : (
               events.map((event) => (
                 <EventItem 

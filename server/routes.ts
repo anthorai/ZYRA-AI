@@ -19871,18 +19871,63 @@ Return JSON array of segments only, no explanation text.`;
         .orderBy(desc(autonomousActions.completedAt))
         .limit(1);
       
+      const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
+      const detectionProgress = await fastDetectionEngine.getDetectionStatus(userId);
+      
       res.json({
-        activePhase: 'detect',
+        activePhase: detectionProgress.phase === 'decision_ready' ? 'decide' : 'detect',
         currentAction: null,
         todayRevenueDelta: Number(todayProofs.total) || 0,
         todayOptimizations: Number(todayOptimizations.count) || 0,
         pendingApprovals: Number(pendingCount.count) || 0,
         successRate,
         lastActionAt: lastAction?.completedAt?.toISOString() || null,
+        detection: {
+          phase: detectionProgress.phase,
+          complete: detectionProgress.complete,
+          cacheStatus: detectionProgress.cacheStatus,
+          timestamp: detectionProgress.timestamp,
+        },
       });
     } catch (error) {
       console.error("Error fetching ZYRA live stats:", error);
       res.status(500).json({ error: "Failed to fetch live stats" });
+    }
+  });
+
+  app.post("/api/zyra/detect", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
+      
+      const result = await fastDetectionEngine.detectWithTimeout(userId);
+      
+      res.json({
+        success: result.success,
+        frictionDetected: result.frictionDetected,
+        topFriction: result.topFriction,
+        detectionDurationMs: result.detectionDurationMs,
+        phase: result.phase,
+        cacheStatus: result.cacheStatus,
+        lastValidNextMoveId: result.lastValidNextMoveId,
+      });
+    } catch (error) {
+      console.error("Error running ZYRA detection:", error);
+      res.status(500).json({ error: "Failed to run detection" });
+    }
+  });
+
+  app.get("/api/zyra/detection-status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
+      
+      const status = await fastDetectionEngine.getDetectionStatus(userId);
+      
+      res.json(status);
+    } catch (error) {
+      console.error("Error fetching detection status:", error);
+      res.status(500).json({ error: "Failed to fetch detection status" });
     }
   });
 

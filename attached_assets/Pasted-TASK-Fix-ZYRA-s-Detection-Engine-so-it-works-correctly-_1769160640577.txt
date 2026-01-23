@@ -1,0 +1,180 @@
+TASK:
+Fix ZYRA’s Detection Engine so it works correctly, fast, and reliably.
+
+Current issue:
+- Detection is slow
+- Detection scans too much data
+- Live Activity Feed feels stuck
+- Results are delayed or inconsistent
+
+Goal:
+Detection must feel instant, decision-driven, and reliable
+while still producing correct friction-based insights.
+
+================================================
+ROOT CAUSE (ASSUME THIS IS TRUE)
+================================================
+
+The Detection Engine is doing one or more of the following WRONG:
+
+1. Re-scanning the entire Shopify store on every detect
+2. Querying Shopify APIs live instead of cached data
+3. Mixing first-time store sync with live detection
+4. Running detection synchronously (blocking UI)
+5. Calculating history repeatedly instead of reading aggregates
+6. Trying to detect ALL frictions instead of TOP priority only
+
+================================================
+MANDATORY FIX (NON-NEGOTIABLE)
+================================================
+
+DETECTION ENGINE MUST BE SPLIT INTO 3 LAYERS
+
+------------------------------------------------
+LAYER 1: DATA PRECOMPUTATION (BACKGROUND ONLY)
+------------------------------------------------
+
+Purpose:
+Prepare all heavy data BEFORE detection runs.
+
+Runs:
+- On store connection
+- On scheduled cron (every 6–12 hours)
+- On major data changes (bulk import, theme change)
+
+Must precompute and store:
+- Product-level funnel stats (views → cart → checkout → purchase)
+- Revenue per SKU (last 7, 14, 30 days)
+- Drop-off counts at each funnel step
+- Top traffic SKUs
+- Historical ZYRA actions + outcomes
+- Confidence baseline per product
+
+Rules:
+- NEVER block UI
+- NEVER run during live detection
+- MUST write results to cache tables
+
+------------------------------------------------
+LAYER 2: FAST DETECT (LIVE, ≤10 SECONDS)
+------------------------------------------------
+
+Purpose:
+Instantly decide the next best revenue action.
+
+Runs:
+- When Autopilot is ON
+- When merchant opens ZYRA At Work
+- When Live Activity Feed starts
+
+Must ONLY:
+- Read from precomputed cache
+- Evaluate TOP 10–20 SKUs by revenue or traffic
+- Evaluate TOP 3 friction types only
+- Calculate expected revenue recovery
+- Select ONE highest-priority action
+
+Rules:
+- No Shopify API calls
+- No loops over full product catalog
+- No historical recalculation
+- Hard timeout: 10 seconds
+
+Output:
+- Friction detected
+- Product affected
+- Expected revenue impact
+- Confidence score
+- Risk level
+
+------------------------------------------------
+LAYER 3: DEEP DETECT (ASYNC, OPTIONAL)
+------------------------------------------------
+
+Purpose:
+Improve accuracy, not speed.
+
+Runs:
+- After Fast Detect
+- Only if Power Mode is ON
+- Only if merchant explicitly requests
+
+Can:
+- Recalculate deeper stats
+- Run SERP competitive analysis
+- Adjust confidence and revenue estimate
+
+Rules:
+- Must NEVER block Fast Detect
+- Must NEVER block UI
+- Can replace Next Move later if higher impact found
+
+================================================
+DETECTION PRIORITY RULE (VERY IMPORTANT)
+================================================
+
+Detection must NEVER try to find everything.
+
+It must always:
+1. Find the SINGLE biggest revenue friction
+2. Ignore all others until next cycle
+3. Be repeatable every few minutes
+
+================================================
+FIX LIVE ACTIVITY FEED COORDINATION
+================================================
+
+Detection Engine must emit progress signals:
+
+- detect_started
+- cache_loaded
+- friction_identified
+- decision_ready
+
+Live Activity Feed must:
+- Move through 8 business steps on a timer
+- Finish EXACTLY when decision_ready is emitted
+- Never wait for Deep Detect
+
+================================================
+FAIL-SAFE RULES (CRITICAL)
+================================================
+
+If detection exceeds 10 seconds:
+- Return last known valid Next Move
+- Mark confidence as “Improving”
+- Schedule Deep Detect in background
+
+If cache is missing or stale:
+- Show “Preparing store data”
+- Do NOT run live detection
+- Trigger background precompute
+
+================================================
+WHAT TO REMOVE IMMEDIATELY
+================================================
+
+DELETE or DISABLE:
+- Full product loops inside detect()
+- Live Shopify API reads inside detect()
+- Historical recomputation inside detect()
+- Detection tied to UI rendering
+
+================================================
+PERFORMANCE TARGETS (MANDATORY)
+================================================
+
+- Fast Detect: 3–10 seconds
+- Live Activity Feed total duration: 30–45 seconds
+- UI must never freeze
+- Detection must always return ONE action or a clear reason
+
+================================================
+OUTPUT EXPECTED
+================================================
+
+- Refactored detection pipeline
+- Cached data model
+- Async worker separation
+- Deterministic detection output
+- Stable, repeatable Next Move
