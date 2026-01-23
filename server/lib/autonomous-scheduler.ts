@@ -1033,16 +1033,11 @@ async function runRevenueLoopScan(): Promise<void> {
     const settings = await db
       .select()
       .from(automationSettings)
-      .where(eq(automationSettings.autopilotEnabled, true));
+      .where(eq(automationSettings.globalAutopilotEnabled, true));
 
     console.log(`📊 [Revenue Loop] Found ${settings.length} users with autopilot enabled`);
 
     for (const setting of settings) {
-      if (!setting.globalAutopilotEnabled) {
-        console.log(`⏭️  [Revenue Loop] Skipping user ${setting.userId} - global autopilot disabled`);
-        continue;
-      }
-
       try {
         const detectionEngine = new RevenueDetectionEngine();
         const priorityService = new RevenuePriorityService();
