@@ -9,11 +9,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Lock, CheckCircle2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
 const resetPasswordSchema = z.object({
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -28,8 +27,10 @@ export default function ResetPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
   const [isVerifying, setIsVerifying] = useState(true);
-  const [hasValidSession, setHasValidSession] = useState(false);
+  const [tokenValid, setTokenValid] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   const form = useForm<ResetPasswordForm>({
     resolver: zodResolver(resetPasswordSchema),
@@ -37,130 +38,71 @@ export default function ResetPassword() {
   });
 
   useEffect(() => {
-    const handlePasswordReset = async () => {
+    const verifyToken = async () => {
       try {
-        // Check for code or access_token in URL params (check both hash and search params)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const searchParams = new URLSearchParams(window.location.search);
+        const tokenParam = searchParams.get('token');
         
-        const code = hashParams.get('code') || searchParams.get('code');
-        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token') || '';
-        const type = hashParams.get('type') || searchParams.get('type');
-        const error = hashParams.get('error') || searchParams.get('error');
-        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
+        console.log('[ResetPassword] Token from URL:', tokenParam ? 'present' : 'missing');
         
-        console.log('[ResetPassword] URL params:', { 
-          hasCode: !!code, 
-          hasAccessToken: !!accessToken, 
-          type,
-          error,
-          errorDescription,
-          fullHash: window.location.hash,
-          fullSearch: window.location.search 
-        });
-        
-        // Check for explicit errors from Supabase (expired link, etc.)
-        if (error) {
-          console.error('[ResetPassword] Supabase error:', error, errorDescription);
-          setVerificationError(errorDescription || 'The password reset link has expired or is invalid.');
+        if (!tokenParam) {
+          setVerificationError('No reset token found. Please request a new password reset link.');
           setIsVerifying(false);
           return;
         }
+
+        setToken(tokenParam);
+
+        const response = await fetch(`/api/auth/verify-reset-token?token=${encodeURIComponent(tokenParam)}`);
+        const result = await response.json();
         
-        if (code) {
-          // Exchange code for session (PKCE flow)
-          console.log('[ResetPassword] Exchanging code for session...');
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) {
-            console.error('[ResetPassword] Code exchange error:', exchangeError);
-            throw exchangeError;
-          }
-          if (data.session) {
-            console.log('[ResetPassword] Session established from code exchange');
-            setHasValidSession(true);
-          }
-        } else if (accessToken) {
-          // Set session directly if access_token is provided (implicit flow)
-          console.log('[ResetPassword] Setting session with access token...');
-          const { data, error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-          if (sessionError) {
-            console.error('[ResetPassword] Set session error:', sessionError);
-            throw sessionError;
-          }
-          if (data.session) {
-            console.log('[ResetPassword] Session established from access token');
-            setHasValidSession(true);
-          }
-        } else if (type === 'recovery') {
-          // Recovery type detected - Supabase processes these automatically via onAuthStateChange
-          console.log('[ResetPassword] Recovery type detected, waiting for Supabase auth event...');
-          
-          // Listen for auth state change from Supabase processing the recovery token
-          const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: unknown) => {
-            console.log('[ResetPassword] Auth state change:', event, !!session);
-            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-              console.log('[ResetPassword] Recovery session established via auth event');
-              setHasValidSession(true);
-              setIsVerifying(false);
-            }
-          });
-          
-          // Also check for existing session
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            console.log('[ResetPassword] Existing session found');
-            setHasValidSession(true);
-            subscription.unsubscribe();
-          } else {
-            // Give Supabase time to process the recovery token
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            if (retrySession) {
-              console.log('[ResetPassword] Session found after wait');
-              setHasValidSession(true);
-              subscription.unsubscribe();
-            } else {
-              // Keep the form visible - user may still be able to reset
-              console.log('[ResetPassword] No session yet, showing form anyway');
-              setHasValidSession(true); // Allow form submission attempt
-              subscription.unsubscribe();
-            }
-          }
+        console.log('[ResetPassword] Token verification result:', result);
+
+        if (result.valid) {
+          setTokenValid(true);
+          setUserEmail(result.email || '');
         } else {
-          // Check if session already exists (user might have been redirected with session already set)
-          console.log('[ResetPassword] No token params, checking existing session...');
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            console.log('[ResetPassword] Existing session found');
-            setHasValidSession(true);
-          } else {
-            // No tokens and no session - show error but don't redirect
-            console.log('[ResetPassword] No tokens and no session');
-            setVerificationError('No password reset token found. Please request a new reset link.');
-          }
+          setVerificationError(result.message || 'Invalid or expired reset link.');
         }
       } catch (error: any) {
         console.error('[ResetPassword] Verification error:', error);
-        setVerificationError(error.message || 'Failed to verify reset link. Please try again.');
+        setVerificationError('Failed to verify reset link. Please try again.');
       } finally {
         setIsVerifying(false);
       }
     };
-    handlePasswordReset();
+
+    verifyToken();
   }, []);
 
   const onSubmit = async (data: ResetPasswordForm) => {
+    if (!token) {
+      toast({
+        title: "Error",
+        description: "No reset token found. Please request a new link.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: data.password
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          password: data.password,
+        }),
       });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to reset password');
+      }
 
       setPasswordReset(true);
       toast({
@@ -181,7 +123,6 @@ export default function ResetPassword() {
     }
   };
 
-  // Show loading state while verifying
   if (isVerifying) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -193,7 +134,6 @@ export default function ResetPassword() {
     );
   }
 
-  // Show error state with option to request new link
   if (verificationError) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
@@ -205,7 +145,7 @@ export default function ResetPassword() {
                   <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-white">
-                  Link Expired
+                  Link Invalid
                 </h2>
                 <p className="text-slate-400 mt-2">
                   {verificationError}
@@ -238,7 +178,7 @@ export default function ResetPassword() {
                 Set New Password
               </h2>
               <p className="text-slate-400 mt-2">
-                Choose a strong password for your account
+                {userEmail ? `Reset password for ${userEmail}` : 'Choose a strong password for your account'}
               </p>
             </div>
 
@@ -253,7 +193,7 @@ export default function ResetPassword() {
                       type="password"
                       autoComplete="new-password"
                       className="form-input pl-10"
-                      placeholder="Enter new password"
+                      placeholder="Enter new password (min 8 characters)"
                       {...form.register("password")}
                       data-testid="input-password"
                     />

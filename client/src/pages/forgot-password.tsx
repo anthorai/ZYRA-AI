@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
 const forgotPasswordSchema = z.object({
@@ -32,18 +31,21 @@ export default function ForgotPassword() {
   const onSubmit = async (data: ForgotPasswordForm) => {
     setIsSubmitting(true);
     try {
-      console.log('Sending password reset email to:', data.email);
-      console.log('Redirect URL:', `${window.location.origin}/reset-password`);
+      console.log('Sending password reset request to backend:', data.email);
       
-      const { data: responseData, error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: data.email }),
       });
 
-      console.log('Supabase response:', { data: responseData, error });
+      const result = await response.json();
+      console.log('Backend response:', result);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to send reset email');
       }
 
       setEmailSent(true);
@@ -54,12 +56,9 @@ export default function ForgotPassword() {
     } catch (error: any) {
       console.error("Password reset error:", error);
       
-      // Provide more specific error messages
       let errorMessage = error.message || "Please try again later";
       if (error.message?.includes('rate limit')) {
         errorMessage = "Too many requests. Please wait a few minutes and try again.";
-      } else if (error.message?.includes('not found') || error.message?.includes('invalid')) {
-        errorMessage = "Please check your email address and try again.";
       }
       
       toast({

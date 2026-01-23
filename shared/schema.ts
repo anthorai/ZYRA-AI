@@ -1154,6 +1154,27 @@ export const loginLogs = pgTable("login_logs", {
   index('login_logs_user_date_idx').on(table.userId, table.createdAt),
 ]);
 
+// Password Reset Tokens - for forgot password flow
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('password_reset_tokens_email_idx').on(table.email),
+  index('password_reset_tokens_token_idx').on(table.token),
+]);
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
 export const supportTickets = pgTable("support_tickets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),

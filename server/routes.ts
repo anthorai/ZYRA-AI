@@ -79,7 +79,8 @@ import {
   revenueSignals,
   revenueOpportunities,
   revenueLoopProof,
-  storeLearningInsights
+  storeLearningInsights,
+  passwordResetTokens
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";
@@ -1543,6 +1544,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imageUrl: user.imageUrl
       } 
     });
+  });
+
+  // ===== Password Reset Routes =====
+
+  // Request password reset - sends email with reset link
+  app.post("/api/auth/forgot-password", authLimiter, sanitizeBody, async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const crypto = await import('crypto');
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Check if user exists in Supabase (reliable lookup)
+      // First list all users and find exact email match to avoid pagination/filter issues
+      let supabaseUser = null;
+      let page = 1;
+      const perPage = 1000;
+      
+      while (!supabaseUser) {
+        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
+        
+        if (listError || !usersData?.users?.length) {
+          break; // No more users or error
+        }
+        
+        supabaseUser = usersData.users.find((u: any) => 
+          u.email?.toLowerCase() === normalizedEmail
+        );
+        
+        if (usersData.users.length < perPage) {
+          break; // Last page
+        }
+        page++;
+      }
+      
+      // For security, always return success even if user doesn't exist (prevents email enumeration)
+      if (!supabaseUser) {
+        console.log(`Password reset requested for non-existent email: ${normalizedEmail}`);
+        return res.json({ message: "If an account exists with this email, a password reset link has been sent." });
+      }
+
+      // Generate secure random token
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      // Hash the token for storage (security: DB leak won't expose raw tokens)
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Store HASHED token in database (raw token is sent to user via email)
+      await db.insert(passwordResetTokens).values({
+        email: normalizedEmail,
+        token: hashedToken,
+        expiresAt,
+      });
+
+      // Generate reset URL (use raw token in URL, it will be hashed for comparison)
+      const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
+      const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
+
+      // Send email via SendGrid
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+            .header h1 { color: white; margin: 0; font-size: 28px; }
+            .content { padding: 40px 30px; }
+            .content h2 { color: #333; margin-top: 0; }
+            .content p { color: #666; line-height: 1.6; font-size: 16px; }
+            .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+            .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Zyra AI</h1>
+            </div>
+            <div class="content">
+              <h2>Reset Your Password</h2>
+              <p>We received a request to reset the password for your Zyra AI account. Click the button below to create a new password:</p>
+              <p style="text-align: center;">
+                <a href="${resetUrl}" class="cta-button" style="color: white;">Reset Password</a>
+              </p>
+              <p>If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #667eea; font-size: 14px;">${resetUrl}</p>
+              <p><strong>This link will expire in 1 hour.</strong></p>
+              <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+            </div>
+            <div class="footer">
+              <p>&copy; ${new Date().getFullYear()} Zyra AI. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await sendEmail(email, 'Reset Your Password - Zyra AI', emailHtml);
+      console.log(`✅ Password reset email sent to ${email}`);
+
+      res.json({ message: "If an account exists with this email, a password reset link has been sent." });
+    } catch (error: any) {
+      console.error('Password reset request error:', error);
+      res.status(500).json({ message: 'Failed to process password reset request', error: error.message });
+    }
+  });
+
+  // Reset password with token
+  app.post("/api/auth/reset-password", authLimiter, sanitizeBody, async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+
+      // Hash the incoming token to compare with stored hash
+      const crypto = await import('crypto');
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+      // Find valid token (compare hashed versions)
+      const [resetToken] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token, hashedToken))
+        .limit(1);
+
+      if (!resetToken) {
+        return res.status(400).json({ message: "Invalid or expired reset link. Please request a new one." });
+      }
+
+      if (resetToken.usedAt) {
+        return res.status(400).json({ message: "This reset link has already been used. Please request a new one." });
+      }
+
+      if (new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ message: "This reset link has expired. Please request a new one." });
+      }
+
+      // Find user in Supabase by email (paginated search for reliability)
+      let supabaseUser = null;
+      let page = 1;
+      const perPage = 1000;
+      
+      while (!supabaseUser) {
+        const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+          page,
+          perPage
+        });
+        
+        if (listError || !usersData?.users?.length) {
+          break;
+        }
+        
+        supabaseUser = usersData.users.find((u: any) => 
+          u.email?.toLowerCase() === resetToken.email.toLowerCase()
+        );
+        
+        if (usersData.users.length < perPage) {
+          break;
+        }
+        page++;
+      }
+
+      if (!supabaseUser) {
+        console.error('Failed to find user for email:', resetToken.email);
+        return res.status(400).json({ message: "User not found. Please contact support." });
+      }
+
+      // Update password in Supabase
+      const { error: updateError } = await supabase.auth.admin.updateUserById(supabaseUser.id, {
+        password: password
+      });
+
+      if (updateError) {
+        console.error('Supabase password update error:', updateError);
+        return res.status(500).json({ message: "Failed to update password. Please try again." });
+      }
+
+      // Mark token as used
+      await db
+        .update(passwordResetTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResetTokens.id, resetToken.id));
+
+      console.log(`✅ Password reset successful for ${resetToken.email}`);
+
+      res.json({ message: "Password has been reset successfully. You can now log in with your new password." });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      res.status(500).json({ message: 'Failed to reset password', error: error.message });
+    }
+  });
+
+  // Verify reset token is valid (for UI feedback)
+  app.get("/api/auth/verify-reset-token", apiLimiter, async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ valid: false, message: "Token is required" });
+      }
+
+      // Hash the incoming token to compare with stored hash
+      const crypto = await import('crypto');
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+      const [resetToken] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token, hashedToken))
+        .limit(1);
+
+      if (!resetToken) {
+        return res.json({ valid: false, message: "Invalid reset link" });
+      }
+
+      if (resetToken.usedAt) {
+        return res.json({ valid: false, message: "This reset link has already been used" });
+      }
+
+      if (new Date() > resetToken.expiresAt) {
+        return res.json({ valid: false, message: "This reset link has expired" });
+      }
+
+      res.json({ valid: true, email: resetToken.email });
+    } catch (error: any) {
+      console.error('Token verification error:', error);
+      res.status(500).json({ valid: false, message: 'Failed to verify token' });
+    }
   });
 
 
