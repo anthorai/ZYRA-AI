@@ -997,7 +997,6 @@ function ProgressStages({
                     onClick={() => onApprove(committedActionId)}
                     disabled={isApproving}
                     data-testid="button-approve-foundational-action"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     {isApproving ? (
                       <>
@@ -1176,7 +1175,6 @@ function ProgressStages({
                     onClick={() => onApprove('foundational_trust_signals')}
                     disabled={isApproving}
                     data-testid="button-approve-fallback-action"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     {isApproving ? (
                       <>
@@ -1207,21 +1205,174 @@ function ProgressStages({
                 </span>
               </div>
             </div>
+          ) : detectionStatus === 'friction_found' ? (
+            <div className="text-left">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    executionStatus === 'running' ? 'bg-amber-400' : 
+                    executionResult ? 'bg-emerald-400' : 'bg-emerald-400'
+                  } ${executionResult ? '' : 'animate-pulse'}`} />
+                  <p className={`text-sm font-medium ${
+                    executionStatus === 'running' ? 'text-amber-400' : 
+                    executionResult ? 'text-emerald-400' : 'text-emerald-400'
+                  }`}>
+                    {executionResult ? 'Optimization Complete' :
+                     executionStatus === 'running' 
+                      ? (activePhase === 'prove' ? 'Proving Results...' 
+                         : activePhase === 'learn' ? 'Learning & Improving...' 
+                         : 'Applying Optimization...') 
+                      : executionStatus === 'awaiting_approval' ? 'Review & Approve' 
+                      : 'Revenue Opportunity Found'}
+                  </p>
+                  {executionStatus === 'running' && !executionResult && (
+                    <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                  )}
+                  {executionResult && (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  )}
+                </div>
+                {executionStatus === 'awaiting_approval' && committedActionId && onApprove && !executionResult && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => onApprove(committedActionId)}
+                    disabled={isApproving}
+                    data-testid="button-approve-friction-action"
+                  >
+                    {isApproving ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3 h-3 mr-1" />
+                        Approve & Fix
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+              
+              <p className="text-sm font-medium text-foreground mb-1">
+                {executionResult ? `${executionResult.actionLabel || 'AI Optimization'}` : 'Friction Point Detected'}
+              </p>
+              <p className="text-xs text-slate-400 mb-2">
+                {executionResult 
+                  ? `Successfully applied ${executionResult.totalChanges} improvements`
+                  : 'ZYRA found a revenue opportunity that needs attention'}
+              </p>
+              
+              {!executionResult && executionStatus !== 'running' && (
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                    Low Risk
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Changes can be rolled back instantly
+                  </span>
+                </div>
+              )}
+              
+              {executionStatus === 'running' && !executionResult && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-2 text-xs">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="text-slate-300">
+                      {activePhase === 'execute' ? 'Applying AI-generated improvements to your products...' :
+                       activePhase === 'prove' ? 'Verifying changes and setting up tracking...' :
+                       activePhase === 'learn' ? 'Recording optimization patterns for future use...' :
+                       'Processing optimization...'}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {executionResult && executionResult.productsOptimized.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm font-medium text-emerald-400">
+                      {executionResult.totalChanges} Changes Applied
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {executionResult.productsOptimized.map((product, pIdx) => (
+                      <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-white mb-2">
+                          {product.productName}
+                        </p>
+                        <div className="space-y-2">
+                          {product.changes.map((change, cIdx) => (
+                            <div key={cIdx} className="text-xs">
+                              <div className="flex items-center gap-1 mb-1">
+                                <span className="text-primary font-medium">{change.field}</span>
+                              </div>
+                              <div className="grid grid-cols-1 gap-1 ml-2">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
+                                  <span className="text-slate-500 line-through">{change.before || '(empty)'}</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
+                                  <span className="text-emerald-300">{change.after}</span>
+                                </div>
+                                {change.reason && (
+                                  <p className="text-slate-400 italic mt-1">{change.reason}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
+                          {product.impactExplanation}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-3 p-2 bg-emerald-500/10 rounded text-center">
+                    <p className="text-xs text-emerald-400 font-medium">
+                      {executionResult.estimatedImpact}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {executionActivities.length > 0 && !executionResult?.productsOptimized?.length && (
+                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-slate-300">Live Activity</span>
+                  </div>
+                  <div className="space-y-2">
+                    {executionActivities.slice(-5).map((activity, idx) => (
+                      <div key={activity.id || idx} className="flex items-start gap-2 text-xs">
+                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
+                          activity.status === 'completed' ? 'bg-emerald-400' :
+                          activity.status === 'warning' ? 'bg-amber-400' : 'bg-primary'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-slate-300">{activity.message}</p>
+                          {activity.details && (
+                            <p className="text-slate-500 mt-0.5">{activity.details}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="text-center">
-              <p className={`text-sm font-medium ${
-                detectionStatus === 'friction_found' ? 'text-emerald-400' : 'text-blue-400'
-              }`}>
-                {detectionStatus === 'friction_found' 
-                  ? 'Next revenue move ready'
-                  : 'No urgent revenue risk detected'
-                }
+              <p className="text-sm font-medium text-blue-400">
+                No urgent revenue risk detected
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                {detectionStatus === 'friction_found'
-                  ? 'Review recommended action in Next Move'
-                  : 'ZYRA is actively monitoring your store for new opportunities'
-                }
+                ZYRA is actively monitoring your store for new opportunities
               </p>
             </div>
           )}
@@ -1406,9 +1557,28 @@ export default function ZyraAtWork() {
         });
         return response.json();
       }
-      // Regular friction action - approve the opportunity
-      const response = await apiRequest('POST', `/api/revenue-opportunities/${actionId}/approve`, {});
-      return response.json();
+      // Regular friction action - approve then execute
+      const approveResponse = await apiRequest('POST', '/api/next-move/approve', { 
+        opportunityId: actionId 
+      });
+      const approveData = await approveResponse.json();
+      
+      if (!approveData.success) {
+        throw new Error(approveData.message || 'Failed to approve action');
+      }
+      
+      // Execute the action after approval - returns real execution results
+      const executeResponse = await apiRequest('POST', '/api/next-move/execute', { 
+        opportunityId: actionId 
+      });
+      const executeData = await executeResponse.json();
+      
+      if (!executeData.success) {
+        throw new Error(executeData.error || 'Execution failed');
+      }
+      
+      // Return real execution results from backend
+      return executeData;
     },
     onSuccess: async (data) => {
       // Store execution results for display
@@ -1441,10 +1611,10 @@ export default function ZyraAtWork() {
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Approval Failed',
-        description: 'Could not approve the action. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not approve the action. Please try again.',
         variant: 'destructive',
       });
     },
@@ -1740,15 +1910,44 @@ export default function ZyraAtWork() {
   };
   
   // Determine current phase - sync with execution status for consistency
-  // Priority: backendExecutionPhase > approvedPhase > executionStatus > events > detection phase > default
+  // Priority: executionResult > backendExecutionPhase > approvedPhase > executionStatus > events > detection phase > default
+  // Helper to validate execution result has real change data
+  const hasValidExecutionData = (result: ExecutionResult | null): boolean => {
+    if (!result || !result.productsOptimized || result.productsOptimized.length === 0) {
+      return false;
+    }
+    // Check at least one product has changes with real 'after' values
+    // Note: 'before' may be null for fast-path executions (partialData flag)
+    return result.productsOptimized.some(product => 
+      product.changes && product.changes.length > 0 &&
+      product.changes.some((change: { after?: string }) => change.after && change.after.length > 0)
+    );
+  };
+  
   const currentPhase = (() => {
-    // HIGHEST PRIORITY: Backend is executing - use its phase (synced with server)
+    // HIGHEST PRIORITY: If we have VALIDATED execution results with real data, show 'learn'
+    if (executionResult && hasValidExecutionData(executionResult)) {
+      return 'learn';
+    }
+    // Backend is executing - use its phase (synced with server)
     if (backendExecutionPhase !== 'idle' && backendExecutionPhase !== 'completed') {
       return mapBackendPhase(backendExecutionPhase);
+    }
+    // Backend completed but no valid results - stay in prove phase (error state)
+    if (backendExecutionPhase === 'completed' && !hasValidExecutionData(executionResult)) {
+      return 'prove';
+    }
+    // Backend completed with valid results - show learn
+    if (backendExecutionPhase === 'completed') {
+      return 'learn';
     }
     // If local approvedPhase is active (fallback for fast UI updates)
     if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
       return approvedPhase;
+    }
+    // If approvedPhase just completed, check for valid results
+    if (approvedPhase === 'complete') {
+      return hasValidExecutionData(executionResult) ? 'learn' : 'prove';
     }
     // If actively executing, show execute phase
     if (derivedExecutionStatus === 'running') {

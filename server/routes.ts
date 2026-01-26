@@ -16701,14 +16701,174 @@ Output format: Markdown with clear section headings.`;
         });
       }
       
-      const { executeNextMove } = await import('./lib/next-move-engine');
-      const result = await executeNextMove(userId, opportunityId);
+      // Use revenue execution engine for real AI execution with results
+      const { revenueExecutionEngine } = await import('./lib/revenue-execution-engine');
+      const executionResult = await revenueExecutionEngine.executeOpportunity(opportunityId);
       
-      if (!result.success) {
-        return res.status(400).json({ error: result.message });
+      if (!executionResult.success) {
+        return res.status(400).json({ 
+          success: false,
+          error: executionResult.error || 'Execution failed' 
+        });
       }
       
-      res.json(result);
+      // Transform execution result to match frontend expected format
+      // Handle different result shapes from the execution engine
+      const changes = executionResult.changes || {};
+      const changeType = changes.type || 'unknown';
+      
+      // Build productsOptimized array based on result type
+      let productsOptimized: any[] = [];
+      
+      if (changeType === 'prebuilt_payload_execution') {
+        // Fast path execution result - uses pre-built payload with actionTaken
+        // appliedChanges contains the actual field updates (name, description, etc.)
+        const appliedFields = changes.appliedChanges || {};
+        const fieldChanges: any[] = [];
+        
+        // Build changes from applied fields (real data)
+        // Note: Fast path doesn't capture before values - only after (applied) values
+        if (appliedFields.name) {
+          fieldChanges.push({
+            field: 'Product Title',
+            before: null, // Before value not captured in fast path
+            after: appliedFields.name,
+            reason: 'Title optimized for conversion',
+            hasRealBefore: false
+          });
+        }
+        if (appliedFields.description) {
+          const desc = appliedFields.description;
+          fieldChanges.push({
+            field: 'Description',
+            before: null, // Before value not captured in fast path
+            after: typeof desc === 'string' ? desc.substring(0, 200) + (desc.length > 200 ? '...' : '') : 'Updated',
+            reason: 'Description enhanced for clarity',
+            hasRealBefore: false
+          });
+        }
+        
+        // If no specific field changes, use the action taken as the change
+        if (fieldChanges.length === 0 && changes.actionTaken) {
+          fieldChanges.push({
+            field: 'Action Taken',
+            before: null,
+            after: changes.actionTaken,
+            reason: changes.targetImprovement || 'Friction point addressed',
+            hasRealBefore: false
+          });
+        }
+        
+        // Require at least some real data to proceed
+        if (fieldChanges.length === 0) {
+          return res.status(400).json({ 
+            success: false,
+            error: 'No optimization changes could be applied' 
+          });
+        }
+        
+        productsOptimized = [{
+          productName: changes.productName,
+          changes: fieldChanges,
+          impactExplanation: `Friction type "${changes.frictionType}" addressed. Execution time: ${changes.executionTimeMs}ms`,
+          partialData: true // Flag that before values aren't available
+        }];
+      } else if (changeType === 'description_enhancement') {
+        // Description enhancement result - has real before/after
+        if (!changes.before?.description && !changes.after) {
+          return res.status(400).json({ 
+            success: false,
+            error: 'Description enhancement failed - no content generated' 
+          });
+        }
+        const beforeDesc = changes.before?.description || '';
+        const afterContent = changes.after;
+        const afterDesc = typeof afterContent === 'string' ? afterContent : 
+          (afterContent?.enhanced_description || afterContent?.description || '');
+        
+        productsOptimized = [{
+          productName: changes.productName || 'Product',
+          changes: [
+            {
+              field: 'Description',
+              before: beforeDesc.substring(0, 200) + (beforeDesc.length > 200 ? '...' : ''),
+              after: afterDesc.substring(0, 200) + (afterDesc.length > 200 ? '...' : ''),
+              reason: 'AI-enhanced for better conversion'
+            }
+          ],
+          impactExplanation: 'Description optimized with persuasive language and clear call-to-action'
+        }];
+      } else if (changeType === 'seo_optimization') {
+        // SEO optimization result - has real before/after
+        if (!changes.after?.seoTitle && !changes.after?.metaDescription) {
+          return res.status(400).json({ 
+            success: false,
+            error: 'SEO optimization failed - no content generated' 
+          });
+        }
+        const seoChanges: any[] = [];
+        if (changes.after?.seoTitle) {
+          seoChanges.push({
+            field: 'SEO Title',
+            before: changes.before?.seoTitle || '(no previous title)',
+            after: changes.after.seoTitle,
+            reason: 'Optimized for search visibility'
+          });
+        }
+        if (changes.after?.metaDescription) {
+          seoChanges.push({
+            field: 'Meta Description',
+            before: changes.before?.metaDescription || '(no previous meta)',
+            after: changes.after.metaDescription,
+            reason: 'Enhanced for click-through rate'
+          });
+        }
+        
+        productsOptimized = [{
+          productName: changes.productName || 'Product',
+          changes: seoChanges,
+          impactExplanation: `SEO score: ${changes.after?.seoScore || 'improved'}`
+        }];
+      } else if (changes.error) {
+        // Error case
+        return res.status(400).json({ 
+          success: false,
+          error: changes.error 
+        });
+      } else if (changeType === 'no_op') {
+        // No operation case
+        return res.status(400).json({ 
+          success: false,
+          error: changes.reason || 'No optimization could be applied' 
+        });
+      } else {
+        // Unknown type without valid data
+        return res.status(400).json({ 
+          success: false,
+          error: `Unknown optimization type: ${changeType}` 
+        });
+      }
+      
+      // Validate we have actual changes before returning success
+      if (productsOptimized.length === 0 || productsOptimized[0].changes.length === 0) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'No changes were applied during optimization' 
+        });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Optimization applied successfully',
+        result: {
+          actionLabel: 'Revenue Friction Fix',
+          productsOptimized,
+          totalChanges: productsOptimized.reduce((sum, p) => sum + p.changes.length, 0),
+          estimatedImpact: '+5-15% expected improvement',
+          creditsUsed: executionResult.creditsUsed,
+          executionType: changeType,
+        }
+      });
     } catch (error) {
       console.error("Error executing next move:", error);
       res.status(500).json({ error: "Failed to execute next move" });
