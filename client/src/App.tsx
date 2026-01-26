@@ -104,7 +104,7 @@ const RevenueLoopControls = lazy(() => import("@/pages/automation/revenue-loop-c
 const PowerModePage = lazy(() => import("@/pages/automation/power-mode"));
 const ProductAutonomy = lazy(() => import("@/pages/automation/product-autonomy"));
 const PendingApprovals = lazy(() => import("@/pages/pending-approvals"));
-
+const ChangeControlDashboard = lazy(() => import("@/pages/change-control-dashboard"));
 
 // Shopify installation onboarding
 const ShopifyOnboarding = lazy(() => import("@/pages/ShopifyOnboarding"));
@@ -742,6 +742,15 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <PendingApprovals />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      
+      {/* Change Control Dashboard */}
+      <Route path="/change-control" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <ChangeControlDashboard />
           </Suspense>
         </ProtectedRoute>
       )} />
