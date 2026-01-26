@@ -42,7 +42,7 @@ export const DashboardHeader = memo(function DashboardHeader({
       "ai-tools": { title: "AI Tools", subtitle: "AI-powered content generation" },
       "automate": { title: "Automation", subtitle: "Bulk operations and workflows" },
       campaigns: { title: "Campaigns", subtitle: "Email and SMS marketing" },
-      products: { title: "Products", subtitle: "Manage your product catalog" },
+      products: { title: "Product Intelligence", subtitle: "AI-powered product insights and optimization" },
       profile: { title: "Profile", subtitle: "Your account information" },
       settings: { title: "Settings", subtitle: "App configuration and preferences" },
     };

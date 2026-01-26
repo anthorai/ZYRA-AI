@@ -8,13 +8,12 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package, ShoppingBag, RefreshCw } from "lucide-react";
+import { Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
 import { PageContainer } from "@/components/ui/standardized-layout";
-import { GradientPageHeader } from "@/components/ui/page-hero";
 import { ProductIntelligenceCard, ProductIntelligenceCardSkeleton } from "@/components/products/ProductIntelligenceCard";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
 import { ProductIntelligenceSummaryBar } from "@/components/products/ProductIntelligenceSummary";
@@ -106,12 +105,7 @@ export function ProductIntelligenceTab() {
     <TooltipProvider>
       <div className="space-y-6">
         <PageContainer>
-          <div className="flex items-center justify-between mb-6">
-            <GradientPageHeader
-              icon={<ShoppingBag className="w-8 h-8 text-primary" />}
-              title="Product Revenue Intelligence"
-              subtitle="ZYRA is protecting, monitoring, and optimizing your products. View revenue health, confidence scores, and action history."
-            />
+          <div className="flex items-center justify-end mb-6">
             <Button 
               onClick={handleSync}
               disabled={isSyncing}
