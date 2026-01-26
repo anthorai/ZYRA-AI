@@ -20384,15 +20384,16 @@ Return JSON array of segments only, no explanation text.`;
     }
   });
 
-  // Execute foundational action for new stores
+  // Execute foundational action for new stores - REAL EXECUTION with AI
   app.post("/api/zyra/execute-foundational", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       const { type } = req.body as { type: string };
       
-      console.log(`[ZYRA Execute Foundational] Starting ${type} for user ${userId}`);
+      console.log(`[ZYRA Execute Foundational] Starting REAL execution: ${type} for user ${userId}`);
       
-      const { fastDetectionEngine, FOUNDATIONAL_ACTION_LABELS, FOUNDATIONAL_ACTION_DESCRIPTIONS } = await import('./lib/fast-detection-engine');
+      const { fastDetectionEngine, FOUNDATIONAL_ACTION_LABELS } = await import('./lib/fast-detection-engine');
+      const { foundationalExecutionService } = await import('./lib/foundational-execution');
       
       // Validate action type
       const validTypes = ['seo_basics', 'product_copy_clarity', 'trust_signals', 'recovery_setup'];
@@ -20403,38 +20404,64 @@ Return JSON array of segments only, no explanation text.`;
         });
       }
       
-      // Get the foundational action details
-      const actionDetails = FOUNDATIONAL_ACTION_DESCRIPTIONS[type as keyof typeof FOUNDATIONAL_ACTION_DESCRIPTIONS];
-      if (!actionDetails) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Action details not found' 
-        });
-      }
-      
-      // Start execution tracking - this triggers the ZYRA loop phases
+      // Start execution tracking for UI phases
       const actionId = `foundational_${type}`;
       fastDetectionEngine.startExecution(userId, actionId, type);
       
-      // Log the execution success
-      console.log(`✅ [ZYRA Execute Foundational] Executed ${type} for user ${userId}`);
+      // Execute REAL foundational action with AI
+      const result = await foundationalExecutionService.executeFoundationalAction(userId, type);
       
-      // Return success - the actual optimization would be triggered here in production
+      console.log(`✅ [ZYRA Execute Foundational] Completed ${type} for user ${userId}:`, {
+        success: result.success,
+        productsOptimized: result.productsOptimized.length,
+        totalChanges: result.totalChanges,
+      });
+      
+      // Return detailed results
       res.json({
-        success: true,
-        message: `Foundational action "${FOUNDATIONAL_ACTION_LABELS[type as keyof typeof FOUNDATIONAL_ACTION_LABELS]}" executed successfully`,
+        success: result.success,
+        message: result.summary,
         type,
         executionPhase: 'executing',
-        actionDetails: {
-          label: FOUNDATIONAL_ACTION_LABELS[type as keyof typeof FOUNDATIONAL_ACTION_LABELS],
-          description: actionDetails.description,
+        result: {
+          actionLabel: result.actionLabel,
+          productsOptimized: result.productsOptimized,
+          totalChanges: result.totalChanges,
+          estimatedImpact: result.estimatedImpact,
+          executionTimeMs: result.executionTimeMs,
         },
+        error: result.error,
       });
     } catch (error) {
       console.error("[ZYRA Execute Foundational] Error:", error);
       res.status(500).json({ 
         success: false, 
         error: 'Failed to execute foundational action' 
+      });
+    }
+  });
+  
+  // Get execution activities for Live Activity Feed
+  app.get("/api/zyra/execution-activities", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { foundationalExecutionService } = await import('./lib/foundational-execution');
+      
+      const activities = foundationalExecutionService.getActivities(userId);
+      
+      res.json({
+        success: true,
+        activities: activities.map(a => ({
+          ...a,
+          timestamp: a.timestamp.toISOString(),
+        })),
+      });
+    } catch (error) {
+      console.error("[ZYRA Execution Activities] Error:", error);
+      res.status(500).json({ 
+        success: false, 
+        activities: [],
+        error: 'Failed to fetch activities' 
       });
     }
   });

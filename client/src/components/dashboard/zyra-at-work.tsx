@@ -58,6 +58,41 @@ interface FoundationalAction {
   riskLevel: 'low';
 }
 
+// Execution results from real AI-powered optimization
+interface ContentChange {
+  field: string;
+  before: string;
+  after: string;
+  reason: string;
+}
+
+interface ProductOptimization {
+  productId: string;
+  productName: string;
+  changes: ContentChange[];
+  impactExplanation: string;
+}
+
+interface ExecutionResult {
+  success: boolean;
+  actionLabel: string;
+  productsOptimized: ProductOptimization[];
+  totalChanges: number;
+  estimatedImpact: string;
+  executionTimeMs: number;
+}
+
+interface ExecutionActivityItem {
+  id: string;
+  timestamp: string;
+  phase: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
+  message: string;
+  status: 'in_progress' | 'completed' | 'warning';
+  details?: string;
+  productName?: string;
+  changes?: ContentChange[];
+}
+
 interface ZyraStats {
   activePhase: string;
   currentAction: string | null;
@@ -302,7 +337,9 @@ function ProgressStages({
   onApprove,
   isApproving = false,
   onComplete,
-  activePhase = 'detect'
+  activePhase = 'detect',
+  executionResult = null,
+  executionActivities = []
 }: { 
   isAutopilotEnabled: boolean;
   detectionPhase?: DetectionPhase;
@@ -316,6 +353,8 @@ function ProgressStages({
   isApproving?: boolean;
   onComplete?: () => void;
   activePhase?: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
+  executionResult?: ExecutionResult | null;
+  executionActivities?: ExecutionActivityItem[];
 }) {
   const [currentStage, setCurrentStage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -623,6 +662,83 @@ function ProgressStages({
                   {foundationalAction.expectedImpact}
                 </span>
               </div>
+              
+              {/* EXECUTION RESULTS DISPLAY - Shows real changes made */}
+              {executionResult && executionResult.productsOptimized.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-sm font-medium text-emerald-400">
+                      {executionResult.totalChanges} Changes Applied
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {executionResult.productsOptimized.map((product, pIdx) => (
+                      <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-white mb-2">
+                          {product.productName}
+                        </p>
+                        <div className="space-y-2">
+                          {product.changes.map((change, cIdx) => (
+                            <div key={cIdx} className="text-xs">
+                              <div className="flex items-center gap-1 mb-1">
+                                <span className="text-primary font-medium">{change.field}</span>
+                              </div>
+                              <div className="grid grid-cols-1 gap-1 ml-2">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
+                                  <span className="text-slate-500 line-through">{change.before}</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
+                                  <span className="text-emerald-300">{change.after}</span>
+                                </div>
+                                <p className="text-slate-400 italic mt-1">{change.reason}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
+                          {product.impactExplanation}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-3 p-2 bg-emerald-500/10 rounded text-center">
+                    <p className="text-xs text-emerald-400 font-medium">
+                      {executionResult.estimatedImpact}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* EXECUTION ACTIVITIES LOG - Detailed step-by-step log */}
+              {executionActivities.length > 0 && !executionResult?.productsOptimized?.length && (
+                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-slate-300">Activity Log</span>
+                  </div>
+                  <div className="space-y-2">
+                    {executionActivities.slice(-5).map((activity, idx) => (
+                      <div key={activity.id || idx} className="flex items-start gap-2 text-xs">
+                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
+                          activity.status === 'completed' ? 'bg-emerald-400' :
+                          activity.status === 'warning' ? 'bg-amber-400' : 'bg-primary'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-slate-300">{activity.message}</p>
+                          {activity.details && (
+                            <p className="text-slate-500 mt-0.5">{activity.details}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (detectionStatus === 'foundational_action' || isNewStore) ? (
             // Fallback for new stores without foundational action (should not happen)
@@ -856,6 +972,10 @@ export default function ZyraAtWork() {
   const [approvedPhase, setApprovedPhase] = useState<'idle' | 'execute' | 'prove' | 'learn' | 'complete'>('idle');
   const approvedPhaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Store execution results for display
+  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
+  const [executionActivities, setExecutionActivities] = useState<ExecutionActivityItem[]>([]);
+  
   const DETECTION_TIMEOUT_MS = 10000;
   
   const { data: detectionStatusData } = useQuery<{
@@ -892,18 +1012,40 @@ export default function ZyraAtWork() {
     mutationFn: async (actionId: string) => {
       // Check if it's a foundational action
       if (actionId.startsWith('foundational_')) {
-        // Execute foundational action
-        return await apiRequest('POST', '/api/zyra/execute-foundational', { 
+        // Execute foundational action - returns real execution results
+        const response = await apiRequest('POST', '/api/zyra/execute-foundational', { 
           type: actionId.replace('foundational_', '') 
         });
+        return response.json();
       }
       // Regular friction action - approve the opportunity
-      return await apiRequest('POST', `/api/revenue-opportunities/${actionId}/approve`, {});
+      const response = await apiRequest('POST', `/api/revenue-opportunities/${actionId}/approve`, {});
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      // Store execution results for display
+      if (data?.result) {
+        setExecutionResult(data.result);
+      }
+      
+      // Fetch execution activities for detailed log
+      try {
+        const activitiesResponse = await fetch('/api/zyra/execution-activities', {
+          credentials: 'include',
+        });
+        if (activitiesResponse.ok) {
+          const activitiesData = await activitiesResponse.json();
+          if (activitiesData.activities) {
+            setExecutionActivities(activitiesData.activities);
+          }
+        }
+      } catch (err) {
+        console.log('[ZYRA] Could not fetch execution activities:', err);
+      }
+      
       toast({
-        title: 'Action Approved',
-        description: 'ZYRA is now executing the action',
+        title: data?.success ? 'Optimization Complete' : 'Action Approved',
+        description: data?.message || 'ZYRA has applied the improvements',
       });
       // Start post-approval phase progression: execute → prove → learn → complete
       setApprovedPhase('execute');
@@ -1421,6 +1563,63 @@ export default function ZyraAtWork() {
           </div>
         </CardHeader>
         <CardContent>
+          {/* EXECUTION RESULTS BANNER - Always visible when results exist */}
+          {executionResult && executionResult.productsOptimized.length > 0 && (
+            <div className="mb-4 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30" data-testid="execution-results-banner">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-emerald-400">
+                    {executionResult.actionLabel} Complete
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {executionResult.totalChanges} changes across {executionResult.productsOptimized.length} product{executionResult.productsOptimized.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {executionResult.productsOptimized.map((product, pIdx) => (
+                  <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
+                    <p className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+                      <ShoppingCart className="w-3 h-3 text-primary" />
+                      {product.productName}
+                    </p>
+                    <div className="space-y-3">
+                      {product.changes.map((change, cIdx) => (
+                        <div key={cIdx} className="text-xs border-l-2 border-primary/30 pl-3">
+                          <p className="text-primary font-medium mb-1">{change.field}</p>
+                          <div className="space-y-1">
+                            <div className="flex items-start gap-2">
+                              <span className="text-red-400 font-mono text-[10px] w-14 shrink-0">BEFORE:</span>
+                              <span className="text-slate-500">{change.before}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-emerald-400 font-mono text-[10px] w-14 shrink-0">AFTER:</span>
+                              <span className="text-emerald-300">{change.after}</span>
+                            </div>
+                            <p className="text-slate-400 italic mt-1 text-[11px]">{change.reason}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
+                      {product.impactExplanation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-3 p-2 bg-emerald-500/20 rounded text-center">
+                <p className="text-xs text-emerald-400 font-medium">
+                  {executionResult.estimatedImpact}
+                </p>
+              </div>
+            </div>
+          )}
+          
           <div 
             ref={scrollContainerRef}
             className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
@@ -1446,6 +1645,8 @@ export default function ZyraAtWork() {
                 onApprove={(actionId) => approveActionMutation.mutate(actionId)}
                 isApproving={approveActionMutation.isPending}
                 activePhase={currentPhase as 'detect' | 'decide' | 'execute' | 'prove' | 'learn'}
+                executionResult={executionResult}
+                executionActivities={executionActivities}
               />
             ) : (
               events.map((event) => (
