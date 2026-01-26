@@ -16637,7 +16637,7 @@ Output format: Markdown with clear section headings.`;
           id: revenueOpportunities.id,
           opportunityType: revenueOpportunities.opportunityType,
           status: revenueOpportunities.status,
-          priorityScore: revenueOpportunities.priorityScore,
+          safetyScore: revenueOpportunities.safetyScore,
           estimatedRevenueLift: revenueOpportunities.estimatedRevenueLift,
           createdAt: revenueOpportunities.createdAt,
           entityId: revenueOpportunities.entityId,
@@ -16648,8 +16648,8 @@ Output format: Markdown with clear section headings.`;
         .limit(15);
 
       for (const opp of opportunities) {
-        const score = opp.priorityScore || 0;
-        const revenue = opp.estimatedRevenueLift || 0;
+        const score = opp.safetyScore || 0;
+        const revenue = Number(opp.estimatedRevenueLift) || 0;
         
         if (opp.status === 'pending') {
           activities.push({
@@ -16695,7 +16695,7 @@ Output format: Markdown with clear section headings.`;
         .limit(10);
 
       for (const proof of proofs) {
-        const delta = proof.revenueDelta || 0;
+        const delta = Number(proof.revenueDelta) || 0;
         const isPositive = delta > 0;
         
         activities.push({
@@ -19980,8 +19980,48 @@ Return JSON array of segments only, no explanation text.`;
       const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
       const detectionProgress = await fastDetectionEngine.getDetectionStatus(userId);
       
+      // Determine active phase based on what's actually happening
+      // Check for executing opportunities
+      const [executingOpp] = await db.select({ id: revenueOpportunities.id })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'executing')
+        ))
+        .limit(1);
+      
+      // Check for proving opportunities
+      const [provingOpp] = await db.select({ id: revenueOpportunities.id })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'proving')
+        ))
+        .limit(1);
+      
+      // Check for approved/pending opportunities (decide phase)
+      const [decidingOpp] = await db.select({ id: revenueOpportunities.id })
+        .from(revenueOpportunities)
+        .where(and(
+          eq(revenueOpportunities.userId, userId),
+          inArray(revenueOpportunities.status, ['pending', 'approved'])
+        ))
+        .limit(1);
+      
+      // Determine phase based on current activity
+      let activePhase: 'detect' | 'decide' | 'execute' | 'prove' | 'learn' = 'detect';
+      if (executingOpp) {
+        activePhase = 'execute';
+      } else if (provingOpp) {
+        activePhase = 'prove';
+      } else if (decidingOpp || detectionProgress.phase === 'decision_ready') {
+        activePhase = 'decide';
+      } else if (Number(pendingCount.count) > 0) {
+        activePhase = 'decide';
+      }
+      
       res.json({
-        activePhase: detectionProgress.phase === 'decision_ready' ? 'decide' : 'detect',
+        activePhase,
         currentAction: null,
         todayRevenueDelta: Number(todayProofs.total) || 0,
         todayOptimizations: Number(todayOptimizations.count) || 0,
