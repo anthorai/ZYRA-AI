@@ -257,11 +257,13 @@ function ProgressStages({
   isAutopilotEnabled, 
   detectionPhase = 'idle',
   detectionStatus = 'detecting',
+  isDetectionComplete = false,
   onComplete 
 }: { 
   isAutopilotEnabled: boolean;
   detectionPhase?: DetectionPhase;
   detectionStatus?: StrictDetectionStatus;
+  isDetectionComplete?: boolean;
   onComplete?: () => void;
 }) {
   const [currentStage, setCurrentStage] = useState(0);
@@ -272,8 +274,6 @@ function ProgressStages({
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const hardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPhaseRef = useRef<DetectionPhase>('idle');
-
-  const isDetectionComplete = detectionStatus !== 'detecting';
   const targetStage = phaseToMinStage[detectionPhase] || 0;
 
   useEffect(() => {
@@ -686,11 +686,13 @@ export default function ZyraAtWork() {
     }
   }, [isDetecting, detectionStartTime]);
 
-  const detectionPhase = detectionStatusData?.phase || stats?.detection?.phase || 'idle';
+  // When detection-status query is disabled (isDetecting=false), use stats as primary source
+  const detectionPhase = (isDetecting && detectionStatusData?.phase) || stats?.detection?.phase || 'idle';
   
   // Derive strict status from server endpoint - NEVER default to 'no_friction'
-  // Also consider the stats query completion state as fallback
-  const detectionStatus: StrictDetectionStatus = detectionStatusData?.status || 
+  // When detection-status query is disabled (stale data), prioritize stats query
+  const detectionStatus: StrictDetectionStatus = 
+    (isDetecting && detectionStatusData?.status) || 
     (stats?.detection?.complete ? 'insufficient_data' : 'detecting');
   
   // Use strict status to determine completion - NOT boolean
@@ -1018,6 +1020,7 @@ export default function ZyraAtWork() {
                 isAutopilotEnabled={isAutopilotEnabled} 
                 detectionPhase={detectionPhase as DetectionPhase}
                 detectionStatus={detectionStatus}
+                isDetectionComplete={isDetectionComplete}
               />
             ) : (
               events.map((event) => (
