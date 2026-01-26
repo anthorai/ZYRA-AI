@@ -780,17 +780,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planName = plan?.planName || u.plan;
         }
         
-        // Get credits info from Neon database (where trial grants are stored)
+        // Get credits used from Neon database
         const [stats] = await db.select({
           creditsUsed: usageStats.creditsUsed,
-          creditsRemaining: usageStats.creditsRemaining,
         }).from(usageStats).where(eq(usageStats.userId, u.id));
         
         const creditsUsed = stats?.creditsUsed || 0;
-        const creditsRemaining = stats?.creditsRemaining || 0;
         
-        // Get credit limit from plan
-        let creditLimit = creditsUsed + creditsRemaining;
+        // Get credit limit from plan (ALWAYS calculate remaining from plan limit)
+        let creditLimit = 100; // Default trial credits
         if (subscription?.planId) {
           const [planData] = await db.select({ limits: subscriptionPlans.limits })
             .from(subscriptionPlans)
@@ -799,6 +797,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             creditLimit = (planData.limits as { credits?: number }).credits || creditLimit;
           }
         }
+        
+        // Calculate remaining credits (never use stored value - always compute from limit)
+        const creditsRemaining = Math.max(0, creditLimit - creditsUsed);
         
         // Determine expiration date (trial end for trialing, period end for active)
         const expiresAt = subscription?.status === 'trialing' 
