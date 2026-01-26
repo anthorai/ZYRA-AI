@@ -1,5 +1,5 @@
 # Overview
-Zyra AI is an AI-powered Shopify SaaS application designed to enhance e-commerce operations by boosting sales, optimizing product listings, recovering abandoned carts, and automating growth. Its long-term vision is to evolve into a fully autonomous AI store manager that continuously monitors, optimizes, and learns, providing key capabilities such as AI-generated product descriptions, SEO optimization, email marketing automation, Shopify integration, and an analytics dashboard.
+Zyra AI is an AI-powered Shopify SaaS application designed to enhance e-commerce operations by boosting sales, optimizing product listings, recovering abandoned carts, and automating growth. Its long-term vision is to evolve into a fully autonomous AI store manager that continuously monitors, optimizes, and learns, providing key capabilities such as AI-generated product descriptions, SEO optimization, email marketing automation, Shopify integration, and an analytics dashboard. The system focuses on detecting and removing "revenue friction" across the buyer journey.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -7,17 +7,17 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## UI/UX Decisions
-The frontend uses React 18, TypeScript, Vite, shadcn/ui with Radix UI, and Wouter for routing. Styling is managed by Tailwind CSS (dark theme) with a component-based architecture. The application prioritizes accessibility (WCAG 2.1 AA compliant) and PWA capabilities. Performance optimization includes TanStack Query for data management, optimistic updates, route prefetching, lazy loading, a service worker for offline support, and GPU-accelerated animations.
+The frontend uses React 18, TypeScript, Vite, shadcn/ui with Radix UI, and Wouter for routing. Styling is managed by Tailwind CSS (dark theme) with a component-based architecture. The application prioritizes accessibility (WCAG 2.1 AA compliant) and PWA capabilities. Performance optimization includes TanStack Query, optimistic updates, route prefetching, lazy loading, a service worker for offline support, and GPU-accelerated animations.
 
 ## Technical Implementations
-The backend is built with Express.js and TypeScript, providing RESTful API endpoints. Authentication uses `express-session` and Passport.js. PostgreSQL with Drizzle ORM handles type-safe database operations. Sensitive data is encrypted using AES-256-GCM. The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend, and supports persistent schedulers for billing, campaigns, and product syncing. Automated Drizzle Kit migrations run on startup.
+The backend is built with Express.js and TypeScript, providing RESTful API endpoints. Authentication uses `express-session` and Passport.js. PostgreSQL with Drizzle ORM handles type-safe database operations. Sensitive data is encrypted using AES-256-GCM. The application is configured for VM deployment on Replit, with Vite for frontend and esbuild for backend, and supports persistent schedulers for various background tasks. Automated Drizzle Kit migrations run on startup.
 
 ## Feature Specifications
 ### AI Integration
 Utilizes a multi-model AI system (GPT-4o, GPT-4o-mini) with a centralized prompt library for professional copywriting, product description generation, SEO optimization, and bulk product optimization, maintaining brand voice memory. It includes premium Strategy AI (GPT-4o) with token accounting, rate limiting, and Redis-backed caching. "Fast Mode" uses GPT-4o-mini with SSE streaming, while "Quality Mode" uses a multi-agent pipeline with GPT-4o.
 
 ### SEO & Competitive Intelligence
-Provides a comprehensive SEO Health Dashboard for monitoring and improving Shopify store SEO, including store health scores, issue detection, per-product audits, keyword ranking, schema markup generation, and AI recommendations. SERP Competitive Intelligence offers real-time Google search analysis via DataForSEO API, extracting patterns from top-ranking competitors and using an AI prompt system (ZYRA GOOGLE ECOMMERCE RANKING ANALYZER) to generate content for competitive advantage.
+Provides a comprehensive SEO Health Dashboard for monitoring and improving Shopify store SEO, including store health scores, issue detection, per-product audits, keyword ranking, schema markup generation, and AI recommendations. SERP Competitive Intelligence offers real-time Google search analysis via DataForSEO API, extracting patterns from top-ranking competitors and using an AI prompt system to generate content for competitive advantage.
 
 ### Authentication & Authorization
 Uses Supabase Auth for email/password authentication, password reset, JWT-based session management, Row Level Security (RLS), RBAC for admin endpoints, and TOTP-based Two-Factor Authentication.
@@ -29,17 +29,10 @@ Supports PayPal-only payment processing (USD globally) with secure webhook handl
 Automatically activates a 7-day free trial on user signup with daily welcome dialog reminders, managing trial state and displaying contextual messages.
 
 ### Marketing Automation System
-ZYRA operates as an autonomous marketing brain rather than a campaign-building tool. Marketing functionality (abandoned cart recovery, post-purchase upsells, follow-ups) is presented as AI-detected revenue actions requiring user approval, not as user-created campaigns. Email/SMS delivery via SendGrid and Twilio enables automated recovery messages and upsell notifications with full performance tracking.
+ZYRA operates as an autonomous marketing brain, presenting marketing functionality (abandoned cart recovery, post-purchase upsells, follow-ups) as AI-detected revenue actions requiring user approval, rather than user-created campaigns. Email/SMS delivery via SendGrid and Twilio enables automated recovery messages and upsell notifications with full performance tracking.
 
 ### Email Template Builder
-Enterprise-grade drag-and-drop email template editor with 3-panel layout (blocks, preview, properties). Features include:
-- **Block Types**: Logo, Heading, Text, Image, Button (table-based), Divider, Spacer, Columns - all with professional email-safe rendering
-- **Undo/Redo**: 50-state history stack with keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y), proper history seeding on template load
-- **Version History**: Full version control with restore capability via dialog and API integration
-- **Send Test Email**: Email validation with SendGrid integration for production, simulation mode for development
-- **HTML Export**: Auto-download generated email-safe HTML with inline CSS and CAN-SPAM compliant footer
-- **Brand Settings**: Customizable primary/secondary colors, background, text color, font family, and footer text
-- **Desktop/Mobile Preview**: Email client simulation with responsive preview modes
+Enterprise-grade drag-and-drop email template editor with features like various block types (Logo, Heading, Text, Image, Button, Divider, Spacer, Columns), undo/redo functionality (50-state history stack), full version control with restore capability, send test email functionality (SendGrid integration), HTML export with inline CSS, customizable brand settings (colors, fonts), and desktop/mobile preview modes.
 
 ### Analytics & Reporting
 A real-time dashboard tracks key metrics with PDF and CSV export, including an ROI Tracking System for end-to-end revenue attribution across various sources, integrating with Shopify sales webhooks.
@@ -54,7 +47,7 @@ Ensures production-ready security with multi-tier rate limiting, input sanitizat
 Offers advanced multi-channel notification preferences (Email, SMS, In-App, Push) with granular control and proactive trial expiration notifications.
 
 ### Shopify Integration
-Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing. The connection flow uses a shared ConnectionProgressCard component (`client/src/components/ui/connection-progress-card.tsx`) with 5-step visual progress (Initializing, Authenticating, Verifying, Syncing, Complete), consistent UX across both manual connects and App Store installations, and comprehensive error handling with specific error codes for Shopify review compliance.
+Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing. The connection flow uses a shared `ConnectionProgressCard` component with a 5-step visual progress and comprehensive error handling.
 
 ### Automation Tools
 Includes comprehensive bulk SEO optimization tools like "Smart Bulk Suggestions" (AI-powered fixes with previews) and "One-Click Shopify Publish" with per-product rollback.
@@ -66,106 +59,23 @@ An AI-powered post-purchase upsell system sending personalized product recommend
 This system transforms manual optimization into autonomous, AI-driven processes, including Autonomous SEO (daily audits, AI-powered action processing), Dynamic Pricing AI, and Autonomous Marketing (multi-channel automation, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system.
 
 ### Revenue Loop System
-Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. The system continuously monitors products for optimization opportunities, automatically applies AI-powered improvements, and tracks revenue impact without manual intervention.
+Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. The system continuously monitors products for optimization opportunities, automatically applies AI-powered improvements, and tracks revenue impact.
 
 ### Revenue Friction Detection System
-ZYRA detects and removes REVENUE FRICTION - moments where buyer intent exists but money doesn't happen. The friction-focused architecture identifies 4 friction types in the buyer journey:
-- **view_no_cart**: Product views but no add-to-cart (discovery friction)
-- **cart_no_checkout**: Cart additions but no checkout (consideration friction)
-- **checkout_drop**: Checkout started but abandoned (conversion friction)
-- **purchase_no_upsell**: Order completed but no additional purchase (expansion friction)
-
-**Database Schema Extensions**:
-- `frictionType` enum added to `revenueSignals` and `revenueOpportunities` tables
-- Friction-specific fields: `frictionDescription`, `estimatedRecovery`
-- All friction fields nullable for gradual rollout
-
-**Detection Engine** (`server/lib/revenue-detection-engine.ts`):
-- Detects friction from contentPerformance, abandonedCarts, and order analysis
-- Uses business language in WHY framework explanations (no technical jargon)
-- Scoring formula: `Priority = Expected_Recovery × Confidence × (1/Risk)`
+ZYRA detects and removes "revenue friction" – moments where buyer intent exists but a sale doesn't happen. It identifies four friction types: `view_no_cart`, `cart_no_checkout`, `checkout_drop`, and `purchase_no_upsell`. A detection engine identifies friction from performance data, abandoned carts, and order analysis, using a scoring formula (`Priority = Expected_Recovery × Confidence × (1/Risk)`) to prioritize opportunities.
 
 ### Next Move Feature
-The "Next Move" feature is ZYRA's single authoritative revenue decision interface. It surfaces exactly ONE high-priority action at a time - never a list of suggestions.
-
-**Decision Engine** (`server/lib/next-move-engine.ts`):
-- Scores all revenue opportunities using: `NextMoveScore = (Expected_Revenue_Impact × Confidence_Score) ÷ Risk_Level`
-- Selects the highest-scoring opportunity as the active Next Move
-- Converts safetyScore (0-100) to risk levels (low/medium/high)
-- Calculates credit costs per action type
-- Includes friction context: frictionType, frictionDescription, whereIntentDied, estimatedMonthlyLoss
-
-**Plan-Based Execution Rules**:
-- **Starter+ ($49)**: Always requires approval, only very low-risk auto-actions
-- **Growth ($249)**: Auto-run low-risk actions, medium-risk requires approval
-- **Scale ($499)**: Auto-run most actions, approval only for high-risk
-
-**API Endpoints**:
-- `GET /api/next-move` - Fetch the current best revenue decision
-- `POST /api/next-move/approve` - Approve and deduct credits
-- `POST /api/next-move/execute` - Start execution
-- `POST /api/next-move/rollback` - Rollback a completed action
-- `POST /api/next-move/generate-demo` - Create a demo opportunity for testing
-
-**Frontend** (`client/src/components/dashboard/next-move.tsx`):
-- Hero card UI showing action type, product, reason, expected revenue, confidence, risk level
-- Plan-aware CTA buttons (Approve & Run vs Run Automatically)
-- Real-time status updates (Ready → Executing → Monitoring → Completed)
-- Rollback guarantee visible for every action
+The "Next Move" feature is ZYRA's single authoritative revenue decision interface, surfacing one high-priority action at a time. A decision engine scores all revenue opportunities (`NextMoveScore = (Expected_Revenue_Impact × Confidence_Score) ÷ Risk_Level`) and selects the highest-scoring one. Execution rules are plan-based (Starter+, Growth, Scale) determining whether actions require approval or can run automatically. API endpoints manage fetching, approving, executing, and rolling back actions. The frontend displays the action, reason, expected revenue, confidence, and risk level, with real-time status updates.
 
 ### ZYRA Detection Engine (3-Layer Architecture)
-High-performance revenue opportunity detection with guaranteed ≤10s response time.
-
-**Layer 1 - Background Precomputation Worker** (`server/lib/detection-precompute.ts`):
-- Runs on schedule and when store data changes
-- Precomputes product funnel stats, friction scores, and revenue signals
-- Populates `detectionCache` table for fast reads
-- No Shopify API calls during detection - all data is cached
-
-**Layer 2 - Fast Detect** (`server/lib/fast-detection-engine.ts`):
-- Hard 10-second timeout with abort signal mechanism
-- Reads only from precomputed cache - no Shopify API calls
-- Detection phases: `detect_started` → `cache_loaded` → `friction_identified` → `decision_ready`
-- Abort guards after every await to prevent post-timeout writes
-- Returns `lastValidNextMoveId` on timeout for fallback messaging
-
-**Layer 3 - Deep Detect** (`server/lib/deep-detection-engine.ts`):
-- Async worker for optional accuracy improvements
-- Triggered by stale cache (>12hr) or low confidence scores
-- Does not block Fast Detect response
-
-**API Endpoints**:
-- `GET /api/zyra/detection-status` - Get current detection phase (polled at 1s intervals)
-- `POST /api/zyra/detect` - Trigger Fast Detect with timeout
-
-**Frontend Integration** (`client/src/components/dashboard/zyra-at-work.tsx`):
-- ProgressStages component synced to backend detection phases
-- UI completion tied strictly to `decision_ready` phase (not timer-based)
-- Polling stops when detection completes or times out
+This high-performance engine ensures ≤10s response time for revenue opportunity detection using a three-layer architecture:
+1.  **Background Precomputation Worker**: Runs on schedule and data changes, precomputes product funnel stats, friction scores, and revenue signals, and pre-builds execution payloads.
+2.  **Fast Detect**: Hard 10-second timeout, reads only from precomputed cache, and returns detection phases (`detect_started`, `cache_loaded`, `friction_identified`, `decision_ready`).
+3.  **Deep Detect**: An async worker for optional accuracy improvements, triggered by stale cache or low confidence scores, but does not block Fast Detect.
+The PROVE phase is event-driven, using `interimProofEvents` database table and Shopify webhooks for real-time attribution. The frontend integrates with detection status polling and displays progress.
 
 ### Credit Consumption System
-Plan-aware credit consumption where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs.
-
-**Monthly Credits by Plan**:
-- Starter+ ($49): 1,000 credits
-- Growth ($249): 6,000 credits
-- Scale ($499): 15,000 credits
-
-**Credit Cost Multipliers** (`server/lib/constants/credit-consumption.ts`):
-- **Base Cost**: Varies by action type and plan (higher plans = deeper AI = higher base cost)
-- **SERP Multiplier**: Starter+ ×1.2, Growth ×1.6, Scale ×2.2
-- **Autonomy Multiplier**: Starter+ ×1.0, Growth ×1.3, Scale ×1.6 (for auto-executed actions)
-- **Learning/Monitoring**: 10% of execution cost charged weekly for ongoing analysis
-
-**Low Credit Behavior** (soft nudges, not hard blocks):
-- Exhausted: "ZYRA is prioritizing highest-impact actions"
-- Very Low (10%): "Credits running low, focusing on revenue-critical actions"
-- Low (20%): "ZYRA is working efficiently, deep AI analysis consuming credits as expected"
-
-**Backend Enforcement**:
-- Credit checks happen server-side before execution
-- Credits deducted BEFORE action starts
-- 5% credit reserve maintained for monitoring and rollback safety
+A plan-aware credit consumption system where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs. Monthly credits vary by plan, and credit cost multipliers are applied based on action type, plan, SERP usage, and autonomy. The system includes "soft nudges" for low credit situations and backend enforcement with credit checks before execution and a 5% credit reserve.
 
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
@@ -173,21 +83,21 @@ The application uses two storage implementations: `MemStorage` (in-memory for ge
 # External Dependencies
 
 ## Database & Hosting
-- **PostgreSQL**: Production database.
-- **Supabase**: PostgreSQL and authentication services.
-- **Drizzle ORM**: Type-safe database queries.
-- **Deployment Options**: Replit VM, Vercel.
+-   **PostgreSQL**: Production database.
+-   **Supabase**: PostgreSQL and authentication services.
+-   **Drizzle ORM**: Type-safe database queries.
+-   **Deployment Options**: Replit VM, Vercel.
 
 ## AI & Machine Learning
-- **OpenAI API**: GPT-4o mini (text generation), Vision API (image analysis).
-- **Upstash Redis**: Serverless Redis for AI response caching.
+-   **OpenAI API**: GPT-4o mini (text generation), Vision API (image analysis).
+-   **Upstash Redis**: Serverless Redis for AI response caching.
 
 ## SEO & Analytics
-- **DataForSEO API**: Real-time Google SERP data for competitive intelligence.
+-   **DataForSEO API**: Real-time Google SERP data for competitive intelligence.
 
 ## Payment Processing
-- **PayPal**: International payment gateway.
+-   **PayPal**: International payment gateway.
 
 ## Email & SMS Services
-- **SendGrid**: Transactional emails and marketing campaigns.
-- **Twilio**: SMS notifications and cart recovery. Merchants can connect their own Twilio accounts, with credentials securely stored and validated.
+-   **SendGrid**: Transactional emails and marketing campaigns.
+-   **Twilio**: SMS notifications and cart recovery.
