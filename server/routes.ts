@@ -88,7 +88,7 @@ import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
 import { db, requireDb, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
-import { eq, desc, sql, and, gte, lte, isNotNull } from "drizzle-orm";
+import { eq, desc, sql, and, gte, lte, isNotNull, inArray } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
 import multer from "multer";
