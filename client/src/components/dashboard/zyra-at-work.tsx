@@ -2220,33 +2220,41 @@ export default function ZyraAtWork() {
                   </div>
                 </div>
                 
-                {/* Summary Stats Row */}
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-products-updated">
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <Package className="w-4 h-4 text-primary" />
-                      <span className="text-xl font-bold text-white" data-testid="text-products-count">{executionResult.productsOptimized.length}</span>
+                {/* Summary Stats Row - only show when there are products optimized */}
+                {executionResult.productsOptimized.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-products-updated">
+                      <div className="flex items-center justify-center gap-1.5 mb-1">
+                        <Package className="w-4 h-4 text-primary" />
+                        <span className="text-xl font-bold text-white" data-testid="text-products-count">{executionResult.productsOptimized.length}</span>
+                      </div>
+                      <p className="text-xs text-slate-400">Products Updated</p>
                     </div>
-                    <p className="text-xs text-slate-400">Products Updated</p>
-                  </div>
-                  <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-fields-changed">
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <FileText className="w-4 h-4 text-blue-400" />
-                      <span className="text-xl font-bold text-white" data-testid="text-changes-count">{executionResult.totalChanges}</span>
+                    <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-fields-changed">
+                      <div className="flex items-center justify-center gap-1.5 mb-1">
+                        <FileText className="w-4 h-4 text-blue-400" />
+                        <span className="text-xl font-bold text-white" data-testid="text-changes-count">{executionResult.totalChanges}</span>
+                      </div>
+                      <p className="text-xs text-slate-400">Fields Changed</p>
                     </div>
-                    <p className="text-xs text-slate-400">Fields Changed</p>
-                  </div>
-                  <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-success-rate">
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span className="text-xl font-bold text-white" data-testid="text-success-rate">100%</span>
+                    <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-success-rate">
+                      <div className="flex items-center justify-center gap-1.5 mb-1">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span className="text-xl font-bold text-white" data-testid="text-success-rate">100%</span>
+                      </div>
+                      <p className="text-xs text-slate-400">Success Rate</p>
                     </div>
-                    <p className="text-xs text-slate-400">Success Rate</p>
                   </div>
-                </div>
+                ) : (
+                  <div className="mt-4 bg-slate-800/50 rounded-lg p-4 text-center" data-testid="stat-action-complete">
+                    <p className="text-sm text-slate-300">Action processed successfully</p>
+                    <p className="text-xs text-slate-500 mt-1">{executionResult.estimatedImpact || 'ZYRA will continue monitoring for improvements'}</p>
+                  </div>
+                )}
               </div>
               
-              {/* Product Changes - Always Visible List */}
+              {/* Product Changes - Only show when there are products */}
+              {executionResult.productsOptimized.length > 0 && (
               <div className="p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2" data-testid="text-changes-applied-label">
                   <Activity className="w-3 h-3" />
@@ -2317,6 +2325,7 @@ export default function ZyraAtWork() {
                   ))}
                 </div>
               </div>
+              )}
               
               {/* Impact Summary Footer */}
               <div className="px-5 py-4 bg-gradient-to-r from-emerald-500/10 via-primary/10 to-transparent border-t border-slate-700/50">
