@@ -17395,14 +17395,37 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
 
-      const { autonomousActions } = await import('@shared/schema');
+      const { autonomousActions, products } = await import('@shared/schema');
       
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
 
+      // Join with products table to get real product names and images
       const actions = await db
-        .select()
+        .select({
+          id: autonomousActions.id,
+          userId: autonomousActions.userId,
+          actionType: autonomousActions.actionType,
+          entityType: autonomousActions.entityType,
+          entityId: autonomousActions.entityId,
+          status: autonomousActions.status,
+          decisionReason: autonomousActions.decisionReason,
+          ruleId: autonomousActions.ruleId,
+          payload: autonomousActions.payload,
+          result: autonomousActions.result,
+          estimatedImpact: autonomousActions.estimatedImpact,
+          actualImpact: autonomousActions.actualImpact,
+          executedBy: autonomousActions.executedBy,
+          dryRun: autonomousActions.dryRun,
+          publishedToShopify: autonomousActions.publishedToShopify,
+          createdAt: autonomousActions.createdAt,
+          completedAt: autonomousActions.completedAt,
+          rolledBackAt: autonomousActions.rolledBackAt,
+          productName: products.title,
+          productImage: products.imageUrl,
+        })
         .from(autonomousActions)
+        .leftJoin(products, eq(autonomousActions.entityId, products.id))
         .where(eq(autonomousActions.userId, userId))
         .orderBy(desc(autonomousActions.createdAt))
         .limit(limit)
