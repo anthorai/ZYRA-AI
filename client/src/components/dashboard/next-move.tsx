@@ -27,6 +27,14 @@ import {
   ShoppingCart,
   CreditCard,
   Package,
+  Search,
+  FileText,
+  Mail,
+  Activity,
+  Gauge,
+  Award,
+  BarChart3,
+  RefreshCw,
   type LucideIcon
 } from "lucide-react";
 import {
@@ -121,6 +129,224 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
   completed: { label: "Completed", icon: <CheckCircle2 className="w-4 h-4" />, color: "text-emerald-400" },
   blocked: { label: "Queued for Next Cycle", icon: <Clock className="w-4 h-4" />, color: "text-amber-400" },
 };
+
+// ZYRA AI Agent Powers - All capabilities the agent can perform
+const ZYRA_POWERS = [
+  {
+    id: 'seo',
+    icon: Search,
+    title: 'SEO Optimization',
+    description: 'AI rewrites titles & meta for Google ranking',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/30',
+  },
+  {
+    id: 'copy',
+    icon: FileText,
+    title: 'Product Copy',
+    description: 'Converts features into compelling benefits',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/30',
+  },
+  {
+    id: 'trust',
+    icon: ShieldCheck,
+    title: 'Trust Builder',
+    description: 'Adds badges, policies & social proof',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/30',
+  },
+  {
+    id: 'recovery',
+    icon: Mail,
+    title: 'Cart Recovery',
+    description: 'Auto-sends recovery emails & SMS',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30',
+  },
+  {
+    id: 'upsell',
+    icon: TrendingUp,
+    title: 'Smart Upsell',
+    description: 'Detects cross-sell opportunities',
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/10',
+    borderColor: 'border-pink-500/30',
+  },
+  {
+    id: 'prove',
+    icon: BarChart3,
+    title: 'Impact Proof',
+    description: 'Tracks before/after with revenue attribution',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/30',
+  },
+];
+
+// ZYRA Powers Grid Component - Shows all AI capabilities
+function ZyraPowersGrid() {
+  return (
+    <div className="mb-6" data-testid="zyra-powers-grid">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-semibold text-foreground">ZYRA's AI Powers</h3>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        {ZYRA_POWERS.map((power) => {
+          const Icon = power.icon;
+          return (
+            <div
+              key={power.id}
+              className={`p-3 rounded-lg ${power.bgColor} border ${power.borderColor} overflow-visible hover-elevate`}
+              data-testid={`power-${power.id}`}
+            >
+              <div className="flex flex-col items-center text-center gap-1.5">
+                <div className={`p-2 rounded-lg ${power.bgColor}`}>
+                  <Icon className={`w-4 h-4 ${power.color}`} />
+                </div>
+                <p className={`text-xs font-medium ${power.color}`} data-testid={`power-title-${power.id}`}>{power.title}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight hidden sm:block" data-testid={`power-desc-${power.id}`}>{power.description}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// AI Agent Status Panel - Shows live monitoring stats
+function AgentStatusPanel({ productsMonitored = 6, frictionDetected = 3, optimizationsReady = 1, isActive = true }: {
+  productsMonitored?: number;
+  frictionDetected?: number;
+  optimizationsReady?: number;
+  isActive?: boolean;
+}) {
+  return (
+    <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20" data-testid="agent-status-panel">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="p-2.5 rounded-xl bg-primary/20">
+              <Brain className="w-6 h-6 text-primary" />
+            </div>
+            {isActive && (
+              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-background animate-pulse" data-testid="indicator-active-pulse" />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground" data-testid="text-agent-title">ZYRA Agent</h3>
+              {isActive ? (
+                <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30 px-1.5 py-0" data-testid="badge-agent-active">
+                  <Activity className="w-2.5 h-2.5 mr-1" />
+                  Active
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] text-muted-foreground border-muted px-1.5 py-0" data-testid="badge-agent-standby">
+                  Standby
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground" data-testid="text-agent-description">Autonomous revenue optimization</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="text-center" data-testid="stat-products">
+            <p className="text-lg font-bold text-foreground" data-testid="text-products-count">{productsMonitored}</p>
+            <p className="text-[10px] text-muted-foreground">Monitored</p>
+          </div>
+          <div className="text-center" data-testid="stat-friction">
+            <p className="text-lg font-bold text-amber-400" data-testid="text-friction-count">{frictionDetected}</p>
+            <p className="text-[10px] text-muted-foreground">Friction Found</p>
+          </div>
+          <div className="text-center" data-testid="stat-ready">
+            <p className="text-lg font-bold text-emerald-400" data-testid="text-ready-count">{optimizationsReady}</p>
+            <p className="text-[10px] text-muted-foreground">Ready</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Track Record Stats - Shows ZYRA's performance history
+function TrackRecordStats({ totalOptimizations = 0, revenueGenerated = 0, successRate = 0 }: {
+  totalOptimizations?: number;
+  revenueGenerated?: number;
+  successRate?: number;
+}) {
+  if (totalOptimizations === 0) return null;
+  
+  return (
+    <div className="mb-6" data-testid="track-record-stats">
+      <div className="flex items-center gap-2 mb-3">
+        <Award className="w-4 h-4 text-amber-400" />
+        <h3 className="text-sm font-semibold text-foreground" data-testid="text-track-record-title">ZYRA's Track Record</h3>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-3 rounded-lg bg-muted/30 border border-muted text-center" data-testid="stat-total-optimizations">
+          <p className="text-xl font-bold text-foreground" data-testid="text-total-optimizations">{totalOptimizations}</p>
+          <p className="text-xs text-muted-foreground">Optimizations</p>
+        </div>
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-center" data-testid="stat-revenue-generated">
+          <p className="text-xl font-bold text-emerald-400" data-testid="text-revenue-generated">${revenueGenerated.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">Generated</p>
+        </div>
+        <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 text-center" data-testid="stat-success-rate">
+          <p className="text-xl font-bold text-primary" data-testid="text-success-rate">{successRate}%</p>
+          <p className="text-xs text-muted-foreground">Success Rate</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Action Queue Preview - Shows upcoming optimizations
+function ActionQueuePreview({ queuedActions = [] }: { queuedActions?: Array<{ type: string; product: string; score: number }> }) {
+  if (queuedActions.length === 0) return null;
+  
+  return (
+    <div className="mt-6" data-testid="action-queue-preview">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground" data-testid="text-queue-header">Coming Up Next</h3>
+        </div>
+        <Badge variant="outline" className="text-[10px]" data-testid="badge-queue-count">{queuedActions.length} queued</Badge>
+      </div>
+      <div className="space-y-2">
+        {queuedActions.slice(0, 3).map((action, idx) => (
+          <div 
+            key={idx} 
+            className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-muted"
+            data-testid={`queued-action-${idx}`}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground font-medium" data-testid={`queue-number-${idx}`}>
+                {idx + 2}
+              </div>
+              <div>
+                <p className="text-xs font-medium text-foreground" data-testid={`queue-action-type-${idx}`}>{ACTION_TYPE_LABELS[action.type] || action.type}</p>
+                <p className="text-[10px] text-muted-foreground" data-testid={`queue-product-${idx}`}>{action.product}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Gauge className="w-3 h-3 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground" data-testid={`queue-score-${idx}`}>{action.score}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function NextMove() {
   const { toast } = useToast();
@@ -434,16 +660,27 @@ export default function NextMove() {
     );
   };
 
+  // Mock data for demo - in real app, these would come from API
+  const mockQueuedActions = [
+    { type: 'product_seo', product: 'Premium Headphones', score: 78 },
+    { type: 'cart_recovery', product: 'Abandoned Order #1234', score: 72 },
+    { type: 'upsell', product: 'Wireless Speaker Set', score: 65 },
+  ];
+
   return (
     <div className="p-4 sm:p-6 space-y-6">
+      {/* Header with Plan Badge */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Brain className="w-6 h-6 text-primary" />
+          <div className="relative">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10">
+              <Brain className="w-7 h-7 text-primary" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-background animate-pulse" data-testid="indicator-main-pulse" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">One Friction ZYRA Will Remove</h1>
-            <p className="text-sm text-muted-foreground">Where buyer intent exists but money isn't happening</p>
+            <h1 className="text-xl font-bold text-foreground" data-testid="text-page-title">ZYRA AI Agent</h1>
+            <p className="text-sm text-muted-foreground" data-testid="text-page-subtitle">Autonomous revenue optimization engine</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -456,7 +693,32 @@ export default function NextMove() {
         </div>
       </div>
 
-      <Card className="gradient-surface border-primary/20 overflow-hidden">
+      {/* ZYRA Agent Status Panel - Shows live monitoring */}
+      <AgentStatusPanel 
+        productsMonitored={6}
+        frictionDetected={3}
+        optimizationsReady={1}
+        isActive={true}
+      />
+
+      {/* ZYRA Powers Grid - Shows all AI capabilities */}
+      <ZyraPowersGrid />
+
+      {/* Track Record Stats - Shows ZYRA's performance history */}
+      <TrackRecordStats 
+        totalOptimizations={12}
+        revenueGenerated={2450}
+        successRate={91}
+      />
+
+      {/* Current Priority Action Header */}
+      <div className="flex items-center gap-2" data-testid="priority-action-header">
+        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold" data-testid="priority-number">1</div>
+        <h2 className="text-sm font-semibold text-foreground" data-testid="text-priority-action">Priority Action</h2>
+        <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent" />
+      </div>
+
+      <Card className="gradient-surface border-primary/20 overflow-hidden relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/50 to-transparent" />
         
         <CardHeader className="pb-4">
@@ -657,6 +919,9 @@ export default function NextMove() {
         
         return null;
       })()}
+
+      {/* Action Queue Preview - Shows upcoming optimizations */}
+      <ActionQueuePreview queuedActions={mockQueuedActions} />
 
       {/* Credit Justification - reframe credits as growth fuel */}
       <div className="p-3 rounded-lg bg-muted/20 border border-muted" data-testid="credits-info">
