@@ -303,7 +303,7 @@ interface ZyraStats {
   // Foundational action for new stores
   foundationalAction?: FoundationalAction;
   // Execution status for loop progression
-  executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+  executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle' | 'completed';
   // Execution phase from backend (real-time sync)
   executionPhase?: 'idle' | 'executing' | 'proving' | 'learning' | 'completed';
   committedActionId?: string | null;
@@ -536,7 +536,7 @@ function ProgressStages({
   isDetectionComplete?: boolean;
   isNewStore?: boolean;
   foundationalAction?: FoundationalAction;
-  executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+  executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle' | 'completed';
   committedActionId?: string | null;
   onApprove?: (actionId: string) => void;
   isApproving?: boolean;
@@ -977,17 +977,28 @@ function ProgressStages({
             <div className="text-left">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${executionStatus === 'running' ? 'bg-amber-400' : 'bg-primary'} animate-pulse`} />
-                  <p className={`text-sm font-medium ${executionStatus === 'running' ? 'text-amber-400' : 'text-primary'}`}>
-                    {executionStatus === 'running' 
-                      ? (activePhase === 'prove' ? 'Proving Results...' 
-                         : activePhase === 'learn' ? 'Learning & Improving...' 
-                         : 'Applying Fix...') 
-                      : executionStatus === 'awaiting_approval' ? 'Review & Approve' 
-                      : 'Next Move Ready'}
+                  <div className={`w-2 h-2 rounded-full ${
+                    executionStatus === 'completed' ? 'bg-emerald-400' :
+                    executionStatus === 'running' ? 'bg-amber-400' : 'bg-primary'
+                  } ${executionStatus === 'completed' ? '' : 'animate-pulse'}`} />
+                  <p className={`text-sm font-medium ${
+                    executionStatus === 'completed' ? 'text-emerald-400' :
+                    executionStatus === 'running' ? 'text-amber-400' : 'text-primary'
+                  }`}>
+                    {executionStatus === 'completed'
+                      ? 'Optimization Complete'
+                      : executionStatus === 'running' 
+                        ? (activePhase === 'prove' ? 'Proving Results...' 
+                           : activePhase === 'learn' ? 'Learning & Improving...' 
+                           : 'Applying Fix...') 
+                        : executionStatus === 'awaiting_approval' ? 'Review & Approve' 
+                        : 'Next Move Ready'}
                   </p>
                   {executionStatus === 'running' && (
                     <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                  )}
+                  {executionStatus === 'completed' && (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   )}
                 </div>
                 {executionStatus === 'awaiting_approval' && committedActionId && onApprove && (
@@ -1514,6 +1525,9 @@ export default function ZyraAtWork() {
   const [approvedPhase, setApprovedPhase] = useState<'idle' | 'execute' | 'prove' | 'learn' | 'complete'>('idle');
   const approvedPhaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Track completed action IDs to prevent button from reappearing after execution
+  const [completedActionId, setCompletedActionId] = useState<string | null>(null);
+  
   // Store execution results for display
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [executionActivities, setExecutionActivities] = useState<ExecutionActivityItem[]>([]);
@@ -1531,7 +1545,7 @@ export default function ZyraAtWork() {
     isNewStore?: boolean;
     foundationalAction?: FoundationalAction;
     // DECIDE COMMIT STATUS - UI contract
-    executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+    executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle' | 'completed';
     // Execution phase from backend (real-time sync)
     executionPhase?: 'idle' | 'executing' | 'proving' | 'learning' | 'completed';
     committedActionId?: string | null;
@@ -1588,7 +1602,12 @@ export default function ZyraAtWork() {
       // Return real execution results from backend
       return executeData;
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, actionId) => {
+      console.log('[ZYRA Approve] onSuccess called with data:', data, 'actionId:', actionId);
+      
+      // Track this action as completed to prevent button from reappearing
+      setCompletedActionId(actionId);
+      
       // Store execution results for display
       if (data?.result) {
         setExecutionResult(data.result);
@@ -1675,15 +1694,14 @@ export default function ZyraAtWork() {
     
     approvedPhaseTimeoutRef.current = setTimeout(() => {
       const next = nextPhases[approvedPhase as keyof typeof nextPhases];
+      console.log(`[ZYRA Phase] Transitioning from ${approvedPhase} → ${next}`);
       setApprovedPhase(next);
       
-      // When complete, refresh data to get next action
+      // When complete, keep in completed state (don't refresh - this would show the button again)
       if (next === 'complete') {
-        setTimeout(() => {
-          setApprovedPhase('idle');
-          queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
-        }, 2000);
+        console.log('[ZYRA Phase] Loop completed - staying in complete state');
+        // Don't reset to idle - keep showing completed state
+        // The completedActionId will prevent the button from reappearing
       }
     }, phaseDelays[approvedPhase as keyof typeof phaseDelays]);
     
@@ -1725,7 +1743,18 @@ export default function ZyraAtWork() {
   
   // Derive execution status - backend execution state takes priority
   // This ensures frontend stays in sync with backend execution progress
+  // Get the current action ID to check against completed actions
+  const currentActionId = detectionStatusData?.committedActionId || stats?.committedActionId;
+  
   const derivedExecutionStatus = (() => {
+    // If we've already completed this exact action, show 'completed' instead of 'awaiting_approval'
+    if (completedActionId && currentActionId === completedActionId) {
+      return 'completed';
+    }
+    // Local approvedPhase is complete - show 'completed'
+    if (approvedPhase === 'complete') {
+      return 'completed';
+    }
     // Backend is actively executing - always show 'running'
     if (serverExecutionPhase !== 'idle' && serverExecutionPhase !== 'completed') {
       return 'running';
