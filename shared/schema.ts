@@ -3689,6 +3689,59 @@ export const FRICTION_TYPE_CAUSES: Record<FrictionType, string[]> = {
   purchase_no_upsell: ['Missed AOV opportunity', 'Offer irrelevance']
 };
 
+// Foundational Action Types - For new stores without revenue friction data
+// These are low-risk, revenue-preparation actions for stores with limited history
+export type FoundationalActionType = 
+  | 'seo_basics'           // Basic SEO optimization for discoverability
+  | 'product_copy_clarity' // Product descriptions need improvement
+  | 'trust_signals'        // Add trust elements (reviews, badges, policies)
+  | 'recovery_setup';      // Cart recovery not configured
+
+export interface FoundationalAction {
+  type: FoundationalActionType;
+  productId?: string;
+  productName?: string;
+  title: string;
+  description: string;
+  whyItHelps: string;
+  expectedImpact: string;
+  riskLevel: 'low';
+}
+
+export const FOUNDATIONAL_ACTION_LABELS: Record<FoundationalActionType, string> = {
+  seo_basics: 'Improve Discoverability',
+  product_copy_clarity: 'Clarify Product Value',
+  trust_signals: 'Build Buyer Confidence',
+  recovery_setup: 'Set Up Cart Recovery'
+};
+
+export const FOUNDATIONAL_ACTION_DESCRIPTIONS: Record<FoundationalActionType, { 
+  description: string; 
+  whyItHelps: string; 
+  expectedImpact: string; 
+}> = {
+  seo_basics: {
+    description: 'Optimize product titles and meta descriptions for search visibility',
+    whyItHelps: 'Better SEO brings higher-intent visitors who are actively searching for your products',
+    expectedImpact: 'Prepares your store to attract organic buyers'
+  },
+  product_copy_clarity: {
+    description: 'Improve product descriptions to clearly communicate value',
+    whyItHelps: 'Clear product copy helps visitors quickly understand why they should buy',
+    expectedImpact: 'Prepares your store to convert first visitors better'
+  },
+  trust_signals: {
+    description: 'Add trust elements like clear policies, badges, and social proof',
+    whyItHelps: 'Trust signals reduce buyer hesitation and increase confidence to purchase',
+    expectedImpact: 'Prepares your store to overcome first-time buyer doubt'
+  },
+  recovery_setup: {
+    description: 'Configure abandoned cart recovery to capture lost sales',
+    whyItHelps: 'Cart abandonment is inevitable - recovery captures revenue that would otherwise be lost',
+    expectedImpact: 'Prepares your store to recapture abandoned purchases'
+  }
+};
+
 // Detection Cache - Precomputed data for fast detection (Layer 1)
 export const detectionCache = pgTable("detection_cache", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
