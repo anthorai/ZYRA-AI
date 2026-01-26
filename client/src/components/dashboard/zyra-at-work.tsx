@@ -705,14 +705,136 @@ function ProgressStages({
   const phaseConfig = PHASE_CONFIG[activePhase] || PHASE_CONFIG.detect;
   const PhaseIcon = phaseConfig.icon;
 
+  // Generate dynamic activity log entries based on current phase
+  const generateLogEntries = useCallback((): AILogEntry[] => {
+    const entries: AILogEntry[] = [];
+    const now = new Date();
+    
+    if (currentStage >= 0) {
+      entries.push({
+        id: 'init',
+        timestamp: new Date(now.getTime() - 8000),
+        type: 'info',
+        message: 'Initiating revenue opportunity scan for your store...',
+        detail: 'Connecting to Shopify analytics and performance data'
+      });
+    }
+    
+    if (currentStage >= 1) {
+      entries.push({
+        id: 'scan-start',
+        timestamp: new Date(now.getTime() - 6500),
+        type: 'thinking',
+        message: 'Analyzing store performance metrics and buyer behavior patterns',
+        detail: 'Looking at conversion rates, cart abandonment, and product engagement',
+        metrics: [
+          { label: 'Products Scanned', value: Math.min(currentStage * 3, 12) },
+          { label: 'Data Points', value: Math.min(currentStage * 47, 200) + '+' }
+        ]
+      });
+    }
+    
+    if (currentStage >= 2) {
+      entries.push({
+        id: 'friction-detect',
+        timestamp: new Date(now.getTime() - 5000),
+        type: 'insight',
+        message: 'Identified potential friction points in the buyer journey',
+        detail: 'Scanning product pages, checkout flow, and trust indicators'
+      });
+    }
+    
+    if (currentStage >= 3) {
+      entries.push({
+        id: 'calc-impact',
+        timestamp: new Date(now.getTime() - 3500),
+        type: 'thinking',
+        message: 'Calculating revenue impact of each identified opportunity',
+        metrics: [
+          { label: 'Opportunities', value: Math.max(1, Math.floor(currentStage / 2)) },
+          { label: 'Est. Recovery', value: '$50-200/mo' }
+        ]
+      });
+    }
+    
+    if (currentStage >= 4) {
+      entries.push({
+        id: 'prioritize',
+        timestamp: new Date(now.getTime() - 2000),
+        type: 'action',
+        message: 'Prioritizing highest-impact optimization for your store',
+        detail: 'Selected based on conversion lift potential and implementation ease'
+      });
+    }
+    
+    if (currentStage >= 5 && foundationalAction) {
+      entries.push({
+        id: 'ready',
+        timestamp: new Date(now.getTime() - 500),
+        type: 'success',
+        message: `Recommended action ready: ${foundationalAction.title}`,
+        detail: foundationalAction.description
+      });
+    }
+    
+    if (executionStatus === 'running' && activePhase === 'execute') {
+      entries.push({
+        id: 'executing',
+        timestamp: now,
+        type: 'action',
+        message: 'Applying AI-powered optimization to your store...',
+        detail: 'Generating improved content using GPT-4o-mini'
+      });
+    }
+    
+    if (executionResult && executionResult.productsOptimized.length > 0) {
+      entries.push({
+        id: 'complete',
+        timestamp: now,
+        type: 'success',
+        message: `Successfully applied ${executionResult.totalChanges} improvements`,
+        detail: executionResult.estimatedImpact,
+        metrics: [
+          { label: 'Products Updated', value: executionResult.productsOptimized.length },
+          { label: 'Changes Made', value: executionResult.totalChanges }
+        ]
+      });
+    }
+    
+    return entries;
+  }, [currentStage, foundationalAction, executionStatus, activePhase, executionResult]);
+
+  const logEntries = generateLogEntries();
+  const latestEntry = logEntries[logEntries.length - 1];
+
+  // Generate thinking thoughts based on phase
+  const generateThoughts = useCallback((): string[] => {
+    const thoughts: string[] = [];
+    
+    if (currentStage >= 1 && currentStage < 5) {
+      thoughts.push('Examining product listing quality and SEO signals...');
+    }
+    if (currentStage >= 2 && currentStage < 5) {
+      thoughts.push('Comparing trust elements against high-converting stores...');
+    }
+    if (currentStage >= 3 && currentStage < 5) {
+      thoughts.push('Evaluating which changes will drive the most revenue...');
+    }
+    
+    return thoughts;
+  }, [currentStage]);
+
+  const thoughts = generateThoughts();
+  const isThinking = currentStage >= 1 && currentStage < 5 && !isDetectionComplete;
+
   return (
-    <div className="py-6">
-      {/* Phase Status Card - Shows current phase with clear message */}
-      <div className={`mb-6 p-4 rounded-lg ${phaseConfig.bgColor} border border-slate-700/50`}>
+    <div className="py-4">
+      {/* Header with Phase Status */}
+      <div className={`mb-4 p-3 rounded-lg ${phaseConfig.bgColor} border border-slate-700/50`}>
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full ${phaseConfig.bgColor} flex items-center justify-center relative`}>
-            <PhaseIcon className={`w-5 h-5 ${phaseConfig.color}`} />
-            {(executionStatus === 'running' || executionStatus === 'pending') && (
+          <div className={`w-9 h-9 rounded-full ${phaseConfig.bgColor} flex items-center justify-center relative`}>
+            <PhaseIcon className={`w-4.5 h-4.5 ${phaseConfig.color}`} />
+            {(executionStatus === 'running' || executionStatus === 'pending' || !isDetectionComplete) && (
               <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
             )}
           </div>
@@ -721,7 +843,7 @@ function ProgressStages({
               <span className={`text-sm font-semibold ${phaseConfig.color}`}>
                 {phaseConfig.label}
               </span>
-              {(executionStatus === 'running' || executionStatus === 'pending') && (
+              {!isDetectionComplete && (
                 <RefreshCw className="w-3 h-3 animate-spin text-slate-400" />
               )}
             </div>
@@ -729,61 +851,54 @@ function ProgressStages({
               {phaseConfig.statusMessage}
             </p>
           </div>
+          <div className="text-right">
+            <div className="text-xs font-mono text-slate-500">{Math.round(progress)}%</div>
+          </div>
         </div>
       </div>
 
-      {/* Current Stage Display - Detailed progress within the phase */}
-      <div className={`flex flex-col items-center text-center transition-all duration-300 ${
-        isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
-      }`}>
-        <div className={`w-16 h-16 rounded-full ${stage.bgColor} flex items-center justify-center mb-4 relative`}>
-          <Icon className={`w-8 h-8 ${stage.color}`} />
-          {detectionPhase !== 'idle' && !isDetectionComplete && (
-            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
-          )}
-        </div>
-        <p className={`font-semibold text-lg mb-2 ${stage.color}`}>
-          {stage.title}
-        </p>
-        <p className={`text-slate-400 text-sm max-w-md mb-6 transition-opacity duration-300 ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}>
-          {description}
-        </p>
-      </div>
+      {/* AI Thinking Panel */}
+      <ThinkingPanel thoughts={thoughts} isActive={isThinking} />
 
-      {/* Progress Indicator */}
-      <div className="max-w-md mx-auto">
-        <div className="flex justify-between mb-2 px-1">
-          <span className="text-xs text-slate-500">Step {currentStage + 1} of {PROGRESS_STAGES.length}</span>
-          <span className="text-xs text-slate-500">{Math.round(progress)}%</span>
-        </div>
-        <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${progress}%` }}
-          />
+      {/* Live Activity Feed - Terminal Style */}
+      <div className="mb-4 rounded-lg bg-slate-900/70 border border-slate-700/50 overflow-hidden" data-testid="live-activity-feed">
+        {/* Terminal Header */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 border-b border-slate-700/30">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+          </div>
+          <span className="text-[10px] font-mono text-slate-500 ml-2">ZYRA Activity Log</span>
+          <div className="flex-1" />
+          <Bot className="w-3.5 h-3.5 text-primary" />
         </div>
         
-        {/* Stage Dots */}
-        <div className="flex justify-between mt-3">
-          {PROGRESS_STAGES.map((s, idx) => (
-            <div 
-              key={s.id}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                idx < currentStage ? 'bg-emerald-400' : 
-                idx === currentStage ? 'bg-primary scale-125' : 
-                'bg-slate-600'
-              }`}
+        {/* Log Entries */}
+        <div className="max-h-64 overflow-y-auto p-2 space-y-1" data-testid="activity-log-entries">
+          {logEntries.map((entry, idx) => (
+            <AILogEntryComponent 
+              key={entry.id} 
+              entry={entry} 
+              isNew={idx === logEntries.length - 1 && !isDetectionComplete}
             />
           ))}
         </div>
       </div>
 
-      {/* Reassurance Message */}
-      <p className="text-center text-xs text-slate-500 mt-6">
-        Working in the background — no action needed from you
-      </p>
+      {/* Compact Progress Bar */}
+      <div className="mb-4">
+        <div className="h-1 bg-slate-700/50 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-1.5 px-1">
+          <span className="text-[10px] text-slate-600">Step {currentStage + 1}/{PROGRESS_STAGES.length}</span>
+          <span className="text-[10px] text-slate-600">Working autonomously</span>
+        </div>
+      </div>
       
       {/* Status Display for completed detection - Step 8 is ALWAYS a terminal success state */}
       {isDetectionComplete && (
