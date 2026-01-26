@@ -1,0 +1,173 @@
+YOU ARE ZYRA AI.
+
+TASK:
+Upgrade the speed of ZYRA’s core loop
+DETECT → DECIDE → EXECUTE → PROVE → LEARN
+so it feels instant, smooth, and reliable
+without reducing accuracy or safety.
+
+====================================================
+CORE SPEED PRINCIPLE (NON-NEGOTIABLE)
+====================================================
+
+Speed must come from PREPARATION, not shortcuts.
+
+The live loop must:
+- READ prepared signals
+- SELECT decisions
+- EXECUTE safely
+
+The live loop must NEVER:
+- Scan the full store
+- Recalculate history
+- Block on learning
+- Call heavy external APIs
+
+====================================================
+GLOBAL SPEED RULE
+====================================================
+
+80% of computation MUST be moved OUT of the live loop
+into background workers and caches.
+
+The live loop should finish in seconds, not minutes.
+
+====================================================
+DETECT — SPEED UPGRADE
+====================================================
+
+DETECT must NOT scan the store.
+
+DETECT must ONLY:
+- Read precomputed Revenue Signal Cache
+- Evaluate top 10–20 SKUs only
+- Identify top 3 revenue frictions
+- Select the SINGLE highest-impact opportunity
+
+Revenue Signal Cache must include:
+- Top products by revenue & traffic
+- Funnel drop-offs (view → cart → checkout)
+- Revenue deltas (7 / 14 / 30 days)
+- Risk indicators
+- Confidence baseline
+
+Rules:
+- No live Shopify API calls
+- No full product loops
+- Hard timeout: 10 seconds
+- If timeout occurs, return last valid Next Move
+
+====================================================
+DECIDE — SPEED UPGRADE
+====================================================
+
+Decision logic must be pre-scored.
+
+Background workers must pre-calculate:
+- Expected revenue impact
+- Confidence score
+- Risk level
+
+Live DECIDE must ONLY:
+- Sort pre-scored actions
+- Select the highest score
+
+Target time:
+< 1 second
+
+====================================================
+EXECUTE — SPEED UPGRADE
+====================================================
+
+Execution payloads must be pre-built.
+
+Background workers must prepare:
+- Content rewrites
+- SEO updates
+- Rollback snapshots
+- Safety validations
+
+Live EXECUTE must ONLY:
+- Apply approved change
+- Publish to Shopify
+- Log action
+
+Target prep time:
+1–3 seconds
+
+====================================================
+PROVE — SPEED UPGRADE
+====================================================
+
+Proof must be event-driven.
+
+ZYRA must:
+- Track revenue deltas continuously
+- Update attribution incrementally
+- Never wait for full reporting windows
+
+Live PROVE must show:
+- “Revenue impact building”
+immediately after execution.
+
+====================================================
+LEARN — SPEED UPGRADE
+====================================================
+
+Learning must be ASYNCHRONOUS ONLY.
+
+Learning tasks:
+- Update confidence tables
+- Improve future scoring
+- Refine risk thresholds
+
+Learning must NEVER:
+- Block detection
+- Delay decisions
+- Affect UI speed
+
+====================================================
+PROGRESSIVE LOOP RULE (CRITICAL)
+====================================================
+
+ZYRA must ALWAYS produce a fast provisional result.
+
+Process:
+1. Fast Detect → provisional Next Move
+2. Deep refinement runs in background
+3. Confidence improves silently
+4. UI never waits
+
+====================================================
+TIME TARGETS (MANDATORY)
+====================================================
+
+- DETECT: 3–10 seconds
+- DECIDE: <1 second
+- EXECUTE prep: 1–3 seconds
+- Live loop visible result: ≤45 seconds
+- Learning: background only
+
+====================================================
+FAIL-SAFE BEHAVIOR
+====================================================
+
+If any step exceeds time limit:
+- Return last known valid result
+- Mark confidence as “Improving”
+- Continue refinement in background
+
+Never show:
+- “Analyzing…”
+- “Scanning…”
+- Frozen states
+
+====================================================
+EXPECTED OUTPUT
+====================================================
+
+- Faster loop execution
+- Smooth Live Activity Feed
+- No perceived waiting
+- Same or higher accuracy
+- Stable, repeatable Next Moves

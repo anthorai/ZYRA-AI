@@ -170,15 +170,9 @@ export class FastDetectionEngine {
 
     const topProduct = topFrictionProducts[0];
     
-    let productName = 'Unknown Product';
-    if (topProduct.productId && !isAborted()) {
-      const [product] = await db
-        .select({ name: products.name })
-        .from(products)
-        .where(eq(products.id, topProduct.productId))
-        .limit(1);
-      if (product && !isAborted()) productName = product.name;
-    }
+    // Use denormalized productName from cache - NO live product table lookups
+    // This follows the speed requirement: "DETECT must ONLY read precomputed cache"
+    const productName = topProduct.productName || 'Product';
 
     if (isAborted()) return this.abortedResult(startTime);
 

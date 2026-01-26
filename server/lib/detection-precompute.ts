@@ -32,6 +32,7 @@ export class DetectionPrecompute {
         id: products.id,
         name: products.name,
         price: products.price,
+        image: products.image, // Include image for cache
       })
       .from(products)
       .where(eq(products.userId, userId))
@@ -57,7 +58,7 @@ export class DetectionPrecompute {
 
   private async precomputeProductCache(
     userId: string, 
-    product: { id: string; name: string; price: string | null }
+    product: { id: string; name: string; price: string | null; image: string | null }
   ): Promise<void> {
     const db = requireDb();
     
@@ -117,10 +118,40 @@ export class DetectionPrecompute {
 
     const confidenceScore = Math.min(90, 40 + (views / 5));
 
+    // Pre-score decision (moved from live DECIDE phase)
+    const riskLevel: 'low' | 'medium' | 'high' = 
+      frictionScore >= 70 ? 'high' :
+      frictionScore >= 40 ? 'medium' : 'low';
+    const riskDivisor = { low: 1, medium: 2, high: 3 }[riskLevel];
+    const expectedRevenueImpact = estimatedMonthlyLoss * 0.3; // 30% recovery estimate
+    const decisionScore = (expectedRevenueImpact * (confidenceScore / 100)) / riskDivisor;
+    
+    // Map friction to action type
+    const recommendedActionType = this.mapFrictionToActionType(topFrictionType);
+    
+    // Pre-build execution payload (content improvement)
+    const executionPayload = {
+      productId: product.id,
+      productName: product.name,
+      actionType: recommendedActionType,
+      frictionType: topFrictionType,
+      targetImprovement: this.getTargetImprovement(topFrictionType),
+      preparedAt: new Date().toISOString(),
+    };
+    
+    // Pre-build rollback payload
+    const rollbackPayload = {
+      productId: product.id,
+      originalState: 'captured_on_execution',
+      capturedAt: new Date().toISOString(),
+    };
+
     await db.insert(detectionCache)
       .values({
         userId,
         productId: product.id,
+        productName: product.name, // Denormalized for cache-only DETECT
+        productImage: product.image, // Denormalized for cache-only DETECT
         views7d: views,
         views14d: views,
         views30d: views,
@@ -134,6 +165,13 @@ export class DetectionPrecompute {
         topFrictionType,
         estimatedMonthlyLoss: estimatedMonthlyLoss.toFixed(2),
         confidenceScore: Math.round(confidenceScore),
+        decisionScore: decisionScore.toFixed(2),
+        recommendedActionType,
+        expectedRevenueImpact: expectedRevenueImpact.toFixed(2),
+        riskLevel,
+        executionPayloadReady: true,
+        executionPayload,
+        rollbackPayload,
         lastPrecomputedAt: new Date(),
         isStale: false,
       })
@@ -153,6 +191,13 @@ export class DetectionPrecompute {
           topFrictionType,
           estimatedMonthlyLoss: estimatedMonthlyLoss.toFixed(2),
           confidenceScore: Math.round(confidenceScore),
+          decisionScore: decisionScore.toFixed(2),
+          recommendedActionType,
+          expectedRevenueImpact: expectedRevenueImpact.toFixed(2),
+          riskLevel,
+          executionPayloadReady: true,
+          executionPayload,
+          rollbackPayload,
           lastPrecomputedAt: new Date(),
           isStale: false,
           updatedAt: new Date(),
@@ -167,6 +212,13 @@ export class DetectionPrecompute {
             topFrictionType,
             estimatedMonthlyLoss: estimatedMonthlyLoss.toFixed(2),
             confidenceScore: Math.round(confidenceScore),
+            decisionScore: decisionScore.toFixed(2),
+            recommendedActionType,
+            expectedRevenueImpact: expectedRevenueImpact.toFixed(2),
+            riskLevel,
+            executionPayloadReady: true,
+            executionPayload,
+            rollbackPayload,
             lastPrecomputedAt: new Date(),
             isStale: false,
             updatedAt: new Date(),
@@ -200,6 +252,26 @@ export class DetectionPrecompute {
     } else {
       await this.precomputeForUser(userId);
     }
+  }
+
+  private mapFrictionToActionType(frictionType: FrictionType): string {
+    const mapping: Record<FrictionType, string> = {
+      'view_no_cart': 'product_content_fix',
+      'cart_no_checkout': 'checkout_optimization',
+      'checkout_drop': 'cart_recovery',
+      'purchase_no_upsell': 'upsell_opportunity',
+    };
+    return mapping[frictionType] || 'revenue_recovery';
+  }
+
+  private getTargetImprovement(frictionType: FrictionType): string {
+    const improvements: Record<FrictionType, string> = {
+      'view_no_cart': 'Improve product title, description, and images to increase add-to-cart rate',
+      'cart_no_checkout': 'Simplify checkout flow and add trust signals',
+      'checkout_drop': 'Send cart recovery email and offer incentive',
+      'purchase_no_upsell': 'Send personalized product recommendations',
+    };
+    return improvements[frictionType] || 'Optimize product for better conversion';
   }
 }
 

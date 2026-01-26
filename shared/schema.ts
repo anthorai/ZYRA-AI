@@ -3666,6 +3666,8 @@ export const detectionCache = pgTable("detection_cache", {
   
   // Product-level aggregates (precomputed)
   productId: varchar("product_id").references(() => products.id),
+  productName: text("product_name"), // Denormalized for cache-only reads
+  productImage: text("product_image"), // Denormalized for cache-only reads
   
   // Funnel stats (views → cart → checkout → purchase)
   views7d: integer("views_7d").default(0),
@@ -3698,6 +3700,17 @@ export const detectionCache = pgTable("detection_cache", {
   
   // Confidence baseline
   confidenceScore: integer("confidence_score").default(50), // 0-100
+  
+  // Pre-scored decision (for instant DECIDE phase)
+  decisionScore: numeric("decision_score", { precision: 12, scale: 2 }).default("0"), // (revenue × confidence) / risk
+  recommendedActionType: text("recommended_action_type"),
+  expectedRevenueImpact: numeric("expected_revenue_impact", { precision: 12, scale: 2 }).default("0"),
+  riskLevel: text("risk_level").default("medium"), // 'low' | 'medium' | 'high'
+  
+  // Pre-built execution payload (for instant EXECUTE phase)
+  executionPayloadReady: boolean("execution_payload_ready").default(false),
+  executionPayload: jsonb("execution_payload"),
+  rollbackPayload: jsonb("rollback_payload"),
   
   // Cache metadata
   lastPrecomputedAt: timestamp("last_precomputed_at").default(sql`NOW()`),

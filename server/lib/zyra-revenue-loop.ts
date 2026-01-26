@@ -24,7 +24,9 @@ import {
   subscriptions,
   products,
   usageStats,
-  autonomousActions
+  autonomousActions,
+  detectionCache,
+  FRICTION_TYPE_LABELS
 } from '@shared/schema';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { revenueDetectionEngine } from './revenue-detection-engine';
@@ -182,6 +184,152 @@ export class ZyraRevenueLoop {
   }
 
   /**
+   * FAST DECIDE from pre-scored cache (target <1 second)
+   * Uses decisionScore computed by background precompute worker
+   * 
+   * Gates:
+   * - executionPayloadReady = true (payload exists)
+   * - isStale = false (cache is fresh)
+   * - recommendedActionType is revenue-whitelisted
+   */
+  private async decideFromCache(userId: string): Promise<RevenueAction | null> {
+    const db = requireDb();
+    
+    // Cache freshness threshold: 6 hours
+    const freshnessThreshold = new Date(Date.now() - 6 * 60 * 60 * 1000);
+    
+    // Get top pre-scored decision from cache with quality gates
+    const [topCached] = await db
+      .select()
+      .from(detectionCache)
+      .where(
+        and(
+          eq(detectionCache.userId, userId),
+          sql`${detectionCache.frictionScore} > 20`,
+          sql`${detectionCache.decisionScore} > 0`,
+          eq(detectionCache.executionPayloadReady, true),
+          eq(detectionCache.isStale, false),
+          sql`${detectionCache.lastPrecomputedAt} > ${freshnessThreshold}`
+        )
+      )
+      .orderBy(desc(detectionCache.decisionScore))
+      .limit(1);
+
+    if (!topCached || !topCached.productId) {
+      return null;
+    }
+    
+    // Verify action type is revenue-whitelisted (use isRevenueAction for ACTION types)
+    const actionType = sanitizeActionType(topCached.recommendedActionType);
+    if (!isRevenueAction(actionType)) {
+      console.log(`⏭️  [ZYRA Loop] Cached action type not revenue-whitelisted: ${actionType}`);
+      return null;
+    }
+    console.log(`⚡ [ZYRA Loop] Cache fast-path hit for action: ${actionType}`);
+
+    const subscription = await this.getUserSubscription(userId);
+    const planId = subscription?.planId || ZYRA_PLANS.FREE;
+    
+    const riskLevel = (topCached.riskLevel as RiskLevel) || 'medium';
+    const confidenceScore = topCached.confidenceScore || 50;
+    const expectedRevenue = parseFloat(topCached.expectedRevenueImpact?.toString() || '0');
+    const estimatedLoss = parseFloat(topCached.estimatedMonthlyLoss?.toString() || '0');
+    // actionType already validated above as revenue-whitelisted
+    
+    const canAutoExecute = this.canAutoExecute(planId, riskLevel, confidenceScore);
+    const autonomyGranted = await this.checkAutonomyGranted(userId, topCached.productId, actionType, riskLevel);
+
+    // Create action from cached data - no additional DB lookups needed
+    const action: RevenueAction = {
+      id: topCached.id,
+      opportunityId: '',
+      productId: topCached.productId,
+      productName: topCached.productName || 'Product',
+      productImage: topCached.productImage || null,
+      actionType,
+      whatWillChange: this.describeCachedChange(topCached.topFrictionType),
+      expectedRevenueImpact: expectedRevenue,
+      estimatedMonthlyLoss: estimatedLoss,
+      riskLevel,
+      confidenceScore,
+      whyThisProduct: `This product has a friction score of ${topCached.frictionScore} - buyers are hesitating`,
+      whyThisAction: `${FRICTION_TYPE_LABELS[topCached.topFrictionType as keyof typeof FRICTION_TYPE_LABELS] || 'Revenue friction'} detected`,
+      whyNow: `Estimated monthly loss: $${estimatedLoss.toFixed(2)}`,
+      whyItIsSafe: this.generateWhySafe(riskLevel),
+      requiresApproval: !canAutoExecute,
+      autonomyGranted,
+      canAutoExecute: canAutoExecute && autonomyGranted,
+      score: parseFloat(topCached.decisionScore?.toString() || '0'),
+    };
+
+    // Create opportunity from cached decision
+    const opportunity = await this.createOpportunityFromCache(userId, topCached, action);
+    action.opportunityId = opportunity.id;
+
+    this.updateLoopState(userId, 'preparing_action', {
+      productId: action.productId,
+      productName: action.productName,
+      actionType: action.actionType,
+      expectedRevenue: action.expectedRevenueImpact,
+      riskLevel: action.riskLevel,
+      status: action.requiresApproval ? 'awaiting_approval' : 'ready',
+    });
+
+    return action;
+  }
+
+  private describeCachedChange(frictionType: string | null): string {
+    const descriptions: Record<string, string> = {
+      'view_no_cart': 'Improve product content to increase add-to-cart rate',
+      'cart_no_checkout': 'Optimize checkout flow to reduce cart abandonment',
+      'checkout_drop': 'Send recovery email to re-engage buyer',
+      'purchase_no_upsell': 'Send personalized product recommendations',
+    };
+    return descriptions[frictionType || ''] || 'Optimize product for better conversion';
+  }
+
+  private async createOpportunityFromCache(userId: string, cached: any, action: RevenueAction) {
+    const db = requireDb();
+    
+    // Derive confidenceLevel from cached confidenceScore (0-100)
+    const cachedConfidence = cached.confidenceScore || 50;
+    const confidenceLevel = cachedConfidence >= 70 ? 'high' : cachedConfidence >= 40 ? 'medium' : 'low';
+    
+    const [opportunity] = await db.insert(revenueOpportunities)
+      .values({
+        userId,
+        opportunityType: action.actionType,
+        entityType: 'product',
+        entityId: cached.productId,
+        status: action.requiresApproval ? 'pending' : 'approved',
+        safetyScore: 100 - (action.riskLevel === 'high' ? 30 : action.riskLevel === 'medium' ? 15 : 5),
+        confidenceLevel,
+        estimatedRevenueLift: action.expectedRevenueImpact.toString(),
+        frictionType: cached.topFrictionType,
+        frictionDescription: action.whatWillChange,
+        estimatedRecovery: action.estimatedMonthlyLoss.toString(),
+        actionPlan: {
+          type: action.actionType,
+          productId: cached.productId,
+          productName: cached.productName,
+          whatWillChange: action.whatWillChange,
+          whyThisProduct: action.whyThisProduct,
+          whyThisAction: action.whyThisAction,
+          whyNow: action.whyNow,
+          whyItIsSafe: action.whyItIsSafe,
+          executionPayload: cached.executionPayload,
+          rollbackPayload: cached.rollbackPayload,
+        },
+        originalContent: cached.originalContent || null,
+        proposedContent: cached.proposedContent || null,
+        rollbackData: cached.rollbackPayload,
+      })
+      .returning();
+
+    return opportunity;
+  }
+
+  /**
    * PHASE 1: DETECT - Revenue Surveillance
    * 
    * ZYRA continuously reads precomputed revenue signals
@@ -213,18 +361,29 @@ export class ZyraRevenueLoop {
   }
 
   /**
-   * PHASE 2: DECIDE - Capital Priority Engine
+   * PHASE 2: DECIDE - Capital Priority Engine (SPEED OPTIMIZED)
    * 
    * ZYRA ALWAYS selects ONE action only.
    * Decision formula: (Expected Revenue × Confidence) ÷ Risk
    * 
-   * If confidence is low: ZYRA slows down, requests approval
+   * SPEED UPGRADE: Uses pre-scored decisionScore from detection_cache
+   * Target time: <1 second
    */
   async decide(userId: string): Promise<RevenueAction | null> {
     console.log(`🎯 [ZYRA Loop] DECIDE phase for user ${userId}`);
+    const decideStart = Date.now();
     this.updateLoopState(userId, 'selecting_action');
     const db = requireDb();
 
+    // FAST PATH: Try pre-scored cache first (target <1 second)
+    const cachedDecision = await this.decideFromCache(userId);
+    if (cachedDecision) {
+      console.log(`⚡ [ZYRA Loop] FAST DECIDE from cache in ${Date.now() - decideStart}ms`);
+      return cachedDecision;
+    }
+
+    // FALLBACK: Use traditional signal-based approach
+    console.log(`📊 [ZYRA Loop] Using fallback signal-based DECIDE`);
     const activeSignals = await db
       .select()
       .from(revenueSignals)
@@ -570,17 +729,24 @@ export class ZyraRevenueLoop {
     }
 
     const proveResult = await this.prove(userId);
-    const learnResult = await this.learn(userId);
+    
+    // LEARN runs ASYNCHRONOUSLY - never blocks the loop
+    // This follows the speed upgrade requirement: "Learning must be ASYNCHRONOUS ONLY"
+    setImmediate(() => {
+      this.learn(userId).catch(err => {
+        console.error(`⚠️ [ZYRA Loop] Async LEARN failed for user ${userId}:`, err);
+      });
+    });
 
     const cycleTime = Date.now() - startTime;
-    console.log(`✅ [ZYRA Loop] Full cycle complete in ${cycleTime}ms`);
+    console.log(`✅ [ZYRA Loop] Full cycle complete in ${cycleTime}ms (LEARN running async)`);
 
     return {
       detected: detectResult.signalsDetected,
       decided: decision?.opportunityId || null,
       executed,
       proved: proveResult.provedCount,
-      learned: learnResult.insightsUpdated,
+      learned: 0, // LEARN runs async, count not available immediately
       cycleTime,
     };
   }
