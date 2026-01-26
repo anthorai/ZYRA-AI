@@ -1082,7 +1082,28 @@ export default function ZyraAtWork() {
     }
   }, [events]);
 
-  const currentPhase = events.length > 0 ? events[events.length - 1].phase : 'detect';
+  // Determine current phase - sync with execution status for consistency
+  // Priority: executionStatus > events > detection phase > default
+  const currentPhase = (() => {
+    // If actively executing, show execute phase
+    if (derivedExecutionStatus === 'running') {
+      return 'execute';
+    }
+    // If awaiting approval, show decide phase
+    if (derivedExecutionStatus === 'awaiting_approval') {
+      return 'decide';
+    }
+    // If detecting (pending), show detect phase
+    if (derivedExecutionStatus === 'pending' || isActivelyDetecting) {
+      return 'detect';
+    }
+    // Fall back to events-based phase
+    if (events.length > 0) {
+      return events[events.length - 1].phase;
+    }
+    // Default to detect
+    return 'detect';
+  })();
   const currentConfig = PHASE_CONFIG[currentPhase];
 
   // Loading state for store readiness check
