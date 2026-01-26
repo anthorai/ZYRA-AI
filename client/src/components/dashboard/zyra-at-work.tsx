@@ -568,8 +568,12 @@ function ProgressStages({
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${executionStatus === 'running' ? 'bg-amber-400' : 'bg-primary'} animate-pulse`} />
                   <p className={`text-sm font-medium ${executionStatus === 'running' ? 'text-amber-400' : 'text-primary'}`}>
-                    {executionStatus === 'running' ? 'Applying Fix...' : 
-                     executionStatus === 'awaiting_approval' ? 'Review & Approve' : 'Next Move Ready'}
+                    {executionStatus === 'running' 
+                      ? (activePhase === 'prove' ? 'Proving Results...' 
+                         : activePhase === 'learn' ? 'Learning & Improving...' 
+                         : 'Applying Fix...') 
+                      : executionStatus === 'awaiting_approval' ? 'Review & Approve' 
+                      : 'Next Move Ready'}
                   </p>
                   {executionStatus === 'running' && (
                     <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
@@ -999,8 +1003,14 @@ export default function ZyraAtWork() {
   );
   
   // Derive execution status from both detection-status and stats (with fallback)
-  const derivedExecutionStatus = detectionStatusData?.executionStatus || stats?.executionStatus || 'idle';
+  const serverExecutionStatus = detectionStatusData?.executionStatus || stats?.executionStatus || 'idle';
   const derivedCommittedActionId = detectionStatusData?.committedActionId || stats?.committedActionId || null;
+  
+  // Override execution status based on local approvedPhase state
+  // When we're in post-approval phases, show as 'running' instead of server's 'awaiting_approval'
+  const derivedExecutionStatus = (approvedPhase !== 'idle' && approvedPhase !== 'complete') 
+    ? 'running' 
+    : serverExecutionStatus;
   
   // 30-second fail-safe timer for stuck states
   // If execution is stuck in 'running' for too long, force refresh
