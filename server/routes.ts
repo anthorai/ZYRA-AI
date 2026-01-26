@@ -20049,12 +20049,21 @@ Return JSON array of segments only, no explanation text.`;
   app.post("/api/zyra/detect", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
+      const startTime = Date.now();
+      console.log(`[ZYRA Detect API] Started for user ${userId}`);
+      
       const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
       
       const result = await fastDetectionEngine.detectWithTimeout(userId);
       
+      const endTime = Date.now();
+      console.log(`[ZYRA Detect API] Completed in ${endTime - startTime}ms - status: ${result.status}`);
+      
       res.json({
         success: result.success,
+        status: result.status,
+        reason: result.reason,
+        nextAction: result.nextAction,
         frictionDetected: result.frictionDetected,
         topFriction: result.topFriction,
         detectionDurationMs: result.detectionDurationMs,
@@ -20063,8 +20072,18 @@ Return JSON array of segments only, no explanation text.`;
         lastValidNextMoveId: result.lastValidNextMoveId,
       });
     } catch (error) {
-      console.error("Error running ZYRA detection:", error);
-      res.status(500).json({ error: "Failed to run detection" });
+      console.error("[ZYRA Detect API] Error:", error);
+      res.json({
+        success: false,
+        status: 'insufficient_data',
+        reason: 'Detection failed - will retry on next cycle',
+        nextAction: 'data_collection',
+        frictionDetected: false,
+        topFriction: null,
+        detectionDurationMs: 0,
+        phase: 'decision_ready',
+        cacheStatus: 'missing',
+      });
     }
   });
 
@@ -20074,11 +20093,48 @@ Return JSON array of segments only, no explanation text.`;
       const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
       
       const status = await fastDetectionEngine.getDetectionStatus(userId);
+      const lastValidNextMoveId = await fastDetectionEngine.getLastValidNextMove(userId);
       
-      res.json(status);
+      let detectionStatus: 'friction_found' | 'no_friction' | 'insufficient_data' | 'detecting';
+      let reason: string;
+      let nextAction: 'standby' | 'data_collection' | 'decide';
+      
+      if (!status.complete) {
+        detectionStatus = 'detecting';
+        reason = 'Analyzing store performance';
+        nextAction = 'standby';
+      } else if (status.cacheStatus === 'missing') {
+        detectionStatus = 'insufficient_data';
+        reason = 'Not enough data to detect revenue friction - collecting baseline data';
+        nextAction = 'data_collection';
+      } else if (lastValidNextMoveId) {
+        detectionStatus = 'friction_found';
+        reason = 'Revenue friction detected - review opportunity in Next Move';
+        nextAction = 'decide';
+      } else {
+        detectionStatus = 'no_friction';
+        reason = 'No high-impact revenue friction detected';
+        nextAction = 'standby';
+      }
+      
+      res.json({
+        ...status,
+        status: detectionStatus,
+        reason,
+        nextAction,
+        lastValidNextMoveId,
+      });
     } catch (error) {
-      console.error("Error fetching detection status:", error);
-      res.status(500).json({ error: "Failed to fetch detection status" });
+      console.error("[ZYRA Detection Status API] Error:", error);
+      res.json({
+        phase: 'decision_ready',
+        complete: true,
+        timestamp: Date.now(),
+        cacheStatus: 'missing',
+        status: 'insufficient_data',
+        reason: 'Status check failed - will retry on next cycle',
+        nextAction: 'data_collection',
+      });
     }
   });
 

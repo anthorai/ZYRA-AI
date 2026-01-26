@@ -248,24 +248,78 @@ const phaseToMinStage: Record<DetectionPhase, number> = {
   preparing: 2,
 };
 
+const AUTO_ADVANCE_TIMEOUT_MS = 10000;
+const STAGE_AUTO_ADVANCE_MS = 2500;
+
+type StrictDetectionStatus = 'friction_found' | 'no_friction' | 'insufficient_data' | 'detecting';
+
 function ProgressStages({ 
   isAutopilotEnabled, 
-  detectionComplete = false,
   detectionPhase = 'idle',
+  detectionStatus = 'detecting',
   onComplete 
 }: { 
   isAutopilotEnabled: boolean;
-  detectionComplete?: boolean;
   detectionPhase?: DetectionPhase;
+  detectionStatus?: StrictDetectionStatus;
   onComplete?: () => void;
 }) {
   const [currentStage, setCurrentStage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [descriptionIndex, setDescriptionIndex] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
+  const hardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPhaseRef = useRef<DetectionPhase>('idle');
 
+  const isDetectionComplete = detectionStatus !== 'detecting';
   const targetStage = phaseToMinStage[detectionPhase] || 0;
+
+  useEffect(() => {
+    if (isAutopilotEnabled && detectionPhase !== 'idle' && !startTime) {
+      setStartTime(Date.now());
+      console.log('[ProgressStages] Detection started - auto-advance timer started');
+    }
+    if (!isAutopilotEnabled || detectionPhase === 'idle') {
+      setStartTime(null);
+    }
+  }, [isAutopilotEnabled, detectionPhase, startTime]);
+
+  useEffect(() => {
+    if (!isAutopilotEnabled || detectionPhase === 'idle') return;
+    
+    hardTimeoutRef.current = setTimeout(() => {
+      console.log('[ProgressStages] Hard timeout (10s) reached - forcing completion');
+      setCurrentStage(PROGRESS_STAGES.length - 1);
+      setStartTime(null);
+      onComplete?.();
+    }, AUTO_ADVANCE_TIMEOUT_MS);
+    
+    return () => {
+      if (hardTimeoutRef.current) {
+        clearTimeout(hardTimeoutRef.current);
+      }
+    };
+  }, [isAutopilotEnabled, detectionPhase, onComplete]);
+
+  useEffect(() => {
+    if (!isAutopilotEnabled || detectionPhase === 'idle' || isDetectionComplete) return;
+    
+    autoAdvanceRef.current = setInterval(() => {
+      setCurrentStage(prev => {
+        const next = Math.min(prev + 1, PROGRESS_STAGES.length - 2);
+        console.log(`[ProgressStages] Auto-advancing to stage ${next + 1}`);
+        return next;
+      });
+    }, STAGE_AUTO_ADVANCE_MS);
+    
+    return () => {
+      if (autoAdvanceRef.current) {
+        clearInterval(autoAdvanceRef.current);
+      }
+    };
+  }, [isAutopilotEnabled, detectionPhase, isDetectionComplete]);
 
   useEffect(() => {
     if (!isAutopilotEnabled) return;
@@ -278,11 +332,15 @@ function ProgressStages({
   }, [isAutopilotEnabled]);
 
   useEffect(() => {
-    if (detectionPhase === 'decision_ready' && currentStage < PROGRESS_STAGES.length - 1) {
+    if (isDetectionComplete || detectionPhase === 'decision_ready') {
+      console.log(`[ProgressStages] Detection complete with status: ${detectionStatus} - showing final stage`);
       setCurrentStage(PROGRESS_STAGES.length - 1);
+      setStartTime(null);
+      if (hardTimeoutRef.current) clearTimeout(hardTimeoutRef.current);
+      if (autoAdvanceRef.current) clearInterval(autoAdvanceRef.current);
       onComplete?.();
     }
-  }, [detectionPhase, currentStage, onComplete]);
+  }, [detectionPhase, isDetectionComplete, detectionStatus, onComplete]);
 
   useEffect(() => {
     if (detectionPhase !== lastPhaseRef.current) {
@@ -313,6 +371,7 @@ function ProgressStages({
     if (!isAutopilotEnabled) {
       setCurrentStage(0);
       setDescriptionIndex(0);
+      setStartTime(null);
       return;
     }
 
@@ -354,7 +413,7 @@ function ProgressStages({
       }`}>
         <div className={`w-16 h-16 rounded-full ${stage.bgColor} flex items-center justify-center mb-4 relative`}>
           <Icon className={`w-8 h-8 ${stage.color}`} />
-          {detectionPhase !== 'idle' && detectionPhase !== 'decision_ready' && (
+          {detectionPhase !== 'idle' && !isDetectionComplete && (
             <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
           )}
         </div>
@@ -400,6 +459,28 @@ function ProgressStages({
       <p className="text-center text-xs text-slate-500 mt-6">
         Working in the background — no action needed from you
       </p>
+      
+      {/* Status Display for completed detection */}
+      {isDetectionComplete && (
+        <div className={`mt-4 p-3 rounded-lg text-center ${
+          detectionStatus === 'friction_found' ? 'bg-emerald-500/10 border border-emerald-500/30' :
+          detectionStatus === 'insufficient_data' ? 'bg-amber-500/10 border border-amber-500/30' :
+          'bg-blue-500/10 border border-blue-500/30'
+        }`}>
+          <p className={`text-sm font-medium ${
+            detectionStatus === 'friction_found' ? 'text-emerald-400' :
+            detectionStatus === 'insufficient_data' ? 'text-amber-400' :
+            'text-blue-400'
+          }`}>
+            {detectionStatus === 'friction_found' 
+              ? 'Revenue opportunity found — review in Next Move'
+              : detectionStatus === 'insufficient_data'
+              ? 'Collecting baseline data — ZYRA will act once signals are strong'
+              : 'No urgent revenue risk — monitoring continues'
+            }
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -557,13 +638,19 @@ export default function ZyraAtWork() {
   });
 
   const [isDetecting, setIsDetecting] = useState(false);
+  const [detectionStartTime, setDetectionStartTime] = useState<number | null>(null);
+  const detectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const DETECTION_TIMEOUT_MS = 10000;
   
   const { data: detectionStatusData } = useQuery<{
     phase: DetectionPhase;
-    status: string;
+    status: 'friction_found' | 'no_friction' | 'insufficient_data' | 'detecting';
     complete: boolean;
     timestamp: number;
     lastValidNextMoveId?: string;
+    reason?: string;
+    nextAction?: 'standby' | 'data_collection' | 'decide';
   }>({
     queryKey: ['/api/zyra/detection-status'],
     refetchInterval: isDetecting ? 1000 : false,
@@ -573,16 +660,44 @@ export default function ZyraAtWork() {
   useEffect(() => {
     if (detectionStatusData?.complete) {
       setIsDetecting(false);
+      setDetectionStartTime(null);
+      if (detectionTimeoutRef.current) {
+        clearTimeout(detectionTimeoutRef.current);
+        detectionTimeoutRef.current = null;
+      }
     }
   }, [detectionStatusData?.complete]);
 
+  useEffect(() => {
+    if (isDetecting && detectionStartTime) {
+      detectionTimeoutRef.current = setTimeout(() => {
+        console.log('[ZYRA Detection] Client-side timeout reached (10s) - forcing loop advance');
+        setIsDetecting(false);
+        setDetectionStartTime(null);
+        queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
+      }, DETECTION_TIMEOUT_MS);
+      
+      return () => {
+        if (detectionTimeoutRef.current) {
+          clearTimeout(detectionTimeoutRef.current);
+        }
+      };
+    }
+  }, [isDetecting, detectionStartTime]);
+
   const detectionPhase = detectionStatusData?.phase || stats?.detection?.phase || 'idle';
-  const detectionComplete = detectionStatusData?.complete || stats?.detection?.complete || false;
+  
+  // Derive strict status from server endpoint - NEVER default to 'no_friction'
+  const detectionStatus: StrictDetectionStatus = detectionStatusData?.status || 'detecting';
+  
+  // Use strict status to determine completion - NOT boolean
+  const isDetectionComplete = detectionStatus !== 'detecting';
   
   // Determine if detection is actively running (from server state, not just local mutation)
   const isActivelyDetecting = (
     isDetecting || 
-    (detectionPhase !== 'idle' && !detectionComplete)
+    (detectionPhase !== 'idle' && !isDetectionComplete)
   );
 
   const { data: activityData, isLoading, refetch, isRefetching } = useQuery<ActivityFeedResponse>({
@@ -608,11 +723,29 @@ export default function ZyraAtWork() {
       return response.json();
     },
     onMutate: () => {
+      console.log('[ZYRA Detection] Starting detection - timer started');
       setIsDetecting(true);
+      setDetectionStartTime(Date.now());
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[ZYRA Detection] Completed:', data?.status || 'unknown');
+      setIsDetecting(false);
+      setDetectionStartTime(null);
+      if (detectionTimeoutRef.current) {
+        clearTimeout(detectionTimeoutRef.current);
+        detectionTimeoutRef.current = null;
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+    },
+    onError: (error) => {
+      console.error('[ZYRA Detection] Failed:', error);
+      setIsDetecting(false);
+      setDetectionStartTime(null);
+      if (detectionTimeoutRef.current) {
+        clearTimeout(detectionTimeoutRef.current);
+        detectionTimeoutRef.current = null;
+      }
     },
   });
 
@@ -859,8 +992,8 @@ export default function ZyraAtWork() {
             ) : events.length === 0 ? (
               <ProgressStages 
                 isAutopilotEnabled={isAutopilotEnabled} 
-                detectionComplete={detectionComplete}
                 detectionPhase={detectionPhase as DetectionPhase}
+                detectionStatus={detectionStatus}
               />
             ) : (
               events.map((event) => (

@@ -17,10 +17,15 @@ const TOP_FRICTION_TYPES = 3;
 
 export type DetectionPhase = 'idle' | 'detect_started' | 'cache_loaded' | 'friction_identified' | 'decision_ready' | 'preparing';
 
+export type DetectionStatus = 'friction_found' | 'no_friction' | 'insufficient_data';
+
 export interface FastDetectionResult {
   success: boolean;
+  status: DetectionStatus;
   frictionDetected: boolean;
   lastValidNextMoveId?: string;
+  reason?: string;
+  nextAction?: 'standby' | 'data_collection' | 'decide';
   topFriction: {
     productId: string;
     productName: string;
@@ -98,6 +103,9 @@ export class FastDetectionEngine {
       console.log(`⏸️  [Fast Detect] Autopilot disabled for user ${userId}`);
       return {
         success: true,
+        status: 'no_friction' as DetectionStatus,
+        reason: 'Autopilot is disabled',
+        nextAction: 'standby',
         frictionDetected: false,
         topFriction: null,
         detectionDurationMs: Date.now() - startTime,
@@ -134,6 +142,9 @@ export class FastDetectionEngine {
       
       return {
         success: true,
+        status: 'insufficient_data' as DetectionStatus,
+        reason: 'Not enough data to detect revenue friction - collecting baseline data',
+        nextAction: 'data_collection',
         frictionDetected: false,
         topFriction: null,
         detectionDurationMs: Date.now() - startTime,
@@ -157,6 +168,9 @@ export class FastDetectionEngine {
       
       return {
         success: true,
+        status: 'no_friction' as DetectionStatus,
+        reason: 'No high-impact revenue friction detected',
+        nextAction: 'standby',
         frictionDetected: false,
         topFriction: null,
         detectionDurationMs: Date.now() - startTime,
@@ -187,6 +201,9 @@ export class FastDetectionEngine {
 
     const result: FastDetectionResult = {
       success: true,
+      status: 'friction_found' as DetectionStatus,
+      reason: `Revenue friction detected: ${topProduct.topFrictionType || 'view_no_cart'}`,
+      nextAction: 'decide',
       frictionDetected: true,
       lastValidNextMoveId: topProduct.productId || undefined,
       topFriction: {
@@ -220,13 +237,17 @@ export class FastDetectionEngine {
   }
 
   private abortedResult(startTime: number): FastDetectionResult {
+    console.log(`⛔ [Fast Detect] Detection aborted after ${Date.now() - startTime}ms`);
     return {
       success: false,
+      status: 'insufficient_data' as DetectionStatus,
+      reason: 'Detection was aborted - will retry on next cycle',
+      nextAction: 'data_collection',
       frictionDetected: false,
       topFriction: null,
       detectionDurationMs: Date.now() - startTime,
-      phase: 'idle',
-      cacheStatus: 'fresh',
+      phase: 'decision_ready',
+      cacheStatus: 'stale',
     };
   }
 
@@ -300,39 +321,45 @@ export class FastDetectionEngine {
     const db = requireDb();
     const abortSignal = { aborted: false };
     
+    // Pre-cache fallback data BEFORE starting timeout - no blocking during timeout
+    let cachedFallbackId: string | null = null;
+    try {
+      const [cached] = await db
+        .select({ 
+          lastValidNextMoveId: detectionStatus.lastValidNextMoveId,
+          topFrictionId: detectionStatus.topFrictionId
+        })
+        .from(detectionStatus)
+        .where(eq(detectionStatus.userId, userId))
+        .limit(1);
+      cachedFallbackId = cached?.lastValidNextMoveId || cached?.topFrictionId || null;
+      console.log(`⏱️  [Fast Detect] Pre-cached fallback ID for user ${userId}: ${cachedFallbackId || 'none'}`);
+    } catch (e) {
+      console.log(`⏱️  [Fast Detect] Failed to pre-cache fallback ID, will use insufficient_data on timeout`);
+    }
+    
     let timeoutId: NodeJS.Timeout;
     
     const timeoutPromise = new Promise<FastDetectionResult>((resolve) => {
-      timeoutId = setTimeout(async () => {
+      timeoutId = setTimeout(() => {
         abortSignal.aborted = true;
-        console.warn(`⏱️  [Fast Detect] Timeout (${FAST_DETECT_TIMEOUT_MS}ms) for user ${userId}`);
         
-        const [status] = await db
-          .select({ 
-            lastValidNextMoveId: detectionStatus.lastValidNextMoveId,
-            topFrictionId: detectionStatus.topFrictionId
-          })
-          .from(detectionStatus)
-          .where(eq(detectionStatus.userId, userId))
-          .limit(1);
-        
-        await db.update(detectionStatus)
-          .set({
-            consecutiveTimeouts: sql`COALESCE(${detectionStatus.consecutiveTimeouts}, 0) + 1`,
-            status: 'complete',
-            phase: 'decision_ready',
-            updatedAt: new Date(),
-          })
-          .where(eq(detectionStatus.userId, userId));
-        
-        const fallbackProductId = status?.lastValidNextMoveId || status?.topFrictionId;
+        // Use pre-cached fallback data - resolves IMMEDIATELY
+        const hasFallback = !!cachedFallbackId;
+        const resultStatus: DetectionStatus = hasFallback ? 'friction_found' : 'insufficient_data';
+        console.warn(`⏱️  [Fast Detect] Timeout (${FAST_DETECT_TIMEOUT_MS}ms) for user ${userId} - resolving with ${resultStatus}`);
         
         resolve({
           success: true,
-          frictionDetected: !!fallbackProductId,
-          lastValidNextMoveId: fallbackProductId || undefined,
-          topFriction: fallbackProductId ? {
-            productId: fallbackProductId,
+          status: resultStatus,
+          reason: hasFallback 
+            ? 'Detection timed out - using previous recommendation'
+            : 'Detection timed out - will retry on next cycle',
+          nextAction: hasFallback ? 'decide' : 'data_collection',
+          frictionDetected: hasFallback,
+          lastValidNextMoveId: cachedFallbackId || undefined,
+          topFriction: hasFallback ? {
+            productId: cachedFallbackId!,
             productName: 'Previous recommendation',
             frictionType: 'view_no_cart' as FrictionType,
             estimatedMonthlyLoss: 0,
@@ -342,6 +369,23 @@ export class FastDetectionEngine {
           detectionDurationMs: FAST_DETECT_TIMEOUT_MS,
           phase: 'decision_ready',
           cacheStatus: 'stale',
+        });
+        
+        // Offload all DB work to async after resolve
+        setImmediate(async () => {
+          try {
+            await db.update(detectionStatus)
+              .set({
+                consecutiveTimeouts: sql`COALESCE(${detectionStatus.consecutiveTimeouts}, 0) + 1`,
+                status: 'complete',
+                phase: 'decision_ready',
+                updatedAt: new Date(),
+              })
+              .where(eq(detectionStatus.userId, userId));
+            console.log(`⏱️  [Fast Detect] Timeout DB update completed for user ${userId}`);
+          } catch (err) {
+            console.error(`⏱️  [Fast Detect] Timeout DB update failed for user ${userId}:`, err);
+          }
         });
       }, FAST_DETECT_TIMEOUT_MS);
     });
