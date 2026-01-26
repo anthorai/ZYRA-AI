@@ -237,7 +237,7 @@ export default function Reports() {
 
   return (
     <div className="min-h-screen dark-theme-bg">
-      {/* Header - Terminal Style */}
+      {/* Header */}
       <div className="border-b border-primary/20 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -253,14 +253,12 @@ export default function Reports() {
               </Button>
               <div>
                 <div className="flex items-center gap-2" data-testid="text-page-title">
-                  <Terminal className="w-5 h-5 text-primary" />
-                  <span className="font-mono text-sm text-primary">zyra@credits</span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <Coins className="w-5 h-5 text-primary" />
                   <h1 className="text-xl font-bold text-white">Credit Analytics</h1>
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" />
                 </div>
-                <p className="text-sm text-muted-foreground font-mono mt-0.5" data-testid="text-page-subtitle">
-                  <span className="text-emerald-400">$</span> monitoring credit consumption in real-time
+                <p className="text-sm text-muted-foreground mt-0.5" data-testid="text-page-subtitle">
+                  Monitor your credit consumption in real-time
                 </p>
               </div>
             </div>
