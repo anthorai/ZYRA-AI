@@ -671,36 +671,6 @@ function ProgressStages({
   const description = stage.descriptions[descriptionIndex % stage.descriptions.length];
   const progress = ((currentStage + 1) / PROGRESS_STAGES.length) * 100;
 
-  if (!isAutopilotEnabled) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10 text-center">
-        <div className="w-14 h-14 rounded-full bg-slate-700/50 flex items-center justify-center mb-4">
-          <DollarSign className="w-7 h-7 text-slate-400" />
-        </div>
-        <p className="text-white font-medium mb-2">ZYRA is on standby</p>
-        <p className="text-slate-400 text-sm max-w-sm">
-          Ready to find revenue opportunities. Turn on autopilot above to start.
-        </p>
-      </div>
-    );
-  }
-
-  // If insufficient_data BEFORE detection starts (idle phase), show baseline collection screen
-  // This skips the loop animation entirely for newly connected stores
-  if (detectionStatus === 'insufficient_data' && detectionPhase === 'idle' && !isDetectionComplete && currentStage === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10 text-center">
-        <div className="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-          <Database className="w-7 h-7 text-amber-400" />
-        </div>
-        <p className="text-amber-400 font-medium mb-2">Collecting baseline data</p>
-        <p className="text-slate-400 text-sm max-w-sm">
-          ZYRA will act once signals are strong. This happens automatically as your store receives traffic.
-        </p>
-      </div>
-    );
-  }
-
   // Get the current phase config for status display
   const phaseConfig = PHASE_CONFIG[activePhase] || PHASE_CONFIG.detect;
   const PhaseIcon = phaseConfig.icon;
@@ -893,6 +863,36 @@ function ProgressStages({
   const isThinking = (currentStage >= 1 && currentStage < 5 && !isDetectionComplete) || 
                      (executionStatus === 'running' && ['execute', 'prove', 'learn'].includes(activePhase));
 
+  // Early return: ZYRA standby screen
+  if (!isAutopilotEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="w-14 h-14 rounded-full bg-slate-700/50 flex items-center justify-center mb-4">
+          <DollarSign className="w-7 h-7 text-slate-400" />
+        </div>
+        <p className="text-white font-medium mb-2">ZYRA is on standby</p>
+        <p className="text-slate-400 text-sm max-w-sm">
+          Ready to find revenue opportunities. Turn on autopilot above to start.
+        </p>
+      </div>
+    );
+  }
+
+  // Early return: Baseline collection screen for newly connected stores
+  if (detectionStatus === 'insufficient_data' && detectionPhase === 'idle' && !isDetectionComplete && currentStage === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+          <Database className="w-7 h-7 text-amber-400" />
+        </div>
+        <p className="text-amber-400 font-medium mb-2">Collecting baseline data</p>
+        <p className="text-slate-400 text-sm max-w-sm">
+          ZYRA will act once signals are strong. This happens automatically as your store receives traffic.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="py-4">
       {/* Header with Phase Status */}
@@ -1048,9 +1048,9 @@ function ProgressStages({
                         <div>
                           <p className="text-slate-300 font-medium">Analysis</p>
                           <p className="text-slate-400 mt-0.5">
-                            {foundationalAction.actionType === 'seo_basics' 
+                            {foundationalAction.type === 'seo_basics' 
                               ? 'Your product listings need SEO optimization to rank better in search results and drive organic traffic.'
-                              : foundationalAction.actionType === 'trust_signals'
+                              : foundationalAction.type === 'trust_signals'
                               ? 'First-time visitors need trust signals to feel confident making a purchase from your store.'
                               : 'This optimization addresses a key conversion barrier in your store.'}
                           </p>
@@ -1061,9 +1061,9 @@ function ProgressStages({
                         <div>
                           <p className="text-slate-300 font-medium">Expected Outcome</p>
                           <p className="text-slate-400 mt-0.5">
-                            {foundationalAction.actionType === 'seo_basics'
+                            {foundationalAction.type === 'seo_basics'
                               ? 'Better search visibility leads to more organic visitors who are actively looking for your products.'
-                              : foundationalAction.actionType === 'trust_signals'
+                              : foundationalAction.type === 'trust_signals'
                               ? 'Trust elements typically increase conversion rates by 10-30% for new stores.'
                               : 'This action targets a specific friction point that may be costing you sales.'}
                           </p>
