@@ -8,6 +8,7 @@ import {
   automationSettings,
   storeConnections,
   usageStats,
+  activityLogs,
   FrictionType,
   FRICTION_TYPE_LABELS,
   FoundationalActionType,
@@ -596,8 +597,8 @@ export class FastDetectionEngine {
     try {
       const db = requireDb();
       
-      // Get a product to work on (prioritize products with low revenue health score)
-      const [targetProduct] = await db
+      // Get all products to work on (prioritize products with low revenue health score)
+      const userProducts = await db
         .select({ 
           id: products.id, 
           name: products.name,
@@ -606,19 +607,80 @@ export class FastDetectionEngine {
         .from(products)
         .where(eq(products.userId, userId))
         .orderBy(sql`COALESCE(${products.revenueHealthScore}, 0) ASC`)
-        .limit(1);
+        .limit(10);
       
-      // For now, select based on what the product needs most
+      // Get recently executed foundational actions from activity logs
+      const recentActions = await db
+        .select({
+          action: activityLogs.action,
+          metadata: activityLogs.metadata,
+        })
+        .from(activityLogs)
+        .where(and(
+          eq(activityLogs.userId, userId),
+          sql`${activityLogs.action} LIKE 'foundational_%'`,
+          sql`${activityLogs.createdAt} > NOW() - INTERVAL '24 hours'`
+        ))
+        .orderBy(desc(activityLogs.createdAt))
+        .limit(10);
+      
+      // Extract which action types were recently executed
+      const recentActionTypes = new Set(
+        recentActions.map(a => a.action?.replace('foundational_', '') || '')
+      );
+      
+      // Define action type priority order for new stores
+      const actionPriority: FoundationalActionType[] = [
+        'seo_basics',           // First: Help them get discovered
+        'product_copy_clarity', // Second: Make listings compelling
+        'trust_signals',        // Third: Build credibility
+        'recovery_setup'        // Fourth: Set up cart recovery
+      ];
+      
+      // Find the next action type that hasn't been recently executed
       let selectedType: FoundationalActionType = 'seo_basics';
+      let targetProduct = userProducts[0];
       
-      if (targetProduct) {
-        const healthScore = targetProduct.revenueHealthScore || 0;
-        if (healthScore < 30) {
-          selectedType = 'seo_basics';
-        } else if (healthScore < 60) {
-          selectedType = 'product_copy_clarity';
-        } else {
-          selectedType = 'trust_signals';
+      if (userProducts.length > 0) {
+        // Find first action type not recently executed
+        for (const actionType of actionPriority) {
+          if (!recentActionTypes.has(actionType)) {
+            selectedType = actionType;
+            break;
+          }
+        }
+        
+        // If all actions were recently executed, cycle through products
+        if (recentActionTypes.size >= actionPriority.length - 1) {
+          // Find a product that hasn't been optimized recently
+          const optimizedProductIds = new Set(
+            recentActions
+              .map(a => {
+                try {
+                  const meta = typeof a.metadata === 'string' ? JSON.parse(a.metadata) : a.metadata;
+                  return meta?.productId;
+                } catch { return null; }
+              })
+              .filter(Boolean)
+          );
+          
+          const unoptimizedProduct = userProducts.find(p => !optimizedProductIds.has(p.id));
+          if (unoptimizedProduct) {
+            targetProduct = unoptimizedProduct;
+            selectedType = 'seo_basics'; // Start fresh with new product
+          }
+        }
+        
+        // Additional selection logic based on product state
+        if (targetProduct) {
+          const healthScore = targetProduct.revenueHealthScore || 0;
+          
+          // If product has good SEO, move to next action type
+          if (healthScore >= 40 && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
+            selectedType = 'product_copy_clarity';
+          } else if (healthScore >= 60 && !recentActionTypes.has('trust_signals')) {
+            selectedType = 'trust_signals';
+          }
         }
       } else {
         // No products - suggest recovery setup
@@ -638,7 +700,7 @@ export class FastDetectionEngine {
         riskLevel: 'low'
       };
       
-      console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''}`);
+      console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''} | Recent: [${Array.from(recentActionTypes).join(', ')}]`);
       
       return foundationalAction;
     } catch (error) {
