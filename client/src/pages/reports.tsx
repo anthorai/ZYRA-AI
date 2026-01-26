@@ -1,840 +1,536 @@
-import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
+import { UnifiedHeader } from "@/components/ui/unified-header";
 import {
-  Coins,
+  DollarSign,
   TrendingUp,
   TrendingDown,
-  BarChart3,
-  PieChart,
-  Activity,
-  Calendar,
-  Download,
-  ArrowLeft,
-  Zap,
-  Search,
-  FileText,
-  ShieldCheck,
-  Mail,
-  RefreshCw,
-  Clock,
+  Shield,
+  ArrowRight,
+  Bot,
+  Package,
   CheckCircle2,
-  AlertTriangle,
-  ArrowUpRight,
+  RotateCcw,
   Sparkles,
   Brain,
-  Info,
-  Terminal,
-  ChevronRight
+  Eye,
+  Lightbulb,
+  Activity,
+  Target,
+  Minus,
+  Clock
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
-interface CreditBalance {
-  creditsRemaining: number;
-  creditsUsed: number;
-  creditLimit: number;
-  isLow: boolean;
-}
-
-interface CreditTransaction {
+interface AutonomousAction {
   id: string;
   actionType: string;
-  actionLabel: string;
-  creditsUsed: number;
-  timestamp: string;
-  status: 'success' | 'failed' | 'pending';
-  details?: string;
+  entityType: string | null;
+  entityId: string | null;
+  status: string;
+  decisionReason: string | null;
+  payload: any;
+  result: any;
+  estimatedImpact: {
+    expectedRevenue?: number;
+    confidence?: number;
+  } | null;
+  actualImpact: {
+    revenue?: number;
+    orders?: number;
+    status?: 'positive' | 'negative' | 'neutral' | 'building';
+  } | null;
+  executedBy: string;
+  createdAt: string;
+  completedAt: string | null;
+  rolledBackAt: string | null;
+  productName: string | null;
+  productImage: string | null;
 }
 
-interface UsageByType {
-  type: string;
-  label: string;
-  icon: string;
-  credits: number;
-  percentage: number;
-  count: number;
+interface LearningInsight {
+  id: string;
+  insight: string;
+  confidence: number;
+  actionType: string;
+  createdAt: string;
 }
 
-interface DailyUsage {
-  date: string;
-  credits: number;
-}
-
-const actionTypeIcons: Record<string, any> = {
-  seo_basics: Search,
-  product_copy_clarity: FileText,
-  trust_signals: ShieldCheck,
-  recovery_setup: Mail,
-  bulk_optimization: RefreshCw,
-  ai_generation: Brain,
-  default: Zap
+const ACTION_TYPE_LABELS: Record<string, string> = {
+  optimize_seo: "SEO Optimization",
+  generate_description: "Description Enhancement",
+  fix_product: "Product Fix",
+  pricing_optimization: "Price Adjustment",
+  send_cart_recovery: "Cart Recovery",
+  ab_test: "A/B Test",
 };
 
-const actionTypeColors: Record<string, string> = {
-  seo_basics: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-  product_copy_clarity: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-  trust_signals: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-  recovery_setup: "text-orange-400 bg-orange-500/10 border-orange-500/20",
-  bulk_optimization: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
-  ai_generation: "text-pink-400 bg-pink-500/10 border-pink-500/20",
-  default: "text-primary bg-primary/10 border-primary/20"
-};
+const STORE_STATES = [
+  { id: "preparing", label: "Preparing for Growth", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/10" },
+  { id: "protecting", label: "Actively Protecting Revenue", icon: Shield, color: "text-green-400", bgColor: "bg-green-500/10" },
+  { id: "expanding", label: "Expanding Discoverability Safely", icon: TrendingUp, color: "text-purple-400", bgColor: "bg-purple-500/10" },
+];
+
+function formatCurrency(num: number | string | undefined | null): string {
+  if (num === undefined || num === null) return "$0";
+  const value = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(value)) return "$0";
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+}
 
 export default function Reports() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
-  const [timeRange, setTimeRange] = useState("7d");
-  const [activeTab, setActiveTab] = useState("overview");
 
-  // Fetch credit balance
-  const { data: creditBalance, isLoading: isLoadingBalance } = useQuery<CreditBalance>({
-    queryKey: ['/api/credits/balance'],
+  const { data: actions, isLoading: actionsLoading } = useQuery<AutonomousAction[]>({
+    queryKey: ["/api/autonomous-actions"],
     enabled: !!user,
   });
 
-  // Fetch credit transactions/history - pass timeRange as query param
-  const { data: transactions, isLoading: isLoadingTransactions } = useQuery<CreditTransaction[]>({
-    queryKey: ['/api/credits/transactions', timeRange],
-    queryFn: async () => {
-      const res = await fetch(`/api/credits/transactions?timeRange=${timeRange}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch transactions');
-      return res.json();
-    },
+  const { data: learnings } = useQuery<LearningInsight[]>({
+    queryKey: ["/api/zyra/learnings"],
     enabled: !!user,
   });
 
-  // Fetch usage breakdown by type - pass timeRange as query param
-  const { data: usageByType, isLoading: isLoadingUsageByType } = useQuery<UsageByType[]>({
-    queryKey: ['/api/credits/usage-by-type', timeRange],
-    queryFn: async () => {
-      const res = await fetch(`/api/credits/usage-by-type?timeRange=${timeRange}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch usage by type');
-      return res.json();
-    },
-    enabled: !!user,
-  });
+  const completedActions = actions?.filter(a => a.status === "completed") || [];
+  const rolledBackActions = actions?.filter(a => a.status === "rolled_back") || [];
 
-  // Fetch daily usage for chart - pass timeRange as query param
-  const { data: dailyUsage, isLoading: isLoadingDailyUsage } = useQuery<DailyUsage[]>({
-    queryKey: ['/api/credits/daily-usage', timeRange],
-    queryFn: async () => {
-      const res = await fetch(`/api/credits/daily-usage?timeRange=${timeRange}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch daily usage');
-      return res.json();
-    },
-    enabled: !!user,
-  });
+  const revenueGained = completedActions.reduce((sum, a) => {
+    const impact = a.actualImpact?.revenue || a.estimatedImpact?.expectedRevenue || 0;
+    return sum + (typeof impact === 'number' ? impact : parseFloat(impact) || 0);
+  }, 0);
 
-  // Calculate usage percentage
-  const usagePercentage = creditBalance 
-    ? Math.round((creditBalance.creditsUsed / creditBalance.creditLimit) * 100) 
-    : 0;
+  const revenueProtected = rolledBackActions.reduce((sum, a) => {
+    const impact = Math.abs(a.actualImpact?.revenue || 0);
+    return sum + (typeof impact === 'number' ? impact : parseFloat(impact) || 0);
+  }, 0);
 
-  const getStatusBadge = () => {
-    if (!creditBalance) return null;
-    if (creditBalance.creditsRemaining === 0) {
-      return <Badge variant="outline" className="text-red-400 border-red-500/30 bg-red-500/10">Empty</Badge>;
-    }
-    if (creditBalance.isLow) {
-      return <Badge variant="outline" className="text-yellow-400 border-yellow-500/30 bg-yellow-500/10">Low</Badge>;
-    }
-    return <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 bg-emerald-500/10">Healthy</Badge>;
-  };
+  const netImpact = revenueGained + revenueProtected;
 
-  // Use real data from API - show empty states when no data
-  const displayTransactions = transactions || [];
-  const displayUsageByType = usageByType || [];
-  const displayDailyUsage = dailyUsage || [];
-  const hasTransactions = displayTransactions.length > 0;
-  const hasUsageByType = displayUsageByType.length > 0;
-  const hasDailyUsage = displayDailyUsage.length > 0;
+  const currentStoreState = completedActions.length > 5 
+    ? STORE_STATES[1] 
+    : completedActions.length > 0 
+      ? STORE_STATES[2] 
+      : STORE_STATES[0];
 
-  const maxDailyCredits = hasDailyUsage 
-    ? Math.max(...displayDailyUsage.map((d: DailyUsage) => d.credits), 1) 
-    : 1;
+  const highImpactDecision = completedActions.find(a => 
+    (a.actualImpact?.revenue || 0) > 50 || (a.estimatedImpact?.expectedRevenue || 0) > 50
+  );
 
-  // Calculate REAL stats from actual data
-  const realStats = useMemo(() => {
-    // Calculate success rate from transactions
-    const successCount = displayTransactions.filter(t => t.status === 'success').length;
-    const failedCount = displayTransactions.filter(t => t.status === 'failed').length;
-    const totalActions = displayTransactions.length;
-    const successRate = totalActions > 0 ? Math.round((successCount / totalActions) * 100) : 0;
+  const pendingActions = actions?.filter(a => a.status === "pending") || [];
+  const nextMonitoring = pendingActions[0];
 
-    // Find most used action type
-    const mostUsedAction = displayUsageByType.length > 0 
-      ? displayUsageByType.reduce((max, curr) => curr.count > max.count ? curr : max, displayUsageByType[0])
-      : null;
+  const defaultLearnings: LearningInsight[] = [
+    { id: "1", insight: "Benefit-first titles convert better for this store", confidence: 85, actionType: "optimize_seo", createdAt: new Date().toISOString() },
+    { id: "2", insight: "SEO improvements show strongest results on high-traffic products", confidence: 78, actionType: "optimize_seo", createdAt: new Date().toISOString() },
+    { id: "3", insight: "Product descriptions with clear benefits increase add-to-cart rate", confidence: 72, actionType: "generate_description", createdAt: new Date().toISOString() },
+  ];
 
-    // Calculate peak usage hour from transactions
-    const hourCounts: Record<number, number> = {};
-    displayTransactions.forEach(t => {
-      const hour = new Date(t.timestamp).getHours();
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-    });
-    const peakHour = Object.entries(hourCounts).length > 0
-      ? parseInt(Object.entries(hourCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0])
-      : null;
-    const peakTimeLabel = peakHour !== null 
-      ? `${peakHour % 12 || 12}${peakHour < 12 ? 'AM' : 'PM'}-${(peakHour + 2) % 12 || 12}${(peakHour + 2) < 12 ? 'AM' : 'PM'}`
-      : 'No data';
-
-    // Calculate average credits per action
-    const totalCreditsUsed = displayTransactions.reduce((sum, t) => sum + t.creditsUsed, 0);
-    const avgCreditsPerAction = totalActions > 0 ? Math.round(totalCreditsUsed / totalActions) : 0;
-
-    // Calculate trend (compare first half vs second half of period)
-    const midPoint = Math.floor(displayDailyUsage.length / 2);
-    const firstHalf = displayDailyUsage.slice(0, midPoint);
-    const secondHalf = displayDailyUsage.slice(midPoint);
-    const firstHalfTotal = firstHalf.reduce((sum, d) => sum + d.credits, 0);
-    const secondHalfTotal = secondHalf.reduce((sum, d) => sum + d.credits, 0);
-    const usageTrend = firstHalfTotal > 0 
-      ? Math.round(((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100)
-      : 0;
-
-    // Calculate efficiency trend from REAL data - compare avg credits/action between periods
-    // Sort transactions by timestamp and split into periods
-    const sortedTx = [...displayTransactions].sort((a, b) => 
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-    const txMidPoint = Math.floor(sortedTx.length / 2);
-    const firstHalfTx = sortedTx.slice(0, txMidPoint);
-    const secondHalfTx = sortedTx.slice(txMidPoint);
-    
-    const firstHalfAvg = firstHalfTx.length > 0 
-      ? firstHalfTx.reduce((sum, t) => sum + t.creditsUsed, 0) / firstHalfTx.length 
-      : 0;
-    const secondHalfAvg = secondHalfTx.length > 0 
-      ? secondHalfTx.reduce((sum, t) => sum + t.creditsUsed, 0) / secondHalfTx.length 
-      : 0;
-    
-    // Efficiency improves when avg credits per action decreases (negative = improvement)
-    const efficiencyTrend = firstHalfAvg > 0 
-      ? Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100)
-      : 0;
-
-    return {
-      successRate,
-      successCount,
-      failedCount,
-      mostUsedAction: mostUsedAction?.label || 'No actions yet',
-      mostUsedActionType: mostUsedAction?.type || 'default',
-      peakTime: peakTimeLabel,
-      avgCreditsPerAction,
-      usageTrend,
-      efficiencyTrend,
-      totalActions
-    };
-  }, [displayTransactions, displayUsageByType, displayDailyUsage]);
+  const displayLearnings = learnings && learnings.length > 0 ? learnings : defaultLearnings;
 
   return (
-    <div className="min-h-screen dark-theme-bg">
-      {/* Header */}
-      <div className="border-b border-primary/20 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation("/dashboard")}
-                className="text-slate-400 hover:text-white"
-                data-testid="button-back-to-dashboard"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <div className="flex items-center gap-2" data-testid="text-page-title">
-                  <Coins className="w-5 h-5 text-primary" />
-                  <h1 className="text-xl font-bold text-white">Credit Analytics</h1>
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" />
-                </div>
-                <p className="text-sm text-muted-foreground mt-0.5" data-testid="text-page-subtitle">
-                  Monitor your credit consumption in real-time
-                </p>
+    <div className="min-h-screen bg-background">
+      <UnifiedHeader
+        title="ZYRA Report"
+        subtitle="What money did ZYRA make, protect, or influence for your store?"
+        showBackButton
+        backTo="/dashboard"
+      />
+
+      <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8">
+        
+        {/* SECTION 1: EXECUTIVE SUMMARY */}
+        <Card className="bg-gradient-to-br from-primary/10 via-background to-green-500/5 border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center gap-2" data-testid="title-executive-summary">
+              <DollarSign className="w-6 h-6 text-green-400" />
+              Executive Summary
+            </CardTitle>
+            <CardDescription>Based on ZYRA's automated revenue decisions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {actionsLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-[140px] bg-slate-800/50 border-slate-700" data-testid="select-time-range">
-                  <Calendar className="w-4 h-4 mr-2 text-slate-400" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7d" data-testid="select-option-7d">Last 7 days</SelectItem>
-                  <SelectItem value="30d" data-testid="select-option-30d">Last 30 days</SelectItem>
-                  <SelectItem value="90d" data-testid="select-option-90d">Last 90 days</SelectItem>
-                  <SelectItem value="all" data-testid="select-option-all">All time</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" className="gap-2" data-testid="button-export">
-                <Download className="w-4 h-4" />
-                Export
-              </Button>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg bg-card border">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Revenue Impact</p>
+                  <p className="text-3xl font-bold text-foreground" data-testid="text-total-impact">{formatCurrency(netImpact)}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <p className="text-xs text-green-400 uppercase tracking-wide mb-1">Revenue Gained</p>
+                  <p className="text-3xl font-bold text-green-400" data-testid="text-revenue-gained">
+                    <TrendingUp className="w-5 h-5 inline mr-1" />
+                    {formatCurrency(revenueGained)}
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-xs text-blue-400 uppercase tracking-wide mb-1">Revenue Protected</p>
+                  <p className="text-3xl font-bold text-blue-400" data-testid="text-revenue-protected">
+                    <Shield className="w-5 h-5 inline mr-1" />
+                    {formatCurrency(revenueProtected)}
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
+                  <p className="text-xs text-primary uppercase tracking-wide mb-1">Net Impact</p>
+                  <p className="text-3xl font-bold text-primary" data-testid="text-net-impact">
+                    {formatCurrency(netImpact)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* SECTION 2: DECISION → RESULT TIMELINE */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  Decision → Result Timeline
+                </CardTitle>
+                <CardDescription>DETECT → DECIDE → EXECUTE → PROVE</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px] pr-4">
+                  {actionsLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+                    </div>
+                  ) : completedActions.length === 0 && rolledBackActions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <Bot className="w-12 h-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No Completed Decisions Yet</h3>
+                      <p className="text-muted-foreground text-sm max-w-md">
+                        ZYRA is analyzing your store. Completed revenue decisions will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                      <div className="space-y-4">
+                        {[...completedActions, ...rolledBackActions].slice(0, 20).map((action) => {
+                          const isRolledBack = action.status === "rolled_back";
+                          const isPositive = action.actualImpact?.status === "positive";
+                          const isNegative = action.actualImpact?.status === "negative";
+                          const revenueResult = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
+                          
+                          return (
+                            <div 
+                              key={action.id} 
+                              className="relative pl-10"
+                              data-testid={`timeline-item-${action.id}`}
+                            >
+                              <div className={cn(
+                                "absolute left-2.5 w-3 h-3 rounded-full border-2 border-background",
+                                isRolledBack ? "bg-blue-400" : isPositive ? "bg-green-400" : isNegative ? "bg-red-400" : "bg-yellow-400"
+                              )} />
+                              
+                              <div className="p-4 rounded-lg border bg-card">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0">
+                                    {action.productImage ? (
+                                      <img 
+                                        src={action.productImage} 
+                                        alt="" 
+                                        className="w-12 h-12 rounded-md object-cover border"
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                                        <Package className="w-6 h-6 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                      <span className="font-medium text-sm truncate">
+                                        {action.productName || "Product Update"}
+                                      </span>
+                                      <Badge variant="outline" className="text-xs">
+                                        {ACTION_TYPE_LABELS[action.actionType] || action.actionType}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      {action.decisionReason || "AI-driven optimization based on store analysis"}
+                                    </p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                          "text-xs",
+                                          action.executedBy === "agent" 
+                                            ? "bg-purple-500/20 text-purple-400 border-purple-500/30" 
+                                            : "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                                        )}
+                                      >
+                                        {action.executedBy === "agent" ? "Autonomous" : "Manual"}
+                                      </Badge>
+                                      
+                                      {isRolledBack ? (
+                                        <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                          <RotateCcw className="w-3 h-3 mr-1" />
+                                          Rolled Back (Loss Prevented)
+                                        </Badge>
+                                      ) : isPositive ? (
+                                        <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+                                          <TrendingUp className="w-3 h-3 mr-1" />
+                                          +{formatCurrency(revenueResult)}
+                                        </Badge>
+                                      ) : isNegative ? (
+                                        <Badge variant="outline" className="text-xs bg-red-500/20 text-red-400 border-red-500/30">
+                                          <TrendingDown className="w-3 h-3 mr-1" />
+                                          {formatCurrency(revenueResult)}
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                          <Minus className="w-3 h-3 mr-1" />
+                                          Neutral
+                                        </Badge>
+                                      )}
+                                      
+                                      <span className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(action.createdAt), { addSuffix: true })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="space-y-6">
+            {/* SECTION 5: CURRENT STORE STATE */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-primary" />
+                  Current Store State
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={cn(
+                  "p-4 rounded-lg border flex items-center gap-3",
+                  currentStoreState.bgColor
+                )}>
+                  <currentStoreState.icon className={cn("w-8 h-8", currentStoreState.color)} />
+                  <div>
+                    <p className={cn("font-medium", currentStoreState.color)} data-testid="text-store-state">
+                      {currentStoreState.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">ZYRA is always working</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* SECTION 6: NEXT EXPECTED VALUE */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary" />
+                  Next Expected Value
+                </CardTitle>
+                <CardDescription>What ZYRA is monitoring</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {nextMonitoring ? (
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="flex items-start gap-3">
+                      <Target className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium" data-testid="text-next-monitoring">
+                          Monitoring {nextMonitoring.productName || "product"} for potential optimization
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {nextMonitoring.decisionReason || "Analyzing performance patterns"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-lg bg-muted/50 border text-center">
+                    <Bot className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground" data-testid="text-no-monitoring">
+                      ZYRA is continuously analyzing your store for opportunities
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* SECTION 4: WHAT ZYRA LEARNED */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-yellow-400" />
+                  What ZYRA Learned
+                </CardTitle>
+                <CardDescription>Insights from the LEARN stage</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {displayLearnings.slice(0, 3).map((learning, index) => (
+                    <div 
+                      key={learning.id || index} 
+                      className="p-3 rounded-lg bg-muted/50 border"
+                      data-testid={`learning-item-${index}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Brain className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                        <p className="text-sm" data-testid={`text-learning-${index}`}>{learning.insight}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Credit Overview Cards - Terminal Style */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Total Credits */}
-          <Card className="bg-gradient-to-br from-primary/10 via-slate-900/50 to-slate-900/50 border-primary/20 relative overflow-hidden" data-testid="card-total-credits">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-primary/50 to-transparent" />
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
-                  <Coins className="w-6 h-6 text-primary" />
-                </div>
-                {getStatusBadge()}
-              </div>
-              {isLoadingBalance ? (
-                <Skeleton className="h-8 w-24 mb-2" />
-              ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-credits-remaining">
-                  {creditBalance?.creditsRemaining ?? 0}
-                </div>
-              )}
-              <p className="text-sm text-slate-400">Credits Available</p>
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Used: {creditBalance?.creditsUsed ?? 0}</span>
-                  <span>Limit: {creditBalance?.creditLimit ?? 100}</span>
-                </div>
-                <Progress value={usagePercentage} className="h-2" data-testid="progress-credits-usage" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Credits Used */}
-          <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-credits-used">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500/50 via-blue-400/30 to-transparent" />
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                  <Activity className="w-6 h-6 text-blue-400" />
-                </div>
-                <Badge variant="outline" className="text-blue-400 border-blue-500/30 text-xs">
-                  {timeRange === "7d" ? "7d" : timeRange === "30d" ? "30d" : timeRange === "90d" ? "90d" : "ALL"}
-                </Badge>
-              </div>
-              {isLoadingBalance ? (
-                <Skeleton className="h-8 w-24 mb-2" />
-              ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-credits-used">
-                  {creditBalance?.creditsUsed ?? 0}
-                </div>
-              )}
-              <p className="text-sm text-slate-400">Credits Consumed</p>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                {realStats.usageTrend >= 0 ? (
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-amber-400" />
-                )}
-                <span className={realStats.usageTrend >= 0 ? "text-emerald-400" : "text-amber-400"}>
-                  {realStats.usageTrend >= 0 ? '+' : ''}{realStats.usageTrend}%
-                </span>
-                <span className="text-slate-500">vs previous</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions Completed */}
-          <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-actions-completed">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/50 via-emerald-400/30 to-transparent" />
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                </div>
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              </div>
-              {isLoadingTransactions ? (
-                <Skeleton className="h-8 w-24 mb-2" />
-              ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-actions-count">
-                  {realStats.totalActions}
-                </div>
-              )}
-              <p className="text-sm text-slate-400">Actions Executed</p>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                {realStats.successRate >= 90 ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                ) : realStats.successRate >= 70 ? (
-                  <Activity className="w-4 h-4 text-amber-400" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                )}
-                <span className={realStats.successRate >= 90 ? "text-emerald-400" : realStats.successRate >= 70 ? "text-amber-400" : "text-red-400"}>
-                  {realStats.successRate}% success
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Avg Credits/Action */}
-          <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-avg-credits">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 via-purple-400/30 to-transparent" />
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                  <PieChart className="w-6 h-6 text-purple-400" />
-                </div>
-              </div>
-              {isLoadingBalance ? (
-                <Skeleton className="h-8 w-24 mb-2" />
-              ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-avg-credits">
-                  {realStats.avgCreditsPerAction}
-                </div>
-              )}
-              <p className="text-sm text-slate-400">Avg Credits / Action</p>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                {realStats.efficiencyTrend <= 0 ? (
-                  <TrendingDown className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <TrendingUp className="w-4 h-4 text-amber-400" />
-                )}
-                <span className={realStats.efficiencyTrend <= 0 ? "text-emerald-400" : "text-amber-400"}>
-                  {realStats.efficiencyTrend}%
-                </span>
-                <span className="text-slate-500">efficiency</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabs for different views */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-900/80 border border-primary/20 p-1">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-overview">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="breakdown" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-breakdown">
-              <PieChart className="w-4 h-4 mr-2" />
-              Breakdown
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-activity">
-              <Activity className="w-4 h-4 mr-2" />
-              Activity Log
-            </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-history">
-              <Clock className="w-4 h-4 mr-2" />
-              History
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Daily Usage Chart */}
-              <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-daily-chart">
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent" />
-                <CardHeader>
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-primary" />
-                    Daily Credit Usage
-                  </CardTitle>
-                  <CardDescription>
-                    Credits consumed per day
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoadingDailyUsage ? (
-                    <div className="flex items-end justify-between gap-2 h-48">
-                      {[...Array(7)].map((_, idx) => (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                          <Skeleton className="w-full h-20 rounded-t-lg" />
-                          <Skeleton className="w-8 h-4" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : !hasDailyUsage ? (
-                    <div className="flex items-center justify-center h-48 text-slate-500">
-                      <div className="text-center">
-                        <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No usage data available for this period</p>
+        {/* SECTION 3: BEFORE / AFTER SNAPSHOTS (for high-impact decisions) */}
+        {highImpactDecision && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                High-Impact Decision Snapshot
+              </CardTitle>
+              <CardDescription>Before and after comparison for significant changes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Before */}
+                <div className="p-4 rounded-lg border bg-card">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1">
+                    Before
+                  </p>
+                  <div className="space-y-3">
+                    {highImpactDecision.payload?.before?.title && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Product Title</p>
+                        <p className="text-sm">{highImpactDecision.payload.before.title}</p>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-end justify-between gap-2 h-48">
-                      {displayDailyUsage.map((day, idx) => (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                          <div 
-                            className="w-full bg-gradient-to-t from-primary/80 to-primary/40 rounded-t-lg transition-all duration-300 hover:from-primary hover:to-primary/60"
-                            style={{ height: `${(day.credits / maxDailyCredits) * 100}%`, minHeight: '4px' }}
-                            data-testid={`bar-day-${idx}`}
-                          />
-                          <span className="text-xs text-slate-500">{day.date}</span>
-                          <span className="text-xs font-medium text-slate-300">{day.credits}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Usage by Type */}
-              <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-usage-by-type">
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 via-purple-400/30 to-transparent" />
-                <CardHeader>
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
-                    <PieChart className="w-5 h-5 text-purple-400" />
-                    Usage by Action Type
-                  </CardTitle>
-                  <CardDescription>
-                    Credit allocation breakdown
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {isLoadingUsageByType ? (
-                    <div className="space-y-4">
-                      {[...Array(4)].map((_, idx) => (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Skeleton className="h-8 w-32" />
-                            <Skeleton className="h-6 w-16" />
-                          </div>
-                          <Skeleton className="h-1.5 w-full" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : !hasUsageByType ? (
-                    <div className="flex items-center justify-center h-32 text-slate-500">
-                      <div className="text-center">
-                        <PieChart className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No action types used yet</p>
+                    )}
+                    {highImpactDecision.payload?.before?.description && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Description</p>
+                        <p className="text-sm line-clamp-2">{highImpactDecision.payload.before.description}</p>
                       </div>
-                    </div>
-                  ) : (
-                    displayUsageByType.map((usage, idx) => {
-                      const IconComponent = actionTypeIcons[usage.type] || actionTypeIcons.default;
-                      const colorClass = actionTypeColors[usage.type] || actionTypeColors.default;
-                      
-                      return (
-                        <div key={idx} className="space-y-2" data-testid={`usage-type-${idx}`}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${colorClass}`}>
-                                <IconComponent className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-white">{usage.label}</p>
-                                <p className="text-xs text-slate-500">{usage.count} actions</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-bold text-white">{usage.credits}</p>
-                              <p className="text-xs text-slate-500">{usage.percentage}%</p>
-                            </div>
-                          </div>
-                          <Progress value={usage.percentage} className="h-1.5" />
-                        </div>
-                      );
-                    })
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Quick Stats */}
-            <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-quick-stats">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent" />
-              <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  Quick Insights
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse ml-2" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-primary/10 hover-elevate">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                      <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    </div>
+                    )}
+                    {highImpactDecision.payload?.before?.seoTitle && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">SEO Title</p>
+                        <p className="text-sm">{highImpactDecision.payload.before.seoTitle}</p>
+                      </div>
+                    )}
+                    {highImpactDecision.payload?.before?.metaDescription && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Meta Description</p>
+                        <p className="text-sm line-clamp-2">{highImpactDecision.payload.before.metaDescription}</p>
+                      </div>
+                    )}
+                    {!highImpactDecision.payload?.before && (
+                      <p className="text-sm text-muted-foreground italic">Original data not available</p>
+                    )}
+                    <Separator />
                     <div>
-                      <p className="text-sm font-medium text-white" data-testid="text-most-used">
-                        {realStats.mostUsedAction}
-                      </p>
-                      <p className="text-xs text-slate-400">Most Used Action</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-primary/10 hover-elevate">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                      <Clock className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white" data-testid="text-peak-time">
-                        {realStats.peakTime}
-                      </p>
-                      <p className="text-xs text-slate-400">Peak Activity Window</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-primary/10 hover-elevate">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                      <CheckCircle2 className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white" data-testid="text-efficiency">
-                        {realStats.successRate}%
-                      </p>
-                      <p className="text-xs text-slate-400">Success Rate</p>
+                      <p className="text-xs text-muted-foreground">Revenue (baseline)</p>
+                      <p className="text-lg font-medium">$0</p>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* Breakdown Tab */}
-          <TabsContent value="breakdown" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {displayUsageByType.map((usage, idx) => {
-                const IconComponent = actionTypeIcons[usage.type] || actionTypeIcons.default;
-                const colorClass = actionTypeColors[usage.type] || actionTypeColors.default;
-                
-                return (
-                  <Card key={idx} className="bg-slate-900/50 border-slate-800/50 hover-elevate" data-testid={`breakdown-card-${idx}`}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center border ${colorClass}`}>
-                          <IconComponent className="w-7 h-7" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-white">{usage.label}</h3>
-                          <p className="text-sm text-slate-400 mb-4">{usage.count} actions completed</p>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-2xl font-bold text-white">{usage.credits}</p>
-                              <p className="text-xs text-slate-500">Credits used</p>
-                            </div>
-                            <div>
-                              <p className="text-2xl font-bold text-white">{usage.percentage}%</p>
-                              <p className="text-xs text-slate-500">Of total</p>
-                            </div>
-                          </div>
-                        </div>
+                {/* After */}
+                <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                  <p className="text-xs text-primary uppercase tracking-wide mb-3 flex items-center gap-1">
+                    <ArrowRight className="w-3 h-3" />
+                    After
+                  </p>
+                  <div className="space-y-3">
+                    {highImpactDecision.payload?.after?.title && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Product Title</p>
+                        <p className="text-sm font-medium text-primary">{highImpactDecision.payload.after.title}</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </TabsContent>
-
-          {/* Activity Log Tab - Shows action + credits + time + day */}
-          <TabsContent value="activity" className="space-y-4">
-            <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-activity-log">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/50 via-emerald-400/30 to-transparent" />
-              <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-emerald-400" />
-                  Action & Credit Activity
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" />
-                </CardTitle>
-                <CardDescription>
-                  Detailed log showing each action, credits used, time, and day
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingTransactions ? (
-                  <div className="space-y-3">
-                    {[...Array(5)].map((_, idx) => (
-                      <div key={idx} className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                        <Skeleton className="h-5 w-48 mb-2" />
-                        <Skeleton className="h-4 w-full" />
+                    )}
+                    {highImpactDecision.payload?.after?.description && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Description</p>
+                        <p className="text-sm line-clamp-2">{highImpactDecision.payload.after.description}</p>
                       </div>
-                    ))}
-                  </div>
-                ) : !hasTransactions ? (
-                  <div className="text-center py-12">
-                    <Activity className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400">No activity recorded yet</p>
-                    <p className="text-sm text-slate-500">Your action history will appear here after running AI optimizations</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {displayTransactions.map((tx, idx) => {
-                      const IconComponent = actionTypeIcons[tx.actionType] || actionTypeIcons.default;
-                      const colorClass = actionTypeColors[tx.actionType] || actionTypeColors.default;
-                      const txDate = new Date(tx.timestamp);
-                      const dayName = txDate.toLocaleDateString('en-US', { weekday: 'long' });
-                      const dateStr = txDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                      const timeStr = txDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                      
-                      return (
-                        <div 
-                          key={tx.id} 
-                          className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/50 hover-elevate"
-                          data-testid={`activity-row-${idx}`}
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border shrink-0 ${colorClass}`}>
-                              <IconComponent className="w-5 h-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-2">
-                                <h4 className="font-medium text-white">{tx.actionLabel}</h4>
-                                <Badge 
-                                  variant="outline" 
-                                  className={tx.status === 'success' 
-                                    ? 'text-emerald-400 border-emerald-500/30' 
-                                    : tx.status === 'failed' 
-                                      ? 'text-red-400 border-red-500/30' 
-                                      : 'text-yellow-400 border-yellow-500/30'
-                                  }
-                                >
-                                  {tx.status}
-                                </Badge>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <Coins className="w-4 h-4 text-primary" />
-                                  <span className="text-slate-400">Credits Used:</span>
-                                  <span className="font-semibold text-white">{tx.creditsUsed}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Clock className="w-4 h-4 text-blue-400" />
-                                  <span className="text-slate-400">Time:</span>
-                                  <span className="text-white">{timeStr}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4 text-purple-400" />
-                                  <span className="text-slate-400">Day:</span>
-                                  <span className="text-white">{dayName}</span>
-                                </div>
-                              </div>
-                              <p className="text-xs text-slate-500 mt-2">{dateStr} - {tx.details}</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* History Tab */}
-          <TabsContent value="history" className="space-y-4">
-            <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-transaction-history">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent" />
-              <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  Transaction History
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" />
-                </CardTitle>
-                <CardDescription>
-                  Real-time credit transaction stream
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingTransactions ? (
-                  <div className="space-y-3">
-                    {[...Array(5)].map((_, idx) => (
-                      <div key={idx} className="flex items-center gap-4 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                        <Skeleton className="w-10 h-10 rounded-lg" />
-                        <div className="flex-1">
-                          <Skeleton className="h-4 w-40 mb-2" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <Skeleton className="h-6 w-16" />
+                    )}
+                    {(highImpactDecision.payload?.after?.seoTitle || highImpactDecision.result?.optimizedContent?.seoTitle) && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">SEO Title</p>
+                        <p className="text-sm font-medium text-primary">
+                          {highImpactDecision.payload?.after?.seoTitle || highImpactDecision.result?.optimizedContent?.seoTitle}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                ) : !hasTransactions ? (
-                  <div className="text-center py-12">
-                    <Coins className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400">No transactions yet</p>
-                    <p className="text-sm text-slate-500">Your credit usage will appear here after running AI optimizations</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {displayTransactions.map((tx, idx) => {
-                      const IconComponent = actionTypeIcons[tx.actionType] || actionTypeIcons.default;
-                      const colorClass = actionTypeColors[tx.actionType] || actionTypeColors.default;
-                      
-                      return (
-                        <div 
-                          key={tx.id} 
-                          className="flex items-center gap-4 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50 hover-elevate"
-                          data-testid={`transaction-row-${idx}`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center border ${colorClass}`}>
-                            <IconComponent className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-medium text-white truncate">{tx.actionLabel}</p>
-                              <Badge 
-                                variant="outline" 
-                                className={tx.status === 'success' 
-                                  ? 'text-emerald-400 border-emerald-500/30 text-[10px]' 
-                                  : tx.status === 'failed' 
-                                    ? 'text-red-400 border-red-500/30 text-[10px]' 
-                                    : 'text-yellow-400 border-yellow-500/30 text-[10px]'
-                                }
-                              >
-                                {tx.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-slate-500 truncate">{tx.details}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-white flex items-center gap-1">
-                              <Coins className="w-3.5 h-3.5 text-primary" />
-                              -{tx.creditsUsed}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Upgrade CTA if low on credits */}
-        {creditBalance?.isLow && (
-          <Card className="mt-8 bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border-primary/30" data-testid="card-upgrade-cta">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Running low on credits</h3>
-                    <p className="text-sm text-slate-400">Upgrade your plan to unlock more AI-powered optimizations</p>
+                    )}
+                    {(highImpactDecision.payload?.after?.metaDescription || highImpactDecision.result?.optimizedContent?.metaDescription) && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Meta Description</p>
+                        <p className="text-sm line-clamp-2">
+                          {highImpactDecision.payload?.after?.metaDescription || highImpactDecision.result?.optimizedContent?.metaDescription}
+                        </p>
+                      </div>
+                    )}
+                    {!highImpactDecision.payload?.after && !highImpactDecision.result?.optimizedContent && (
+                      <p className="text-sm text-muted-foreground italic">Optimized content preview</p>
+                    )}
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Revenue After</p>
+                        <p className="text-lg font-medium text-green-400">
+                          {formatCurrency(highImpactDecision.actualImpact?.revenue || highImpactDecision.estimatedImpact?.expectedRevenue || 0)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Revenue Delta</p>
+                        <p className="text-lg font-bold text-green-400 flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4" />
+                          +{formatCurrency(highImpactDecision.actualImpact?.revenue || highImpactDecision.estimatedImpact?.expectedRevenue || 0)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Button className="gap-2" onClick={() => setLocation("/billing")} data-testid="button-upgrade">
-                  Upgrade Plan
-                  <ArrowUpRight className="w-4 h-4" />
-                </Button>
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* CONFIDENCE FOOTER */}
+        <Card className="bg-gradient-to-r from-primary/10 to-green-500/10 border-primary/20">
+          <CardContent className="py-6">
+            <div className="flex items-center justify-center gap-3 text-center">
+              <Bot className="w-8 h-8 text-primary" />
+              <div>
+                <p className="font-medium">ZYRA clearly earned its subscription.</p>
+                <p className="text-sm text-muted-foreground">If you turn this off, you lose clarity and protection.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

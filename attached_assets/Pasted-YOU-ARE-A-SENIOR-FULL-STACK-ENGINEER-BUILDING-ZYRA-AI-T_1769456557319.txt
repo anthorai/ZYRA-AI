@@ -1,0 +1,178 @@
+YOU ARE A SENIOR FULL-STACK ENGINEER BUILDING ZYRA AI.
+
+TASK:
+Build a modern, revenue-focused “ZYRA Report Page” that shows
+how ZYRA’s AI decisions impacted a Shopify store’s revenue
+without breaking the core loop:
+
+DETECT → DECIDE → EXECUTE → PROVE → LEARN
+
+This page must NOT be a generic analytics dashboard.
+
+====================================================
+CORE PURPOSE (MANDATORY)
+====================================================
+
+The report page must answer ONE question clearly:
+
+“What money did ZYRA make, protect, or influence for this store?”
+
+If a component does not support this question,
+DO NOT BUILD IT.
+
+====================================================
+PAGE TYPE
+====================================================
+
+- Read-only page
+- No actions triggered from here
+- Reflects completed loop cycles only
+- Uses existing ZYRA decision & execution logs
+
+====================================================
+PAGE STRUCTURE (IMPLEMENT EXACTLY)
+====================================================
+
+-----------------------------------------
+SECTION 1: EXECUTIVE SUMMARY (TOP)
+-----------------------------------------
+
+Create a summary card that shows:
+
+- Total Revenue Impact (₹ / $)
+- Revenue Gained
+- Revenue Protected (via rollback)
+- Net Impact
+
+Text:
+“Based on ZYRA’s automated revenue decisions”
+
+NO charts here.
+Large numbers only.
+
+-----------------------------------------
+SECTION 2: DECISION → RESULT TIMELINE
+-----------------------------------------
+
+Create a vertical timeline list.
+
+Each item must include:
+- Product thumbnail + name
+- Decision summary (what ZYRA changed)
+- Reason for decision (plain language)
+- Manual / Autonomous badge
+- Risk level badge
+- Revenue result:
+  - Positive
+  - Neutral
+  - Rolled back (loss prevented)
+
+Each item must map clearly to:
+DETECT → DECIDE → EXECUTE → PROVE
+
+-----------------------------------------
+SECTION 3: BEFORE / AFTER SNAPSHOTS
+-----------------------------------------
+
+For high-impact decisions, show:
+
+Side-by-side comparison:
+- Product Title
+- Description
+- SEO Title
+- Meta Description
+- Image Alt Text
+
+Include:
+- Revenue before
+- Revenue after
+- Revenue delta
+
+UI:
+- Left = Before (read-only)
+- Right = After (highlight changes)
+
+-----------------------------------------
+SECTION 4: WHAT ZYRA LEARNED
+-----------------------------------------
+
+Summarize learnings in human language.
+
+Examples:
+- “Benefit-first titles convert better for this store”
+- “SEO improvements work best on Product Type X”
+
+These insights must come from LEARN stage data.
+
+-----------------------------------------
+SECTION 5: CURRENT STORE STATE
+-----------------------------------------
+
+Show ONE state only:
+
+- Preparing for Growth
+- Actively Protecting Revenue
+- Expanding Discoverability Safely
+
+This reassures the merchant ZYRA is always working.
+
+-----------------------------------------
+SECTION 6: NEXT EXPECTED VALUE
+-----------------------------------------
+
+Display what ZYRA is monitoring next.
+
+Example:
+“Monitoring Product A for potential upsell opportunity”
+
+NO promises.
+NO execution buttons.
+
+====================================================
+ABSOLUTE RESTRICTIONS
+====================================================
+
+DO NOT BUILD:
+- CTR metrics
+- Open rates
+- Keyword rankings
+- Traffic graphs
+- Advanced filters
+- Editable controls
+
+If it causes analysis paralysis, remove it.
+
+====================================================
+UI / UX REQUIREMENTS
+====================================================
+
+- Modern, premium SaaS UI
+- Dark mode compatible
+- Clear typography
+- Minimal charts (only revenue-linked)
+- Business language, not technical language
+
+====================================================
+DATA SOURCES
+====================================================
+
+Use:
+- ZYRA decision logs
+- Execution history
+- Revenue attribution records
+- Rollback logs
+- Learning summaries
+
+DO NOT fetch raw Shopify analytics directly here.
+
+====================================================
+FINAL CHECK
+====================================================
+
+After viewing this page, the merchant must think:
+
+“ZYRA clearly earned its subscription.”
+“If I turn this off, I lose clarity and protection.”
+
+If the page does not create confidence,
+iterate until it does.
