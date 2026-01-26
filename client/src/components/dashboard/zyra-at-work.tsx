@@ -27,7 +27,8 @@ import {
   Mail,
   DollarSign,
   Eye,
-  Trophy
+  Trophy,
+  Database
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
@@ -405,6 +406,22 @@ function ProgressStages({
     );
   }
 
+  // If insufficient_data BEFORE detection starts (idle phase), show baseline collection screen
+  // This skips the loop animation entirely for newly connected stores
+  if (detectionStatus === 'insufficient_data' && detectionPhase === 'idle' && !isDetectionComplete && currentStage === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+          <Database className="w-7 h-7 text-amber-400" />
+        </div>
+        <p className="text-amber-400 font-medium mb-2">Collecting baseline data</p>
+        <p className="text-slate-400 text-sm max-w-sm">
+          ZYRA will act once signals are strong. This happens automatically as your store receives traffic.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="py-6">
       {/* Current Stage Display */}
@@ -460,23 +477,24 @@ function ProgressStages({
         Working in the background — no action needed from you
       </p>
       
-      {/* Status Display for completed detection */}
+      {/* Status Display for completed detection - Step 8 is ALWAYS a terminal success state */}
       {isDetectionComplete && (
         <div className={`mt-4 p-3 rounded-lg text-center ${
           detectionStatus === 'friction_found' ? 'bg-emerald-500/10 border border-emerald-500/30' :
-          detectionStatus === 'insufficient_data' ? 'bg-amber-500/10 border border-amber-500/30' :
           'bg-blue-500/10 border border-blue-500/30'
         }`}>
           <p className={`text-sm font-medium ${
-            detectionStatus === 'friction_found' ? 'text-emerald-400' :
-            detectionStatus === 'insufficient_data' ? 'text-amber-400' :
-            'text-blue-400'
+            detectionStatus === 'friction_found' ? 'text-emerald-400' : 'text-blue-400'
           }`}>
             {detectionStatus === 'friction_found' 
-              ? 'Revenue opportunity found — review in Next Move'
-              : detectionStatus === 'insufficient_data'
-              ? 'Collecting baseline data — ZYRA will act once signals are strong'
-              : 'No urgent revenue risk — monitoring continues'
+              ? 'Next revenue move ready'
+              : 'No urgent revenue risk detected'
+            }
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            {detectionStatus === 'friction_found'
+              ? 'Review recommended action in Next Move'
+              : 'ZYRA is actively monitoring your store for new opportunities'
             }
           </p>
         </div>
