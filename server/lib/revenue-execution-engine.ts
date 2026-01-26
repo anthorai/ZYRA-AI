@@ -247,6 +247,33 @@ export class RevenueExecutionEngine {
     opportunity: typeof revenueOpportunities.$inferSelect,
     powerModeEnabled: boolean = false
   ): Promise<{ changes: any; creditsUsed?: number }> {
+    // FAST PATH: Use pre-built execution payload ONLY when actual content exists
+    // Payload must have real optimized content - not just metadata
+    const actionPlan = opportunity.actionPlan as any;
+    const payload = actionPlan?.executionPayload;
+    
+    // Strict content check: must have ACTUAL content to apply, not just frictionType/metadata
+    const hasRealContent = payload && (
+      payload.optimizedTitle || 
+      payload.optimizedDescription || 
+      payload.metaTitle || 
+      payload.metaDescription
+    );
+    
+    if (hasRealContent && payload.ready === true) {
+      console.log(`⚡ [Revenue Execution] Using pre-built execution payload (fast path)`);
+      const fastResult = await this.executeFromPrebuiltPayload(opportunity, payload);
+      if (fastResult.success) {
+        return { changes: fastResult.changes, creditsUsed: 1 };
+      }
+      // Fall through to slow path if fast execution fails
+      console.log(`⚠️ [Revenue Execution] Pre-built payload execution failed, falling back to slow path`);
+    } else if (payload?.ready) {
+      // Payload exists but lacks content - log and fall back
+      console.log(`📊 [Revenue Execution] Payload has metadata only, using AI-powered slow path`);
+    }
+
+    // SLOW PATH: Generate content via AI (existing behavior)
     if (opportunity.opportunityType === 'seo_optimization' && opportunity.entityId) {
       if (powerModeEnabled) {
         return this.optimizeSEOWithPowerMode(opportunity.entityId, opportunity.userId);
@@ -261,7 +288,129 @@ export class RevenueExecutionEngine {
       return this.enhanceDescription(opportunity.entityId, opportunity.userId);
     }
 
+    // Handle ZYRA revenue action types from cache
+    const actionType = opportunity.opportunityType;
+    if (['product_content_fix', 'cart_recovery', 'checkout_optimization', 'upsell_opportunity'].includes(actionType)) {
+      if (opportunity.entityId) {
+        if (powerModeEnabled) {
+          return this.optimizeSEOWithPowerMode(opportunity.entityId, opportunity.userId);
+        }
+        return this.optimizeSEO(opportunity.entityId, opportunity.userId);
+      }
+    }
+
     return { changes: { type: 'no_op', reason: 'Unknown opportunity type' } };
+  }
+
+  /**
+   * Execute using pre-built payload from detection cache
+   * Target execution time: 1-3 seconds (no AI calls needed)
+   * 
+   * Fast path: Uses pre-generated content if available
+   * Friction-based path: Marks product for optimization when friction detected
+   */
+  private async executeFromPrebuiltPayload(
+    opportunity: typeof revenueOpportunities.$inferSelect,
+    payload: any
+  ): Promise<{ success: boolean; changes: any }> {
+    const executeStart = Date.now();
+    const db = requireDb();
+
+    try {
+      if (!opportunity.entityId) {
+        return { success: false, changes: { error: 'No entity ID' } };
+      }
+
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, opportunity.entityId))
+        .limit(1);
+
+      if (!product) {
+        return { success: false, changes: { error: 'Product not found' } };
+      }
+
+      // Apply pre-built content changes
+      const updatedFields: any = {
+        isOptimized: true,
+        updatedAt: new Date(),
+      };
+
+      // Use payload's pre-generated content if available
+      if (payload.optimizedTitle) {
+        updatedFields.name = payload.optimizedTitle;
+      }
+      if (payload.optimizedDescription) {
+        updatedFields.description = payload.optimizedDescription;
+      }
+
+      // Track what action was taken based on friction type
+      const actionTaken = this.getActionForFriction(payload.frictionType, product);
+
+      await db.update(products)
+        .set(updatedFields)
+        .where(eq(products.id, opportunity.entityId));
+
+      // Update SEO metadata if provided in payload
+      if (payload.metaTitle || payload.metaDescription) {
+        const [existingSeo] = await db
+          .select()
+          .from(seoMeta)
+          .where(eq(seoMeta.productId, opportunity.entityId))
+          .limit(1);
+
+        if (existingSeo) {
+          await db.update(seoMeta)
+            .set({
+              seoTitle: payload.metaTitle || existingSeo.seoTitle,
+              metaDescription: payload.metaDescription || existingSeo.metaDescription,
+              seoScore: payload.seoScore || existingSeo.seoScore,
+            })
+            .where(eq(seoMeta.productId, opportunity.entityId));
+        } else if (payload.metaTitle) {
+          await db.insert(seoMeta).values({
+            productId: opportunity.entityId,
+            seoTitle: payload.metaTitle,
+            metaDescription: payload.metaDescription || '',
+            seoScore: payload.seoScore || 70,
+          });
+        }
+      }
+
+      // Consume credits for execution
+      await consumeAIToolCredits(opportunity.userId, 'product-seo-engine', 1);
+
+      const executionTime = Date.now() - executeStart;
+      console.log(`⚡ [Revenue Execution] Pre-built payload executed in ${executionTime}ms`);
+
+      return {
+        success: true,
+        changes: {
+          type: 'prebuilt_payload_execution',
+          productId: opportunity.entityId,
+          productName: product.name,
+          appliedChanges: updatedFields,
+          actionTaken,
+          executionTimeMs: executionTime,
+          frictionType: payload.frictionType,
+          targetImprovement: payload.targetImprovement,
+        },
+      };
+    } catch (error) {
+      console.error(`❌ [Revenue Execution] Pre-built payload error:`, error);
+      return { success: false, changes: { error: error instanceof Error ? error.message : 'Unknown error' } };
+    }
+  }
+
+  private getActionForFriction(frictionType: string | null, product: any): string {
+    const actions: Record<string, string> = {
+      'view_no_cart': `Optimized product listing to improve add-to-cart conversion`,
+      'cart_no_checkout': `Flagged for checkout flow optimization`,
+      'checkout_drop': `Queued for cart recovery sequence`,
+      'purchase_no_upsell': `Enabled for post-purchase recommendations`,
+    };
+    return actions[frictionType || ''] || 'Product marked for optimization';
   }
 
   private async optimizeSEOWithPowerMode(productId: string, userId: string): Promise<{ changes: any; creditsUsed: number }> {

@@ -130,7 +130,9 @@ export class DetectionPrecompute {
     const recommendedActionType = this.mapFrictionToActionType(topFrictionType);
     
     // Pre-build execution payload (content improvement)
+    // Includes `ready: true` flag for fast execution path detection
     const executionPayload = {
+      ready: true,
       productId: product.id,
       productName: product.name,
       actionType: recommendedActionType,
