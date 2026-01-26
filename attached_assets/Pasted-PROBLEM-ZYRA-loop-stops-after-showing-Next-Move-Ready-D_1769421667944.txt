@@ -1,0 +1,84 @@
+PROBLEM:
+ZYRA loop stops after showing "Next Move Ready".
+DECIDE is not committed and loop does not advance.
+
+GOAL:
+Ensure ZYRA loop ALWAYS progresses after Next Move is identified.
+
+====================================================
+CRITICAL STATE RULE
+====================================================
+
+"NEXT_MOVE_READY" is NOT an end state.
+It is a TRANSITION state between DECIDE and EXECUTE.
+
+====================================================
+MANDATORY LOOP FLOW
+====================================================
+
+After DETECT:
+
+1. DECIDE must be EXPLICITLY committed:
+   - action_id
+   - product_id
+   - risk_level
+   - expected_impact
+
+2. System must then enter:
+   STATE = AWAITING_APPROVAL or AUTO_EXECUTE
+
+====================================================
+APPROVAL LOGIC
+====================================================
+
+If store.autopilot = FALSE:
+- Show "Approve & Run" CTA
+- Pause ONLY at AWAITING_APPROVAL
+
+If store.autopilot = TRUE AND risk = LOW:
+- Skip approval
+- Immediately EXECUTE
+
+====================================================
+EXECUTION GUARANTEE
+====================================================
+
+Once DECIDE is committed:
+- EXECUTE must always run
+- PROVE must always follow EXECUTE
+- LEARN must always follow PROVE
+
+No state is allowed to exit early.
+
+====================================================
+UI ↔ ENGINE CONTRACT
+====================================================
+
+UI showing "Next Move Ready" MUST include:
+- action_id
+- execution_status
+- next_state
+
+If execution_status = "pending":
+→ show Approve CTA
+
+If execution_status = "running":
+→ show Applying Fix
+
+====================================================
+FAIL-SAFE
+====================================================
+
+If system remains in NEXT_MOVE_READY > 30 seconds:
+- Auto-transition to AWAITING_APPROVAL
+- Log error
+- Never freeze the loop
+
+====================================================
+EXPECTED RESULT
+====================================================
+
+After "Next Move Ready":
+- Loop ALWAYS continues
+- EXECUTE → PROVE → LEARN always run
+- Step 8 only appears AFTER LEARN completes

@@ -78,6 +78,9 @@ interface ZyraStats {
   totalOrders?: number;
   // Foundational action for new stores
   foundationalAction?: FoundationalAction;
+  // Execution status for loop progression
+  executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+  committedActionId?: string | null;
 }
 
 interface ZyraEvent {
@@ -279,6 +282,10 @@ function ProgressStages({
   isDetectionComplete = false,
   isNewStore = false,
   foundationalAction,
+  executionStatus = 'idle',
+  committedActionId = null,
+  onApprove,
+  isApproving = false,
   onComplete 
 }: { 
   isAutopilotEnabled: boolean;
@@ -287,6 +294,10 @@ function ProgressStages({
   isDetectionComplete?: boolean;
   isNewStore?: boolean;
   foundationalAction?: FoundationalAction;
+  executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+  committedActionId?: string | null;
+  onApprove?: (actionId: string) => void;
+  isApproving?: boolean;
   onComplete?: () => void;
 }) {
   const [currentStage, setCurrentStage] = useState(0);
@@ -509,11 +520,35 @@ function ProgressStages({
           {/* For new stores with foundational action - show the concrete Next Move */}
           {(detectionStatus === 'foundational_action' || isNewStore) && foundationalAction ? (
             <div className="text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <p className="text-sm font-medium text-primary">
-                  Next Move Ready
-                </p>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <p className="text-sm font-medium text-primary">
+                    {executionStatus === 'running' ? 'Executing...' : 'Next Move Ready'}
+                  </p>
+                </div>
+                {executionStatus === 'awaiting_approval' && committedActionId && onApprove && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => onApprove(committedActionId)}
+                    disabled={isApproving}
+                    data-testid="button-approve-foundational-action"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    {isApproving ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3 h-3 mr-1" />
+                        Approve & Run
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
               <p className="text-sm font-medium text-foreground mb-1">
                 {foundationalAction.title}
@@ -538,11 +573,35 @@ function ProgressStages({
           ) : (detectionStatus === 'foundational_action' || isNewStore) ? (
             // Fallback for new stores without foundational action (should not happen)
             <div className="text-left">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <p className="text-sm font-medium text-primary">
-                  Next Move Ready
-                </p>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <p className="text-sm font-medium text-primary">
+                    Next Move Ready
+                  </p>
+                </div>
+                {executionStatus === 'awaiting_approval' && onApprove && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => onApprove('foundational_trust_signals')}
+                    disabled={isApproving}
+                    data-testid="button-approve-fallback-action"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    {isApproving ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3 h-3 mr-1" />
+                        Approve & Run
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
               <p className="text-sm font-medium text-foreground mb-1">
                 Build Buyer Confidence
@@ -751,10 +810,52 @@ export default function ZyraAtWork() {
     nextAction?: 'standby' | 'data_collection' | 'decide' | 'foundational';
     isNewStore?: boolean;
     foundationalAction?: FoundationalAction;
+    // DECIDE COMMIT STATUS - UI contract
+    executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+    committedActionId?: string | null;
+    nextState?: 'awaiting_approval' | 'auto_execute' | 'idle';
   }>({
     queryKey: ['/api/zyra/detection-status'],
-    refetchInterval: isDetecting ? 1000 : false,
-    enabled: storeReadiness?.state === 'ready' && isDetecting,
+    // Poll during detection (fast), and continue polling after completion for execution status
+    refetchInterval: isDetecting ? 1000 : 5000,
+    // Keep enabled after detection completes to show executionStatus/CTA
+    enabled: storeReadiness?.state === 'ready',
+    // Reduce staleTime so we get fresh data after detection
+    staleTime: 2000,
+  });
+  
+  // Approve action mutation for awaiting_approval state
+  const approveActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      // Check if it's a foundational action
+      if (actionId.startsWith('foundational_')) {
+        // Execute foundational action
+        return await apiRequest('/api/zyra/execute-foundational', {
+          method: 'POST',
+          body: JSON.stringify({ type: actionId.replace('foundational_', '') }),
+        });
+      }
+      // Regular friction action - approve the opportunity
+      return await apiRequest(`/api/revenue-opportunities/${actionId}/approve`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Action Approved',
+        description: 'ZYRA is now executing the action',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Approval Failed',
+        description: 'Could not approve the action. Please try again.',
+        variant: 'destructive',
+      });
+    },
   });
 
   useEffect(() => {
@@ -806,6 +907,68 @@ export default function ZyraAtWork() {
     isDetecting || 
     (detectionPhase !== 'idle' && !isDetectionComplete)
   );
+  
+  // Derive execution status from both detection-status and stats (with fallback)
+  const derivedExecutionStatus = detectionStatusData?.executionStatus || stats?.executionStatus || 'idle';
+  const derivedCommittedActionId = detectionStatusData?.committedActionId || stats?.committedActionId || null;
+  
+  // 30-second fail-safe timer for stuck states
+  // If execution is stuck in 'running' for too long, force refresh
+  // For 'awaiting_approval', use a longer timeout (2 min) to give user time to respond
+  const FAILSAFE_RUNNING_TIMEOUT_MS = 30000;
+  const FAILSAFE_APPROVAL_TIMEOUT_MS = 120000;
+  const executionStartTimeRef = useRef<number | null>(null);
+  const failsafeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastExecutionStatusRef = useRef<string | null>(null);
+  
+  useEffect(() => {
+    // Use derived execution status that combines detection-status and stats
+    const executionStatus = derivedExecutionStatus;
+    
+    // Detect status change - reset timer if status changed
+    if (executionStatus !== lastExecutionStatusRef.current) {
+      if (failsafeTimeoutRef.current) {
+        clearTimeout(failsafeTimeoutRef.current);
+        failsafeTimeoutRef.current = null;
+      }
+      executionStartTimeRef.current = null;
+      lastExecutionStatusRef.current = executionStatus || null;
+    }
+    
+    if (executionStatus === 'running' || executionStatus === 'awaiting_approval') {
+      // Start fail-safe timer for running or awaiting_approval state
+      if (!executionStartTimeRef.current) {
+        executionStartTimeRef.current = Date.now();
+        const timeout = executionStatus === 'running' ? FAILSAFE_RUNNING_TIMEOUT_MS : FAILSAFE_APPROVAL_TIMEOUT_MS;
+        failsafeTimeoutRef.current = setTimeout(() => {
+          console.log(`[ZYRA Fail-safe] ${executionStatus} stuck for ${timeout/1000}s - forcing refresh`);
+          queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
+          executionStartTimeRef.current = null;
+          if (executionStatus === 'running') {
+            toast({
+              title: 'Execution Check',
+              description: 'Refreshing status - action may have completed',
+            });
+          }
+        }, timeout);
+      }
+    } else {
+      // Clear fail-safe timer if execution completed
+      if (failsafeTimeoutRef.current) {
+        clearTimeout(failsafeTimeoutRef.current);
+        failsafeTimeoutRef.current = null;
+      }
+      executionStartTimeRef.current = null;
+    }
+    
+    return () => {
+      if (failsafeTimeoutRef.current) {
+        clearTimeout(failsafeTimeoutRef.current);
+      }
+    };
+  }, [derivedExecutionStatus, toast]);
 
   const { data: activityData, isLoading, refetch, isRefetching } = useQuery<ActivityFeedResponse>({
     queryKey: ['/api/revenue-loop/activity-feed'],
@@ -1123,6 +1286,10 @@ export default function ZyraAtWork() {
                 isDetectionComplete={isDetectionComplete}
                 isNewStore={stats?.isNewStore || detectionStatusData?.isNewStore || false}
                 foundationalAction={detectionStatusData?.foundationalAction || stats?.foundationalAction}
+                executionStatus={derivedExecutionStatus}
+                committedActionId={derivedCommittedActionId}
+                onApprove={(actionId) => approveActionMutation.mutate(actionId)}
+                isApproving={approveActionMutation.isPending}
               />
             ) : (
               events.map((event) => (
