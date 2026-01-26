@@ -20108,12 +20108,13 @@ Return JSON array of segments only, no explanation text.`;
           if (Number(pendingCount.count) > 0) {
             return 'awaiting_approval';
           }
-          if (detectionProgress.complete && (isNewStore || lastValidNextMoveId)) {
+          // For new stores with foundational action, always awaiting_approval
+          if (detectionProgress.complete && isNewStore && foundationalAction) {
             return 'awaiting_approval';
           }
           return 'idle';
         })(),
-        committedActionId: lastValidNextMoveId || (isNewStore && foundationalAction ? `foundational_${foundationalAction.type}` : null),
+        committedActionId: isNewStore && foundationalAction ? `foundational_${foundationalAction.type}` : null,
       });
     } catch (error) {
       console.error("Error fetching ZYRA live stats:", error);
