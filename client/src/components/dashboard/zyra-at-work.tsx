@@ -633,7 +633,7 @@ export default function ZyraAtWork() {
 
   const { data: stats } = useQuery<ZyraStats>({
     queryKey: ['/api/zyra/live-stats'],
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     enabled: storeReadiness?.state === 'ready',
   });
 
@@ -689,10 +689,15 @@ export default function ZyraAtWork() {
   const detectionPhase = detectionStatusData?.phase || stats?.detection?.phase || 'idle';
   
   // Derive strict status from server endpoint - NEVER default to 'no_friction'
-  const detectionStatus: StrictDetectionStatus = detectionStatusData?.status || 'detecting';
+  // Also consider the stats query completion state as fallback
+  const detectionStatus: StrictDetectionStatus = detectionStatusData?.status || 
+    (stats?.detection?.complete ? 'insufficient_data' : 'detecting');
   
   // Use strict status to determine completion - NOT boolean
-  const isDetectionComplete = detectionStatus !== 'detecting';
+  // Also check if stats says detection is complete OR if phase is decision_ready
+  const isDetectionComplete = detectionStatus !== 'detecting' || 
+    stats?.detection?.complete === true || 
+    detectionPhase === 'decision_ready';
   
   // Determine if detection is actively running (from server state, not just local mutation)
   const isActivelyDetecting = (
