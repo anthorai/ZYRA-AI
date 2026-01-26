@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,9 @@ import {
   ArrowUpRight,
   Sparkles,
   Brain,
-  Info
+  Info,
+  Terminal,
+  ChevronRight
 } from "lucide-react";
 
 interface CreditBalance {
@@ -97,21 +99,36 @@ export default function Reports() {
     enabled: !!user,
   });
 
-  // Fetch credit transactions/history
+  // Fetch credit transactions/history - pass timeRange as query param
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery<CreditTransaction[]>({
     queryKey: ['/api/credits/transactions', timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/credits/transactions?timeRange=${timeRange}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch transactions');
+      return res.json();
+    },
     enabled: !!user,
   });
 
-  // Fetch usage breakdown by type
+  // Fetch usage breakdown by type - pass timeRange as query param
   const { data: usageByType, isLoading: isLoadingUsageByType } = useQuery<UsageByType[]>({
     queryKey: ['/api/credits/usage-by-type', timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/credits/usage-by-type?timeRange=${timeRange}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch usage by type');
+      return res.json();
+    },
     enabled: !!user,
   });
 
-  // Fetch daily usage for chart
+  // Fetch daily usage for chart - pass timeRange as query param
   const { data: dailyUsage, isLoading: isLoadingDailyUsage } = useQuery<DailyUsage[]>({
     queryKey: ['/api/credits/daily-usage', timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/credits/daily-usage?timeRange=${timeRange}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch daily usage');
+      return res.json();
+    },
     enabled: !!user,
   });
 
@@ -143,10 +160,85 @@ export default function Reports() {
     ? Math.max(...displayDailyUsage.map((d: DailyUsage) => d.credits), 1) 
     : 1;
 
+  // Calculate REAL stats from actual data
+  const realStats = useMemo(() => {
+    // Calculate success rate from transactions
+    const successCount = displayTransactions.filter(t => t.status === 'success').length;
+    const failedCount = displayTransactions.filter(t => t.status === 'failed').length;
+    const totalActions = displayTransactions.length;
+    const successRate = totalActions > 0 ? Math.round((successCount / totalActions) * 100) : 0;
+
+    // Find most used action type
+    const mostUsedAction = displayUsageByType.length > 0 
+      ? displayUsageByType.reduce((max, curr) => curr.count > max.count ? curr : max, displayUsageByType[0])
+      : null;
+
+    // Calculate peak usage hour from transactions
+    const hourCounts: Record<number, number> = {};
+    displayTransactions.forEach(t => {
+      const hour = new Date(t.timestamp).getHours();
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    });
+    const peakHour = Object.entries(hourCounts).length > 0
+      ? parseInt(Object.entries(hourCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0])
+      : null;
+    const peakTimeLabel = peakHour !== null 
+      ? `${peakHour % 12 || 12}${peakHour < 12 ? 'AM' : 'PM'}-${(peakHour + 2) % 12 || 12}${(peakHour + 2) < 12 ? 'AM' : 'PM'}`
+      : 'No data';
+
+    // Calculate average credits per action
+    const totalCreditsUsed = displayTransactions.reduce((sum, t) => sum + t.creditsUsed, 0);
+    const avgCreditsPerAction = totalActions > 0 ? Math.round(totalCreditsUsed / totalActions) : 0;
+
+    // Calculate trend (compare first half vs second half of period)
+    const midPoint = Math.floor(displayDailyUsage.length / 2);
+    const firstHalf = displayDailyUsage.slice(0, midPoint);
+    const secondHalf = displayDailyUsage.slice(midPoint);
+    const firstHalfTotal = firstHalf.reduce((sum, d) => sum + d.credits, 0);
+    const secondHalfTotal = secondHalf.reduce((sum, d) => sum + d.credits, 0);
+    const usageTrend = firstHalfTotal > 0 
+      ? Math.round(((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100)
+      : 0;
+
+    // Calculate efficiency trend from REAL data - compare avg credits/action between periods
+    // Sort transactions by timestamp and split into periods
+    const sortedTx = [...displayTransactions].sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const txMidPoint = Math.floor(sortedTx.length / 2);
+    const firstHalfTx = sortedTx.slice(0, txMidPoint);
+    const secondHalfTx = sortedTx.slice(txMidPoint);
+    
+    const firstHalfAvg = firstHalfTx.length > 0 
+      ? firstHalfTx.reduce((sum, t) => sum + t.creditsUsed, 0) / firstHalfTx.length 
+      : 0;
+    const secondHalfAvg = secondHalfTx.length > 0 
+      ? secondHalfTx.reduce((sum, t) => sum + t.creditsUsed, 0) / secondHalfTx.length 
+      : 0;
+    
+    // Efficiency improves when avg credits per action decreases (negative = improvement)
+    const efficiencyTrend = firstHalfAvg > 0 
+      ? Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100)
+      : 0;
+
+    return {
+      successRate,
+      successCount,
+      failedCount,
+      mostUsedAction: mostUsedAction?.label || 'No actions yet',
+      mostUsedActionType: mostUsedAction?.type || 'default',
+      peakTime: peakTimeLabel,
+      avgCreditsPerAction,
+      usageTrend,
+      efficiencyTrend,
+      totalActions
+    };
+  }, [displayTransactions, displayUsageByType, displayDailyUsage]);
+
   return (
     <div className="min-h-screen dark-theme-bg">
-      {/* Header */}
-      <div className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+      {/* Header - Terminal Style */}
+      <div className="border-b border-primary/20 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
@@ -160,12 +252,15 @@ export default function Reports() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2" data-testid="text-page-title">
-                  <BarChart3 className="w-6 h-6 text-primary" />
-                  Credit Reports
-                </h1>
-                <p className="text-sm text-slate-400" data-testid="text-page-subtitle">
-                  Track your AI credit usage and optimize your workflow
+                <div className="flex items-center gap-2" data-testid="text-page-title">
+                  <Terminal className="w-5 h-5 text-primary" />
+                  <span className="font-mono text-sm text-primary">zyra@credits</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <h1 className="text-xl font-bold text-white">Credit Analytics</h1>
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" />
+                </div>
+                <p className="text-sm text-muted-foreground font-mono mt-0.5" data-testid="text-page-subtitle">
+                  <span className="text-emerald-400">$</span> monitoring credit consumption in real-time
                 </p>
               </div>
             </div>
@@ -192,13 +287,14 @@ export default function Reports() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Credit Overview Cards */}
+        {/* Credit Overview Cards - Terminal Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Total Credits */}
-          <Card className="bg-gradient-to-br from-primary/10 via-slate-900/50 to-slate-900/50 border-primary/20" data-testid="card-total-credits">
+          <Card className="bg-gradient-to-br from-primary/10 via-slate-900/50 to-slate-900/50 border-primary/20 relative overflow-hidden" data-testid="card-total-credits">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-primary/50 to-transparent" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
                   <Coins className="w-6 h-6 text-primary" />
                 </div>
                 {getStatusBadge()}
@@ -206,15 +302,15 @@ export default function Reports() {
               {isLoadingBalance ? (
                 <Skeleton className="h-8 w-24 mb-2" />
               ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-credits-remaining">
+                <div className="text-3xl font-bold text-white mb-1 font-mono" data-testid="text-credits-remaining">
                   {creditBalance?.creditsRemaining ?? 0}
                 </div>
               )}
-              <p className="text-sm text-slate-400">Credits Remaining</p>
+              <p className="text-sm text-slate-400">credits.available</p>
               <div className="mt-4">
-                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Used: {creditBalance?.creditsUsed ?? 0}</span>
-                  <span>Limit: {creditBalance?.creditLimit ?? 100}</span>
+                <div className="flex justify-between text-xs text-slate-500 mb-1 font-mono">
+                  <span>used: {creditBalance?.creditsUsed ?? 0}</span>
+                  <span>limit: {creditBalance?.creditLimit ?? 100}</span>
                 </div>
                 <Progress value={usagePercentage} className="h-2" data-testid="progress-credits-usage" />
               </div>
@@ -222,110 +318,135 @@ export default function Reports() {
           </Card>
 
           {/* Credits Used */}
-          <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-credits-used">
+          <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-credits-used">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500/50 via-blue-400/30 to-transparent" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                   <Activity className="w-6 h-6 text-blue-400" />
                 </div>
-                <Badge variant="outline" className="text-blue-400 border-blue-500/30">
-                  {timeRange === "7d" ? "This Week" : timeRange === "30d" ? "This Month" : "Period"}
+                <Badge variant="outline" className="text-blue-400 border-blue-500/30 font-mono text-xs">
+                  {timeRange === "7d" ? "7d" : timeRange === "30d" ? "30d" : timeRange === "90d" ? "90d" : "ALL"}
                 </Badge>
               </div>
               {isLoadingBalance ? (
                 <Skeleton className="h-8 w-24 mb-2" />
               ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-credits-used">
+                <div className="text-3xl font-bold text-white mb-1 font-mono" data-testid="text-credits-used">
                   {creditBalance?.creditsUsed ?? 0}
                 </div>
               )}
-              <p className="text-sm text-slate-400">Credits Used</p>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400">+12%</span>
-                <span className="text-slate-500">vs last period</span>
+              <p className="text-sm text-slate-400">Credits Consumed</p>
+              <div className="mt-4 flex items-center gap-2 text-sm font-mono">
+                {realStats.usageTrend >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-amber-400" />
+                )}
+                <span className={realStats.usageTrend >= 0 ? "text-emerald-400" : "text-amber-400"}>
+                  {realStats.usageTrend >= 0 ? '+' : ''}{realStats.usageTrend}%
+                </span>
+                <span className="text-slate-500">vs previous</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Actions Completed */}
-          <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-actions-completed">
+          <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-actions-completed">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/50 via-emerald-400/30 to-transparent" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                   <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                 </div>
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </div>
               {isLoadingTransactions ? (
                 <Skeleton className="h-8 w-24 mb-2" />
               ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-actions-count">
-                  {displayTransactions.length}
+                <div className="text-3xl font-bold text-white mb-1 font-mono" data-testid="text-actions-count">
+                  {realStats.totalActions}
                 </div>
               )}
-              <p className="text-sm text-slate-400">Actions Completed</p>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span className="text-slate-400">All successful</span>
+              <p className="text-sm text-slate-400">Actions Executed</p>
+              <div className="mt-4 flex items-center gap-2 text-sm font-mono">
+                {realStats.successRate >= 90 ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                ) : realStats.successRate >= 70 ? (
+                  <Activity className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                )}
+                <span className={realStats.successRate >= 90 ? "text-emerald-400" : realStats.successRate >= 70 ? "text-amber-400" : "text-red-400"}>
+                  {realStats.successRate}% success
+                </span>
               </div>
             </CardContent>
           </Card>
 
           {/* Avg Credits/Action */}
-          <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-avg-credits">
+          <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-avg-credits">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 via-purple-400/30 to-transparent" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                   <PieChart className="w-6 h-6 text-purple-400" />
                 </div>
               </div>
               {isLoadingBalance ? (
                 <Skeleton className="h-8 w-24 mb-2" />
               ) : (
-                <div className="text-3xl font-bold text-white mb-1" data-testid="text-avg-credits">
-                  {displayTransactions.length > 0 
-                    ? Math.round(displayTransactions.reduce((sum, t) => sum + t.creditsUsed, 0) / displayTransactions.length)
-                    : 0}
+                <div className="text-3xl font-bold text-white mb-1 font-mono" data-testid="text-avg-credits">
+                  {realStats.avgCreditsPerAction}
                 </div>
               )}
               <p className="text-sm text-slate-400">Avg Credits / Action</p>
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                <TrendingDown className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400">-5%</span>
-                <span className="text-slate-500">more efficient</span>
+              <div className="mt-4 flex items-center gap-2 text-sm font-mono">
+                {realStats.efficiencyTrend <= 0 ? (
+                  <TrendingDown className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <TrendingUp className="w-4 h-4 text-amber-400" />
+                )}
+                <span className={realStats.efficiencyTrend <= 0 ? "text-emerald-400" : "text-amber-400"}>
+                  {realStats.efficiencyTrend}%
+                </span>
+                <span className="text-slate-500">efficiency</span>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs for different views */}
+        {/* Tabs for different views - Terminal Style */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-overview">
+          <TabsList className="bg-slate-900/80 border border-primary/20 p-1 font-mono">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono" data-testid="tab-overview">
               <BarChart3 className="w-4 h-4 mr-2" />
-              Overview
+              ./overview
             </TabsTrigger>
-            <TabsTrigger value="breakdown" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-breakdown">
+            <TabsTrigger value="breakdown" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono" data-testid="tab-breakdown">
               <PieChart className="w-4 h-4 mr-2" />
-              Breakdown
+              ./breakdown
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary" data-testid="tab-history">
+            <TabsTrigger value="history" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary font-mono" data-testid="tab-history">
               <Clock className="w-4 h-4 mr-2" />
-              History
+              ./logs
             </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Daily Usage Chart */}
-              <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-daily-chart">
+              {/* Daily Usage Chart - Terminal Style */}
+              <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-daily-chart">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent" />
                 <CardHeader>
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <CardTitle className="text-lg text-white flex items-center gap-2 font-mono">
                     <Activity className="w-5 h-5 text-primary" />
-                    Daily Credit Usage
+                    <span className="text-primary">$</span> credits.daily()
                   </CardTitle>
-                  <CardDescription>Credits consumed each day</CardDescription>
+                  <CardDescription className="font-mono text-muted-foreground">
+                    // consumption per day
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isLoadingDailyUsage ? (
@@ -362,14 +483,17 @@ export default function Reports() {
                 </CardContent>
               </Card>
 
-              {/* Usage by Type */}
-              <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-usage-by-type">
+              {/* Usage by Type - Terminal Style */}
+              <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-usage-by-type">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500/50 via-purple-400/30 to-transparent" />
                 <CardHeader>
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <CardTitle className="text-lg text-white flex items-center gap-2 font-mono">
                     <PieChart className="w-5 h-5 text-purple-400" />
-                    Usage by Action Type
+                    <span className="text-purple-400">$</span> credits.groupBy('action')
                   </CardTitle>
-                  <CardDescription>Where your credits are going</CardDescription>
+                  <CardDescription className="font-mono text-muted-foreground">
+                    // credit allocation breakdown
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {isLoadingUsageByType ? (
@@ -422,41 +546,49 @@ export default function Reports() {
               </Card>
             </div>
 
-            {/* Quick Stats */}
-            <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-quick-stats">
+            {/* Quick Stats - Terminal Style */}
+            <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-quick-stats">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent" />
               <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <Info className="w-5 h-5 text-blue-400" />
-                  Quick Insights
+                <CardTitle className="text-lg text-white flex items-center gap-2 font-mono">
+                  <Terminal className="w-5 h-5 text-primary" />
+                  <span className="text-primary">$</span> system.insights()
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse ml-2" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-primary/10 hover-elevate">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                       <TrendingUp className="w-5 h-5 text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white" data-testid="text-most-used">SEO Optimization</p>
-                      <p className="text-xs text-slate-400">Most used action</p>
+                      <p className="text-sm font-medium text-white font-mono" data-testid="text-most-used">
+                        {realStats.mostUsedAction}
+                      </p>
+                      <p className="text-xs text-slate-400">most_used_action</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-primary/10 hover-elevate">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                       <Clock className="w-5 h-5 text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white" data-testid="text-peak-time">2-4 PM</p>
-                      <p className="text-xs text-slate-400">Peak usage time</p>
+                      <p className="text-sm font-medium text-white font-mono" data-testid="text-peak-time">
+                        {realStats.peakTime}
+                      </p>
+                      <p className="text-xs text-slate-400">peak_activity_window</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-slate-700/50">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30 border border-primary/10 hover-elevate">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                       <Sparkles className="w-5 h-5 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white" data-testid="text-efficiency">92%</p>
-                      <p className="text-xs text-slate-400">Success rate</p>
+                      <p className="text-sm font-medium text-white font-mono" data-testid="text-efficiency">
+                        {realStats.successRate}%
+                      </p>
+                      <p className="text-xs text-slate-400">execution_success_rate</p>
                     </div>
                   </div>
                 </div>
@@ -500,15 +632,19 @@ export default function Reports() {
             </div>
           </TabsContent>
 
-          {/* History Tab */}
+          {/* History Tab - Terminal Style Console Log */}
           <TabsContent value="history" className="space-y-4">
-            <Card className="bg-slate-900/50 border-slate-800/50" data-testid="card-transaction-history">
+            <Card className="bg-slate-900/50 border-primary/10 relative overflow-hidden" data-testid="card-transaction-history">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent" />
               <CardHeader>
-                <CardTitle className="text-lg text-white flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-slate-400" />
-                  Credit Transaction History
+                <CardTitle className="text-lg text-white flex items-center gap-2 font-mono">
+                  <Terminal className="w-5 h-5 text-primary" />
+                  <span className="text-primary">$</span> tail -f credits.log
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-2" />
                 </CardTitle>
-                <CardDescription>Detailed log of all credit usage</CardDescription>
+                <CardDescription className="font-mono text-muted-foreground">
+                  // real-time credit transaction stream
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingTransactions ? (
