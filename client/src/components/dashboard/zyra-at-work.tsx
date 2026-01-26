@@ -994,7 +994,10 @@ function ProgressStages({
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={() => onApprove(committedActionId)}
+                    onClick={() => {
+                      console.log('[ZYRA Button] Approve button clicked for:', committedActionId);
+                      onApprove(committedActionId);
+                    }}
                     disabled={isApproving}
                     data-testid="button-approve-foundational-action"
                   >
@@ -1549,13 +1552,18 @@ export default function ZyraAtWork() {
   // Approve action mutation for awaiting_approval state
   const approveActionMutation = useMutation({
     mutationFn: async (actionId: string) => {
+      console.log('[ZYRA Approve] Starting mutation for actionId:', actionId);
+      
       // Check if it's a foundational action
       if (actionId.startsWith('foundational_')) {
+        console.log('[ZYRA Approve] Executing foundational action:', actionId);
         // Execute foundational action - returns real execution results
         const response = await apiRequest('POST', '/api/zyra/execute-foundational', { 
           type: actionId.replace('foundational_', '') 
         });
-        return response.json();
+        const result = await response.json();
+        console.log('[ZYRA Approve] Foundational action result:', result);
+        return result;
       }
       // Regular friction action - approve then execute
       const approveResponse = await apiRequest('POST', '/api/next-move/approve', { 
@@ -1612,6 +1620,7 @@ export default function ZyraAtWork() {
       queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
     },
     onError: (error) => {
+      console.error('[ZYRA Approve] Mutation error:', error);
       toast({
         title: 'Approval Failed',
         description: error instanceof Error ? error.message : 'Could not approve the action. Please try again.',
