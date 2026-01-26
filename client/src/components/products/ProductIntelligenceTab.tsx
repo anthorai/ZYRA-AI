@@ -8,17 +8,19 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw } from "lucide-react";
+import { Package, RefreshCw, Store, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Product } from "@shared/schema";
+import type { Product, StoreConnection } from "@shared/schema";
 import { PageContainer } from "@/components/ui/standardized-layout";
 import { ProductIntelligenceCard, ProductIntelligenceCardSkeleton } from "@/components/products/ProductIntelligenceCard";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
 import { ProductIntelligenceSummaryBar } from "@/components/products/ProductIntelligenceSummary";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 
 function ProductIntelligenceGrid({ 
   products, 
@@ -73,9 +75,21 @@ export function ProductIntelligenceTab() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  // Check for connected stores
+  const { data: storeConnections = [], isLoading: storesLoading } = useQuery<StoreConnection[]>({
+    queryKey: ['/api/store-connections'],
+  });
+
+  // Get the active connected store
+  const connectedStore = storeConnections.find(store => store.status === 'active');
+  const hasConnectedStore = !!connectedStore;
+
+  // Only fetch products if we have a connected store
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
+    enabled: hasConnectedStore, // Only fetch when store is connected
   });
 
   const handleSync = async () => {
@@ -99,13 +113,50 @@ export function ProductIntelligenceTab() {
     }
   };
 
+  const handleConnectStore = () => {
+    setLocation('/settings/integrations');
+  };
+
   const userPlan = (user as any)?.plan || 'trial';
+  const isLoading = storesLoading || (hasConnectedStore && productsLoading);
+
+  // Show connect store message if no store is connected
+  if (!storesLoading && !hasConnectedStore) {
+    return (
+      <TooltipProvider>
+        <PageContainer>
+          <DashboardCard className="text-center py-12">
+            <Store className="w-16 h-16 mx-auto text-primary mb-6" />
+            <h3 className="text-xl font-semibold mb-3 text-foreground">Connect Your Store</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Connect your Shopify store to unlock Product Intelligence. ZYRA will automatically analyze, monitor, and optimize your products for maximum revenue.
+            </p>
+            <Button 
+              onClick={handleConnectStore}
+              className="gradient-button"
+              data-testid="button-connect-store"
+            >
+              Connect Shopify Store
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </DashboardCard>
+        </PageContainer>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <TooltipProvider>
       <div className="space-y-6">
         <PageContainer>
-          <div className="flex items-center justify-end mb-6">
+          <div className="flex items-center justify-between mb-6">
+            {/* Show connected store info */}
+            {connectedStore && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Store className="w-4 h-4 text-primary" />
+                <span>Connected: <span className="text-foreground font-medium">{connectedStore.storeName}</span></span>
+              </div>
+            )}
             <Button 
               onClick={handleSync}
               disabled={isSyncing}
