@@ -299,6 +299,103 @@ function calculateOpportunityCost(
 }
 
 /**
+ * Generate a dynamic, contextual reason based on actual product data
+ * This creates unique, real messages for ZYRA's Decision - never the same generic text
+ */
+function generateDynamicReason(
+  opportunityType: string,
+  frictionType: string | null,
+  productName: string | null,
+  productData: any,
+  expectedRevenue: number,
+  confidence: number
+): string {
+  const name = productName || 'this product';
+  const price = productData?.price ? `$${parseFloat(productData.price).toFixed(0)}` : null;
+  const views = productData?.views || 0;
+  const orders = productData?.ordersCount || 0;
+  const addToCart = productData?.addToCartCount || 0;
+  
+  // Build context-aware reasons based on actual data
+  const reasons: Record<string, () => string> = {
+    seo_optimization: () => {
+      if (views === 0) {
+        return `"${name}" has no recorded views yet. Optimizing SEO will help it get discovered in search results and drive initial traffic.`;
+      }
+      if (views > 0 && orders === 0) {
+        return `"${name}" has ${views} views but no sales. ZYRA identified SEO improvements to attract better-qualified buyers.`;
+      }
+      return `"${name}" can rank higher in search. ZYRA identified keywords and title optimizations to increase visibility.`;
+    },
+    product_seo: () => {
+      if (productData?.title && productData.title.length < 40) {
+        return `"${name}" has a short title that may limit search visibility. ZYRA prepared an optimized title with relevant keywords.`;
+      }
+      return `"${name}" can be optimized for better search rankings. ZYRA analyzed competitors and prepared improvements.`;
+    },
+    title_rewrite: () => {
+      if (productData?.title) {
+        const titleLength = productData.title.length;
+        if (titleLength > 80) {
+          return `"${name}" title is ${titleLength} characters - too long for optimal display. ZYRA prepared a cleaner, more impactful version.`;
+        }
+        if (titleLength < 30) {
+          return `"${name}" title could include more descriptive keywords. ZYRA prepared an enhanced version to improve click-through.`;
+        }
+      }
+      return `"${name}" title can better communicate value. ZYRA analyzed what converts and prepared an improved version.`;
+    },
+    description_enhancement: () => {
+      if (!productData?.description || productData.description.length < 100) {
+        return `"${name}" has a minimal description. ZYRA prepared compelling copy that highlights key benefits and drives conversions.`;
+      }
+      if (views > 0 && addToCart === 0) {
+        return `"${name}" gets views but visitors aren't adding to cart. ZYRA prepared description updates to address common buyer concerns.`;
+      }
+      return `"${name}" description can be enhanced to convert more visitors. ZYRA prepared benefit-focused copy.`;
+    },
+    upsell: () => {
+      if (orders > 0) {
+        return `"${name}" has ${orders} orders. ZYRA identified complementary products to suggest post-purchase for additional revenue.`;
+      }
+      return `"${name}"${price ? ` (${price})` : ''} has upsell potential. ZYRA prepared a cross-sell strategy to increase average order value.`;
+    },
+    cart_recovery: () => {
+      if (addToCart > orders) {
+        const abandoned = addToCart - orders;
+        return `${abandoned} customers added "${name}" to cart but didn't purchase. ZYRA prepared a recovery message to recapture these sales.`;
+      }
+      return `"${name}" has abandoned carts that can be recovered. ZYRA prepared a follow-up sequence to convert hesitant buyers.`;
+    },
+    price_adjustment: () => {
+      if (views > 50 && orders === 0) {
+        return `"${name}"${price ? ` at ${price}` : ''} has ${views} views but no conversions. ZYRA analyzed pricing optimization to remove purchase barriers.`;
+      }
+      return `"${name}" pricing can be optimized based on market analysis. ZYRA prepared an adjustment to improve conversion.`;
+    }
+  };
+  
+  // Add friction-specific context if available
+  const frictionContext: Record<string, string> = {
+    view_no_cart: `Visitors view but don't add to cart.`,
+    cart_no_checkout: `Products get added to cart but checkout isn't starting.`,
+    checkout_drop: `Customers start checkout but don't complete.`,
+    purchase_no_upsell: `Sales happening without cross-sells.`
+  };
+  
+  // Get the base reason
+  const baseReason = reasons[opportunityType]?.() || 
+    `ZYRA identified an optimization opportunity for "${name}" with ${confidence}% confidence of recovering $${expectedRevenue.toLocaleString()}.`;
+  
+  // Add friction context if relevant
+  if (frictionType && frictionContext[frictionType]) {
+    return `${frictionContext[frictionType]} ${baseReason}`;
+  }
+  
+  return baseReason;
+}
+
+/**
  * Generate AI reasoning steps - shows what ZYRA analyzed to make this decision
  * These describe the actual analysis process that led to this recommendation
  * Steps are based on the opportunity detection logic, not fabricated
@@ -666,12 +763,22 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     topOpportunity.opportunityType || 'seo_optimization'
   );
 
+  // Generate a dynamic, contextual reason based on real product data
+  const dynamicReason = generateDynamicReason(
+    topOpportunity.opportunityType || 'seo_optimization',
+    topOpportunity.frictionType || null,
+    productName,
+    productData,
+    topOpportunity.expectedRevenue,
+    topOpportunity.confidence
+  );
+
   const nextMove: NextMoveAction = {
     id: topOpportunity.id,
     actionType: topOpportunity.opportunityType || 'seo_optimization',
     productId: topOpportunity.entityId,
     productName,
-    reason: topOpportunity.description,
+    reason: dynamicReason,
     expectedRevenue: topOpportunity.expectedRevenue,
     confidenceScore: topOpportunity.confidence,
     riskLevel: topOpportunity.risk,
