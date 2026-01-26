@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +34,192 @@ import {
   ArrowRight,
   Package,
   FileText,
-  ChevronRight
+  ChevronRight,
+  Terminal,
+  Bot,
+  Cpu,
+  Lightbulb,
+  BarChart3,
+  Globe,
+  Shield,
+  Wand2
 } from "lucide-react";
+
+// ============================================================================
+// TYPEWRITER TEXT COMPONENT - Shows AI "thinking" and "writing" in real-time
+// ============================================================================
+interface TypewriterTextProps {
+  text: string;
+  speed?: number;
+  delay?: number;
+  onComplete?: () => void;
+  className?: string;
+  showCursor?: boolean;
+}
+
+function TypewriterText({ 
+  text, 
+  speed = 25, 
+  delay = 0, 
+  onComplete, 
+  className = "",
+  showCursor = true 
+}: TypewriterTextProps) {
+  const [displayedText, setDisplayedText] = useState("");
+  const [isComplete, setIsComplete] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  useEffect(() => {
+    setDisplayedText("");
+    setIsComplete(false);
+    setHasStarted(false);
+    
+    const startTimer = setTimeout(() => {
+      setHasStarted(true);
+    }, delay);
+
+    return () => clearTimeout(startTimer);
+  }, [text, delay]);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex < text.length) {
+        setDisplayedText(text.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setIsComplete(true);
+        clearInterval(interval);
+        onComplete?.();
+      }
+    }, speed);
+
+    return () => clearInterval(interval);
+  }, [hasStarted, text, speed, onComplete]);
+
+  return (
+    <span className={className}>
+      {displayedText}
+      {showCursor && !isComplete && <span className="animate-pulse text-primary">|</span>}
+    </span>
+  );
+}
+
+// ============================================================================
+// AI ACTIVITY LOG ENTRY - Terminal-style log entries with timestamps
+// ============================================================================
+interface AILogEntry {
+  id: string;
+  timestamp: Date;
+  type: 'info' | 'thinking' | 'action' | 'success' | 'warning' | 'insight';
+  message: string;
+  detail?: string;
+  metrics?: { label: string; value: string | number }[];
+}
+
+const LOG_TYPE_CONFIG = {
+  info: { icon: Terminal, color: 'text-slate-400', prefix: '[INFO]', bgColor: 'bg-slate-500/10' },
+  thinking: { icon: Brain, color: 'text-purple-400', prefix: '[THINK]', bgColor: 'bg-purple-500/10' },
+  action: { icon: Zap, color: 'text-amber-400', prefix: '[ACTION]', bgColor: 'bg-amber-500/10' },
+  success: { icon: CheckCircle2, color: 'text-emerald-400', prefix: '[DONE]', bgColor: 'bg-emerald-500/10' },
+  warning: { icon: AlertCircle, color: 'text-orange-400', prefix: '[WARN]', bgColor: 'bg-orange-500/10' },
+  insight: { icon: Lightbulb, color: 'text-cyan-400', prefix: '[INSIGHT]', bgColor: 'bg-cyan-500/10' },
+};
+
+function AILogEntryComponent({ entry, isNew = false }: { entry: AILogEntry; isNew?: boolean }) {
+  const config = LOG_TYPE_CONFIG[entry.type];
+  const Icon = config.icon;
+  const timeStr = entry.timestamp.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit',
+    hour12: false 
+  });
+
+  return (
+    <div 
+      className={`flex items-start gap-3 py-2.5 px-3 rounded-lg transition-all duration-500 ${
+        isNew ? 'animate-in fade-in slide-in-from-left-2 bg-slate-800/50' : ''
+      }`}
+      data-testid={`ai-log-${entry.id}`}
+    >
+      <div className={`shrink-0 mt-0.5 ${config.color}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className={`text-[10px] font-mono font-bold ${config.color}`}>
+            {config.prefix}
+          </span>
+          <span className="text-[10px] font-mono text-slate-600">
+            {timeStr}
+          </span>
+        </div>
+        <p className="text-sm text-slate-200 leading-relaxed">
+          {isNew ? (
+            <TypewriterText text={entry.message} speed={15} />
+          ) : (
+            entry.message
+          )}
+        </p>
+        {entry.detail && (
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            {entry.detail}
+          </p>
+        )}
+        {entry.metrics && entry.metrics.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {entry.metrics.map((m, idx) => (
+              <div key={idx} className={`px-2 py-1 rounded ${config.bgColor} border border-slate-700/30`}>
+                <span className="text-[10px] text-slate-500">{m.label}: </span>
+                <span className={`text-xs font-medium ${config.color}`}>{m.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// AI THINKING PANEL - Shows what ZYRA is reasoning about
+// ============================================================================
+interface ThinkingPanelProps {
+  thoughts: string[];
+  isActive: boolean;
+}
+
+function ThinkingPanel({ thoughts, isActive }: ThinkingPanelProps) {
+  if (!isActive || thoughts.length === 0) return null;
+
+  return (
+    <div className="mb-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/20" data-testid="ai-thinking-panel">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
+          <Brain className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+        </div>
+        <span className="text-xs font-medium text-purple-400">ZYRA is thinking...</span>
+      </div>
+      <div className="space-y-2 pl-8">
+        {thoughts.map((thought, idx) => (
+          <div key={idx} className="flex items-start gap-2">
+            <span className="text-purple-400/50 text-xs">•</span>
+            <p className="text-sm text-slate-300 italic">
+              {idx === thoughts.length - 1 ? (
+                <TypewriterText text={thought} speed={20} showCursor={true} />
+              ) : (
+                thought
+              )}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 import { useLocation } from "wouter";
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
 import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
@@ -815,37 +999,6 @@ function ProgressStages({
         </div>
       )}
     </div>
-  );
-}
-
-function TypewriterText({ text, onComplete }: { text: string; onComplete?: () => void }) {
-  const [displayedText, setDisplayedText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    setDisplayedText('');
-    setIsComplete(false);
-    let currentIndex = 0;
-    
-    const interval = setInterval(() => {
-      if (currentIndex < text.length) {
-        setDisplayedText(text.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        setIsComplete(true);
-        clearInterval(interval);
-        onComplete?.();
-      }
-    }, 20);
-
-    return () => clearInterval(interval);
-  }, [text, onComplete]);
-
-  return (
-    <span>
-      {displayedText}
-      {!isComplete && <span className="animate-pulse">|</span>}
-    </span>
   );
 }
 
