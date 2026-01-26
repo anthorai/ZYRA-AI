@@ -435,6 +435,32 @@ function TypewriterText({ text, onComplete }: { text: string; onComplete?: () =>
   );
 }
 
+// CSS animation for smooth event entry - injected once globally
+const ANIMATION_INJECTED_KEY = 'zyra-event-animation-injected';
+
+function injectEventAnimation() {
+  if (typeof document !== 'undefined' && !document.getElementById(ANIMATION_INJECTED_KEY)) {
+    const style = document.createElement('style');
+    style.id = ANIMATION_INJECTED_KEY;
+    style.textContent = `
+      @keyframes slideInFade {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+// Inject animation styles once on module load
+injectEventAnimation();
+
 function EventItem({ event, isTyping, onTypingComplete }: { 
   event: ZyraEvent; 
   isTyping: boolean;
@@ -455,34 +481,45 @@ function EventItem({ event, isTyping, onTypingComplete }: {
       ? 'text-amber-400' 
       : 'text-slate-400';
 
+  // Smooth entry animation with staggered delay based on status
+  const isNewEvent = event.status === 'in_progress';
+  
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-slate-700/50 last:border-0">
-      <div className={`p-2 rounded-lg ${config.bgColor} flex-shrink-0`}>
-        <Icon className={`w-4 h-4 ${config.color}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${config.color} border-current/30`}>
-            {config.label}
-          </Badge>
-          <span className="text-[10px] text-slate-500">
-            {event.timestamp.toLocaleTimeString()}
-          </span>
+    <div 
+      className="flex items-start gap-3 py-3 border-b border-slate-700/50 last:border-0"
+      style={isNewEvent ? { animation: 'slideInFade 0.3s ease-out' } : undefined}
+    >
+        <div className={`p-2 rounded-lg ${config.bgColor} flex-shrink-0 ${
+          isNewEvent ? 'ring-2 ring-primary/30 ring-offset-1 ring-offset-transparent' : ''
+        }`}>
+          <Icon className={`w-4 h-4 ${config.color} ${isNewEvent ? 'animate-pulse' : ''}`} />
         </div>
-        <p className="text-sm text-slate-200 leading-relaxed">
-          {isTyping ? (
-            <TypewriterText text={event.message} onComplete={onTypingComplete} />
-          ) : (
-            event.message
-          )}
-        </p>
-        {event.details && !isTyping && (
-          <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-            <StatusIcon className={`w-3 h-3 ${statusColor}`} />
-            {event.details}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${config.color} border-current/30`}>
+              {config.label}
+            </Badge>
+            <span className="text-[10px] text-slate-500">
+              {event.timestamp.toLocaleTimeString()}
+            </span>
+            {isNewEvent && (
+              <span className="text-[10px] text-primary animate-pulse">Active</span>
+            )}
+          </div>
+          <p className="text-sm text-slate-200 leading-relaxed">
+            {isTyping ? (
+              <TypewriterText text={event.message} onComplete={onTypingComplete} />
+            ) : (
+              event.message
+            )}
           </p>
-        )}
-      </div>
+          {event.details && !isTyping && (
+            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+              <StatusIcon className={`w-3 h-3 ${statusColor}`} />
+              {event.details}
+            </p>
+          )}
+        </div>
     </div>
   );
 }
@@ -541,10 +578,17 @@ export default function ZyraAtWork() {
 
   const detectionPhase = detectionStatusData?.phase || stats?.detection?.phase || 'idle';
   const detectionComplete = detectionStatusData?.complete || stats?.detection?.complete || false;
+  
+  // Determine if detection is actively running (from server state, not just local mutation)
+  const isActivelyDetecting = (
+    isDetecting || 
+    (detectionPhase !== 'idle' && !detectionComplete)
+  );
 
   const { data: activityData, isLoading, refetch, isRefetching } = useQuery<ActivityFeedResponse>({
     queryKey: ['/api/revenue-loop/activity-feed'],
-    refetchInterval: 30000,
+    // Faster polling during active detection (using server state) for smoother updates
+    refetchInterval: isActivelyDetecting ? 3000 : 15000,
     // Only fetch activity if store is ready
     enabled: storeReadiness?.state === 'ready',
   });
