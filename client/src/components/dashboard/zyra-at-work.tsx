@@ -824,21 +824,21 @@ export default function ZyraAtWork() {
     staleTime: 2000,
   });
   
+  // Initialize toast early since it's used by mutations below
+  const { toast } = useToast();
+  
   // Approve action mutation for awaiting_approval state
   const approveActionMutation = useMutation({
     mutationFn: async (actionId: string) => {
       // Check if it's a foundational action
       if (actionId.startsWith('foundational_')) {
         // Execute foundational action
-        return await apiRequest('/api/zyra/execute-foundational', {
-          method: 'POST',
-          body: JSON.stringify({ type: actionId.replace('foundational_', '') }),
+        return await apiRequest('POST', '/api/zyra/execute-foundational', { 
+          type: actionId.replace('foundational_', '') 
         });
       }
       // Regular friction action - approve the opportunity
-      return await apiRequest(`/api/revenue-opportunities/${actionId}/approve`, {
-        method: 'POST',
-      });
+      return await apiRequest('POST', `/api/revenue-opportunities/${actionId}/approve`, {});
     },
     onSuccess: () => {
       toast({
@@ -984,7 +984,6 @@ export default function ZyraAtWork() {
     enabled: storeReadiness?.state === 'ready',
   });
 
-  const { toast } = useToast();
   const isAutopilotEnabled = automationSettings?.globalAutopilotEnabled ?? false;
 
   const triggerDetectionMutation = useMutation({
