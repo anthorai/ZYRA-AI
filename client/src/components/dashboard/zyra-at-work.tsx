@@ -566,10 +566,14 @@ function ProgressStages({
             <div className="text-left">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <p className="text-sm font-medium text-primary">
-                    {executionStatus === 'running' ? 'Executing...' : 'Next Move Ready'}
+                  <div className={`w-2 h-2 rounded-full ${executionStatus === 'running' ? 'bg-amber-400' : 'bg-primary'} animate-pulse`} />
+                  <p className={`text-sm font-medium ${executionStatus === 'running' ? 'text-amber-400' : 'text-primary'}`}>
+                    {executionStatus === 'running' ? 'Applying Fix...' : 
+                     executionStatus === 'awaiting_approval' ? 'Review & Approve' : 'Next Move Ready'}
                   </p>
+                  {executionStatus === 'running' && (
+                    <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                  )}
                 </div>
                 {executionStatus === 'awaiting_approval' && committedActionId && onApprove && (
                   <Button
