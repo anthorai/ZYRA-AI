@@ -47,6 +47,28 @@ export interface AIReasoningStep {
   dataPoint: string | null;     // Specific metric if applicable
 }
 
+// Real agent stats based on actual store data
+export interface AgentStats {
+  productsMonitored: number;     // Actual synced products count
+  frictionDetected: number;      // Count of detected friction signals
+  optimizationsReady: number;    // Count of pending opportunities
+}
+
+// Track record based on actual executed actions
+export interface TrackRecord {
+  totalOptimizations: number;    // Count of completed actions
+  revenueGenerated: number;      // Actual proven revenue from actions
+  successRate: number;           // % of successful actions
+}
+
+// Queued action for action queue preview
+export interface QueuedAction {
+  type: string;
+  product: string;
+  score: number;
+  expectedRevenue: number;
+}
+
 export interface NextMoveAction {
   id: string;
   actionType: string;
@@ -95,6 +117,10 @@ export interface NextMoveResponse {
   requiresApproval: boolean;
   blockedReason: string | null;
   executionSpeed: string;
+  // Real stats from actual store data
+  agentStats: AgentStats;
+  trackRecord: TrackRecord;
+  queuedActions: QueuedAction[];
 }
 
 const RISK_LEVEL_SCORES: Record<RiskLevel, number> = {
@@ -182,21 +208,43 @@ function generateDecisionReasons(
   score: number,
   frictionType?: string,
   whereIntentDied?: string,
-  estimatedMonthlyLoss?: number
+  estimatedMonthlyLoss?: number,
+  productData?: any  // Real product metrics
 ): string[] {
   const reasons: string[] = [];
   const monthlyLoss = estimatedMonthlyLoss || Math.round(expectedRevenue * 0.5);
   
-  // WHY THIS PRODUCT - Where intent is dying
+  // Extract real metrics from product data
+  const views = productData?.views || 0;
+  const orders = productData?.ordersCount || 0;
+  const addToCart = productData?.addToCartCount || 0;
+  const price = productData?.price ? parseFloat(productData.price) : 0;
+  
+  // WHY THIS PRODUCT - Where intent is dying with REAL NUMBERS
   if (productName) {
     if (frictionType === 'view_no_cart') {
-      reasons.push(`WHY THIS PRODUCT: "${productName}" is getting views but buyers aren't adding to cart - value isn't clear enough`);
+      if (views > 0) {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" has ${views} views but only ${addToCart} cart adds - value isn't compelling enough`);
+      } else {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" is getting views but buyers aren't adding to cart - value isn't clear enough`);
+      }
     } else if (frictionType === 'cart_no_checkout') {
-      reasons.push(`WHY THIS PRODUCT: "${productName}" is being added to cart but buyers are hesitating before checkout`);
+      const abandoned = addToCart - orders;
+      if (abandoned > 0) {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" has ${abandoned} abandoned carts - buyers hesitate at checkout`);
+      } else {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" is being added to cart but buyers are hesitating before checkout`);
+      }
     } else if (frictionType === 'checkout_drop') {
       reasons.push(`WHY THIS PRODUCT: "${productName}" sales are dying at checkout - final trust barrier needs fixing`);
     } else {
-      reasons.push(`WHY THIS PRODUCT: "${productName}" has buyer intent that isn't converting to money`);
+      if (views > 0 && orders === 0) {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" has ${views} views but 0 sales - something is blocking conversion`);
+      } else if (views === 0) {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" has no traffic yet - needs visibility boost`);
+      } else {
+        reasons.push(`WHY THIS PRODUCT: "${productName}" has buyer intent that isn't converting to money`);
+      }
     }
   }
   
@@ -594,6 +642,144 @@ function requiresApproval(planId: string, riskLevel: RiskLevel): boolean {
   }
 }
 
+/**
+ * Get real agent stats from actual database records
+ * Shows actual products monitored, friction detected, and ready optimizations
+ */
+async function getAgentStats(userId: string): Promise<AgentStats> {
+  if (!db) {
+    return { productsMonitored: 0, frictionDetected: 0, optimizationsReady: 0 };
+  }
+  
+  // Count actual synced products for this user
+  const userProducts = await db
+    .select()
+    .from(products)
+    .where(eq(products.userId, userId));
+  const productsMonitored = userProducts.length;
+  
+  // Count pending/active opportunities (friction signals)
+  const opportunities = await db
+    .select()
+    .from(revenueOpportunities)
+    .where(
+      and(
+        eq(revenueOpportunities.userId, userId),
+        inArray(revenueOpportunities.status, ['pending', 'approved'])
+      )
+    );
+  const optimizationsReady = opportunities.length;
+  
+  // Friction detected = opportunities with frictionType set
+  const frictionDetected = opportunities.filter(o => o.frictionType).length;
+  
+  return {
+    productsMonitored,
+    frictionDetected,
+    optimizationsReady
+  };
+}
+
+/**
+ * Get real track record from completed autonomous actions
+ * Shows actual completed optimizations, proven revenue, and success rate
+ */
+async function getTrackRecord(userId: string): Promise<TrackRecord> {
+  if (!db) {
+    return { totalOptimizations: 0, revenueGenerated: 0, successRate: 0 };
+  }
+  
+  // Get all completed actions for this user
+  const completedActions = await db
+    .select()
+    .from(autonomousActions)
+    .where(
+      and(
+        eq(autonomousActions.userId, userId),
+        eq(autonomousActions.status, 'completed')
+      )
+    );
+  
+  const totalOptimizations = completedActions.length;
+  
+  // Calculate revenue from actualImpact field (contains revenue data after execution)
+  const revenueGenerated = completedActions.reduce((sum, action) => {
+    const impact = action.actualImpact as { revenue?: number; revenueGenerated?: number } | null;
+    const revenue = impact?.revenue || impact?.revenueGenerated || 0;
+    return sum + revenue;
+  }, 0);
+  
+  // Count successful vs failed for success rate
+  const allActions = await db
+    .select()
+    .from(autonomousActions)
+    .where(eq(autonomousActions.userId, userId));
+  
+  const successful = allActions.filter(a => a.status === 'completed').length;
+  const failed = allActions.filter(a => a.status === 'failed' || a.status === 'rolled_back').length;
+  const total = successful + failed;
+  const successRate = total > 0 ? Math.round((successful / total) * 100) : 0;
+  
+  return {
+    totalOptimizations,
+    revenueGenerated: Math.round(revenueGenerated),
+    successRate
+  };
+}
+
+/**
+ * Get queued actions - other pending opportunities after the top one
+ * Returns real queued actions, not mock data
+ */
+async function getQueuedActions(userId: string, excludeId?: string): Promise<QueuedAction[]> {
+  if (!db) {
+    return [];
+  }
+  
+  // Get pending opportunities ordered by safety score (higher = better priority)
+  const opportunities = await db
+    .select()
+    .from(revenueOpportunities)
+    .where(
+      and(
+        eq(revenueOpportunities.userId, userId),
+        eq(revenueOpportunities.status, 'pending')
+      )
+    )
+    .orderBy(desc(revenueOpportunities.safetyScore))
+    .limit(5);
+  
+  // Filter out the current top action and get product names
+  const queuedOpportunities = opportunities.filter(o => o.id !== excludeId);
+  
+  const queuedActions: QueuedAction[] = [];
+  for (const opp of queuedOpportunities.slice(0, 3)) {
+    let productName = 'Unknown Product';
+    if (opp.entityType === 'product' && opp.entityId) {
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, opp.entityId))
+        .limit(1);
+      productName = product?.name || 'Product';
+    }
+    
+    // Use estimatedRevenueLift or estimatedRecovery as expectedRevenue
+    const expectedRevenue = opp.estimatedRevenueLift 
+      ? parseFloat(String(opp.estimatedRevenueLift)) 
+      : (opp.estimatedRecovery ? parseFloat(String(opp.estimatedRecovery)) : 0);
+    
+    queuedActions.push({
+      type: opp.opportunityType || 'seo_optimization',
+      product: productName,
+      score: opp.safetyScore || 0,
+      expectedRevenue
+    });
+  }
+  
+  return queuedActions;
+}
+
 export async function getNextMove(userId: string): Promise<NextMoveResponse> {
   if (!db) {
     throw new Error('Database not available');
@@ -647,6 +833,10 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     .limit(50);
 
   if (opportunities.length === 0) {
+    // Still fetch real stats even when no opportunities
+    const agentStats = await getAgentStats(userId);
+    const trackRecord = await getTrackRecord(userId);
+    
     return {
       nextMove: null,
       userPlan: planName,
@@ -657,6 +847,9 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
       requiresApproval: true,
       blockedReason: null,
       executionSpeed,
+      agentStats,
+      trackRecord,
+      queuedActions: [],
     };
   }
 
@@ -734,7 +927,8 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     topOpportunity.score,
     topOpportunity.frictionType || undefined,
     topOpportunity.frictionDescription || undefined,
-    estimatedRecovery || undefined
+    estimatedRecovery || undefined,
+    productData  // Pass real product metrics for dynamic reasons
   );
   
   // Layer 2: Calculate opportunity cost if skipped
@@ -811,6 +1005,11 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     changeType: mapOpportunityToChangeType(topOpportunity.opportunityType || 'seo_optimization'),
   };
 
+  // Fetch real stats from database
+  const agentStats = await getAgentStats(userId);
+  const trackRecord = await getTrackRecord(userId);
+  const queuedActions = await getQueuedActions(userId, topOpportunity.id);
+
   return {
     nextMove,
     userPlan: planName,
@@ -821,6 +1020,9 @@ export async function getNextMove(userId: string): Promise<NextMoveResponse> {
     requiresApproval: needsApproval,
     blockedReason,
     executionSpeed,
+    agentStats,
+    trackRecord,
+    queuedActions,
   };
 }
 

@@ -120,6 +120,28 @@ const FRICTION_TYPE_ICONS: Record<string, LucideIcon> = {
   purchase_no_upsell: Package
 };
 
+// Real agent stats from actual store data
+interface AgentStats {
+  productsMonitored: number;
+  frictionDetected: number;
+  optimizationsReady: number;
+}
+
+// Track record from completed actions
+interface TrackRecord {
+  totalOptimizations: number;
+  revenueGenerated: number;
+  successRate: number;
+}
+
+// Queued action preview
+interface QueuedAction {
+  type: string;
+  product: string;
+  score: number;
+  expectedRevenue: number;
+}
+
 interface NextMoveResponse {
   nextMove: NextMoveAction | null;
   userPlan: string;
@@ -130,6 +152,10 @@ interface NextMoveResponse {
   requiresApproval: boolean;
   blockedReason: string | null;
   executionSpeed: string;
+  // Real stats from actual store data
+  agentStats: AgentStats;
+  trackRecord: TrackRecord;
+  queuedActions: QueuedAction[];
 }
 
 const ACTION_TYPE_LABELS: Record<string, string> = {
@@ -338,7 +364,7 @@ function TrackRecordStats({ totalOptimizations = 0, revenueGenerated = 0, succes
 }
 
 // Action Queue Preview - Shows upcoming optimizations
-function ActionQueuePreview({ queuedActions = [] }: { queuedActions?: Array<{ type: string; product: string; score: number }> }) {
+function ActionQueuePreview({ queuedActions = [] }: { queuedActions?: Array<{ type: string; product: string; score: number; expectedRevenue?: number }> }) {
   if (queuedActions.length === 0) return null;
   
   return (
@@ -366,9 +392,16 @@ function ActionQueuePreview({ queuedActions = [] }: { queuedActions?: Array<{ ty
                 <p className="text-[10px] text-muted-foreground" data-testid={`queue-product-${idx}`}>{action.product}</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Gauge className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground" data-testid={`queue-score-${idx}`}>{action.score}</span>
+            <div className="flex items-center gap-2">
+              {(action.expectedRevenue ?? 0) > 0 && (
+                <span className="text-xs text-emerald-400" data-testid={`queue-revenue-${idx}`}>
+                  ${(action.expectedRevenue ?? 0).toLocaleString()}
+                </span>
+              )}
+              <div className="flex items-center gap-1">
+                <Gauge className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground" data-testid={`queue-score-${idx}`}>{action.score}</span>
+              </div>
             </div>
           </div>
         ))}
@@ -827,12 +860,6 @@ export default function NextMove() {
     );
   };
 
-  // Mock data for demo - in real app, these would come from API
-  const mockQueuedActions = [
-    { type: 'product_seo', product: 'Premium Headphones', score: 78 },
-    { type: 'cart_recovery', product: 'Abandoned Order #1234', score: 72 },
-    { type: 'upsell', product: 'Wireless Speaker Set', score: 65 },
-  ];
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -860,22 +887,22 @@ export default function NextMove() {
         </div>
       </div>
 
-      {/* ZYRA Agent Status Panel - Shows live monitoring */}
+      {/* ZYRA Agent Status Panel - Shows real store data */}
       <AgentStatusPanel 
-        productsMonitored={6}
-        frictionDetected={3}
-        optimizationsReady={1}
+        productsMonitored={data?.agentStats?.productsMonitored || 0}
+        frictionDetected={data?.agentStats?.frictionDetected || 0}
+        optimizationsReady={data?.agentStats?.optimizationsReady || 0}
         isActive={true}
       />
 
       {/* ZYRA Powers Grid - Shows all AI capabilities */}
       <ZyraPowersGrid />
 
-      {/* Track Record Stats - Shows ZYRA's performance history */}
+      {/* Track Record Stats - Shows ZYRA's actual performance history */}
       <TrackRecordStats 
-        totalOptimizations={12}
-        revenueGenerated={2450}
-        successRate={91}
+        totalOptimizations={data?.trackRecord?.totalOptimizations || 0}
+        revenueGenerated={data?.trackRecord?.revenueGenerated || 0}
+        successRate={data?.trackRecord?.successRate || 0}
       />
 
       {/* Current Priority Action Header */}
@@ -1105,7 +1132,7 @@ export default function NextMove() {
       })()}
 
       {/* Action Queue Preview - Shows upcoming optimizations */}
-      <ActionQueuePreview queuedActions={mockQueuedActions} />
+      <ActionQueuePreview queuedActions={data?.queuedActions || []} />
 
       {/* Credit Justification - reframe credits as growth fuel */}
       <div className="p-3 rounded-lg bg-muted/20 border border-muted" data-testid="credits-info">
