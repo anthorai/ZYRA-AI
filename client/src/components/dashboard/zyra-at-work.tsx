@@ -846,6 +846,10 @@ export default function ZyraAtWork() {
   const [detectionStartTime, setDetectionStartTime] = useState<number | null>(null);
   const detectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Track post-approval phase progression (execute → prove → learn)
+  const [approvedPhase, setApprovedPhase] = useState<'idle' | 'execute' | 'prove' | 'learn' | 'complete'>('idle');
+  const approvedPhaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const DETECTION_TIMEOUT_MS = 10000;
   
   const { data: detectionStatusData } = useQuery<{
@@ -893,6 +897,8 @@ export default function ZyraAtWork() {
         title: 'Action Approved',
         description: 'ZYRA is now executing the action',
       });
+      // Start post-approval phase progression: execute → prove → learn → complete
+      setApprovedPhase('execute');
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
@@ -934,6 +940,42 @@ export default function ZyraAtWork() {
       };
     }
   }, [isDetecting, detectionStartTime]);
+
+  // Post-approval phase auto-progression: execute (3s) → prove (3s) → learn (3s) → complete
+  useEffect(() => {
+    if (approvedPhase === 'idle' || approvedPhase === 'complete') {
+      return;
+    }
+    
+    // Clear any existing timeout
+    if (approvedPhaseTimeoutRef.current) {
+      clearTimeout(approvedPhaseTimeoutRef.current);
+    }
+    
+    // Set timeout for next phase transition
+    const phaseDelays = { execute: 3000, prove: 3000, learn: 3000 };
+    const nextPhases = { execute: 'prove', prove: 'learn', learn: 'complete' } as const;
+    
+    approvedPhaseTimeoutRef.current = setTimeout(() => {
+      const next = nextPhases[approvedPhase as keyof typeof nextPhases];
+      setApprovedPhase(next);
+      
+      // When complete, refresh data to get next action
+      if (next === 'complete') {
+        setTimeout(() => {
+          setApprovedPhase('idle');
+          queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
+        }, 2000);
+      }
+    }, phaseDelays[approvedPhase as keyof typeof phaseDelays]);
+    
+    return () => {
+      if (approvedPhaseTimeoutRef.current) {
+        clearTimeout(approvedPhaseTimeoutRef.current);
+      }
+    };
+  }, [approvedPhase]);
 
   // When detection-status query is disabled (isDetecting=false), use stats as primary source
   const detectionPhase = (isDetecting && detectionStatusData?.phase) || stats?.detection?.phase || 'idle';
@@ -1131,8 +1173,12 @@ export default function ZyraAtWork() {
   }, [events]);
 
   // Determine current phase - sync with execution status for consistency
-  // Priority: executionStatus > events > detection phase > default
+  // Priority: approvedPhase (post-approval) > executionStatus > events > detection phase > default
   const currentPhase = (() => {
+    // HIGHEST PRIORITY: If we're in post-approval progression, use that phase
+    if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
+      return approvedPhase;
+    }
     // If actively executing, show execute phase
     if (derivedExecutionStatus === 'running') {
       return 'execute';
