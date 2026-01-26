@@ -584,3 +584,6 @@ export class FastDetectionEngine {
 }
 
 export const fastDetectionEngine = new FastDetectionEngine();
+
+// Re-export foundational action constants for use in routes
+export { FOUNDATIONAL_ACTION_LABELS, FOUNDATIONAL_ACTION_DESCRIPTIONS } from '@shared/schema';
