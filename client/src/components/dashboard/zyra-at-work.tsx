@@ -781,6 +781,25 @@ export default function ZyraAtWork() {
     }
   });
 
+  // AUTO-TRIGGER: Start detection when page loads with autopilot enabled
+  // This ensures detection runs even if user already had autopilot on
+  const hasTriggeredInitialDetection = useRef(false);
+  
+  useEffect(() => {
+    // Only trigger once per page load when conditions are met
+    if (
+      storeReadiness?.state === 'ready' &&
+      isAutopilotEnabled &&
+      !isDetecting &&
+      !hasTriggeredInitialDetection.current &&
+      (detectionPhase === 'idle' || !detectionStatusData?.complete)
+    ) {
+      console.log('[ZYRA Detection] Auto-triggering initial detection on page load');
+      hasTriggeredInitialDetection.current = true;
+      triggerDetectionMutation.mutate();
+    }
+  }, [storeReadiness?.state, isAutopilotEnabled, isDetecting, detectionPhase, detectionStatusData?.complete]);
+
   const events: ZyraEvent[] = (activityData?.activities?.map(a => ({
     ...a,
     timestamp: new Date(a.timestamp),

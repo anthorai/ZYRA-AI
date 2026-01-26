@@ -136,9 +136,14 @@ export class FastDetectionEngine {
 
     if (cacheStatus === 'missing') {
       console.log(`📦 [Fast Detect] Cache missing for user ${userId}, triggering precompute`);
+      // Emit preparing phase first (data collection starting)
       if (!isAborted()) await this.emitProgress(userId, 'preparing', false, abortSignal);
       
       this.triggerBackgroundPrecompute(userId);
+      
+      // Mark detection as complete since we've determined the outcome (insufficient data)
+      // This allows the UI to show the "collecting baseline data" message and stop spinner
+      if (!isAborted()) await this.emitProgress(userId, 'decision_ready', true, abortSignal);
       
       return {
         success: true,
@@ -148,7 +153,7 @@ export class FastDetectionEngine {
         frictionDetected: false,
         topFriction: null,
         detectionDurationMs: Date.now() - startTime,
-        phase: 'preparing',
+        phase: 'decision_ready',
         cacheStatus: 'missing',
       };
     }

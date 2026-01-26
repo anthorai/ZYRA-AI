@@ -101,3 +101,15 @@ The application uses two storage implementations: `MemStorage` (in-memory for ge
 ## Email & SMS Services
 -   **SendGrid**: Transactional emails and marketing campaigns.
 -   **Twilio**: SMS notifications and cart recovery.
+
+# Recent Changes
+
+## January 26, 2026 - Finding Friction Detection Fix
+- **Issue**: "Finding Friction Step 1" was stuck and detection wasn't progressing
+- **Root Cause**: 
+  1. Detection only triggered when user toggled autopilot ON, not when page loaded with autopilot already enabled
+  2. When cache was missing, detection returned without properly marking as complete, causing UI to stay stuck
+- **Fix Applied**:
+  1. Added auto-trigger in `zyra-at-work.tsx` to start detection when page loads with autopilot enabled
+  2. Fixed `fast-detection-engine.ts` to properly emit both 'preparing' and 'decision_ready' phases with complete=true when cache is missing
+  3. This ensures the UI properly shows the "Collecting baseline data" message and stops the progress spinner
