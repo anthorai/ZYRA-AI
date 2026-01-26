@@ -1010,7 +1010,64 @@ async function runMarketingCampaignScan(): Promise<void> {
 }
 
 /**
- * Run Revenue Loop Scan
+ * Run Unified ZYRA Revenue Loop
+ * Uses the new unified loop controller: DETECT → DECIDE → EXECUTE → PROVE → LEARN
+ * 
+ * CORE LAW: If an action does NOT directly affect revenue,
+ * ZYRA must NOT detect it, decide on it, execute it, or show it.
+ */
+async function runUnifiedZyraLoop(): Promise<void> {
+  const jobId = 'zyra-unified-loop';
+  if (runningJobs.has(jobId)) {
+    console.log(`⏭️  [ZYRA Loop] Skipping unified loop - already running`);
+    return;
+  }
+
+  runningJobs.add(jobId);
+  console.log('🔄 [ZYRA Loop] Starting unified revenue loop...');
+
+  try {
+    const { zyraRevenueLoop } = await import('./zyra-revenue-loop');
+    
+    const settings = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.globalAutopilotEnabled, true));
+
+    console.log(`📊 [ZYRA Loop] Found ${settings.length} users with revenue protection enabled`);
+
+    for (const setting of settings) {
+      try {
+        const isDryRun = setting.dryRunMode ?? false;
+        const hasAutonomy = setting.autopilotEnabled ?? false;
+        
+        console.log(`🔄 [ZYRA Loop] Running cycle for user ${setting.userId}`);
+        console.log(`   Mode: ${hasAutonomy ? 'Autonomous (earned)' : 'Manual approval (default)'}${isDryRun ? ' [DRY RUN]' : ''}`);
+        
+        const result = await zyraRevenueLoop.runFullCycle(setting.userId, false);
+        
+        console.log(`   Revenue signals found: ${result.detected}`);
+        console.log(`   Next move selected: ${result.decided ? 'Yes (awaiting approval)' : 'None available'}`);
+        console.log(`   Actions executed: ${result.executed ? 'Yes' : 'No (requires approval)'}`);
+        console.log(`   Revenue impact measured: ${result.proved} actions`);
+        console.log(`   Intelligence updated: ${result.learned} patterns`);
+        console.log(`   Cycle completed in ${result.cycleTime}ms`);
+        
+      } catch (error) {
+        console.error(`❌ [ZYRA Loop] Error processing user ${setting.userId}:`, error);
+      }
+    }
+
+    console.log('✅ [ZYRA Loop] Revenue protection cycle completed');
+  } catch (error) {
+    console.error('❌ [ZYRA Loop] Error during revenue loop:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
+}
+
+/**
+ * Run Revenue Loop Scan (Legacy)
  * Executes the complete DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle
  */
 async function runRevenueLoopScan(): Promise<void> {
@@ -1212,11 +1269,17 @@ export function initializeAutonomousScheduler(): void {
     await runMarketingCampaignScan();
   });
 
-  // Revenue Loop Scan - runs every 30 minutes
+  // Unified ZYRA Loop - runs every 15 minutes (primary loop)
+  cron.schedule('*/15 * * * *', async () => {
+    console.log('⏰ [Scheduler] Running unified ZYRA revenue loop...');
+    await runUnifiedZyraLoop();
+  });
+
+  // Legacy Revenue Loop Scan - runs every 30 minutes (fallback)
   cron.schedule('*/30 * * * *', async () => {
-    console.log('⏰ [Scheduler] Running revenue loop scan...');
+    console.log('⏰ [Scheduler] Running legacy revenue loop scan...');
     await runRevenueLoopScan();
   });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Revenue Loop (Every 30 min)');
+  console.log('✅ [Autonomous Scheduler] Initialized - ZYRA Loop (Every 15 min), Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Legacy Revenue Loop (Every 30 min)');
 }

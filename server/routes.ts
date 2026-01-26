@@ -16739,6 +16739,111 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // ===== ZYRA UNIFIED REVENUE LOOP API =====
+  
+  app.get("/api/zyra-loop/status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const status = zyraRevenueLoop.getBusinessStatus(userId);
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting ZYRA loop status:", error);
+      res.status(500).json({ error: "Failed to get loop status" });
+    }
+  });
+
+  app.get("/api/zyra-loop/state", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const state = zyraRevenueLoop.getLoopState(userId);
+      res.json(state);
+    } catch (error) {
+      console.error("Error getting ZYRA loop state:", error);
+      res.status(500).json({ error: "Failed to get loop state" });
+    }
+  });
+
+  app.post("/api/zyra-loop/detect", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const result = await zyraRevenueLoop.detect(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error in ZYRA detect phase:", error);
+      res.status(500).json({ error: "Detection failed" });
+    }
+  });
+
+  app.post("/api/zyra-loop/decide", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const decision = await zyraRevenueLoop.decide(userId);
+      res.json({ decision });
+    } catch (error) {
+      console.error("Error in ZYRA decide phase:", error);
+      res.status(500).json({ error: "Decision failed" });
+    }
+  });
+
+  app.post("/api/zyra-loop/execute", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { opportunityId, approved } = req.body;
+      
+      if (!opportunityId) {
+        return res.status(400).json({ error: "opportunityId is required" });
+      }
+      
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const result = await zyraRevenueLoop.execute(userId, opportunityId, approved === true);
+      res.json(result);
+    } catch (error) {
+      console.error("Error in ZYRA execute phase:", error);
+      res.status(500).json({ error: "Execution failed" });
+    }
+  });
+
+  app.post("/api/zyra-loop/prove", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const result = await zyraRevenueLoop.prove(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error in ZYRA prove phase:", error);
+      res.status(500).json({ error: "Proving failed" });
+    }
+  });
+
+  app.post("/api/zyra-loop/learn", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const result = await zyraRevenueLoop.learn(userId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error in ZYRA learn phase:", error);
+      res.status(500).json({ error: "Learning failed" });
+    }
+  });
+
+  app.post("/api/zyra-loop/run-cycle", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { autoApprove } = req.body;
+      const { zyraRevenueLoop } = await import('./lib/zyra-revenue-loop');
+      const result = await zyraRevenueLoop.runFullCycle(userId, autoApprove === true);
+      res.json(result);
+    } catch (error) {
+      console.error("Error running ZYRA full cycle:", error);
+      res.status(500).json({ error: "Full cycle failed" });
+    }
+  });
+
   // ===== POWER MODE API =====
   
   app.get("/api/power-mode/health", requireAuth, async (req, res) => {
