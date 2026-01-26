@@ -6,18 +6,28 @@ import {
   revenueOpportunities,
   products,
   automationSettings,
+  storeConnections,
+  usageStats,
   FrictionType,
-  FRICTION_TYPE_LABELS
+  FRICTION_TYPE_LABELS,
+  FoundationalActionType,
+  FoundationalAction,
+  FOUNDATIONAL_ACTION_LABELS,
+  FOUNDATIONAL_ACTION_DESCRIPTIONS
 } from '@shared/schema';
-import { eq, and, desc, sql, gte, isNull, or } from 'drizzle-orm';
+import { eq, and, desc, sql, gte, isNull, or, count } from 'drizzle-orm';
 
 const FAST_DETECT_TIMEOUT_MS = 10000;
 const TOP_PRODUCTS_LIMIT = 20;
 const TOP_FRICTION_TYPES = 3;
 
+// New store thresholds
+const NEW_STORE_AGE_DAYS = 30;
+const NEW_STORE_ORDER_THRESHOLD = 50;
+
 export type DetectionPhase = 'idle' | 'detect_started' | 'cache_loaded' | 'friction_identified' | 'decision_ready' | 'preparing';
 
-export type DetectionStatus = 'friction_found' | 'no_friction' | 'insufficient_data';
+export type DetectionStatus = 'friction_found' | 'no_friction' | 'insufficient_data' | 'foundational_action';
 
 export interface FastDetectionResult {
   success: boolean;
@@ -25,7 +35,7 @@ export interface FastDetectionResult {
   frictionDetected: boolean;
   lastValidNextMoveId?: string;
   reason?: string;
-  nextAction?: 'standby' | 'data_collection' | 'decide';
+  nextAction?: 'standby' | 'data_collection' | 'decide' | 'foundational';
   topFriction: {
     productId: string;
     productName: string;
@@ -34,6 +44,9 @@ export interface FastDetectionResult {
     confidenceScore: number;
     riskLevel: 'low' | 'medium' | 'high';
   } | null;
+  // New store foundational action
+  isNewStore?: boolean;
+  foundationalAction?: FoundationalAction;
   detectionDurationMs: number;
   phase: DetectionPhase;
   cacheStatus: 'fresh' | 'stale' | 'missing';
@@ -135,14 +148,41 @@ export class FastDetectionEngine {
       cacheAge > 12 * 60 * 60 * 1000 ? 'stale' : 'fresh';
 
     if (cacheStatus === 'missing') {
-      console.log(`📦 [Fast Detect] Cache missing for user ${userId}, triggering precompute`);
-      // Emit preparing phase first (data collection starting)
-      if (!isAborted()) await this.emitProgress(userId, 'preparing', false, abortSignal);
+      console.log(`📦 [Fast Detect] Cache missing for user ${userId}, checking if new store...`);
       
+      // Check if this is a new store - if so, provide foundational action
+      const { isNew, storeAgeDays, totalOrders } = await this.isNewStore(userId);
+      
+      if (isNew) {
+        console.log(`🏪 [Fast Detect] New store detected (age=${storeAgeDays}d, orders=${totalOrders}), selecting foundational action`);
+        
+        // Select a foundational action for the new store
+        const foundationalAction = await this.selectFoundationalAction(userId);
+        
+        if (!isAborted()) await this.emitProgress(userId, 'decision_ready', true, abortSignal);
+        
+        // Trigger background precompute for future detections
+        this.triggerBackgroundPrecompute(userId);
+        
+        return {
+          success: true,
+          status: 'foundational_action' as DetectionStatus,
+          reason: 'New store - preparing revenue foundations',
+          nextAction: 'foundational',
+          frictionDetected: false,
+          topFriction: null,
+          isNewStore: true,
+          foundationalAction: foundationalAction || undefined,
+          detectionDurationMs: Date.now() - startTime,
+          phase: 'decision_ready',
+          cacheStatus: 'missing',
+        };
+      }
+      
+      // Not a new store, but cache missing - trigger precompute
+      if (!isAborted()) await this.emitProgress(userId, 'preparing', false, abortSignal);
       this.triggerBackgroundPrecompute(userId);
       
-      // Mark detection as complete since we've determined the outcome (insufficient data)
-      // This allows the UI to show the "collecting baseline data" message and stop spinner
       if (!isAborted()) await this.emitProgress(userId, 'decision_ready', true, abortSignal);
       
       return {
@@ -168,7 +208,36 @@ export class FastDetectionEngine {
       .slice(0, TOP_FRICTION_TYPES);
 
     if (topFrictionProducts.length === 0) {
-      console.log(`✅ [Fast Detect] No significant friction found for user ${userId}`);
+      console.log(`✅ [Fast Detect] No significant friction found for user ${userId}, checking if new store...`);
+      
+      // Check if this is a new store - if so, ALWAYS provide a foundational action
+      // RULE: For NEW STORES, DETECT must NEVER return "no action"
+      const { isNew, storeAgeDays, totalOrders } = await this.isNewStore(userId);
+      
+      if (isNew) {
+        console.log(`🏪 [Fast Detect] New store (age=${storeAgeDays}d, orders=${totalOrders}), selecting foundational action instead of standby`);
+        
+        // Select a foundational action for the new store
+        const foundationalAction = await this.selectFoundationalAction(userId);
+        
+        if (!isAborted()) await this.emitProgress(userId, 'decision_ready', true, abortSignal);
+        
+        return {
+          success: true,
+          status: 'foundational_action' as DetectionStatus,
+          reason: 'New store - preparing revenue foundations',
+          nextAction: 'foundational',
+          frictionDetected: false,
+          topFriction: null,
+          isNewStore: true,
+          foundationalAction: foundationalAction || undefined,
+          detectionDurationMs: Date.now() - startTime,
+          phase: 'decision_ready',
+          cacheStatus,
+        };
+      }
+      
+      // Established store with no friction - standby mode
       if (!isAborted()) await this.emitProgress(userId, 'decision_ready', true, abortSignal);
       
       return {
@@ -178,6 +247,7 @@ export class FastDetectionEngine {
         nextAction: 'standby',
         frictionDetected: false,
         topFriction: null,
+        isNewStore: false,
         detectionDurationMs: Date.now() - startTime,
         phase: 'decision_ready',
         cacheStatus,
@@ -403,6 +473,102 @@ export class FastDetectionEngine {
     abortSignal.aborted = true;
 
     return result;
+  }
+
+  /**
+   * Detect if a store is "new" based on age and order count
+   * New stores: age < 30 days OR orders < 50
+   */
+  async isNewStore(userId: string): Promise<{ isNew: boolean; storeAgeDays: number; totalOrders: number }> {
+    const db = requireDb();
+    
+    // Get store connection age
+    const [storeConnection] = await db
+      .select({ createdAt: storeConnections.createdAt })
+      .from(storeConnections)
+      .where(eq(storeConnections.userId, userId))
+      .limit(1);
+    
+    // Get total orders from usage stats
+    const [stats] = await db
+      .select({ totalOrders: usageStats.totalOrders })
+      .from(usageStats)
+      .where(eq(usageStats.userId, userId))
+      .limit(1);
+    
+    const storeAgeDays = storeConnection?.createdAt
+      ? Math.floor((Date.now() - new Date(storeConnection.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    
+    const totalOrders = stats?.totalOrders || 0;
+    
+    const isNew = storeAgeDays < NEW_STORE_AGE_DAYS || totalOrders < NEW_STORE_ORDER_THRESHOLD;
+    
+    console.log(`🏪 [New Store Check] User ${userId}: age=${storeAgeDays}d, orders=${totalOrders}, isNew=${isNew}`);
+    
+    return { isNew, storeAgeDays, totalOrders };
+  }
+
+  /**
+   * Select ONE foundational action for a new store
+   * Priority: SEO basics > Product copy clarity > Trust signals > Recovery setup
+   */
+  async selectFoundationalAction(userId: string): Promise<FoundationalAction | null> {
+    const db = requireDb();
+    
+    // Get a product to work on (prioritize products with low revenue health score)
+    const [targetProduct] = await db
+      .select({ 
+        id: products.id, 
+        name: products.name,
+        revenueHealthScore: products.revenueHealthScore
+      })
+      .from(products)
+      .where(eq(products.userId, userId))
+      .orderBy(sql`COALESCE(${products.revenueHealthScore}, 0) ASC`)
+      .limit(1);
+    
+    // Priority order for foundational actions
+    const priorityActions: FoundationalActionType[] = [
+      'seo_basics',
+      'product_copy_clarity', 
+      'trust_signals',
+      'recovery_setup'
+    ];
+    
+    // For now, select based on what the product needs most
+    let selectedType: FoundationalActionType = 'seo_basics';
+    
+    if (targetProduct) {
+      const healthScore = targetProduct.revenueHealthScore || 0;
+      if (healthScore < 30) {
+        selectedType = 'seo_basics';
+      } else if (healthScore < 60) {
+        selectedType = 'product_copy_clarity';
+      } else {
+        selectedType = 'trust_signals';
+      }
+    } else {
+      // No products - suggest recovery setup
+      selectedType = 'recovery_setup';
+    }
+    
+    const actionDetails = FOUNDATIONAL_ACTION_DESCRIPTIONS[selectedType];
+    
+    const foundationalAction: FoundationalAction = {
+      type: selectedType,
+      productId: targetProduct?.id,
+      productName: targetProduct?.name || undefined,
+      title: FOUNDATIONAL_ACTION_LABELS[selectedType],
+      description: actionDetails.description,
+      whyItHelps: actionDetails.whyItHelps,
+      expectedImpact: actionDetails.expectedImpact,
+      riskLevel: 'low'
+    };
+    
+    console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''}`);
+    
+    return foundationalAction;
   }
 }
 
