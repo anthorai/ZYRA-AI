@@ -19932,10 +19932,41 @@ Return JSON array of segments only, no explanation text.`;
   app.get("/api/zyra/live-stats", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const { revenueOpportunities, revenueLoopProof, pendingApprovals, autonomousActions } = await import('@shared/schema');
+      const { revenueOpportunities, revenueLoopProof, pendingApprovals, autonomousActions, storeConnections, usageStats } = await import('@shared/schema');
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      // Check if this is a new/low-data store (age < 30 days OR orders < 50)
+      const NEW_STORE_DAYS_THRESHOLD = 30;
+      const NEW_STORE_ORDERS_THRESHOLD = 50;
+      
+      const [storeConnection] = await db.select({ 
+        createdAt: storeConnections.createdAt 
+      })
+        .from(storeConnections)
+        .where(and(
+          eq(storeConnections.userId, userId),
+          eq(storeConnections.status, 'active')
+        ))
+        .limit(1);
+      
+      const [userStats] = await db.select({ 
+        totalOrders: usageStats.totalOrders 
+      })
+        .from(usageStats)
+        .where(eq(usageStats.userId, userId))
+        .limit(1);
+      
+      // Calculate store age in days
+      const storeAgeMs = storeConnection?.createdAt 
+        ? Date.now() - new Date(storeConnection.createdAt).getTime() 
+        : 0;
+      const storeAgeDays = Math.floor(storeAgeMs / (1000 * 60 * 60 * 24));
+      const totalOrders = Number(userStats?.totalOrders) || 0;
+      
+      // New store if: age < 30 days OR orders < 50
+      const isNewStore = storeAgeDays < NEW_STORE_DAYS_THRESHOLD || totalOrders < NEW_STORE_ORDERS_THRESHOLD;
       
       const [todayProofs] = await db.select({ 
         total: sql<number>`COALESCE(SUM(CAST(revenue_delta AS DECIMAL)), 0)` 
@@ -20039,6 +20070,10 @@ Return JSON array of segments only, no explanation text.`;
           cacheStatus: detectionProgress.cacheStatus,
           timestamp: detectionProgress.timestamp,
         },
+        // New store mode: for stores with age < 30 days OR orders < 50
+        isNewStore,
+        storeAgeDays,
+        totalOrders,
       });
     } catch (error) {
       console.error("Error fetching ZYRA live stats:", error);

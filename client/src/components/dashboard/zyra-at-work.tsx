@@ -60,6 +60,10 @@ interface ZyraStats {
     cacheStatus: string;
     timestamp: number;
   };
+  // New store mode: for stores with age < 30 days OR orders < 50
+  isNewStore?: boolean;
+  storeAgeDays?: number;
+  totalOrders?: number;
 }
 
 interface ZyraEvent {
@@ -259,12 +263,14 @@ function ProgressStages({
   detectionPhase = 'idle',
   detectionStatus = 'detecting',
   isDetectionComplete = false,
+  isNewStore = false,
   onComplete 
 }: { 
   isAutopilotEnabled: boolean;
   detectionPhase?: DetectionPhase;
   detectionStatus?: StrictDetectionStatus;
   isDetectionComplete?: boolean;
+  isNewStore?: boolean;
   onComplete?: () => void;
 }) {
   const [currentStage, setCurrentStage] = useState(0);
@@ -481,19 +487,25 @@ function ProgressStages({
       {isDetectionComplete && (
         <div className={`mt-4 p-3 rounded-lg text-center ${
           detectionStatus === 'friction_found' ? 'bg-emerald-500/10 border border-emerald-500/30' :
+          isNewStore ? 'bg-primary/10 border border-primary/30' :
           'bg-blue-500/10 border border-blue-500/30'
         }`}>
           <p className={`text-sm font-medium ${
-            detectionStatus === 'friction_found' ? 'text-emerald-400' : 'text-blue-400'
+            detectionStatus === 'friction_found' ? 'text-emerald-400' : 
+            isNewStore ? 'text-primary' : 'text-blue-400'
           }`}>
             {detectionStatus === 'friction_found' 
               ? 'Next revenue move ready'
+              : isNewStore
+              ? 'Preparing your store for revenue growth'
               : 'No urgent revenue risk detected'
             }
           </p>
           <p className="text-xs text-slate-400 mt-1">
             {detectionStatus === 'friction_found'
               ? 'Review recommended action in Next Move'
+              : isNewStore
+              ? 'ZYRA is setting up foundational growth systems for your store'
               : 'ZYRA is actively monitoring your store for new opportunities'
             }
           </p>
@@ -1039,6 +1051,7 @@ export default function ZyraAtWork() {
                 detectionPhase={detectionPhase as DetectionPhase}
                 detectionStatus={detectionStatus}
                 isDetectionComplete={isDetectionComplete}
+                isNewStore={stats?.isNewStore || false}
               />
             ) : (
               events.map((event) => (
