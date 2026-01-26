@@ -1690,9 +1690,12 @@ export default function ZyraAtWork() {
   
   // Derive strict status from server endpoint - NEVER default to 'no_friction'
   // When detection-status query is disabled (stale data), prioritize stats query
+  // Check for foundational action to set proper status
+  const hasFoundationalAction = detectionStatusData?.foundationalAction || stats?.foundationalAction;
   const detectionStatus: StrictDetectionStatus = 
     (isDetecting && detectionStatusData?.status) || 
-    (stats?.detection?.complete ? 'insufficient_data' : 'detecting');
+    (hasFoundationalAction ? 'foundational_action' : 
+     stats?.detection?.complete ? 'insufficient_data' : 'detecting');
   
   // Use strict status to determine completion - NOT boolean
   // Also check if stats says detection is complete OR if phase is decision_ready
