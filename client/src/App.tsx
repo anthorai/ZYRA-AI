@@ -37,6 +37,7 @@ const Billing = lazy(() => import("@/pages/billing"));
 const BillingConfirm = lazy(() => import("@/pages/billing-confirm"));
 const Settings = lazy(() => import("@/pages/settings"));
 const SubscriptionManagement = lazy(() => import("@/pages/subscription-management"));
+const Reports = lazy(() => import("@/pages/reports"));
 
 // Settings subpages
 const AIPreferencesPage = lazy(() => import("@/pages/settings/ai-preferences"));
@@ -367,6 +368,13 @@ function Router() {
         <ProtectedRoute>
           <Suspense fallback={<PageLoader />}>
             <SubscriptionManagement />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/reports" component={() => (
+        <ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <Reports />
           </Suspense>
         </ProtectedRoute>
       )} />

@@ -16,7 +16,8 @@ import {
   Coins,
   Shield,
   Activity,
-  Brain
+  Brain,
+  BarChart3
 } from "lucide-react";
 
 interface SidebarProps {
@@ -159,6 +160,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     { id: "next-move", label: "Next Move", icon: <Brain className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "next-move" },
     { id: "zyra-at-work", label: "ZYRA at Work", icon: <Activity className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "zyra-at-work" },
     { id: "products", label: "Products", icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
+    { id: "reports", label: "Reports", icon: <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />, onClick: () => setLocation("/reports") },
     { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> },
     // Admin-only items
     ...(isAdmin ? [

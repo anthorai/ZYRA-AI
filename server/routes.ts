@@ -6586,6 +6586,245 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Get credit transactions/history for Reports page
+  app.get("/api/credits/transactions", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const timeRange = req.query.timeRange as string || "7d";
+      
+      // Calculate date range
+      const now = new Date();
+      let startDate: Date;
+      switch (timeRange) {
+        case "30d":
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case "90d":
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case "all":
+          startDate = new Date(0);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+      
+      // Get activity logs that consumed credits
+      const logs = await db
+        .select()
+        .from(activityLogs)
+        .where(
+          and(
+            eq(activityLogs.userId, userId),
+            gte(activityLogs.createdAt, startDate)
+          )
+        )
+        .orderBy(desc(activityLogs.createdAt))
+        .limit(50);
+      
+      // Transform to credit transactions format
+      const transactions = logs.map((log) => ({
+        id: log.id,
+        actionType: log.toolUsed || "ai_generation",
+        actionLabel: log.action,
+        creditsUsed: (log.metadata as any)?.creditsUsed || 1,
+        timestamp: log.createdAt?.toISOString() || new Date().toISOString(),
+        status: "success" as const,
+        details: log.description,
+      }));
+      
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching credit transactions:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch credit transactions",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get credit usage breakdown by action type for Reports page
+  app.get("/api/credits/usage-by-type", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const timeRange = req.query.timeRange as string || "7d";
+      
+      // Calculate date range
+      const now = new Date();
+      let startDate: Date;
+      switch (timeRange) {
+        case "30d":
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case "90d":
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case "all":
+          startDate = new Date(0);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+      
+      // Get activity logs grouped by tool used
+      const logs = await db
+        .select()
+        .from(activityLogs)
+        .where(
+          and(
+            eq(activityLogs.userId, userId),
+            gte(activityLogs.createdAt, startDate)
+          )
+        );
+      
+      // Group and aggregate by tool type
+      const usageMap = new Map<string, { credits: number; count: number }>();
+      let totalCredits = 0;
+      
+      for (const log of logs) {
+        const toolType = log.toolUsed || "ai_generation";
+        const credits = (log.metadata as any)?.creditsUsed || 1;
+        
+        const existing = usageMap.get(toolType) || { credits: 0, count: 0 };
+        existing.credits += credits;
+        existing.count += 1;
+        usageMap.set(toolType, existing);
+        totalCredits += credits;
+      }
+      
+      // Convert to array format with labels
+      const labelMap: Record<string, string> = {
+        seo_basics: "SEO Optimization",
+        product_copy_clarity: "Product Copy",
+        trust_signals: "Trust Signals",
+        recovery_setup: "Cart Recovery",
+        bulk_optimization: "Bulk Optimization",
+        ai_generation: "AI Generation",
+      };
+      
+      const usageByType = Array.from(usageMap.entries()).map(([type, data]) => ({
+        type,
+        label: labelMap[type] || type,
+        icon: type,
+        credits: data.credits,
+        percentage: totalCredits > 0 ? Math.round((data.credits / totalCredits) * 100) : 0,
+        count: data.count,
+      }));
+      
+      res.json(usageByType);
+    } catch (error: any) {
+      console.error("Error fetching credit usage by type:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch credit usage by type",
+        message: error.message 
+      });
+    }
+  });
+
+  // Get daily credit usage for Reports chart
+  app.get("/api/credits/daily-usage", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const timeRange = req.query.timeRange as string || "7d";
+      
+      // Calculate number of days
+      let days: number;
+      switch (timeRange) {
+        case "30d":
+          days = 30;
+          break;
+        case "90d":
+          days = 90;
+          break;
+        case "all":
+          days = 365;
+          break;
+        default:
+          days = 7;
+      }
+      
+      const now = new Date();
+      const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      // Get activity logs
+      const logs = await db
+        .select()
+        .from(activityLogs)
+        .where(
+          and(
+            eq(activityLogs.userId, userId),
+            gte(activityLogs.createdAt, startDate)
+          )
+        );
+      
+      // Group by date key (YYYY-MM-DD)
+      const dailyMap = new Map<string, number>();
+      
+      // Aggregate credits by date
+      for (const log of logs) {
+        if (log.createdAt) {
+          const dateKey = log.createdAt.toISOString().split('T')[0];
+          const credits = (log.metadata as any)?.creditsUsed || 1;
+          dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + credits);
+        }
+      }
+      
+      // Generate labels based on time range
+      const dailyUsage: Array<{ date: string; credits: number }> = [];
+      
+      if (days <= 7) {
+        // For 7 days: Show day names (Mon, Tue, etc.)
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        for (let i = days - 1; i >= 0; i--) {
+          const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+          const dateKey = date.toISOString().split('T')[0];
+          dailyUsage.push({
+            date: dayNames[date.getDay()],
+            credits: dailyMap.get(dateKey) || 0,
+          });
+        }
+      } else if (days <= 30) {
+        // For 30 days: Show date as MM/DD
+        for (let i = days - 1; i >= 0; i--) {
+          const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+          const dateKey = date.toISOString().split('T')[0];
+          dailyUsage.push({
+            date: `${date.getMonth() + 1}/${date.getDate()}`,
+            credits: dailyMap.get(dateKey) || 0,
+          });
+        }
+      } else {
+        // For 90d/all: Group by week
+        const weekMap = new Map<string, number>();
+        for (let i = Math.ceil(days / 7) - 1; i >= 0; i--) {
+          const weekStart = new Date(now.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000);
+          const weekEnd = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+          const weekLabel = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
+          
+          let weekCredits = 0;
+          for (let d = 0; d < 7; d++) {
+            const date = new Date(weekStart.getTime() + d * 24 * 60 * 60 * 1000);
+            const dateKey = date.toISOString().split('T')[0];
+            weekCredits += dailyMap.get(dateKey) || 0;
+          }
+          
+          dailyUsage.push({
+            date: weekLabel,
+            credits: weekCredits,
+          });
+        }
+      }
+      
+      res.json(dailyUsage);
+    } catch (error: any) {
+      console.error("Error fetching daily credit usage:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch daily credit usage",
+        message: error.message 
+      });
+    }
+  });
+
   // Get subscription status with credits info
   app.get("/api/subscription/status", requireAuth, async (req, res) => {
     try {
