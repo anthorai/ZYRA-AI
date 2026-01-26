@@ -104,14 +104,23 @@ interface ActivityFeedResponse {
 }
 
 // Revenue-friction intelligence phases - trust-first language
-const PHASE_CONFIG = {
+const PHASE_CONFIG: Record<string, {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  color: string;
+  bgColor: string;
+  primaryText: string;
+  secondaryText: string;
+  statusMessage: string;
+}> = {
   detect: { 
     icon: Search, 
     label: 'Finding Friction', 
     color: 'text-blue-400', 
     bgColor: 'bg-blue-500/10',
     primaryText: 'ZYRA is identifying revenue friction',
-    secondaryText: 'Analyzing where buyers hesitate before purchasing'
+    secondaryText: 'Analyzing where buyers hesitate before purchasing',
+    statusMessage: 'Scanning your store for revenue opportunities...'
   },
   decide: { 
     icon: Brain, 
@@ -119,7 +128,8 @@ const PHASE_CONFIG = {
     color: 'text-purple-400', 
     bgColor: 'bg-purple-500/10',
     primaryText: 'ZYRA is deciding the next best revenue move',
-    secondaryText: 'Evaluating impact, confidence, and risk'
+    secondaryText: 'Evaluating impact, confidence, and risk',
+    statusMessage: 'Analyzing the best action to take...'
   },
   execute: { 
     icon: Zap, 
@@ -127,7 +137,8 @@ const PHASE_CONFIG = {
     color: 'text-amber-400', 
     bgColor: 'bg-amber-500/10',
     primaryText: 'Applying approved revenue optimization',
-    secondaryText: 'Changes are being published safely'
+    secondaryText: 'Changes are being published safely',
+    statusMessage: 'Publishing changes to your store...'
   },
   prove: { 
     icon: TrendingUp, 
@@ -135,7 +146,8 @@ const PHASE_CONFIG = {
     color: 'text-emerald-400', 
     bgColor: 'bg-emerald-500/10',
     primaryText: 'Measuring revenue impact',
-    secondaryText: 'Comparing before and after results'
+    secondaryText: 'Comparing before and after results',
+    statusMessage: 'Tracking the impact of changes...'
   },
   learn: { 
     icon: Target, 
@@ -143,7 +155,8 @@ const PHASE_CONFIG = {
     color: 'text-cyan-400', 
     bgColor: 'bg-cyan-500/10',
     primaryText: 'ZYRA is improving future decisions',
-    secondaryText: 'Learning what converts better for your store'
+    secondaryText: 'Learning what converts better for your store',
+    statusMessage: 'Updating strategies based on results...'
   },
 };
 
@@ -286,7 +299,8 @@ function ProgressStages({
   committedActionId = null,
   onApprove,
   isApproving = false,
-  onComplete 
+  onComplete,
+  activePhase = 'detect'
 }: { 
   isAutopilotEnabled: boolean;
   detectionPhase?: DetectionPhase;
@@ -299,6 +313,7 @@ function ProgressStages({
   onApprove?: (actionId: string) => void;
   isApproving?: boolean;
   onComplete?: () => void;
+  activePhase?: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
 }) {
   const [currentStage, setCurrentStage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -455,9 +470,38 @@ function ProgressStages({
     );
   }
 
+  // Get the current phase config for status display
+  const phaseConfig = PHASE_CONFIG[activePhase] || PHASE_CONFIG.detect;
+  const PhaseIcon = phaseConfig.icon;
+
   return (
     <div className="py-6">
-      {/* Current Stage Display */}
+      {/* Phase Status Card - Shows current phase with clear message */}
+      <div className={`mb-6 p-4 rounded-lg ${phaseConfig.bgColor} border border-slate-700/50`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-full ${phaseConfig.bgColor} flex items-center justify-center relative`}>
+            <PhaseIcon className={`w-5 h-5 ${phaseConfig.color}`} />
+            {(executionStatus === 'running' || executionStatus === 'pending') && (
+              <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+            )}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-semibold ${phaseConfig.color}`}>
+                {phaseConfig.label}
+              </span>
+              {(executionStatus === 'running' || executionStatus === 'pending') && (
+                <RefreshCw className="w-3 h-3 animate-spin text-slate-400" />
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {phaseConfig.statusMessage}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Current Stage Display - Detailed progress within the phase */}
       <div className={`flex flex-col items-center text-center transition-all duration-300 ${
         isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
       }`}>
@@ -1310,6 +1354,7 @@ export default function ZyraAtWork() {
                 committedActionId={derivedCommittedActionId}
                 onApprove={(actionId) => approveActionMutation.mutate(actionId)}
                 isApproving={approveActionMutation.isPending}
+                activePhase={currentPhase as 'detect' | 'decide' | 'execute' | 'prove' | 'learn'}
               />
             ) : (
               events.map((event) => (
