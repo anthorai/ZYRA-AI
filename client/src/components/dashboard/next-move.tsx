@@ -863,28 +863,14 @@ export default function NextMove() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      {/* Header with Plan Badge */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10">
-              <Brain className="w-7 h-7 text-primary" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-background animate-pulse" data-testid="indicator-main-pulse" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground" data-testid="text-page-title">ZYRA AI Agent</h1>
-            <p className="text-sm text-muted-foreground" data-testid="text-page-subtitle">Autonomous revenue optimization engine</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs" data-testid="badge-user-plan">
-            {data?.userPlan}
-          </Badge>
-          <Badge variant="outline" className="text-xs" data-testid="badge-execution-speed">
-            {data?.executionSpeed === 'priority' ? 'Priority' : data?.executionSpeed === 'fast' ? 'Fast' : 'Standard'} Speed
-          </Badge>
-        </div>
+      {/* Plan Badges */}
+      <div className="flex items-center justify-end gap-2">
+        <Badge variant="outline" className="text-xs" data-testid="badge-user-plan">
+          {data?.userPlan}
+        </Badge>
+        <Badge variant="outline" className="text-xs" data-testid="badge-execution-speed">
+          {data?.executionSpeed === 'priority' ? 'Priority' : data?.executionSpeed === 'fast' ? 'Fast' : 'Standard'} Speed
+        </Badge>
       </div>
 
       {/* ZYRA Agent Status Panel - Shows real store data */}
