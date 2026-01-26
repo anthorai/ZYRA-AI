@@ -1025,7 +1025,7 @@ function ProgressStages({
               <p className="text-xs text-slate-400 mb-2">
                 {foundationalAction.description}
               </p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
                   Low Risk
                 </span>
@@ -1033,6 +1033,55 @@ function ProgressStages({
                   {foundationalAction.expectedImpact}
                 </span>
               </div>
+              
+              {/* AI REASONING SECTION - Expandable details */}
+              {executionStatus === 'awaiting_approval' && (
+                <details className="mt-3 group" data-testid="ai-reasoning-details">
+                  <summary className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer hover:text-slate-300 transition-colors list-none">
+                    <ChevronRight className="w-3 h-3 transition-transform group-open:rotate-90" />
+                    <span>Why ZYRA recommends this</span>
+                  </summary>
+                  <div className="mt-2 p-2.5 bg-slate-800/40 rounded-md border border-slate-700/30">
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-start gap-2">
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-slate-300 font-medium">Analysis</p>
+                          <p className="text-slate-400 mt-0.5">
+                            {foundationalAction.actionType === 'seo_basics' 
+                              ? 'Your product listings need SEO optimization to rank better in search results and drive organic traffic.'
+                              : foundationalAction.actionType === 'trust_signals'
+                              ? 'First-time visitors need trust signals to feel confident making a purchase from your store.'
+                              : 'This optimization addresses a key conversion barrier in your store.'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Target className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-slate-300 font-medium">Expected Outcome</p>
+                          <p className="text-slate-400 mt-0.5">
+                            {foundationalAction.actionType === 'seo_basics'
+                              ? 'Better search visibility leads to more organic visitors who are actively looking for your products.'
+                              : foundationalAction.actionType === 'trust_signals'
+                              ? 'Trust elements typically increase conversion rates by 10-30% for new stores.'
+                              : 'This action targets a specific friction point that may be costing you sales.'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Shield className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-slate-300 font-medium">Risk Assessment</p>
+                          <p className="text-slate-400 mt-0.5">
+                            Low risk - changes can be rolled back instantly. ZYRA saves your original content before making any modifications.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              )}
               
               {/* EXECUTION RESULTS DISPLAY - Shows real changes made */}
               {executionResult && executionResult.productsOptimized.length > 0 && (
