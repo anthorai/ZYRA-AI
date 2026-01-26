@@ -80,6 +80,8 @@ interface ZyraStats {
   foundationalAction?: FoundationalAction;
   // Execution status for loop progression
   executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+  // Execution phase from backend (real-time sync)
+  executionPhase?: 'idle' | 'executing' | 'proving' | 'learning' | 'completed';
   committedActionId?: string | null;
 }
 
@@ -868,6 +870,8 @@ export default function ZyraAtWork() {
     foundationalAction?: FoundationalAction;
     // DECIDE COMMIT STATUS - UI contract
     executionStatus?: 'pending' | 'running' | 'awaiting_approval' | 'idle';
+    // Execution phase from backend (real-time sync)
+    executionPhase?: 'idle' | 'executing' | 'proving' | 'learning' | 'completed';
     committedActionId?: string | null;
     nextState?: 'awaiting_approval' | 'auto_execute' | 'idle';
   }>({
@@ -1004,13 +1008,23 @@ export default function ZyraAtWork() {
   
   // Derive execution status from both detection-status and stats (with fallback)
   const serverExecutionStatus = detectionStatusData?.executionStatus || stats?.executionStatus || 'idle';
+  const serverExecutionPhase = detectionStatusData?.executionPhase || stats?.executionPhase || 'idle';
   const derivedCommittedActionId = detectionStatusData?.committedActionId || stats?.committedActionId || null;
   
-  // Override execution status based on local approvedPhase state
-  // When we're in post-approval phases, show as 'running' instead of server's 'awaiting_approval'
-  const derivedExecutionStatus = (approvedPhase !== 'idle' && approvedPhase !== 'complete') 
-    ? 'running' 
-    : serverExecutionStatus;
+  // Derive execution status - backend execution state takes priority
+  // This ensures frontend stays in sync with backend execution progress
+  const derivedExecutionStatus = (() => {
+    // Backend is actively executing - always show 'running'
+    if (serverExecutionPhase !== 'idle' && serverExecutionPhase !== 'completed') {
+      return 'running';
+    }
+    // Local approvedPhase fallback for fast UI updates
+    if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
+      return 'running';
+    }
+    // Default to server's execution status
+    return serverExecutionStatus;
+  })();
   
   // 30-second fail-safe timer for stuck states
   // If execution is stuck in 'running' for too long, force refresh
@@ -1182,10 +1196,27 @@ export default function ZyraAtWork() {
     }
   }, [events]);
 
+  // Get backend execution phase for real-time sync
+  const backendExecutionPhase = detectionStatusData?.executionPhase || stats?.executionPhase || 'idle';
+  
+  // Map backend execution phase to frontend phase names
+  const mapBackendPhase = (phase: string): 'detect' | 'decide' | 'execute' | 'prove' | 'learn' => {
+    switch (phase) {
+      case 'executing': return 'execute';
+      case 'proving': return 'prove';
+      case 'learning': return 'learn';
+      default: return 'detect';
+    }
+  };
+  
   // Determine current phase - sync with execution status for consistency
-  // Priority: approvedPhase (post-approval) > executionStatus > events > detection phase > default
+  // Priority: backendExecutionPhase > approvedPhase > executionStatus > events > detection phase > default
   const currentPhase = (() => {
-    // HIGHEST PRIORITY: If we're in post-approval progression, use that phase
+    // HIGHEST PRIORITY: Backend is executing - use its phase (synced with server)
+    if (backendExecutionPhase !== 'idle' && backendExecutionPhase !== 'completed') {
+      return mapBackendPhase(backendExecutionPhase);
+    }
+    // If local approvedPhase is active (fallback for fast UI updates)
     if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
       return approvedPhase;
     }

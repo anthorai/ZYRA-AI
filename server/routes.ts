@@ -20079,6 +20079,9 @@ Return JSON array of segments only, no explanation text.`;
         }
       }
       
+      // Get the current execution state from the engine
+      const execState = fastDetectionEngine.getExecutionState(userId);
+      
       res.json({
         activePhase,
         currentAction: null,
@@ -20099,8 +20102,14 @@ Return JSON array of segments only, no explanation text.`;
         totalOrders,
         // Foundational action for new stores (GUARANTEED non-null for new stores)
         foundationalAction,
+        // Execution phase from the detection engine (real-time sync)
+        executionPhase: execState.phase,
         // Execution status for loop progression (computed based on current state)
         executionStatus: (() => {
+          // If execution is in progress, return 'running'
+          if (execState.phase !== 'idle' && execState.phase !== 'completed') {
+            return 'running';
+          }
           // Determine execution status based on pending approvals and detection state
           if (detectionProgress.phase !== 'decision_ready' && detectionProgress.phase !== 'idle') {
             return 'pending';
@@ -20305,13 +20314,22 @@ Return JSON array of segments only, no explanation text.`;
       // =====================================================
       // EXECUTION STATUS for UI contract
       // Shows current state of loop progression
+      // Checks in-memory execution state first, then falls back to detection state
       // =====================================================
       let executionStatus: 'pending' | 'running' | 'awaiting_approval' | 'idle' = 'idle';
       let committedActionId: string | null = null;
       let nextState: 'awaiting_approval' | 'auto_execute' | 'idle' = 'idle';
+      let executionPhase: 'idle' | 'executing' | 'proving' | 'learning' | 'completed' = 'idle';
       
-      if (detectionStatus === 'friction_found' || detectionStatus === 'foundational_action') {
-        // Check autopilot setting
+      // Check if there's an active execution in progress
+      const execState = fastDetectionEngine.getExecutionState(userId);
+      if (execState.phase !== 'idle') {
+        // Execution is in progress - show running status with current phase
+        executionStatus = execState.phase === 'completed' ? 'idle' : 'running';
+        executionPhase = execState.phase;
+        committedActionId = execState.actionId;
+      } else if (detectionStatus === 'friction_found' || detectionStatus === 'foundational_action') {
+        // No execution in progress - check if action is awaiting approval
         const [settings] = await db
           .select({ globalAutopilotEnabled: automationSettings.globalAutopilotEnabled })
           .from(automationSettings)
@@ -20327,8 +20345,7 @@ Return JSON array of segments only, no explanation text.`;
           committedActionId = `foundational_${foundationalAction.type}`;
         }
         
-        // Determine execution status - always show 'awaiting_approval' (Deciding) phase
-        // The actual execution happens async after user sees the decide phase
+        // Determine execution status - show 'awaiting_approval' (Deciding) phase
         if (committedActionId) {
           executionStatus = 'awaiting_approval';
           nextState = 'awaiting_approval';
@@ -20345,6 +20362,7 @@ Return JSON array of segments only, no explanation text.`;
         foundationalAction,
         // DECIDE COMMIT STATUS - UI contract
         executionStatus,
+        executionPhase,
         committedActionId,
         nextState,
       });
@@ -20359,6 +20377,7 @@ Return JSON array of segments only, no explanation text.`;
         reason: 'Status check failed - will retry on next cycle',
         nextAction: 'data_collection',
         executionStatus: 'idle',
+        executionPhase: 'idle',
         committedActionId: null,
         nextState: 'idle',
       });
@@ -20393,6 +20412,10 @@ Return JSON array of segments only, no explanation text.`;
         });
       }
       
+      // Start execution tracking - this triggers the ZYRA loop phases
+      const actionId = `foundational_${type}`;
+      fastDetectionEngine.startExecution(userId, actionId, type);
+      
       // Log the execution success
       console.log(`✅ [ZYRA Execute Foundational] Executed ${type} for user ${userId}`);
       
@@ -20401,6 +20424,7 @@ Return JSON array of segments only, no explanation text.`;
         success: true,
         message: `Foundational action "${FOUNDATIONAL_ACTION_LABELS[type as keyof typeof FOUNDATIONAL_ACTION_LABELS]}" executed successfully`,
         type,
+        executionPhase: 'executing',
         actionDetails: {
           label: FOUNDATIONAL_ACTION_LABELS[type as keyof typeof FOUNDATIONAL_ACTION_LABELS],
           description: actionDetails.description,

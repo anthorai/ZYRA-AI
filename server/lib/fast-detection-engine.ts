@@ -58,8 +58,86 @@ export interface DetectionProgress {
   timestamp: number;
 }
 
+// Execution state tracking
+export type ExecutionPhase = 'idle' | 'executing' | 'proving' | 'learning' | 'completed';
+
+export interface ExecutionState {
+  phase: ExecutionPhase;
+  actionId: string | null;
+  actionType: string | null;
+  startedAt: number;
+  completedAt: number | null;
+}
+
 export class FastDetectionEngine {
   private progressCallbacks: Map<string, (progress: DetectionProgress) => void> = new Map();
+  
+  // Track execution state per user (in-memory for real-time updates)
+  private executionStates: Map<string, ExecutionState> = new Map();
+  
+  // Get execution state for a user
+  getExecutionState(userId: string): ExecutionState {
+    return this.executionStates.get(userId) || {
+      phase: 'idle',
+      actionId: null,
+      actionType: null,
+      startedAt: 0,
+      completedAt: null
+    };
+  }
+  
+  // Start execution - called when user approves action
+  startExecution(userId: string, actionId: string, actionType: string): void {
+    console.log(`🚀 [Execution] Starting for user ${userId}: ${actionType}`);
+    this.executionStates.set(userId, {
+      phase: 'executing',
+      actionId,
+      actionType,
+      startedAt: Date.now(),
+      completedAt: null
+    });
+    
+    // Auto-progress through phases
+    this.progressExecutionPhases(userId);
+  }
+  
+  // Auto-progress through execution phases
+  private async progressExecutionPhases(userId: string): Promise<void> {
+    const phases: ExecutionPhase[] = ['executing', 'proving', 'learning', 'completed'];
+    const phaseDelays = [2500, 2500, 2500]; // 2.5s for each phase
+    
+    for (let i = 1; i < phases.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, phaseDelays[i - 1]));
+      
+      const currentState = this.executionStates.get(userId);
+      if (!currentState || currentState.phase === 'idle') {
+        // User may have reset or navigated away
+        break;
+      }
+      
+      console.log(`📊 [Execution] User ${userId} progressing to phase: ${phases[i]}`);
+      this.executionStates.set(userId, {
+        ...currentState,
+        phase: phases[i],
+        completedAt: phases[i] === 'completed' ? Date.now() : null
+      });
+    }
+    
+    // Clear state after a short delay so next detection cycle can start fresh
+    setTimeout(() => {
+      const state = this.executionStates.get(userId);
+      if (state?.phase === 'completed') {
+        console.log(`✅ [Execution] Clearing completed state for user ${userId}`);
+        this.executionStates.delete(userId);
+      }
+    }, 3000);
+  }
+  
+  // Reset execution state (for cancellation or errors)
+  resetExecution(userId: string): void {
+    console.log(`🔄 [Execution] Resetting state for user ${userId}`);
+    this.executionStates.delete(userId);
+  }
 
   async emitProgress(userId: string, phase: DetectionPhase, complete: boolean = false, abortSignal?: { aborted: boolean }) {
     if (abortSignal?.aborted) {
