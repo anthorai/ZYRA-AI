@@ -247,15 +247,20 @@ export class ZyraRevenueLoop {
     const revenueOnlySignals = activeSignals.filter(signal => {
       const signalType = signal.signalType;
       const hasRevenueDelta = parseFloat(signal.estimatedRevenueDelta?.toString() || '0') > 0;
-      const hasFrictionType = signal.frictionType !== null;
       
-      const isRevenue = isRevenueSignal(signalType) || 
-        (hasFrictionType && hasRevenueDelta);
+      const isWhitelisted = isRevenueSignal(signalType);
       
-      if (!isRevenue) {
-        console.log(`⏭️  [ZYRA Loop] Skipping non-revenue signal: ${signalType} (no revenue impact)`);
+      if (!isWhitelisted) {
+        console.log(`⏭️  [ZYRA Loop] Rejecting non-revenue signal type: ${signalType}`);
+        return false;
       }
-      return isRevenue;
+      
+      if (!hasRevenueDelta) {
+        console.log(`⏭️  [ZYRA Loop] Rejecting signal with no revenue impact: ${signalType}`);
+        return false;
+      }
+      
+      return true;
     });
 
     if (revenueOnlySignals.length === 0) {
@@ -689,33 +694,39 @@ export class ZyraRevenueLoop {
   }
 
   private mapSignalToActionType(signalType: string | null): string {
-    switch (signalType) {
-      case 'low_seo_score':
-      case 'high_traffic_low_conversion':
-        return 'product_content_fix';
-      case 'abandoned_cart_pattern':
-        return 'cart_recovery';
-      case 'pricing_opportunity':
-        return 'pricing_protection';
-      case 'revenue_drop':
-        return 'revenue_protection';
-      default:
-        return 'revenue_recovery';
+    const mapping: Record<string, string> = {
+      'abandoned_cart_pattern': 'cart_recovery',
+      'checkout_drop': 'cart_recovery',
+      'view_no_cart': 'product_content_fix',
+      'cart_no_checkout': 'checkout_optimization',
+      'purchase_no_upsell': 'upsell_opportunity',
+      'pricing_opportunity': 'pricing_protection',
+      'revenue_drop': 'revenue_protection',
+      'low_conversion': 'product_content_fix',
+      'high_traffic_low_conversion': 'product_content_fix',
+      'cart_abandonment': 'cart_recovery',
+    };
+    
+    if (signalType && mapping[signalType]) {
+      return mapping[signalType];
     }
+    
+    return sanitizeActionType(signalType);
   }
 
   private mapActionTypeToBusinessLabel(actionType: string): string {
+    const sanitizedType = sanitizeActionType(actionType);
+    
     const labels: Record<string, string> = {
       'product_content_fix': 'Remove buyer hesitation',
       'cart_recovery': 'Recover abandoned sale',
       'pricing_protection': 'Protect profit margin',
       'revenue_protection': 'Stop revenue leak',
       'revenue_recovery': 'Recover lost revenue',
-      'seo_optimization': 'Fix conversion barrier',
-      'description_enhancement': 'Improve value clarity',
-      'optimize_seo': 'Remove buyer friction',
+      'checkout_optimization': 'Fix checkout friction',
+      'upsell_opportunity': 'Increase order value',
     };
-    return labels[actionType] || 'Revenue action';
+    return labels[sanitizedType] || 'Revenue action';
   }
 
   private describeChange(signal: typeof revenueSignals.$inferSelect): string {
