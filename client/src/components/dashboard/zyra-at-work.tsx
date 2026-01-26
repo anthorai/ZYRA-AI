@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { RevenueDelta } from "@/components/ui/revenue-delta";
 import { 
   Activity, 
@@ -2007,86 +2006,76 @@ export default function ZyraAtWork() {
                 </div>
               </div>
               
-              {/* Product Changes - Collapsible Accordion */}
+              {/* Product Changes - Always Visible List */}
               <div className="p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2" data-testid="text-changes-applied-label">
                   <Activity className="w-3 h-3" />
                   Changes Applied
                 </p>
-                <Accordion type="single" collapsible className="space-y-2">
+                <div className="space-y-3">
                   {executionResult.productsOptimized.map((product, pIdx) => (
-                    <AccordionItem 
+                    <div 
                       key={pIdx} 
-                      value={`product-${pIdx}`}
-                      className="border border-slate-700/50 rounded-lg overflow-hidden bg-slate-800/30 data-[state=open]:border-primary/30"
+                      className="border border-slate-700/50 rounded-lg overflow-hidden bg-slate-800/30"
+                      data-testid={`product-changes-${pIdx}`}
                     >
-                      <AccordionTrigger className="px-4 py-3" data-testid={`accordion-trigger-product-${pIdx}`}>
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Package className="w-4 h-4 text-primary" />
-                          </div>
-                          <div className="text-left flex-1">
-                            <p className="text-sm font-medium text-white" data-testid={`text-product-name-${pIdx}`}>{product.productName}</p>
-                            <p className="text-xs text-slate-400" data-testid={`text-product-fields-${pIdx}`}>{product.changes.length} field{product.changes.length !== 1 ? 's' : ''} optimized</p>
-                          </div>
-                          <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 text-[10px] mr-2" data-testid={`badge-applied-${pIdx}`}>
-                            Applied
-                          </Badge>
+                      {/* Product Header */}
+                      <div className="px-4 py-3 flex items-center gap-3 border-b border-slate-700/30 bg-slate-800/20">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-primary" />
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4">
-                        <div className="space-y-4 pt-2">
-                          {product.changes.map((change, cIdx) => (
-                            <div key={cIdx} className="rounded-lg bg-slate-900/50 p-4" data-testid={`change-card-${pIdx}-${cIdx}`}>
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                <span className="text-sm font-medium text-white" data-testid={`text-change-field-${pIdx}-${cIdx}`}>{change.field}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white" data-testid={`text-product-name-${pIdx}`}>{product.productName}</p>
+                          <p className="text-xs text-slate-400" data-testid={`text-product-fields-${pIdx}`}>{product.changes.length} field{product.changes.length !== 1 ? 's' : ''} optimized</p>
+                        </div>
+                        <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 text-[10px]" data-testid={`badge-applied-${pIdx}`}>
+                          Applied
+                        </Badge>
+                      </div>
+                      
+                      {/* Changes - Always Visible */}
+                      <div className="px-4 py-3 space-y-3">
+                        {product.changes.map((change, cIdx) => (
+                          <div key={cIdx} className="rounded-lg bg-slate-900/50 p-3" data-testid={`change-card-${pIdx}-${cIdx}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-2 h-2 rounded-full bg-primary" />
+                              <span className="text-sm font-medium text-white" data-testid={`text-change-field-${pIdx}-${cIdx}`}>{change.field}</span>
+                            </div>
+                            
+                            {/* Before/After - Responsive */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="rounded-md bg-red-500/5 border border-red-500/20 p-2" data-testid={`card-before-${pIdx}-${cIdx}`}>
+                                <span className="text-[10px] font-bold text-red-400 uppercase">Before</span>
+                                <p className="text-xs text-slate-400 mt-1 line-clamp-2" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
+                                  {change.before || <span className="italic text-slate-600">(empty)</span>}
+                                </p>
                               </div>
-                              
-                              {/* Before/After Comparison */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div className="rounded-lg bg-red-500/5 border border-red-500/20 p-3" data-testid={`card-before-${pIdx}-${cIdx}`}>
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
-                                      <span className="text-[10px] font-bold text-red-400">OLD</span>
-                                    </div>
-                                    <span className="text-xs font-medium text-red-400/80">Before</span>
-                                  </div>
-                                  <p className="text-sm text-slate-400 leading-relaxed" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
-                                    {change.before || <span className="italic text-slate-600">(empty)</span>}
-                                  </p>
-                                </div>
-                                <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3" data-testid={`card-after-${pIdx}-${cIdx}`}>
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                      <span className="text-[10px] font-bold text-emerald-400">NEW</span>
-                                    </div>
-                                    <span className="text-xs font-medium text-emerald-400/80">After</span>
-                                  </div>
-                                  <p className="text-sm text-emerald-300 leading-relaxed" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
-                                    {change.after}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Reason Badge */}
-                              <div className="mt-3 flex items-start gap-2">
-                                <Brain className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                                <p className="text-xs text-slate-400 leading-relaxed" data-testid={`text-change-reason-${pIdx}-${cIdx}`}>{change.reason}</p>
+                              <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-2" data-testid={`card-after-${pIdx}-${cIdx}`}>
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase">After</span>
+                                <p className="text-xs text-emerald-300 mt-1 line-clamp-2" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
+                                  {change.after}
+                                </p>
                               </div>
                             </div>
-                          ))}
-                          
-                          {/* Product Impact */}
-                          <div className="rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 flex items-start gap-2" data-testid={`card-product-impact-${pIdx}`}>
-                            <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                            <p className="text-xs text-slate-300" data-testid={`text-product-impact-${pIdx}`}>{product.impactExplanation}</p>
+                            {/* AI Reason */}
+                            {change.reason && (
+                              <div className="mt-2 flex items-start gap-1.5" data-testid={`reason-${pIdx}-${cIdx}`}>
+                                <Brain className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                                <p className="text-[10px] text-slate-400 leading-relaxed">{change.reason}</p>
+                              </div>
+                            )}
                           </div>
+                        ))}
+                        
+                        {/* Product Impact */}
+                        <div className="rounded-md bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-2 flex items-start gap-2" data-testid={`card-product-impact-${pIdx}`}>
+                          <TrendingUp className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                          <p className="text-xs text-slate-300" data-testid={`text-product-impact-${pIdx}`}>{product.impactExplanation}</p>
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                      </div>
+                    </div>
                   ))}
-                </Accordion>
+                </div>
               </div>
               
               {/* Impact Summary Footer */}
@@ -2253,284 +2242,117 @@ export default function ZyraAtWork() {
 
       {/* ZYRA Core Capabilities */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Brain className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold text-white">ZYRA Core Capabilities</h2>
-          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">What ZYRA Can Do</Badge>
+        {/* ZYRA Powers - Badge Style Display */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">ZYRA Powers:</span>
+          <Badge 
+            className="bg-primary/10 text-primary border-primary/30 hover-elevate cursor-default" 
+            data-testid="badge-seo-optimization"
+          >
+            <Search className="w-3 h-3 mr-1.5" />
+            SEO Optimization
+          </Badge>
+          <Badge 
+            className="bg-blue-500/10 text-blue-400 border-blue-500/30 hover-elevate cursor-default" 
+            data-testid="badge-bulk-optimization"
+          >
+            <Layers className="w-3 h-3 mr-1.5" />
+            Bulk Updates
+          </Badge>
+          <Badge 
+            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover-elevate cursor-default" 
+            data-testid="badge-image-seo"
+          >
+            <ImageIcon className="w-3 h-3 mr-1.5" />
+            Image SEO
+          </Badge>
+          <Badge 
+            className="bg-purple-500/10 text-purple-400 border-purple-500/30 hover-elevate cursor-default" 
+            data-testid="badge-brand-voice"
+          >
+            <MessageSquare className="w-3 h-3 mr-1.5" />
+            Brand Voice
+          </Badge>
+          <Badge 
+            className="bg-amber-500/10 text-amber-400 border-amber-500/30 hover-elevate cursor-default" 
+            data-testid="badge-smart-refresh"
+          >
+            <Calendar className="w-3 h-3 mr-1.5" />
+            Smart Refresh
+          </Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=seo')} data-testid="card-seo-optimization">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Search className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Product SEO Optimization</h3>
-                  <p className="text-xs text-slate-400 mb-3">AI improves titles, descriptions & meta when revenue upside is detected</p>
-                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30">Used by ZYRA</Badge>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-see-seo-actions">
-                <Eye className="w-4 h-4 mr-2" />
-                See SEO Actions by ZYRA
-              </Button>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=bulk')} data-testid="card-bulk-optimization">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Layers className="w-5 h-5 text-blue-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Bulk Product Optimization</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA updates multiple products when patterns repeat</p>
-                  <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-400/30">Automated</Badge>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-bulk-actions">
-                <Eye className="w-4 h-4 mr-2" />
-                View Bulk Actions
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Execution & Safety - Badge Style */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Execution:</span>
+          <Badge 
+            className="bg-green-500/10 text-green-400 border-green-500/30 hover-elevate cursor-default" 
+            data-testid="badge-shopify-publish"
+          >
+            <Upload className="w-3 h-3 mr-1.5" />
+            Auto-Publish
+          </Badge>
+          <Badge 
+            className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover-elevate cursor-default" 
+            data-testid="badge-patterns"
+          >
+            <Layers className="w-3 h-3 mr-1.5" />
+            Pattern Recognition
+          </Badge>
+          <Badge 
+            className="bg-red-500/10 text-red-400 border-red-500/30 hover-elevate cursor-default" 
+            data-testid="badge-rollback"
+          >
+            <History className="w-3 h-3 mr-1.5" />
+            Instant Rollback
+          </Badge>
+        </div>
 
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=image')} data-testid="card-image-seo">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <ImageIcon className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Image SEO Enhancement</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA auto-generates alt-text to improve discoverability</p>
-                  <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-400/30">Active</Badge>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-image-updates">
-                <Eye className="w-4 h-4 mr-2" />
-                View Image Updates
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=voice')} data-testid="card-brand-voice">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <MessageSquare className="w-5 h-5 text-purple-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Brand Voice Intelligence</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA applies your brand tone automatically</p>
-                  <Badge variant="outline" className="text-[10px] text-purple-400 border-purple-400/30">Learning</Badge>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-applied-voice">
-                <Eye className="w-4 h-4 mr-2" />
-                View Applied Voice
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=refresh')} data-testid="card-smart-refresh">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Calendar className="w-5 h-5 text-amber-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Smart Content Refresh</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA refreshes content when decay is detected</p>
-                  <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-400/30">Scheduled</Badge>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-refresh-history">
-                <Eye className="w-4 h-4 mr-2" />
-                View Refresh History
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Revenue Actions - Badge Style */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Actions:</span>
+          <Badge 
+            className="bg-orange-500/10 text-orange-400 border-orange-500/30 hover-elevate cursor-default" 
+            data-testid="badge-cart-recovery"
+          >
+            <ShoppingCart className="w-3 h-3 mr-1.5" />
+            Cart Recovery
+            <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </Badge>
+          <Badge 
+            className="bg-pink-500/10 text-pink-400 border-pink-500/30 hover-elevate cursor-default" 
+            data-testid="badge-upsell"
+          >
+            <Mail className="w-3 h-3 mr-1.5" />
+            Post-Purchase Upsell
+            <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </Badge>
         </div>
       </div>
 
-      {/* ZYRA Automation & Execution */}
-      <div className="space-y-4">
+      {/* How ZYRA Works - Compact Summary */}
+      <div className="pt-3 border-t border-slate-700/30 space-y-2" data-testid="section-how-zyra-works">
         <div className="flex items-center gap-2">
-          <Settings className="w-5 h-5 text-blue-400" />
-          <h2 className="text-lg font-semibold text-white">Automation & Execution</h2>
-          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">How ZYRA Executes</Badge>
+          <Brain className="w-4 h-4 text-primary" />
+          <span className="text-sm text-slate-300" data-testid="text-zyra-summary">
+            ZYRA monitors, optimizes, and learns from your store—tracking real revenue impact.
+          </span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=publish')} data-testid="card-shopify-publishing">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <Upload className="w-5 h-5 text-green-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Shopify Publishing Engine</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA publishes approved changes automatically</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-publish-log">
-                <Eye className="w-4 h-4 mr-2" />
-                View Publish Log
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=patterns')} data-testid="card-optimization-patterns">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-cyan-500/10">
-                  <Layers className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Optimization Patterns</h3>
-                  <p className="text-xs text-slate-400 mb-3">Repeated improvements ZYRA applies across products</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-pattern-usage">
-                <Eye className="w-4 h-4 mr-2" />
-                View Pattern Usage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=rollback')} data-testid="card-safety-rollback">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <History className="w-5 h-5 text-red-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Safety & Rollback System</h3>
-                  <p className="text-xs text-slate-400 mb-3">Instantly revert any ZYRA action</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-change-history">
-                <Eye className="w-4 h-4 mr-2" />
-                View Change History
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-safe">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Safe & Reversible
+          </Badge>
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-revenue-first">
+            <TrendingUp className="w-3 h-3 mr-1" />
+            Revenue-First
+          </Badge>
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-auto-rollback">
+            <RotateCcw className="w-3 h-3 mr-1" />
+            Auto-Rollback
+          </Badge>
         </div>
       </div>
-
-      {/* Revenue Actions */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-emerald-400" />
-          <h2 className="text-lg font-semibold text-white">Active Revenue Actions</h2>
-          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Marketing Running Now</Badge>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=cart')} data-testid="card-cart-recovery">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <ShoppingCart className="w-5 h-5 text-orange-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Cart Recovery Actions</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA recovers lost revenue automatically</p>
-                  <div className="flex items-center gap-2">
-                    <Badge className="text-[10px] bg-emerald-500/20 text-emerald-400 border-0">Active</Badge>
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-active-recoveries">
-                <Eye className="w-4 h-4 mr-2" />
-                View Active Recoveries
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#16162c] border-slate-700/50 hover-elevate cursor-pointer" onClick={() => setLocation('/ai-tools/activity-timeline?filter=upsell')} data-testid="card-upsell-actions">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-pink-500/10">
-                  <Mail className="w-5 h-5 text-pink-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-1">Post-Purchase Upsell Actions</h3>
-                  <p className="text-xs text-slate-400 mb-3">ZYRA recommends products after purchase</p>
-                  <div className="flex items-center gap-2">
-                    <Badge className="text-[10px] bg-emerald-500/20 text-emerald-400 border-0">Active</Badge>
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-3 text-slate-300" data-testid="button-view-upsell-actions">
-                <Eye className="w-4 h-4 mr-2" />
-                View Upsell Actions
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Revenue Impact Overview (Proof) */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-chart-2" />
-          <h2 className="text-lg font-semibold text-white">Revenue Impact Overview</h2>
-          <Badge variant="outline" className="text-xs text-slate-400 border-slate-600">Proof</Badge>
-        </div>
-        <Card className="bg-gradient-to-r from-primary/10 to-emerald-500/10 border-primary/20 hover-elevate cursor-pointer" onClick={() => setLocation('/analytics/revenue-impact')} data-testid="card-revenue-overview">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-primary/20">
-                  <DollarSign className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-1">What ZYRA Changed & Revenue Made</h3>
-                  <p className="text-sm text-slate-400">See all decisions, affected products, and actual revenue impact</p>
-                </div>
-              </div>
-              <Button variant="outline" className="border-primary/30 text-primary" onClick={() => setLocation('/ai-tools/activity-timeline')} data-testid="button-view-zyra-decisions">
-                <Eye className="w-4 h-4 mr-2" />
-                View ZYRA Decisions
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="bg-[#16162c] border-slate-700/50">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-lg bg-primary/10 flex-shrink-0">
-              <Brain className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-white font-semibold mb-1">How ZYRA Works</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                ZYRA continuously monitors your store, detecting revenue opportunities and executing safe, 
-                reversible optimizations. Every action is measured for real revenue impact, and ZYRA learns 
-                what works best for your specific store over time.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-3">
-                <Badge variant="outline" className="text-slate-400 border-slate-600">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Safe & Reversible
-                </Badge>
-                <Badge variant="outline" className="text-slate-400 border-slate-600">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  Revenue-First
-                </Badge>
-                <Badge variant="outline" className="text-slate-400 border-slate-600">
-                  <RotateCcw className="w-3 h-3 mr-1" />
-                  Auto-Rollback
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
