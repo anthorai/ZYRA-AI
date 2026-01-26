@@ -779,11 +779,56 @@ function ProgressStages({
     
     if (executionStatus === 'running' && activePhase === 'execute') {
       entries.push({
-        id: 'executing',
+        id: 'exec-start',
+        timestamp: new Date(now.getTime() - 3000),
+        type: 'action',
+        message: 'Starting AI optimization engine...',
+        detail: 'Loading product data and brand voice settings'
+      });
+      entries.push({
+        id: 'exec-ai',
+        timestamp: new Date(now.getTime() - 1500),
+        type: 'thinking',
+        message: 'Generating AI-enhanced content with GPT-4o-mini...',
+        detail: 'Crafting compelling product copy that converts',
+        metrics: [
+          { label: 'Model', value: 'GPT-4o-mini' },
+          { label: 'Mode', value: 'Fast Quality' }
+        ]
+      });
+      entries.push({
+        id: 'exec-apply',
         timestamp: now,
         type: 'action',
-        message: 'Applying AI-powered optimization to your store...',
-        detail: 'Generating improved content using GPT-4o-mini'
+        message: 'Publishing optimized content to Shopify...',
+        detail: 'Applying changes via Shopify Admin API'
+      });
+    }
+    
+    if (executionStatus === 'running' && activePhase === 'prove') {
+      entries.push({
+        id: 'prove-start',
+        timestamp: new Date(now.getTime() - 1000),
+        type: 'action',
+        message: 'Verifying changes were applied successfully...',
+        detail: 'Comparing before/after content on Shopify'
+      });
+      entries.push({
+        id: 'prove-collect',
+        timestamp: now,
+        type: 'thinking',
+        message: 'Setting up performance tracking for this optimization...',
+        detail: 'Will measure conversion rate impact over next 7 days'
+      });
+    }
+    
+    if (executionStatus === 'running' && activePhase === 'learn') {
+      entries.push({
+        id: 'learn-analyze',
+        timestamp: new Date(now.getTime() - 500),
+        type: 'insight',
+        message: 'Recording optimization patterns for your store...',
+        detail: 'Improving future recommendations based on this action'
       });
     }
     
@@ -792,11 +837,11 @@ function ProgressStages({
         id: 'complete',
         timestamp: now,
         type: 'success',
-        message: `Successfully applied ${executionResult.totalChanges} improvements`,
+        message: `Applied ${executionResult.totalChanges} improvements to ${executionResult.productsOptimized.length} product(s)`,
         detail: executionResult.estimatedImpact,
         metrics: [
           { label: 'Products Updated', value: executionResult.productsOptimized.length },
-          { label: 'Changes Made', value: executionResult.totalChanges }
+          { label: 'Total Changes', value: executionResult.totalChanges }
         ]
       });
     }
@@ -811,21 +856,42 @@ function ProgressStages({
   const generateThoughts = useCallback((): string[] => {
     const thoughts: string[] = [];
     
-    if (currentStage >= 1 && currentStage < 5) {
+    // Detection phase thoughts
+    if (currentStage >= 1 && currentStage < 5 && !isDetectionComplete) {
       thoughts.push('Examining product listing quality and SEO signals...');
     }
-    if (currentStage >= 2 && currentStage < 5) {
+    if (currentStage >= 2 && currentStage < 5 && !isDetectionComplete) {
       thoughts.push('Comparing trust elements against high-converting stores...');
     }
-    if (currentStage >= 3 && currentStage < 5) {
+    if (currentStage >= 3 && currentStage < 5 && !isDetectionComplete) {
       thoughts.push('Evaluating which changes will drive the most revenue...');
     }
     
+    // Execution phase thoughts
+    if (executionStatus === 'running' && activePhase === 'execute') {
+      thoughts.push('Analyzing your brand voice and writing style...');
+      thoughts.push('Generating compelling, conversion-focused copy...');
+      thoughts.push('Applying SEO best practices to content...');
+    }
+    
+    // Prove phase thoughts
+    if (executionStatus === 'running' && activePhase === 'prove') {
+      thoughts.push('Verifying Shopify product updates applied correctly...');
+      thoughts.push('Setting baseline metrics for performance tracking...');
+    }
+    
+    // Learn phase thoughts
+    if (executionStatus === 'running' && activePhase === 'learn') {
+      thoughts.push('Recording successful optimization patterns...');
+      thoughts.push('Updating store optimization profile...');
+    }
+    
     return thoughts;
-  }, [currentStage]);
+  }, [currentStage, isDetectionComplete, executionStatus, activePhase]);
 
   const thoughts = generateThoughts();
-  const isThinking = currentStage >= 1 && currentStage < 5 && !isDetectionComplete;
+  const isThinking = (currentStage >= 1 && currentStage < 5 && !isDetectionComplete) || 
+                     (executionStatus === 'running' && ['execute', 'prove', 'learn'].includes(activePhase));
 
   return (
     <div className="py-4">
