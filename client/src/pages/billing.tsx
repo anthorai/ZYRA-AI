@@ -683,7 +683,7 @@ export default function BillingPage() {
       <PageShell
         title="Billing & Subscription"
         subtitle="Manage your subscription plans and billing"
-        backTo="/settings"
+        useHistoryBack={true}
         maxWidth="xl"
         spacing="normal"
       >
@@ -701,7 +701,7 @@ export default function BillingPage() {
     <PageShell
       title="Billing & Subscription"
       subtitle="Manage your subscription plans and billing"
-      backTo="/settings"
+      useHistoryBack={true}
       maxWidth="xl"
       spacing="normal"
     >

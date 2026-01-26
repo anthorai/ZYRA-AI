@@ -198,7 +198,7 @@ export default function SubscriptionManagement() {
     <PageShell
       title="Subscription Management"
       subtitle="View and manage your subscription, invoices, and billing history"
-      backTo="/settings"
+      useHistoryBack={true}
       maxWidth="xl"
       spacing="normal"
     >

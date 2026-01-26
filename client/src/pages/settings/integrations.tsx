@@ -741,7 +741,7 @@ export default function IntegrationsPage() {
       subtitle="Connect third-party services to enhance your Zyra AI experience"
       maxWidth="xl"
       spacing="normal"
-      backTo="/settings"
+      useHistoryBack={true}
     >
       {/* Success Banner - Shows when store is connected */}
       {showSuccessBanner && (
