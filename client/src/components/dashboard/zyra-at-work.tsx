@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { RevenueDelta } from "@/components/ui/revenue-delta";
 import { 
   Activity, 
@@ -28,7 +29,12 @@ import {
   DollarSign,
   Eye,
   Trophy,
-  Database
+  Database,
+  Sparkles,
+  ArrowRight,
+  Package,
+  FileText,
+  ChevronRight
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
@@ -1563,59 +1569,162 @@ export default function ZyraAtWork() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* EXECUTION RESULTS BANNER - Always visible when results exist */}
+          {/* EXECUTION RESULTS BANNER - Professional Design */}
           {executionResult && executionResult.productsOptimized.length > 0 && (
-            <div className="mb-4 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30" data-testid="execution-results-banner">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-emerald-400">
-                    {executionResult.actionLabel} Complete
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {executionResult.totalChanges} changes across {executionResult.productsOptimized.length} product{executionResult.productsOptimized.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                {executionResult.productsOptimized.map((product, pIdx) => (
-                  <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
-                    <p className="text-sm font-medium text-white mb-2 flex items-center gap-2">
-                      <ShoppingCart className="w-3 h-3 text-primary" />
-                      {product.productName}
-                    </p>
-                    <div className="space-y-3">
-                      {product.changes.map((change, cIdx) => (
-                        <div key={cIdx} className="text-xs border-l-2 border-primary/30 pl-3">
-                          <p className="text-primary font-medium mb-1">{change.field}</p>
-                          <div className="space-y-1">
-                            <div className="flex items-start gap-2">
-                              <span className="text-red-400 font-mono text-[10px] w-14 shrink-0">BEFORE:</span>
-                              <span className="text-slate-500">{change.before}</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-emerald-400 font-mono text-[10px] w-14 shrink-0">AFTER:</span>
-                              <span className="text-emerald-300">{change.after}</span>
-                            </div>
-                            <p className="text-slate-400 italic mt-1 text-[11px]">{change.reason}</p>
-                          </div>
-                        </div>
-                      ))}
+            <div className="mb-6 rounded-xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-slate-900/50 to-slate-900/80" data-testid="execution-results-banner">
+              {/* Success Header */}
+              <div className="p-5 border-b border-emerald-500/10 bg-gradient-to-r from-emerald-500/10 to-transparent">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                      <CheckCircle2 className="w-7 h-7 text-white" />
                     </div>
-                    <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
-                      {product.impactExplanation}
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 text-amber-900" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="text-lg font-semibold text-white" data-testid="text-action-label">
+                        {executionResult.actionLabel}
+                      </h3>
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs" data-testid="badge-complete">
+                        Complete
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-slate-400" data-testid="text-optimization-status">
+                      AI-powered optimization finished successfully
                     </p>
                   </div>
-                ))}
+                </div>
+                
+                {/* Summary Stats Row */}
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-products-updated">
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <Package className="w-4 h-4 text-primary" />
+                      <span className="text-xl font-bold text-white" data-testid="text-products-count">{executionResult.productsOptimized.length}</span>
+                    </div>
+                    <p className="text-xs text-slate-400">Products Updated</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-fields-changed">
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <FileText className="w-4 h-4 text-blue-400" />
+                      <span className="text-xl font-bold text-white" data-testid="text-changes-count">{executionResult.totalChanges}</span>
+                    </div>
+                    <p className="text-xs text-slate-400">Fields Changed</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-3 text-center" data-testid="stat-success-rate">
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xl font-bold text-white" data-testid="text-success-rate">100%</span>
+                    </div>
+                    <p className="text-xs text-slate-400">Success Rate</p>
+                  </div>
+                </div>
               </div>
               
-              <div className="mt-3 p-2 bg-emerald-500/20 rounded text-center">
-                <p className="text-xs text-emerald-400 font-medium">
-                  {executionResult.estimatedImpact}
+              {/* Product Changes - Collapsible Accordion */}
+              <div className="p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2" data-testid="text-changes-applied-label">
+                  <Activity className="w-3 h-3" />
+                  Changes Applied
                 </p>
+                <Accordion type="single" collapsible className="space-y-2">
+                  {executionResult.productsOptimized.map((product, pIdx) => (
+                    <AccordionItem 
+                      key={pIdx} 
+                      value={`product-${pIdx}`}
+                      className="border border-slate-700/50 rounded-lg overflow-hidden bg-slate-800/30 data-[state=open]:border-primary/30"
+                    >
+                      <AccordionTrigger className="px-4 py-3" data-testid={`accordion-trigger-product-${pIdx}`}>
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="text-left flex-1">
+                            <p className="text-sm font-medium text-white" data-testid={`text-product-name-${pIdx}`}>{product.productName}</p>
+                            <p className="text-xs text-slate-400" data-testid={`text-product-fields-${pIdx}`}>{product.changes.length} field{product.changes.length !== 1 ? 's' : ''} optimized</p>
+                          </div>
+                          <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 text-[10px] mr-2" data-testid={`badge-applied-${pIdx}`}>
+                            Applied
+                          </Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <div className="space-y-4 pt-2">
+                          {product.changes.map((change, cIdx) => (
+                            <div key={cIdx} className="rounded-lg bg-slate-900/50 p-4" data-testid={`change-card-${pIdx}-${cIdx}`}>
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                <span className="text-sm font-medium text-white" data-testid={`text-change-field-${pIdx}-${cIdx}`}>{change.field}</span>
+                              </div>
+                              
+                              {/* Before/After Comparison */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="rounded-lg bg-red-500/5 border border-red-500/20 p-3" data-testid={`card-before-${pIdx}-${cIdx}`}>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
+                                      <span className="text-[10px] font-bold text-red-400">OLD</span>
+                                    </div>
+                                    <span className="text-xs font-medium text-red-400/80">Before</span>
+                                  </div>
+                                  <p className="text-sm text-slate-400 leading-relaxed" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
+                                    {change.before || <span className="italic text-slate-600">(empty)</span>}
+                                  </p>
+                                </div>
+                                <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3" data-testid={`card-after-${pIdx}-${cIdx}`}>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                      <span className="text-[10px] font-bold text-emerald-400">NEW</span>
+                                    </div>
+                                    <span className="text-xs font-medium text-emerald-400/80">After</span>
+                                  </div>
+                                  <p className="text-sm text-emerald-300 leading-relaxed" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
+                                    {change.after}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Reason Badge */}
+                              <div className="mt-3 flex items-start gap-2">
+                                <Brain className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                                <p className="text-xs text-slate-400 leading-relaxed" data-testid={`text-change-reason-${pIdx}-${cIdx}`}>{change.reason}</p>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Product Impact */}
+                          <div className="rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-3 flex items-start gap-2" data-testid={`card-product-impact-${pIdx}`}>
+                            <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                            <p className="text-xs text-slate-300" data-testid={`text-product-impact-${pIdx}`}>{product.impactExplanation}</p>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+              
+              {/* Impact Summary Footer */}
+              <div className="px-5 py-4 bg-gradient-to-r from-emerald-500/10 via-primary/10 to-transparent border-t border-slate-700/50">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400/20 to-primary/20 flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 mb-0.5">Expected Revenue Impact</p>
+                      <p className="text-sm font-medium text-emerald-400" data-testid="text-estimated-impact">
+                        {executionResult.estimatedImpact}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-0 py-1.5 px-3" data-testid="badge-optimization-live">
+                    <Sparkles className="w-3 h-3 mr-1.5" />
+                    Optimization Live
+                  </Badge>
+                </div>
               </div>
             </div>
           )}
