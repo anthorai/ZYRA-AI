@@ -1,0 +1,205 @@
+YOU ARE ZYRA AI.
+
+TASK:
+Create a single unified “Change Control Dashboard”
+that gives merchants full visibility, control, and proof
+over every AI-driven change made by ZYRA
+without breaking the core revenue loop.
+
+====================================================
+CORE PRINCIPLE (NON-NEGOTIABLE)
+====================================================
+
+This dashboard must NOT be a generic editor.
+
+It is a:
+- Decision review system
+- Execution control panel
+- Revenue proof system
+
+Every item shown must map to:
+DETECT → DECIDE → EXECUTE → PROVE → LEARN
+
+====================================================
+DASHBOARD PURPOSE
+====================================================
+
+The dashboard must allow merchants to:
+1. See WHAT ZYRA wants to change
+2. See WHY ZYRA wants to change it
+3. See BEFORE vs AFTER clearly
+4. Approve or reject changes
+5. Auto-apply or manually apply changes
+6. Instantly rollback any change
+7. See revenue impact of each change
+
+====================================================
+DASHBOARD STRUCTURE (SINGLE PAGE)
+====================================================
+
+SECTION 1: CHANGE TIMELINE (TOP)
+
+- Chronological list of all ZYRA actions
+- Each item shows:
+  • Product name + thumbnail
+  • Action type (SEO, Content, Discoverability, Recovery)
+  • Status badge:
+    - Pending Approval
+    - Applied
+    - Rolled Back
+    - Monitoring Impact
+  • Risk level (Low / Medium / High)
+  • Manual / Autonomous badge
+
+----------------------------------------------------
+
+SECTION 2: CHANGE DETAIL PANEL (ON SELECT)
+
+For the selected change, show:
+
+A) DECISION CONTEXT
+- Why this product
+- Why this change
+- Expected revenue impact
+- Confidence score
+- Risk explanation (plain language)
+
+----------------------------------------------------
+
+B) BEFORE / AFTER COMPARISON (CORE FEATURE)
+
+Show side-by-side comparison for:
+- Product Title
+- Product Description
+- SEO Title
+- Meta Description
+- Image Alt Text
+- Tags / Keywords (if applicable)
+
+UI REQUIREMENTS:
+- Left = BEFORE (read-only)
+- Right = AFTER (highlighted changes)
+- Inline diff highlighting
+- Clean, modern typography
+- Dark mode compatible
+
+----------------------------------------------------
+
+C) EXECUTION CONTROLS
+
+Buttons (context-aware):
+
+IF PENDING:
+- [Approve & Push to Shopify]
+- [Edit Before Pushing] (optional manual tweak)
+- [Reject Change]
+
+IF APPLIED:
+- [Rollback Instantly]
+- [Lock Change]
+
+IF AUTOPILOT ENABLED:
+- Badge: “Auto-applied by ZYRA”
+- Rollback always available
+
+----------------------------------------------------
+
+SECTION 3: REVENUE PROOF PANEL
+
+After execution, show:
+
+- Revenue delta (₹ / $)
+- Orders influenced
+- Timeline:
+  Decision → Execution → Result
+- Status:
+  • Impact Building
+  • Positive Impact
+  • Negative Impact (Rollback Suggested)
+
+IMPORTANT:
+No vanity metrics.
+No CTR.
+No impressions.
+Only money.
+
+----------------------------------------------------
+
+SECTION 4: SAFETY & CONTROL SETTINGS
+
+Per store / per product:
+- Enable / disable autopilot
+- Autonomy level (Low-risk only / All except high-risk)
+- Auto-rollback threshold
+- Manual approval required toggle
+
+====================================================
+ROLLBACK SYSTEM (CRITICAL)
+====================================================
+
+Every applied change MUST:
+- Store a full snapshot of original content
+- Allow rollback in one click
+- Log rollback reason
+- Restore Shopify state instantly
+
+Rollback must NOT:
+- Break loop
+- Reset learning
+- Lose history
+
+====================================================
+LOOP INTEGRATION RULES
+====================================================
+
+This dashboard must NOT create a new workflow.
+
+Rules:
+- DETECT creates the opportunity
+- DECIDE creates the change proposal
+- DASHBOARD is the REVIEW & CONTROL layer
+- EXECUTE happens only after approval or autopilot rule
+- PROVE updates dashboard with revenue impact
+- LEARN updates future confidence scores
+
+Dashboard is a WINDOW into the loop, not a replacement.
+
+====================================================
+UI LANGUAGE RULES
+====================================================
+
+Use business language, not technical language.
+
+Examples:
+- “Why ZYRA recommends this”
+- “What will change”
+- “Expected revenue impact”
+- “Safe to apply / Requires review”
+- “Undo change instantly”
+
+====================================================
+EXPECTED RESULT
+====================================================
+
+Merchants should feel:
+- Safe
+- In control
+- Confident
+- Informed
+
+ZYRA should feel like:
+A senior growth manager making explainable decisions.
+
+====================================================
+FINAL CHECK
+====================================================
+
+This dashboard must:
+- Increase trust
+- Reduce fear of automation
+- Increase approval rate
+- Reduce churn
+- Justify premium pricing
+
+If any feature does NOT support revenue confidence,
+it must be removed.
