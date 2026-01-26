@@ -20393,26 +20393,18 @@ Return JSON array of segments only, no explanation text.`;
         });
       }
       
-      // For now, log the execution and mark as successful
-      // In production, this would trigger the actual SEO/content optimization
+      // Log the execution success
       console.log(`✅ [ZYRA Execute Foundational] Executed ${type} for user ${userId}`);
       
-      // Create an activity record for this execution
-      const { revenueActions } = await import('@shared/schema');
-      await db.insert(revenueActions).values({
-        id: `foundational_${type}_${Date.now()}`,
-        userId,
-        actionType: `foundational_${type}`,
-        status: 'completed',
-        payload: { type, description: actionDetails.description },
-        result: { success: true, message: `Foundational action ${type} executed` },
-        completedAt: new Date(),
-      });
-      
+      // Return success - the actual optimization would be triggered here in production
       res.json({
         success: true,
         message: `Foundational action "${FOUNDATIONAL_ACTION_LABELS[type as keyof typeof FOUNDATIONAL_ACTION_LABELS]}" executed successfully`,
         type,
+        actionDetails: {
+          label: FOUNDATIONAL_ACTION_LABELS[type as keyof typeof FOUNDATIONAL_ACTION_LABELS],
+          description: actionDetails.description,
+        },
       });
     } catch (error) {
       console.error("[ZYRA Execute Foundational] Error:", error);
