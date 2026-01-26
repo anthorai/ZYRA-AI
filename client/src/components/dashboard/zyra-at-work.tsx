@@ -2103,7 +2103,7 @@ export default function ZyraAtWork() {
           
           <div 
             ref={scrollContainerRef}
-            className="max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+            className="w-full"
             data-testid="activity-feed"
           >
             {isLoading ? (
