@@ -69,17 +69,22 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
     refetchInterval: 60000, // Refresh every minute
   });
 
-  // Get the display name for the current plan
+  // Get the display name for the current plan (short version for sidebar)
   const getCurrentPlanDisplay = () => {
-    // If we have subscription data with a plan name, use it
+    // If we have subscription data with a plan name, use it (but shorten trial names)
     if (subscriptionData?.planName) {
+      const planName = subscriptionData.planName.toLowerCase();
+      // Shorten long trial names for sidebar display
+      if (planName.includes('trial') || planName.includes('free trial')) {
+        return 'Trial';
+      }
       return subscriptionData.planName;
     }
     // Fall back to appUser plan
     if (appUser?.plan) {
-      // Format common plan values nicely
+      // Format common plan values nicely (short for sidebar)
       const planMap: Record<string, string> = {
-        'trial': 'Free Trial',
+        'trial': 'Trial',
         'free': 'Free',
         'starter': 'Starter',
         'growth': 'Growth',
@@ -88,7 +93,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
       };
       return planMap[appUser.plan.toLowerCase()] || appUser.plan;
     }
-    return 'Free Trial';
+    return 'Trial';
   };
 
   // Close sidebar when clicking outside on mobile
