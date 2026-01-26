@@ -3530,6 +3530,29 @@ export const revenueLoopProof = pgTable("revenue_loop_proof", {
   index('revenue_loop_proof_verdict_idx').on(table.verdict),
 ]);
 
+// Interim Proof Events - Event-driven real-time proof tracking
+// Populated by Shopify webhooks, read by PROVE phase for immediate feedback
+export const interimProofEvents = pgTable("interim_proof_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  opportunityId: varchar("opportunity_id").references(() => revenueOpportunities.id).notNull(),
+  productId: integer("product_id").references(() => products.id),
+  
+  // Event Type: sale, view, add_to_cart
+  eventType: text("event_type").notNull(),
+  
+  // Revenue amount (for sales)
+  amount: numeric("amount", { precision: 12, scale: 2 }).default("0"),
+  
+  // Timestamp of the event
+  eventTimestamp: timestamp("event_timestamp").default(sql`NOW()`),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('interim_proof_events_opportunity_id_idx').on(table.opportunityId),
+  index('interim_proof_events_product_id_idx').on(table.productId),
+  index('interim_proof_events_event_type_idx').on(table.eventType),
+]);
+
 // Store Learning Insights - LEARN phase persistent patterns
 export const storeLearningInsights = pgTable("store_learning_insights", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -3620,6 +3643,11 @@ export const insertRevenueLoopProofSchema = createInsertSchema(revenueLoopProof)
   updatedAt: true,
 });
 
+export const insertInterimProofEventSchema = createInsertSchema(interimProofEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertStoreLearningInsightSchema = createInsertSchema(storeLearningInsights).omit({
   id: true,
   createdAt: true,
@@ -3639,6 +3667,8 @@ export type RevenueOpportunity = typeof revenueOpportunities.$inferSelect;
 export type InsertRevenueOpportunity = z.infer<typeof insertRevenueOpportunitySchema>;
 export type RevenueLoopProof = typeof revenueLoopProof.$inferSelect;
 export type InsertRevenueLoopProof = z.infer<typeof insertRevenueLoopProofSchema>;
+export type InterimProofEvent = typeof interimProofEvents.$inferSelect;
+export type InsertInterimProofEvent = z.infer<typeof insertInterimProofEventSchema>;
 export type StoreLearningInsight = typeof storeLearningInsights.$inferSelect;
 export type InsertStoreLearningInsight = z.infer<typeof insertStoreLearningInsightSchema>;
 export type RevenueLoopRun = typeof revenueLoopRuns.$inferSelect;

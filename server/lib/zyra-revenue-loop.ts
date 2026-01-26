@@ -122,6 +122,7 @@ export interface LoopCycleResult {
   decided: string | null;
   executed: boolean;
   proved: number;
+  provingInProgress: number; // Actions with impact still building
   learned: number;
   cycleTime: number;
 }
@@ -613,31 +614,69 @@ export class ZyraRevenueLoop {
   }
 
   /**
-   * PHASE 4: PROVE - Financial Proof Only
+   * PHASE 4: PROVE - Financial Proof Only (EVENT-DRIVEN)
    * 
    * ZYRA must prove results using ONLY:
    * - Revenue change (₹ / $)
    * - Per-product impact
    * - Before vs after timeline
    * 
+   * SPEED UPGRADE: Provides immediate "impact building" feedback
+   * while proof window is still open. Final verdict only after window closes.
+   * 
    * NO vanity metrics (CTR, impressions, rankings)
    */
   async prove(userId: string): Promise<{
     provedCount: number;
+    inProgress: number;
     results: {
       opportunityId: string;
       verdict: string;
       revenueDelta: number;
       rolledBack: boolean;
     }[];
+    buildingImpact: {
+      opportunityId: string;
+      productName: string | null;
+      hoursRemaining: number;
+      currentSignal: 'positive' | 'neutral' | 'negative' | 'building';
+    }[];
   }> {
     console.log(`📊 [ZYRA Loop] PROVE phase for user ${userId}`);
     this.updateLoopState(userId, 'measuring_impact');
     const db = requireDb();
 
-    const opportunitiesReady = await revenueAttributionService.getOpportunitiesReadyForProving(10);
-    const userOpportunities = opportunitiesReady.filter(o => o.userId === userId);
+    // Get ALL opportunities in proving state (both ready and in-progress)
+    const allProving = await db
+      .select()
+      .from(revenueOpportunities)
+      .where(
+        and(
+          eq(revenueOpportunities.userId, userId),
+          eq(revenueOpportunities.status, 'proving')
+        )
+      );
 
+    const now = new Date();
+    const readyForFinalVerdict: typeof allProving = [];
+    const stillBuilding: typeof allProving = [];
+
+    // Separate completed windows from in-progress
+    for (const opp of allProving) {
+      const proveWindow = opp.proveWindowHours || 72;
+      const proveStarted = opp.proveStartedAt;
+      
+      if (proveStarted) {
+        const proofEndTime = new Date(proveStarted.getTime() + proveWindow * 60 * 60 * 1000);
+        if (now >= proofEndTime) {
+          readyForFinalVerdict.push(opp);
+        } else {
+          stillBuilding.push(opp);
+        }
+      }
+    }
+
+    // Process completed proof windows (final verdicts)
     const results: {
       opportunityId: string;
       verdict: string;
@@ -645,7 +684,7 @@ export class ZyraRevenueLoop {
       rolledBack: boolean;
     }[] = [];
 
-    for (const opp of userOpportunities) {
+    for (const opp of readyForFinalVerdict) {
       const result = await revenueAttributionService.measureOpportunityImpact(opp.id);
       if (result) {
         results.push({
@@ -663,8 +702,52 @@ export class ZyraRevenueLoop {
       }
     }
 
-    console.log(`✅ [ZYRA Loop] PROVE complete: ${results.length} opportunities measured`);
-    return { provedCount: results.length, results };
+    // Generate immediate "impact building" feedback for in-progress windows
+    // Use Promise.all for parallel async signal retrieval
+    const buildingImpact = await Promise.all(stillBuilding.map(async opp => {
+      const proveWindow = opp.proveWindowHours || 72;
+      const proveStarted = opp.proveStartedAt!;
+      const proofEndTime = new Date(proveStarted.getTime() + proveWindow * 60 * 60 * 1000);
+      const hoursRemaining = Math.ceil((proofEndTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+      
+      // Determine current signal based on early metrics (event-driven, from DB)
+      const actionPlan = opp.actionPlan as any;
+      const currentSignal = await this.getEarlyImpactSignal(opp, actionPlan);
+      
+      return {
+        opportunityId: opp.id,
+        productName: actionPlan?.productName || null,
+        hoursRemaining,
+        currentSignal,
+      };
+    }));
+
+    if (buildingImpact.length > 0) {
+      console.log(`📈 [ZYRA Loop] ${buildingImpact.length} actions building impact`);
+    }
+
+    console.log(`✅ [ZYRA Loop] PROVE complete: ${results.length} measured, ${buildingImpact.length} building`);
+    return { 
+      provedCount: results.length, 
+      inProgress: buildingImpact.length,
+      results, 
+      buildingImpact 
+    };
+  }
+
+  /**
+   * Get early impact signal for in-progress proof windows (EVENT-DRIVEN)
+   * Uses real-time sales event data from revenueAttributionService
+   * Backed by database for durability across restarts
+   */
+  private async getEarlyImpactSignal(
+    opportunity: typeof revenueOpportunities.$inferSelect,
+    actionPlan: any
+  ): Promise<'positive' | 'neutral' | 'negative' | 'building'> {
+    // Use the event-driven interim metrics from attribution service
+    // These metrics are populated by Shopify sales webhooks in real-time
+    // Data is persisted to database for durability
+    return await revenueAttributionService.getInterimImpactSignal(opportunity.id);
   }
 
   /**
@@ -746,6 +829,7 @@ export class ZyraRevenueLoop {
       decided: decision?.opportunityId || null,
       executed,
       proved: proveResult.provedCount,
+      provingInProgress: proveResult.inProgress,
       learned: 0, // LEARN runs async, count not available immediately
       cycleTime,
     };

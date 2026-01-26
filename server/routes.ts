@@ -16073,6 +16073,11 @@ Output format: Markdown with clear section headings.`;
             totalRevenue: saleAmount // This sale's revenue
           });
 
+          // EVENT-DRIVEN PROOF: Record sale for interim proof metrics
+          // This enables real-time "impact building" feedback in the PROVE phase
+          const { revenueAttributionService } = await import('./lib/revenue-attribution-service');
+          await revenueAttributionService.recordSalesEvent(product.id, 'sale', saleAmount);
+
           console.log(`[Orders/Paid] Tracked sale for optimized product ${product.id}: $${saleAmount}`);
         } catch (itemError) {
           console.error('[Orders/Paid] Error processing line item:', itemError);
