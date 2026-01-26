@@ -20172,17 +20172,22 @@ Return JSON array of segments only, no explanation text.`;
         const riskLevel = result.topFriction?.riskLevel || foundationalAction?.riskLevel || 'low';
         
         // DECIDE: Commit the decision
+        // Always show 'awaiting_approval' (Deciding) first, then transition to 'running' (Applying)
         if (result.status === 'friction_found' && result.lastValidNextMoveId) {
           committedActionId = result.lastValidNextMoveId;
           
-          // If autopilot=true AND risk=low, auto-execute
+          // Always show decide phase first - return 'awaiting_approval' initially
+          executionStatus = 'awaiting_approval';
+          nextState = 'awaiting_approval';
+          console.log(`⏳ [ZYRA Detect] Deciding phase: action ${committedActionId} ready`);
+          
+          // If autopilot=true AND risk=low, schedule auto-execute after brief delay
+          // This ensures the UI shows "Deciding Next Move" before jumping to "Applying Fix"
           if (isAutopilot && riskLevel === 'low') {
-            executionStatus = 'running';
-            nextState = 'auto_execute';
-            console.log(`🚀 [ZYRA Detect] Auto-executing low-risk action ${committedActionId}`);
+            console.log(`🚀 [ZYRA Detect] Will auto-execute low-risk action ${committedActionId} after decide phase`);
             
-            // Trigger async execution (non-blocking)
-            setImmediate(async () => {
+            // Trigger async execution after a short delay to allow UI to show decide phase
+            setTimeout(async () => {
               try {
                 const { revenueExecutionEngine } = await import('./lib/revenue-execution-engine');
                 await revenueExecutionEngine.executeOpportunity(committedActionId!);
@@ -20190,11 +20195,7 @@ Return JSON array of segments only, no explanation text.`;
               } catch (err) {
                 console.error(`❌ [ZYRA Detect] Auto-execution failed:`, err);
               }
-            });
-          } else {
-            executionStatus = 'awaiting_approval';
-            nextState = 'awaiting_approval';
-            console.log(`⏳ [ZYRA Detect] Awaiting approval for action ${committedActionId}`);
+            }, 2000); // 2 second delay to show decide phase
           }
         } else if (result.status === 'foundational_action' && foundationalAction) {
           // For foundational actions, always await approval (new stores)
@@ -20326,11 +20327,9 @@ Return JSON array of segments only, no explanation text.`;
           committedActionId = `foundational_${foundationalAction.type}`;
         }
         
-        // Determine execution status based on autopilot and risk
-        if (isAutopilot && riskLevel === 'low' && committedActionId) {
-          executionStatus = 'running';
-          nextState = 'auto_execute';
-        } else if (committedActionId) {
+        // Determine execution status - always show 'awaiting_approval' (Deciding) phase
+        // The actual execution happens async after user sees the decide phase
+        if (committedActionId) {
           executionStatus = 'awaiting_approval';
           nextState = 'awaiting_approval';
         }
