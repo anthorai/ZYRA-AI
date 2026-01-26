@@ -20056,6 +20056,29 @@ Return JSON array of segments only, no explanation text.`;
         activePhase = 'decide';
       }
       
+      // Get foundational action for new stores with HARD GUARANTEE for new stores
+      let foundationalAction = undefined;
+      if (isNewStore) {
+        const { FOUNDATIONAL_ACTION_LABELS, FOUNDATIONAL_ACTION_DESCRIPTIONS } = await import('./lib/fast-detection-engine');
+        try {
+          foundationalAction = await fastDetectionEngine.selectFoundationalAction(userId);
+        } catch (actionError) {
+          console.error("[ZYRA Live Stats] Foundational action selection failed, using fallback:", actionError);
+        }
+        // HARD GUARANTEE: If still undefined after try, create fallback action at API level
+        // RULE: For NEW STORES, DETECT must NEVER return "no action"
+        if (!foundationalAction) {
+          foundationalAction = {
+            type: 'trust_signals',
+            title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
+            description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
+            whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
+            expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
+            riskLevel: 'low'
+          };
+        }
+      }
+      
       res.json({
         activePhase,
         currentAction: null,
@@ -20074,6 +20097,8 @@ Return JSON array of segments only, no explanation text.`;
         isNewStore,
         storeAgeDays,
         totalOrders,
+        // Foundational action for new stores (GUARANTEED non-null for new stores)
+        foundationalAction,
       });
     } catch (error) {
       console.error("Error fetching ZYRA live stats:", error);
@@ -20087,12 +20112,26 @@ Return JSON array of segments only, no explanation text.`;
       const startTime = Date.now();
       console.log(`[ZYRA Detect API] Started for user ${userId}`);
       
-      const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
+      const { fastDetectionEngine, FOUNDATIONAL_ACTION_LABELS, FOUNDATIONAL_ACTION_DESCRIPTIONS } = await import('./lib/fast-detection-engine');
       
       const result = await fastDetectionEngine.detectWithTimeout(userId);
       
       const endTime = Date.now();
       console.log(`[ZYRA Detect API] Completed in ${endTime - startTime}ms - status: ${result.status}`);
+      
+      // HARD GUARANTEE: If new store but no foundational action, create fallback at API level
+      // RULE: For NEW STORES, DETECT must NEVER return "no action"
+      let foundationalAction = result.foundationalAction;
+      if (result.isNewStore && !foundationalAction) {
+        foundationalAction = {
+          type: 'trust_signals',
+          title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
+          description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
+          whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
+          expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
+          riskLevel: 'low'
+        };
+      }
       
       res.json({
         success: result.success,
@@ -20105,6 +20144,9 @@ Return JSON array of segments only, no explanation text.`;
         phase: result.phase,
         cacheStatus: result.cacheStatus,
         lastValidNextMoveId: result.lastValidNextMoveId,
+        // New store foundational action (GUARANTEED non-null for new stores)
+        isNewStore: result.isNewStore,
+        foundationalAction,
       });
     } catch (error) {
       console.error("[ZYRA Detect API] Error:", error);
@@ -20125,27 +20167,55 @@ Return JSON array of segments only, no explanation text.`;
   app.get("/api/zyra/detection-status", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
+      const { fastDetectionEngine, FOUNDATIONAL_ACTION_LABELS, FOUNDATIONAL_ACTION_DESCRIPTIONS } = await import('./lib/fast-detection-engine');
       
       const status = await fastDetectionEngine.getDetectionStatus(userId);
       const lastValidNextMoveId = await fastDetectionEngine.getLastValidNextMove(userId);
       
-      let detectionStatus: 'friction_found' | 'no_friction' | 'insufficient_data' | 'detecting';
+      // Check if this is a new store
+      const { isNew: isNewStore } = await fastDetectionEngine.isNewStore(userId);
+      
+      let detectionStatus: 'friction_found' | 'no_friction' | 'insufficient_data' | 'foundational_action' | 'detecting';
       let reason: string;
-      let nextAction: 'standby' | 'data_collection' | 'decide';
+      let nextAction: 'standby' | 'data_collection' | 'decide' | 'foundational';
+      let foundationalAction = undefined;
       
       if (!status.complete) {
         detectionStatus = 'detecting';
         reason = 'Analyzing store performance';
         nextAction = 'standby';
+      } else if (lastValidNextMoveId) {
+        // Friction found - takes priority over new store status
+        detectionStatus = 'friction_found';
+        reason = 'Revenue friction detected - review opportunity in Next Move';
+        nextAction = 'decide';
+      } else if (isNewStore) {
+        // New store - provide foundational action instead of "no friction" or "insufficient data"
+        // RULE: For NEW STORES, DETECT must NEVER return "no action"
+        detectionStatus = 'foundational_action';
+        reason = 'Preparing revenue foundations for your store';
+        nextAction = 'foundational';
+        // Get the foundational action with API-level fallback guarantee
+        try {
+          foundationalAction = await fastDetectionEngine.selectFoundationalAction(userId);
+        } catch (actionError) {
+          console.error("[ZYRA Detection Status] Foundational action selection failed, using fallback:", actionError);
+        }
+        // HARD GUARANTEE: If still undefined after try, create fallback action at API level
+        if (!foundationalAction) {
+          foundationalAction = {
+            type: 'trust_signals',
+            title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
+            description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
+            whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
+            expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
+            riskLevel: 'low'
+          };
+        }
       } else if (status.cacheStatus === 'missing') {
         detectionStatus = 'insufficient_data';
         reason = 'Not enough data to detect revenue friction - collecting baseline data';
         nextAction = 'data_collection';
-      } else if (lastValidNextMoveId) {
-        detectionStatus = 'friction_found';
-        reason = 'Revenue friction detected - review opportunity in Next Move';
-        nextAction = 'decide';
       } else {
         detectionStatus = 'no_friction';
         reason = 'No high-impact revenue friction detected';
@@ -20158,6 +20228,8 @@ Return JSON array of segments only, no explanation text.`;
         reason,
         nextAction,
         lastValidNextMoveId,
+        isNewStore,
+        foundationalAction,
       });
     } catch (error) {
       console.error("[ZYRA Detection Status API] Error:", error);

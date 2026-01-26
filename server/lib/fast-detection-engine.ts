@@ -172,7 +172,7 @@ export class FastDetectionEngine {
           frictionDetected: false,
           topFriction: null,
           isNewStore: true,
-          foundationalAction: foundationalAction || undefined,
+          foundationalAction,
           detectionDurationMs: Date.now() - startTime,
           phase: 'decision_ready',
           cacheStatus: 'missing',
@@ -230,7 +230,7 @@ export class FastDetectionEngine {
           frictionDetected: false,
           topFriction: null,
           isNewStore: true,
-          foundationalAction: foundationalAction || undefined,
+          foundationalAction,
           detectionDurationMs: Date.now() - startTime,
           phase: 'decision_ready',
           cacheStatus,
@@ -512,63 +512,74 @@ export class FastDetectionEngine {
   /**
    * Select ONE foundational action for a new store
    * Priority: SEO basics > Product copy clarity > Trust signals > Recovery setup
+   * RULE: This method ALWAYS returns an action - never null for new stores
    */
-  async selectFoundationalAction(userId: string): Promise<FoundationalAction | null> {
-    const db = requireDb();
-    
-    // Get a product to work on (prioritize products with low revenue health score)
-    const [targetProduct] = await db
-      .select({ 
-        id: products.id, 
-        name: products.name,
-        revenueHealthScore: products.revenueHealthScore
-      })
-      .from(products)
-      .where(eq(products.userId, userId))
-      .orderBy(sql`COALESCE(${products.revenueHealthScore}, 0) ASC`)
-      .limit(1);
-    
-    // Priority order for foundational actions
-    const priorityActions: FoundationalActionType[] = [
-      'seo_basics',
-      'product_copy_clarity', 
-      'trust_signals',
-      'recovery_setup'
-    ];
-    
-    // For now, select based on what the product needs most
-    let selectedType: FoundationalActionType = 'seo_basics';
-    
-    if (targetProduct) {
-      const healthScore = targetProduct.revenueHealthScore || 0;
-      if (healthScore < 30) {
-        selectedType = 'seo_basics';
-      } else if (healthScore < 60) {
-        selectedType = 'product_copy_clarity';
+  async selectFoundationalAction(userId: string): Promise<FoundationalAction> {
+    try {
+      const db = requireDb();
+      
+      // Get a product to work on (prioritize products with low revenue health score)
+      const [targetProduct] = await db
+        .select({ 
+          id: products.id, 
+          name: products.name,
+          revenueHealthScore: products.revenueHealthScore
+        })
+        .from(products)
+        .where(eq(products.userId, userId))
+        .orderBy(sql`COALESCE(${products.revenueHealthScore}, 0) ASC`)
+        .limit(1);
+      
+      // For now, select based on what the product needs most
+      let selectedType: FoundationalActionType = 'seo_basics';
+      
+      if (targetProduct) {
+        const healthScore = targetProduct.revenueHealthScore || 0;
+        if (healthScore < 30) {
+          selectedType = 'seo_basics';
+        } else if (healthScore < 60) {
+          selectedType = 'product_copy_clarity';
+        } else {
+          selectedType = 'trust_signals';
+        }
       } else {
-        selectedType = 'trust_signals';
+        // No products - suggest recovery setup
+        selectedType = 'recovery_setup';
       }
-    } else {
-      // No products - suggest recovery setup
-      selectedType = 'recovery_setup';
+      
+      const actionDetails = FOUNDATIONAL_ACTION_DESCRIPTIONS[selectedType];
+      
+      const foundationalAction: FoundationalAction = {
+        type: selectedType,
+        productId: targetProduct?.id,
+        productName: targetProduct?.name || undefined,
+        title: FOUNDATIONAL_ACTION_LABELS[selectedType],
+        description: actionDetails.description,
+        whyItHelps: actionDetails.whyItHelps,
+        expectedImpact: actionDetails.expectedImpact,
+        riskLevel: 'low'
+      };
+      
+      console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''}`);
+      
+      return foundationalAction;
+    } catch (error) {
+      // FALLBACK: Always return a default action for new stores
+      // RULE: For NEW STORES, DETECT must NEVER return "no action"
+      console.error(`❌ [Foundational Action] Error selecting action for user ${userId}:`, error);
+      
+      const fallbackAction: FoundationalAction = {
+        type: 'trust_signals',
+        title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
+        description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
+        whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
+        expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
+        riskLevel: 'low'
+      };
+      
+      console.log(`🔧 [Foundational Action] Using fallback "trust_signals" for user ${userId}`);
+      return fallbackAction;
     }
-    
-    const actionDetails = FOUNDATIONAL_ACTION_DESCRIPTIONS[selectedType];
-    
-    const foundationalAction: FoundationalAction = {
-      type: selectedType,
-      productId: targetProduct?.id,
-      productName: targetProduct?.name || undefined,
-      title: FOUNDATIONAL_ACTION_LABELS[selectedType],
-      description: actionDetails.description,
-      whyItHelps: actionDetails.whyItHelps,
-      expectedImpact: actionDetails.expectedImpact,
-      riskLevel: 'low'
-    };
-    
-    console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''}`);
-    
-    return foundationalAction;
   }
 }
 

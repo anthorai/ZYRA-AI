@@ -46,6 +46,18 @@ interface AutomationSettings {
   maxDailyActions?: number;
 }
 
+// Foundational action for new stores
+interface FoundationalAction {
+  type: 'seo_basics' | 'product_copy_clarity' | 'trust_signals' | 'recovery_setup';
+  productId?: string;
+  productName?: string;
+  title: string;
+  description: string;
+  whyItHelps: string;
+  expectedImpact: string;
+  riskLevel: 'low';
+}
+
 interface ZyraStats {
   activePhase: string;
   currentAction: string | null;
@@ -64,6 +76,8 @@ interface ZyraStats {
   isNewStore?: boolean;
   storeAgeDays?: number;
   totalOrders?: number;
+  // Foundational action for new stores
+  foundationalAction?: FoundationalAction;
 }
 
 interface ZyraEvent {
@@ -256,7 +270,7 @@ const phaseToMinStage: Record<DetectionPhase, number> = {
 const AUTO_ADVANCE_TIMEOUT_MS = 10000;
 const STAGE_AUTO_ADVANCE_MS = 2500;
 
-type StrictDetectionStatus = 'friction_found' | 'no_friction' | 'insufficient_data' | 'detecting';
+type StrictDetectionStatus = 'friction_found' | 'no_friction' | 'insufficient_data' | 'foundational_action' | 'detecting';
 
 function ProgressStages({ 
   isAutopilotEnabled, 
@@ -264,6 +278,7 @@ function ProgressStages({
   detectionStatus = 'detecting',
   isDetectionComplete = false,
   isNewStore = false,
+  foundationalAction,
   onComplete 
 }: { 
   isAutopilotEnabled: boolean;
@@ -271,6 +286,7 @@ function ProgressStages({
   detectionStatus?: StrictDetectionStatus;
   isDetectionComplete?: boolean;
   isNewStore?: boolean;
+  foundationalAction?: FoundationalAction;
   onComplete?: () => void;
 }) {
   const [currentStage, setCurrentStage] = useState(0);
@@ -485,30 +501,82 @@ function ProgressStages({
       
       {/* Status Display for completed detection - Step 8 is ALWAYS a terminal success state */}
       {isDetectionComplete && (
-        <div className={`mt-4 p-3 rounded-lg text-center ${
+        <div className={`mt-4 p-3 rounded-lg ${
           detectionStatus === 'friction_found' ? 'bg-emerald-500/10 border border-emerald-500/30' :
-          isNewStore ? 'bg-primary/10 border border-primary/30' :
+          (detectionStatus === 'foundational_action' || isNewStore) ? 'bg-primary/10 border border-primary/30' :
           'bg-blue-500/10 border border-blue-500/30'
         }`}>
-          <p className={`text-sm font-medium ${
-            detectionStatus === 'friction_found' ? 'text-emerald-400' : 
-            isNewStore ? 'text-primary' : 'text-blue-400'
-          }`}>
-            {detectionStatus === 'friction_found' 
-              ? 'Next revenue move ready'
-              : isNewStore
-              ? 'Preparing your store for revenue growth'
-              : 'No urgent revenue risk detected'
-            }
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            {detectionStatus === 'friction_found'
-              ? 'Review recommended action in Next Move'
-              : isNewStore
-              ? 'ZYRA is setting up foundational growth systems for your store'
-              : 'ZYRA is actively monitoring your store for new opportunities'
-            }
-          </p>
+          {/* For new stores with foundational action - show the concrete Next Move */}
+          {(detectionStatus === 'foundational_action' || isNewStore) && foundationalAction ? (
+            <div className="text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <p className="text-sm font-medium text-primary">
+                  Next Move Ready
+                </p>
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1">
+                {foundationalAction.title}
+              </p>
+              {foundationalAction.productName && (
+                <p className="text-xs text-slate-400 mb-2">
+                  Product: {foundationalAction.productName}
+                </p>
+              )}
+              <p className="text-xs text-slate-400 mb-2">
+                {foundationalAction.description}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                  Low Risk
+                </span>
+                <span className="text-xs text-slate-500">
+                  {foundationalAction.expectedImpact}
+                </span>
+              </div>
+            </div>
+          ) : (detectionStatus === 'foundational_action' || isNewStore) ? (
+            // Fallback for new stores without foundational action (should not happen)
+            <div className="text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <p className="text-sm font-medium text-primary">
+                  Next Move Ready
+                </p>
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1">
+                Build Buyer Confidence
+              </p>
+              <p className="text-xs text-slate-400 mb-2">
+                Add trust elements like clear policies, badges, and social proof
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                  Low Risk
+                </span>
+                <span className="text-xs text-slate-500">
+                  Prepares your store to overcome first-time buyer doubt
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className={`text-sm font-medium ${
+                detectionStatus === 'friction_found' ? 'text-emerald-400' : 'text-blue-400'
+              }`}>
+                {detectionStatus === 'friction_found' 
+                  ? 'Next revenue move ready'
+                  : 'No urgent revenue risk detected'
+                }
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                {detectionStatus === 'friction_found'
+                  ? 'Review recommended action in Next Move'
+                  : 'ZYRA is actively monitoring your store for new opportunities'
+                }
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -675,12 +743,14 @@ export default function ZyraAtWork() {
   
   const { data: detectionStatusData } = useQuery<{
     phase: DetectionPhase;
-    status: 'friction_found' | 'no_friction' | 'insufficient_data' | 'detecting';
+    status: 'friction_found' | 'no_friction' | 'insufficient_data' | 'foundational_action' | 'detecting';
     complete: boolean;
     timestamp: number;
     lastValidNextMoveId?: string;
     reason?: string;
-    nextAction?: 'standby' | 'data_collection' | 'decide';
+    nextAction?: 'standby' | 'data_collection' | 'decide' | 'foundational';
+    isNewStore?: boolean;
+    foundationalAction?: FoundationalAction;
   }>({
     queryKey: ['/api/zyra/detection-status'],
     refetchInterval: isDetecting ? 1000 : false,
@@ -1051,7 +1121,8 @@ export default function ZyraAtWork() {
                 detectionPhase={detectionPhase as DetectionPhase}
                 detectionStatus={detectionStatus}
                 isDetectionComplete={isDetectionComplete}
-                isNewStore={stats?.isNewStore || false}
+                isNewStore={stats?.isNewStore || detectionStatusData?.isNewStore || false}
+                foundationalAction={detectionStatusData?.foundationalAction || stats?.foundationalAction}
               />
             ) : (
               events.map((event) => (

@@ -104,6 +104,20 @@ The application uses two storage implementations: `MemStorage` (in-memory for ge
 
 # Recent Changes
 
+## January 26, 2026 - New Store Foundational Actions
+- **Rule**: For NEW STORES (age < 30 days OR orders < 50), DETECT must NEVER return "no action"
+- **Implementation**: Added Foundational Action System with 4 action types:
+  - `seo_basics`: "Improve Discoverability" - Optimize titles and descriptions
+  - `product_copy_clarity`: "Clarify Product Value" - Refine copy for buyer confidence
+  - `trust_signals`: "Build Buyer Confidence" - Add policies, badges, social proof
+  - `recovery_setup`: "Prepare Revenue Safety Net" - Enable cart recovery
+- **Selection Logic**: Based on product health score (< 30: SEO, 30-60: Copy, 60+: Trust)
+- **Triple-Layer Guarantee**:
+  1. `selectFoundationalAction()` always returns valid action (try-catch with fallback)
+  2. API endpoints add hard fallback if action is still missing
+  3. UI shows hardcoded fallback if foundationalAction is undefined
+- **Files Changed**: `shared/schema.ts`, `server/lib/fast-detection-engine.ts`, `server/routes.ts`, `client/src/components/dashboard/zyra-at-work.tsx`
+
 ## January 26, 2026 - Finding Friction Detection Fix
 - **Issue**: "Finding Friction Step 1" was stuck and detection wasn't progressing
 - **Root Cause**: 
