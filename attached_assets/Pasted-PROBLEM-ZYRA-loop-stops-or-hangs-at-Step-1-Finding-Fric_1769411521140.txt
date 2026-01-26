@@ -1,0 +1,164 @@
+PROBLEM:
+ZYRA loop stops or hangs at Step 1: “Finding Friction”.
+The loop does not advance to DECIDE → EXECUTE → PROVE → LEARN.
+
+GOAL:
+Ensure ZYRA loop ALWAYS completes or exits gracefully.
+The system must NEVER get stuck in detection.
+
+====================================================
+ROOT CAUSE (ASSUME ONE OR MORE IS TRUE)
+====================================================
+
+1. Detection is waiting for perfect data
+2. Detection tries to find ALL frictions instead of ONE
+3. No timeout or fallback logic exists
+4. Detection fails silently when data is insufficient
+5. Detection is blocking on background jobs
+6. UI waits for detection completion instead of a signal
+
+====================================================
+MANDATORY FIX (NON-NEGOTIABLE)
+====================================================
+
+DETECTION MUST NEVER BLOCK THE LOOP.
+
+Detection is a SIGNAL FINDER, not a full analyzer.
+
+====================================================
+NEW DETECT RULE (CRITICAL)
+====================================================
+
+Detection must ALWAYS end in ONE of these outcomes:
+
+A) Friction Found
+B) No High-Impact Friction
+C) Insufficient Data
+
+NO OTHER STATE IS ALLOWED.
+
+====================================================
+STEP 1 — TIMEOUT CONTROL (REQUIRED)
+====================================================
+
+Add a HARD TIMEOUT to DETECT.
+
+- Max detection time: 10 seconds
+- Timer starts when detect() is called
+
+If timeout reached:
+→ Stop detection immediately
+→ Move loop forward using fallback logic
+
+====================================================
+STEP 2 — SINGLE FRICTION RULE
+====================================================
+
+Detection must:
+- Scan ONLY top 10–20 SKUs
+- Evaluate ONLY top 3 friction types
+- STOP immediately after FIRST valid friction is found
+
+DO NOT search for “best” or “all” frictions.
+
+First valid, revenue-impacting friction is ENOUGH.
+
+====================================================
+STEP 3 — FALLBACK LOGIC (CRITICAL)
+====================================================
+
+If no friction is found within time limit:
+
+Return:
+{
+  status: "no_friction",
+  reason: "No high-impact revenue friction detected",
+  next_action: "standby"
+}
+
+Loop must then:
+→ Skip DECIDE
+→ Show “No urgent revenue risk”
+→ Move to LEARN (light update)
+→ Return to standby
+
+====================================================
+STEP 4 — INSUFFICIENT DATA HANDLING
+====================================================
+
+If store data is too small / new:
+
+Return:
+{
+  status: "insufficient_data",
+  reason: "Not enough data to detect revenue friction",
+  next_action: "data_collection"
+}
+
+UI must show:
+“Collecting baseline data — ZYRA will act once signals are strong.”
+
+Loop must NOT freeze.
+
+====================================================
+STEP 5 — DETECTION OUTPUT CONTRACT (STRICT)
+====================================================
+
+detect() MUST always return within 10 seconds:
+
+{
+  status: "friction_found" | "no_friction" | "insufficient_data",
+  product_id: optional,
+  friction_type: optional,
+  expected_revenue_impact: optional,
+  confidence_score: optional
+}
+
+If detect() returns NOTHING → treat as FAILURE → fallback.
+
+====================================================
+STEP 6 — LOOP ADVANCE RULE (MANDATORY)
+====================================================
+
+The loop controller must enforce:
+
+IF detect() completes OR times out
+→ Advance loop state immediately
+
+The UI must NEVER wait indefinitely for detection.
+
+====================================================
+STEP 7 — UI STATE FIX
+====================================================
+
+Replace “Finding Friction…” spinner with staged messages:
+
+- “Reviewing store performance”
+- “Checking buyer drop-offs”
+- “Evaluating revenue impact”
+
+After 10 seconds MAX:
+→ Move to next state automatically
+
+====================================================
+STEP 8 — LOGGING & DEBUGGING
+====================================================
+
+Add logs for:
+- Detection start time
+- Detection end time
+- Timeout triggers
+- Fallback path used
+
+This allows quick diagnosis if it happens again.
+
+====================================================
+EXPECTED RESULT
+====================================================
+
+- ZYRA loop NEVER freezes
+- Step 1 always exits cleanly
+- Loop always reaches:
+  DECIDE → EXECUTE → PROVE → LEARN
+  OR exits safely to standby
+- Merchant NEVER feels ZYRA is “stuck”
