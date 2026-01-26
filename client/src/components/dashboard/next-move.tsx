@@ -45,6 +45,28 @@ import {
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
 import type { StoreReadiness } from "@shared/schema";
 
+// Store analytics data for AI Agent display
+interface StoreAnalytics {
+  productViews: number;
+  addToCartRate: number;
+  checkoutRate: number;
+  conversionRate: number;
+  averageOrderValue: number;
+  benchmarkConversionRate: number;
+  dataSource: string;
+  lastUpdated: string;
+  trendsDirection: 'up' | 'down' | 'stable';
+  competitorsAnalyzed: number;
+}
+
+// AI reasoning step for transparency
+interface AIReasoningStep {
+  step: number;
+  action: string;
+  finding: string;
+  dataPoint: string | null;
+}
+
 interface NextMoveAction {
   id: string;
   actionType: string;
@@ -74,6 +96,13 @@ interface NextMoveAction {
   frictionDescription?: string;
   whereIntentDied?: string;
   estimatedMonthlyLoss?: number;
+  // AI AGENT DATA - Real store analytics
+  storeAnalytics?: StoreAnalytics | null;
+  aiReasoningSteps?: AIReasoningStep[];
+  // Before/After preview
+  currentValue?: string | null;
+  proposedValue?: string | null;
+  changeType?: string | null;
 }
 
 // Friction type labels for display
@@ -344,6 +373,144 @@ function ActionQueuePreview({ queuedActions = [] }: { queuedActions?: Array<{ ty
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// AI Reasoning Panel - Shows step-by-step AI analysis (like Cursor/ChatGPT)
+function AIReasoningPanel({ steps, isExpanded = false }: { steps: AIReasoningStep[]; isExpanded?: boolean }) {
+  const [isOpen, setIsOpen] = useState(isExpanded);
+  
+  if (!steps || steps.length === 0) return null;
+  
+  return (
+    <div className="mb-4" data-testid="ai-reasoning-panel">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <button 
+            className="flex items-center justify-between w-full p-3 rounded-lg bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 text-left group overflow-visible hover-elevate"
+            data-testid="button-toggle-reasoning"
+          >
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Brain className="w-4 h-4 text-primary" />
+                <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+              </div>
+              <span className="text-sm font-medium text-primary">ZYRA's Analysis Process</span>
+              <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{steps.length} steps</Badge>
+            </div>
+            {isOpen ? (
+              <ChevronUp className="w-4 h-4 text-primary" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-primary" />
+            )}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <div className="space-y-2 pl-2 border-l-2 border-primary/20 ml-2" data-testid="reasoning-steps">
+            {steps.map((step, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-2 rounded-lg bg-muted/10" data-testid={`reasoning-step-${idx}`}>
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] text-primary font-bold flex-shrink-0 mt-0.5">
+                  {step.step}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground" data-testid={`step-action-${idx}`}>{step.action}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5" data-testid={`step-finding-${idx}`}>{step.finding}</p>
+                  {step.dataPoint && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0" data-testid={`step-data-${idx}`}>
+                        {step.dataPoint}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+// Store Analytics Panel - Shows real store metrics
+function StoreAnalyticsPanel({ analytics }: { analytics: StoreAnalytics }) {
+  if (!analytics) return null;
+  
+  const TrendIcon = analytics.trendsDirection === 'up' ? TrendingUp : 
+                    analytics.trendsDirection === 'down' ? TrendingUp : Activity;
+  const trendColor = analytics.trendsDirection === 'up' ? 'text-emerald-400' : 
+                     analytics.trendsDirection === 'down' ? 'text-red-400' : 'text-muted-foreground';
+  const trendRotation = analytics.trendsDirection === 'down' ? 'rotate-180' : '';
+  
+  // Calculate if below benchmark
+  const isBelowBenchmark = analytics.conversionRate < analytics.benchmarkConversionRate;
+  
+  return (
+    <div className="mb-4 p-3 rounded-lg bg-muted/10 border border-muted" data-testid="store-analytics-panel">
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-blue-400" />
+          <span className="text-xs font-medium text-foreground" data-testid="text-analytics-title">Live Store Data</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] text-muted-foreground" data-testid="text-data-source">
+            Source: {analytics.dataSource}
+          </span>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="p-2 rounded-lg bg-muted/20 text-center" data-testid="metric-views">
+          <p className="text-lg font-bold text-foreground" data-testid="text-views">{analytics.productViews.toLocaleString()}</p>
+          <p className="text-[10px] text-muted-foreground">Product Views</p>
+        </div>
+        <div className="p-2 rounded-lg bg-muted/20 text-center" data-testid="metric-cart-rate">
+          <p className="text-lg font-bold text-foreground" data-testid="text-cart-rate">{analytics.addToCartRate}%</p>
+          <p className="text-[10px] text-muted-foreground">Add to Cart</p>
+        </div>
+        <div className="p-2 rounded-lg bg-muted/20 text-center" data-testid="metric-checkout-rate">
+          <p className="text-lg font-bold text-foreground" data-testid="text-checkout-rate">{analytics.checkoutRate}%</p>
+          <p className="text-[10px] text-muted-foreground">Checkout Rate</p>
+        </div>
+        <div className={`p-2 rounded-lg text-center ${isBelowBenchmark ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`} data-testid="metric-conversion">
+          <div className="flex items-center justify-center gap-1">
+            <p className={`text-lg font-bold ${isBelowBenchmark ? 'text-amber-400' : 'text-emerald-400'}`} data-testid="text-conversion-rate">
+              {analytics.conversionRate.toFixed(1)}%
+            </p>
+            {analytics.trendsDirection !== 'stable' && (
+              <TrendIcon className={`w-3 h-3 ${trendColor} ${trendRotation}`} />
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Conversion {isBelowBenchmark ? `(Benchmark: ${analytics.benchmarkConversionRate}%)` : ''}
+          </p>
+        </div>
+      </div>
+      
+      {analytics.competitorsAnalyzed > 0 && (
+        <div className="mt-2 pt-2 border-t border-muted flex items-center gap-2" data-testid="competitors-analyzed">
+          <Search className="w-3 h-3 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground">
+            {analytics.competitorsAnalyzed} competitors analyzed for keyword gaps
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Active Analysis Badge - Shows ZYRA has analyzed this opportunity
+function ActiveAnalysisBadge() {
+  return (
+    <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20" data-testid="active-analysis-badge">
+      <div className="relative">
+        <Brain className="w-4 h-4 text-primary" />
+        <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full" />
+      </div>
+      <span className="text-xs text-primary font-medium">ZYRA has analyzed this opportunity and prepared an action</span>
     </div>
   );
 }
@@ -778,8 +945,25 @@ export default function NextMove() {
         </CardHeader>
 
         <CardContent className="space-y-5">
+          {/* Active Analysis Badge */}
+          <ActiveAnalysisBadge />
+          
+          {/* AI Agent Store Analytics - Real data from Shopify */}
+          {nextMove.storeAnalytics && (
+            <StoreAnalyticsPanel analytics={nextMove.storeAnalytics} />
+          )}
+          
+          {/* AI Reasoning Steps - Shows ZYRA's analysis process */}
+          {nextMove.aiReasoningSteps && nextMove.aiReasoningSteps.length > 0 && (
+            <AIReasoningPanel steps={nextMove.aiReasoningSteps} />
+          )}
+          
           {/* Main reason - ZYRA's decision statement */}
           <div className="p-4 rounded-lg bg-muted/30 border border-muted" data-testid="card-reason">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="w-4 h-4 text-primary" />
+              <span className="text-xs font-medium text-primary">ZYRA's Decision</span>
+            </div>
             <p className="text-sm text-foreground leading-relaxed" data-testid="text-reason">{nextMove.reason}</p>
           </div>
 
