@@ -11407,11 +11407,29 @@ Output format: Markdown with clear section headings.`;
 
   // Public OAuth initiation for Shopify App Store installations (no auth required)
   app.get('/api/shopify/install', async (req, res) => {
+    // Helper to get base URL for redirects
+    const getRedirectBaseUrl = () => {
+      if (process.env.PRODUCTION_DOMAIN) {
+        return process.env.PRODUCTION_DOMAIN;
+      }
+      return `${req.protocol}://${req.get('host')}`;
+    };
+    
     try {
       const { shop, hmac, timestamp } = req.query;
       
+      console.log('🔵 [SHOPIFY INSTALL] Request received:', {
+        hasShop: !!shop,
+        shop: shop || 'missing',
+        hasHmac: !!hmac,
+        hasTimestamp: !!timestamp,
+        userAgent: req.get('User-Agent')?.substring(0, 50) || 'unknown'
+      });
+      
       if (!shop) {
-        return res.status(400).json({ error: 'Shop domain is required' });
+        console.error('❌ [SHOPIFY INSTALL] Missing shop parameter');
+        // Redirect to auth page with error for browser requests
+        return res.redirect(`${getRedirectBaseUrl()}/auth?error=missing_shop&source=shopify_install`);
       }
 
       // Normalize shop domain to permanent .myshopify.com format
@@ -11419,13 +11437,14 @@ Output format: Markdown with clear section headings.`;
 
       // Validate domain format
       if (!/^[a-z0-9-]+\.myshopify\.com$/.test(shopDomain)) {
-        return res.status(400).json({ error: 'Invalid Shopify store domain' });
+        console.error('❌ [SHOPIFY INSTALL] Invalid shop domain format:', shopDomain);
+        return res.redirect(`${getRedirectBaseUrl()}/auth?error=invalid_shop&source=shopify_install`);
       }
 
       // REQUIRED: Verify HMAC for security (prevents unauthorized OAuth initiation)
       if (!hmac || !timestamp) {
-        console.error('Missing HMAC or timestamp - possible attack attempt');
-        return res.status(403).json({ error: 'Missing required security parameters' });
+        console.error('❌ [SHOPIFY INSTALL] Missing HMAC or timestamp - possible attack attempt');
+        return res.redirect(`${getRedirectBaseUrl()}/auth?error=security_params_missing&source=shopify_install`);
       }
 
       // Import crypto once at the top of this block
@@ -11434,8 +11453,8 @@ Output format: Markdown with clear section headings.`;
       const apiSecret = (process.env.SHOPIFY_API_SECRET || '').trim();
       
       if (!apiSecret) {
-        console.error('❌ SHOPIFY_API_SECRET not configured');
-        return res.status(500).json({ error: 'Server configuration error' });
+        console.error('❌ [SHOPIFY INSTALL] SHOPIFY_API_SECRET not configured');
+        return res.redirect(`${getRedirectBaseUrl()}/auth?error=config_error&source=shopify_install`);
       }
       
       // Validate timestamp freshness (prevent replay attacks)
@@ -11575,16 +11594,12 @@ Output format: Markdown with clear section headings.`;
       }
       
       if (!hmacResult.valid) {
-        console.error('❌ HMAC verification failed during installation for shop:', shopDomain);
+        console.error('❌ [SHOPIFY INSTALL] HMAC verification failed for shop:', shopDomain);
         console.error('  All verification methods failed. Check that SHOPIFY_API_SECRET matches your Shopify Partner Dashboard.');
-        return res.status(403).json({ 
-          error: 'HMAC verification failed - invalid signature',
-          debug: {
-            providedHmac: (hmac as string).substring(0, 16) + '...',
-            computedHmac: hmacResult.computed.substring(0, 16) + '...',
-            message: 'Ensure SHOPIFY_API_SECRET matches your Shopify app Client Secret'
-          }
-        });
+        console.error('  Provided HMAC:', (hmac as string).substring(0, 16) + '...');
+        console.error('  Computed HMAC:', hmacResult.computed.substring(0, 16) + '...');
+        // Redirect to auth page with error (browser request)
+        return res.redirect(`${getRedirectBaseUrl()}/auth?error=hmac_failed&source=shopify_install`);
       }
       
       console.log('✅ HMAC verified successfully for installation from:', shopDomain, '(method:', hmacResult.method + ')');
@@ -11611,10 +11626,18 @@ Output format: Markdown with clear section headings.`;
       
       const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
       
-      res.json({ authUrl });
+      console.log('🚀 [SHOPIFY INSTALL] Redirecting to Shopify OAuth consent page');
+      console.log('  Auth URL:', authUrl.substring(0, 100) + '...');
+      
+      // CRITICAL: Redirect browser to Shopify OAuth - NOT return JSON!
+      // When users install from Shopify App Store, their browser comes here directly
+      // and expects a redirect to the OAuth consent page
+      return res.redirect(authUrl);
     } catch (error) {
       console.error('Shopify installation OAuth error:', error);
-      res.status(500).json({ error: 'Failed to initiate Shopify OAuth' });
+      // For browser-based errors, show a user-friendly page
+      const baseUrl = getBaseUrl();
+      return res.redirect(`${baseUrl}/auth?error=shopify_install_failed`);
     }
   });
 
