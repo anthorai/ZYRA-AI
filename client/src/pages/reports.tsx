@@ -138,8 +138,6 @@ export default function Reports() {
       <UnifiedHeader
         title="ZYRA Report"
         subtitle="What money did ZYRA make, protect, or influence for your store?"
-        showBackButton
-        backTo="/dashboard"
       />
       <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8 bg-[#121224]">
         
