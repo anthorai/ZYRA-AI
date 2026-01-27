@@ -1,11 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { UnifiedHeader } from "@/components/ui/unified-header";
+import { useLogout } from "@/hooks/useLogout";
+import Sidebar from "@/components/dashboard/sidebar";
+import Footer from "@/components/ui/footer";
+import NotificationCenter from "@/components/dashboard/notification-center";
+import { AvatarMenu } from "@/components/ui/avatar-menu";
+import { Menu } from "lucide-react";
 import {
   DollarSign,
   TrendingUp,
@@ -133,14 +141,65 @@ export default function Reports() {
 
   const displayLearnings = learnings && learnings.length > 0 ? learnings : defaultLearnings;
 
+  const [, setLocation] = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleTabChange = (tab: string) => {
+    setSidebarOpen(false);
+    if (tab === "reports") return;
+    if (tab === "change-control") {
+      setLocation("/change-control");
+    } else {
+      setLocation("/dashboard");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <UnifiedHeader
-        title="ZYRA Report"
-        subtitle="What money did ZYRA make, protect, or influence for your store?"
+    <div className="min-h-screen flex">
+      <Sidebar 
+        activeTab="reports" 
+        onTabChange={handleTabChange} 
+        user={user} 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex-1 overflow-auto">
-        <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8 bg-[#121224]">
+
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'sm:ml-64 ml-0' : 'ml-0'
+      }`}>
+        {/* Header - Same as Dashboard */}
+        <header className="gradient-surface border-b px-3 sm:px-6 py-2 sm:py-4 flex-shrink-0 sticky top-0 z-50">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+                data-testid="button-toggle-sidebar"
+              >
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Button>
+              <div className="min-w-0">
+                <h1 className="font-bold text-white text-sm sm:text-lg lg:text-xl xl:text-2xl truncate" data-testid="text-page-title">
+                  ZYRA Report
+                </h1>
+                <p className="text-slate-300 text-xs sm:text-sm lg:text-base hidden sm:block truncate" data-testid="text-page-subtitle">
+                  What money did ZYRA make, protect, or influence for your store?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-1 sm:gap-3 flex-shrink-0">
+              <NotificationCenter />
+              <AvatarMenu />
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
+          <div className="container max-w-6xl mx-auto space-y-8">
         
         {/* SECTION 1: EXECUTIVE SUMMARY */}
         <Card className="bg-gradient-to-br from-primary/10 via-background to-green-500/5 border-primary/20">
@@ -529,7 +588,11 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
+          </div>
         </div>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

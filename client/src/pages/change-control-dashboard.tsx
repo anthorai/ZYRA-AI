@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { UnifiedHeader } from "@/components/ui/unified-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,11 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import Sidebar from "@/components/dashboard/sidebar";
+import Footer from "@/components/ui/footer";
+import NotificationCenter from "@/components/dashboard/notification-center";
+import { AvatarMenu } from "@/components/ui/avatar-menu";
 import { 
   Check, 
   X, 
@@ -37,7 +42,8 @@ import {
   Sparkles,
   CheckCircle2,
   XCircle,
-  Timer
+  Timer,
+  Menu
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -219,15 +225,67 @@ export default function ChangeControlDashboard() {
     return sum + impact;
   }, 0);
 
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleTabChange = (tab: string) => {
+    setSidebarOpen(false);
+    if (tab === "change-control") return;
+    if (tab === "reports") {
+      setLocation("/reports");
+    } else {
+      setLocation("/dashboard");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <UnifiedHeader
-        title="Change Control"
-        subtitle="Full visibility and control over every AI-driven change"
+    <div className="min-h-screen flex">
+      <Sidebar 
+        activeTab="change-control" 
+        onTabChange={handleTabChange} 
+        user={user} 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      <div className="flex-1 overflow-auto">
-        <div className="container max-w-7xl mx-auto px-4 py-6 space-y-6 bg-[#121224]">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'sm:ml-64 ml-0' : 'ml-0'
+      }`}>
+        {/* Header - Same as Dashboard */}
+        <header className="gradient-surface border-b px-3 sm:px-6 py-2 sm:py-4 flex-shrink-0 sticky top-0 z-50">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+                data-testid="button-toggle-sidebar"
+              >
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Button>
+              <div className="min-w-0">
+                <h1 className="font-bold text-white text-sm sm:text-lg lg:text-xl xl:text-2xl truncate" data-testid="text-page-title">
+                  Change Control
+                </h1>
+                <p className="text-slate-300 text-xs sm:text-sm lg:text-base hidden sm:block truncate" data-testid="text-page-subtitle">
+                  Full visibility and control over every AI-driven change
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-1 sm:gap-3 flex-shrink-0">
+              <NotificationCenter />
+              <AvatarMenu />
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
+          <div className="container max-w-7xl mx-auto space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader className="pb-3">
@@ -711,8 +769,12 @@ export default function ChangeControlDashboard() {
               </CardContent>
             </Card>
           </div>
+            </div>
+          </div>
         </div>
-        </div>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );
