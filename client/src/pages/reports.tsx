@@ -134,12 +134,13 @@ export default function Reports() {
   const displayLearnings = learnings && learnings.length > 0 ? learnings : defaultLearnings;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <UnifiedHeader
         title="ZYRA Report"
         subtitle="What money did ZYRA make, protect, or influence for your store?"
       />
-      <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8 bg-[#121224]">
+      <div className="flex-1 overflow-auto">
+        <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8 bg-[#121224]">
         
         {/* SECTION 1: EXECUTIVE SUMMARY */}
         <Card className="bg-gradient-to-br from-primary/10 via-background to-green-500/5 border-primary/20">
@@ -528,6 +529,7 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

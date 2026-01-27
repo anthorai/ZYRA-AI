@@ -220,12 +220,13 @@ export default function ChangeControlDashboard() {
   }, 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <UnifiedHeader
         title="Change Control"
         subtitle="Full visibility and control over every AI-driven change"
       />
-      <div className="container max-w-7xl mx-auto px-4 py-6 space-y-6 bg-[#121224]">
+      <div className="flex-1 overflow-auto">
+        <div className="container max-w-7xl mx-auto px-4 py-6 space-y-6 bg-[#121224]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -710,6 +711,7 @@ export default function ChangeControlDashboard() {
               </CardContent>
             </Card>
           </div>
+        </div>
         </div>
       </div>
     </div>
