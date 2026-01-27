@@ -80,7 +80,8 @@ import {
   revenueOpportunities,
   revenueLoopProof,
   storeLearningInsights,
-  passwordResetTokens
+  passwordResetTokens,
+  activityLogs
 } from "@shared/schema";
 import { supabaseStorage } from "./lib/supabase-storage";
 import { supabase, supabaseAuth } from "./lib/supabase";

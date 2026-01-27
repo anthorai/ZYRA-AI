@@ -58,7 +58,7 @@ interface TypewriterTextProps {
 
 function TypewriterText({ 
   text, 
-  speed = 25, 
+  speed = 35, // Matched to backend activity timing for natural feel
   delay = 0, 
   onComplete, 
   className = "",
@@ -158,7 +158,7 @@ function AILogEntryComponent({ entry, isNew = false }: { entry: AILogEntry; isNe
         </div>
         <p className="text-sm text-slate-200 leading-relaxed">
           {isNew ? (
-            <TypewriterText text={entry.message} speed={15} />
+            <TypewriterText text={entry.message} speed={35} />
           ) : (
             entry.message
           )}
@@ -674,12 +674,29 @@ function ProgressStages({
   const phaseConfig = PHASE_CONFIG[activePhase] || PHASE_CONFIG.detect;
   const PhaseIcon = phaseConfig.icon;
 
+  // Map backend execution activity to log entry type
+  const mapPhaseToLogType = (phase: string, status: string): 'info' | 'thinking' | 'action' | 'success' | 'warning' | 'insight' => {
+    if (status === 'warning') return 'warning';
+    if (status === 'completed' && phase === 'learn') return 'success';
+    if (status === 'completed' && phase === 'prove') return 'success';
+    switch (phase) {
+      case 'detect': return 'info';
+      case 'decide': return 'action';
+      case 'execute': return status === 'completed' ? 'action' : 'thinking';
+      case 'prove': return 'insight';
+      case 'learn': return 'success';
+      default: return 'info';
+    }
+  };
+
   // Generate dynamic activity log entries based on current phase
+  // Uses REAL backend activities when available for live sync
   const generateLogEntries = useCallback((): AILogEntry[] => {
     const entries: AILogEntry[] = [];
     const now = new Date();
     
-    if (currentStage >= 0) {
+    // DETECTION PHASE: Use generated entries (backend doesn't stream detection activities)
+    if (currentStage >= 0 && !executionActivities.length) {
       entries.push({
         id: 'init',
         timestamp: new Date(now.getTime() - 8000),
@@ -689,7 +706,7 @@ function ProgressStages({
       });
     }
     
-    if (currentStage >= 1) {
+    if (currentStage >= 1 && !executionActivities.length) {
       entries.push({
         id: 'scan-start',
         timestamp: new Date(now.getTime() - 6500),
@@ -703,7 +720,7 @@ function ProgressStages({
       });
     }
     
-    if (currentStage >= 2) {
+    if (currentStage >= 2 && !executionActivities.length) {
       entries.push({
         id: 'friction-detect',
         timestamp: new Date(now.getTime() - 5000),
@@ -713,7 +730,7 @@ function ProgressStages({
       });
     }
     
-    if (currentStage >= 3) {
+    if (currentStage >= 3 && !executionActivities.length) {
       entries.push({
         id: 'calc-impact',
         timestamp: new Date(now.getTime() - 3500),
@@ -726,7 +743,7 @@ function ProgressStages({
       });
     }
     
-    if (currentStage >= 4) {
+    if (currentStage >= 4 && !executionActivities.length) {
       entries.push({
         id: 'prioritize',
         timestamp: new Date(now.getTime() - 2000),
@@ -736,7 +753,7 @@ function ProgressStages({
       });
     }
     
-    if (currentStage >= 5 && foundationalAction) {
+    if (currentStage >= 5 && foundationalAction && !executionActivities.length) {
       entries.push({
         id: 'ready',
         timestamp: new Date(now.getTime() - 500),
@@ -746,61 +763,50 @@ function ProgressStages({
       });
     }
     
-    if (executionStatus === 'running' && activePhase === 'execute') {
-      entries.push({
-        id: 'exec-start',
-        timestamp: new Date(now.getTime() - 3000),
-        type: 'action',
-        message: 'Starting AI optimization engine...',
-        detail: 'Loading product data and brand voice settings'
+    // EXECUTION PHASE: Use REAL backend activities when available
+    if (executionActivities.length > 0) {
+      // Convert backend ExecutionActivityItem to AILogEntry format
+      executionActivities.forEach((activity) => {
+        const timestamp = typeof activity.timestamp === 'string' 
+          ? new Date(activity.timestamp) 
+          : activity.timestamp;
+        
+        entries.push({
+          id: activity.id,
+          timestamp: timestamp,
+          type: mapPhaseToLogType(activity.phase, activity.status),
+          message: activity.message,
+          detail: activity.details || activity.productName,
+        });
       });
-      entries.push({
-        id: 'exec-ai',
-        timestamp: new Date(now.getTime() - 1500),
-        type: 'thinking',
-        message: 'Generating AI-enhanced content with GPT-4o-mini...',
-        detail: 'Crafting compelling product copy that converts',
-        metrics: [
-          { label: 'Model', value: 'GPT-4o-mini' },
-          { label: 'Mode', value: 'Fast Quality' }
-        ]
-      });
-      entries.push({
-        id: 'exec-apply',
-        timestamp: now,
-        type: 'action',
-        message: 'Publishing optimized content to Shopify...',
-        detail: 'Applying changes via Shopify Admin API'
-      });
+    } else if (executionStatus === 'running') {
+      // Fallback: If no backend activities yet during execution, show placeholder
+      if (activePhase === 'execute') {
+        entries.push({
+          id: 'exec-start',
+          timestamp: new Date(now.getTime() - 1000),
+          type: 'action',
+          message: 'Starting AI optimization engine...',
+          detail: 'Loading product data and brand voice settings'
+        });
+      } else if (activePhase === 'prove') {
+        entries.push({
+          id: 'prove-start',
+          timestamp: now,
+          type: 'thinking',
+          message: 'Verifying changes applied successfully...',
+        });
+      } else if (activePhase === 'learn') {
+        entries.push({
+          id: 'learn-start',
+          timestamp: now,
+          type: 'insight',
+          message: 'Recording optimization patterns...',
+        });
+      }
     }
     
-    if (executionStatus === 'running' && activePhase === 'prove') {
-      entries.push({
-        id: 'prove-start',
-        timestamp: new Date(now.getTime() - 1000),
-        type: 'action',
-        message: 'Verifying changes were applied successfully...',
-        detail: 'Comparing before/after content on Shopify'
-      });
-      entries.push({
-        id: 'prove-collect',
-        timestamp: now,
-        type: 'thinking',
-        message: 'Setting up performance tracking for this optimization...',
-        detail: 'Will measure conversion rate impact over next 7 days'
-      });
-    }
-    
-    if (executionStatus === 'running' && activePhase === 'learn') {
-      entries.push({
-        id: 'learn-analyze',
-        timestamp: new Date(now.getTime() - 500),
-        type: 'insight',
-        message: 'Recording optimization patterns for your store...',
-        detail: 'Improving future recommendations based on this action'
-      });
-    }
-    
+    // COMPLETION: Show success summary
     if (executionResult && executionResult.productsOptimized.length > 0) {
       entries.push({
         id: 'complete',
@@ -816,7 +822,7 @@ function ProgressStages({
     }
     
     return entries;
-  }, [currentStage, foundationalAction, executionStatus, activePhase, executionResult]);
+  }, [currentStage, foundationalAction, executionStatus, activePhase, executionResult, executionActivities]);
 
   const logEntries = generateLogEntries();
   const latestEntry = logEntries[logEntries.length - 1];
@@ -1532,6 +1538,9 @@ export default function ZyraAtWork() {
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [executionActivities, setExecutionActivities] = useState<ExecutionActivityItem[]>([]);
   
+  // Track previous activities count for detecting new entries
+  const prevActivitiesCountRef = useRef<number>(0);
+  
   const DETECTION_TIMEOUT_MS = 10000;
   
   const { data: detectionStatusData } = useQuery<{
@@ -1760,12 +1769,38 @@ export default function ZyraAtWork() {
       return 'running';
     }
     // Local approvedPhase fallback for fast UI updates
-    if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
+    if (!['idle', 'complete'].includes(approvedPhase)) {
       return 'running';
     }
     // Default to server's execution status
     return serverExecutionStatus;
   })();
+  
+  // LIVE POLLING: Fetch execution activities during running state for real-time log updates
+  const isExecutionActive = derivedExecutionStatus === 'running' || !['idle', 'complete'].includes(approvedPhase);
+  
+  const { data: liveActivitiesData } = useQuery<{ activities: ExecutionActivityItem[] }>({
+    queryKey: ['/api/zyra/execution-activities'],
+    // Poll frequently during execution for live updates (every 800ms for smooth display)
+    refetchInterval: isExecutionActive ? 800 : false,
+    enabled: isExecutionActive && storeReadiness?.state === 'ready',
+    staleTime: 500,
+  });
+  
+  // Update execution activities from live polling
+  useEffect(() => {
+    if (liveActivitiesData?.activities && liveActivitiesData.activities.length > 0) {
+      const newCount = liveActivitiesData.activities.length;
+      const prevCount = prevActivitiesCountRef.current;
+      
+      // Only update if we have new activities
+      if (newCount > prevCount || prevCount === 0) {
+        console.log(`[ZYRA Live Activities] Updating: ${prevCount} -> ${newCount} activities`);
+        setExecutionActivities(liveActivitiesData.activities);
+        prevActivitiesCountRef.current = newCount;
+      }
+    }
+  }, [liveActivitiesData]);
   
   // 30-second fail-safe timer for stuck states
   // If execution is stuck in 'running' for too long, force refresh
