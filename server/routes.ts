@@ -16531,8 +16531,8 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
-  // Update user's automation settings
-  app.put("/api/automation/settings", requireAuth, async (req, res) => {
+  // Update user's automation settings (supports both PUT and PATCH)
+  const updateAutomationSettingsHandler = async (req: any, res: any) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
 
@@ -16566,7 +16566,10 @@ Output format: Markdown with clear section headings.`;
       console.error("Error updating automation settings:", error);
       res.status(500).json({ error: "Failed to update automation settings" });
     }
-  });
+  };
+
+  app.put("/api/automation/settings", requireAuth, updateAutomationSettingsHandler);
+  app.patch("/api/automation/settings", requireAuth, updateAutomationSettingsHandler);
 
   // ===== NEXT MOVE API =====
   // The "Next Move" feature: ZYRA's single authoritative revenue decision
