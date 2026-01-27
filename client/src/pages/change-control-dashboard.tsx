@@ -123,7 +123,7 @@ function formatCurrency(value: number | string | undefined | null): string {
 export default function ChangeControlDashboard() {
   const { toast } = useToast();
   const [selectedChange, setSelectedChange] = useState<ChangeItem | null>(null);
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const [settingsExpanded, setSettingsExpanded] = useState(true);
 
   const { data: changes, isLoading: changesLoading } = useQuery<ChangeItem[]>({
     queryKey: ["/api/autonomous-actions"],

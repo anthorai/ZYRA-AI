@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Menu, User, LogOut, Settings as SettingsIcon } from "lucide-react";
-import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
 import NotificationCenter from "@/components/dashboard/notification-center";
 
 interface DashboardHeaderProps {
@@ -73,9 +72,8 @@ export const DashboardHeader = memo(function DashboardHeader({
           </div>
         </div>
 
-        {/* Right Section - Automation Toggle + Notifications + Profile Menu */}
+        {/* Right Section - Notifications + Profile Menu */}
         <div className="flex items-center justify-end gap-1 sm:gap-3 flex-shrink-0">
-          <MasterAutomationToggle />
           <NotificationCenter />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

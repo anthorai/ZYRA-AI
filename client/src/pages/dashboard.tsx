@@ -40,7 +40,7 @@ interface StoreConnection {
 export default function Dashboard() {
   const { user, appUser } = useAuth();
   const { handleLogout, isLoggingOut } = useLogout();
-  const [activeTab, setActiveTab] = useState("next-move");
+  const [activeTab, setActiveTab] = useState("zyra-at-work");
   
   // Initialize sidebar state from localStorage, default to true for desktop, false for mobile
   const getInitialSidebarState = () => {
