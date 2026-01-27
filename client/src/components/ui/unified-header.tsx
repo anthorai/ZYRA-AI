@@ -43,7 +43,7 @@ export function UnifiedHeader({
 
   return (
     <header className={cn(
-      "gradient-surface border-b border px-4 sm:px-6 py-3 sm:py-4",
+      "gradient-surface border-b border px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-50",
       className
     )}>
       <div className="flex items-center">
