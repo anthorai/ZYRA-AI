@@ -11405,6 +11405,36 @@ Output format: Markdown with clear section headings.`;
     }
   }, 10 * 60 * 1000);
 
+  // Public health check for Shopify integration (no auth required) - for testing
+  app.get('/api/shopify/health', (req, res) => {
+    const hasApiKey = !!process.env.SHOPIFY_API_KEY;
+    const hasApiSecret = !!process.env.SHOPIFY_API_SECRET;
+    const hasProductionDomain = !!process.env.PRODUCTION_DOMAIN;
+    const baseUrl = getBaseUrl();
+    
+    console.log('🔵 [SHOPIFY HEALTH] Health check requested');
+    console.log('  API Key present:', hasApiKey);
+    console.log('  API Secret present:', hasApiSecret);
+    console.log('  Production Domain:', process.env.PRODUCTION_DOMAIN || 'not set');
+    console.log('  Base URL:', baseUrl);
+    
+    res.json({
+      status: hasApiKey && hasApiSecret ? 'ready' : 'missing_credentials',
+      installUrl: `${baseUrl}/api/shopify/install`,
+      callbackUrl: `${baseUrl}/api/shopify/callback`,
+      checks: {
+        apiKeyConfigured: hasApiKey,
+        apiSecretConfigured: hasApiSecret,
+        productionDomainConfigured: hasProductionDomain,
+        productionDomain: process.env.PRODUCTION_DOMAIN || null
+      },
+      message: hasApiKey && hasApiSecret 
+        ? 'Shopify OAuth is configured correctly. Make sure the App URL in Shopify Partner Dashboard points to the install URL and the callback URL is in allowed redirects.'
+        : 'Missing Shopify API credentials. Please configure SHOPIFY_API_KEY and SHOPIFY_API_SECRET.',
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // Public OAuth initiation for Shopify App Store installations (no auth required)
   app.get('/api/shopify/install', async (req, res) => {
     // Helper to get base URL for redirects
