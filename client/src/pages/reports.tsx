@@ -141,8 +141,7 @@ export default function Reports() {
         showBackButton
         backTo="/dashboard"
       />
-
-      <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8">
+      <div className="container max-w-6xl mx-auto px-4 py-6 space-y-8 bg-[#121224]">
         
         {/* SECTION 1: EXECUTIVE SUMMARY */}
         <Card className="bg-gradient-to-br from-primary/10 via-background to-green-500/5 border-primary/20">
