@@ -182,15 +182,21 @@ export default function ChangeControlDashboard() {
     
     let filtered = changes;
     
+    // Filter out entries without real product names
+    filtered = filtered.filter(c => {
+      const productName = c.productName || c.payload?.productName;
+      return productName && productName !== "Unknown Product";
+    });
+    
     switch (filterStatus) {
       case "applied":
-        filtered = changes.filter(c => c.status === "completed" || c.status === "dry_run");
+        filtered = filtered.filter(c => c.status === "completed" || c.status === "dry_run");
         break;
       case "pending":
-        filtered = changes.filter(c => c.status === "pending");
+        filtered = filtered.filter(c => c.status === "pending");
         break;
       case "rolled_back":
-        filtered = changes.filter(c => c.status === "rolled_back");
+        filtered = filtered.filter(c => c.status === "rolled_back");
         break;
     }
     
@@ -751,7 +757,10 @@ export default function ChangeControlDashboard() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setSelectedChange(isSelected ? null : change)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedChange(isSelected ? null : change);
+                                }}
                                 className="gap-1 text-xs"
                                 data-testid={`button-details-${change.id}`}
                               >
