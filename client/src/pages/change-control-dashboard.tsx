@@ -44,15 +44,25 @@ import {
   Menu,
   Upload,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Search,
+  ShoppingCart,
+  Brain,
+  Tag,
+  Globe,
+  Target,
+  Image,
+  Pause,
+  BarChart
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 type ActionStatus = "pending" | "running" | "completed" | "failed" | "rolled_back" | "dry_run";
-type ActionType = "optimize_seo" | "fix_product" | "send_cart_recovery" | "run_ab_test" | "adjust_price" | "content_refresh" | "discoverability" | "seo_basics" | "product_copy_clarity" | "trust_signals" | "cart_recovery";
+type ActionType = "optimize_seo" | "fix_product" | "send_cart_recovery" | "run_ab_test" | "adjust_price" | "content_refresh" | "discoverability" | "seo_basics" | "product_copy_clarity" | "trust_signals" | "cart_recovery" | "title_optimization" | "meta_optimization" | "search_intent_fix" | "alt_text_optimization" | "stale_content_refresh" | "description_clarity" | "value_proposition_fix" | "trust_signal_enhancement" | "friction_copy_removal" | "above_fold_optimization" | "abandoned_cart_recovery" | "post_purchase_upsell" | "checkout_drop_mitigation" | "underperforming_rollback" | "risky_optimization_freeze" | "conversion_pattern_learning" | "performance_baseline_update";
 type RiskLevel = "low" | "medium" | "high";
 type FilterStatus = "all" | "applied" | "pending" | "rolled_back";
+type ActionCategory = "seo" | "conversion" | "revenue_recovery" | "revenue_protection" | "learning";
 
 interface ChangeItem {
   id: string;
@@ -87,19 +97,64 @@ interface AutomationSettings {
   maxDailyActions: number;
 }
 
-const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
-  optimize_seo: { label: "SEO", icon: TrendingUp, color: "text-blue-400" },
-  seo_basics: { label: "SEO Basics", icon: TrendingUp, color: "text-blue-400" },
-  fix_product: { label: "Content", icon: FileText, color: "text-green-400" },
-  product_copy_clarity: { label: "Copy Clarity", icon: FileText, color: "text-green-400" },
-  send_cart_recovery: { label: "Recovery", icon: DollarSign, color: "text-yellow-400" },
-  cart_recovery: { label: "Cart Recovery", icon: DollarSign, color: "text-yellow-400" },
-  run_ab_test: { label: "A/B Test", icon: Activity, color: "text-purple-400" },
-  adjust_price: { label: "Pricing", icon: DollarSign, color: "text-emerald-400" },
-  content_refresh: { label: "Content", icon: FileText, color: "text-cyan-400" },
-  discoverability: { label: "Discoverability", icon: Eye, color: "text-orange-400" },
-  trust_signals: { label: "Trust Signals", icon: Shield, color: "text-indigo-400" },
+const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: string; category: ActionCategory }> = {
+  // SEO Actions
+  optimize_seo: { label: "SEO", icon: TrendingUp, color: "text-blue-400", category: "seo" },
+  seo_basics: { label: "SEO Basics", icon: TrendingUp, color: "text-blue-400", category: "seo" },
+  discoverability: { label: "Discoverability", icon: Eye, color: "text-orange-400", category: "seo" },
+  title_optimization: { label: "Product Title Optimization", icon: Tag, color: "text-blue-400", category: "seo" },
+  meta_optimization: { label: "Meta Title, Description & Tag", icon: Globe, color: "text-cyan-400", category: "seo" },
+  search_intent_fix: { label: "Search Intent Alignment Fix", icon: Target, color: "text-purple-400", category: "seo" },
+  alt_text_optimization: { label: "Image Alt-Text Optimization", icon: Image, color: "text-emerald-400", category: "seo" },
+  stale_content_refresh: { label: "Stale SEO Content Refresh", icon: RefreshCw, color: "text-amber-400", category: "seo" },
+  content_refresh: { label: "Content Refresh", icon: FileText, color: "text-cyan-400", category: "seo" },
+  
+  // Conversion Actions
+  fix_product: { label: "Content", icon: FileText, color: "text-green-400", category: "conversion" },
+  product_copy_clarity: { label: "Copy Clarity", icon: FileText, color: "text-green-400", category: "conversion" },
+  description_clarity: { label: "Product Description Clarity Upgrade", icon: FileText, color: "text-green-400", category: "conversion" },
+  value_proposition_fix: { label: "Value Proposition Alignment Fix", icon: Sparkles, color: "text-violet-400", category: "conversion" },
+  trust_signals: { label: "Trust Signals", icon: Shield, color: "text-indigo-400", category: "conversion" },
+  trust_signal_enhancement: { label: "Trust Signal Enhancement", icon: Shield, color: "text-indigo-400", category: "conversion" },
+  friction_copy_removal: { label: "Friction Copy Removal", icon: X, color: "text-orange-400", category: "conversion" },
+  above_fold_optimization: { label: "Above-the-Fold Content Optimization", icon: Eye, color: "text-pink-400", category: "conversion" },
+  
+  // Revenue Recovery Actions
+  send_cart_recovery: { label: "Recovery", icon: DollarSign, color: "text-yellow-400", category: "revenue_recovery" },
+  cart_recovery: { label: "Cart Recovery", icon: DollarSign, color: "text-yellow-400", category: "revenue_recovery" },
+  abandoned_cart_recovery: { label: "Abandoned Cart Recovery Activation", icon: ShoppingCart, color: "text-yellow-400", category: "revenue_recovery" },
+  post_purchase_upsell: { label: "Post-Purchase Upsell Enablement", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
+  checkout_drop_mitigation: { label: "Checkout Drop-Off Mitigation", icon: DollarSign, color: "text-rose-400", category: "revenue_recovery" },
+  
+  // Revenue Protection Actions
+  underperforming_rollback: { label: "Underperforming Change Rollback", icon: RotateCcw, color: "text-red-400", category: "revenue_protection" },
+  risky_optimization_freeze: { label: "Risky Optimization Freeze", icon: Pause, color: "text-orange-400", category: "revenue_protection" },
+  
+  // Learning Actions
+  conversion_pattern_learning: { label: "Store Conversion Pattern Learning", icon: Brain, color: "text-purple-400", category: "learning" },
+  performance_baseline_update: { label: "Product Performance Baseline Update", icon: BarChart, color: "text-sky-400", category: "learning" },
+  
+  // Misc
+  run_ab_test: { label: "A/B Test", icon: Activity, color: "text-purple-400", category: "conversion" },
+  adjust_price: { label: "Pricing", icon: DollarSign, color: "text-emerald-400", category: "revenue_recovery" },
 };
+
+const CATEGORY_CONFIG: Record<ActionCategory, { label: string; icon: any; color: string; description: string }> = {
+  seo: { label: "Discoverability & SEO", icon: Search, color: "text-blue-400", description: "Optimize product visibility in search" },
+  conversion: { label: "Conversion Optimization", icon: ShoppingCart, color: "text-green-400", description: "Turn more visitors into buyers" },
+  revenue_recovery: { label: "Revenue Recovery", icon: DollarSign, color: "text-yellow-400", description: "Recover lost sales opportunities" },
+  revenue_protection: { label: "Revenue Protection", icon: Shield, color: "text-red-400", description: "Protect against revenue loss" },
+  learning: { label: "Learning & Intelligence", icon: Brain, color: "text-purple-400", description: "AI learns and improves" },
+};
+
+const SEO_ACTION_ROWS = [
+  { key: "description", label: "Product Description", field: "Product Description" },
+  { key: "title", label: "Product Title Optimization", field: "Product Title" },
+  { key: "meta", label: "Meta Title, Description & Tags", field: "Meta Description" },
+  { key: "search_intent", label: "Search Intent Alignment", field: "SEO Title" },
+  { key: "alt_text", label: "Image Alt-Text", field: "Image Alt Text" },
+  { key: "stale_refresh", label: "Stale SEO Content Refresh", field: "Content" },
+];
 
 const STATUS_CONFIG: Record<ActionStatus, { label: string; color: string; bgColor: string }> = {
   pending: { label: "Pending", color: "text-yellow-400", bgColor: "bg-yellow-500/20" },
@@ -196,6 +251,13 @@ export default function ChangeControlDashboard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
   const [showLatestOnly, setShowLatestOnly] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<ActionCategory>("seo");
+
+  const handleCategoryChange = (category: ActionCategory) => {
+    setActiveCategory(category);
+    setSelectedIds(new Set());
+    setSelectedChange(null);
+  };
 
   const { data: changes, isLoading: changesLoading, refetch } = useQuery<ChangeItem[]>({
     queryKey: ["/api/autonomous-actions"],
@@ -242,6 +304,32 @@ export default function ChangeControlDashboard() {
     
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [changes, filterStatus, showLatestOnly]);
+
+  const categoryFilteredChanges = useMemo(() => {
+    return filteredChanges.filter(change => {
+      const config = ACTION_TYPE_CONFIG[change.actionType];
+      return config?.category === activeCategory;
+    });
+  }, [filteredChanges, activeCategory]);
+
+  const changesByCategory = useMemo(() => {
+    const byCategory: Record<ActionCategory, ChangeItem[]> = {
+      seo: [],
+      conversion: [],
+      revenue_recovery: [],
+      revenue_protection: [],
+      learning: []
+    };
+    
+    filteredChanges.forEach(change => {
+      const config = ACTION_TYPE_CONFIG[change.actionType];
+      if (config?.category) {
+        byCategory[config.category].push(change);
+      }
+    });
+    
+    return byCategory;
+  }, [filteredChanges]);
 
   const rollbackMutation = useMutation({
     mutationFn: async (actionId: string) => {
@@ -429,10 +517,10 @@ export default function ChangeControlDashboard() {
   };
 
   const selectAll = () => {
-    if (selectedIds.size === filteredChanges.length) {
+    if (selectedIds.size === categoryFilteredChanges.length && categoryFilteredChanges.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredChanges.map(c => c.id)));
+      setSelectedIds(new Set(categoryFilteredChanges.map(c => c.id)));
     }
   };
 
@@ -501,11 +589,11 @@ export default function ChangeControlDashboard() {
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-3">
                       <Checkbox 
-                        checked={selectedIds.size === filteredChanges.length && filteredChanges.length > 0}
+                        checked={selectedIds.size === categoryFilteredChanges.length && categoryFilteredChanges.length > 0}
                         onCheckedChange={selectAll}
                         data-testid="checkbox-select-all"
                       />
-                      <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                      <span className="text-sm font-medium">{selectedIds.size} selected in {CATEGORY_CONFIG[activeCategory].label}</span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       {canBulkRollback && (
@@ -571,24 +659,60 @@ export default function ChangeControlDashboard() {
               </Card>
             )}
 
+            <Card className="mb-4">
+              <CardContent className="pt-4 pb-2">
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(CATEGORY_CONFIG) as ActionCategory[]).map((category) => {
+                    const config = CATEGORY_CONFIG[category];
+                    const Icon = config.icon;
+                    const count = changesByCategory[category]?.length || 0;
+                    const isActive = activeCategory === category;
+                    return (
+                      <Button
+                        key={category}
+                        variant={isActive ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleCategoryChange(category)}
+                        className={cn(
+                          "gap-2 transition-all",
+                          isActive && config.color.replace("text-", "bg-").replace("400", "500/20"),
+                          !isActive && "hover-elevate"
+                        )}
+                        data-testid={`tab-category-${category}`}
+                      >
+                        <Icon className={cn("w-4 h-4", config.color)} />
+                        <span className="hidden sm:inline">{config.label}</span>
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {count}
+                        </Badge>
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {CATEGORY_CONFIG[activeCategory].description}
+                </p>
+              </CardContent>
+            </Card>
+
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <Tabs value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
                 <TabsList>
                   <TabsTrigger value="all" className="gap-2" data-testid="tab-all">
                     <Filter className="w-4 h-4" />
-                    All ({changes?.length || 0})
+                    All ({categoryFilteredChanges.length})
                   </TabsTrigger>
                   <TabsTrigger value="applied" className="gap-2" data-testid="tab-applied">
                     <CheckCircle2 className="w-4 h-4 text-green-400" />
-                    Applied ({appliedChanges.length})
+                    Applied ({categoryFilteredChanges.filter(c => c.status === "completed" || c.status === "dry_run").length})
                   </TabsTrigger>
                   <TabsTrigger value="pending" className="gap-2" data-testid="tab-pending">
                     <Clock className="w-4 h-4 text-yellow-400" />
-                    Pending ({pendingChanges.length})
+                    Pending ({categoryFilteredChanges.filter(c => c.status === "pending").length})
                   </TabsTrigger>
                   <TabsTrigger value="rolled_back" className="gap-2" data-testid="tab-rolled-back">
                     <RotateCcw className="w-4 h-4 text-slate-400" />
-                    Rolled Back ({rolledBackChanges.length})
+                    Rolled Back ({categoryFilteredChanges.filter(c => c.status === "rolled_back").length})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -624,23 +748,387 @@ export default function ChangeControlDashboard() {
                       <Skeleton key={i} className="h-48 w-full rounded-lg" />
                     ))}
                   </div>
-                ) : filteredChanges.length === 0 ? (
+                ) : categoryFilteredChanges.length === 0 ? (
                   <Card>
                     <CardContent className="py-12">
                       <div className="flex flex-col items-center justify-center text-center">
-                        <Bot className="w-12 h-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium mb-2">No Changes Found</h3>
-                        <p className="text-muted-foreground text-sm max-w-md">
-                          {filterStatus === "all" 
-                            ? "ZYRA will show optimizations here after analyzing your store. Connect your Shopify store to get started."
-                            : `No ${filterStatus === "applied" ? "applied" : filterStatus === "pending" ? "pending" : "rolled back"} changes found.`}
-                        </p>
+                        {activeCategory === "learning" ? (
+                          <>
+                            <Brain className="w-12 h-12 text-purple-400 mb-4" />
+                            <h3 className="text-lg font-medium mb-2">Learning & Intelligence</h3>
+                            <p className="text-muted-foreground text-sm max-w-md">
+                              ZYRA continuously learns from your store data to improve future decisions. This happens automatically in the background.
+                            </p>
+                            <div className="flex gap-4 mt-6">
+                              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                                <Brain className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                                <p className="text-sm font-medium">Store Conversion Pattern Learning</p>
+                                <Badge variant="outline" className="mt-2 text-xs bg-green-500/20 text-green-400">
+                                  Active
+                                </Badge>
+                              </div>
+                              <div className="p-4 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                                <BarChart className="w-8 h-8 text-sky-400 mx-auto mb-2" />
+                                <p className="text-sm font-medium">Performance Baseline Update</p>
+                                <Badge variant="outline" className="mt-2 text-xs bg-green-500/20 text-green-400">
+                                  Active
+                                </Badge>
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-4">
+                              Used internally to improve future decisions
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Bot className="w-12 h-12 text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-medium mb-2">No {CATEGORY_CONFIG[activeCategory].label} Changes</h3>
+                            <p className="text-muted-foreground text-sm max-w-md">
+                              {filterStatus === "all" 
+                                ? `ZYRA will show ${CATEGORY_CONFIG[activeCategory].label.toLowerCase()} optimizations here after analyzing your store.`
+                                : `No ${filterStatus === "applied" ? "applied" : filterStatus === "pending" ? "pending" : "rolled back"} changes found.`}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
+                ) : activeCategory === "seo" ? (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Search className="w-5 h-5 text-blue-400" />
+                        SEO Comparison Table
+                      </CardTitle>
+                      <CardDescription>
+                        Compare unoptimized vs optimized product content
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm" data-testid="table-seo-comparison">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="p-3 text-left font-medium w-8">
+                                <Checkbox 
+                                  checked={selectedIds.size === categoryFilteredChanges.length && categoryFilteredChanges.length > 0}
+                                  onCheckedChange={selectAll}
+                                  data-testid="checkbox-select-all-seo"
+                                />
+                              </th>
+                              <th className="p-3 text-left font-medium">Action</th>
+                              <th className="p-3 text-left font-medium">Product</th>
+                              <th className="p-3 text-left font-medium text-muted-foreground">Unoptimized</th>
+                              <th className="p-3 text-left font-medium text-primary">Optimized</th>
+                              <th className="p-3 text-left font-medium">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {categoryFilteredChanges.map((change) => {
+                              const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.optimize_seo;
+                              const statusConfig = STATUS_CONFIG[change.status];
+                              const { before, after } = getBeforeAfterContent(change);
+                              const isChecked = selectedIds.has(change.id);
+                              const beforeText = Object.values(before)[0] || "—";
+                              const afterText = Object.values(after)[0] || "—";
+                              
+                              return (
+                                <tr 
+                                  key={change.id} 
+                                  className={cn(
+                                    "border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors",
+                                    isChecked && "bg-primary/5"
+                                  )}
+                                  onClick={() => setSelectedChange(selectedChange?.id === change.id ? null : change)}
+                                  data-testid={`row-seo-${change.id}`}
+                                >
+                                  <td className="p-3">
+                                    <Checkbox 
+                                      checked={isChecked}
+                                      onCheckedChange={() => toggleSelection(change.id)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      data-testid={`checkbox-seo-${change.id}`}
+                                    />
+                                  </td>
+                                  <td className="p-3">
+                                    <Badge variant="outline" className={cn("text-xs", config.color)}>
+                                      {config.label}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-3">
+                                    <div className="flex items-center gap-2">
+                                      {change.productImage ? (
+                                        <img src={change.productImage} alt="" className="w-8 h-8 rounded object-cover" />
+                                      ) : (
+                                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                                          <Package className="w-4 h-4 text-muted-foreground" />
+                                        </div>
+                                      )}
+                                      <span className="truncate max-w-[150px]">{change.productName || "Unknown"}</span>
+                                    </div>
+                                  </td>
+                                  <td className="p-3 max-w-[200px]">
+                                    <p className="text-xs text-muted-foreground truncate" title={beforeText}>
+                                      {beforeText.length > 60 ? beforeText.substring(0, 60) + "..." : beforeText}
+                                    </p>
+                                  </td>
+                                  <td className="p-3 max-w-[200px]">
+                                    <p className="text-xs text-primary truncate" title={afterText}>
+                                      {afterText.length > 60 ? afterText.substring(0, 60) + "..." : afterText}
+                                    </p>
+                                  </td>
+                                  <td className="p-3">
+                                    <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
+                                      {statusConfig.label}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {selectedIds.size > 0 && (
+                        <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const idsToPush = Array.from(selectedIds).filter(id => {
+                                const change = changes?.find(c => c.id === id);
+                                return change && !change.publishedToShopify;
+                              });
+                              if (idsToPush.length > 0) {
+                                bulkPushMutation.mutate(idsToPush);
+                              }
+                            }}
+                            disabled={bulkPushMutation.isPending}
+                            className="gap-2"
+                            data-testid="button-push-selected-seo"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Push Selected to Shopify ({selectedIds.size})
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const idsToRollback = Array.from(selectedIds).filter(id => {
+                                const change = changes?.find(c => c.id === id);
+                                return change && (change.status === "completed" || change.status === "dry_run");
+                              });
+                              if (idsToRollback.length > 0) {
+                                bulkRollbackMutation.mutate(idsToRollback);
+                              }
+                            }}
+                            disabled={bulkRollbackMutation.isPending}
+                            className="gap-2"
+                            data-testid="button-rollback-selected-seo"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            Rollback Selected
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : activeCategory === "learning" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="bg-purple-500/5 border-purple-500/20">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-3">
+                          <Brain className="w-10 h-10 text-purple-400 flex-shrink-0" />
+                          <div>
+                            <h4 className="font-medium">Store Conversion Pattern Learning</h4>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              ZYRA learns which product attributes drive conversions in your store
+                            </p>
+                            <Badge variant="outline" className="mt-3 bg-green-500/20 text-green-400 border-green-500/30">
+                              <Activity className="w-3 h-3 mr-1" />
+                              Active - Updating
+                            </Badge>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-4 italic">
+                          Used internally to improve future decisions
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-sky-500/5 border-sky-500/20">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-3">
+                          <BarChart className="w-10 h-10 text-sky-400 flex-shrink-0" />
+                          <div>
+                            <h4 className="font-medium">Product Performance Baseline Update</h4>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Continuously updates performance baselines for accurate impact measurement
+                            </p>
+                            <Badge variant="outline" className="mt-3 bg-green-500/20 text-green-400 border-green-500/30">
+                              <Activity className="w-3 h-3 mr-1" />
+                              Active - Updating
+                            </Badge>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-4 italic">
+                          Used internally to improve future decisions
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : activeCategory === "revenue_protection" ? (
+                  <div className="space-y-4">
+                    {categoryFilteredChanges.length === 0 ? (
+                      <Card className="bg-red-500/5 border-red-500/20">
+                        <CardContent className="py-8">
+                          <div className="flex flex-col items-center text-center">
+                            <Shield className="w-12 h-12 text-red-400 mb-4" />
+                            <h3 className="text-lg font-medium mb-2">Revenue Protection Active</h3>
+                            <p className="text-muted-foreground text-sm max-w-md">
+                              No revenue threats detected. ZYRA is monitoring for underperforming changes and risky optimizations.
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      categoryFilteredChanges.map((change) => {
+                        const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.underperforming_rollback;
+                        const Icon = config.icon;
+                        return (
+                          <Card 
+                            key={change.id}
+                            className="border-red-500/30 bg-red-500/5"
+                            data-testid={`card-protection-${change.id}`}
+                          >
+                            <CardContent className="pt-6">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3">
+                                  <div className="p-2 rounded-lg bg-red-500/20">
+                                    <Icon className="w-6 h-6 text-red-400" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium flex items-center gap-2">
+                                      {config.label}
+                                      <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30">
+                                        <AlertTriangle className="w-3 h-3 mr-1" />
+                                        Warning
+                                      </Badge>
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      {change.productName || "Unknown Product"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      {change.decisionReason || "Revenue impact detected"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => rollbackMutation.mutate(change.id)}
+                                    disabled={rollbackMutation.isPending}
+                                    className="gap-1"
+                                    data-testid={`button-rollback-protection-${change.id}`}
+                                  >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Rollback
+                                  </Button>
+                                  {change.actionType === "risky_optimization_freeze" && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="gap-1 border-orange-500/30 text-orange-400"
+                                      data-testid={`button-freeze-${change.id}`}
+                                    >
+                                      <Pause className="w-4 h-4" />
+                                      Freeze
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : activeCategory === "revenue_recovery" ? (
+                  <div className="space-y-4">
+                    {categoryFilteredChanges.map((change) => {
+                      const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.abandoned_cart_recovery;
+                      const statusConfig = STATUS_CONFIG[change.status];
+                      const Icon = config.icon;
+                      const isEnabled = change.status === "completed";
+                      
+                      return (
+                        <Card 
+                          key={change.id}
+                          className={cn(
+                            "transition-all",
+                            isEnabled ? "border-green-500/30 bg-green-500/5" : "border-yellow-500/30 bg-yellow-500/5"
+                          )}
+                          data-testid={`card-recovery-${change.id}`}
+                        >
+                          <CardContent className="pt-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
+                                <div className={cn(
+                                  "p-2 rounded-lg",
+                                  isEnabled ? "bg-green-500/20" : "bg-yellow-500/20"
+                                )}>
+                                  <Icon className={cn("w-6 h-6", config.color)} />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium">{config.label}</h4>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    {change.productName || "Store-wide"}
+                                  </p>
+                                  <div className="flex items-center gap-3 mt-3">
+                                    <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
+                                      {isEnabled ? "Enabled" : "Pending"}
+                                    </Badge>
+                                    {change.estimatedImpact?.expectedRevenue && (
+                                      <span className="text-xs text-green-400">
+                                        Expected: +{formatCurrency(change.estimatedImpact.expectedRevenue)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                {!isEnabled && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => pushToShopifyMutation.mutate(change.id)}
+                                    disabled={pushToShopifyMutation.isPending}
+                                    className="gap-1"
+                                    data-testid={`button-enable-${change.id}`}
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Enable
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => rollbackMutation.mutate(change.id)}
+                                  disabled={rollbackMutation.isPending}
+                                  className="gap-1"
+                                  data-testid={`button-disable-${change.id}`}
+                                >
+                                  <X className="w-4 h-4" />
+                                  {isEnabled ? "Disable" : "Rollback"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredChanges.map((change) => {
+                    {categoryFilteredChanges.map((change) => {
                       const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.optimize_seo;
                       const statusConfig = STATUS_CONFIG[change.status];
                       const riskLevel = getRiskLevel(change);
