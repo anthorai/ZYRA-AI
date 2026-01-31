@@ -285,19 +285,26 @@ Respond ONLY with valid JSON:
         .where(eq(seoMeta.productId, product.id))
         .limit(1);
 
-      if (optimized.seoTitle && optimized.seoTitle !== (existingSeo?.seoTitle || '')) {
+      // Compare against both original AND optimized fields - only skip if exact match with optimized version
+      const existingTitle = existingSeo?.optimizedTitle || existingSeo?.seoTitle || '';
+      const existingMeta = existingSeo?.optimizedMeta || existingSeo?.metaDescription || '';
+
+      // Force change if no optimized version exists yet, or if AI generated different content
+      const isFirstOptimization = !existingSeo?.optimizedTitle;
+      
+      if (optimized.seoTitle && (isFirstOptimization || optimized.seoTitle !== existingTitle)) {
         changes.push({
           field: 'SEO Title',
-          before: existingSeo?.seoTitle || '(none)',
+          before: existingTitle || '(none)',
           after: optimized.seoTitle,
           reason: 'Added buyer-focused keywords to improve search visibility',
         });
       }
 
-      if (optimized.metaDescription && optimized.metaDescription !== (existingSeo?.metaDescription || '')) {
+      if (optimized.metaDescription && (isFirstOptimization || optimized.metaDescription !== existingMeta)) {
         changes.push({
           field: 'Meta Description',
-          before: existingSeo?.metaDescription || '(none)',
+          before: existingMeta || '(none)',
           after: optimized.metaDescription,
           reason: 'Created compelling description to increase click-through rate',
         });
