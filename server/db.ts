@@ -491,10 +491,11 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Free",
         price: "0",
-        description: "Free to install",
+        description: "Free to install - 7-day trial with 150 credits, then 50/month",
         shopifyPlanHandle: "free",
         features: [
-          "Free to install",
+          "7-day trial with 150 bonus credits",
+          "Then 50 credits / month forever",
           "Revenue Detection:",
           "• ZYRA detects all revenue opportunities",
           "• View Next Move recommendations",
@@ -507,34 +508,14 @@ export async function seedSubscriptionPlans(): Promise<void> {
         ],
         limits: {
           credits: 50,
+          trialCredits: 150,
+          trialDays: 7,
           actionsPerMonth: 10,
           autopilot: false,
           bulkOptimization: false,
           powerMode: false
         },
         interval: "month",
-        isActive: true
-      },
-      {
-        planName: "7-Day Free Trial",
-        price: "0",
-        description: "Explore ZYRA's revenue detection",
-        features: [
-          "100 Credits / 7 days",
-          "Revenue Detection:",
-          "• ZYRA detects optimization opportunities",
-          "• Preview mode for all actions",
-          "Product Intelligence:",
-          "• ZYRA analyzes product SEO",
-          "• Basic content suggestions",
-          "Safety & Control:",
-          "• One-click Shopify publish",
-          "• Instant rollback protection"
-        ],
-        limits: {
-          credits: 100
-        },
-        interval: "day",
         isActive: true
       },
       {
@@ -677,8 +658,8 @@ export async function seedSubscriptionPlans(): Promise<void> {
       }
     }
 
-    // Deactivate any legacy plans not in the new 5-plan set
-    const activePlanNames = ["Free", "7-Day Free Trial", "Starter", "Growth", "Pro"];
+    // Deactivate any legacy plans not in the new 4-plan set
+    const activePlanNames = ["Free", "Starter", "Growth", "Pro"];
     await db.update(subscriptionPlans)
       .set({ isActive: false })
       .where(notInArray(subscriptionPlans.planName, activePlanNames));

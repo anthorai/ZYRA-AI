@@ -30,25 +30,25 @@ export async function grantFreeTrial(userId: string): Promise<{
       };
     }
 
-    // Get the 7-Day Free Trial plan
-    const [trialPlan] = await db
+    // Get the Free plan (includes 7-day trial with 150 credits)
+    const [freePlan] = await db
       .select()
       .from(subscriptionPlans)
-      .where(eq(subscriptionPlans.planName, "7-Day Free Trial"))
+      .where(eq(subscriptionPlans.planName, "Free"))
       .limit(1);
 
-    if (!trialPlan) {
-      console.error("[Trial Grant] 7-Day Free Trial plan not found in database");
-      return { success: false, message: "Trial plan not found" };
+    if (!freePlan) {
+      console.error("[Trial Grant] Free plan not found in database");
+      return { success: false, message: "Free plan not found" };
     }
 
     const now = new Date();
     const trialEndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
 
-    // Create subscription record
+    // Create subscription record with Free plan
     await db.insert(subscriptions).values({
       userId,
-      planId: trialPlan.id,
+      planId: freePlan.id,
       status: "trialing",
       trialStart: now,
       trialEnd: trialEndDate,
@@ -57,19 +57,17 @@ export async function grantFreeTrial(userId: string): Promise<{
       cancelAtPeriodEnd: false,
     });
 
-    // Update user's plan and trial end date
+    // Update user's plan to 'free' with trial end date
     await db
       .update(users)
       .set({ 
-        plan: "trial",
+        plan: "free",
         trialEndDate: trialEndDate,
       })
       .where(eq(users.id, userId));
 
-    // Initialize usage stats with trial credits
-    const trialCredits = trialPlan.limits && typeof trialPlan.limits === 'object' && 'credits' in trialPlan.limits 
-      ? (trialPlan.limits as { credits?: number }).credits || 100 
-      : 100;
+    // Initialize usage stats with 150 trial credits
+    const trialCredits = 150; // Free plan trial bonus credits
 
     try {
       // Check if usage stats already exist
