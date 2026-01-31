@@ -5,6 +5,7 @@ import {
   revenueSignals,
   revenueOpportunities,
   products,
+  seoMeta,
   automationSettings,
   storeConnections,
   usageStats,
@@ -765,17 +766,24 @@ export class FastDetectionEngine {
     try {
       const db = requireDb();
       
-      // Get all products to work on (prioritize products with low revenue health score)
-      const userProducts = await db
+      // Get all products, prioritizing those without SEO optimization
+      const allProducts = await db
         .select({ 
           id: products.id, 
           name: products.name,
-          revenueHealthScore: products.revenueHealthScore
+          revenueHealthScore: products.revenueHealthScore,
+          hasOptimizedSeo: seoMeta.optimizedTitle
         })
         .from(products)
+        .leftJoin(seoMeta, eq(products.id, seoMeta.productId))
         .where(eq(products.userId, userId))
         .orderBy(sql`COALESCE(${products.revenueHealthScore}, 0) ASC`)
         .limit(10);
+      
+      // Prioritize products without optimized SEO, then those with low health scores
+      const unoptimizedProducts = allProducts.filter(p => !p.hasOptimizedSeo);
+      const optimizedProducts = allProducts.filter(p => p.hasOptimizedSeo);
+      const userProducts = [...unoptimizedProducts, ...optimizedProducts].slice(0, 10);
       
       // Get recently executed foundational actions from activity logs
       const recentActions = await db
@@ -839,12 +847,20 @@ export class FastDetectionEngine {
           }
         }
         
+        // Check if all products already have optimized SEO
+        const allProductsHaveSeo = unoptimizedProducts.length === 0 && optimizedProducts.length > 0;
+        
         // Additional selection logic based on product state
         if (targetProduct) {
           const healthScore = targetProduct.revenueHealthScore || 0;
+          const productHasSeo = targetProduct.hasOptimizedSeo;
           
-          // If product has good SEO, move to next action type
-          if (healthScore >= 40 && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
+          // If all products have SEO optimization, move to next action type
+          if (allProductsHaveSeo && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
+            selectedType = 'product_copy_clarity';
+          } else if (productHasSeo && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
+            selectedType = 'product_copy_clarity';
+          } else if (healthScore >= 40 && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
             selectedType = 'product_copy_clarity';
           } else if (healthScore >= 60 && !recentActionTypes.has('trust_signals')) {
             selectedType = 'trust_signals';
