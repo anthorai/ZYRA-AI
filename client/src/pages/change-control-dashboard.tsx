@@ -1126,169 +1126,122 @@ export default function ChangeControlDashboard() {
                       );
                     })}
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ) : activeCategory === "conversion" ? (
+                  <div className="space-y-4">
                     {categoryFilteredChanges.map((change) => {
-                      const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.optimize_seo;
+                      const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.description_clarity;
                       const statusConfig = STATUS_CONFIG[change.status];
-                      const riskLevel = getRiskLevel(change);
-                      const riskConfig = RISK_CONFIG[riskLevel];
                       const Icon = config.icon;
-                      const isSelected = selectedChange?.id === change.id;
-                      const isChecked = selectedIds.has(change.id);
-                      const isAutonomous = change.executedBy === "agent";
                       const { before, after } = getBeforeAfterContent(change);
-
+                      const beforeText = Object.values(before)[0] || "No previous content";
+                      const afterText = Object.values(after)[0] || "Optimized content pending";
+                      const fieldName = Object.keys(before)[0] || Object.keys(after)[0] || "Content";
+                      
                       return (
                         <Card 
                           key={change.id}
-                          className={cn(
-                            "cursor-pointer transition-all hover-elevate",
-                            isSelected && "ring-2 ring-primary border-primary"
-                          )}
-                          data-testid={`card-change-${change.id}`}
+                          className="border-green-500/20 bg-green-500/5"
+                          data-testid={`card-conversion-${change.id}`}
                         >
                           <CardHeader className="pb-2">
-                            <div className="flex items-start gap-3">
-                              <Checkbox 
-                                checked={isChecked}
-                                onCheckedChange={() => toggleSelection(change.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                data-testid={`checkbox-${change.id}`}
-                              />
-                              <div className="flex-shrink-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
                                 {change.productImage ? (
                                   <img 
                                     src={change.productImage} 
                                     alt="" 
-                                    className="w-14 h-14 rounded-md object-cover border border-border"
+                                    className="w-12 h-12 rounded-md object-cover border border-border"
                                   />
                                 ) : (
-                                  <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center">
-                                    <Package className="w-7 h-7 text-muted-foreground" />
+                                  <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                                    <Package className="w-6 h-6 text-muted-foreground" />
                                   </div>
                                 )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">
-                                  {change.productName || change.payload?.productName || "Unknown Product"}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                  <Badge variant="outline" className={cn("text-xs", config.color)}>
-                                    <Icon className="w-3 h-3 mr-1" />
-                                    {config.label}
-                                  </Badge>
-                                  <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
-                                    {statusConfig.label}
-                                  </Badge>
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {change.productName || "Unknown Product"}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="outline" className={cn("text-xs", config.color)}>
+                                      <Icon className="w-3 h-3 mr-1" />
+                                      {config.label}
+                                    </Badge>
+                                    <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
+                                      {statusConfig.label}
+                                    </Badge>
+                                  </div>
                                 </div>
+                              </div>
+                              <div className="flex gap-2">
+                                {!change.publishedToShopify && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => pushToShopifyMutation.mutate(change.id)}
+                                    disabled={pushToShopifyMutation.isPending}
+                                    className="gap-1"
+                                    data-testid={`button-push-conversion-${change.id}`}
+                                  >
+                                    <Upload className="w-4 h-4" />
+                                    Push to Shopify
+                                  </Button>
+                                )}
+                                {(change.status === "completed" || change.status === "dry_run") && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => rollbackMutation.mutate(change.id)}
+                                    disabled={rollbackMutation.isPending}
+                                    className="gap-1"
+                                    data-testid={`button-rollback-conversion-${change.id}`}
+                                  >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Rollback
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent 
-                            className="pt-2 space-y-3"
-                            onClick={() => setSelectedChange(isSelected ? null : change)}
-                          >
-                            <div className="p-3 rounded-lg bg-muted/50">
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                                <Clock className="w-3 h-3" />
-                                <span>Optimized {formatDistanceToNow(new Date(change.createdAt), { addSuffix: true })}</span>
-                              </div>
-                              {change.completedAt && (
-                                <p className="text-xs text-muted-foreground">
-                                  Completed: {format(new Date(change.completedAt), 'MMM d, yyyy h:mm a')}
+                          <CardContent className="pt-2">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              {fieldName}
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                                  <X className="w-3 h-3 text-red-400" />
+                                  Before (Unoptimized)
                                 </p>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className={cn("text-xs", riskConfig.bgColor, riskConfig.color)}>
-                                {riskConfig.label}
-                              </Badge>
-                              {(() => {
-                                const aiMode = change.payload?.aiMode || change.result?.aiMode;
-                                if (aiMode === 'fast') {
-                                  return (
-                                    <Badge variant="outline" className="text-xs bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
-                                      <Zap className="w-3 h-3 mr-1" />
-                                      Fast Mode
-                                    </Badge>
-                                  );
-                                } else if (aiMode === 'quality') {
-                                  return (
-                                    <Badge variant="outline" className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">
-                                      <Sparkles className="w-3 h-3 mr-1" />
-                                      Quality Mode
-                                    </Badge>
-                                  );
-                                }
-                                return null;
-                              })()}
-                              {isAutonomous && (
-                                <Badge variant="outline" className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
-                                  <Bot className="w-3 h-3 mr-1" />
-                                  Auto
-                                </Badge>
-                              )}
-                              {change.publishedToShopify && (
-                                <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
-                                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                                  Live
-                                </Badge>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2 pt-2">
-                              {(change.status === "completed" || change.status === "dry_run") && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    rollbackMutation.mutate(change.id);
-                                  }}
-                                  disabled={rollbackMutation.isPending}
-                                  className="gap-1 text-xs flex-1"
-                                  data-testid={`button-rollback-${change.id}`}
-                                >
-                                  <RotateCcw className="w-3 h-3" />
-                                  Rollback
-                                </Button>
-                              )}
-                              {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run") && (
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    pushToShopifyMutation.mutate(change.id);
-                                  }}
-                                  disabled={pushToShopifyMutation.isPending}
-                                  className="gap-1 text-xs flex-1"
-                                  data-testid={`button-push-${change.id}`}
-                                >
-                                  <Upload className="w-3 h-3" />
-                                  Push to Shopify
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setLocation(`/change-control/${change.id}`);
-                                }}
-                                className="gap-1 text-xs"
-                                data-testid={`button-details-${change.id}`}
-                              >
-                                <Eye className="w-3 h-3" />
-                                Details
-                              </Button>
+                                <p className="text-sm">
+                                  {beforeText.length > 200 ? beforeText.substring(0, 200) + "..." : beforeText}
+                                </p>
+                              </div>
+                              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                                <p className="text-xs text-green-400 mb-2 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  After (Optimized)
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {afterText.length > 200 ? afterText.substring(0, 200) + "..." : afterText}
+                                </p>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
                       );
                     })}
                   </div>
+                ) : (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <Bot className="w-12 h-12 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-medium mb-2">No Changes in This Category</h3>
+                        <p className="text-muted-foreground text-sm max-w-md">
+                          ZYRA will show optimizations here after analyzing your store.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
 
