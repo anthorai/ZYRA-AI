@@ -16754,7 +16754,8 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
-      const { automationSettings, autonomousActions, revenueLoopProof, products } = await import('@shared/schema');
+      const { automationSettings, products, scanActivity } = await import('@shared/schema');
+      const { revenueImmuneScanner } = await import('./lib/revenue-immune-scanner');
       
       // Get automation settings for the user
       const [settings] = await db
@@ -16763,173 +16764,84 @@ Output format: Markdown with clear section headings.`;
         .where(eq(automationSettings.userId, userId))
         .limit(1);
       
-      // Calculate prevented revenue from revenue loop proof entries this month
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      // Get start of today for today's activity
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
-      
-      // Get start of last 7 days for history
-      const startOfWeek = new Date();
-      startOfWeek.setDate(startOfWeek.getDate() - 7);
-      startOfWeek.setHours(0, 0, 0, 0);
-      
-      // Get revenue proof entries for this month using typed gte comparison
-      const proofEntries = await db
-        .select()
-        .from(revenueLoopProof)
-        .where(
-          and(
-            eq(revenueLoopProof.userId, userId),
-            gte(revenueLoopProof.createdAt, startOfMonth)
-          )
-        );
-      
-      // Filter entries with valid createdAt to prevent null issues
-      const validProofEntries = proofEntries.filter(e => e.createdAt != null);
-      
-      // Get today's proof entries for activity log (with null safety)
-      const todayProofEntries = validProofEntries.filter(e => 
-        new Date(e.createdAt as Date) >= startOfToday
-      );
-      
-      // Get weekly entries for history (with null safety)
-      const weeklyProofEntries = await db
-        .select()
-        .from(revenueLoopProof)
-        .where(
-          and(
-            eq(revenueLoopProof.userId, userId),
-            gte(revenueLoopProof.createdAt, startOfWeek)
-          )
-        );
-      const validWeeklyEntries = weeklyProofEntries.filter(e => e.createdAt != null);
-      
-      // Get autonomous actions for more accurate activity tracking
-      const todayActions = await db
-        .select()
-        .from(autonomousActions)
-        .where(
-          and(
-            eq(autonomousActions.userId, userId),
-            gte(autonomousActions.createdAt, startOfToday)
-          )
-        );
-      
-      // Get product count for scan reporting
+      // Get product count
       const userProducts = await db
         .select()
         .from(products)
         .where(eq(products.userId, userId));
       const totalProducts = userProducts.length;
       
-      // Sum up prevented revenue (estimated_impact from proven actions) - single truth metric
-      let preventedRevenue = 0;
+      // Get today's scans from scan_activity table (REAL DATA)
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
       
-      for (const entry of validProofEntries) {
-        if (entry.status === 'proven' || entry.status === 'positive') {
-          const impact = typeof entry.estimatedImpact === 'number' 
-            ? entry.estimatedImpact 
-            : (entry.estimatedImpact as any)?.revenue || 0;
-          preventedRevenue += Math.abs(impact);
-        }
-      }
+      const todayScans = await db
+        .select()
+        .from(scanActivity)
+        .where(
+          and(
+            eq(scanActivity.userId, userId),
+            gte(scanActivity.createdAt, startOfToday)
+          )
+        )
+        .orderBy(desc(scanActivity.createdAt));
       
-      // Build today's activity - detected issues and fixes from autonomous actions
+      // Get weekly stats from real scan data
+      const weeklyStats = await revenueImmuneScanner.getWeeklyStats(userId);
+      
+      // Get last scan timestamp from real data
+      const lastScanTimestamp = await revenueImmuneScanner.getLastScanTimestamp(userId);
+      
+      // Build today's activity from actual scan results
       const todayDetectedIssues: Array<{problemType: string; entityName: string; timestamp: string}> = [];
       const todayFixesExecuted: Array<{surfaceTouched: string; entityName: string; timestamp: string}> = [];
       
-      // Add activity from autonomous actions
-      for (const action of todayActions) {
-        const actionType = (action.actionType as string) || 'optimization';
-        const entityName = (action as any).productTitle || (action as any).entityName || 'Product';
-        const timestamp = action.createdAt ? new Date(action.createdAt).toISOString() : new Date().toISOString();
+      let preventedRevenue = 0;
+      let totalScansToday = 0;
+      let totalProductsScannedToday = 0;
+      
+      for (const scan of todayScans) {
+        totalScansToday++;
+        totalProductsScannedToday += scan.productsScanned ?? 0;
+        preventedRevenue += parseFloat(scan.estimatedRevenueProtected?.toString() ?? '0');
         
-        if (action.status === 'executed' || action.status === 'completed') {
-          todayFixesExecuted.push({
-            surfaceTouched: actionType.replace(/_/g, ' '),
-            entityName,
-            timestamp,
-          });
-        } else if (action.status === 'pending' || action.status === 'approved') {
-          todayDetectedIssues.push({
-            problemType: actionType.replace(/_/g, ' '),
-            entityName,
-            timestamp,
-          });
+        // Extract issues from scan
+        const issueDetails = scan.issueDetails as Array<{type: string; productName: string; description: string}> | null;
+        if (issueDetails && Array.isArray(issueDetails)) {
+          for (const issue of issueDetails.slice(0, 5)) {
+            todayDetectedIssues.push({
+              problemType: issue.type.replace(/_/g, ' '),
+              entityName: issue.productName || 'Product',
+              timestamp: scan.createdAt ? new Date(scan.createdAt).toISOString() : new Date().toISOString(),
+            });
+          }
+        }
+        
+        // Extract fixes from scan
+        const fixDetails = scan.fixDetails as Array<{type: string; productName: string; description: string}> | null;
+        if (fixDetails && Array.isArray(fixDetails)) {
+          for (const fix of fixDetails.slice(0, 5)) {
+            todayFixesExecuted.push({
+              surfaceTouched: fix.type.replace(/_/g, ' '),
+              entityName: fix.productName || 'Product',
+              timestamp: scan.createdAt ? new Date(scan.createdAt).toISOString() : new Date().toISOString(),
+            });
+          }
         }
       }
-      
-      // Also include proof entries for today
-      for (const entry of todayProofEntries) {
-        const actionType = (entry.actionType as string) || 'optimization';
-        const entityName = (entry as any).productTitle || (entry as any).entityName || 'Product';
-        const timestamp = entry.createdAt ? new Date(entry.createdAt).toISOString() : new Date().toISOString();
-        
-        if (entry.status === 'proven' || entry.status === 'positive') {
-          todayFixesExecuted.push({
-            surfaceTouched: actionType.replace(/_/g, ' '),
-            entityName,
-            timestamp,
-          });
-        } else if (entry.status === 'pending' || entry.status === 'monitoring') {
-          todayDetectedIssues.push({
-            problemType: actionType.replace(/_/g, ' '),
-            entityName,
-            timestamp,
-          });
-        }
-      }
-      
-      // Calculate weekly stats for history modal using actual data only
-      const weeklyActions = await db
-        .select()
-        .from(autonomousActions)
-        .where(
-          and(
-            eq(autonomousActions.userId, userId),
-            gte(autonomousActions.createdAt, startOfWeek)
-          )
-        );
-      
-      // Only count actual recorded activity - no fabrication
-      const weeklyStats = {
-        scansPerformed: validWeeklyEntries.length + weeklyActions.length,
-        issuesDetected: validWeeklyEntries.filter(e => e.status === 'pending' || e.status === 'monitoring').length + 
-                       weeklyActions.filter(a => a.status === 'pending').length,
-        fixesExecuted: validWeeklyEntries.filter(e => e.status === 'proven' || e.status === 'positive').length +
-                      weeklyActions.filter(a => a.status === 'executed' || a.status === 'completed').length,
-        rollbacksNeeded: validWeeklyEntries.filter(e => e.status === 'negative' || e.status === 'reverted').length,
-      };
-      
-      // Last scan timestamp - use most recent entry with null safety (no fabrication)
-      const sortedEntries = [...validProofEntries, ...todayActions.filter(a => a.createdAt)]
-        .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime());
-      
-      // Return actual timestamp or null - be transparent about actual activity
-      let lastScanTimestamp: string | null = null;
-      if (sortedEntries.length > 0 && sortedEntries[0].createdAt) {
-        lastScanTimestamp = new Date(sortedEntries[0].createdAt).toISOString();
-      }
-      
-      // Actual scan count based on real entries
-      const actualScansToday = todayActions.length + todayProofEntries.length;
       
       res.json({
         isActive: settings?.globalAutopilotEnabled ?? false,
         sensitivity: settings?.autopilotMode ?? 'balanced',
         preventedRevenue: preventedRevenue,
         currency: '₹',
-        // Live monitoring data - transparent, no fabrication
-        lastScanTimestamp,
-        todayScannedProductsCount: actualScansToday,
+        // Live monitoring data from REAL scans
+        lastScanTimestamp: lastScanTimestamp ? lastScanTimestamp.toISOString() : null,
+        todayScannedProductsCount: totalProductsScannedToday,
         totalProductsMonitored: totalProducts,
         todayDetectedIssues,
         todayFixesExecuted,
-        // Weekly history for expander
+        // Weekly history from real scan data
         weeklyStats,
         // Protection scope
         protectionScope: ['Products', 'SEO', 'Recovery flows'],
@@ -16937,6 +16849,36 @@ Output format: Markdown with clear section headings.`;
     } catch (error) {
       console.error("Error fetching revenue immune status:", error);
       res.status(500).json({ error: "Failed to fetch revenue immune status" });
+    }
+  });
+  
+  // Trigger a manual scan (for testing/debugging)
+  app.post("/api/revenue-immune/scan", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { revenueImmuneScanner } = await import('./lib/revenue-immune-scanner');
+      
+      const result = await revenueImmuneScanner.runFullScan(userId);
+      
+      if (result) {
+        res.json({
+          success: true,
+          scanId: result.scanId,
+          productsScanned: result.productsScanned,
+          issuesDetected: result.issuesDetected.length,
+          fixesApplied: result.fixesApplied.length,
+          estimatedRevenueProtected: result.estimatedRevenueProtected,
+          durationMs: result.durationMs,
+        });
+      } else {
+        res.json({
+          success: false,
+          message: 'Scan not started - protection may be disabled or scan already in progress',
+        });
+      }
+    } catch (error) {
+      console.error("Error running manual scan:", error);
+      res.status(500).json({ error: "Failed to run scan" });
     }
   });
 

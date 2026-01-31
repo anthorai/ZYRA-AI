@@ -3887,6 +3887,57 @@ export const insertProductAutonomySettingsSchema = createInsertSchema(productAut
 export type ProductAutonomySettings = typeof productAutonomySettings.$inferSelect;
 export type InsertProductAutonomySettings = z.infer<typeof insertProductAutonomySettingsSchema>;
 
+// ============================================================================
+// Revenue Immune System - Scan Activity Tracking
+// ============================================================================
+// Real-time logging of protection scans for transparent monitoring
+
+export const scanActivityTypeEnum = pgEnum('scan_activity_type', ['product_scan', 'seo_scan', 'recovery_scan', 'full_scan']);
+
+export const scanActivity = pgTable("scan_activity", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Scan type and timing
+  scanType: text("scan_type").notNull(), // 'product_scan', 'seo_scan', 'recovery_scan', 'full_scan'
+  startedAt: timestamp("started_at").default(sql`NOW()`),
+  completedAt: timestamp("completed_at"),
+  durationMs: integer("duration_ms"),
+  
+  // Scan scope
+  productsScanned: integer("products_scanned").default(0),
+  
+  // Issues detected during scan
+  issuesDetected: integer("issues_detected").default(0),
+  issueDetails: jsonb("issue_details"), // Array of {type, productId, productName, severity, description}
+  
+  // Fixes applied
+  fixesApplied: integer("fixes_applied").default(0),
+  fixDetails: jsonb("fix_details"), // Array of {type, productId, productName, description, estimatedImpact}
+  
+  // Estimated revenue impact of fixes
+  estimatedRevenueProtected: numeric("estimated_revenue_protected", { precision: 12, scale: 2 }).default("0"),
+  
+  // Scan status
+  status: text("status").default('completed'), // 'running', 'completed', 'failed'
+  errorMessage: text("error_message"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('scan_activity_user_id_idx').on(table.userId),
+  index('scan_activity_scan_type_idx').on(table.scanType),
+  index('scan_activity_created_at_idx').on(table.createdAt),
+  index('scan_activity_status_idx').on(table.status),
+]);
+
+export const insertScanActivitySchema = createInsertSchema(scanActivity).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ScanActivity = typeof scanActivity.$inferSelect;
+export type InsertScanActivity = z.infer<typeof insertScanActivitySchema>;
+
 // Re-export chat models for AI integrations
 export * from "./models/chat";
 

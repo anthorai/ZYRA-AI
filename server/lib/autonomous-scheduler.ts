@@ -1281,5 +1281,61 @@ export function initializeAutonomousScheduler(): void {
     await runRevenueLoopScan();
   });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - ZYRA Loop (Every 15 min), Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Legacy Revenue Loop (Every 30 min)');
+  // Revenue Immune Scanner - runs every 20 minutes when protection is enabled
+  cron.schedule('*/20 * * * *', async () => {
+    console.log('⏰ [Scheduler] Running Revenue Immune System scan...');
+    await runRevenueImmuneScan();
+  });
+
+  console.log('✅ [Autonomous Scheduler] Initialized - ZYRA Loop (Every 15 min), Revenue Immune Scan (Every 20 min), Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Legacy Revenue Loop (Every 30 min)');
+}
+
+/**
+ * Revenue Immune System Scanner
+ * Scans all users with protection enabled for content decay, SEO issues, and copy fatigue
+ */
+async function runRevenueImmuneScan(): Promise<void> {
+  const jobId = 'revenue-immune-scan';
+  if (runningJobs.has(jobId)) {
+    console.log('⚠️ [Revenue Immune] Scan already in progress, skipping...');
+    return;
+  }
+
+  runningJobs.add(jobId);
+
+  try {
+    console.log('🛡️ [Revenue Immune] Starting protection scan...');
+    
+    const { revenueImmuneScanner } = await import('./revenue-immune-scanner');
+    
+    // Get all users with protection enabled
+    const enabledSettings = await db
+      .select()
+      .from(automationSettings)
+      .where(eq(automationSettings.globalAutopilotEnabled, true));
+    
+    console.log(`🛡️ [Revenue Immune] Found ${enabledSettings.length} users with protection enabled`);
+    
+    for (const setting of enabledSettings) {
+      try {
+        console.log(`🛡️ [Revenue Immune] Scanning user ${setting.userId}...`);
+        const result = await revenueImmuneScanner.runFullScan(setting.userId);
+        
+        if (result) {
+          console.log(`   ✅ Scanned ${result.productsScanned} products, found ${result.issuesDetected.length} issues`);
+          if (result.estimatedRevenueProtected > 0) {
+            console.log(`   💰 Estimated revenue protected: ₹${result.estimatedRevenueProtected}`);
+          }
+        }
+      } catch (error) {
+        console.error(`   ❌ Error scanning user ${setting.userId}:`, error);
+      }
+    }
+
+    console.log('✅ [Revenue Immune] Completed protection scan');
+  } catch (error) {
+    console.error('❌ [Revenue Immune] Error during protection scan:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
 }
