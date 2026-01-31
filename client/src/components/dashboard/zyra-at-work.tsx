@@ -1122,50 +1122,60 @@ function ProgressStages({
               )}
               
               {/* EXECUTION RESULTS DISPLAY - Shows real changes made */}
-              {executionResult && executionResult.productsOptimized.length > 0 && (
+              {executionResult && (
                 <div className="mt-4 pt-4 border-t border-slate-700/50">
                   <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm font-medium text-emerald-400">
-                      {executionResult.totalChanges} Changes Applied
+                    <CheckCircle2 className={`w-4 h-4 ${executionResult.productsOptimized.length > 0 ? 'text-emerald-400' : 'text-amber-400'}`} />
+                    <span className={`text-sm font-medium ${executionResult.productsOptimized.length > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {executionResult.totalChanges > 0 
+                        ? `${executionResult.totalChanges} Changes Applied`
+                        : 'Action Completed'}
                     </span>
                   </div>
                   
-                  <div className="space-y-3">
-                    {executionResult.productsOptimized.map((product, pIdx) => (
-                      <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
-                        <p className="text-xs font-medium text-white mb-2">
-                          {product.productName}
-                        </p>
-                        <div className="space-y-2">
-                          {product.changes.map((change, cIdx) => (
-                            <div key={cIdx} className="text-xs">
-                              <div className="flex items-center gap-1 mb-1">
-                                <span className="text-primary font-medium">{change.field}</span>
-                              </div>
-                              <div className="grid grid-cols-1 gap-1 ml-2">
-                                <div className="flex items-start gap-2">
-                                  <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
-                                  <span className="text-slate-500 line-through">{change.before}</span>
+                  {executionResult.productsOptimized.length > 0 ? (
+                    <div className="space-y-3">
+                      {executionResult.productsOptimized.map((product, pIdx) => (
+                        <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
+                          <p className="text-xs font-medium text-white mb-2">
+                            {product.productName}
+                          </p>
+                          <div className="space-y-2">
+                            {product.changes.map((change, cIdx) => (
+                              <div key={cIdx} className="text-xs">
+                                <div className="flex items-center gap-1 mb-1">
+                                  <span className="text-primary font-medium">{change.field}</span>
                                 </div>
-                                <div className="flex items-start gap-2">
-                                  <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
-                                  <span className="text-emerald-300">{change.after}</span>
+                                <div className="grid grid-cols-1 gap-1 ml-2">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
+                                    <span className="text-slate-500 line-through">{change.before}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
+                                    <span className="text-emerald-300">{change.after}</span>
+                                  </div>
+                                  <p className="text-slate-400 italic mt-1">{change.reason}</p>
                                 </div>
-                                <p className="text-slate-400 italic mt-1">{change.reason}</p>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                          <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
+                            {product.impactExplanation}
+                          </p>
                         </div>
-                        <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
-                          {product.impactExplanation}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-amber-500/10 rounded-lg p-3">
+                      <p className="text-xs text-amber-400">
+                        No product changes were needed at this time. Your store is already optimized for this action.
+                      </p>
+                    </div>
+                  )}
                   
-                  <div className="mt-3 p-2 bg-emerald-500/10 rounded text-center">
-                    <p className="text-xs text-emerald-400 font-medium">
+                  <div className={`mt-3 p-2 rounded text-center ${executionResult.productsOptimized.length > 0 ? 'bg-emerald-500/10' : 'bg-slate-800/50'}`}>
+                    <p className={`text-xs font-medium ${executionResult.productsOptimized.length > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
                       {executionResult.estimatedImpact}
                     </p>
                   </div>
@@ -1173,7 +1183,7 @@ function ProgressStages({
               )}
               
               {/* EXECUTION ACTIVITIES LOG - Detailed step-by-step log */}
-              {executionActivities.length > 0 && !executionResult?.productsOptimized?.length && (
+              {executionActivities.length > 0 && !executionResult && (
                 <div className="mt-4 pt-4 border-t border-slate-700/50">
                   <div className="flex items-center gap-2 mb-3">
                     <Activity className="w-4 h-4 text-primary" />
@@ -1329,59 +1339,69 @@ function ProgressStages({
                 </div>
               )}
               
-              {executionResult && executionResult.productsOptimized.length > 0 && (
+              {executionResult && (
                 <div className="mt-4 pt-4 border-t border-slate-700/50">
                   <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm font-medium text-emerald-400">
-                      {executionResult.totalChanges} Changes Applied
+                    <CheckCircle2 className={`w-4 h-4 ${executionResult.productsOptimized.length > 0 ? 'text-emerald-400' : 'text-amber-400'}`} />
+                    <span className={`text-sm font-medium ${executionResult.productsOptimized.length > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {executionResult.totalChanges > 0 
+                        ? `${executionResult.totalChanges} Changes Applied`
+                        : 'Action Completed'}
                     </span>
                   </div>
                   
-                  <div className="space-y-3">
-                    {executionResult.productsOptimized.map((product, pIdx) => (
-                      <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
-                        <p className="text-xs font-medium text-white mb-2">
-                          {product.productName}
-                        </p>
-                        <div className="space-y-2">
-                          {product.changes.map((change, cIdx) => (
-                            <div key={cIdx} className="text-xs">
-                              <div className="flex items-center gap-1 mb-1">
-                                <span className="text-primary font-medium">{change.field}</span>
-                              </div>
-                              <div className="grid grid-cols-1 gap-1 ml-2">
-                                <div className="flex items-start gap-2">
-                                  <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
-                                  <span className="text-slate-500 line-through">{change.before || '(empty)'}</span>
+                  {executionResult.productsOptimized.length > 0 ? (
+                    <div className="space-y-3">
+                      {executionResult.productsOptimized.map((product, pIdx) => (
+                        <div key={pIdx} className="bg-slate-800/50 rounded-lg p-3">
+                          <p className="text-xs font-medium text-white mb-2">
+                            {product.productName}
+                          </p>
+                          <div className="space-y-2">
+                            {product.changes.map((change, cIdx) => (
+                              <div key={cIdx} className="text-xs">
+                                <div className="flex items-center gap-1 mb-1">
+                                  <span className="text-primary font-medium">{change.field}</span>
                                 </div>
-                                <div className="flex items-start gap-2">
-                                  <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
-                                  <span className="text-emerald-300">{change.after}</span>
+                                <div className="grid grid-cols-1 gap-1 ml-2">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
+                                    <span className="text-slate-500 line-through">{change.before || '(empty)'}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
+                                    <span className="text-emerald-300">{change.after}</span>
+                                  </div>
+                                  {change.reason && (
+                                    <p className="text-slate-400 italic mt-1">{change.reason}</p>
+                                  )}
                                 </div>
-                                {change.reason && (
-                                  <p className="text-slate-400 italic mt-1">{change.reason}</p>
-                                )}
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                          <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
+                            {product.impactExplanation}
+                          </p>
                         </div>
-                        <p className="text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/30">
-                          {product.impactExplanation}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-amber-500/10 rounded-lg p-3">
+                      <p className="text-xs text-amber-400">
+                        No product changes were needed at this time. Your store is already optimized for this action.
+                      </p>
+                    </div>
+                  )}
                   
-                  <div className="mt-3 p-2 bg-emerald-500/10 rounded text-center">
-                    <p className="text-xs text-emerald-400 font-medium">
+                  <div className={`mt-3 p-2 rounded text-center ${executionResult.productsOptimized.length > 0 ? 'bg-emerald-500/10' : 'bg-slate-800/50'}`}>
+                    <p className={`text-xs font-medium ${executionResult.productsOptimized.length > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
                       {executionResult.estimatedImpact}
                     </p>
                   </div>
                 </div>
               )}
               
-              {executionActivities.length > 0 && !executionResult?.productsOptimized?.length && (
+              {executionActivities.length > 0 && !executionResult && (
                 <div className="mt-4 pt-4 border-t border-slate-700/50">
                   <div className="flex items-center gap-2 mb-3">
                     <Activity className="w-4 h-4 text-primary" />
