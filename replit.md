@@ -49,6 +49,14 @@ Features full OAuth 2.0 integration for bidirectional product sync and store man
 ### Automation Tools
 Includes comprehensive bulk SEO optimization tools like "Smart Bulk Suggestions" (AI-powered fixes with previews) and "One-Click Shopify Publish" with per-product rollback.
 
+### Change Control Dashboard (Category Tabs)
+The Change Control Dashboard now features 5 category tabs for organized action management:
+1. **Discoverability & SEO** - Comparison table view with columns: Action, Product, Unoptimized, Optimized, Status. Supports multi-select with Push Selected/Rollback Selected bulk actions.
+2. **Conversion Optimization** - Card-based before/after view with individual Push to Shopify and Rollback buttons.
+3. **Revenue Recovery** - Status cards showing Enabled/Disabled state with Enable/Disable controls and expected revenue recovery estimates.
+4. **Revenue Protection** - Warning-badged cards with one-click Rollback and Freeze buttons for underperforming changes.
+5. **Learning & Intelligence** - Read-only status cards (no action buttons) showing Store Conversion Pattern Learning and Performance Baseline Update with "Used internally to improve future decisions" tooltip.
+
 ### Autonomous AI Store Manager
 This system transforms manual optimization into autonomous, AI-driven processes, including Autonomous SEO (daily audits, AI-powered action processing), Dynamic Pricing AI, and Autonomous Marketing (multi-channel automation, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system.
 
