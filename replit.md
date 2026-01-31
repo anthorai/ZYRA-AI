@@ -71,6 +71,23 @@ The PROVE phase is event-driven, using `interimProofEvents` database table and S
 ### Credit Consumption System
 A plan-aware credit consumption system where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs. Monthly credits vary by plan, and credit cost multipliers are applied based on action type, plan, SERP usage, and autonomy. The system includes "soft nudges" for low credit situations and backend enforcement with credit checks before execution and a 5% credit reserve.
 
+### Live Activity Log (SSE Streaming)
+Real-time activity streaming using Server-Sent Events (SSE) to show ZYRA engine activities as they happen. Features include:
+- SSE endpoint at `/api/zyra/activity-stream` with persistent connections and 15-second heartbeat
+- Event emitter system (`zyraEventEmitter`) tracking detection phases (DETECT, DECIDE, EXECUTE, PROVE, LEARN)
+- Frontend hook (`useZyraActivityStream`) using fetch API with streaming for Authorization header support
+- Exponential backoff reconnection on both errors and normal stream closure
+- 50-event history per user for replay on reconnection
+- Connection status indicators ("Live", "Connecting...", "Reconnecting...")
+
+### Dynamic Recommendation Reasoning
+Context-specific "Why ZYRA recommends this" explanations generated dynamically based on:
+- Actual product name and health score
+- Store situation (total products count)
+- Completed actions count for template rotation
+- Multiple template variations per action type for variety
+The `generateDynamicReasoning` method in `FastDetectionEngine` provides personalized descriptions, reasons, and expected impacts instead of static generic text.
+
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
 
