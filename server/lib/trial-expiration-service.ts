@@ -98,7 +98,7 @@ export async function grantFreeTrial(userId: string): Promise<{
     try {
       await db.insert(notifications).values({
         userId,
-        title: 'Welcome to Zyra AI! 🎉',
+        title: 'Welcome to Zyra AI',
         message: `Your 7-day free trial has started! Explore AI-powered product descriptions, SEO optimization, and smart marketing automation. Your trial ends on ${trialEndDate.toLocaleDateString()}.`,
         type: 'info',
         link: '/dashboard',
@@ -124,6 +124,9 @@ export async function grantFreeTrial(userId: string): Promise<{
 /**
  * Checks for users with expired trials and handles subscription updates
  * This should be called periodically (e.g., via a cron job or scheduled task)
+ * 
+ * Free plan users: After 7-day trial ends, they stay on Free plan with 50 credits/month
+ * Trial plan users: After 7-day trial ends, they go to past_due unless they have active subscription
  */
 export async function handleExpiredTrials(): Promise<{
   processedCount: number;
@@ -134,27 +137,33 @@ export async function handleExpiredTrials(): Promise<{
   let processedCount = 0;
 
   try {
-    // Find users with expired trials that haven't been converted
+    // Find users with expired trials (both 'trial' and 'free' plan users with trial end date)
     const expiredTrialUsers = await db
       .select()
       .from(users)
       .where(
         and(
           lt(users.trialEndDate, now),
-          eq(users.plan, "trial")
+          sql`${users.plan} IN ('trial', 'free')`
         )
       );
 
     console.log(`[Trial Service] Found ${expiredTrialUsers.length} expired trial users`);
 
-    // Get the "Starter" plan as default fallback
-    const starterPlan = await db
+    // Get the "Starter" and "Free" plans
+    const [starterPlan] = await db
       .select()
       .from(subscriptionPlans)
       .where(eq(subscriptionPlans.planName, "Starter"))
       .limit(1);
 
-    if (!starterPlan || starterPlan.length === 0) {
+    const [freePlan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.planName, "Free"))
+      .limit(1);
+
+    if (!starterPlan) {
       errors.push("No starter plan found for trial conversion");
       return { processedCount: 0, errors };
     }
@@ -193,7 +202,46 @@ export async function handleExpiredTrials(): Promise<{
           continue;
         }
 
-        // No active subscription - update subscription to "past_due" to trigger payment
+        // Handle Free plan users differently - they stay on Free with 50 credits
+        if (user.plan === 'free') {
+          console.log(`[Trial Service] Free plan user ${user.id} trial ended - converting to regular Free plan`);
+          
+          // Reset credits to 50 (regular Free plan monthly credits)
+          await db
+            .update(usageStats)
+            .set({ 
+              creditsRemaining: 50,
+              creditsUsed: 0,
+              lastResetDate: now,
+            })
+            .where(eq(usageStats.userId, user.id));
+          
+          // Clear trial end date (no longer on trial, just regular Free plan)
+          await db
+            .update(users)
+            .set({ trialEndDate: null })
+            .where(eq(users.id, user.id));
+          
+          // Send notification about trial ending but staying on Free
+          try {
+            await db.insert(notifications).values({
+              userId: user.id,
+              title: 'Welcome to Free Plan',
+              message: 'Your 7-day trial with bonus credits has ended. You now have 50 credits per month on the Free plan. Upgrade to unlock more credits and features!',
+              type: 'info',
+              link: '/settings/billing',
+              isRead: false
+            });
+          } catch (notifError) {
+            console.warn(`[Trial Service] Failed to send Free plan transition notification:`, notifError);
+          }
+          
+          console.log(`[Trial Service] ✅ Free plan user ${user.id} transitioned to regular Free plan with 50 credits`);
+          processedCount++;
+          continue;
+        }
+
+        // Regular trial plan users - go to past_due
         const userSubscriptions = await db
           .select()
           .from(subscriptions)
@@ -215,7 +263,7 @@ export async function handleExpiredTrials(): Promise<{
             .insert(subscriptions)
             .values({
               userId: user.id,
-              planId: starterPlan[0].id,
+              planId: starterPlan.id,
               status: "past_due",
               trialEnd: now,
               currentPeriodStart: now,
@@ -236,7 +284,7 @@ export async function handleExpiredTrials(): Promise<{
         try {
           await db.insert(notifications).values({
             userId: user.id,
-            title: '🔒 Trial Expired - Upgrade Required',
+            title: 'Trial Expired - Upgrade Required',
             message: 'Your Zyra AI trial has expired. Upgrade to a paid plan to restore access to your products, campaigns, and AI tools. Your data is safe and will be available once you upgrade.',
             type: 'error',
             link: '/settings/billing',
@@ -356,9 +404,9 @@ export async function sendTrialExpirationNotifications(): Promise<{
   let processedCount = 0;
 
   const notificationSchedules = [
-    { days: 7, title: 'Welcome to Zyra AI Trial! 🎉', message: 'Your 7-day trial has started! Explore all features including AI-powered product descriptions, SEO optimization, and smart marketing automation. Upgrade anytime to keep your data and unlock unlimited access.', type: 'info' as const },
+    { days: 7, title: 'Welcome to Zyra AI Trial', message: 'Your 7-day trial has started! Explore all features including AI-powered product descriptions, SEO optimization, and smart marketing automation. Upgrade anytime to keep your data and unlock unlimited access.', type: 'info' as const },
     { days: 3, title: 'Trial Ending Soon - 3 Days Left', message: 'Your Zyra AI trial expires in 3 days. Upgrade now to continue optimizing your products and automating your marketing campaigns. Choose from Starter, Growth, or Pro plans.', type: 'warning' as const },
-    { days: 1, title: '⚠️ Trial Expires Tomorrow', message: 'Your Zyra AI trial ends tomorrow! Upgrade now to avoid losing access to your AI-generated content, SEO optimizations, and marketing campaigns. All your data will be preserved.', type: 'warning' as const }
+    { days: 1, title: 'Trial Expires Tomorrow', message: 'Your Zyra AI trial ends tomorrow! Upgrade now to avoid losing access to your AI-generated content, SEO optimizations, and marketing campaigns. All your data will be preserved.', type: 'warning' as const }
   ];
 
   try {
@@ -370,7 +418,7 @@ export async function sendTrialExpirationNotifications(): Promise<{
       const nextDay = new Date(targetDate);
       nextDay.setDate(nextDay.getDate() + 1);
       
-      // Find users with trial ending on target date who are still on trial plan
+      // Find users with trial ending on target date (both 'trial' and 'free' plan users with trial)
       const usersToNotify = await db
         .select({
           id: users.id,
@@ -382,7 +430,7 @@ export async function sendTrialExpirationNotifications(): Promise<{
         .from(users)
         .where(
           and(
-            eq(users.plan, 'trial'),
+            sql`${users.plan} IN ('trial', 'free')`,
             gte(users.trialEndDate, targetDate),
             lte(users.trialEndDate, nextDay)
           )

@@ -13,12 +13,16 @@ export const ZYRA_PLANS = {
 } as const;
 
 export const CREDIT_LIMITS = {
-  [ZYRA_PLANS.FREE_PLAN]: 50,
+  [ZYRA_PLANS.FREE_PLAN]: 50,  // Regular Free plan monthly credits
   [ZYRA_PLANS.FREE]: 100,
   [ZYRA_PLANS.STARTER]: 1000,
   [ZYRA_PLANS.GROWTH]: 6000,
   [ZYRA_PLANS.SCALE]: 15000,
 } as const;
+
+// Free plan trial bonus - new accounts get 150 credits for 7 days
+export const FREE_PLAN_TRIAL_CREDITS = 150;
+export const FREE_PLAN_TRIAL_DAYS = 7;
 
 export const EXECUTION_PRIORITY = {
   [ZYRA_PLANS.FREE_PLAN]: 'standard',

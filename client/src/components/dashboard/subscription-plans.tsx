@@ -14,11 +14,12 @@ const plans = [
     icon: <Gift className="w-8 h-8" />,
     description: "Free to Install",
     features: [
+      "7-day trial with 150 bonus credits",
+      "Then 50 credits / month forever",
       "ZYRA detects all revenue opportunities",
       "Manual approval mode only",
       "One-click rollback protection",
-      "Email support",
-      "50 credits / month"
+      "Email support"
     ],
     popular: false,
     isTrial: false,

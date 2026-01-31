@@ -12149,7 +12149,8 @@ Output format: Markdown with clear section headings.`;
             const cryptoModule = await import('crypto');
             const newUserId = cryptoModule.randomUUID();
             
-            // Insert user with Free plan (no trial end date - it's permanently free)
+            // Insert user with Free plan + 7-day trial with 150 credits
+            const trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
             await db.insert(users).values({
               id: newUserId,
               email: shopOwnerEmail,
@@ -12157,9 +12158,24 @@ Output format: Markdown with clear section headings.`;
               password: null, // Shopify OAuth user - no password needed
               role: 'user',
               plan: 'free', // Default to Free plan
-              trialEndDate: null, // No trial - Free plan is permanent until upgrade
+              trialEndDate: trialEndDate, // 7-day trial with bonus credits
               preferredLanguage: 'en',
             });
+            
+            // Initialize usage stats with 150 trial credits
+            await db.insert(usageStats).values({
+              userId: newUserId,
+              creditsRemaining: 150, // Free plan trial bonus credits
+              creditsUsed: 0,
+              totalRevenue: 0,
+              totalOrders: 0,
+              conversionRate: 0,
+              productsOptimized: 0,
+              emailsSent: 0,
+              smsSent: 0,
+              aiGenerationsUsed: 0,
+              seoOptimizationsUsed: 0
+            }).onConflictDoNothing();
             
             // Create profile for user
             await db.insert(profiles).values({
