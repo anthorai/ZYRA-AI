@@ -1,0 +1,262 @@
+/* =========================================================
+   ZYRA AI — REVENUE IMMUNE SYSTEM
+   FULL PRODUCTION-READY UPDATE PROMPT (SQL-STYLE SPEC)
+   ========================================================= */
+
+/* ===============================
+   SYSTEM ROLE
+   =============================== */
+SYSTEM_ROLE = 'Senior SaaS Architect + Shopify Automation Engineer';
+
+/*
+GOAL:
+Upgrade existing ZYRA AI system by ADDING a new core feature:
+"Revenue Immune System"
+
+IMPORTANT:
+- Do NOT remove existing features
+- Do NOT create suggestion systems
+- Do NOT require merchant decisions
+- Feature must be silent, automatic, reversible, continuous
+- Must follow ZYRA LOOP
+*/
+
+/* ===============================
+   CORE LOOP DEFINITION
+   =============================== */
+ZYRA_LOOP = (
+  DETECT,
+  DECIDE,
+  EXECUTE,
+  PROVE,
+  LEARN
+);
+
+/* =========================================================
+   BACKEND ARCHITECTURE
+   ========================================================= */
+
+/* ===============================
+   SERVICE: STORE SIGNAL MONITOR
+   =============================== */
+CREATE SERVICE store_signal_monitor AS
+BEGIN
+  MONITOR 24/7 USING event_driven + scheduled_jobs;
+
+  COLLECT SIGNALS:
+    - product_search_impressions
+    - product_ctr
+    - product_traffic
+    - product_conversion_rate
+    - recovery_flow_revenue_per_send
+    - traffic_vs_revenue_divergence
+    - ranking_drift_if_available;
+
+  SOURCES:
+    - Shopify Admin API
+    - Shopify Storefront API
+    - Internal ZYRA historical data
+    - Google Search Console (optional);
+
+  RULE:
+    NO merchant alerts;
+END;
+
+/* ===============================
+   SERVICE: REVENUE DECAY DETECTION
+   =============================== */
+CREATE SERVICE revenue_decay_detector AS
+BEGIN
+  INPUT FROM store_signal_monitor;
+
+  APPLY rolling_baselines (7d, 14d, 30d);
+
+  IGNORE noise_spikes;
+
+  DETECT decay_patterns:
+    - content_decay
+    - intent_mismatch
+    - seo_erosion
+    - recovery_copy_fatigue;
+
+  OUTPUT FORMAT:
+    {
+      store_id,
+      entity_type (product | collection | recovery_flow),
+      problem_type,
+      confidence_score (0.0 - 1.0)
+    };
+END;
+
+/* ===============================
+   SERVICE: DECISION ENGINE
+   =============================== */
+CREATE SERVICE decision_engine AS
+BEGIN
+  INPUT FROM revenue_decay_detector;
+
+  RULES:
+    - IF confidence_score < threshold THEN observe_only;
+    - IF confidence_score >= threshold AND safe_fix_available THEN execute_fix;
+
+  CONSTRAINTS:
+    - NO UI output
+    - NO merchant approval
+    - NO recommendations
+END;
+
+/* ===============================
+   SERVICE: SAFE EXECUTION ENGINE
+   =============================== */
+CREATE SERVICE safe_execution_engine AS
+BEGIN
+  ALLOWED_MUTATIONS:
+    - product_title_text
+    - product_description_text
+    - meta_title
+    - meta_description
+    - product_tags
+    - image_alt_text
+    - email_sms_copy_text;
+
+  FORBIDDEN_MUTATIONS:
+    - pricing
+    - checkout
+    - discounts
+    - theme
+    - layout;
+
+  REQUIRE:
+    - content_versioning
+    - timestamp
+    - previous_state_storage;
+END;
+
+/* ===============================
+   SERVICE: ROLLBACK CONTROLLER
+   =============================== */
+CREATE SERVICE rollback_controller AS
+BEGIN
+  MONITOR post_execution_metrics;
+
+  IF performance_declines THEN
+    ROLLBACK to previous_version;
+    LOG rollback_reason;
+    UPDATE memory_engine.confidence -= value;
+END;
+
+/* ===============================
+   SERVICE: REVENUE PROTECTION LEDGER
+   =============================== */
+CREATE SERVICE revenue_protection_ledger AS
+BEGIN
+  CALCULATE counterfactual_loss USING:
+    - pre_fix_decay_slope
+    - post_fix_stabilization;
+
+  STORE RESULT:
+    {
+      period,
+      prevented_revenue,
+      currency,
+      source_type
+    };
+
+  RULE:
+    NO charts;
+    ONE truth metric only;
+END;
+
+/* ===============================
+   SERVICE: STORE MEMORY ENGINE
+   =============================== */
+CREATE SERVICE store_memory_engine AS
+BEGIN
+  STORE:
+    - high_converting_language
+    - fatigued_phrases
+    - seo_decay_patterns
+    - recovery_copy_lifecycle
+    - rollback_history;
+
+  RULES:
+    - store_isolated
+    - non_exportable
+    - compounds_over_time;
+
+  FEEDS INTO:
+    - future_detection
+    - future_decisions;
+END;
+
+/* =========================================================
+   FRONTEND SPECIFICATION
+   ========================================================= */
+
+/* ===============================
+   UI RULES
+   =============================== */
+FRONTEND_CONSTRAINTS:
+  - NO dashboards
+  - NO alerts
+  - NO task lists
+  - NO next-move cards;
+
+/* ===============================
+   SINGLE UI COMPONENT
+   =============================== */
+CREATE UI_COMPONENT revenue_immune_card AS
+BEGIN
+  DISPLAY:
+    "Revenue Immune System: ACTIVE ✅"
+    "ZYRA prevented ₹X revenue loss this month"
+
+  OPTIONAL:
+    learn_more_modal (concept explanation only);
+
+  CONTROLS:
+    - toggle_on_off
+    - sensitivity (Conservative | Balanced | Aggressive);
+END;
+
+/* =========================================================
+   SYSTEM BEHAVIOR RULES
+   ========================================================= */
+
+SYSTEM_BEHAVIOR:
+  - always_on_24_7
+  - event_triggered + scheduled
+  - silent_when_working
+  - visible_only_when_value_proven;
+
+/* =========================================================
+   FAILURE CONDITIONS
+   ========================================================= */
+
+FAIL_IF:
+  - merchant_decisions_required
+  - suggestions_generated
+  - irreversible_changes
+  - value_not_provable
+  - feature_becomes_dashboard;
+
+/* =========================================================
+   SUCCESS CONDITIONS
+   ========================================================= */
+
+SUCCESS_IF:
+  - merchant_can_be_inactive_weeks
+  - revenue_decay_prevented_silently
+  - turning_off_feels_risky
+  - long_term_users_outperform_new;
+
+/* =========================================================
+   FINAL DIRECTIVE
+   ========================================================= */
+
+FINAL_GOAL:
+"ZYRA must feel like revenue infrastructure, not software."
+
+/* ===============================
+   END OF SPEC
+   =============================== */
