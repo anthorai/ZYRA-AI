@@ -137,22 +137,22 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 items-stretch pt-4">
         {plans.map((plan, index) => (
           <Card 
             key={index} 
-            className={`gradient-card border-0 relative ${
+            className={`gradient-card border-0 relative flex flex-col h-full ${
               plan.popular ? 'ring-2 ring-primary' : ''
             }`}
             data-testid={`card-plan-${index}`}
           >
             {plan.popular && (
-              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
+              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground z-10">
                 Most Popular
               </Badge>
             )}
             
-            <CardHeader className="text-center">
+            <CardHeader className="text-center pb-4">
               <div className="flex justify-center text-primary mb-2">{plan.icon}</div>
               <CardTitle className="text-lg sm:text-xl font-bold" data-testid={`text-plan-name-${index}`}>
                 {plan.name}
@@ -175,8 +175,8 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
               </div>
             </CardHeader>
             
-            <CardContent className="space-y-4">
-              <ul className="space-y-2 sm:space-y-3">
+            <CardContent className="flex flex-col flex-1 pt-0">
+              <ul className="space-y-2 sm:space-y-3 flex-1">
                 {plan.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-start space-x-2">
                     <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -188,7 +188,7 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
               </ul>
               
               <Button 
-                className={`w-full text-sm sm:text-base ${
+                className={`w-full text-sm sm:text-base mt-4 ${
                   currentPlan === (plan as any).planId || currentPlan === plan.name
                     ? 'bg-muted text-muted-foreground cursor-not-allowed'
                     : plan.popular 
