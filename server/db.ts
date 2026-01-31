@@ -489,6 +489,33 @@ export async function seedSubscriptionPlans(): Promise<void> {
 
     const defaultPlans: any[] = [
       {
+        planName: "Free",
+        price: "0",
+        description: "Free to install",
+        shopifyPlanHandle: "free",
+        features: [
+          "Free to install",
+          "Revenue Detection:",
+          "• ZYRA detects all revenue opportunities",
+          "• View Next Move recommendations",
+          "Manual Mode Only:",
+          "• Manual approval for all actions",
+          "• One-click execution",
+          "Safety & Control:",
+          "• One-click rollback protection",
+          "• Email support"
+        ],
+        limits: {
+          credits: 50,
+          actionsPerMonth: 10,
+          autopilot: false,
+          bulkOptimization: false,
+          powerMode: false
+        },
+        interval: "month",
+        isActive: true
+      },
+      {
         planName: "7-Day Free Trial",
         price: "0",
         description: "Explore ZYRA's revenue detection",
@@ -650,8 +677,8 @@ export async function seedSubscriptionPlans(): Promise<void> {
       }
     }
 
-    // Deactivate any legacy plans not in the new 4-plan set
-    const activePlanNames = ["7-Day Free Trial", "Starter", "Growth", "Pro"];
+    // Deactivate any legacy plans not in the new 5-plan set
+    const activePlanNames = ["Free", "7-Day Free Trial", "Starter", "Growth", "Pro"];
     await db.update(subscriptionPlans)
       .set({ isActive: false })
       .where(notInArray(subscriptionPlans.planName, activePlanNames));

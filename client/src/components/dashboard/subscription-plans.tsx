@@ -7,22 +7,26 @@ import { Check, Gift, Zap, Crown, Award } from "lucide-react";
 
 const plans = [
   {
-    name: "7-Day Free Trial",
+    name: "Free",
+    planId: "18f8da29-94cf-417b-83f8-07191b22f254",
     monthlyPrice: 0,
-    period: "7 days",
+    period: "forever",
     icon: <Gift className="w-8 h-8" />,
-    description: "Try ZYRA for 7 Days",
+    description: "Free to Install",
     features: [
-      "Test all core features (SEO, product optimization, content tools)",
-      "Limited credits",
-      "No hidden charges",
-      "Cancel anytime before trial ends"
+      "ZYRA detects all revenue opportunities",
+      "Manual approval mode only",
+      "One-click rollback protection",
+      "Email support",
+      "50 credits / month"
     ],
     popular: false,
-    isTrial: true
+    isTrial: false,
+    isFree: true
   },
   {
     name: "Starter",
+    planId: "357abaf6-3035-4a25-b178-b5602c09fa8a",
     monthlyPrice: 49,
     period: "per month",
     icon: <Zap className="w-8 h-8" />,
@@ -39,12 +43,13 @@ const plans = [
   },
   {
     name: "Growth",
-    monthlyPrice: 299,
+    planId: "aaca603f-f064-44a7-87a4-485f84f19517",
+    monthlyPrice: 249,
     period: "per month",
     icon: <Award className="w-8 h-8" />,
     description: "For Growing Merchants",
     features: [
-      "10,000 credits / month",
+      "6,000 credits / month",
       "Everything in Starter, plus:",
       "A/B testing for products, copy & campaigns",
       "Smart upsell suggestions, abandoned cart recovery",
@@ -56,12 +61,13 @@ const plans = [
   },
   {
     name: "Pro",
-    monthlyPrice: 999,
+    planId: "5a02d7c5-031f-48fe-bbbd-42847b1c39df",
+    monthlyPrice: 499,
     period: "per month",
     icon: <Crown className="w-8 h-8" />,
     description: "For High-Revenue Brands",
     features: [
-      "Unlimited credits",
+      "15,000 credits / month",
       "Everything in Growth, plus:",
       "Advanced ROI tracking & revenue attribution",
       "Multimodal AI (text + image + insights)",
@@ -82,7 +88,7 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
   const [isAnnual, setIsAnnual] = useState(false);
 
   const getPrice = (plan: typeof plans[0]) => {
-    if (plan.isTrial) return "$0";
+    if (plan.isTrial || (plan as any).isFree) return "$0";
     if (isAnnual) {
       const annualPrice = Math.round(plan.monthlyPrice * 12 * 0.8);
       return `$${annualPrice}`;
@@ -92,11 +98,12 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
 
   const getPeriod = (plan: typeof plans[0]) => {
     if (plan.isTrial) return "7 days";
+    if ((plan as any).isFree) return "forever";
     return isAnnual ? "per year" : "per month";
   };
 
   const getSavings = (plan: typeof plans[0]) => {
-    if (plan.isTrial || !isAnnual) return null;
+    if (plan.isTrial || (plan as any).isFree || !isAnnual) return null;
     const monthlyTotal = plan.monthlyPrice * 12;
     const annualTotal = Math.round(monthlyTotal * 0.8);
     return monthlyTotal - annualTotal;
@@ -182,21 +189,23 @@ export default function SubscriptionPlans({ currentPlan }: SubscriptionPlansProp
               
               <Button 
                 className={`w-full text-sm sm:text-base ${
-                  currentPlan === plan.name.toLowerCase().replace(/\s+/g, '-')
+                  currentPlan === (plan as any).planId || currentPlan === plan.name
                     ? 'bg-muted text-muted-foreground cursor-not-allowed'
                     : plan.popular 
                       ? 'gradient-button' 
                       : 'border border hover:bg-muted'
                 }`}
                 variant={plan.popular ? "default" : "outline"}
-                disabled={currentPlan === plan.name.toLowerCase().replace(/\s+/g, '-')}
+                disabled={currentPlan === (plan as any).planId || currentPlan === plan.name}
                 data-testid={`button-plan-${index}`}
               >
-                {currentPlan === plan.name.toLowerCase().replace(/\s+/g, '-')
+                {currentPlan === (plan as any).planId || currentPlan === plan.name
                   ? 'Current Plan'
-                  : index === 0 
-                    ? "Start Trial" 
-                    : "Choose Plan"
+                  : (plan as any).isFree 
+                    ? "Get Started Free"
+                    : plan.isTrial
+                      ? "Start Trial"
+                      : "Choose Plan"
                 }
               </Button>
             </CardContent>

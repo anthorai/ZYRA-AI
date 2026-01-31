@@ -88,7 +88,7 @@ import { supabase, supabaseAuth } from "./lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
-import { db, requireDb, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
+import { db, requireDb, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, getUserByEmail, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
 import { eq, desc, sql, and, gte, lte, isNotNull, inArray } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
@@ -12093,49 +12093,149 @@ Output format: Markdown with clear section headings.`;
       }
 
       // Handle new installation without userId AND no existing connection (fresh from App Store)
+      // AUTO-CREATE USER AND AUTO-CONNECT STORE for seamless Shopify App Store experience
       if (isNewInstallation && !resolvedUserId) {
-        console.log('📋 NEW INSTALLATION FLOW: User not logged in');
-        // Store pending connection in database temporarily (30 minutes - gives time for email verification)
-        const cryptoModule = await import('crypto');
-        const pendingState = cryptoModule.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+        console.log('📋 NEW INSTALLATION FLOW: Auto-creating user and connecting store');
         
-        // Store with metadata JSON for pending installation data
-        await db.insert(oauthStates).values({
-          state: `pending_${pendingState}`,
-          userId: null,
-          shopDomain,
-          expiresAt,
-          // Note: metadata would require adding a column, so we'll create a separate pending record
-        });
+        // Use shop owner email from Shopify to create the user account
+        if (!shopOwnerEmail) {
+          console.log('⚠️  No shop owner email available from Shopify - falling back to manual signup');
+          const cryptoModule = await import('crypto');
+          const pendingState = cryptoModule.randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+          
+          await db.insert(oauthStates).values({
+            state: `pending_${pendingState}`,
+            userId: null,
+            shopDomain,
+            expiresAt,
+          });
+          
+          await db.insert(oauthStates).values({
+            state: `pending_meta_${pendingState}`,
+            userId: null,
+            shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: `https://${shop}`, currency: storeCurrency }),
+            expiresAt,
+          });
+          
+          const redirectUrl = process.env.PRODUCTION_DOMAIN 
+            ? `${process.env.PRODUCTION_DOMAIN}/auth?shopify_install=${pendingState}&shop=${encodeURIComponent(shopName)}`
+            : `${req.protocol}://${req.get('host')}/auth?shopify_install=${pendingState}&shop=${encodeURIComponent(shopName)}`;
+          
+          return res.send(`
+            <html>
+              <head>
+                <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+              </head>
+              <body>
+                <script>
+                  window.location.href = '${redirectUrl}';
+                </script>
+                <p>Shopify authorized! Creating your Zyra AI account...</p>
+              </body>
+            </html>
+          `);
+        }
         
-        // Store additional pending data as a JSON string in shop_domain field temporarily
-        // This is a workaround - ideally we'd have a metadata column
-        await db.insert(oauthStates).values({
-          state: `pending_meta_${pendingState}`,
-          userId: null,
-          shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: `https://${shop}`, currency: storeCurrency }),
-          expiresAt,
-        });
+        console.log('🔧 Auto-creating user with shop owner email:', shopOwnerEmail);
         
-        // Redirect to signup page with pending connection info
-        const redirectUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/auth?shopify_install=${pendingState}&shop=${encodeURIComponent(shopName)}`
-          : `${req.protocol}://${req.get('host')}/auth?shopify_install=${pendingState}&shop=${encodeURIComponent(shopName)}`;
-        
-        return res.send(`
-          <html>
-            <head>
-              <meta http-equiv="refresh" content="0;url=${redirectUrl}">
-            </head>
-            <body>
-              <script>
-                window.location.href = '${redirectUrl}';
-              </script>
-              <p>Shopify authorized! Creating your Zyra AI account...</p>
-            </body>
-          </html>
-        `);
+        try {
+          // Check if user with this email already exists
+          let autoCreatedUser = await getUserByEmail(shopOwnerEmail);
+          
+          if (!autoCreatedUser) {
+            // Create new user with shop owner email and Free plan
+            console.log('  Creating new user account...');
+            const cryptoModule = await import('crypto');
+            const newUserId = cryptoModule.randomUUID();
+            
+            // Insert user with Free plan (no trial end date - it's permanently free)
+            await db.insert(users).values({
+              id: newUserId,
+              email: shopOwnerEmail,
+              fullName: shopName || 'Store Owner',
+              password: null, // Shopify OAuth user - no password needed
+              role: 'user',
+              plan: 'free', // Default to Free plan
+              trialEndDate: null, // No trial - Free plan is permanent until upgrade
+              preferredLanguage: 'en',
+            });
+            
+            // Create profile for user
+            await db.insert(profiles).values({
+              userId: newUserId,
+              name: shopName || 'Store Owner',
+            }).onConflictDoNothing();
+            
+            // Get the created user
+            autoCreatedUser = await getUserByEmail(shopOwnerEmail);
+            console.log('✅ User auto-created with ID:', newUserId);
+          } else {
+            console.log('  User already exists with this email, using existing account');
+          }
+          
+          if (autoCreatedUser) {
+            resolvedUserId = autoCreatedUser.id;
+            console.log('✅ User resolved for auto-connection:', resolvedUserId);
+            
+            // Assign Free plan subscription if not already subscribed
+            try {
+              const existingSub = await getUserSubscription(resolvedUserId);
+              if (!existingSub || existingSub.status !== 'active') {
+                // Get Free plan ID
+                const [freePlan] = await db.select()
+                  .from(subscriptionPlans)
+                  .where(eq(subscriptionPlans.planName, 'Free'))
+                  .limit(1);
+                
+                if (freePlan) {
+                  await updateUserSubscription(resolvedUserId, freePlan.id, shopOwnerEmail, 'monthly');
+                  console.log('✅ Free plan assigned to new user');
+                }
+              }
+            } catch (subError) {
+              console.log('⚠️  Could not assign subscription (non-critical):', subError);
+            }
+          }
+        } catch (autoCreateError) {
+          console.error('❌ Failed to auto-create user:', autoCreateError);
+          
+          // Fall back to manual signup flow
+          const cryptoModule = await import('crypto');
+          const pendingState = cryptoModule.randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+          
+          await db.insert(oauthStates).values({
+            state: `pending_${pendingState}`,
+            userId: null,
+            shopDomain,
+            expiresAt,
+          });
+          
+          await db.insert(oauthStates).values({
+            state: `pending_meta_${pendingState}`,
+            userId: null,
+            shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: `https://${shop}`, currency: storeCurrency }),
+            expiresAt,
+          });
+          
+          const baseUrl = getBaseUrl();
+          const errorRedirectUrl = `${baseUrl}/auth?shopify_install_error=auto_create_failed&shop=${encodeURIComponent(shopName)}`;
+          
+          return res.send(`
+            <html>
+              <head>
+                <meta http-equiv="refresh" content="0;url=${errorRedirectUrl}">
+              </head>
+              <body>
+                <script>
+                  window.location.href = '${errorRedirectUrl}';
+                </script>
+                <p>We couldn't complete store connection automatically. Please sign up to continue.</p>
+              </body>
+            </html>
+          `);
+        }
       }
 
       // Step 7: Store connection in database
@@ -12292,13 +12392,20 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation from Shopify - redirect to integrations page with success indicator
-        // Include store name in URL for display in the connection success modal
+        // Direct installation from Shopify - redirect based on installation type
+        // For Shopify-initiated installs (new users), go to ZYRA At Work dashboard
+        // For existing users, go to integrations page
         const encodedStoreName = encodeURIComponent(shopName || shop as string);
-        const successUrl = process.env.PRODUCTION_DOMAIN 
-          ? `${process.env.PRODUCTION_DOMAIN}/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`
-          : `${req.protocol}://${req.get('host')}/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`;
-        console.log('  Redirecting to integrations:', successUrl);
+        const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
+        
+        // Determine redirect destination based on whether this was a fresh Shopify install
+        const redirectPath = isShopifyInitiatedInstall 
+          ? `/zyra-at-work?shopify_connected=true&store_name=${encodedStoreName}` // New installs go to ZYRA dashboard
+          : `/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`; // Existing users go to integrations
+        
+        const successUrl = `${baseUrl}${redirectPath}`;
+        console.log('  Redirecting to:', successUrl);
+        console.log('  Install type:', isShopifyInitiatedInstall ? 'Shopify-initiated (new user → ZYRA At Work)' : 'App-initiated (existing user → Integrations)');
         
         res.send(`
           <html>
@@ -12309,7 +12416,7 @@ Output format: Markdown with clear section headings.`;
               <script>
                 window.location.href = '${successUrl}';
               </script>
-              <p>Store connected successfully! Redirecting...</p>
+              <p>Store connected successfully! Redirecting to ZYRA...</p>
             </body>
           </html>
         `);

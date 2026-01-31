@@ -1,0 +1,141 @@
+YOU ARE A SENIOR SHOPIFY APP ENGINEER.
+
+TASK:
+1. Automatically detect and fix the broken Shopify auto-store connection
+   that fails when users install the app from the Shopify App Store.
+2. Add a “Free to Install” plan card in the subscription section.
+
+====================================================
+PART 1 — FIX AUTOMATIC STORE CONNECTION (CRITICAL)
+====================================================
+
+PROBLEM:
+- Manual store connection works.
+- Automatic store connection during Shopify App Store install DOES NOT work.
+- App installs, but store is not connected automatically.
+
+GOAL:
+When a merchant installs ZYRA from the Shopify App Store,
+the store must auto-connect without any manual action.
+
+----------------------------------------------------
+ROOT CAUSE TO CHECK & FIX
+----------------------------------------------------
+
+1. Shopify App Install Flow
+   - Ensure `shop` query param is captured on install
+   - Example: ?shop=example-store.myshopify.com
+
+2. OAuth Callback Handling
+   - Ensure OAuth callback:
+     - completes token exchange
+     - stores access_token
+     - immediately creates or updates store record
+
+3. Store Record Creation (MANDATORY)
+   - On successful OAuth:
+     - Auto-create store entry in DB
+     - Set status = CONNECTED
+     - Assign default plan = FREE
+   - Do NOT wait for manual connect button
+
+4. Subscription Gating BUG (IMPORTANT)
+   - Store connection must NOT be blocked by:
+     - Missing subscription
+     - Plan checks
+     - Credit checks
+
+   FIX:
+   - Move subscription enforcement AFTER store connection
+
+5. Session Persistence
+   - Ensure shop domain is persisted:
+     - cookies / session / JWT
+   - Prevent redirect loops after install
+
+----------------------------------------------------
+MANDATORY AUTO-CONNECTION FLOW
+----------------------------------------------------
+
+ON APP INSTALL:
+1. Receive shop parameter
+2. Complete OAuth
+3. Save access token
+4. Auto-create store record
+5. Set store status = CONNECTED
+6. Assign plan = FREE
+7. Redirect user to ZYRA dashboard
+
+NO MANUAL CONNECT BUTTON REQUIRED
+IF INSTALL IS FROM SHOPIFY APP STORE
+
+----------------------------------------------------
+FAIL-SAFE HANDLING
+----------------------------------------------------
+
+If auto-connection fails:
+- Show clear error:
+  “We couldn’t complete store connection automatically”
+- Provide retry button
+- Log error reason
+
+NEVER fail silently.
+
+====================================================
+PART 2 — ADD “FREE TO INSTALL” PLAN CARD
+====================================================
+
+Add a new subscription card.
+
+----------------------------------------------------
+PLAN DETAILS
+----------------------------------------------------
+
+PLAN NAME: Free
+PRICE: Free to install
+
+FEATURES:
+- ZYRA detects all revenue opportunities
+- Manual approval mode only
+- One-click rollback protection
+- Email support
+
+----------------------------------------------------
+PLAN BEHAVIOR
+----------------------------------------------------
+
+Free plan must allow:
+- Store auto-connection
+- Full DETECT
+- View Next Move
+- Manual execution only
+- Rollback access
+
+Restrictions:
+- No autopilot
+- No bulk optimization
+- Limited actions per month
+- No Power Mode (SERP)
+
+----------------------------------------------------
+SUBSCRIPTION DEFAULT RULE
+----------------------------------------------------
+
+On first install:
+- Auto-assign Free plan
+- Do NOT block onboarding
+- Show upgrade only when user hits a locked feature
+
+====================================================
+FINAL VALIDATION CHECK (MUST PASS)
+====================================================
+
+After fix:
+- Merchant installs app from Shopify App Store
+- Store auto-connects successfully
+- No manual connection required
+- User lands on ZYRA At Work
+- Free plan card visible in subscription section
+- ZYRA loop can run in Manual mode
+
+If any step fails, fix before release.

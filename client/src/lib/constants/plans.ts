@@ -5,13 +5,15 @@
  */
 
 export const ZYRA_PLANS = {
-  FREE: "e613e6c0-3e31-4ba7-ba1d-9587c7b67547",      // 7-Day Free Trial
-  STARTER: "357abaf6-3035-4a25-b178-b5602c09fa8a",  // Starter+ ($49)
-  GROWTH: "aaca603f-f064-44a7-87a4-485f84f19517",   // Growth ($249)
-  SCALE: "5a02d7c5-031f-48fe-bbbd-42847b1c39df",    // Scale ($499)
+  FREE_PLAN: "18f8da29-94cf-417b-83f8-07191b22f254", // Free (permanent free tier, 50 credits)
+  FREE: "e613e6c0-3e31-4ba7-ba1d-9587c7b67547",      // 7-Day Free Trial (100 credits)
+  STARTER: "357abaf6-3035-4a25-b178-b5602c09fa8a",  // Starter ($49, 1,000 credits)
+  GROWTH: "aaca603f-f064-44a7-87a4-485f84f19517",   // Growth ($249, 6,000 credits)
+  SCALE: "5a02d7c5-031f-48fe-bbbd-42847b1c39df",    // Pro ($499, 15,000 credits)
 } as const;
 
 export const CREDIT_LIMITS = {
+  [ZYRA_PLANS.FREE_PLAN]: 50,
   [ZYRA_PLANS.FREE]: 100,
   [ZYRA_PLANS.STARTER]: 1000,
   [ZYRA_PLANS.GROWTH]: 6000,
@@ -19,6 +21,7 @@ export const CREDIT_LIMITS = {
 } as const;
 
 export const EXECUTION_PRIORITY = {
+  [ZYRA_PLANS.FREE_PLAN]: 'standard',
   [ZYRA_PLANS.FREE]: 'standard',
   [ZYRA_PLANS.STARTER]: 'standard',
   [ZYRA_PLANS.GROWTH]: 'fast',
@@ -26,6 +29,7 @@ export const EXECUTION_PRIORITY = {
 } as const;
 
 export const AUTONOMY_LEVELS = {
+  [ZYRA_PLANS.FREE_PLAN]: 'very_low',
   [ZYRA_PLANS.FREE]: 'very_low',
   [ZYRA_PLANS.STARTER]: 'very_low',
   [ZYRA_PLANS.GROWTH]: 'medium',
@@ -33,13 +37,15 @@ export const AUTONOMY_LEVELS = {
 } as const;
 
 export const PLAN_NAMES = {
+  [ZYRA_PLANS.FREE_PLAN]: "Free",
   [ZYRA_PLANS.FREE]: "7-Day Free Trial",
-  [ZYRA_PLANS.STARTER]: "Starter+",
+  [ZYRA_PLANS.STARTER]: "Starter",
   [ZYRA_PLANS.GROWTH]: "Growth",
-  [ZYRA_PLANS.SCALE]: "Scale",
+  [ZYRA_PLANS.SCALE]: "Pro",
 } as const;
 
 export const PLAN_PRICES = {
+  [ZYRA_PLANS.FREE_PLAN]: 0,
   [ZYRA_PLANS.FREE]: 0,
   [ZYRA_PLANS.STARTER]: 49,
   [ZYRA_PLANS.GROWTH]: 249,
@@ -47,6 +53,7 @@ export const PLAN_PRICES = {
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
+  [ZYRA_PLANS.FREE_PLAN]: "Free to install - manual approval mode only",
   [ZYRA_PLANS.FREE]: "New users exploring ZYRA features",
   [ZYRA_PLANS.STARTER]: "Powerful but cautious assistant - manual approval required",
   [ZYRA_PLANS.GROWTH]: "Trusted autonomous operator - auto-runs low-risk actions",
@@ -55,6 +62,7 @@ export const PLAN_DESCRIPTIONS = {
 
 // Plan autonomy levels for UI display
 export const PLAN_AUTONOMY = {
+  [ZYRA_PLANS.FREE_PLAN]: 'manual',
   [ZYRA_PLANS.FREE]: 'manual',
   [ZYRA_PLANS.STARTER]: 'manual',
   [ZYRA_PLANS.GROWTH]: 'semi_auto',
@@ -63,6 +71,15 @@ export const PLAN_AUTONOMY = {
 
 // Plan feature flags for conditional UI rendering
 export const PLAN_FEATURES = {
+  [ZYRA_PLANS.FREE_PLAN]: {
+    bulkOptimization: false,
+    serpIntelligence: false,
+    advancedCartRecovery: false,
+    scheduledRefresh: false,
+    perProductAutonomy: false,
+    autoExecution: false,
+    powerMode: false,
+  },
   [ZYRA_PLANS.FREE]: {
     bulkOptimization: false,
     serpIntelligence: false,
@@ -70,6 +87,7 @@ export const PLAN_FEATURES = {
     scheduledRefresh: false,
     perProductAutonomy: false,
     autoExecution: false,
+    powerMode: false,
   },
   [ZYRA_PLANS.STARTER]: {
     bulkOptimization: false,
@@ -78,6 +96,7 @@ export const PLAN_FEATURES = {
     scheduledRefresh: false,
     perProductAutonomy: false,
     autoExecution: false,
+    powerMode: false,
   },
   [ZYRA_PLANS.GROWTH]: {
     bulkOptimization: true,
@@ -85,7 +104,8 @@ export const PLAN_FEATURES = {
     advancedCartRecovery: true,
     scheduledRefresh: true,
     perProductAutonomy: false,
-    autoExecution: true, // Low-risk only
+    autoExecution: true,
+    powerMode: true,
   },
   [ZYRA_PLANS.SCALE]: {
     bulkOptimization: true,
@@ -93,14 +113,17 @@ export const PLAN_FEATURES = {
     advancedCartRecovery: true,
     scheduledRefresh: true,
     perProductAutonomy: true,
-    autoExecution: true, // Low and medium risk
+    autoExecution: true,
+    powerMode: true,
   },
 } as const;
 
 export const PLAN_BY_NAME: Record<string, string> = {
+  "Free": ZYRA_PLANS.FREE_PLAN,
+  "free": ZYRA_PLANS.FREE_PLAN,
+  "free_plan": ZYRA_PLANS.FREE_PLAN,
   "7-Day Free Trial": ZYRA_PLANS.FREE,
   "trial": ZYRA_PLANS.FREE,
-  "free": ZYRA_PLANS.FREE,
   "Starter+": ZYRA_PLANS.STARTER,
   "Starter": ZYRA_PLANS.STARTER,
   "starter": ZYRA_PLANS.STARTER,
@@ -114,12 +137,12 @@ export const PLAN_BY_NAME: Record<string, string> = {
 } as const;
 
 export function getPlanIdByName(planName: string): string {
-  return PLAN_BY_NAME[planName] || ZYRA_PLANS.FREE;
+  return PLAN_BY_NAME[planName] || ZYRA_PLANS.FREE_PLAN;
 }
 
 export function getPlanFeatures(planName: string) {
   const planId = getPlanIdByName(planName);
-  return PLAN_FEATURES[planId as keyof typeof PLAN_FEATURES] || PLAN_FEATURES[ZYRA_PLANS.FREE];
+  return PLAN_FEATURES[planId as keyof typeof PLAN_FEATURES] || PLAN_FEATURES[ZYRA_PLANS.FREE_PLAN];
 }
 
 export type PlanId = typeof ZYRA_PLANS[keyof typeof ZYRA_PLANS];
