@@ -565,7 +565,7 @@ const PHASE_CONFIG: Record<string, {
 }> = {
   detect: { 
     icon: Search, 
-    label: 'Finding Friction', 
+    label: 'DETECT', 
     color: 'text-blue-400', 
     bgColor: 'bg-blue-500/10',
     primaryText: 'ZYRA is identifying revenue friction',
@@ -574,7 +574,7 @@ const PHASE_CONFIG: Record<string, {
   },
   decide: { 
     icon: Brain, 
-    label: 'Deciding Next Move', 
+    label: 'DECIDE', 
     color: 'text-purple-400', 
     bgColor: 'bg-purple-500/10',
     primaryText: 'ZYRA is deciding the next best revenue move',
@@ -583,7 +583,7 @@ const PHASE_CONFIG: Record<string, {
   },
   execute: { 
     icon: Zap, 
-    label: 'Applying Fix', 
+    label: 'EXECUTE', 
     color: 'text-amber-400', 
     bgColor: 'bg-amber-500/10',
     primaryText: 'Applying approved revenue optimization',
@@ -592,7 +592,7 @@ const PHASE_CONFIG: Record<string, {
   },
   prove: { 
     icon: TrendingUp, 
-    label: 'Proving Results', 
+    label: 'PROVE', 
     color: 'text-emerald-400', 
     bgColor: 'bg-emerald-500/10',
     primaryText: 'Measuring revenue impact',
@@ -601,7 +601,7 @@ const PHASE_CONFIG: Record<string, {
   },
   learn: { 
     icon: Target, 
-    label: 'Improving', 
+    label: 'LEARN', 
     color: 'text-cyan-400', 
     bgColor: 'bg-cyan-500/10',
     primaryText: 'ZYRA is improving future decisions',
