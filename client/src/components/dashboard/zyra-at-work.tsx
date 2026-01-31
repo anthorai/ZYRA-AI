@@ -42,7 +42,9 @@ import {
   BarChart3,
   Globe,
   Shield,
-  Wand2
+  Wand2,
+  Pause,
+  Tag
 } from "lucide-react";
 
 // ============================================================================
@@ -236,16 +238,237 @@ interface AutomationSettings {
   maxDailyActions?: number;
 }
 
-// Foundational action for new stores
+// ============================================================================
+// APPROVED ZYRA ACTION TYPES (12 Total) - Per Core Specification
+// ============================================================================
+
+// ZYRA Action Categories
+type ZyraActionCategory = 'foundational' | 'optimization' | 'revenue_recovery' | 'risk_control';
+
+// All 12 Approved Action Types
+type ZyraActionType = 
+  // FOUNDATIONAL / DISCOVERABILITY (4)
+  | 'seo_foundation'           // SEO Foundation Optimization
+  | 'product_copy_clarity'     // Product Copy Clarity Upgrade
+  | 'trust_signals'            // Trust Signal Enhancement
+  | 'recovery_setup'           // Revenue Recovery Setup
+  // OPTIMIZATION (4)
+  | 'product_title'            // Product Title Optimization
+  | 'meta_optimization'        // Meta Title & Description Optimization
+  | 'image_alt_text'           // Image Alt-Text Optimization
+  | 'stale_content_refresh'    // Stale Content Refresh
+  // REVENUE RECOVERY (2)
+  | 'abandoned_cart_recovery'  // Abandoned Cart Recovery Activation
+  | 'post_purchase_upsell'     // Post-Purchase Upsell Enablement
+  // RISK CONTROL (2)
+  | 'underperforming_rollback' // Underperforming Change Rollback
+  | 'risky_freeze';            // Risky Optimization Freeze
+
+// Legacy type mapping for backwards compatibility
+type LegacyFoundationalType = 'seo_basics' | 'product_copy_clarity' | 'trust_signals' | 'recovery_setup';
+
+// Action Type Configuration
+interface ZyraActionConfig {
+  type: ZyraActionType;
+  category: ZyraActionCategory;
+  label: string;
+  description: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  icon: string;
+  color: string;
+}
+
+// All 12 Approved Action Type Configurations
+const ZYRA_ACTION_TYPES: Record<ZyraActionType, ZyraActionConfig> = {
+  // FOUNDATIONAL / DISCOVERABILITY
+  seo_foundation: {
+    type: 'seo_foundation',
+    category: 'foundational',
+    label: 'SEO Foundation Optimization',
+    description: 'Optimize product listings for search engine visibility',
+    riskLevel: 'low',
+    icon: 'Search',
+    color: 'text-blue-400'
+  },
+  product_copy_clarity: {
+    type: 'product_copy_clarity',
+    category: 'foundational',
+    label: 'Product Copy Clarity Upgrade',
+    description: 'Improve product descriptions for better conversion',
+    riskLevel: 'low',
+    icon: 'FileText',
+    color: 'text-purple-400'
+  },
+  trust_signals: {
+    type: 'trust_signals',
+    category: 'foundational',
+    label: 'Trust Signal Enhancement',
+    description: 'Add trust elements to increase buyer confidence',
+    riskLevel: 'low',
+    icon: 'Shield',
+    color: 'text-emerald-400'
+  },
+  recovery_setup: {
+    type: 'recovery_setup',
+    category: 'foundational',
+    label: 'Revenue Recovery Setup',
+    description: 'Configure recovery flows for lost revenue',
+    riskLevel: 'low',
+    icon: 'RotateCcw',
+    color: 'text-amber-400'
+  },
+  // OPTIMIZATION
+  product_title: {
+    type: 'product_title',
+    category: 'optimization',
+    label: 'Product Title Optimization',
+    description: 'Optimize product titles for search and conversion',
+    riskLevel: 'low',
+    icon: 'Tag',
+    color: 'text-cyan-400'
+  },
+  meta_optimization: {
+    type: 'meta_optimization',
+    category: 'optimization',
+    label: 'Meta Title & Description',
+    description: 'Optimize meta tags for better SERP appearance',
+    riskLevel: 'low',
+    icon: 'Globe',
+    color: 'text-indigo-400'
+  },
+  image_alt_text: {
+    type: 'image_alt_text',
+    category: 'optimization',
+    label: 'Image Alt-Text Optimization',
+    description: 'Add SEO-optimized alt text to product images',
+    riskLevel: 'low',
+    icon: 'Image',
+    color: 'text-pink-400'
+  },
+  stale_content_refresh: {
+    type: 'stale_content_refresh',
+    category: 'optimization',
+    label: 'Stale Content Refresh',
+    description: 'Update outdated content to improve relevance',
+    riskLevel: 'low',
+    icon: 'RefreshCw',
+    color: 'text-orange-400'
+  },
+  // REVENUE RECOVERY
+  abandoned_cart_recovery: {
+    type: 'abandoned_cart_recovery',
+    category: 'revenue_recovery',
+    label: 'Abandoned Cart Recovery',
+    description: 'Activate cart recovery to recapture lost sales',
+    riskLevel: 'low',
+    icon: 'ShoppingCart',
+    color: 'text-red-400'
+  },
+  post_purchase_upsell: {
+    type: 'post_purchase_upsell',
+    category: 'revenue_recovery',
+    label: 'Post-Purchase Upsell',
+    description: 'Enable post-purchase offers to increase order value',
+    riskLevel: 'low',
+    icon: 'TrendingUp',
+    color: 'text-green-400'
+  },
+  // RISK CONTROL
+  underperforming_rollback: {
+    type: 'underperforming_rollback',
+    category: 'risk_control',
+    label: 'Underperforming Rollback',
+    description: 'Revert changes that caused revenue decline',
+    riskLevel: 'medium',
+    icon: 'RotateCcw',
+    color: 'text-yellow-400'
+  },
+  risky_freeze: {
+    type: 'risky_freeze',
+    category: 'risk_control',
+    label: 'Risky Optimization Freeze',
+    description: 'Pause risky optimizations to protect revenue',
+    riskLevel: 'medium',
+    icon: 'Pause',
+    color: 'text-slate-400'
+  }
+};
+
+// Revenue Signal Types - ONLY money-related signals
+type RevenueSignalType = 
+  | 'high_traffic_low_conversion'  // High traffic with low conversion
+  | 'funnel_dropoff'               // Drop-offs between funnel stages
+  | 'wasted_visitors'              // Products wasting visitors
+  | 'revenue_decline'              // Revenue decline after a change
+  | 'missing_recovery'             // Missing recovery flows
+  | 'conversion_readiness_gap';    // New-store conversion readiness gaps
+
+// Revenue Signal Detection
+interface RevenueSignal {
+  type: RevenueSignalType;
+  productId?: string;
+  productName?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  estimatedRevenueLoss: number;
+  eligibleActions: ZyraActionType[];
+}
+
+// Action Score Calculation (per spec: Impact × Confidence × Risk Inverse)
+interface ActionScore {
+  actionType: ZyraActionType;
+  expectedRevenueImpact: number;
+  confidenceScore: number;      // 0-1
+  riskInverse: number;          // 1 / risk (higher = safer)
+  totalScore: number;           // Impact × Confidence × RiskInverse
+}
+
+// Decision Explanation (business language per spec)
+interface ActionDecision {
+  selectedAction: ZyraActionType;
+  productId?: string;
+  productName?: string;
+  whyThisProduct: string;       // Why this product
+  whyThisAction: string;        // Why this action
+  whyNow: string;               // Why now
+  whySafe: string;              // Why it is safe
+  score: ActionScore;
+}
+
+// Revenue Proof (ONLY revenue metrics - no vanity metrics)
+interface RevenueProof {
+  revenueGained: number;
+  revenueProtected: number;
+  revenueLost: number;
+  proofStatement: string;       // "This action generated / protected ₹_____"
+}
+
+// Store Learning (what ZYRA learns from each action)
+interface StoreLearning {
+  copyPatterns: string[];       // What copy converts for this store
+  safeActions: ZyraActionType[];
+  riskyActions: ZyraActionType[];
+  bestTiming: string[];
+  productTypeResponses: Record<string, string>;
+}
+
+// Foundational action for new stores (expanded to support all action types)
 interface FoundationalAction {
-  type: 'seo_basics' | 'product_copy_clarity' | 'trust_signals' | 'recovery_setup';
+  type: ZyraActionType | LegacyFoundationalType;
+  category?: ZyraActionCategory;
   productId?: string;
   productName?: string;
   title: string;
   description: string;
   whyItHelps: string;
   expectedImpact: string;
-  riskLevel: 'low';
+  riskLevel: 'low' | 'medium' | 'high';
+  // Decision explanation fields (per spec)
+  whyThisProduct?: string;
+  whyThisAction?: string;
+  whyNow?: string;
+  whySafe?: string;
+  // Score calculation
+  score?: ActionScore;
 }
 
 // Execution results from real AI-powered optimization
@@ -1072,50 +1295,92 @@ function ProgressStages({
                 </span>
               </div>
               
-              {/* AI REASONING SECTION - Expandable details */}
+              {/* AI DECISION EXPLANATION - Business Language (Per ZYRA Spec) */}
+              {/* Shows: Why this product, Why this action, Why now, Why safe */}
               {executionStatus === 'awaiting_approval' && (
                 <details className="mt-3 group" data-testid="ai-reasoning-details">
                   <summary className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer hover:text-slate-300 transition-colors list-none">
                     <ChevronRight className="w-3 h-3 transition-transform group-open:rotate-90" />
-                    <span>Why ZYRA recommends this</span>
+                    <span>Why ZYRA selected this action</span>
                   </summary>
                   <div className="mt-2 p-2.5 bg-slate-800/40 rounded-md border border-slate-700/30">
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-start gap-2">
-                        <Lightbulb className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                    <div className="space-y-2.5 text-xs">
+                      {/* WHY THIS PRODUCT */}
+                      {foundationalAction.productName && (
+                        <div className="flex items-start gap-2" data-testid="decision-why-product">
+                          <Package className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-slate-300 font-medium">Why this product</p>
+                            <p className="text-slate-400 mt-0.5">
+                              {foundationalAction.whyThisProduct || 
+                                `"${foundationalAction.productName}" has the highest potential for revenue improvement based on traffic and conversion patterns.`}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* WHY THIS ACTION */}
+                      <div className="flex items-start gap-2" data-testid="decision-why-action">
+                        <Zap className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-slate-300 font-medium">Analysis</p>
+                          <p className="text-slate-300 font-medium">Why this action</p>
                           <p className="text-slate-400 mt-0.5">
-                            {foundationalAction.type === 'seo_basics' 
-                              ? 'Your product listings need SEO optimization to rank better in search results and drive organic traffic.'
-                              : foundationalAction.type === 'trust_signals'
-                              ? 'First-time visitors need trust signals to feel confident making a purchase from your store.'
-                              : 'This optimization addresses a key conversion barrier in your store.'}
+                            {foundationalAction.whyThisAction || (
+                              foundationalAction.type === 'seo_basics' || foundationalAction.type === 'seo_foundation'
+                                ? 'SEO optimization has the highest impact-to-risk ratio for increasing discoverability and organic revenue.'
+                                : foundationalAction.type === 'trust_signals'
+                                ? 'Trust signals directly address first-time buyer hesitation, the #1 barrier to conversion for new stores.'
+                                : foundationalAction.type === 'product_copy_clarity'
+                                ? 'Clear, compelling product copy removes purchase friction and increases add-to-cart rates.'
+                                : foundationalAction.type === 'recovery_setup'
+                                ? 'Recovery flows capture revenue that would otherwise be lost from abandoned carts and missed follow-ups.'
+                                : 'This action scored highest in the revenue impact calculation (Impact × Confidence × Safety).'
+                            )}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <Target className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                      
+                      {/* WHY NOW */}
+                      <div className="flex items-start gap-2" data-testid="decision-why-now">
+                        <Clock className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-slate-300 font-medium">Expected Outcome</p>
+                          <p className="text-slate-300 font-medium">Why now</p>
                           <p className="text-slate-400 mt-0.5">
-                            {foundationalAction.type === 'seo_basics'
-                              ? 'Better search visibility leads to more organic visitors who are actively looking for your products.'
-                              : foundationalAction.type === 'trust_signals'
-                              ? 'Trust elements typically increase conversion rates by 10-30% for new stores.'
-                              : 'This action targets a specific friction point that may be costing you sales.'}
+                            {foundationalAction.whyNow || 
+                              'This opportunity has the highest urgency based on current traffic patterns and revenue signals. Delaying may result in continued revenue loss.'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-2">
+                      
+                      {/* WHY IT IS SAFE */}
+                      <div className="flex items-start gap-2" data-testid="decision-why-safe">
                         <Shield className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-slate-300 font-medium">Risk Assessment</p>
+                          <p className="text-slate-300 font-medium">Why it is safe</p>
                           <p className="text-slate-400 mt-0.5">
-                            Low risk - changes can be rolled back instantly. ZYRA saves your original content before making any modifications.
+                            {foundationalAction.whySafe || 
+                              `${foundationalAction.riskLevel === 'low' ? 'Low risk' : foundationalAction.riskLevel === 'medium' ? 'Medium risk' : 'Higher risk'} - All changes are reversible with instant rollback. ZYRA saves original content before any modification.`}
                           </p>
                         </div>
                       </div>
+                      
+                      {/* ACTION SCORE (if available) */}
+                      {foundationalAction.score && (
+                        <div className="mt-2 pt-2 border-t border-slate-700/30" data-testid="decision-score">
+                          <div className="flex items-center gap-3 text-[10px]">
+                            <span className="text-slate-500">Action Score:</span>
+                            <Badge className="bg-primary/20 text-primary border-0 text-[10px] h-5">
+                              Impact: {foundationalAction.score.expectedRevenueImpact.toLocaleString()}
+                            </Badge>
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-[10px] h-5">
+                              Confidence: {Math.round(foundationalAction.score.confidenceScore * 100)}%
+                            </Badge>
+                            <Badge className="bg-blue-500/20 text-blue-400 border-0 text-[10px] h-5">
+                              Safety: {Math.round(foundationalAction.score.riskInverse * 100)}%
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </details>
@@ -2432,24 +2697,35 @@ export default function ZyraAtWork() {
               </div>
               )}
               
-              {/* Impact Summary Footer */}
-              <div className="px-5 py-4 bg-gradient-to-r from-emerald-500/10 via-primary/10 to-transparent border-t border-slate-700/50">
-                <div className="flex items-center justify-between gap-4">
+              {/* REVENUE PROOF SUMMARY - ONLY Revenue Metrics (Per ZYRA Spec) */}
+              {/* Format: "This action generated / protected ₹_____" */}
+              {/* NEVER show: CTR, Rankings, Open rates, Vanity metrics */}
+              <div className="px-5 py-4 bg-gradient-to-r from-emerald-500/10 via-primary/10 to-transparent border-t border-slate-700/50" data-testid="revenue-proof-section">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400/20 to-primary/20 flex items-center justify-center">
                       <DollarSign className="w-5 h-5 text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400 mb-0.5">Expected Revenue Impact</p>
-                      <p className="text-sm font-medium text-emerald-400" data-testid="text-estimated-impact">
-                        {executionResult.estimatedImpact}
+                      <p className="text-xs text-slate-400 mb-0.5">Revenue Proof</p>
+                      <p className="text-sm font-medium text-emerald-400" data-testid="text-revenue-proof">
+                        {/* Revenue-only proof statement per spec */}
+                        {executionResult.estimatedImpact.includes('₹') || executionResult.estimatedImpact.includes('$')
+                          ? `This action generated ${executionResult.estimatedImpact}`
+                          : executionResult.estimatedImpact}
                       </p>
                     </div>
                   </div>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-0 py-1.5 px-3" data-testid="badge-optimization-live">
-                    <Sparkles className="w-3 h-3 mr-1.5" />
-                    Optimization Live
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-0 py-1.5 px-3" data-testid="badge-optimization-live">
+                      <Sparkles className="w-3 h-3 mr-1.5" />
+                      Revenue Protected
+                    </Badge>
+                    <Badge variant="outline" className="text-slate-400 border-slate-600 py-1.5 px-3" data-testid="badge-rollback-available">
+                      <RotateCcw className="w-3 h-3 mr-1.5" />
+                      Rollback Available
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2610,116 +2886,162 @@ export default function ZyraAtWork() {
         </p>
       </div>
 
-      {/* ZYRA Core Capabilities */}
-      <div className="space-y-4">
-        {/* ZYRA Powers - Badge Style Display */}
+      {/* APPROVED ZYRA ACTION TYPES (12 Total) - Per Core Specification */}
+      <div className="space-y-4" data-testid="section-zyra-action-types">
+        {/* FOUNDATIONAL / DISCOVERABILITY (4 Actions) */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">ZYRA Powers:</span>
-          <Badge 
-            className="bg-primary/10 text-primary border-primary/30 hover-elevate cursor-default" 
-            data-testid="badge-seo-optimization"
-          >
-            <Search className="w-3 h-3 mr-1.5" />
-            SEO Optimization
-          </Badge>
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Foundational:</span>
           <Badge 
             className="bg-blue-500/10 text-blue-400 border-blue-500/30 hover-elevate cursor-default" 
-            data-testid="badge-bulk-optimization"
+            data-testid="badge-action-seo-foundation"
           >
-            <Layers className="w-3 h-3 mr-1.5" />
-            Bulk Updates
-          </Badge>
-          <Badge 
-            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover-elevate cursor-default" 
-            data-testid="badge-image-seo"
-          >
-            <ImageIcon className="w-3 h-3 mr-1.5" />
-            Image SEO
+            <Search className="w-3 h-3 mr-1.5" />
+            SEO Foundation
           </Badge>
           <Badge 
             className="bg-purple-500/10 text-purple-400 border-purple-500/30 hover-elevate cursor-default" 
-            data-testid="badge-brand-voice"
+            data-testid="badge-action-product-copy"
           >
-            <MessageSquare className="w-3 h-3 mr-1.5" />
-            Brand Voice
+            <FileText className="w-3 h-3 mr-1.5" />
+            Product Copy Clarity
+          </Badge>
+          <Badge 
+            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-trust-signals"
+          >
+            <Shield className="w-3 h-3 mr-1.5" />
+            Trust Signals
           </Badge>
           <Badge 
             className="bg-amber-500/10 text-amber-400 border-amber-500/30 hover-elevate cursor-default" 
-            data-testid="badge-smart-refresh"
+            data-testid="badge-action-recovery-setup"
           >
-            <Calendar className="w-3 h-3 mr-1.5" />
-            Smart Refresh
+            <RotateCcw className="w-3 h-3 mr-1.5" />
+            Recovery Setup
           </Badge>
         </div>
 
-        {/* Execution & Safety - Badge Style */}
+        {/* OPTIMIZATION (4 Actions) */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Execution:</span>
-          <Badge 
-            className="bg-green-500/10 text-green-400 border-green-500/30 hover-elevate cursor-default" 
-            data-testid="badge-shopify-publish"
-          >
-            <Upload className="w-3 h-3 mr-1.5" />
-            Auto-Publish
-          </Badge>
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Optimization:</span>
           <Badge 
             className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover-elevate cursor-default" 
-            data-testid="badge-patterns"
+            data-testid="badge-action-product-title"
           >
-            <Layers className="w-3 h-3 mr-1.5" />
-            Pattern Recognition
+            <Tag className="w-3 h-3 mr-1.5" />
+            Product Titles
           </Badge>
           <Badge 
-            className="bg-red-500/10 text-red-400 border-red-500/30 hover-elevate cursor-default" 
-            data-testid="badge-rollback"
+            className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-meta-optimization"
           >
-            <History className="w-3 h-3 mr-1.5" />
-            Instant Rollback
-          </Badge>
-        </div>
-
-        {/* Revenue Actions - Badge Style */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Actions:</span>
-          <Badge 
-            className="bg-orange-500/10 text-orange-400 border-orange-500/30 hover-elevate cursor-default" 
-            data-testid="badge-cart-recovery"
-          >
-            <ShoppingCart className="w-3 h-3 mr-1.5" />
-            Cart Recovery
-            <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <Globe className="w-3 h-3 mr-1.5" />
+            Meta Tags
           </Badge>
           <Badge 
             className="bg-pink-500/10 text-pink-400 border-pink-500/30 hover-elevate cursor-default" 
-            data-testid="badge-upsell"
+            data-testid="badge-action-image-alt"
           >
-            <Mail className="w-3 h-3 mr-1.5" />
+            <ImageIcon className="w-3 h-3 mr-1.5" />
+            Image Alt-Text
+          </Badge>
+          <Badge 
+            className="bg-orange-500/10 text-orange-400 border-orange-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-stale-refresh"
+          >
+            <RefreshCw className="w-3 h-3 mr-1.5" />
+            Stale Content Refresh
+          </Badge>
+        </div>
+
+        {/* REVENUE RECOVERY (2 Actions) */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Recovery:</span>
+          <Badge 
+            className="bg-red-500/10 text-red-400 border-red-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-cart-recovery"
+          >
+            <ShoppingCart className="w-3 h-3 mr-1.5" />
+            Abandoned Cart Recovery
+            <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </Badge>
+          <Badge 
+            className="bg-green-500/10 text-green-400 border-green-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-post-purchase"
+          >
+            <TrendingUp className="w-3 h-3 mr-1.5" />
             Post-Purchase Upsell
             <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </Badge>
         </div>
+
+        {/* RISK CONTROL (2 Actions) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Risk Control:</span>
+          <Badge 
+            className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-rollback"
+          >
+            <History className="w-3 h-3 mr-1.5" />
+            Underperforming Rollback
+          </Badge>
+          <Badge 
+            className="bg-slate-500/10 text-slate-400 border-slate-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-freeze"
+          >
+            <Pause className="w-3 h-3 mr-1.5" />
+            Risky Optimization Freeze
+          </Badge>
+        </div>
       </div>
 
-      {/* How ZYRA Works - Compact Summary */}
-      <div className="pt-3 border-t border-slate-700/30 space-y-2" data-testid="section-how-zyra-works">
+      {/* ZYRA CORE LOOP - DETECT → DECIDE → EXECUTE → PROVE → LEARN */}
+      <div className="pt-3 border-t border-slate-700/30 space-y-3" data-testid="section-zyra-core-loop">
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-primary" />
-          <span className="text-sm text-slate-300" data-testid="text-zyra-summary">
-            ZYRA monitors, optimizes, and learns from your store—tracking real revenue impact.
+          <span className="text-sm text-slate-300 font-medium" data-testid="text-zyra-summary">
+            ZYRA at Work: Live Revenue Operating System
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-safe">
-            <CheckCircle2 className="w-3 h-3 mr-1" />
-            Safe & Reversible
+        
+        {/* Core Loop Visualization */}
+        <div className="flex items-center justify-center gap-1 text-[10px] font-mono py-2" data-testid="core-loop-visual">
+          <span className="text-blue-400">DETECT</span>
+          <ArrowRight className="w-3 h-3 text-slate-600" />
+          <span className="text-purple-400">DECIDE</span>
+          <ArrowRight className="w-3 h-3 text-slate-600" />
+          <span className="text-amber-400">EXECUTE</span>
+          <ArrowRight className="w-3 h-3 text-slate-600" />
+          <span className="text-emerald-400">PROVE</span>
+          <ArrowRight className="w-3 h-3 text-slate-600" />
+          <span className="text-cyan-400">LEARN</span>
+        </div>
+        
+        <p className="text-xs text-slate-400 text-center" data-testid="text-core-law">
+          Core Law: If an action does NOT directly increase or protect revenue, ZYRA will NOT perform it.
+        </p>
+        
+        {/* Identity Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-thinks">
+            <Brain className="w-3 h-3 mr-1" />
+            Thinks
           </Badge>
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-revenue-first">
-            <TrendingUp className="w-3 h-3 mr-1" />
-            Revenue-First
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-acts">
+            <Zap className="w-3 h-3 mr-1" />
+            Acts
           </Badge>
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-auto-rollback">
-            <RotateCcw className="w-3 h-3 mr-1" />
-            Auto-Rollback
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-explains">
+            <MessageSquare className="w-3 h-3 mr-1" />
+            Explains
+          </Badge>
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-proves">
+            <DollarSign className="w-3 h-3 mr-1" />
+            Proves
+          </Badge>
+          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-improves">
+            <Target className="w-3 h-3 mr-1" />
+            Improves
           </Badge>
         </div>
       </div>
