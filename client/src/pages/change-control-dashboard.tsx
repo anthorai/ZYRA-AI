@@ -787,7 +787,7 @@ export default function ChangeControlDashboard() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setSelectedChange(isSelected ? null : change);
+                                  setLocation(`/change-control/${change.id}`);
                                 }}
                                 className="gap-1 text-xs"
                                 data-testid={`button-details-${change.id}`}
