@@ -1517,6 +1517,9 @@ export default function ZyraAtWork() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
   
+  // Real-time SSE activity stream for phase indicators
+  const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivityStream();
+  
   // Optimization mode preference (stored in localStorage)
   const [optimizationMode, setOptimizationMode] = useState<OptimizationMode>(() => {
     if (typeof window !== 'undefined') {
@@ -2021,7 +2024,28 @@ export default function ZyraAtWork() {
   };
   
   const currentPhase = (() => {
-    // HIGHEST PRIORITY: If we have VALIDATED execution results with real data, show 'learn'
+    // HIGHEST PRIORITY: Real-time SSE events - most authoritative source
+    if (streamEvents.length > 0 && isStreamConnected) {
+      const latestEvent = streamEvents[streamEvents.length - 1];
+      // Map SSE event types to phases
+      if (latestEvent.eventType.startsWith('DETECT_')) {
+        return 'detect';
+      } else if (latestEvent.eventType.startsWith('DECIDE_')) {
+        return 'decide';
+      } else if (latestEvent.eventType.startsWith('EXECUTE_')) {
+        return 'execute';
+      } else if (latestEvent.eventType.startsWith('PROVE_')) {
+        return 'prove';
+      } else if (latestEvent.eventType.startsWith('LEARN_')) {
+        return 'learn';
+      }
+      // Use event's phase field if event type doesn't match
+      if (latestEvent.phase) {
+        return latestEvent.phase;
+      }
+    }
+    
+    // If we have VALIDATED execution results with real data, show 'learn'
     if (executionResult && hasValidExecutionData(executionResult)) {
       return 'learn';
     }
@@ -2057,7 +2081,7 @@ export default function ZyraAtWork() {
     if (derivedExecutionStatus === 'pending' || isActivelyDetecting) {
       return 'detect';
     }
-    // Fall back to events-based phase
+    // Fall back to events-based phase (non-SSE events)
     if (events.length > 0) {
       return events[events.length - 1].phase;
     }
@@ -2450,22 +2474,38 @@ export default function ZyraAtWork() {
         {Object.entries(PHASE_CONFIG).map(([phase, config]) => {
           const Icon = config.icon;
           const isActive = currentPhase === phase;
+          const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
+          const currentIndex = phaseOrder.indexOf(currentPhase);
+          const phaseIndex = phaseOrder.indexOf(phase);
+          const isCompleted = phaseIndex < currentIndex;
+          
           return (
             <Card 
               key={phase}
               className={`${config.bgColor} border-slate-700/50 transition-all duration-300 ${
                 isActive ? 'ring-2 ring-offset-2 ring-offset-slate-900' : ''
-              }`}
+              } ${isCompleted ? 'opacity-60' : ''}`}
               style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
               data-testid={`phase-indicator-${phase}`}
             >
-              <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+              <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center relative">
+                {isCompleted && (
+                  <div className="absolute top-1 right-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  </div>
+                )}
                 <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${config.color}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
                 </div>
-                <span className={`text-xs font-medium ${isActive ? config.color : 'text-slate-400'}`}>
+                <span className={`text-xs font-medium ${isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
                   {config.label}
                 </span>
+                {isActive && isStreamConnected && (
+                  <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Live
+                  </span>
+                )}
               </CardContent>
             </Card>
           );
