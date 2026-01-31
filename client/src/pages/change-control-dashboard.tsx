@@ -167,6 +167,7 @@ export default function ChangeControlDashboard() {
   const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [showLatestOnly, setShowLatestOnly] = useState(true);
 
   const { data: changes, isLoading: changesLoading, refetch } = useQuery<ChangeItem[]>({
     queryKey: ["/api/autonomous-actions"],
@@ -178,17 +179,35 @@ export default function ChangeControlDashboard() {
 
   const filteredChanges = useMemo(() => {
     if (!changes) return [];
+    
+    let filtered = changes;
+    
     switch (filterStatus) {
       case "applied":
-        return changes.filter(c => c.status === "completed" || c.status === "dry_run");
+        filtered = changes.filter(c => c.status === "completed" || c.status === "dry_run");
+        break;
       case "pending":
-        return changes.filter(c => c.status === "pending");
+        filtered = changes.filter(c => c.status === "pending");
+        break;
       case "rolled_back":
-        return changes.filter(c => c.status === "rolled_back");
-      default:
-        return changes;
+        filtered = changes.filter(c => c.status === "rolled_back");
+        break;
     }
-  }, [changes, filterStatus]);
+    
+    if (showLatestOnly) {
+      const latestByProduct = new Map<string, ChangeItem>();
+      for (const change of filtered) {
+        const productKey = change.entityId || change.payload?.productId || change.id;
+        const existing = latestByProduct.get(productKey);
+        if (!existing || new Date(change.createdAt) > new Date(existing.createdAt)) {
+          latestByProduct.set(productKey, change);
+        }
+      }
+      filtered = Array.from(latestByProduct.values());
+    }
+    
+    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [changes, filterStatus, showLatestOnly]);
 
   const rollbackMutation = useMutation({
     mutationFn: async (actionId: string) => {
@@ -393,7 +412,8 @@ export default function ChangeControlDashboard() {
   const canBulkPush = useMemo(() => {
     return Array.from(selectedIds).some(id => {
       const change = changes?.find(c => c.id === id);
-      return change && change.status === "pending";
+      return change && !change.publishedToShopify && 
+        (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
     });
   }, [selectedIds, changes]);
 
@@ -484,7 +504,8 @@ export default function ChangeControlDashboard() {
                           onClick={() => {
                             const idsToPush = Array.from(selectedIds).filter(id => {
                               const change = changes?.find(c => c.id === id);
-                              return change && change.status === "pending";
+                              return change && !change.publishedToShopify && 
+                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
                             });
                             if (idsToPush.length > 0) {
                               bulkPushMutation.mutate(idsToPush);
@@ -497,7 +518,8 @@ export default function ChangeControlDashboard() {
                           <Upload className="w-4 h-4" />
                           Bulk Push to Shopify ({Array.from(selectedIds).filter(id => {
                             const change = changes?.find(c => c.id === id);
-                            return change && change.status === "pending";
+                            return change && !change.publishedToShopify && 
+                              (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
                           }).length})
                         </Button>
                       )}
@@ -536,16 +558,28 @@ export default function ChangeControlDashboard() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                className="gap-2"
-                data-testid="button-refresh"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Refresh
-              </Button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={showLatestOnly}
+                    onCheckedChange={setShowLatestOnly}
+                    data-testid="switch-latest-only"
+                  />
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                    Latest per product
+                  </Label>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetch()}
+                  className="gap-2"
+                  data-testid="button-refresh"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -649,6 +683,25 @@ export default function ChangeControlDashboard() {
                               <Badge variant="outline" className={cn("text-xs", riskConfig.bgColor, riskConfig.color)}>
                                 {riskConfig.label}
                               </Badge>
+                              {(() => {
+                                const aiMode = change.payload?.aiMode || change.result?.aiMode;
+                                if (aiMode === 'fast') {
+                                  return (
+                                    <Badge variant="outline" className="text-xs bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                                      <Zap className="w-3 h-3 mr-1" />
+                                      Fast Mode
+                                    </Badge>
+                                  );
+                                } else if (aiMode === 'quality') {
+                                  return (
+                                    <Badge variant="outline" className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                      <Sparkles className="w-3 h-3 mr-1" />
+                                      Quality Mode
+                                    </Badge>
+                                  );
+                                }
+                                return null;
+                              })()}
                               {isAutonomous && (
                                 <Badge variant="outline" className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
                                   <Bot className="w-3 h-3 mr-1" />
@@ -664,7 +717,7 @@ export default function ChangeControlDashboard() {
                             </div>
 
                             <div className="flex items-center gap-2 pt-2">
-                              {change.status === "completed" && (
+                              {(change.status === "completed" || change.status === "dry_run") && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -680,7 +733,7 @@ export default function ChangeControlDashboard() {
                                   Rollback
                                 </Button>
                               )}
-                              {change.status === "pending" && (
+                              {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run") && (
                                 <Button
                                   size="sm"
                                   onClick={(e) => {
@@ -762,7 +815,7 @@ export default function ChangeControlDashboard() {
                         <p className="text-xs text-muted-foreground">
                           {selectedChange.decisionReason || "AI analysis identified optimization opportunities."}
                         </p>
-                        <div className="grid grid-cols-2 gap-2 pt-2">
+                        <div className="grid grid-cols-3 gap-2 pt-2">
                           <div>
                             <p className="text-xs text-muted-foreground">Expected Impact</p>
                             <p className="text-sm font-bold text-green-400">
@@ -774,6 +827,28 @@ export default function ChangeControlDashboard() {
                             <p className="text-sm font-bold">
                               {selectedChange.estimatedImpact?.confidence || 85}%
                             </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">AI Mode</p>
+                            {(() => {
+                              const aiMode = selectedChange.payload?.aiMode || selectedChange.result?.aiMode;
+                              if (aiMode === 'fast') {
+                                return (
+                                  <p className="text-sm font-bold text-cyan-400 flex items-center gap-1">
+                                    <Zap className="w-3 h-3" />
+                                    Fast
+                                  </p>
+                                );
+                              } else if (aiMode === 'quality') {
+                                return (
+                                  <p className="text-sm font-bold text-amber-400 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3" />
+                                    Quality
+                                  </p>
+                                );
+                              }
+                              return <p className="text-sm font-bold">Auto</p>;
+                            })()}
                           </div>
                         </div>
                       </div>

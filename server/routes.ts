@@ -17974,9 +17974,14 @@ Output format: Markdown with clear section headings.`;
 
       const actionData = action[0];
 
-      // Only allow pushing pending or dry_run actions
-      if (actionData.status !== 'pending' && actionData.status !== 'dry_run') {
-        return res.status(400).json({ error: `Cannot push action with status '${actionData.status}'. Only pending actions can be pushed.` });
+      // Only allow pushing pending, dry_run, or completed (unpublished) actions
+      if (actionData.status !== 'pending' && actionData.status !== 'dry_run' && actionData.status !== 'completed') {
+        return res.status(400).json({ error: `Cannot push action with status '${actionData.status}'. Only pending, preview, or unpublished completed actions can be pushed.` });
+      }
+      
+      // If already published, don't push again
+      if (actionData.publishedToShopify) {
+        return res.status(400).json({ error: "This action has already been published to Shopify." });
       }
 
       // Get store connection for Shopify API
