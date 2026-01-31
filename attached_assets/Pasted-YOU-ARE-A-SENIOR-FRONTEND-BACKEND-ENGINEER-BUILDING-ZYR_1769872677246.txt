@@ -1,0 +1,179 @@
+YOU ARE A SENIOR FRONTEND + BACKEND ENGINEER BUILDING ZYRA AI.
+
+TASK:
+Update the Change Control section to clearly display
+ALL ZYRA Action Categories with structured comparison,
+manual control, and rollback — without breaking the
+DETECT → DECIDE → EXECUTE → PROVE → LEARN loop.
+
+====================================================
+PART 1 — DISCOVERABILITY & SEO CHANGE CONTROL TABLE
+====================================================
+
+Create a primary Change Control card for:
+🔍 Discoverability & SEO Actions
+
+----------------------------------------------------
+TABLE STRUCTURE (MANDATORY)
+----------------------------------------------------
+
+Create a table with THREE columns:
+
+1. ACTION NAME
+2. UNOPTIMIZED PRODUCT
+3. OPTIMIZED PRODUCT
+
+----------------------------------------------------
+ROWS (EXACT — DO NOT CHANGE)
+----------------------------------------------------
+
+Include the following rows:
+
+1. Product Description
+2. Product Title Optimization
+3. Meta Title, Meta Description & Tag Optimization
+4. Search Intent Alignment Fix
+5. Image Alt-Text Optimization
+6. Stale SEO Content Refresh
+
+----------------------------------------------------
+ROW BEHAVIOR
+----------------------------------------------------
+
+For each row:
+- UNOPTIMIZED PRODUCT shows current Shopify value
+- OPTIMIZED PRODUCT shows AI-proposed change
+- Highlight differences clearly
+- Read-only by default
+
+----------------------------------------------------
+ACTION CONTROLS (TABLE LEVEL)
+----------------------------------------------------
+
+Add buttons:
+
+- [Push Selected to Shopify]
+- [Rollback Selected]
+
+Rules:
+- User can select 1 or multiple rows
+- Push = manual execution
+- Rollback = restore original values
+- Changes must log execution + rollback events
+
+====================================================
+PART 2 — ACTION CATEGORY TABS (SECONDARY)
+====================================================
+
+Add horizontal tabs above Change Control:
+
+Tabs:
+1. 🔍 Discoverability & SEO
+2. 🛒 Conversion Optimization
+3. 💰 Revenue Recovery
+4. 🛡️ Revenue Protection
+5. 🧠 Learning & Intelligence
+
+Only ONE tab visible at a time.
+
+====================================================
+PART 3 — TAB CONTENT REQUIREMENTS
+====================================================
+
+----------------------------------------------------
+🛒 Conversion Optimization Actions
+----------------------------------------------------
+
+Display cards for:
+
+- Product Description Clarity Upgrade
+- Value Proposition Alignment Fix
+- Trust Signal Enhancement
+- Friction Copy Removal
+- Above-the-Fold Content Optimization
+
+Each card must show:
+- Action name
+- Affected product(s)
+- Before / After preview
+- [Push to Shopify]
+- [Rollback]
+
+----------------------------------------------------
+💰 Revenue Recovery Actions
+----------------------------------------------------
+
+Display cards for:
+
+- Abandoned Cart Recovery Activation
+- Post-Purchase Upsell Enablement
+- Checkout Drop-Off Mitigation
+
+Each card must show:
+- Status (Enabled / Disabled)
+- Expected revenue recovery
+- Manual enable button
+- Rollback / disable option
+
+----------------------------------------------------
+🛡️ Revenue Protection Actions
+----------------------------------------------------
+
+Display cards for:
+
+- Underperforming Change Rollback
+- Risky Optimization Freeze
+
+Each card must show:
+- Trigger reason
+- Affected change
+- One-click rollback / freeze button
+- Warning badge
+
+----------------------------------------------------
+🧠 Learning & Intelligence Actions (Silent)
+----------------------------------------------------
+
+Display read-only cards for:
+
+- Store Conversion Pattern Learning
+- Product Performance Baseline Update
+
+Rules:
+- NO push button
+- NO rollback button
+- Status only (Active / Updating)
+- Tooltip: “Used internally to improve future decisions”
+
+====================================================
+PART 4 — GLOBAL CONTROL RULES
+====================================================
+
+- ALL pushes are manual (unless autonomy enabled elsewhere)
+- ALL rollbacks must be instant
+- All actions must log:
+  - Action type
+  - Product
+  - Before / After
+  - Timestamp
+  - Revenue outcome later
+
+====================================================
+PART 5 — LOOP SAFETY (NON-NEGOTIABLE)
+====================================================
+
+This UI must:
+- NOT trigger new decisions
+- ONLY execute approved decisions
+- Reflect DECIDE → EXECUTE → PROVE
+- NEVER act silently
+
+====================================================
+FINAL VALIDATION CHECK
+====================================================
+
+After update:
+- Merchant can clearly compare unoptimized vs optimized
+- Merchant can select individual or multiple actions
+- Merchant can push or rollback confidently
+- ZYRA remains explainable, controllable, and trusted
