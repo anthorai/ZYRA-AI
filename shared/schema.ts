@@ -3535,7 +3535,7 @@ export const revenueLoopProof = pgTable("revenue_loop_proof", {
 export const interimProofEvents = pgTable("interim_proof_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   opportunityId: varchar("opportunity_id").references(() => revenueOpportunities.id).notNull(),
-  productId: integer("product_id").references(() => products.id),
+  productId: varchar("product_id").references(() => products.id),
   
   // Event Type: sale, view, add_to_cart
   eventType: text("event_type").notNull(),
