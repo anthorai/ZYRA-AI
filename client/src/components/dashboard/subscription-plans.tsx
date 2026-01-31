@@ -7,17 +7,15 @@ import { Check, Gift, Zap, Crown, Award } from "lucide-react";
 
 const plans = [
   {
-    name: "Free",
+    name: "Free to Install",
     planId: "18f8da29-94cf-417b-83f8-07191b22f254",
     monthlyPrice: 0,
     period: "forever",
     icon: <Gift className="w-8 h-8" />,
-    description: "Free to Install",
+    description: "Perfect for new and growing Shopify stores",
     features: [
-      "7-day trial with 150 bonus credits",
-      "Then 50 credits / month forever",
-      "ZYRA detects all revenue opportunities",
-      "Manual approval mode only",
+      "ZYRA detects all opportunities",
+      "Manual approval mode",
       "One-click rollback protection",
       "Email support"
     ],
