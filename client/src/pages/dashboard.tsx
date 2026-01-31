@@ -15,7 +15,7 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import Footer from "@/components/ui/footer";
 import { ProductIntelligenceTab } from "@/components/products/ProductIntelligenceTab";
 import ZyraAtWork from "@/components/dashboard/zyra-at-work";
-import NextMove from "@/components/dashboard/next-move";
+import RevenueImmuneCard from "@/components/dashboard/revenue-immune-card";
 import { MasterAutomationToggle } from "@/components/MasterAutomationToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
@@ -134,7 +134,7 @@ export default function Dashboard() {
     const tabParam = urlParams.get('tab');
     
     // Only allow valid tabs in the simplified navigation
-    const validTabs = ['zyra-at-work', 'products', 'settings'];
+    const validTabs = ['zyra-at-work', 'products', 'settings', 'revenue-immune'];
     
     if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam);
@@ -230,8 +230,8 @@ export default function Dashboard() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "next-move":
-        return <NextMove />;
+      case "revenue-immune":
+        return <RevenueImmuneCard />;
       case "products":
         return <ProductIntelligenceTab />;
       case "profile":

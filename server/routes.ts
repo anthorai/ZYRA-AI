@@ -16748,6 +16748,63 @@ Output format: Markdown with clear section headings.`;
   app.put("/api/automation/settings", requireAuth, updateAutomationSettingsHandler);
   app.patch("/api/automation/settings", requireAuth, updateAutomationSettingsHandler);
 
+  // ===== REVENUE IMMUNE SYSTEM API =====
+  // Returns prevented revenue loss and protection status
+  app.get("/api/revenue-immune/status", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      
+      const { automationSettings, autonomousActions, revenueLoopProof } = await import('@shared/schema');
+      
+      // Get automation settings for the user
+      const [settings] = await db
+        .select()
+        .from(automationSettings)
+        .where(eq(automationSettings.userId, userId))
+        .limit(1);
+      
+      // Calculate prevented revenue from revenue loop proof entries this month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      // Get revenue proof entries for this month using typed gte comparison
+      const proofEntries = await db
+        .select()
+        .from(revenueLoopProof)
+        .where(
+          and(
+            eq(revenueLoopProof.userId, userId),
+            gte(revenueLoopProof.createdAt, startOfMonth)
+          )
+        );
+      
+      // Sum up prevented revenue (estimated_impact from proven actions) - single truth metric
+      let preventedRevenue = 0;
+      
+      for (const entry of proofEntries) {
+        if (entry.status === 'proven' || entry.status === 'positive') {
+          // Parse estimated impact - could be stored as number or in JSON
+          const impact = typeof entry.estimatedImpact === 'number' 
+            ? entry.estimatedImpact 
+            : (entry.estimatedImpact as any)?.revenue || 0;
+          preventedRevenue += Math.abs(impact);
+        }
+      }
+      
+      // Single truth metric response - only prevented revenue
+      res.json({
+        isActive: settings?.globalAutopilotEnabled ?? false,
+        sensitivity: settings?.autopilotMode ?? 'balanced',
+        preventedRevenue: preventedRevenue,
+        currency: '₹',
+      });
+    } catch (error) {
+      console.error("Error fetching revenue immune status:", error);
+      res.status(500).json({ error: "Failed to fetch revenue immune status" });
+    }
+  });
+
   // ===== NEXT MOVE API =====
   // The "Next Move" feature: ZYRA's single authoritative revenue decision
   
