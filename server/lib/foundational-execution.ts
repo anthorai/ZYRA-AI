@@ -116,11 +116,26 @@ export class FoundationalExecutionService {
         status: 'completed',
       });
 
-      const userProducts = await db
-        .select()
+      // Prefer products that haven't been optimized yet (no optimizedTitle in seoMeta)
+      const allUserProducts = await db
+        .select({
+          product: products,
+          hasOptimizedSeo: seoMeta.optimizedTitle,
+        })
         .from(products)
+        .leftJoin(seoMeta, eq(products.id, seoMeta.productId))
         .where(eq(products.userId, userId))
-        .limit(3);
+        .limit(10);
+      
+      // Prioritize products without optimized SEO, then fall back to any products
+      const unoptimizedProducts = allUserProducts.filter(p => !p.hasOptimizedSeo).map(p => p.product);
+      const optimizedProducts = allUserProducts.filter(p => p.hasOptimizedSeo).map(p => p.product);
+      
+      // Take unoptimized first, then fill with optimized if needed
+      const userProducts = [
+        ...unoptimizedProducts.slice(0, 3),
+        ...optimizedProducts.slice(0, Math.max(0, 3 - unoptimizedProducts.length))
+      ].slice(0, 3);
 
       if (userProducts.length === 0) {
         this.addActivity(userId, {
