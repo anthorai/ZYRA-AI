@@ -66,8 +66,15 @@ Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LE
 ### Revenue Friction Detection System
 ZYRA detects and removes "revenue friction" – moments where buyer intent exists but a sale doesn't happen. It identifies four friction types: `view_no_cart`, `cart_no_checkout`, `checkout_drop`, and `purchase_no_upsell`. A detection engine identifies friction from performance data, abandoned carts, and order analysis, using a scoring formula to prioritize opportunities.
 
-### Next Move Feature
-The "Next Move" feature is ZYRA's single authoritative revenue decision interface, surfacing one high-priority action at a time. A decision engine scores all revenue opportunities and selects the highest-scoring one. Execution rules are plan-based, determining whether actions require approval or can run automatically. API endpoints manage fetching, approving, executing, and rolling back actions. The frontend displays the action, reason, expected revenue, confidence, and risk level, with real-time status updates.
+### Revenue Immune System
+The Revenue Immune System is ZYRA's core revenue protection feature that operates silently in the background like a store's immune system. Unlike the previous suggestion-based "Next Move" feature, this system:
+- Displays a single truth metric: "Prevented Revenue" - the estimated value of revenue loss that ZYRA prevented this month
+- Provides ACTIVE/PAUSED status toggle to enable/disable autonomous protection
+- Offers sensitivity controls (Conservative/Balanced/Aggressive) mapped to automation settings
+- Operates silently 24/7 detecting and fixing issues (content decay, SEO erosion, copy fatigue) before they impact sales
+- All changes are reversible and logged for transparency
+- Backend calculates prevented revenue from `revenue_loop_proof` table entries with status 'proven' or 'positive'
+- API endpoint: `/api/revenue-immune/status` provides current protection status and metrics
 
 ### ZYRA Detection Engine (3-Layer Architecture)
 This high-performance engine ensures ≤10s response time for revenue opportunity detection using a three-layer architecture:
