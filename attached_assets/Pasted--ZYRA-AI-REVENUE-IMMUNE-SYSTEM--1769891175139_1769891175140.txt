@@ -1,0 +1,228 @@
+/* =========================================================
+   ZYRA AI — REVENUE IMMUNE SYSTEM
+   TRUST-BUILDING UI + LIVE MONITORING PROMPT (SL / SQL BOX)
+   ========================================================= */
+
+/* ===============================
+   SYSTEM ROLE
+   =============================== */
+SYSTEM_ROLE = 'Senior Product Designer + SaaS Frontend Architect + Backend Integrator';
+
+/*
+OBJECTIVE:
+Redesign the Revenue Immune System card so merchants:
+- TRUST the feature
+- FEEL live 24/7 monitoring
+- UNDERSTAND what the system did today
+- SEE scope of protection without dashboards
+
+IMPORTANT:
+- Do NOT add analytics dashboards
+- Do NOT expose internal complexity
+- Do NOT require merchant actions
+- UI must feel like infrastructure, not a setting
+*/
+
+/* =========================================================
+   CORE UX PRINCIPLE
+   ========================================================= */
+
+UX_RULE:
+  "Show evidence of vigilance, not metrics.
+   Show work done, not charts.
+   Show protected surfaces, not features."
+
+/* =========================================================
+   UI COMPONENT: REVENUE IMMUNE SYSTEM CARD (V2)
+   ========================================================= */
+
+CREATE UI_COMPONENT revenue_immune_system_card_v2 AS
+BEGIN
+
+  /* ===============================
+     HEADER SECTION
+     =============================== */
+  HEADER:
+    TITLE = 'Revenue Immune System';
+    STATUS_BADGE = 'ACTIVE';
+    ICON = shield_check;
+    TOGGLE = protection_on_off;
+
+  SUBHEADER:
+    TEXT = 'Silently protecting your store revenue';
+    LINK = 'Learn how protection works';
+
+  /* ===============================
+     LIVE MONITORING STATUS (CRITICAL)
+     =============================== */
+  LIVE_STATUS_BLOCK:
+    INDICATOR = green_pulse_dot;
+    TEXT_PRIMARY = 'Actively monitoring your store';
+    TEXT_SECONDARY = 'Last scan: {X minutes ago}';
+    WATCHING_SCOPE = 'Products · SEO · Recovery flows';
+
+  /*
+  PURPOSE:
+  - Prove system is alive
+  - Create 24/7 monitoring feeling
+  - Remove "is this doing anything?" doubt
+  */
+
+  /* ===============================
+     MONTHLY PROTECTION VALUE
+     =============================== */
+  PROTECTION_VALUE_BLOCK:
+    TITLE = 'Revenue loss prevented this month';
+    VALUE = '₹{amount}';
+
+    IF amount == 0 THEN
+      SUBTEXT = 'No revenue decay detected yet';
+      HELPER_TEXT = 'Prevention happens before loss';
+    END IF;
+
+  /*
+  RULE:
+  ₹0 must NEVER feel like failure.
+  ₹0 = store was protected.
+  */
+
+  /* ===============================
+     TODAY ACTIVITY LOG (MOST IMPORTANT)
+     =============================== */
+  TODAY_ACTIVITY_BLOCK:
+    TITLE = 'Today’s Revenue Protection Activity';
+
+    CONTENT_DYNAMIC:
+      IF no_fixes_detected_today THEN
+        SHOW:
+          '✓ Scanned {N} product pages for intent decay';
+          '✓ Monitored SEO rankings on {N} key products';
+          '✓ Checked recovery flow performance';
+          '✓ No revenue leakage detected today';
+      END IF;
+
+      IF fixes_detected_today THEN
+        FOR EACH fix IN fixes_today:
+          SHOW:
+            '⚠️ Detected {problem_type} on "{entity_name}"';
+            '✓ Repaired {surface_touched}';
+            '↺ Monitoring performance (rollback ready)';
+        END FOR;
+      END IF;
+
+  /*
+  PURPOSE:
+  - Show daily work
+  - Build trust even when nothing breaks
+  - Replace dashboards with human-readable proof
+  */
+
+  /* ===============================
+     PROTECTED SURFACES (POWER DISPLAY)
+     =============================== */
+  PROTECTED_SURFACES_BLOCK:
+    TITLE = 'What ZYRA is protecting';
+
+    LIST:
+      '✓ Product copy decay';
+      '✓ SEO ranking erosion';
+      '✓ Conversion intent mismatch';
+      '✓ Recovery message fatigue';
+      '✓ Silent revenue leakage';
+
+  /*
+  PURPOSE:
+  - Show scope of power
+  - Answer "what all does this do?"
+  - No documentation needed
+  */
+
+  /* ===============================
+     SENSITIVITY CONTROL
+     =============================== */
+  SENSITIVITY_CONTROL:
+    LABEL = 'Protection Sensitivity';
+    OPTIONS = ('Conservative', 'Balanced', 'Aggressive');
+    DEFAULT = 'Balanced';
+
+  /*
+  RULE:
+  This affects detection thresholds ONLY.
+  No per-action approvals allowed.
+  */
+
+  /* ===============================
+     OPTIONAL MICRO-TRUST EXPANDER
+     =============================== */
+  OPTIONAL_EXPANDER:
+    LABEL = 'View protection history';
+
+    ON_CLICK:
+      SHOW_MODAL:
+        TITLE = 'Recent Protection Summary';
+        CONTENT:
+          'Last 7 days:';
+          '- {X} intent decay scans';
+          '- {X} SEO drift checks';
+          '- {X} copy repairs executed';
+          '- {X} rollbacks needed';
+
+  /*
+  RULE:
+  - No charts
+  - No graphs
+  - Text-only proof
+  */
+
+END;
+
+/* =========================================================
+   BACKEND DATA REQUIREMENTS (FOR UI)
+   ========================================================= */
+
+REQUIRE BACKEND TO PROVIDE:
+  - last_scan_timestamp
+  - today_scanned_products_count
+  - today_detected_issues[]
+  - today_fixes_executed[]
+  - monthly_prevented_revenue
+  - protection_scope_status
+  - sensitivity_level
+
+UPDATE FREQUENCY:
+  - live_status: every few minutes
+  - today_activity: real-time append
+  - monthly_value: daily recalculation
+
+/* =========================================================
+   FAILURE CONDITIONS (DO NOT SHIP IF TRUE)
+   ========================================================= */
+
+FAIL_IF:
+  - Card looks like a simple toggle
+  - ₹0 appears without explanation
+  - No indication of live monitoring
+  - Merchant cannot tell what happened today
+  - UI feels like settings, not protection
+
+/* =========================================================
+   SUCCESS CONDITIONS
+   ========================================================= */
+
+SUCCESS_IF:
+  - Merchant immediately feels store is being watched
+  - Merchant understands daily protection without learning
+  - Merchant trusts system even when nothing breaks
+  - Turning OFF protection feels risky
+
+/* =========================================================
+   FINAL UX DIRECTIVE
+   ========================================================= */
+
+FINAL_DIRECTIVE:
+  "This card must feel like a security guard report,
+   not a feature configuration panel."
+
+/* ===============================
+   END OF SL / SQL BOX PROMPT
+   =============================== */
