@@ -86,7 +86,7 @@ export default function ProductsPage() {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await apiRequest("POST", "/api/shopify/sync-products");
+      await apiRequest("POST", "/api/shopify/sync");
       await queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/products/intelligence/summary'] });
       toast({
