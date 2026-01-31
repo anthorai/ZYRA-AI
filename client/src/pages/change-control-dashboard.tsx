@@ -136,6 +136,16 @@ function getBeforeAfterContent(change: ChangeItem) {
   const before: Record<string, string> = {};
   const after: Record<string, string> = {};
 
+  // Handle payload.changes array format (new format)
+  if (change.payload?.changes && Array.isArray(change.payload.changes)) {
+    for (const fieldChange of change.payload.changes) {
+      const fieldName = fieldChange.field || "Unknown Field";
+      if (fieldChange.before) before[fieldName] = fieldChange.before;
+      if (fieldChange.after) after[fieldName] = fieldChange.after;
+    }
+  }
+
+  // Handle payload.before/after object format (legacy format)
   if (change.payload?.before) {
     if (change.payload.before.title) before["Product Title"] = change.payload.before.title;
     if (change.payload.before.description) before["Product Description"] = change.payload.before.description;
@@ -150,6 +160,16 @@ function getBeforeAfterContent(change: ChangeItem) {
     if (change.payload.after.metaDescription) after["Meta Description"] = change.payload.after.metaDescription;
   }
 
+  // Handle result.changes array format
+  if (change.result?.changes && Array.isArray(change.result.changes)) {
+    for (const fieldChange of change.result.changes) {
+      const fieldName = fieldChange.field || "Unknown Field";
+      if (fieldChange.before) before[fieldName] = fieldChange.before;
+      if (fieldChange.after) after[fieldName] = fieldChange.after;
+    }
+  }
+
+  // Handle optimizedCopy or optimizedContent
   const optimized = change.payload?.optimizedCopy || change.result?.optimizedContent;
   if (optimized) {
     if (optimized.title) after["Product Title"] = optimized.title;
