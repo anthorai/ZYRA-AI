@@ -1,0 +1,146 @@
+YOU ARE A SENIOR FULL-STACK ENGINEER WORKING ON ZYRA AI.
+
+TASK:
+Fix the ZYRA Live Activity Log so it displays REAL-TIME engine activity
+instead of precomputed, cached, or already-set-up data.
+
+====================================================
+PROBLEM DESCRIPTION
+====================================================
+
+Current Behavior:
+- Live Activity Log shows old / static states
+- Displays “already completed” steps
+- Does NOT update while ZYRA is running
+- Merchants feel ZYRA is idle or fake
+
+Expected Behavior:
+- Live Activity Log updates in real time
+- Shows what ZYRA is doing RIGHT NOW
+- Reflects DETECT → DECIDE → EXECUTE → PROVE → LEARN as they happen
+
+====================================================
+ROOT CAUSES TO IDENTIFY & FIX
+====================================================
+
+1. Activity Log is reading from:
+   ❌ Stored loop history
+   ❌ Final state snapshots
+   ❌ Cached DB rows
+
+2. Activity Log is NOT connected to:
+   ❌ Real-time engine events
+   ❌ State transitions
+   ❌ Worker progress
+
+3. No real-time transport:
+   ❌ No WebSocket / SSE / polling
+   ❌ UI not subscribed to live updates
+
+====================================================
+MANDATORY FIX (NON-NEGOTIABLE)
+====================================================
+
+Live Activity Log MUST be driven by:
+REAL-TIME ENGINE EVENTS
+—not stored results.
+
+====================================================
+REQUIRED ARCHITECTURE
+====================================================
+
+1. ENGINE EVENT EMISSION (BACKEND)
+
+Every loop step MUST emit events:
+
+EVENT TYPES:
+- LOOP_STARTED
+- DETECT_STARTED
+- DETECT_PROGRESS
+- DETECT_COMPLETED
+- DECIDE_STARTED
+- DECIDE_COMPLETED
+- EXECUTE_STARTED
+- EXECUTE_PROGRESS
+- EXECUTE_COMPLETED
+- PROVE_STARTED
+- PROVE_UPDATED
+- LEARN_STARTED
+- LOOP_COMPLETED
+- LOOP_STANDBY
+
+Each event MUST include:
+- store_id
+- loop_id
+- step_name
+- timestamp
+- human-readable message
+
+====================================================
+2. REAL-TIME TRANSPORT (CHOOSE ONE)
+====================================================
+
+IMPLEMENT ONE OF:
+- WebSockets (preferred)
+- Server-Sent Events (SSE)
+- Fallback polling every 2–3 seconds
+
+UI must SUBSCRIBE to:
+- Active loop_id
+- Current store_id
+
+====================================================
+3. LIVE ACTIVITY LOG UI BEHAVIOR
+====================================================
+
+The UI must:
+- Render events as they arrive
+- Append messages chronologically
+- Animate step transitions
+- NEVER preload completed steps
+
+RULE:
+If an event did not happen in this session,
+DO NOT show it.
+
+====================================================
+4. REMOVE STATIC DATA SOURCE
+====================================================
+
+REMOVE:
+- Any logic reading from “last_loop_result”
+- Any prefilled activity steps
+- Any mock progress
+
+Activity Log must start EMPTY on loop start.
+
+====================================================
+5. PROGRESS DISPLAY RULE
+====================================================
+
+- Each step advances ONLY when event arrives
+- No fake progress
+- No instant completion unless engine finished
+
+====================================================
+6. FAIL-SAFE BEHAVIOR
+====================================================
+
+If real-time connection drops:
+- Show “Reconnecting…”
+- Resume stream automatically
+- NEVER freeze UI
+
+====================================================
+FINAL VALIDATION CHECK
+====================================================
+
+After fix:
+- Start ZYRA loop
+- Live Activity Log updates every step
+- Messages reflect actual engine work
+- No preloaded data visible
+- Merchants can literally “watch ZYRA think”
+
+If the UI can update without engine events,
+THE FIX IS NOT COMPLETE.

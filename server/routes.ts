@@ -21068,6 +21068,70 @@ Return JSON array of segments only, no explanation text.`;
     }
   });
 
+  // SSE endpoint for real-time ZYRA activity events
+  app.get("/api/zyra/activity-stream", requireAuth, (req, res) => {
+    const userId = (req as AuthenticatedRequest).user.id;
+    
+    // Set SSE headers - CRITICAL: must be set before any writes
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.flushHeaders();
+    
+    console.log(`[SSE] Client connected: ${userId}`);
+    
+    // Use dynamic import for the event emitter
+    import('./lib/zyra-event-emitter').then(({ ZyraEventEmitter }) => {
+      // Send initial connection event
+      res.write(`data: ${JSON.stringify({ type: 'connected', userId, timestamp: new Date().toISOString() })}\n\n`);
+      
+      // Send recent events for context
+      const recentEvents = ZyraEventEmitter.getRecentEvents(userId, 10);
+      if (recentEvents.length > 0) {
+        res.write(`data: ${JSON.stringify({ type: 'history', events: recentEvents })}\n\n`);
+      }
+      
+      // Subscribe to new events
+      const unsubscribe = ZyraEventEmitter.subscribe(userId, (event) => {
+        try {
+          if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ type: 'activity', event })}\n\n`);
+          }
+        } catch (err) {
+          console.error('[SSE] Error sending event:', err);
+        }
+      });
+      
+      // Send heartbeat every 15 seconds to keep connection alive
+      const heartbeatInterval = setInterval(() => {
+        try {
+          if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
+          } else {
+            clearInterval(heartbeatInterval);
+          }
+        } catch (err) {
+          clearInterval(heartbeatInterval);
+        }
+      }, 15000);
+      
+      // Cleanup on connection close
+      req.on('close', () => {
+        clearInterval(heartbeatInterval);
+        unsubscribe();
+        console.log(`[SSE] Client disconnected: ${userId}`);
+      });
+    }).catch(err => {
+      console.error('[SSE] Failed to load event emitter:', err);
+      res.end();
+    });
+    
+    // IMPORTANT: Don't call res.end() - keep connection open
+    // The connection stays open until the client disconnects
+  });
+
   app.get("/api/zyra/live-actions", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;

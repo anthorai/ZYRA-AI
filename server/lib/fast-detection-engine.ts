@@ -17,6 +17,7 @@ import {
   FOUNDATIONAL_ACTION_DESCRIPTIONS
 } from '@shared/schema';
 import { eq, and, desc, sql, gte, isNull, or, count } from 'drizzle-orm';
+import { emitZyraActivity, ZyraEventType } from './zyra-event-emitter';
 
 const FAST_DETECT_TIMEOUT_MS = 10000;
 const TOP_PRODUCTS_LIMIT = 20;
@@ -106,6 +107,13 @@ export class FastDetectionEngine {
   private async progressExecutionPhases(userId: string): Promise<void> {
     const phases: ExecutionPhase[] = ['executing', 'proving', 'learning', 'completed'];
     const phaseDelays = [2500, 2500, 2500]; // 2.5s for each phase
+    const loopId = `exec_${userId}_${Date.now()}`;
+    
+    // Emit initial execution started event
+    emitZyraActivity(userId, loopId, 'EXECUTE_STARTED', 'Applying AI-generated improvements to your products...', {
+      phase: 'execute',
+      detail: 'Making targeted optimizations to increase conversions',
+    });
     
     for (let i = 1; i < phases.length; i++) {
       await new Promise(resolve => setTimeout(resolve, phaseDelays[i - 1]));
@@ -122,6 +130,25 @@ export class FastDetectionEngine {
         phase: phases[i],
         completedAt: phases[i] === 'completed' ? Date.now() : null
       });
+      
+      // Emit SSE events for each phase transition
+      if (phases[i] === 'proving') {
+        emitZyraActivity(userId, loopId, 'PROVE_STARTED', 'Verifying changes and setting up tracking...', {
+          phase: 'prove',
+          detail: 'Monitoring for revenue impact and conversion improvements',
+        });
+      } else if (phases[i] === 'learning') {
+        emitZyraActivity(userId, loopId, 'LEARN_STARTED', 'Recording optimization patterns for future use...', {
+          phase: 'learn',
+          detail: 'ZYRA is learning what works best for your store',
+        });
+      } else if (phases[i] === 'completed') {
+        emitZyraActivity(userId, loopId, 'LOOP_COMPLETED', 'Optimization complete - changes applied successfully', {
+          phase: 'standby',
+          detail: 'Your products have been optimized. Monitoring for results.',
+          status: 'success',
+        });
+      }
     }
     
     // Clear state after a short delay so next detection cycle can start fresh
@@ -149,6 +176,45 @@ export class FastDetectionEngine {
     const callback = this.progressCallbacks.get(userId);
     if (callback) {
       callback({ phase, complete, timestamp: Date.now() });
+    }
+
+    // Emit real-time SSE event
+    const loopId = `detect_${userId}_${Date.now()}`;
+    const phaseEventMap: Record<DetectionPhase, { eventType: ZyraEventType; message: string; detail?: string }> = {
+      'idle': { eventType: 'LOOP_STANDBY', message: 'ZYRA is standing by' },
+      'detect_started': { 
+        eventType: 'DETECT_STARTED', 
+        message: 'Initiating revenue opportunity scan for your store...', 
+        detail: 'Connecting to Shopify analytics and performance data' 
+      },
+      'cache_loaded': { 
+        eventType: 'DETECT_PROGRESS', 
+        message: 'Analyzing store performance metrics and buyer behavior patterns', 
+        detail: 'Looking at conversion rates, cart abandonment, and product engagement' 
+      },
+      'friction_identified': { 
+        eventType: 'DETECT_PROGRESS', 
+        message: 'Identified potential friction points in the buyer journey', 
+        detail: 'Scanning product pages, checkout flow, and trust indicators' 
+      },
+      'decision_ready': { 
+        eventType: 'DETECT_COMPLETED', 
+        message: 'Analysis complete - prioritizing highest-impact optimization', 
+        detail: 'Selected based on conversion lift potential and implementation ease' 
+      },
+      'preparing': { 
+        eventType: 'DECIDE_STARTED', 
+        message: 'Preparing recommended action for your store', 
+        detail: 'Calculating expected revenue impact' 
+      },
+    };
+
+    const eventInfo = phaseEventMap[phase];
+    if (eventInfo) {
+      emitZyraActivity(userId, loopId, eventInfo.eventType, eventInfo.message, {
+        phase: phase === 'preparing' ? 'decide' : 'detect',
+        detail: eventInfo.detail,
+      });
     }
 
     const db = requireDb();

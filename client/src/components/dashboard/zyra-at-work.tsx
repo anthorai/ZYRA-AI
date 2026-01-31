@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RevenueDelta } from "@/components/ui/revenue-delta";
+import { useZyraActivityStream, ZyraActivityEvent } from "@/hooks/useZyraActivityStream";
 import { 
   Activity, 
   Search, 
@@ -554,6 +555,9 @@ function ProgressStages({
   const hardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPhaseRef = useRef<DetectionPhase>('idle');
   const targetStage = phaseToMinStage[detectionPhase] || 0;
+  
+  // Real-time activity stream
+  const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivityStream();
 
   useEffect(() => {
     if (isAutopilotEnabled && detectionPhase !== 'idle' && !startTime) {
@@ -690,139 +694,68 @@ function ProgressStages({
   };
 
   // Generate dynamic activity log entries based on current phase
-  // Uses REAL backend activities when available for live sync
+  // PRIORITY: Real-time SSE events only - no simulated fallback
   const generateLogEntries = useCallback((): AILogEntry[] => {
     const entries: AILogEntry[] = [];
     const now = new Date();
     
-    // DETECTION PHASE: Use generated entries (backend doesn't stream detection activities)
-    if (currentStage >= 0 && !executionActivities.length) {
-      entries.push({
-        id: 'init',
-        timestamp: new Date(now.getTime() - 8000),
-        type: 'info',
-        message: 'Initiating revenue opportunity scan for your store...',
-        detail: 'Connecting to Shopify analytics and performance data'
+    // Use real-time SSE events (keep showing even if disconnected)
+    if (streamEvents.length > 0) {
+      streamEvents.forEach((event: ZyraActivityEvent) => {
+        entries.push({
+          id: event.id,
+          timestamp: new Date(event.timestamp),
+          type: event.status as AILogEntry['type'],
+          message: event.message,
+          detail: event.detail,
+          metrics: event.metrics?.map(m => ({ label: m.label, value: m.value })),
+        });
       });
     }
     
-    if (currentStage >= 1 && !executionActivities.length) {
-      entries.push({
-        id: 'scan-start',
-        timestamp: new Date(now.getTime() - 6500),
-        type: 'thinking',
-        message: 'Analyzing store performance metrics and buyer behavior patterns',
-        detail: 'Looking at conversion rates, cart abandonment, and product engagement',
-        metrics: [
-          { label: 'Products Scanned', value: Math.min(currentStage * 3, 12) },
-          { label: 'Data Points', value: Math.min(currentStage * 47, 200) + '+' }
-        ]
-      });
-    }
-    
-    if (currentStage >= 2 && !executionActivities.length) {
-      entries.push({
-        id: 'friction-detect',
-        timestamp: new Date(now.getTime() - 5000),
-        type: 'insight',
-        message: 'Identified potential friction points in the buyer journey',
-        detail: 'Scanning product pages, checkout flow, and trust indicators'
-      });
-    }
-    
-    if (currentStage >= 3 && !executionActivities.length) {
-      entries.push({
-        id: 'calc-impact',
-        timestamp: new Date(now.getTime() - 3500),
-        type: 'thinking',
-        message: 'Calculating revenue impact of each identified opportunity',
-        metrics: [
-          { label: 'Opportunities', value: Math.max(1, Math.floor(currentStage / 2)) },
-          { label: 'Est. Recovery', value: '$50-200/mo' }
-        ]
-      });
-    }
-    
-    if (currentStage >= 4 && !executionActivities.length) {
-      entries.push({
-        id: 'prioritize',
-        timestamp: new Date(now.getTime() - 2000),
-        type: 'action',
-        message: 'Prioritizing highest-impact optimization for your store',
-        detail: 'Selected based on conversion lift potential and implementation ease'
-      });
-    }
-    
-    if (currentStage >= 5 && foundationalAction && !executionActivities.length) {
-      entries.push({
-        id: 'ready',
-        timestamp: new Date(now.getTime() - 500),
-        type: 'success',
-        message: `Recommended action ready: ${foundationalAction.title}`,
-        detail: foundationalAction.description
-      });
-    }
-    
-    // EXECUTION PHASE: Use REAL backend activities when available
+    // Add execution activities if any
     if (executionActivities.length > 0) {
-      // Convert backend ExecutionActivityItem to AILogEntry format
       executionActivities.forEach((activity) => {
-        const timestamp = typeof activity.timestamp === 'string' 
-          ? new Date(activity.timestamp) 
-          : activity.timestamp;
-        
         entries.push({
-          id: activity.id,
-          timestamp: timestamp,
-          type: mapPhaseToLogType(activity.phase, activity.status),
+          id: activity.id || `activity-${activity.timestamp.getTime()}`,
+          timestamp: activity.timestamp,
+          type: activity.status === 'completed' ? 'success' : 
+                activity.status === 'warning' ? 'warning' : 'action',
           message: activity.message,
-          detail: activity.details || activity.productName,
+          detail: activity.details,
         });
       });
-    } else if (executionStatus === 'running') {
-      // Fallback: If no backend activities yet during execution, show placeholder
-      if (activePhase === 'execute') {
-        entries.push({
-          id: 'exec-start',
-          timestamp: new Date(now.getTime() - 1000),
-          type: 'action',
-          message: 'Starting AI optimization engine...',
-          detail: 'Loading product data and brand voice settings'
-        });
-      } else if (activePhase === 'prove') {
-        entries.push({
-          id: 'prove-start',
-          timestamp: now,
-          type: 'thinking',
-          message: 'Verifying changes applied successfully...',
-        });
-      } else if (activePhase === 'learn') {
-        entries.push({
-          id: 'learn-start',
-          timestamp: now,
-          type: 'insight',
-          message: 'Recording optimization patterns...',
-        });
-      }
     }
     
-    // COMPLETION: Show success summary
-    if (executionResult && executionResult.productsOptimized.length > 0) {
+    // Show waiting message only when no events yet and connected
+    if (entries.length === 0 && isStreamConnected) {
       entries.push({
-        id: 'complete',
+        id: 'waiting',
         timestamp: now,
-        type: 'success',
-        message: `Applied ${executionResult.totalChanges} improvements to ${executionResult.productsOptimized.length} product(s)`,
-        detail: executionResult.estimatedImpact,
-        metrics: [
-          { label: 'Products Updated', value: executionResult.productsOptimized.length },
-          { label: 'Total Changes', value: executionResult.totalChanges }
-        ]
+        type: 'info',
+        message: 'Waiting for ZYRA engine activity...',
+        detail: 'Real-time events will appear here as they happen'
+      });
+    } else if (entries.length === 0 && !isStreamConnected && !isReconnecting) {
+      entries.push({
+        id: 'connecting',
+        timestamp: now,
+        type: 'info',
+        message: 'Connecting to activity stream...',
+        detail: 'Establishing real-time connection'
+      });
+    } else if (entries.length === 0 && isReconnecting) {
+      entries.push({
+        id: 'reconnecting',
+        timestamp: now,
+        type: 'warning',
+        message: 'Reconnecting to activity stream...',
+        detail: 'Connection was interrupted'
       });
     }
     
     return entries;
-  }, [currentStage, foundationalAction, executionStatus, activePhase, executionResult, executionActivities]);
+  }, [streamEvents, executionActivities, isStreamConnected, isReconnecting]);
 
   const logEntries = generateLogEntries();
   const latestEntry = logEntries[logEntries.length - 1];
@@ -938,9 +871,13 @@ function ProgressStages({
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+            <div className={`w-2.5 h-2.5 rounded-full ${isStreamConnected ? 'bg-green-500' : isReconnecting ? 'bg-yellow-500 animate-pulse' : 'bg-green-500/60'}`} />
           </div>
-          <span className="text-[10px] font-mono text-slate-500 ml-2">ZYRA Activity Log</span>
+          <span className="text-[10px] font-mono text-slate-500 ml-2">
+            ZYRA Activity Log
+            {isStreamConnected && <span className="text-emerald-400 ml-1">(Live)</span>}
+            {isReconnecting && <span className="text-yellow-400 ml-1">(Reconnecting...)</span>}
+          </span>
           <div className="flex-1" />
           <Bot className="w-3.5 h-3.5 text-primary" />
         </div>
