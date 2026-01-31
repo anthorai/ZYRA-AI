@@ -655,6 +655,108 @@ export class FastDetectionEngine {
   }
 
   /**
+   * Generate dynamic, context-specific reasoning for why ZYRA recommends this action
+   * This makes the recommendation feel personalized and real, not generic
+   */
+  private generateDynamicReasoning(
+    actionType: FoundationalActionType,
+    product: { id: string; name: string; revenueHealthScore: number | null } | undefined,
+    completedActionsCount: number,
+    totalProductsCount: number
+  ): { description: string; whyItHelps: string; expectedImpact: string } {
+    const productName = product?.name || 'your products';
+    const healthScore = product?.revenueHealthScore || 0;
+    const shortProductName = productName.length > 40 ? productName.substring(0, 37) + '...' : productName;
+    
+    // Dynamic reasoning templates based on action type and context
+    const reasoningTemplates: Record<FoundationalActionType, { 
+      descriptions: string[];
+      reasons: string[];
+      impacts: string[];
+    }> = {
+      seo_basics: {
+        descriptions: [
+          `Optimize "${shortProductName}" for search engines to increase organic discovery`,
+          `Improve search ranking potential for "${shortProductName}" with targeted keywords`,
+          `Enhance meta data and titles for "${shortProductName}" to attract search traffic`
+        ],
+        reasons: [
+          `"${shortProductName}" currently has ${healthScore < 30 ? 'low' : 'moderate'} search visibility. Optimizing SEO helps potential buyers find this product when searching for similar items.`,
+          `Products with optimized SEO get 2-3x more organic traffic. "${shortProductName}" can reach more buyers without additional ad spend.`,
+          `Search engines prioritize products with clear, keyword-rich titles and descriptions. This optimization positions "${shortProductName}" for discovery.`
+        ],
+        impacts: [
+          `Increased organic visibility for "${shortProductName}"`,
+          `Better search ranking potential across ${totalProductsCount} product${totalProductsCount > 1 ? 's' : ''}`,
+          `Foundation for long-term organic traffic growth`
+        ]
+      },
+      product_copy_clarity: {
+        descriptions: [
+          `Rewrite "${shortProductName}" description to clearly communicate its unique value`,
+          `Enhance product copy for "${shortProductName}" to highlight key benefits`,
+          `Clarify value proposition and benefits for "${shortProductName}"`
+        ],
+        reasons: [
+          `Visitors often leave because they don't quickly understand the value. Clear copy for "${shortProductName}" helps convert browsers into buyers.`,
+          `Product descriptions that focus on benefits (not just features) convert 20-30% better. "${shortProductName}" needs compelling copy.`,
+          `First-time visitors decide within seconds. "${shortProductName}" needs copy that immediately answers "why should I buy this?"`
+        ],
+        impacts: [
+          `Higher conversion rate for "${shortProductName}" visitors`,
+          `Reduced bounce rate from product pages`,
+          `Clearer value proposition for first-time buyers`
+        ]
+      },
+      trust_signals: {
+        descriptions: [
+          `Add trust elements to "${shortProductName}" to reduce buyer hesitation`,
+          `Build credibility for "${shortProductName}" with social proof and guarantees`,
+          `Strengthen buyer confidence for "${shortProductName}" with trust indicators`
+        ],
+        reasons: [
+          `New stores face trust barriers. Adding reviews, guarantees, and badges to "${shortProductName}" reduces the perceived risk of buying.`,
+          `73% of buyers check for trust signals before purchasing. "${shortProductName}" needs visible credibility markers.`,
+          `First-time buyers are cautious. Trust elements on "${shortProductName}" can increase checkout completion by 15-25%.`
+        ],
+        impacts: [
+          `Increased buyer confidence for "${shortProductName}"`,
+          `Lower cart abandonment from trust concerns`,
+          `Foundation for building store reputation`
+        ]
+      },
+      recovery_setup: {
+        descriptions: [
+          `Configure automated cart recovery to recapture abandoned purchases`,
+          `Set up recovery emails to bring back customers who left items in cart`,
+          `Enable abandoned cart recovery to capture lost revenue automatically`
+        ],
+        reasons: [
+          `On average, 70% of carts are abandoned. Recovery emails can recapture 5-15% of these lost sales automatically.`,
+          `Customers who added items to cart have high purchase intent. A timely reminder often converts them.`,
+          `Recovery automation works 24/7. Once set up, it continuously recaptures revenue with no manual effort.`
+        ],
+        impacts: [
+          `Automated recovery of abandoned purchases`,
+          `Passive revenue recapture system in place`,
+          `Foundation for customer re-engagement`
+        ]
+      }
+    };
+    
+    const templates = reasoningTemplates[actionType];
+    
+    // Use completion count to rotate through templates for variety
+    const index = completedActionsCount % templates.descriptions.length;
+    
+    return {
+      description: templates.descriptions[index],
+      whyItHelps: templates.reasons[index],
+      expectedImpact: templates.impacts[index]
+    };
+  }
+
+  /**
    * Select ONE foundational action for a new store
    * Priority: SEO basics > Product copy clarity > Trust signals > Recovery setup
    * RULE: This method ALWAYS returns an action - never null for new stores
@@ -755,14 +857,22 @@ export class FastDetectionEngine {
       
       const actionDetails = FOUNDATIONAL_ACTION_DESCRIPTIONS[selectedType];
       
+      // Generate dynamic, context-specific reasoning
+      const dynamicReasoning = this.generateDynamicReasoning(
+        selectedType, 
+        targetProduct, 
+        recentActionTypes.size,
+        userProducts.length
+      );
+      
       const foundationalAction: FoundationalAction = {
         type: selectedType,
         productId: targetProduct?.id,
         productName: targetProduct?.name || undefined,
         title: FOUNDATIONAL_ACTION_LABELS[selectedType],
-        description: actionDetails.description,
-        whyItHelps: actionDetails.whyItHelps,
-        expectedImpact: actionDetails.expectedImpact,
+        description: dynamicReasoning.description,
+        whyItHelps: dynamicReasoning.whyItHelps,
+        expectedImpact: dynamicReasoning.expectedImpact,
         riskLevel: 'low'
       };
       
