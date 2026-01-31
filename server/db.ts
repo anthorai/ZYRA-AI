@@ -491,24 +491,18 @@ export async function seedSubscriptionPlans(): Promise<void> {
       {
         planName: "Free",
         price: "0",
-        description: "Free to install - 7-day trial with 150 credits, then 50/month",
+        description: "Free to install - 499 credits for 7 days",
         shopifyPlanHandle: "free",
         features: [
-          "7-day trial with 150 bonus credits",
-          "Then 50 credits / month forever",
-          "Revenue Detection:",
-          "• ZYRA detects all revenue opportunities",
-          "• View Next Move recommendations",
-          "Manual Mode Only:",
-          "• Manual approval for all actions",
-          "• One-click execution",
-          "Safety & Control:",
-          "• One-click rollback protection",
-          "• Email support"
+          "499 credits for 7 days",
+          "ZYRA detects all opportunities",
+          "Manual approval mode",
+          "One-click rollback protection",
+          "Email support"
         ],
         limits: {
-          credits: 50,
-          trialCredits: 150,
+          credits: 499,
+          trialCredits: 499,
           trialDays: 7,
           actionsPerMonth: 10,
           autopilot: false,

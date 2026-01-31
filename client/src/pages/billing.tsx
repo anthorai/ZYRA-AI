@@ -124,7 +124,7 @@ interface PlanDetails {
 
 const planDetails: Record<string, PlanDetails> = {
   "Free": {
-    credits: "50 Credits / month",
+    credits: "499 Credits / 7 days",
     tagline: "Perfect for new and growing Shopify stores",
     categories: [
       {

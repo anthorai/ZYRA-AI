@@ -66,8 +66,8 @@ export async function grantFreeTrial(userId: string): Promise<{
       })
       .where(eq(users.id, userId));
 
-    // Initialize usage stats with 150 trial credits
-    const trialCredits = 150; // Free plan trial bonus credits
+    // Initialize usage stats with 499 trial credits
+    const trialCredits = 499; // Free plan trial bonus credits
 
     try {
       // Check if usage stats already exist

@@ -10,10 +10,11 @@ const plans = [
     name: "Free to Install",
     planId: "18f8da29-94cf-417b-83f8-07191b22f254",
     monthlyPrice: 0,
-    period: "forever",
+    period: "7 days",
     icon: <Gift className="w-8 h-8" />,
     description: "Perfect for new and growing Shopify stores",
     features: [
+      "499 credits for 7 days",
       "ZYRA detects all opportunities",
       "Manual approval mode",
       "One-click rollback protection",
