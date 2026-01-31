@@ -166,7 +166,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Starter": {
-    credits: "1,000 Credits / month",
+    credits: "2,000 Credits / month",
     tagline: "Smart growth with full control",
     categories: [
       {
@@ -250,7 +250,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Growth": {
-    credits: "6,000 Credits / month",
+    credits: "10,000 Credits / month",
     tagline: "Faster growth with trusted autonomy",
     categories: [
       {
@@ -333,7 +333,7 @@ const planDetails: Record<string, PlanDetails> = {
     ]
   },
   "Pro": {
-    credits: "15,000 Credits / month",
+    credits: "20,000 Credits / month",
     tagline: "Hands-free revenue engine",
     categories: [
       {

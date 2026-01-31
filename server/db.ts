@@ -518,7 +518,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         description: "Smart growth with full control",
         shopifyPlanHandle: "starter",
         features: [
-          "1,000 Credits / month",
+          "2,000 Credits / month",
           "Revenue Detection & Decisions:",
           "• ZYRA detects all revenue opportunities",
           "• Manual-approval mode (you approve)",
@@ -539,7 +539,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           "• All actions require your approval"
         ],
         limits: {
-          credits: 1000
+          credits: 2000
         },
         interval: "month",
         isActive: true
@@ -550,7 +550,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         description: "Faster growth with trusted autonomy",
         shopifyPlanHandle: "growth",
         features: [
-          "6,000 Credits / month",
+          "10,000 Credits / month",
           "Autonomous Execution:",
           "• Everything in Starter+",
           "• ZYRA auto-runs low-risk actions",
@@ -571,7 +571,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           "• Priority over Starter+ actions"
         ],
         limits: {
-          credits: 6000
+          credits: 10000
         },
         interval: "month",
         isActive: true
@@ -582,7 +582,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
         description: "Hands-free revenue engine",
         shopifyPlanHandle: "pro",
         features: [
-          "15,000 Credits / month",
+          "20,000 Credits / month",
           "Full Autonomy:",
           "• Everything in Growth",
           "• ZYRA operates with minimal supervision",
@@ -602,7 +602,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           "• Premium support access"
         ],
         limits: {
-          credits: 15000
+          credits: 20000
         },
         interval: "month",
         isActive: true

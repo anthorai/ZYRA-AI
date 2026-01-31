@@ -32,7 +32,7 @@ const plans = [
     icon: <Zap className="w-8 h-8" />,
     description: "For New Shopify Stores",
     features: [
-      "1,000 credits / month",
+      "2,000 credits / month",
       "AI product optimization & SEO tools",
       "Basic conversion boosting (emails, triggers)",
       "Ready-to-use templates for product descriptions",
@@ -49,7 +49,7 @@ const plans = [
     icon: <Award className="w-8 h-8" />,
     description: "For Growing Merchants",
     features: [
-      "6,000 credits / month",
+      "10,000 credits / month",
       "Everything in Starter, plus:",
       "A/B testing for products, copy & campaigns",
       "Smart upsell suggestions, abandoned cart recovery",
@@ -67,7 +67,7 @@ const plans = [
     icon: <Crown className="w-8 h-8" />,
     description: "For High-Revenue Brands",
     features: [
-      "15,000 credits / month",
+      "20,000 credits / month",
       "Everything in Growth, plus:",
       "Advanced ROI tracking & revenue attribution",
       "Multimodal AI (text + image + insights)",
