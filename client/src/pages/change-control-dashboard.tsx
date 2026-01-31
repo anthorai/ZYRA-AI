@@ -136,46 +136,54 @@ function getBeforeAfterContent(change: ChangeItem) {
   const before: Record<string, string> = {};
   const after: Record<string, string> = {};
 
-  // Handle payload.changes array format (new format)
+  // Handle payload.changes array format (new format) - most common
   if (change.payload?.changes && Array.isArray(change.payload.changes)) {
     for (const fieldChange of change.payload.changes) {
       const fieldName = fieldChange.field || "Unknown Field";
-      if (fieldChange.before) before[fieldName] = fieldChange.before;
-      if (fieldChange.after) after[fieldName] = fieldChange.after;
+      if (fieldChange.before !== undefined && fieldChange.before !== null) {
+        before[fieldName] = String(fieldChange.before);
+      }
+      if (fieldChange.after !== undefined && fieldChange.after !== null) {
+        after[fieldName] = String(fieldChange.after);
+      }
+    }
+  }
+
+  // Handle result.changes array format (fallback)
+  if (change.result?.changes && Array.isArray(change.result.changes)) {
+    for (const fieldChange of change.result.changes) {
+      const fieldName = fieldChange.field || "Unknown Field";
+      if (fieldChange.before !== undefined && fieldChange.before !== null && !before[fieldName]) {
+        before[fieldName] = String(fieldChange.before);
+      }
+      if (fieldChange.after !== undefined && fieldChange.after !== null && !after[fieldName]) {
+        after[fieldName] = String(fieldChange.after);
+      }
     }
   }
 
   // Handle payload.before/after object format (legacy format)
-  if (change.payload?.before) {
+  if (change.payload?.before && typeof change.payload.before === 'object') {
     if (change.payload.before.title) before["Product Title"] = change.payload.before.title;
     if (change.payload.before.description) before["Product Description"] = change.payload.before.description;
     if (change.payload.before.seoTitle) before["SEO Title"] = change.payload.before.seoTitle;
     if (change.payload.before.metaDescription) before["Meta Description"] = change.payload.before.metaDescription;
   }
 
-  if (change.payload?.after) {
+  if (change.payload?.after && typeof change.payload.after === 'object') {
     if (change.payload.after.title) after["Product Title"] = change.payload.after.title;
     if (change.payload.after.description) after["Product Description"] = change.payload.after.description;
     if (change.payload.after.seoTitle) after["SEO Title"] = change.payload.after.seoTitle;
     if (change.payload.after.metaDescription) after["Meta Description"] = change.payload.after.metaDescription;
   }
 
-  // Handle result.changes array format
-  if (change.result?.changes && Array.isArray(change.result.changes)) {
-    for (const fieldChange of change.result.changes) {
-      const fieldName = fieldChange.field || "Unknown Field";
-      if (fieldChange.before) before[fieldName] = fieldChange.before;
-      if (fieldChange.after) after[fieldName] = fieldChange.after;
-    }
-  }
-
   // Handle optimizedCopy or optimizedContent
   const optimized = change.payload?.optimizedCopy || change.result?.optimizedContent;
-  if (optimized) {
-    if (optimized.title) after["Product Title"] = optimized.title;
-    if (optimized.description) after["Product Description"] = optimized.description;
-    if (optimized.seoTitle) after["SEO Title"] = optimized.seoTitle;
-    if (optimized.metaDescription) after["Meta Description"] = optimized.metaDescription;
+  if (optimized && typeof optimized === 'object') {
+    if (optimized.title && !after["Product Title"]) after["Product Title"] = optimized.title;
+    if (optimized.description && !after["Product Description"]) after["Product Description"] = optimized.description;
+    if (optimized.seoTitle && !after["SEO Title"]) after["SEO Title"] = optimized.seoTitle;
+    if (optimized.metaDescription && !after["Meta Description"]) after["Meta Description"] = optimized.metaDescription;
   }
 
   return { before, after };
