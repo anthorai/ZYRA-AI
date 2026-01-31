@@ -16749,12 +16749,12 @@ Output format: Markdown with clear section headings.`;
   app.patch("/api/automation/settings", requireAuth, updateAutomationSettingsHandler);
 
   // ===== REVENUE IMMUNE SYSTEM API =====
-  // Returns prevented revenue loss and protection status
+  // Returns prevented revenue loss, protection status, and live monitoring data
   app.get("/api/revenue-immune/status", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
-      const { automationSettings, autonomousActions, revenueLoopProof } = await import('@shared/schema');
+      const { automationSettings, autonomousActions, revenueLoopProof, products } = await import('@shared/schema');
       
       // Get automation settings for the user
       const [settings] = await db
@@ -16768,6 +16768,15 @@ Output format: Markdown with clear section headings.`;
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       
+      // Get start of today for today's activity
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      
+      // Get start of last 7 days for history
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - 7);
+      startOfWeek.setHours(0, 0, 0, 0);
+      
       // Get revenue proof entries for this month using typed gte comparison
       const proofEntries = await db
         .select()
@@ -16779,12 +16788,49 @@ Output format: Markdown with clear section headings.`;
           )
         );
       
+      // Filter entries with valid createdAt to prevent null issues
+      const validProofEntries = proofEntries.filter(e => e.createdAt != null);
+      
+      // Get today's proof entries for activity log (with null safety)
+      const todayProofEntries = validProofEntries.filter(e => 
+        new Date(e.createdAt as Date) >= startOfToday
+      );
+      
+      // Get weekly entries for history (with null safety)
+      const weeklyProofEntries = await db
+        .select()
+        .from(revenueLoopProof)
+        .where(
+          and(
+            eq(revenueLoopProof.userId, userId),
+            gte(revenueLoopProof.createdAt, startOfWeek)
+          )
+        );
+      const validWeeklyEntries = weeklyProofEntries.filter(e => e.createdAt != null);
+      
+      // Get autonomous actions for more accurate activity tracking
+      const todayActions = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            gte(autonomousActions.createdAt, startOfToday)
+          )
+        );
+      
+      // Get product count for scan reporting
+      const userProducts = await db
+        .select()
+        .from(products)
+        .where(eq(products.userId, userId));
+      const totalProducts = userProducts.length;
+      
       // Sum up prevented revenue (estimated_impact from proven actions) - single truth metric
       let preventedRevenue = 0;
       
-      for (const entry of proofEntries) {
+      for (const entry of validProofEntries) {
         if (entry.status === 'proven' || entry.status === 'positive') {
-          // Parse estimated impact - could be stored as number or in JSON
           const impact = typeof entry.estimatedImpact === 'number' 
             ? entry.estimatedImpact 
             : (entry.estimatedImpact as any)?.revenue || 0;
@@ -16792,12 +16838,101 @@ Output format: Markdown with clear section headings.`;
         }
       }
       
-      // Single truth metric response - only prevented revenue
+      // Build today's activity - detected issues and fixes from autonomous actions
+      const todayDetectedIssues: Array<{problemType: string; entityName: string; timestamp: string}> = [];
+      const todayFixesExecuted: Array<{surfaceTouched: string; entityName: string; timestamp: string}> = [];
+      
+      // Add activity from autonomous actions
+      for (const action of todayActions) {
+        const actionType = (action.actionType as string) || 'optimization';
+        const entityName = (action as any).productTitle || (action as any).entityName || 'Product';
+        const timestamp = action.createdAt ? new Date(action.createdAt).toISOString() : new Date().toISOString();
+        
+        if (action.status === 'executed' || action.status === 'completed') {
+          todayFixesExecuted.push({
+            surfaceTouched: actionType.replace(/_/g, ' '),
+            entityName,
+            timestamp,
+          });
+        } else if (action.status === 'pending' || action.status === 'approved') {
+          todayDetectedIssues.push({
+            problemType: actionType.replace(/_/g, ' '),
+            entityName,
+            timestamp,
+          });
+        }
+      }
+      
+      // Also include proof entries for today
+      for (const entry of todayProofEntries) {
+        const actionType = (entry.actionType as string) || 'optimization';
+        const entityName = (entry as any).productTitle || (entry as any).entityName || 'Product';
+        const timestamp = entry.createdAt ? new Date(entry.createdAt).toISOString() : new Date().toISOString();
+        
+        if (entry.status === 'proven' || entry.status === 'positive') {
+          todayFixesExecuted.push({
+            surfaceTouched: actionType.replace(/_/g, ' '),
+            entityName,
+            timestamp,
+          });
+        } else if (entry.status === 'pending' || entry.status === 'monitoring') {
+          todayDetectedIssues.push({
+            problemType: actionType.replace(/_/g, ' '),
+            entityName,
+            timestamp,
+          });
+        }
+      }
+      
+      // Calculate weekly stats for history modal using actual data only
+      const weeklyActions = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            gte(autonomousActions.createdAt, startOfWeek)
+          )
+        );
+      
+      // Only count actual recorded activity - no fabrication
+      const weeklyStats = {
+        scansPerformed: validWeeklyEntries.length + weeklyActions.length,
+        issuesDetected: validWeeklyEntries.filter(e => e.status === 'pending' || e.status === 'monitoring').length + 
+                       weeklyActions.filter(a => a.status === 'pending').length,
+        fixesExecuted: validWeeklyEntries.filter(e => e.status === 'proven' || e.status === 'positive').length +
+                      weeklyActions.filter(a => a.status === 'executed' || a.status === 'completed').length,
+        rollbacksNeeded: validWeeklyEntries.filter(e => e.status === 'negative' || e.status === 'reverted').length,
+      };
+      
+      // Last scan timestamp - use most recent entry with null safety (no fabrication)
+      const sortedEntries = [...validProofEntries, ...todayActions.filter(a => a.createdAt)]
+        .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime());
+      
+      // Return actual timestamp or null - be transparent about actual activity
+      let lastScanTimestamp: string | null = null;
+      if (sortedEntries.length > 0 && sortedEntries[0].createdAt) {
+        lastScanTimestamp = new Date(sortedEntries[0].createdAt).toISOString();
+      }
+      
+      // Actual scan count based on real entries
+      const actualScansToday = todayActions.length + todayProofEntries.length;
+      
       res.json({
         isActive: settings?.globalAutopilotEnabled ?? false,
         sensitivity: settings?.autopilotMode ?? 'balanced',
         preventedRevenue: preventedRevenue,
         currency: '₹',
+        // Live monitoring data - transparent, no fabrication
+        lastScanTimestamp,
+        todayScannedProductsCount: actualScansToday,
+        totalProductsMonitored: totalProducts,
+        todayDetectedIssues,
+        todayFixesExecuted,
+        // Weekly history for expander
+        weeklyStats,
+        // Protection scope
+        protectionScope: ['Products', 'SEO', 'Recovery flows'],
       });
     } catch (error) {
       console.error("Error fetching revenue immune status:", error);
