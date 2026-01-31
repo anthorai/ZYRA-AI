@@ -17950,6 +17950,194 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  // Push a pending action to Shopify
+  app.post("/api/autonomous-actions/:id/push-to-shopify", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { autonomousActions, seoMeta, products: productsTable, storeConnections } = await import('@shared/schema');
+      
+      const actionId = req.params.id;
+
+      // Get the action
+      const action = await db
+        .select()
+        .from(autonomousActions)
+        .where(and(
+          eq(autonomousActions.id, actionId),
+          eq(autonomousActions.userId, userId)
+        ))
+        .limit(1);
+
+      if (action.length === 0) {
+        return res.status(404).json({ error: "Action not found" });
+      }
+
+      const actionData = action[0];
+
+      // Get store connection for Shopify API
+      const storeConnection = await db
+        .select()
+        .from(storeConnections)
+        .where(eq(storeConnections.userId, userId))
+        .limit(1);
+
+      if (storeConnection.length === 0 || !storeConnection[0].shopifyAccessToken) {
+        return res.status(400).json({ error: "No Shopify store connected" });
+      }
+
+      const productId = actionData.entityId;
+      if (!productId) {
+        return res.status(400).json({ error: "No product associated with this action" });
+      }
+
+      // Get product to find Shopify ID
+      const product = await db
+        .select()
+        .from(productsTable)
+        .where(eq(productsTable.id, productId))
+        .limit(1);
+
+      if (product.length === 0 || !product[0].shopifyId) {
+        return res.status(400).json({ error: "Product not found or not synced with Shopify" });
+      }
+
+      const shopifyProductId = product[0].shopifyId;
+      const shopDomain = storeConnection[0].shopDomain;
+      const accessToken = storeConnection[0].shopifyAccessToken;
+
+      // Get optimized content from payload or result
+      const optimizedContent = actionData.payload?.optimizedCopy || actionData.result?.optimizedContent || actionData.payload?.after;
+
+      if (!optimizedContent) {
+        return res.status(400).json({ error: "No optimized content found for this action" });
+      }
+
+      // Build the Shopify product update
+      const productUpdate: any = {};
+      if (optimizedContent.title) productUpdate.title = optimizedContent.title;
+      if (optimizedContent.description) productUpdate.body_html = optimizedContent.description;
+
+      // Update product on Shopify if there are product-level changes
+      if (Object.keys(productUpdate).length > 0) {
+        const productResponse = await fetch(
+          `https://${shopDomain}/admin/api/2024-01/products/${shopifyProductId}.json`,
+          {
+            method: 'PUT',
+            headers: {
+              'X-Shopify-Access-Token': accessToken,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ product: productUpdate }),
+          }
+        );
+
+        if (!productResponse.ok) {
+          const errorText = await productResponse.text();
+          console.error("Shopify product update failed:", errorText);
+          return res.status(500).json({ error: "Failed to update product on Shopify" });
+        }
+      }
+
+      // Update SEO metafields if present
+      if (optimizedContent.seoTitle || optimizedContent.metaDescription) {
+        const metafieldsUpdate: any[] = [];
+        
+        if (optimizedContent.seoTitle) {
+          metafieldsUpdate.push({
+            namespace: "global",
+            key: "title_tag",
+            value: optimizedContent.seoTitle,
+            type: "single_line_text_field"
+          });
+        }
+        
+        if (optimizedContent.metaDescription) {
+          metafieldsUpdate.push({
+            namespace: "global",
+            key: "description_tag",
+            value: optimizedContent.metaDescription,
+            type: "single_line_text_field"
+          });
+        }
+
+        for (const metafield of metafieldsUpdate) {
+          await fetch(
+            `https://${shopDomain}/admin/api/2024-01/products/${shopifyProductId}/metafields.json`,
+            {
+              method: 'POST',
+              headers: {
+                'X-Shopify-Access-Token': accessToken,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ metafield }),
+            }
+          );
+        }
+      }
+
+      // Update local database to reflect the changes
+      if (optimizedContent.title || optimizedContent.description) {
+        const localUpdate: any = {};
+        if (optimizedContent.title) localUpdate.name = optimizedContent.title;
+        if (optimizedContent.description) localUpdate.description = optimizedContent.description;
+        
+        await db
+          .update(productsTable)
+          .set(localUpdate)
+          .where(eq(productsTable.id, productId));
+      }
+
+      // Update seoMeta if present
+      if (optimizedContent.seoTitle || optimizedContent.metaDescription) {
+        const existingSeo = await db
+          .select()
+          .from(seoMeta)
+          .where(eq(seoMeta.productId, productId))
+          .limit(1);
+
+        const seoUpdate: any = {};
+        if (optimizedContent.seoTitle) seoUpdate.seoTitle = optimizedContent.seoTitle;
+        if (optimizedContent.metaDescription) seoUpdate.metaDescription = optimizedContent.metaDescription;
+        seoUpdate.lastOptimizedAt = new Date();
+
+        if (existingSeo.length > 0) {
+          await db
+            .update(seoMeta)
+            .set(seoUpdate)
+            .where(eq(seoMeta.productId, productId));
+        } else {
+          await db
+            .insert(seoMeta)
+            .values({
+              productId,
+              userId,
+              ...seoUpdate,
+            });
+        }
+      }
+
+      // Update action status to completed
+      await db
+        .update(autonomousActions)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+          publishedToShopify: true,
+          result: {
+            ...actionData.result,
+            pushedToShopify: true,
+            pushedAt: new Date().toISOString(),
+          } as any,
+        })
+        .where(eq(autonomousActions.id, actionId));
+
+      res.json({ success: true, message: "Changes pushed to Shopify successfully" });
+    } catch (error) {
+      console.error("Error pushing to Shopify:", error);
+      res.status(500).json({ error: "Failed to push changes to Shopify" });
+    }
+  });
+
   // ============================================================================
   // DYNAMIC PRICING AUTOMATION ROUTES
   // ============================================================================
