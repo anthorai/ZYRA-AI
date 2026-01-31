@@ -1,5 +1,5 @@
 import { requireDb } from '../db';
-import { products, seoMeta, automationSettings } from '@shared/schema';
+import { products, seoMeta, automationSettings, autonomousActions } from '@shared/schema';
 import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
@@ -216,6 +216,46 @@ export class FoundationalExecutionService {
         status: 'completed',
         details: 'ZYRA will monitor how these changes affect your conversion rates over the next 7 days.',
       });
+
+      // Save to autonomousActions for Change Control visibility
+      if (productsOptimized.length > 0) {
+        try {
+          for (const optimized of productsOptimized) {
+            await db.insert(autonomousActions).values({
+              userId,
+              actionType: actionType === 'seo_basics' ? 'optimize_seo' : 
+                          actionType === 'product_copy_clarity' ? 'fix_product' : 
+                          actionType === 'trust_signals' ? 'optimize_seo' :
+                          actionType === 'recovery_setup' ? 'send_cart_recovery' : 'optimize_seo',
+              entityType: 'product',
+              entityId: optimized.productId,
+              status: 'completed',
+              decisionReason: `ZYRA AI detected optimization opportunity: ${ACTION_LABELS[actionType] || actionType}`,
+              payload: {
+                productName: optimized.productName,
+                changes: optimized.changes,
+                actionLabel: ACTION_LABELS[actionType] || actionType,
+              },
+              result: {
+                success: true,
+                changesApplied: optimized.changes.length,
+                impactExplanation: optimized.impactExplanation,
+              },
+              estimatedImpact: {
+                type: actionType,
+                description: this.generateImpactSummary(actionType, optimized.changes.length),
+              },
+              executedBy: 'agent',
+              dryRun: false,
+              publishedToShopify: false,
+              completedAt: new Date(),
+            });
+          }
+          console.log(`[Foundational Execution] Saved ${productsOptimized.length} actions to Change Control`);
+        } catch (saveError) {
+          console.error('[Foundational Execution] Error saving to autonomousActions:', saveError);
+        }
+      }
 
       return {
         success: true,
