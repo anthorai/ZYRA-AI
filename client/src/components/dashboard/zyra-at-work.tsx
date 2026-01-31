@@ -44,7 +44,11 @@ import {
   Shield,
   Wand2,
   Pause,
-  Tag
+  Tag,
+  Eraser,
+  BarChart,
+  CreditCard,
+  Layout
 } from "lucide-react";
 
 // ============================================================================
@@ -239,33 +243,39 @@ interface AutomationSettings {
 }
 
 // ============================================================================
-// APPROVED ZYRA ACTION TYPES (12 Total) - Per Core Specification
+// APPROVED ZYRA ACTION TYPES (17 Total) - Per Core Specification
 // ============================================================================
 
-// ZYRA Action Categories
-type ZyraActionCategory = 'foundational' | 'optimization' | 'revenue_recovery' | 'risk_control';
+// ZYRA Action Categories (per spec)
+type ZyraActionCategory = 'seo' | 'conversion' | 'revenue_recovery' | 'revenue_protection' | 'learning';
 
-// All 12 Approved Action Types
+// All 17 Approved Action Types (per spec)
 type ZyraActionType = 
-  // FOUNDATIONAL / DISCOVERABILITY (4)
-  | 'seo_foundation'           // SEO Foundation Optimization
-  | 'product_copy_clarity'     // Product Copy Clarity Upgrade
-  | 'trust_signals'            // Trust Signal Enhancement
-  | 'recovery_setup'           // Revenue Recovery Setup
-  // OPTIMIZATION (4)
+  // 🔍 DISCOVERABILITY & SEO (5 Actions)
   | 'product_title'            // Product Title Optimization
-  | 'meta_optimization'        // Meta Title & Description Optimization
+  | 'meta_optimization'        // Meta Title, Meta Description & Tag Optimization
+  | 'search_intent_alignment'  // Search Intent Alignment Fix
   | 'image_alt_text'           // Image Alt-Text Optimization
-  | 'stale_content_refresh'    // Stale Content Refresh
-  // REVENUE RECOVERY (2)
+  | 'stale_content_refresh'    // Stale SEO Content Refresh
+  // 🛒 CONVERSION OPTIMIZATION (5 Actions)
+  | 'product_description_clarity' // Product Description Clarity Upgrade
+  | 'value_proposition_fix'    // Value Proposition Alignment Fix
+  | 'trust_signals'            // Trust Signal Enhancement
+  | 'friction_copy_removal'    // Friction Copy Removal
+  | 'above_fold_optimization'  // Above-the-Fold Content Optimization
+  // 💰 REVENUE RECOVERY (3 Actions)
   | 'abandoned_cart_recovery'  // Abandoned Cart Recovery Activation
   | 'post_purchase_upsell'     // Post-Purchase Upsell Enablement
-  // RISK CONTROL (2)
+  | 'checkout_dropoff_mitigation' // Checkout Drop-Off Mitigation
+  // 🛡️ REVENUE PROTECTION (2 Actions)
   | 'underperforming_rollback' // Underperforming Change Rollback
-  | 'risky_freeze';            // Risky Optimization Freeze
+  | 'risky_freeze'             // Risky Optimization Freeze
+  // 🧠 LEARNING & INTELLIGENCE - Silent (2 Actions)
+  | 'conversion_pattern_learning'  // Store Conversion Pattern Learning
+  | 'performance_baseline_update'; // Product Performance Baseline Update
 
 // Legacy type mapping for backwards compatibility
-type LegacyFoundationalType = 'seo_basics' | 'product_copy_clarity' | 'trust_signals' | 'recovery_setup';
+type LegacyActionType = 'seo_basics' | 'seo_foundation' | 'product_copy_clarity' | 'trust_signals' | 'recovery_setup' | 'foundational';
 
 // Action Type Configuration
 interface ZyraActionConfig {
@@ -278,87 +288,105 @@ interface ZyraActionConfig {
   color: string;
 }
 
-// All 12 Approved Action Type Configurations
+// All 17 Approved Action Type Configurations (per spec)
 const ZYRA_ACTION_TYPES: Record<ZyraActionType, ZyraActionConfig> = {
-  // FOUNDATIONAL / DISCOVERABILITY
-  seo_foundation: {
-    type: 'seo_foundation',
-    category: 'foundational',
-    label: 'SEO Foundation Optimization',
-    description: 'Optimize product listings for search engine visibility',
-    riskLevel: 'low',
-    icon: 'Search',
-    color: 'text-blue-400'
-  },
-  product_copy_clarity: {
-    type: 'product_copy_clarity',
-    category: 'foundational',
-    label: 'Product Copy Clarity Upgrade',
-    description: 'Improve product descriptions for better conversion',
-    riskLevel: 'low',
-    icon: 'FileText',
-    color: 'text-purple-400'
-  },
-  trust_signals: {
-    type: 'trust_signals',
-    category: 'foundational',
-    label: 'Trust Signal Enhancement',
-    description: 'Add trust elements to increase buyer confidence',
-    riskLevel: 'low',
-    icon: 'Shield',
-    color: 'text-emerald-400'
-  },
-  recovery_setup: {
-    type: 'recovery_setup',
-    category: 'foundational',
-    label: 'Revenue Recovery Setup',
-    description: 'Configure recovery flows for lost revenue',
-    riskLevel: 'low',
-    icon: 'RotateCcw',
-    color: 'text-amber-400'
-  },
-  // OPTIMIZATION
+  // 🔍 DISCOVERABILITY & SEO (5 Actions)
   product_title: {
     type: 'product_title',
-    category: 'optimization',
+    category: 'seo',
     label: 'Product Title Optimization',
-    description: 'Optimize product titles for search and conversion',
+    description: 'Optimize product titles for search visibility and click-through',
     riskLevel: 'low',
     icon: 'Tag',
-    color: 'text-cyan-400'
+    color: 'text-blue-400'
   },
   meta_optimization: {
     type: 'meta_optimization',
-    category: 'optimization',
-    label: 'Meta Title & Description',
-    description: 'Optimize meta tags for better SERP appearance',
+    category: 'seo',
+    label: 'Meta Title, Description & Tag Optimization',
+    description: 'Optimize meta tags for better SERP appearance and CTR',
     riskLevel: 'low',
     icon: 'Globe',
+    color: 'text-cyan-400'
+  },
+  search_intent_alignment: {
+    type: 'search_intent_alignment',
+    category: 'seo',
+    label: 'Search Intent Alignment Fix',
+    description: 'Align product content with buyer search intent',
+    riskLevel: 'low',
+    icon: 'Target',
     color: 'text-indigo-400'
   },
   image_alt_text: {
     type: 'image_alt_text',
-    category: 'optimization',
+    category: 'seo',
     label: 'Image Alt-Text Optimization',
-    description: 'Add SEO-optimized alt text to product images',
+    description: 'Add SEO-optimized alt text for image search visibility',
     riskLevel: 'low',
     icon: 'Image',
-    color: 'text-pink-400'
+    color: 'text-purple-400'
   },
   stale_content_refresh: {
     type: 'stale_content_refresh',
-    category: 'optimization',
-    label: 'Stale Content Refresh',
-    description: 'Update outdated content to improve relevance',
+    category: 'seo',
+    label: 'Stale SEO Content Refresh',
+    description: 'Update outdated content to maintain search relevance',
     riskLevel: 'low',
     icon: 'RefreshCw',
+    color: 'text-teal-400'
+  },
+  // 🛒 CONVERSION OPTIMIZATION (5 Actions)
+  product_description_clarity: {
+    type: 'product_description_clarity',
+    category: 'conversion',
+    label: 'Product Description Clarity Upgrade',
+    description: 'Improve product descriptions for better conversion',
+    riskLevel: 'low',
+    icon: 'FileText',
+    color: 'text-emerald-400'
+  },
+  value_proposition_fix: {
+    type: 'value_proposition_fix',
+    category: 'conversion',
+    label: 'Value Proposition Alignment Fix',
+    description: 'Clarify product value to address buyer hesitation',
+    riskLevel: 'low',
+    icon: 'Sparkles',
+    color: 'text-amber-400'
+  },
+  trust_signals: {
+    type: 'trust_signals',
+    category: 'conversion',
+    label: 'Trust Signal Enhancement',
+    description: 'Add trust elements to increase buyer confidence',
+    riskLevel: 'low',
+    icon: 'Shield',
+    color: 'text-green-400'
+  },
+  friction_copy_removal: {
+    type: 'friction_copy_removal',
+    category: 'conversion',
+    label: 'Friction Copy Removal',
+    description: 'Remove confusing or hesitation-causing language',
+    riskLevel: 'low',
+    icon: 'Eraser',
     color: 'text-orange-400'
   },
-  // REVENUE RECOVERY
+  above_fold_optimization: {
+    type: 'above_fold_optimization',
+    category: 'conversion',
+    label: 'Above-the-Fold Content Optimization',
+    description: 'Optimize first-view content to capture buyer attention',
+    riskLevel: 'low',
+    icon: 'Layout',
+    color: 'text-pink-400'
+  },
+  // 💰 REVENUE RECOVERY (3 Actions)
   abandoned_cart_recovery: {
     type: 'abandoned_cart_recovery',
     category: 'revenue_recovery',
-    label: 'Abandoned Cart Recovery',
+    label: 'Abandoned Cart Recovery Activation',
     description: 'Activate cart recovery to recapture lost sales',
     riskLevel: 'low',
     icon: 'ShoppingCart',
@@ -367,17 +395,26 @@ const ZYRA_ACTION_TYPES: Record<ZyraActionType, ZyraActionConfig> = {
   post_purchase_upsell: {
     type: 'post_purchase_upsell',
     category: 'revenue_recovery',
-    label: 'Post-Purchase Upsell',
+    label: 'Post-Purchase Upsell Enablement',
     description: 'Enable post-purchase offers to increase order value',
     riskLevel: 'low',
     icon: 'TrendingUp',
-    color: 'text-green-400'
+    color: 'text-lime-400'
   },
-  // RISK CONTROL
+  checkout_dropoff_mitigation: {
+    type: 'checkout_dropoff_mitigation',
+    category: 'revenue_recovery',
+    label: 'Checkout Drop-Off Mitigation',
+    description: 'Reduce checkout abandonment with recovery flows',
+    riskLevel: 'low',
+    icon: 'CreditCard',
+    color: 'text-rose-400'
+  },
+  // 🛡️ REVENUE PROTECTION (2 Actions)
   underperforming_rollback: {
     type: 'underperforming_rollback',
-    category: 'risk_control',
-    label: 'Underperforming Rollback',
+    category: 'revenue_protection',
+    label: 'Underperforming Change Rollback',
     description: 'Revert changes that caused revenue decline',
     riskLevel: 'medium',
     icon: 'RotateCcw',
@@ -385,12 +422,31 @@ const ZYRA_ACTION_TYPES: Record<ZyraActionType, ZyraActionConfig> = {
   },
   risky_freeze: {
     type: 'risky_freeze',
-    category: 'risk_control',
+    category: 'revenue_protection',
     label: 'Risky Optimization Freeze',
     description: 'Pause risky optimizations to protect revenue',
     riskLevel: 'medium',
     icon: 'Pause',
     color: 'text-slate-400'
+  },
+  // 🧠 LEARNING & INTELLIGENCE - Silent (2 Actions)
+  conversion_pattern_learning: {
+    type: 'conversion_pattern_learning',
+    category: 'learning',
+    label: 'Store Conversion Pattern Learning',
+    description: 'Learn what copy and patterns convert for this store',
+    riskLevel: 'low',
+    icon: 'Brain',
+    color: 'text-violet-400'
+  },
+  performance_baseline_update: {
+    type: 'performance_baseline_update',
+    category: 'learning',
+    label: 'Product Performance Baseline Update',
+    description: 'Update performance baselines for future comparisons',
+    riskLevel: 'low',
+    icon: 'BarChart',
+    color: 'text-sky-400'
   }
 };
 
@@ -453,7 +509,7 @@ interface StoreLearning {
 
 // Foundational action for new stores (expanded to support all action types)
 interface FoundationalAction {
-  type: ZyraActionType | LegacyFoundationalType;
+  type: ZyraActionType | LegacyActionType;
   category?: ZyraActionCategory;
   productId?: string;
   productName?: string;
@@ -2886,75 +2942,89 @@ export default function ZyraAtWork() {
         </p>
       </div>
 
-      {/* APPROVED ZYRA ACTION TYPES (12 Total) - Per Core Specification */}
+      {/* APPROVED ZYRA ACTION TYPES (17 Total) - Per Core Specification */}
       <div className="space-y-4" data-testid="section-zyra-action-types">
-        {/* FOUNDATIONAL / DISCOVERABILITY (4 Actions) */}
+        {/* 🔍 DISCOVERABILITY & SEO (5 Actions) */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Foundational:</span>
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Discoverability & SEO:</span>
           <Badge 
             className="bg-blue-500/10 text-blue-400 border-blue-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-seo-foundation"
-          >
-            <Search className="w-3 h-3 mr-1.5" />
-            SEO Foundation
-          </Badge>
-          <Badge 
-            className="bg-purple-500/10 text-purple-400 border-purple-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-product-copy"
-          >
-            <FileText className="w-3 h-3 mr-1.5" />
-            Product Copy Clarity
-          </Badge>
-          <Badge 
-            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-trust-signals"
-          >
-            <Shield className="w-3 h-3 mr-1.5" />
-            Trust Signals
-          </Badge>
-          <Badge 
-            className="bg-amber-500/10 text-amber-400 border-amber-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-recovery-setup"
-          >
-            <RotateCcw className="w-3 h-3 mr-1.5" />
-            Recovery Setup
-          </Badge>
-        </div>
-
-        {/* OPTIMIZATION (4 Actions) */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Optimization:</span>
-          <Badge 
-            className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover-elevate cursor-default" 
             data-testid="badge-action-product-title"
           >
             <Tag className="w-3 h-3 mr-1.5" />
-            Product Titles
+            Product Title Optimization
           </Badge>
           <Badge 
-            className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover-elevate cursor-default" 
+            className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover-elevate cursor-default" 
             data-testid="badge-action-meta-optimization"
           >
             <Globe className="w-3 h-3 mr-1.5" />
-            Meta Tags
+            Meta Title, Description & Tags
           </Badge>
           <Badge 
-            className="bg-pink-500/10 text-pink-400 border-pink-500/30 hover-elevate cursor-default" 
+            className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-search-intent"
+          >
+            <Target className="w-3 h-3 mr-1.5" />
+            Search Intent Alignment Fix
+          </Badge>
+          <Badge 
+            className="bg-purple-500/10 text-purple-400 border-purple-500/30 hover-elevate cursor-default" 
             data-testid="badge-action-image-alt"
           >
             <ImageIcon className="w-3 h-3 mr-1.5" />
-            Image Alt-Text
+            Image Alt-Text Optimization
           </Badge>
           <Badge 
-            className="bg-orange-500/10 text-orange-400 border-orange-500/30 hover-elevate cursor-default" 
+            className="bg-teal-500/10 text-teal-400 border-teal-500/30 hover-elevate cursor-default" 
             data-testid="badge-action-stale-refresh"
           >
             <RefreshCw className="w-3 h-3 mr-1.5" />
-            Stale Content Refresh
+            Stale SEO Content Refresh
           </Badge>
         </div>
 
-        {/* REVENUE RECOVERY (2 Actions) */}
+        {/* 🛒 CONVERSION OPTIMIZATION (5 Actions) */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Conversion Optimization:</span>
+          <Badge 
+            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-product-description"
+          >
+            <FileText className="w-3 h-3 mr-1.5" />
+            Product Description Clarity Upgrade
+          </Badge>
+          <Badge 
+            className="bg-amber-500/10 text-amber-400 border-amber-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-value-proposition"
+          >
+            <Sparkles className="w-3 h-3 mr-1.5" />
+            Value Proposition Alignment Fix
+          </Badge>
+          <Badge 
+            className="bg-green-500/10 text-green-400 border-green-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-trust-signals"
+          >
+            <Shield className="w-3 h-3 mr-1.5" />
+            Trust Signal Enhancement
+          </Badge>
+          <Badge 
+            className="bg-orange-500/10 text-orange-400 border-orange-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-friction-copy"
+          >
+            <Eraser className="w-3 h-3 mr-1.5" />
+            Friction Copy Removal
+          </Badge>
+          <Badge 
+            className="bg-pink-500/10 text-pink-400 border-pink-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-above-fold"
+          >
+            <Layout className="w-3 h-3 mr-1.5" />
+            Above-the-Fold Content Optimization
+          </Badge>
+        </div>
+
+        {/* 💰 REVENUE RECOVERY (3 Actions) */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Recovery:</span>
           <Badge 
@@ -2962,28 +3032,35 @@ export default function ZyraAtWork() {
             data-testid="badge-action-cart-recovery"
           >
             <ShoppingCart className="w-3 h-3 mr-1.5" />
-            Abandoned Cart Recovery
+            Abandoned Cart Recovery Activation
             <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </Badge>
           <Badge 
-            className="bg-green-500/10 text-green-400 border-green-500/30 hover-elevate cursor-default" 
+            className="bg-lime-500/10 text-lime-400 border-lime-500/30 hover-elevate cursor-default" 
             data-testid="badge-action-post-purchase"
           >
             <TrendingUp className="w-3 h-3 mr-1.5" />
-            Post-Purchase Upsell
+            Post-Purchase Upsell Enablement
             <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </Badge>
+          <Badge 
+            className="bg-rose-500/10 text-rose-400 border-rose-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-checkout-dropoff"
+          >
+            <CreditCard className="w-3 h-3 mr-1.5" />
+            Checkout Drop-Off Mitigation
           </Badge>
         </div>
 
-        {/* RISK CONTROL (2 Actions) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Risk Control:</span>
+        {/* 🛡️ REVENUE PROTECTION (2 Actions) */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Protection:</span>
           <Badge 
             className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover-elevate cursor-default" 
             data-testid="badge-action-rollback"
           >
-            <History className="w-3 h-3 mr-1.5" />
-            Underperforming Rollback
+            <RotateCcw className="w-3 h-3 mr-1.5" />
+            Underperforming Change Rollback
           </Badge>
           <Badge 
             className="bg-slate-500/10 text-slate-400 border-slate-500/30 hover-elevate cursor-default" 
@@ -2991,6 +3068,27 @@ export default function ZyraAtWork() {
           >
             <Pause className="w-3 h-3 mr-1.5" />
             Risky Optimization Freeze
+          </Badge>
+        </div>
+
+        {/* 🧠 LEARNING & INTELLIGENCE - Silent (2 Actions) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Learning & Intelligence:</span>
+          <Badge 
+            className="bg-violet-500/10 text-violet-400 border-violet-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-pattern-learning"
+          >
+            <Brain className="w-3 h-3 mr-1.5" />
+            Store Conversion Pattern Learning
+            <span className="ml-1.5 text-[10px] text-slate-500">(Silent)</span>
+          </Badge>
+          <Badge 
+            className="bg-sky-500/10 text-sky-400 border-sky-500/30 hover-elevate cursor-default" 
+            data-testid="badge-action-baseline-update"
+          >
+            <BarChart className="w-3 h-3 mr-1.5" />
+            Product Performance Baseline Update
+            <span className="ml-1.5 text-[10px] text-slate-500">(Silent)</span>
           </Badge>
         </div>
       </div>
