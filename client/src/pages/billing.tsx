@@ -28,6 +28,7 @@ import {
   BarChart,
   Wand2,
   Clock,
+  Gift,
   TrendingUp,
   AlertCircle,
   CheckCircle2,
@@ -100,6 +101,7 @@ interface UsageStats {
 }
 
 const planIcons: Record<string, JSX.Element> = {
+  "Free": <Gift className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "7-Day Free Trial": <Rocket className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "Starter": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
   "Starter+": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
@@ -121,6 +123,21 @@ interface PlanDetails {
 }
 
 const planDetails: Record<string, PlanDetails> = {
+  "Free": {
+    credits: "50 Credits / month",
+    tagline: "Perfect for new and growing Shopify stores",
+    categories: [
+      {
+        name: "Core Features",
+        features: [
+          "ZYRA detects all opportunities",
+          "Manual approval mode",
+          "One-click rollback protection",
+          "Email support"
+        ]
+      }
+    ]
+  },
   "7-Day Free Trial": {
     credits: "100 Credits / 7 days",
     tagline: "Explore ZYRA's revenue detection",
@@ -717,7 +734,7 @@ export default function BillingPage() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-white text-xl sm:text-2xl font-bold" data-testid="text-current-plan">
-                      {currentPlan.planName || 'Current Plan'}
+                      {currentPlan.planName === "Free" ? "Free to Install" : (currentPlan.planName || 'Current Plan')}
                     </h2>
                     {currentSubscription?.status && (
                       <Badge 
@@ -1016,7 +1033,7 @@ export default function BillingPage() {
                           {planIcons[plan.planName] || <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-10 xl:h-10 text-primary" />}
                         </div>
                         <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-xl font-bold text-white leading-tight" data-testid={`text-plan-name-${index}`}>
-                          {plan.planName}
+                          {plan.planName === "Free" ? "Free to Install" : plan.planName}
                         </h3>
                       </div>
                       
