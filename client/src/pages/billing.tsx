@@ -1002,7 +1002,7 @@ export default function BillingPage() {
               </div>
             </DashboardCard>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-stretch">
               {plans.filter((plan: SubscriptionPlan) => plan.planName !== "7-Day Free Trial").map((plan: SubscriptionPlan, index) => {
               const isCurrentPlan = plan.id === currentSubscription?.planId;
               const isPlanPopular = plan.planName === "Growth";
@@ -1012,7 +1012,7 @@ export default function BillingPage() {
               const annualSavings = isTrial ? 0 : Math.round(plan.price * 12 * 0.2);
               
               return (
-                <div key={plan.id} className={`relative ${isPlanPopular ? 'pt-6 sm:pt-6' : ''}`}>
+                <div key={plan.id} className={`relative h-full flex flex-col ${isPlanPopular ? 'pt-6' : ''}`}>
                   {isPlanPopular && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
                       <Badge className="bg-primary text-primary-foreground px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-lg">
@@ -1022,7 +1022,7 @@ export default function BillingPage() {
                   )}
                   <DashboardCard 
                     size="sm"
-                    className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 ${isPlanPopular ? 'border-primary/50' : ''}`}
+                    className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 flex-1 ${isPlanPopular ? 'border-primary/50' : ''}`}
                     testId={`card-plan-${index}`}
                   >
                   <div className="h-full flex flex-col">
