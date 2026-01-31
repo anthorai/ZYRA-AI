@@ -17761,8 +17761,8 @@ Output format: Markdown with clear section headings.`;
           createdAt: autonomousActions.createdAt,
           completedAt: autonomousActions.completedAt,
           rolledBackAt: autonomousActions.rolledBackAt,
-          productName: products.title,
-          productImage: products.imageUrl,
+          productName: products.name,
+          productImage: products.image,
         })
         .from(autonomousActions)
         .leftJoin(products, eq(autonomousActions.entityId, products.id))

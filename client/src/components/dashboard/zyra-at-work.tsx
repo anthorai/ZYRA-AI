@@ -1988,19 +1988,25 @@ export default function ZyraAtWork() {
   const hasTriggeredInitialDetection = useRef(false);
   
   useEffect(() => {
+    // Check if execution recently completed (within last 2 minutes)
+    const recentlyCompleted = serverExecutionPhase === 'completed' || 
+      (detectionStatusData?.executionStatus === 'completed');
+    
     // Only trigger once per page load when conditions are met
+    // Don't trigger if loop recently completed - wait for user action
     if (
       storeReadiness?.state === 'ready' &&
       isAutopilotEnabled &&
       !isDetecting &&
       !hasTriggeredInitialDetection.current &&
+      !recentlyCompleted &&
       (detectionPhase === 'idle' || !detectionStatusData?.complete)
     ) {
       console.log('[ZYRA Detection] Auto-triggering initial detection on page load');
       hasTriggeredInitialDetection.current = true;
       triggerDetectionMutation.mutate();
     }
-  }, [storeReadiness?.state, isAutopilotEnabled, isDetecting, detectionPhase, detectionStatusData?.complete]);
+  }, [storeReadiness?.state, isAutopilotEnabled, isDetecting, detectionPhase, detectionStatusData?.complete, serverExecutionPhase, detectionStatusData?.executionStatus]);
 
   const events: ZyraEvent[] = (activityData?.activities?.map(a => ({
     ...a,
