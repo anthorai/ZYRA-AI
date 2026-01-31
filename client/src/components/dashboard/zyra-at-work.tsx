@@ -559,10 +559,59 @@ function ProgressStages({
   // Real-time activity stream
   const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivityStream();
 
+  // Map SSE event phases to progress stages (1-8)
+  // Stages 1-4: DETECT phase (checking store, identifying friction, estimating revenue, selecting opportunity)
+  // Stage 5: DECIDE phase (next move ready)
+  // Stage 6: EXECUTE phase (applying improvement)
+  // Stage 7: PROVE phase (measuring impact)
+  // Stage 8: LEARN phase (improving decisions)
+  const ssePhaseToStage = useCallback((phase: string, status: string): number => {
+    switch (phase) {
+      case 'detect':
+        // Progress through stages 0-3 based on status
+        if (status === 'in_progress') return 1; // Checking store performance
+        if (status === 'completed') return 3; // Estimating lost revenue
+        return 0;
+      case 'decide':
+        if (status === 'in_progress') return 3; // Selecting highest-impact opportunity
+        if (status === 'completed') return 4; // Next revenue move ready
+        return 3;
+      case 'execute':
+        if (status === 'in_progress') return 5; // Applying improvement
+        if (status === 'completed') return 5;
+        return 5;
+      case 'prove':
+        if (status === 'in_progress') return 6; // Measuring impact
+        if (status === 'completed') return 6;
+        return 6;
+      case 'learn':
+        if (status === 'in_progress') return 7; // Improving decisions
+        if (status === 'completed') return 7; // Complete
+        return 7;
+      default:
+        return 0;
+    }
+  }, []);
+
+  // Drive progress stages from SSE events
+  useEffect(() => {
+    if (streamEvents.length === 0) return;
+    
+    // Get the most recent event
+    const latestEvent = streamEvents[streamEvents.length - 1];
+    const sseStage = ssePhaseToStage(latestEvent.phase, latestEvent.status);
+    
+    // Only advance forward (never go backwards)
+    if (sseStage > currentStage) {
+      console.log(`[ProgressStages] SSE event advancing to stage ${sseStage + 1}: ${latestEvent.phase} (${latestEvent.status})`);
+      setCurrentStage(sseStage);
+    }
+  }, [streamEvents, currentStage, ssePhaseToStage]);
+
   useEffect(() => {
     if (isAutopilotEnabled && detectionPhase !== 'idle' && !startTime) {
       setStartTime(Date.now());
-      console.log('[ProgressStages] Detection started - auto-advance timer started');
+      console.log('[ProgressStages] Detection started - SSE-driven progress');
     }
     if (!isAutopilotEnabled || detectionPhase === 'idle') {
       setStartTime(null);
@@ -572,11 +621,14 @@ function ProgressStages({
   useEffect(() => {
     if (!isAutopilotEnabled || detectionPhase === 'idle') return;
     
+    // Fallback hard timeout if SSE is not available
     hardTimeoutRef.current = setTimeout(() => {
-      console.log('[ProgressStages] Hard timeout (10s) reached - forcing completion');
-      setCurrentStage(PROGRESS_STAGES.length - 1);
-      setStartTime(null);
-      onComplete?.();
+      if (!isStreamConnected && streamEvents.length === 0) {
+        console.log('[ProgressStages] Hard timeout (10s) reached - no SSE events, forcing completion');
+        setCurrentStage(PROGRESS_STAGES.length - 1);
+        setStartTime(null);
+        onComplete?.();
+      }
     }, AUTO_ADVANCE_TIMEOUT_MS);
     
     return () => {
@@ -584,15 +636,26 @@ function ProgressStages({
         clearTimeout(hardTimeoutRef.current);
       }
     };
-  }, [isAutopilotEnabled, detectionPhase, onComplete]);
+  }, [isAutopilotEnabled, detectionPhase, onComplete, isStreamConnected, streamEvents.length]);
 
+  // Fallback auto-advance only if SSE is not connected AND no events received
   useEffect(() => {
     if (!isAutopilotEnabled || detectionPhase === 'idle' || isDetectionComplete) return;
+    
+    // Only auto-advance if SSE is not working
+    if (isStreamConnected || streamEvents.length > 0) {
+      // SSE is active, don't auto-advance
+      if (autoAdvanceRef.current) {
+        clearInterval(autoAdvanceRef.current);
+        autoAdvanceRef.current = null;
+      }
+      return;
+    }
     
     autoAdvanceRef.current = setInterval(() => {
       setCurrentStage(prev => {
         const next = Math.min(prev + 1, PROGRESS_STAGES.length - 2);
-        console.log(`[ProgressStages] Auto-advancing to stage ${next + 1}`);
+        console.log(`[ProgressStages] Fallback auto-advancing to stage ${next + 1} (SSE not connected)`);
         return next;
       });
     }, STAGE_AUTO_ADVANCE_MS);
@@ -602,7 +665,7 @@ function ProgressStages({
         clearInterval(autoAdvanceRef.current);
       }
     };
-  }, [isAutopilotEnabled, detectionPhase, isDetectionComplete]);
+  }, [isAutopilotEnabled, detectionPhase, isDetectionComplete, isStreamConnected, streamEvents.length]);
 
   useEffect(() => {
     if (!isAutopilotEnabled) return;
@@ -716,9 +779,12 @@ function ProgressStages({
     // Add execution activities if any
     if (executionActivities.length > 0) {
       executionActivities.forEach((activity) => {
+        const activityTimestamp = typeof activity.timestamp === 'string' 
+          ? new Date(activity.timestamp) 
+          : activity.timestamp;
         entries.push({
-          id: activity.id || `activity-${activity.timestamp.getTime()}`,
-          timestamp: activity.timestamp,
+          id: activity.id || `activity-${activityTimestamp.getTime()}`,
+          timestamp: activityTimestamp,
           type: activity.status === 'completed' ? 'success' : 
                 activity.status === 'warning' ? 'warning' : 'action',
           message: activity.message,
@@ -904,7 +970,24 @@ function ProgressStages({
         </div>
         <div className="flex justify-between mt-1.5 px-1">
           <span className="text-[10px] text-slate-600">Step {currentStage + 1}/{PROGRESS_STAGES.length}</span>
-          <span className="text-[10px] text-slate-600">Working autonomously</span>
+          <div className="flex items-center gap-1.5">
+            {isStreamConnected ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] text-emerald-400">Live</span>
+              </>
+            ) : isReconnecting ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] text-amber-400">Reconnecting...</span>
+              </>
+            ) : (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                <span className="text-[10px] text-slate-500">Connecting...</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
       

@@ -79,6 +79,9 @@ Real-time activity streaming using Server-Sent Events (SSE) to show ZYRA engine 
 - Exponential backoff reconnection on both errors and normal stream closure
 - 50-event history per user for replay on reconnection
 - Connection status indicators ("Live", "Connecting...", "Reconnecting...")
+- **8-step progress bar driven by SSE events** - Progress stages advance based on real detection phase events, not timers
+- Phase-to-stage mapping: DETECT (stages 1-4), DECIDE (stage 5), EXECUTE (stage 6), PROVE (stage 7), LEARN (stage 8)
+- Fallback auto-advance only activates when SSE is not connected
 
 ### Dynamic Recommendation Reasoning
 Context-specific "Why ZYRA recommends this" explanations generated dynamically based on:
