@@ -17974,6 +17974,11 @@ Output format: Markdown with clear section headings.`;
 
       const actionData = action[0];
 
+      // Only allow pushing pending or dry_run actions
+      if (actionData.status !== 'pending' && actionData.status !== 'dry_run') {
+        return res.status(400).json({ error: `Cannot push action with status '${actionData.status}'. Only pending actions can be pushed.` });
+      }
+
       // Get store connection for Shopify API
       const storeConnection = await db
         .select()
@@ -17981,8 +17986,43 @@ Output format: Markdown with clear section headings.`;
         .where(eq(storeConnections.userId, userId))
         .limit(1);
 
-      if (storeConnection.length === 0 || !storeConnection[0].shopifyAccessToken) {
+      if (storeConnection.length === 0 || !storeConnection[0].accessToken) {
         return res.status(400).json({ error: "No Shopify store connected" });
+      }
+
+      const storeUrl = storeConnection[0].storeUrl;
+      if (!storeUrl) {
+        return res.status(400).json({ error: "Store URL not configured" });
+      }
+
+      // Validate platform is Shopify and connection is active
+      if (storeConnection[0].platform !== 'shopify' || storeConnection[0].status !== 'active') {
+        return res.status(400).json({ error: "Shopify store connection is not active" });
+      }
+
+      // Normalize shop domain using the same function as OAuth flow
+      // This handles admin.shopify.com/store/... format, protocols, trailing slashes, etc.
+      let shopDomain = storeUrl.trim().toLowerCase();
+      
+      // Handle admin.shopify.com/store/{shop} pattern
+      if (shopDomain.includes('admin.shopify.com/store/')) {
+        const storeMatch = shopDomain.match(/store\/([a-z0-9-]+)/i);
+        if (storeMatch && storeMatch[1]) {
+          shopDomain = `${storeMatch[1]}.myshopify.com`;
+        }
+      } else {
+        // Remove protocol and trailing slash
+        shopDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        // If doesn't end with .myshopify.com, append it
+        if (!shopDomain.endsWith('.myshopify.com')) {
+          const shopName = shopDomain.split('.')[0];
+          shopDomain = `${shopName}.myshopify.com`;
+        }
+      }
+      
+      // Validate the normalized domain
+      if (!shopDomain.endsWith('.myshopify.com')) {
+        return res.status(400).json({ error: "Invalid Shopify store domain" });
       }
 
       const productId = actionData.entityId;
@@ -18002,8 +18042,7 @@ Output format: Markdown with clear section headings.`;
       }
 
       const shopifyProductId = product[0].shopifyId;
-      const shopDomain = storeConnection[0].shopDomain;
-      const accessToken = storeConnection[0].shopifyAccessToken;
+      const accessToken = storeConnection[0].accessToken;
 
       // Get optimized content from payload or result
       const optimizedContent = actionData.payload?.optimizedCopy || actionData.result?.optimizedContent || actionData.payload?.after;
@@ -18060,8 +18099,9 @@ Output format: Markdown with clear section headings.`;
           });
         }
 
+        const metafieldErrors: string[] = [];
         for (const metafield of metafieldsUpdate) {
-          await fetch(
+          const metafieldResponse = await fetch(
             `https://${shopDomain}/admin/api/2024-01/products/${shopifyProductId}/metafields.json`,
             {
               method: 'POST',
@@ -18072,6 +18112,35 @@ Output format: Markdown with clear section headings.`;
               body: JSON.stringify({ metafield }),
             }
           );
+          
+          if (!metafieldResponse.ok) {
+            const errorText = await metafieldResponse.text();
+            console.error(`Shopify metafield update failed for ${metafield.key}:`, errorText);
+            metafieldErrors.push(`${metafield.key}: ${errorText}`);
+          }
+        }
+        
+        if (metafieldErrors.length > 0) {
+          console.error("Metafield updates failed:", metafieldErrors);
+          // Mark action as partially failed instead of completed
+          await db
+            .update(autonomousActions)
+            .set({
+              status: 'failed',
+              result: {
+                ...actionData.result,
+                error: `Metafield updates failed: ${metafieldErrors.join('; ')}`,
+                partialSuccess: true,
+                productUpdated: true,
+                metafieldsUpdated: false,
+              } as any,
+            })
+            .where(eq(autonomousActions.id, actionId));
+          
+          return res.status(500).json({ 
+            error: "Product updated but SEO metafield updates failed",
+            details: metafieldErrors 
+          });
         }
       }
 
