@@ -299,34 +299,36 @@ export class FoundationalExecutionService {
     const db = requireDb();
     const changes: ContentChange[] = [];
 
-    const prompt = `You are an SEO expert for e-commerce. Optimize this product listing.
+    const prompt = `You are an SEO expert for e-commerce. Fully optimize this product listing for search engines and conversions.
 
 Product Name: ${product.name}
 Description: ${product.description || 'No description'}
 Category: ${product.category || 'General'}
 Price: $${product.price}
 
-Generate:
-1. An optimized SEO title (50-60 chars, include buyer keywords)
-2. A compelling meta description (150-160 chars)
-3. An improved product title for the listing
+Generate ALL of the following:
+1. SEO Title / Meta Title (50-60 chars, include buyer-intent keywords)
+2. Meta Description (150-160 chars, compelling with call-to-action)
+3. Improved Product Title (clear, keyword-rich)
+4. Improved Product Description (benefit-focused, SEO-optimized, 2-3 sentences)
 
 Respond ONLY with valid JSON:
 {
-  "seoTitle": "optimized title here",
-  "metaDescription": "compelling description here",
-  "improvedName": "better product name"
+  "seoTitle": "optimized meta title here",
+  "metaDescription": "compelling meta description here",
+  "improvedName": "better product title",
+  "improvedDescription": "SEO-optimized product description highlighting benefits"
 }`;
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 400 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 600 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 400,
+            max_tokens: 600,
           });
           return response.choices[0]?.message?.content || '{}';
         }
@@ -365,6 +367,47 @@ Respond ONLY with valid JSON:
         });
       }
 
+      // Also optimize Product Description as part of SEO basics
+      if (optimized.improvedDescription && optimized.improvedDescription !== product.description) {
+        const beforeDesc = product.description || '(no description)';
+        changes.push({
+          field: 'Product Description',
+          before: beforeDesc.length > 100 ? beforeDesc.substring(0, 100) + '...' : beforeDesc,
+          after: optimized.improvedDescription.length > 100
+            ? optimized.improvedDescription.substring(0, 100) + '...'
+            : optimized.improvedDescription,
+          reason: 'Optimized description with keywords and benefit-focused copy',
+        });
+
+        // Update the product description in the products table
+        await db
+          .update(products)
+          .set({
+            description: optimized.improvedDescription,
+            isOptimized: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(products.id, product.id));
+      }
+
+      // Also update product title if improved
+      if (optimized.improvedName && optimized.improvedName !== product.name) {
+        changes.push({
+          field: 'Product Title',
+          before: product.name,
+          after: optimized.improvedName,
+          reason: 'Enhanced title with buyer-intent keywords for better visibility',
+        });
+
+        await db
+          .update(products)
+          .set({
+            name: optimized.improvedName,
+            updatedAt: new Date(),
+          })
+          .where(eq(products.id, product.id));
+      }
+
       if (changes.length > 0) {
         if (existingSeo) {
           await db
@@ -392,8 +435,8 @@ Respond ONLY with valid JSON:
         productName: product.name,
         changes,
         impactExplanation: changes.length > 0
-          ? 'These SEO improvements help your products appear in more Google searches, bringing in buyers who are ready to purchase.'
-          : 'Product already has good SEO.',
+          ? 'Complete SEO optimization applied: Title, Meta Description, Product Description, and Product Title all enhanced for better search visibility and conversions.'
+          : 'Product already fully optimized.',
       };
 
     } catch (error) {
