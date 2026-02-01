@@ -1,5 +1,5 @@
 import { requireDb } from '../db';
-import { products, seoMeta, automationSettings, autonomousActions } from '@shared/schema';
+import { products, seoMeta, automationSettings, autonomousActions, activityLogs } from '@shared/schema';
 import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
@@ -255,6 +255,26 @@ export class FoundationalExecutionService {
         } catch (saveError) {
           console.error('[Foundational Execution] Error saving to autonomousActions:', saveError);
         }
+      }
+
+      // Log to database for action rotation tracking
+      try {
+        await db.insert(activityLogs).values({
+          userId,
+          action: `foundational_${actionType}`,
+          description: `Executed foundational action: ${ACTION_LABELS[actionType] || actionType}`,
+          toolUsed: 'zyra-engine',
+          metadata: {
+            actionType,
+            productsOptimized: productsOptimized.length,
+            totalChanges,
+            productIds: productsOptimized.map(p => p.productId),
+            productId: productsOptimized[0]?.productId || null,
+          },
+        });
+        console.log(`[Foundational Execution] Logged action to database: foundational_${actionType}`);
+      } catch (logError) {
+        console.error('[Foundational Execution] Error logging to activityLogs:', logError);
       }
 
       return {

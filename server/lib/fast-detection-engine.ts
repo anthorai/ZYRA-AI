@@ -850,20 +850,40 @@ export class FastDetectionEngine {
         // Check if all products already have optimized SEO
         const allProductsHaveSeo = unoptimizedProducts.length === 0 && optimizedProducts.length > 0;
         
+        // Smart rotation: find next action type that hasn't been done recently
+        const getNextAvailableAction = (): FoundationalActionType => {
+          const rotationPriority: FoundationalActionType[] = [
+            'seo_basics',
+            'product_copy_clarity', 
+            'trust_signals',
+            'urgency_cues',
+            'price_anchoring',
+            'recovery_setup'
+          ];
+          
+          // Find first action not recently done
+          for (const actionType of rotationPriority) {
+            if (!recentActionTypes.has(actionType)) {
+              return actionType;
+            }
+          }
+          // All actions done recently - start fresh rotation
+          return rotationPriority[recentActionTypes.size % rotationPriority.length];
+        };
+        
         // Additional selection logic based on product state
         if (targetProduct) {
-          const healthScore = targetProduct.revenueHealthScore || 0;
           const productHasSeo = targetProduct.hasOptimizedSeo;
           
-          // If all products have SEO optimization, move to next action type
-          if (allProductsHaveSeo && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
-            selectedType = 'product_copy_clarity';
-          } else if (productHasSeo && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
-            selectedType = 'product_copy_clarity';
-          } else if (healthScore >= 40 && selectedType === 'seo_basics' && !recentActionTypes.has('product_copy_clarity')) {
-            selectedType = 'product_copy_clarity';
-          } else if (healthScore >= 60 && !recentActionTypes.has('trust_signals')) {
-            selectedType = 'trust_signals';
+          // Always rotate if selectedType was recently executed (ensures diversity)
+          if (recentActionTypes.has(selectedType)) {
+            selectedType = getNextAvailableAction();
+          } else if (allProductsHaveSeo && selectedType === 'seo_basics') {
+            // If SEO is done for all products, rotate to next action
+            selectedType = getNextAvailableAction();
+          } else if (productHasSeo && selectedType === 'seo_basics') {
+            // If this product has SEO, rotate to next action
+            selectedType = getNextAvailableAction();
           }
         }
       } else {
