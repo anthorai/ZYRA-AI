@@ -32,6 +32,7 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const isMountedRef = useRef(true);
   const maxReconnectAttempts = 5;
@@ -168,29 +169,31 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
   // Store connect in a ref to avoid dependency issues
   const connectRef = useRef(connect);
   connectRef.current = connect;
-  const hasConnectedRef = useRef(false);
   
   // Single effect that handles connection based on token availability
   useEffect(() => {
     isMountedRef.current = true;
     
-    if (session?.access_token && !hasConnectedRef.current) {
-      hasConnectedRef.current = true;
-      connectRef.current();
+    if (session?.access_token) {
+      // Small delay to avoid rapid connect/disconnect on fast remounts
+      connectTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          connectRef.current();
+        }
+      }, 100);
     }
-
+    
     return () => {
-      const wasConnected = hasConnectedRef.current;
       isMountedRef.current = false;
       
-      if (wasConnected) {
-        hasConnectedRef.current = false;
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
+      if (connectTimeoutRef.current) {
+        clearTimeout(connectTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
       }
     };
   }, [session?.access_token]);
