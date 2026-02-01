@@ -216,6 +216,59 @@ export default function Reports() {
   const completedActions = actions?.filter(a => a.status === "completed") || [];
   const rolledBackActions = actions?.filter(a => a.status === "rolled_back") || [];
 
+  // Group actions by product for consolidated timeline view
+  const groupedProductActions = useMemo(() => {
+    const allActions = [...completedActions, ...rolledBackActions];
+    const productMap = new Map<string, {
+      productId: string;
+      productName: string;
+      productImage: string | null;
+      actions: typeof allActions;
+      totalRevenue: number;
+      hasPositive: boolean;
+      hasNegative: boolean;
+      hasRolledBack: boolean;
+      latestAction: Date;
+    }>();
+
+    allActions.forEach(action => {
+      const productId = action.productId || action.id;
+      const existing = productMap.get(productId);
+      const revenue = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
+      const isPositive = action.actualImpact?.status === "positive";
+      const isNegative = action.actualImpact?.status === "negative";
+      const isRolledBack = action.status === "rolled_back";
+      const actionDate = new Date(action.createdAt);
+
+      if (existing) {
+        existing.actions.push(action);
+        existing.totalRevenue += typeof revenue === 'number' ? revenue : parseFloat(revenue) || 0;
+        existing.hasPositive = existing.hasPositive || isPositive;
+        existing.hasNegative = existing.hasNegative || isNegative;
+        existing.hasRolledBack = existing.hasRolledBack || isRolledBack;
+        if (actionDate > existing.latestAction) {
+          existing.latestAction = actionDate;
+        }
+      } else {
+        productMap.set(productId, {
+          productId,
+          productName: action.productName || "Product Update",
+          productImage: action.productImage || null,
+          actions: [action],
+          totalRevenue: typeof revenue === 'number' ? revenue : parseFloat(revenue) || 0,
+          hasPositive: isPositive,
+          hasNegative: isNegative,
+          hasRolledBack: isRolledBack,
+          latestAction: actionDate,
+        });
+      }
+    });
+
+    return Array.from(productMap.values())
+      .sort((a, b) => b.latestAction.getTime() - a.latestAction.getTime())
+      .slice(0, 15);
+  }, [completedActions, rolledBackActions]);
+
   const revenueGained = completedActions.reduce((sum, a) => {
     const impact = a.actualImpact?.revenue || a.estimatedImpact?.expectedRevenue || 0;
     return sum + (typeof impact === 'number' ? impact : parseFloat(impact) || 0);
@@ -529,7 +582,7 @@ export default function Reports() {
                     <div className="space-y-4">
                       {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24" />)}
                     </div>
-                  ) : completedActions.length === 0 && rolledBackActions.length === 0 ? (
+                  ) : groupedProductActions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
                       <Bot className="w-12 h-12 text-muted-foreground mb-4" />
                       <h3 className="text-lg font-medium mb-2">No Completed Decisions Yet</h3>
@@ -541,77 +594,106 @@ export default function Reports() {
                     <div className="relative">
                       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
                       <div className="space-y-4">
-                        {[...completedActions, ...rolledBackActions].slice(0, 20).map((action) => {
-                          const isRolledBack = action.status === "rolled_back";
-                          const isPositive = action.actualImpact?.status === "positive";
-                          const isNegative = action.actualImpact?.status === "negative";
-                          const revenueResult = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
+                        {groupedProductActions.map((productGroup) => {
+                          const statusColor = productGroup.hasRolledBack 
+                            ? "bg-blue-400" 
+                            : productGroup.hasPositive 
+                              ? "bg-green-400" 
+                              : productGroup.hasNegative 
+                                ? "bg-red-400" 
+                                : "bg-yellow-400";
                           
                           return (
                             <div 
-                              key={action.id} 
+                              key={productGroup.productId} 
                               className="relative pl-10"
-                              data-testid={`timeline-item-${action.id}`}
+                              data-testid={`timeline-product-${productGroup.productId}`}
                             >
                               <div className={cn(
                                 "absolute left-2.5 w-3 h-3 rounded-full border-2 border-background",
-                                isRolledBack ? "bg-blue-400" : isPositive ? "bg-green-400" : isNegative ? "bg-red-400" : "bg-yellow-400"
+                                statusColor
                               )} />
                               
                               <div className="p-4 rounded-lg border bg-card">
                                 <div className="flex items-start gap-3">
                                   <div className="flex-shrink-0">
-                                    {action.productImage ? (
+                                    {productGroup.productImage ? (
                                       <img 
-                                        src={action.productImage} 
+                                        src={productGroup.productImage} 
                                         alt="" 
-                                        className="w-12 h-12 rounded-md object-cover border"
+                                        className="w-14 h-14 rounded-md object-cover border"
                                       />
                                     ) : (
-                                      <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
-                                        <Package className="w-6 h-6 text-muted-foreground" />
+                                      <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center">
+                                        <Package className="w-7 h-7 text-muted-foreground" />
                                       </div>
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                                      <span className="font-medium text-sm truncate">
-                                        {action.productName || "Product Update"}
+                                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                                      <span className="font-medium text-sm">
+                                        {productGroup.productName}
                                       </span>
-                                      <Badge variant="outline" className="text-xs">
-                                        {ACTION_TYPE_LABELS[action.actionType] || action.actionType}
+                                      <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                                        {productGroup.actions.length} {productGroup.actions.length === 1 ? 'change' : 'changes'}
                                       </Badge>
                                     </div>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      {action.decisionReason || "AI-driven optimization based on store analysis"}
-                                    </p>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge 
-                                        variant="outline" 
-                                        className={cn(
-                                          "text-xs",
-                                          action.executedBy === "agent" 
-                                            ? "bg-purple-500/20 text-purple-400 border-purple-500/30" 
-                                            : "bg-slate-500/20 text-slate-400 border-slate-500/30"
-                                        )}
-                                      >
-                                        {action.executedBy === "agent" ? "Autonomous" : "Manual"}
-                                      </Badge>
-                                      
-                                      {isRolledBack ? (
-                                        <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                          <RotateCcw className="w-3 h-3 mr-1" />
-                                          Rolled Back (Loss Prevented)
-                                        </Badge>
-                                      ) : isPositive ? (
+                                    
+                                    {/* List all changes for this product */}
+                                    <div className="space-y-2 mb-3">
+                                      {productGroup.actions.map((action, idx) => (
+                                        <div 
+                                          key={action.id} 
+                                          className="flex items-start gap-2 p-2 rounded bg-muted/30 border border-border/50"
+                                          data-testid={`change-${action.id}`}
+                                        >
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                              <Badge variant="outline" className="text-xs">
+                                                {ACTION_TYPE_LABELS[action.actionType] || action.actionType}
+                                              </Badge>
+                                              <Badge 
+                                                variant="outline" 
+                                                className={cn(
+                                                  "text-xs",
+                                                  action.executedBy === "agent" 
+                                                    ? "bg-purple-500/20 text-purple-400 border-purple-500/30" 
+                                                    : "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                                                )}
+                                              >
+                                                {action.executedBy === "agent" ? "Autonomous" : "Manual"}
+                                              </Badge>
+                                              {action.status === "rolled_back" && (
+                                                <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                                  <RotateCcw className="w-3 h-3 mr-1" />
+                                                  Rolled Back
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground line-clamp-1">
+                                              {action.decisionReason || "AI-driven optimization"}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    {/* Summary row */}
+                                    <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border/50">
+                                      {productGroup.hasPositive ? (
                                         <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
                                           <TrendingUp className="w-3 h-3 mr-1" />
-                                          +{formatCurrency(revenueResult)}
+                                          +{formatCurrency(productGroup.totalRevenue)}
                                         </Badge>
-                                      ) : isNegative ? (
+                                      ) : productGroup.hasNegative ? (
                                         <Badge variant="outline" className="text-xs bg-red-500/20 text-red-400 border-red-500/30">
                                           <TrendingDown className="w-3 h-3 mr-1" />
-                                          {formatCurrency(revenueResult)}
+                                          {formatCurrency(productGroup.totalRevenue)}
+                                        </Badge>
+                                      ) : productGroup.hasRolledBack ? (
+                                        <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                          <RotateCcw className="w-3 h-3 mr-1" />
+                                          Loss Prevented
                                         </Badge>
                                       ) : (
                                         <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
@@ -621,7 +703,7 @@ export default function Reports() {
                                       )}
                                       
                                       <span className="text-xs text-muted-foreground">
-                                        {formatDistanceToNow(new Date(action.createdAt), { addSuffix: true })}
+                                        {formatDistanceToNow(productGroup.latestAction, { addSuffix: true })}
                                       </span>
                                     </div>
                                   </div>
