@@ -685,54 +685,122 @@ export default function Reports() {
                                       </Badge>
                                     </div>
                                     
-                                    {/* What was changed - consolidated view */}
-                                    <div className="mb-3">
-                                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                                        <span className="text-xs text-muted-foreground">Changed:</span>
-                                        {Array.from(productGroup.changedFields).map((field) => {
-                                          const fieldIcon = {
-                                            'Title': Type,
-                                            'Description': FileText,
-                                            'SEO Title': Search,
-                                            'Meta Description': Tag,
-                                            'Tags': Tag,
-                                            'Images': ImageIcon,
-                                            'SEO': Search,
-                                            'Content': FileText,
-                                          }[field] || FileText;
-                                          const FieldIcon = fieldIcon;
-                                          return (
-                                            <Badge 
-                                              key={field}
-                                              variant="outline" 
-                                              className="text-xs bg-primary/10 text-primary border-primary/30"
-                                            >
-                                              <FieldIcon className="w-3 h-3 mr-1" />
-                                              {field}
-                                            </Badge>
-                                          );
-                                        })}
-                                      </div>
-                                      
-                                      {/* Show action breakdown */}
-                                      <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                                        <span>{productGroup.actions.filter(a => a.executedBy === 'agent').length > 0 && (
-                                          <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/20">
-                                            {productGroup.actions.filter(a => a.executedBy === 'agent').length} Autonomous
-                                          </Badge>
-                                        )}</span>
-                                        <span>{productGroup.actions.filter(a => a.executedBy !== 'agent').length > 0 && (
-                                          <Badge variant="outline" className="text-xs bg-slate-500/10 text-slate-400 border-slate-500/20">
-                                            {productGroup.actions.filter(a => a.executedBy !== 'agent').length} Manual
-                                          </Badge>
-                                        )}</span>
-                                        {productGroup.hasRolledBack && (
-                                          <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/20">
-                                            <RotateCcw className="w-3 h-3 mr-1" />
-                                            Has Rollbacks
-                                          </Badge>
-                                        )}
-                                      </div>
+                                    {/* Detailed changes list with before/after */}
+                                    <div className="mb-3 space-y-2 max-h-[300px] overflow-y-auto">
+                                      {productGroup.actions.map((action, idx) => {
+                                        const actionAny = action as any;
+                                        const before = action.payload?.before || {};
+                                        const after = action.payload?.after || action.result?.optimizedContent || {};
+                                        const credits = actionAny.creditsUsed || actionAny.creditCost || 0;
+                                        const isRolledBack = action.status === "rolled_back";
+                                        const isPositive = action.actualImpact?.status === "positive";
+                                        const isNegative = action.actualImpact?.status === "negative";
+                                        
+                                        return (
+                                          <div 
+                                            key={action.id}
+                                            className={cn(
+                                              "p-3 rounded-lg border text-xs",
+                                              isRolledBack ? "bg-blue-500/5 border-blue-500/20" :
+                                              isPositive ? "bg-green-500/5 border-green-500/20" :
+                                              isNegative ? "bg-red-500/5 border-red-500/20" :
+                                              "bg-muted/30 border-border/50"
+                                            )}
+                                            data-testid={`change-detail-${action.id}`}
+                                          >
+                                            {/* Header row with type, status, credits */}
+                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <Badge variant="outline" className="text-xs">
+                                                  {ACTION_TYPE_LABELS[action.actionType] || action.actionType}
+                                                </Badge>
+                                                {isRolledBack ? (
+                                                  <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                                    <RotateCcw className="w-3 h-3 mr-1" />
+                                                    Rolled Back
+                                                  </Badge>
+                                                ) : isPositive ? (
+                                                  <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+                                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                    Success
+                                                  </Badge>
+                                                ) : isNegative ? (
+                                                  <Badge variant="outline" className="text-xs bg-red-500/20 text-red-400 border-red-500/30">
+                                                    <TrendingDown className="w-3 h-3 mr-1" />
+                                                    Declined
+                                                  </Badge>
+                                                ) : (
+                                                  <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                                    <Minus className="w-3 h-3 mr-1" />
+                                                    Pending
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                              {credits > 0 && (
+                                                <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
+                                                  <Coins className="w-3 h-3 mr-1" />
+                                                  {credits}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            
+                                            {/* Before/After content */}
+                                            <div className="grid grid-cols-2 gap-2">
+                                              {/* Before column */}
+                                              <div className="p-2 rounded bg-muted/50 border border-border/30">
+                                                <p className="text-xs text-muted-foreground font-medium mb-1">Original</p>
+                                                {before.title && (
+                                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                                                    <span className="font-medium">Title:</span> {before.title}
+                                                  </p>
+                                                )}
+                                                {before.description && (
+                                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                                                    <span className="font-medium">Desc:</span> {before.description.substring(0, 80)}...
+                                                  </p>
+                                                )}
+                                                {before.seoTitle && (
+                                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                                    <span className="font-medium">SEO:</span> {before.seoTitle}
+                                                  </p>
+                                                )}
+                                                {!before.title && !before.description && !before.seoTitle && (
+                                                  <p className="text-xs text-muted-foreground italic">No data stored</p>
+                                                )}
+                                              </div>
+                                              
+                                              {/* After column */}
+                                              <div className={cn(
+                                                "p-2 rounded border",
+                                                isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
+                                              )}>
+                                                <p className={cn(
+                                                  "text-xs font-medium mb-1",
+                                                  isRolledBack ? "text-blue-400" : "text-primary"
+                                                )}>Changed To</p>
+                                                {after.title && (
+                                                  <p className="text-xs line-clamp-2 mb-1">
+                                                    <span className="font-medium">Title:</span> {after.title}
+                                                  </p>
+                                                )}
+                                                {after.description && (
+                                                  <p className="text-xs line-clamp-2 mb-1">
+                                                    <span className="font-medium">Desc:</span> {after.description.substring(0, 80)}...
+                                                  </p>
+                                                )}
+                                                {after.seoTitle && (
+                                                  <p className="text-xs line-clamp-1">
+                                                    <span className="font-medium">SEO:</span> {after.seoTitle}
+                                                  </p>
+                                                )}
+                                                {!after.title && !after.description && !after.seoTitle && (
+                                                  <p className="text-xs text-muted-foreground italic">Content optimized</p>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                     
                                     {/* Summary row */}
