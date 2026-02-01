@@ -41,7 +41,12 @@ import {
   Search,
   Wrench,
   Award,
-  Radio
+  Radio,
+  Coins,
+  FileText,
+  Type,
+  Tag,
+  ImageIcon
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -216,6 +221,31 @@ export default function Reports() {
   const completedActions = actions?.filter(a => a.status === "completed") || [];
   const rolledBackActions = actions?.filter(a => a.status === "rolled_back") || [];
 
+  // Helper to extract what fields were changed from payload
+  const getChangedFields = (action: any): string[] => {
+    const fields: string[] = [];
+    const payload = action.payload || action.result?.optimizedContent;
+    const before = action.payload?.before || {};
+    const after = action.payload?.after || payload || {};
+    
+    if (after.title && after.title !== before.title) fields.push('Title');
+    if (after.description && after.description !== before.description) fields.push('Description');
+    if (after.seoTitle && after.seoTitle !== before.seoTitle) fields.push('SEO Title');
+    if (after.metaDescription && after.metaDescription !== before.metaDescription) fields.push('Meta Description');
+    if (after.tags && JSON.stringify(after.tags) !== JSON.stringify(before.tags)) fields.push('Tags');
+    if (after.images) fields.push('Images');
+    
+    // If no specific fields detected, use actionType
+    if (fields.length === 0) {
+      if (action.actionType?.includes('seo')) fields.push('SEO');
+      else if (action.actionType?.includes('description')) fields.push('Description');
+      else if (action.actionType?.includes('title')) fields.push('Title');
+      else fields.push('Content');
+    }
+    
+    return fields;
+  };
+
   // Group actions by product for consolidated timeline view
   // Use productName as the grouping key since productId might be unique per action
   const groupedProductActions = useMemo(() => {
@@ -226,10 +256,12 @@ export default function Reports() {
       productImage: string | null;
       actions: typeof allActions;
       totalRevenue: number;
+      totalCredits: number;
       hasPositive: boolean;
       hasNegative: boolean;
       hasRolledBack: boolean;
       latestAction: Date;
+      changedFields: Set<string>;
     }>();
 
     allActions.forEach(action => {
@@ -238,17 +270,22 @@ export default function Reports() {
       const groupKey = productName.toLowerCase();
       const existing = productMap.get(groupKey);
       const revenue = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
+      const actionAny = action as any;
+      const credits = actionAny.creditsUsed || actionAny.creditCost || 0;
       const isPositive = action.actualImpact?.status === "positive";
       const isNegative = action.actualImpact?.status === "negative";
       const isRolledBack = action.status === "rolled_back";
       const actionDate = new Date(action.createdAt);
+      const changedFields = getChangedFields(action);
 
       if (existing) {
         existing.actions.push(action);
         existing.totalRevenue += typeof revenue === 'number' ? revenue : parseFloat(revenue) || 0;
+        existing.totalCredits += typeof credits === 'number' ? credits : parseFloat(credits) || 0;
         existing.hasPositive = existing.hasPositive || isPositive;
         existing.hasNegative = existing.hasNegative || isNegative;
         existing.hasRolledBack = existing.hasRolledBack || isRolledBack;
+        changedFields.forEach(f => existing.changedFields.add(f));
         // Keep the most recent image
         if (!existing.productImage && action.productImage) {
           existing.productImage = action.productImage;
@@ -258,15 +295,17 @@ export default function Reports() {
         }
       } else {
         productMap.set(groupKey, {
-          productId: action.productId || action.id,
+          productId: actionAny.productId || action.id,
           productName: productName,
           productImage: action.productImage || null,
           actions: [action],
           totalRevenue: typeof revenue === 'number' ? revenue : parseFloat(revenue) || 0,
+          totalCredits: typeof credits === 'number' ? credits : parseFloat(credits) || 0,
           hasPositive: isPositive,
           hasNegative: isNegative,
           hasRolledBack: isRolledBack,
           latestAction: actionDate,
+          changedFields: new Set(changedFields),
         });
       }
     });
@@ -646,43 +685,54 @@ export default function Reports() {
                                       </Badge>
                                     </div>
                                     
-                                    {/* List all changes for this product */}
-                                    <div className="space-y-2 mb-3">
-                                      {productGroup.actions.map((action, idx) => (
-                                        <div 
-                                          key={action.id} 
-                                          className="flex items-start gap-2 p-2 rounded bg-muted/30 border border-border/50"
-                                          data-testid={`change-${action.id}`}
-                                        >
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                                              <Badge variant="outline" className="text-xs">
-                                                {ACTION_TYPE_LABELS[action.actionType] || action.actionType}
-                                              </Badge>
-                                              <Badge 
-                                                variant="outline" 
-                                                className={cn(
-                                                  "text-xs",
-                                                  action.executedBy === "agent" 
-                                                    ? "bg-purple-500/20 text-purple-400 border-purple-500/30" 
-                                                    : "bg-slate-500/20 text-slate-400 border-slate-500/30"
-                                                )}
-                                              >
-                                                {action.executedBy === "agent" ? "Autonomous" : "Manual"}
-                                              </Badge>
-                                              {action.status === "rolled_back" && (
-                                                <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                                  <RotateCcw className="w-3 h-3 mr-1" />
-                                                  Rolled Back
-                                                </Badge>
-                                              )}
-                                            </div>
-                                            <p className="text-xs text-muted-foreground line-clamp-1">
-                                              {action.decisionReason || "AI-driven optimization"}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      ))}
+                                    {/* What was changed - consolidated view */}
+                                    <div className="mb-3">
+                                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                                        <span className="text-xs text-muted-foreground">Changed:</span>
+                                        {Array.from(productGroup.changedFields).map((field) => {
+                                          const fieldIcon = {
+                                            'Title': Type,
+                                            'Description': FileText,
+                                            'SEO Title': Search,
+                                            'Meta Description': Tag,
+                                            'Tags': Tag,
+                                            'Images': ImageIcon,
+                                            'SEO': Search,
+                                            'Content': FileText,
+                                          }[field] || FileText;
+                                          const FieldIcon = fieldIcon;
+                                          return (
+                                            <Badge 
+                                              key={field}
+                                              variant="outline" 
+                                              className="text-xs bg-primary/10 text-primary border-primary/30"
+                                            >
+                                              <FieldIcon className="w-3 h-3 mr-1" />
+                                              {field}
+                                            </Badge>
+                                          );
+                                        })}
+                                      </div>
+                                      
+                                      {/* Show action breakdown */}
+                                      <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                                        <span>{productGroup.actions.filter(a => a.executedBy === 'agent').length > 0 && (
+                                          <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/20">
+                                            {productGroup.actions.filter(a => a.executedBy === 'agent').length} Autonomous
+                                          </Badge>
+                                        )}</span>
+                                        <span>{productGroup.actions.filter(a => a.executedBy !== 'agent').length > 0 && (
+                                          <Badge variant="outline" className="text-xs bg-slate-500/10 text-slate-400 border-slate-500/20">
+                                            {productGroup.actions.filter(a => a.executedBy !== 'agent').length} Manual
+                                          </Badge>
+                                        )}</span>
+                                        {productGroup.hasRolledBack && (
+                                          <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/20">
+                                            <RotateCcw className="w-3 h-3 mr-1" />
+                                            Has Rollbacks
+                                          </Badge>
+                                        )}
+                                      </div>
                                     </div>
                                     
                                     {/* Summary row */}
@@ -706,6 +756,14 @@ export default function Reports() {
                                         <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
                                           <Minus className="w-3 h-3 mr-1" />
                                           Neutral
+                                        </Badge>
+                                      )}
+                                      
+                                      {/* Credits used */}
+                                      {productGroup.totalCredits > 0 && (
+                                        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
+                                          <Coins className="w-3 h-3 mr-1" />
+                                          {productGroup.totalCredits} credits
                                         </Badge>
                                       )}
                                       
