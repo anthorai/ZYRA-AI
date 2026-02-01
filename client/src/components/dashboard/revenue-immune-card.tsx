@@ -34,6 +34,8 @@ import {
   Eye,
   RefreshCw,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   History,
   Zap,
   Search,
@@ -180,6 +182,7 @@ export default function RevenueImmuneCard() {
   const queryClient = useQueryClient();
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [todayReportExpanded, setTodayReportExpanded] = useState(true);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const [connectionElapsed, setConnectionElapsed] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
@@ -363,11 +366,11 @@ export default function RevenueImmuneCard() {
   };
 
   const protectedSurfaces = [
-    { label: "Product copy decay", icon: CheckCircle2 },
-    { label: "SEO ranking erosion", icon: CheckCircle2 },
-    { label: "Conversion intent mismatch", icon: CheckCircle2 },
-    { label: "Recovery message fatigue", icon: CheckCircle2 },
-    { label: "Silent revenue leakage", icon: CheckCircle2 },
+    { label: "Product Copy Decay", description: "Content freshness monitoring", icon: Search, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { label: "SEO Ranking Erosion", description: "Search visibility tracking", icon: TrendingUp, color: "text-green-500", bgColor: "bg-green-500/10" },
+    { label: "Conversion Mismatch", description: "Buyer intent alignment", icon: Activity, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+    { label: "Message Fatigue", description: "Recovery flow optimization", icon: Mail, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    { label: "Revenue Leakage", description: "Silent loss detection", icon: Shield, color: "text-rose-500", bgColor: "bg-rose-500/10" },
   ];
 
   const hasActivityToday = todayDetectedIssues.length > 0 || todayFixesExecuted.length > 0;
@@ -947,77 +950,102 @@ export default function RevenueImmuneCard() {
             </div>
           </div>
 
-          {/* Today's Activity Block */}
-          <div className="bg-muted/20 rounded-lg p-4 mb-6" data-testid="today-activity-block">
-            <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              Today's Revenue Defense Report
-            </h3>
+          {/* Today's Activity Block - Collapsible */}
+          <div className="bg-muted/20 rounded-lg mb-6 overflow-hidden" data-testid="today-activity-block">
+            <button 
+              onClick={() => setTodayReportExpanded(!todayReportExpanded)}
+              className="w-full flex items-center justify-between p-4 hover-elevate"
+              data-testid="button-toggle-today-report"
+            >
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                Today's Revenue Defense Report
+              </h3>
+              {todayReportExpanded ? (
+                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              )}
+            </button>
             
-            {!hasActivityToday ? (
-              <div className="space-y-2">
-                {totalProductsMonitored > 0 ? (
-                  <>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span>{totalProductsMonitored} products scanned</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span>SEO checks completed</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span>No revenue decay detected</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span>Store fully protected today</span>
-                    </div>
-                  </>
+            {todayReportExpanded && (
+              <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
+                {!hasActivityToday ? (
+                  <div className="space-y-2">
+                    {totalProductsMonitored > 0 ? (
+                      <>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span>{totalProductsMonitored} products scanned</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span>SEO checks completed</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span>No revenue decay detected</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span>Store fully protected today</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Eye className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span>Waiting for products to sync from Shopify</span>
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Eye className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span>Waiting for products to sync from Shopify</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {todayDetectedIssues.map((issue, idx) => (
-                  <div key={`issue-${idx}`} className="flex items-start gap-2 text-sm">
-                    <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">
-                      Detected <span className="text-foreground font-medium">{issue.problemType}</span> on "{issue.entityName}"
-                    </span>
-                  </div>
-                ))}
-                {todayFixesExecuted.map((fix, idx) => (
-                  <div key={`fix-${idx}`} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">
-                      Automatic repair applied to <span className="text-foreground font-medium">{fix.surfaceTouched}</span> on "{fix.entityName}"
-                    </span>
-                  </div>
-                ))}
-                {todayFixesExecuted.length > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <RefreshCw className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span>Live monitoring & rollback enabled</span>
+                  <div className="space-y-2">
+                    {todayDetectedIssues.map((issue, idx) => (
+                      <div key={`issue-${idx}`} className="flex items-start gap-2 text-sm">
+                        <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">
+                          Detected <span className="text-foreground font-medium">{issue.problemType}</span> on "{issue.entityName}"
+                        </span>
+                      </div>
+                    ))}
+                    {todayFixesExecuted.map((fix, idx) => (
+                      <div key={`fix-${idx}`} className="flex items-start gap-2 text-sm">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground">
+                          Automatic repair applied to <span className="text-foreground font-medium">{fix.surfaceTouched}</span> on "{fix.entityName}"
+                        </span>
+                      </div>
+                    ))}
+                    {todayFixesExecuted.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <RefreshCw className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span>Live monitoring & rollback enabled</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Protected Surfaces Block */}
-          <div className="bg-muted/20 rounded-lg p-4 mb-6" data-testid="protected-surfaces-block">
-            <h3 className="text-sm font-medium text-foreground mb-3">What ZYRA is protecting</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {/* Protected Surfaces Block - Badge Style */}
+          <div className="mb-6" data-testid="protected-surfaces-block">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-medium">What ZYRA is Protecting</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {protectedSurfaces.map((surface, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <surface.icon className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  <span>{surface.label}</span>
+                <div 
+                  key={idx}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-card/50 border border-border/50 hover-elevate"
+                  data-testid={`badge-protected-${idx}`}
+                >
+                  <div className={`p-2 rounded-lg ${surface.bgColor}`}>
+                    <surface.icon className={`w-4 h-4 ${surface.color}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{surface.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{surface.description}</p>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                 </div>
               ))}
             </div>
