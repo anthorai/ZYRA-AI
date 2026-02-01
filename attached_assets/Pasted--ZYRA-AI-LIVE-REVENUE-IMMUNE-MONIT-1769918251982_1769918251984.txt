@@ -1,0 +1,289 @@
+/* =========================================================
+   ZYRA AI — LIVE REVENUE IMMUNE MONITOR v4
+   REAL-TIME STORE INTELLIGENCE + LIVE ACTIVITY LOG
+   (SL / SQL BOX — PRODUCTION-READY MASTER PROMPT)
+   ========================================================= */
+
+/* ===============================
+   SYSTEM ROLE
+   =============================== */
+SYSTEM_ROLE = 'Principal Systems Architect + Real-Time Intelligence Engineer + Advanced Cyber-UI Designer';
+
+/*
+MISSION:
+Convert Revenue Immune System into a LIVE, BREATHING,
+SHOPIFY-GRADE MONITORING SYSTEM that proves:
+
+• Continuous 24/7 scanning
+• Real system intelligence (not UI theater)
+• Active background protection
+• Deep Shopify surface coverage
+• Zero reliance on dashboards or charts
+
+This must feel closer to:
+“Cloud security monitoring / SOC system”
+NOT:
+“SaaS settings card”
+*/
+
+/* =========================================================
+   CORE EXPERIENCE LAW
+   ========================================================= */
+
+CORE_LAW:
+  "If merchants can’t SEE the system working,
+   they will never TRUST it."
+
+SECONDARY_LAW:
+  "Still UI = dead system.
+   Motion + logs = living system."
+
+/* =========================================================
+   UI COMPONENT: LIVE REVENUE IMMUNE MONITOR (V4)
+   ========================================================= */
+
+CREATE UI_COMPONENT live_revenue_immune_monitor_v4 AS
+BEGIN
+
+  /* ===============================
+     HEADER — LIVE SYSTEM IDENTITY
+     =============================== */
+  HEADER:
+    TITLE = 'Revenue Immune System';
+    STATUS = 'LIVE MONITORING';
+    STATUS_INDICATOR = animated_multi_pulse_shield;
+    SUBTEXT = 'Revenue defense running in real time';
+    TOGGLE = protection_on_off;
+
+  /*
+  VISUAL RULES:
+  - Indicator must pulse continuously
+  - Subtle glow + wave animation
+  - NEVER static
+  */
+
+  /* ===============================
+     LIVE SCANNING EXPLANATION BAR
+     =============================== */
+  SCAN_EXPLANATION_BAR:
+    TEXT =
+      'ZYRA is continuously scanning your Shopify store for
+       revenue decay, intent mismatch, SEO erosion,
+       and recovery flow fatigue — automatically and silently.';
+
+  /*
+  PURPOSE:
+  - Explain WHAT is being scanned
+  - Explain WHY it is always running
+  - Remove mystery without complexity
+  */
+
+  /* ===============================
+     ZYRA LIVE ACTIVITY LOG (CORE TRUST ENGINE)
+     =============================== */
+  ZYRA_ACTIVITY_LOG:
+    TITLE = 'ZYRA Live Activity Log';
+    MODE = realtime_system_feed;
+    AUTO_SCROLL = true;
+    MAX_VISIBLE_EVENTS = 8;
+
+    LOG_EVENT_FORMAT:
+      '[{timestamp}] {system_module}: {activity_description}';
+
+    LOG_EVENT_EXAMPLES:
+      '[12:41:02] Product Scanner: Scanning 46 products for intent decay'
+      '[12:41:05] SEO Monitor: Comparing keyword relevance against competitors'
+      '[12:41:09] Conversion Watcher: Traffic-to-revenue ratio stable'
+      '[12:41:14] Recovery Guard: Monitoring 2 active recovery flows'
+      '[12:41:18] Revenue Engine: No leakage detected'
+      '[12:41:22] System Status: Store health stable'
+
+  /*
+  HARD RULES:
+  - Updates every 2–6 seconds
+  - Always emits activity (even when stable)
+  - Text-only (system log feel)
+  - Calm, confident language
+  */
+
+  /* ===============================
+     ACTIVE SCANNING ENGINES (POWER DISPLAY)
+     =============================== */
+  ACTIVE_SCANNING_ENGINES:
+    TITLE = 'Active Revenue Defense Engines';
+
+    ENGINE:
+      NAME = 'Product Intent Intelligence';
+      STATUS = 'RUNNING';
+      DESCRIPTION = 'Detecting copy decay & buyer intent mismatch';
+
+    ENGINE:
+      NAME = 'SEO Drift Intelligence';
+      STATUS = 'RUNNING';
+      DESCRIPTION = 'Monitoring rankings, impressions & relevance decay';
+
+    ENGINE:
+      NAME = 'Conversion Integrity Engine';
+      STATUS = 'RUNNING';
+      DESCRIPTION = 'Analyzing traffic vs conversion stability';
+
+    ENGINE:
+      NAME = 'Recovery Flow Intelligence';
+      STATUS = 'RUNNING';
+      DESCRIPTION = 'Preventing email & SMS message fatigue';
+
+  /*
+  VISUAL STYLE:
+  - Cyber-wave glow
+  - Status dots animate independently
+  - Looks like system modules, not features
+  */
+
+  /* ===============================
+     TODAY’S DEFENSE REPORT
+     =============================== */
+  TODAY_DEFENSE_REPORT:
+    TITLE = 'Today’s Revenue Defense Report';
+
+    IF no_fixes_today THEN
+      SHOW:
+        '✓ {N} products scanned'
+        '✓ {N} SEO checks completed'
+        '✓ No revenue decay detected'
+        '✓ Store fully protected today';
+    END IF;
+
+    IF fixes_today THEN
+      FOR EACH fix:
+        SHOW:
+          '⚠️ {problem_type} detected on "{entity_name}"'
+          '✓ Automatic repair applied'
+          '↺ Live monitoring & rollback enabled';
+      END FOR;
+    END IF;
+
+  /*
+  PURPOSE:
+  - Daily reassurance
+  - Replace dashboards with summaries
+  - Make “nothing happened” feel powerful
+  */
+
+  /* ===============================
+     MONTHLY REVENUE PROTECTION LEDGER
+     =============================== */
+  MONTHLY_PROTECTION_LEDGER:
+    LABEL = 'Revenue loss prevented (this month)';
+    VALUE = '₹{amount}';
+
+    IF amount == 0 THEN
+      NOTE = 'No revenue decay occurred — prevention successful';
+    END IF;
+
+  /* ===============================
+     DEFENSE SENSITIVITY CONTROL
+     =============================== */
+  DEFENSE_SENSITIVITY:
+    LABEL = 'Defense Sensitivity';
+    OPTIONS = ('Conservative', 'Balanced', 'Aggressive');
+    DESCRIPTION = 'Controls how early ZYRA intervenes';
+
+END;
+
+/* =========================================================
+   BACKEND — ENTERPRISE-GRADE LIVE SCANNING SYSTEM
+   ========================================================= */
+
+/* ===============================
+   REAL-TIME STORE INTELLIGENCE ORCHESTRATOR
+   =============================== */
+CREATE SERVICE realtime_store_intelligence_orchestrator AS
+BEGIN
+  MODE = continuous_event_stream + scheduled_deep_scans;
+
+  SCAN_LAYERS:
+    - micro_scans: every 2–5 minutes
+    - surface_scans: every 15 minutes
+    - deep_decay_analysis: hourly
+    - longitudinal_memory_updates: daily;
+
+  INTELLIGENCE_SURFACES:
+    - product content & metadata
+    - SEO performance signals
+    - traffic vs revenue patterns
+    - recovery flow efficiency
+    - historical decay patterns;
+
+  OUTPUT:
+    live_activity_events[];
+END;
+
+/* ===============================
+   LIVE UI EVENT PIPELINE
+   =============================== */
+CREATE SERVICE zyra_live_event_pipeline AS
+BEGIN
+  EVENT_TYPES:
+    - scan_started
+    - scan_in_progress
+    - surface_verified
+    - anomaly_detected
+    - auto_fix_applied
+    - rollback_ready
+    - store_stable;
+
+  DELIVERY:
+    - WebSocket / SSE (low latency);
+
+  RULE:
+    System MUST always emit events to show life;
+END;
+
+/* =========================================================
+   SAFETY, TRUST & PSYCHOLOGY RULES
+   ========================================================= */
+
+SYSTEM_TONE:
+  - Calm
+  - Professional
+  - Confident
+  - Never alarming
+
+SAFETY_GUARDS:
+  - No false urgency
+  - No red panic states
+  - Rollback always enabled
+  - Silent execution only
+
+/* =========================================================
+   FAILURE CONDITIONS
+   ========================================================= */
+
+FAIL_IF:
+  - UI feels static
+  - Logs stop updating
+  - Merchant can’t tell system is scanning
+  - Looks like a normal SaaS card
+  - Feels optional or decorative
+
+/* =========================================================
+   SUCCESS CONDITIONS
+   ========================================================= */
+
+SUCCESS_IF:
+  - Merchant immediately feels store is watched
+  - UI feels alive even during stability
+  - Turning OFF feels like disabling security
+  - System feels more advanced than Shopify native tools
+
+/* =========================================================
+   FINAL DIRECTIVE
+   ========================================================= */
+
+FINAL_DIRECTIVE:
+  "This UI must feel like a live revenue security console,
+   not a feature panel."
+
+/* ===============================
+   END OF SL / SQL BOX PROMPT
+   =============================== */
