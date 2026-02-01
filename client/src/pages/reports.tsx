@@ -566,21 +566,17 @@ export default function Reports() {
                     <div className="space-y-3">
                       {totalProductsMonitored > 0 ? (
                         <>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                            <span className="text-sm text-foreground">{totalProductsMonitored} products scanned</span>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                            <Package className="w-5 h-5 text-primary flex-shrink-0" />
+                            <span className="text-sm text-foreground">{totalProductsMonitored} products being monitored</span>
                           </div>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                            <span className="text-sm text-foreground">SEO checks completed</span>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                            <Eye className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm text-muted-foreground">No activity logged today yet</span>
                           </div>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                            <span className="text-sm text-foreground">No revenue decay detected</span>
-                          </div>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                            <span className="text-sm text-foreground">Store fully protected today</span>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                            <Bot className="w-5 h-5 text-primary flex-shrink-0" />
+                            <span className="text-sm text-foreground">ZYRA is actively monitoring for issues</span>
                           </div>
                         </>
                       ) : (
