@@ -355,17 +355,42 @@ export default function RevenueImmuneCard() {
                 <div className="flex items-center gap-2 mt-1">
                   <Badge 
                     variant={isActive ? "default" : "secondary"}
-                    className={isActive ? "bg-green-500/20 text-green-500 border-green-500/30" : ""}
+                    className={
+                      !isActive 
+                        ? "" 
+                        : isConnected 
+                          ? "bg-green-500/20 text-green-500 border-green-500/30" 
+                          : isReconnecting 
+                            ? "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+                            : "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                    }
                     data-testid="badge-immune-status"
                   >
                     <span className="flex items-center gap-1.5">
-                      {isActive && (
+                      {isActive && isConnected && (
                         <span className="relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                         </span>
                       )}
-                      {isActive ? "LIVE MONITORING" : "PAUSED"}
+                      {isActive && isReconnecting && !isConnected && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-pulse inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                        </span>
+                      )}
+                      {isActive && !isConnected && !isReconnecting && (
+                        <span className="inline-flex gap-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
+                        </span>
+                      )}
+                      {!isActive 
+                        ? "PAUSED" 
+                        : isConnected 
+                          ? "LIVE" 
+                          : isReconnecting 
+                            ? "RECONNECTING" 
+                            : "CONNECTING"}
                     </span>
                   </Badge>
                   <Dialog open={learnMoreOpen} onOpenChange={setLearnMoreOpen}>
@@ -424,7 +449,13 @@ export default function RevenueImmuneCard() {
                   </Dialog>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {isActive ? 'Revenue defense running in real time' : 'Protection paused'}
+                  {!isActive 
+                    ? 'Protection paused' 
+                    : isConnected 
+                      ? 'Revenue defense running in real time' 
+                      : isReconnecting 
+                        ? 'Reconnecting to monitoring system...'
+                        : 'Establishing connection to monitoring system...'}
                 </p>
               </div>
             </div>
