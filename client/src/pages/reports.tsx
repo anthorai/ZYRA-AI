@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useZyraActivityStream } from "@/hooks/useZyraActivityStream";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +36,12 @@ import {
   ChevronUp,
   ChevronDown,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Zap,
+  Search,
+  Wrench,
+  Award,
+  Radio
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -140,12 +146,72 @@ export default function Reports() {
     enabled: !!user,
   });
 
+  const { events: sseEvents, isConnected, isReconnecting } = useZyraActivityStream();
+
   const [todayReportExpanded, setTodayReportExpanded] = useState(true);
 
   const todayDetectedIssues = revenueImmuneData?.todayDetectedIssues || [];
   const todayFixesExecuted = revenueImmuneData?.todayFixesExecuted || [];
   const totalProductsMonitored = revenueImmuneData?.totalProductsMonitored || 0;
   const hasActivityToday = todayDetectedIssues.length > 0 || todayFixesExecuted.length > 0;
+
+  const liveActivityLog = useMemo(() => {
+    return sseEvents.slice(-10).map(event => {
+      let icon = Activity;
+      let color = "text-primary";
+      let bgColor = "bg-primary/5";
+      let borderColor = "border-primary/20";
+
+      switch (event.phase) {
+        case 'detect':
+          icon = Search;
+          color = "text-blue-500";
+          bgColor = "bg-blue-500/5";
+          borderColor = "border-blue-500/20";
+          break;
+        case 'decide':
+          icon = Brain;
+          color = "text-purple-500";
+          bgColor = "bg-purple-500/5";
+          borderColor = "border-purple-500/20";
+          break;
+        case 'execute':
+          icon = Wrench;
+          color = "text-orange-500";
+          bgColor = "bg-orange-500/5";
+          borderColor = "border-orange-500/20";
+          break;
+        case 'prove':
+          icon = Award;
+          color = "text-green-500";
+          bgColor = "bg-green-500/5";
+          borderColor = "border-green-500/20";
+          break;
+        case 'learn':
+          icon = Lightbulb;
+          color = "text-yellow-500";
+          bgColor = "bg-yellow-500/5";
+          borderColor = "border-yellow-500/20";
+          break;
+        case 'standby':
+          icon = Eye;
+          color = "text-muted-foreground";
+          bgColor = "bg-muted/30";
+          borderColor = "border-muted";
+          break;
+      }
+
+      return {
+        ...event,
+        Icon: icon,
+        color,
+        bgColor,
+        borderColor
+      };
+    }).reverse();
+  }, [sseEvents]);
+
+  const hasLiveActivity = liveActivityLog.length > 0;
 
   const completedActions = actions?.filter(a => a.status === "completed") || [];
   const rolledBackActions = actions?.filter(a => a.status === "rolled_back") || [];
@@ -288,7 +354,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* TODAY'S REVENUE DEFENSE REPORT - Collapsible */}
+        {/* TODAY'S REVENUE DEFENSE REPORT - Collapsible with Live SSE Stream */}
         <Card className="border-primary/20" data-testid="today-defense-report-card">
           <button 
             onClick={() => setTodayReportExpanded(!todayReportExpanded)}
@@ -296,12 +362,32 @@ export default function Reports() {
             data-testid="button-toggle-today-report"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
+              <div className="p-2 rounded-lg bg-primary/10 relative">
                 <Clock className="w-5 h-5 text-primary" />
+                {isConnected && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                )}
               </div>
               <div className="text-left">
-                <h3 className="text-lg font-semibold text-foreground">Today's Revenue Defense Report</h3>
-                <p className="text-sm text-muted-foreground">Daily protection activity summary</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">Today's Revenue Defense Report</h3>
+                  {isConnected ? (
+                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                      <Radio className="w-3 h-3 mr-1 animate-pulse" />
+                      Live
+                    </Badge>
+                  ) : isReconnecting ? (
+                    <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-500 border-yellow-500/30">
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Reconnecting
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                      Connecting...
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">Real-time protection activity from ZYRA engine</p>
               </div>
             </div>
             {todayReportExpanded ? (
@@ -314,59 +400,113 @@ export default function Reports() {
           {todayReportExpanded && (
             <CardContent className="pt-0 pb-4 animate-in slide-in-from-top-2 duration-200">
               <Separator className="mb-4" />
-              {!hasActivityToday ? (
-                <div className="space-y-3">
-                  {totalProductsMonitored > 0 ? (
-                    <>
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-foreground">{totalProductsMonitored} products scanned</span>
+              
+              {/* Live SSE Activity Stream */}
+              {hasLiveActivity && (
+                <div className="mb-4" data-testid="live-sse-activity">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Activity Stream</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {liveActivityLog.map((event) => (
+                      <div 
+                        key={event.id} 
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border transition-all duration-300",
+                          event.bgColor,
+                          event.borderColor
+                        )}
+                        data-testid={`sse-event-${event.id}`}
+                      >
+                        <event.Icon className={cn("w-4 h-4 flex-shrink-0 mt-0.5", event.color)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <Badge variant="outline" className={cn("text-xs", event.color, "border-current/30 bg-transparent")}>
+                              {event.phase.toUpperCase()}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-foreground">{event.message}</p>
+                          {event.detail && (
+                            <p className="text-xs text-muted-foreground mt-1">{event.detail}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-foreground">SEO checks completed</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-foreground">No revenue decay detected</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-foreground">Store fully protected today</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-                      <Eye className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span className="text-sm text-muted-foreground">Waiting for products to sync from Shopify</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Static Today's Activity from API */}
+              {(hasActivityToday || !hasLiveActivity) && (
+                <>
+                  {hasLiveActivity && hasActivityToday && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <Activity className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Today's Recorded Activity</span>
+                      <div className="flex-1 h-px bg-border" />
                     </div>
                   )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {todayDetectedIssues.map((issue, idx) => (
-                    <div key={`issue-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
-                      <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-foreground">
-                        Detected <span className="font-medium text-yellow-500">{issue.problemType}</span> on "{issue.entityName}"
-                      </span>
+                  
+                  {!hasActivityToday && !hasLiveActivity ? (
+                    <div className="space-y-3">
+                      {totalProductsMonitored > 0 ? (
+                        <>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <span className="text-sm text-foreground">{totalProductsMonitored} products scanned</span>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <span className="text-sm text-foreground">SEO checks completed</span>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <span className="text-sm text-foreground">No revenue decay detected</span>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <span className="text-sm text-foreground">Store fully protected today</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                          <Eye className="w-5 h-5 text-primary flex-shrink-0" />
+                          <span className="text-sm text-muted-foreground">Waiting for products to sync from Shopify</span>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                  {todayFixesExecuted.map((fix, idx) => (
-                    <div key={`fix-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-foreground">
-                        Automatic repair applied to <span className="font-medium text-green-500">{fix.surfaceTouched}</span> on "{fix.entityName}"
-                      </span>
-                    </div>
-                  ))}
-                  {todayFixesExecuted.length > 0 && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                      <RefreshCw className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span className="text-sm text-foreground">Live monitoring & rollback enabled</span>
+                  ) : hasActivityToday && (
+                    <div className="space-y-3">
+                      {todayDetectedIssues.map((issue, idx) => (
+                        <div key={`issue-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+                          <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-foreground">
+                            Detected <span className="font-medium text-yellow-500">{issue.problemType}</span> on "{issue.entityName}"
+                          </span>
+                        </div>
+                      ))}
+                      {todayFixesExecuted.map((fix, idx) => (
+                        <div key={`fix-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                          <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-foreground">
+                            Automatic repair applied to <span className="font-medium text-green-500">{fix.surfaceTouched}</span> on "{fix.entityName}"
+                          </span>
+                        </div>
+                      ))}
+                      {todayFixesExecuted.length > 0 && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                          <RefreshCw className="w-5 h-5 text-primary flex-shrink-0" />
+                          <span className="text-sm text-foreground">Live monitoring & rollback enabled</span>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
               )}
             </CardContent>
           )}
