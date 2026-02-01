@@ -693,8 +693,14 @@ export default function Reports() {
                                         const after = action.payload?.after || action.result?.optimizedContent || {};
                                         const credits = actionAny.creditsUsed || actionAny.creditCost || 0;
                                         const isRolledBack = action.status === "rolled_back";
+                                        const isCompleted = action.status === "completed";
                                         const isPositive = action.actualImpact?.status === "positive";
                                         const isNegative = action.actualImpact?.status === "negative";
+                                        
+                                        // Check if any changes were actually stored
+                                        const hasBeforeData = before.title || before.description || before.seoTitle || before.metaDescription;
+                                        const hasAfterData = after.title || after.description || after.seoTitle || after.metaDescription;
+                                        const hasChanges = hasBeforeData || hasAfterData;
                                         
                                         return (
                                           <div 
@@ -702,7 +708,7 @@ export default function Reports() {
                                             className={cn(
                                               "p-3 rounded-lg border text-xs",
                                               isRolledBack ? "bg-blue-500/5 border-blue-500/20" :
-                                              isPositive ? "bg-green-500/5 border-green-500/20" :
+                                              isCompleted ? "bg-green-500/5 border-green-500/20" :
                                               isNegative ? "bg-red-500/5 border-red-500/20" :
                                               "bg-muted/30 border-border/50"
                                             )}
@@ -719,10 +725,10 @@ export default function Reports() {
                                                     <RotateCcw className="w-3 h-3 mr-1" />
                                                     Rolled Back
                                                   </Badge>
-                                                ) : isPositive ? (
+                                                ) : isCompleted ? (
                                                   <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
                                                     <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                    Success
+                                                    Completed
                                                   </Badge>
                                                 ) : isNegative ? (
                                                   <Badge variant="outline" className="text-xs bg-red-500/20 text-red-400 border-red-500/30">
@@ -730,9 +736,9 @@ export default function Reports() {
                                                     Declined
                                                   </Badge>
                                                 ) : (
-                                                  <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                                                    <Minus className="w-3 h-3 mr-1" />
-                                                    Pending
+                                                  <Badge variant="outline" className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                    Applied
                                                   </Badge>
                                                 )}
                                               </div>
@@ -744,60 +750,68 @@ export default function Reports() {
                                               )}
                                             </div>
                                             
-                                            {/* Before/After content */}
-                                            <div className="grid grid-cols-2 gap-2">
-                                              {/* Before column */}
-                                              <div className="p-2 rounded bg-muted/50 border border-border/30">
-                                                <p className="text-xs text-muted-foreground font-medium mb-1">Original</p>
-                                                {before.title && (
-                                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                                                    <span className="font-medium">Title:</span> {before.title}
-                                                  </p>
-                                                )}
-                                                {before.description && (
-                                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                                                    <span className="font-medium">Desc:</span> {before.description.substring(0, 80)}...
-                                                  </p>
-                                                )}
-                                                {before.seoTitle && (
-                                                  <p className="text-xs text-muted-foreground line-clamp-1">
-                                                    <span className="font-medium">SEO:</span> {before.seoTitle}
-                                                  </p>
-                                                )}
-                                                {!before.title && !before.description && !before.seoTitle && (
-                                                  <p className="text-xs text-muted-foreground italic">No data stored</p>
-                                                )}
+                                            {/* Before/After content - only show if changes recorded */}
+                                            {hasChanges ? (
+                                              <div className="grid grid-cols-2 gap-2">
+                                                {/* Before column */}
+                                                <div className="p-2 rounded bg-muted/50 border border-border/30">
+                                                  <p className="text-xs text-muted-foreground font-medium mb-1">Original</p>
+                                                  {before.title && (
+                                                    <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                                                      <span className="font-medium">Title:</span> {before.title}
+                                                    </p>
+                                                  )}
+                                                  {before.description && (
+                                                    <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                                                      <span className="font-medium">Desc:</span> {before.description.substring(0, 80)}...
+                                                    </p>
+                                                  )}
+                                                  {before.seoTitle && (
+                                                    <p className="text-xs text-muted-foreground line-clamp-1">
+                                                      <span className="font-medium">SEO:</span> {before.seoTitle}
+                                                    </p>
+                                                  )}
+                                                  {!hasBeforeData && (
+                                                    <p className="text-xs text-muted-foreground italic">Original not recorded</p>
+                                                  )}
+                                                </div>
+                                                
+                                                {/* After column */}
+                                                <div className={cn(
+                                                  "p-2 rounded border",
+                                                  isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
+                                                )}>
+                                                  <p className={cn(
+                                                    "text-xs font-medium mb-1",
+                                                    isRolledBack ? "text-blue-400" : "text-primary"
+                                                  )}>Changed To</p>
+                                                  {after.title && (
+                                                    <p className="text-xs line-clamp-2 mb-1">
+                                                      <span className="font-medium">Title:</span> {after.title}
+                                                    </p>
+                                                  )}
+                                                  {after.description && (
+                                                    <p className="text-xs line-clamp-2 mb-1">
+                                                      <span className="font-medium">Desc:</span> {after.description.substring(0, 80)}...
+                                                    </p>
+                                                  )}
+                                                  {after.seoTitle && (
+                                                    <p className="text-xs line-clamp-1">
+                                                      <span className="font-medium">SEO:</span> {after.seoTitle}
+                                                    </p>
+                                                  )}
+                                                  {!hasAfterData && (
+                                                    <p className="text-xs text-muted-foreground italic">Changes not recorded</p>
+                                                  )}
+                                                </div>
                                               </div>
-                                              
-                                              {/* After column */}
-                                              <div className={cn(
-                                                "p-2 rounded border",
-                                                isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
-                                              )}>
-                                                <p className={cn(
-                                                  "text-xs font-medium mb-1",
-                                                  isRolledBack ? "text-blue-400" : "text-primary"
-                                                )}>Changed To</p>
-                                                {after.title && (
-                                                  <p className="text-xs line-clamp-2 mb-1">
-                                                    <span className="font-medium">Title:</span> {after.title}
-                                                  </p>
-                                                )}
-                                                {after.description && (
-                                                  <p className="text-xs line-clamp-2 mb-1">
-                                                    <span className="font-medium">Desc:</span> {after.description.substring(0, 80)}...
-                                                  </p>
-                                                )}
-                                                {after.seoTitle && (
-                                                  <p className="text-xs line-clamp-1">
-                                                    <span className="font-medium">SEO:</span> {after.seoTitle}
-                                                  </p>
-                                                )}
-                                                {!after.title && !after.description && !after.seoTitle && (
-                                                  <p className="text-xs text-muted-foreground italic">Content optimized</p>
-                                                )}
+                                            ) : (
+                                              <div className="p-2 rounded bg-muted/30 border border-border/30 text-center">
+                                                <p className="text-xs text-muted-foreground">
+                                                  No change details recorded for this action
+                                                </p>
                                               </div>
-                                            </div>
+                                            )}
                                           </div>
                                         );
                                       })}
