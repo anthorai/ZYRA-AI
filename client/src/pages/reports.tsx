@@ -1,5 +1,31 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+
+interface TodayIssue {
+  problemType: string;
+  entityName: string;
+  timestamp: string;
+}
+
+interface TodayFix {
+  surfaceTouched: string;
+  entityName: string;
+  timestamp: string;
+}
+
+interface RevenueImmuneStatus {
+  isActive: boolean;
+  sensitivity: string;
+  preventedRevenue: number;
+  weeklyStats: {
+    scansPerformed: number;
+    fixesExecuted: number;
+    rollbacksNeeded: number;
+  };
+  totalProductsMonitored: number;
+  todayDetectedIssues: TodayIssue[];
+  todayFixesExecuted: TodayFix[];
+}
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +57,11 @@ import {
   Activity,
   Target,
   Minus,
-  Clock
+  Clock,
+  ChevronUp,
+  ChevronDown,
+  AlertTriangle,
+  RefreshCw
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -104,6 +134,18 @@ export default function Reports() {
     queryKey: ["/api/zyra/learnings"],
     enabled: !!user,
   });
+
+  const { data: revenueImmuneData } = useQuery<RevenueImmuneStatus>({
+    queryKey: ["/api/revenue-immune/status"],
+    enabled: !!user,
+  });
+
+  const [todayReportExpanded, setTodayReportExpanded] = useState(true);
+
+  const todayDetectedIssues = revenueImmuneData?.todayDetectedIssues || [];
+  const todayFixesExecuted = revenueImmuneData?.todayFixesExecuted || [];
+  const totalProductsMonitored = revenueImmuneData?.totalProductsMonitored || 0;
+  const hasActivityToday = todayDetectedIssues.length > 0 || todayFixesExecuted.length > 0;
 
   const completedActions = actions?.filter(a => a.status === "completed") || [];
   const rolledBackActions = actions?.filter(a => a.status === "rolled_back") || [];
@@ -244,6 +286,90 @@ export default function Reports() {
               </div>
             )}
           </CardContent>
+        </Card>
+
+        {/* TODAY'S REVENUE DEFENSE REPORT - Collapsible */}
+        <Card className="border-primary/20" data-testid="today-defense-report-card">
+          <button 
+            onClick={() => setTodayReportExpanded(!todayReportExpanded)}
+            className="w-full flex items-center justify-between p-4 hover-elevate rounded-t-lg"
+            data-testid="button-toggle-today-report"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-lg font-semibold text-foreground">Today's Revenue Defense Report</h3>
+                <p className="text-sm text-muted-foreground">Daily protection activity summary</p>
+              </div>
+            </div>
+            {todayReportExpanded ? (
+              <ChevronUp className="w-5 h-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            )}
+          </button>
+          
+          {todayReportExpanded && (
+            <CardContent className="pt-0 pb-4 animate-in slide-in-from-top-2 duration-200">
+              <Separator className="mb-4" />
+              {!hasActivityToday ? (
+                <div className="space-y-3">
+                  {totalProductsMonitored > 0 ? (
+                    <>
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-sm text-foreground">{totalProductsMonitored} products scanned</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-sm text-foreground">SEO checks completed</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-sm text-foreground">No revenue decay detected</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-sm text-foreground">Store fully protected today</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                      <Eye className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">Waiting for products to sync from Shopify</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {todayDetectedIssues.map((issue, idx) => (
+                    <div key={`issue-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+                      <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-foreground">
+                        Detected <span className="font-medium text-yellow-500">{issue.problemType}</span> on "{issue.entityName}"
+                      </span>
+                    </div>
+                  ))}
+                  {todayFixesExecuted.map((fix, idx) => (
+                    <div key={`fix-${idx}`} className="flex items-start gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-foreground">
+                        Automatic repair applied to <span className="font-medium text-green-500">{fix.surfaceTouched}</span> on "{fix.entityName}"
+                      </span>
+                    </div>
+                  ))}
+                  {todayFixesExecuted.length > 0 && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <RefreshCw className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span className="text-sm text-foreground">Live monitoring & rollback enabled</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          )}
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

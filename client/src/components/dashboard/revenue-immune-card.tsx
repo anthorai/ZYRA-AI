@@ -34,8 +34,6 @@ import {
   Eye,
   RefreshCw,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   History,
   Zap,
   Search,
@@ -182,7 +180,6 @@ export default function RevenueImmuneCard() {
   const queryClient = useQueryClient();
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [todayReportExpanded, setTodayReportExpanded] = useState(true);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const [connectionElapsed, setConnectionElapsed] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
@@ -948,84 +945,6 @@ export default function RevenueImmuneCard() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Today's Activity Block - Collapsible */}
-          <div className="bg-muted/20 rounded-lg mb-6 overflow-hidden" data-testid="today-activity-block">
-            <button 
-              onClick={() => setTodayReportExpanded(!todayReportExpanded)}
-              className="w-full flex items-center justify-between p-4 hover-elevate"
-              data-testid="button-toggle-today-report"
-            >
-              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                Today's Revenue Defense Report
-              </h3>
-              {todayReportExpanded ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              )}
-            </button>
-            
-            {todayReportExpanded && (
-              <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
-                {!hasActivityToday ? (
-                  <div className="space-y-2">
-                    {totalProductsMonitored > 0 ? (
-                      <>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span>{totalProductsMonitored} products scanned</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span>SEO checks completed</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span>No revenue decay detected</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span>Store fully protected today</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Eye className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span>Waiting for products to sync from Shopify</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {todayDetectedIssues.map((issue, idx) => (
-                      <div key={`issue-${idx}`} className="flex items-start gap-2 text-sm">
-                        <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">
-                          Detected <span className="text-foreground font-medium">{issue.problemType}</span> on "{issue.entityName}"
-                        </span>
-                      </div>
-                    ))}
-                    {todayFixesExecuted.map((fix, idx) => (
-                      <div key={`fix-${idx}`} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">
-                          Automatic repair applied to <span className="text-foreground font-medium">{fix.surfaceTouched}</span> on "{fix.entityName}"
-                        </span>
-                      </div>
-                    ))}
-                    {todayFixesExecuted.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <RefreshCw className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span>Live monitoring & rollback enabled</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Protected Surfaces Block - Badge Style */}
