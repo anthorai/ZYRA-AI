@@ -45,7 +45,6 @@ import {
   Lock,
   Wrench,
   SlidersHorizontal,
-  Cpu,
   Radar,
 } from "lucide-react";
 
