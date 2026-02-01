@@ -21478,8 +21478,6 @@ Return JSON array of segments only, no explanation text.`;
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.flushHeaders();
     
-    console.log(`[SSE] Client connected: ${userId}`);
-    
     // Use dynamic import for the event emitter
     import('./lib/zyra-event-emitter').then(({ ZyraEventEmitter }) => {
       // Send initial connection event

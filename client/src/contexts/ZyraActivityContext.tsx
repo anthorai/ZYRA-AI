@@ -58,11 +58,20 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
     isConnectingRef.current = true;
 
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      try {
+        abortControllerRef.current.abort();
+      } catch (e) {
+        // Ignore abort errors on previous controller
+      }
     }
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
+    
+    // Connection timeout - abort if no response in 10 seconds
+    const connectionTimeout = setTimeout(() => {
+      abortController.abort();
+    }, 10000);
 
     try {
       const response = await fetch('/api/zyra/activity-stream', {
@@ -75,6 +84,9 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
         signal: abortController.signal,
       });
       
+      // Clear the timeout since we got a response
+      clearTimeout(connectionTimeout);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -82,7 +94,6 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
       if (!response.body) {
         throw new Error('No response body');
       }
-
       if (isMountedRef.current) {
         setIsConnected(true);
         setIsReconnecting(false);
@@ -127,7 +138,7 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
               const data = JSON.parse(line.slice(6));
               
               if (data.type === 'connected') {
-                console.log('[SSE Context] Server acknowledged connection');
+                // Connection acknowledged by server
               } else if (data.type === 'history') {
                 if (data.events && Array.isArray(data.events) && isMountedRef.current) {
                   setEvents(data.events);
@@ -150,13 +161,22 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (err: any) {
+      clearTimeout(connectionTimeout);
       isConnectingRef.current = false;
       
       if (err.name === 'AbortError') {
+        // Connection was aborted - try to reconnect
+        if (reconnectAttempts.current < maxReconnectAttempts && isMountedRef.current) {
+          const delay = Math.min(baseReconnectDelay * Math.pow(1.5, reconnectAttempts.current), 30000);
+          setIsReconnecting(true);
+          setRetryCount(reconnectAttempts.current + 1);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttempts.current++;
+            connect();
+          }, delay);
+        }
         return;
       }
-      
-      console.error('[SSE Context] Connection error:', err);
       if (isMountedRef.current) {
         setIsConnected(false);
       }
@@ -181,6 +201,7 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
     isMountedRef.current = true;
     
     if (session?.access_token) {
+      // Small delay to allow React to stabilize after HMR
       connectTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current && !isConnectingRef.current) {
           connect();
