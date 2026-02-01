@@ -1,0 +1,87 @@
+/* =========================================================
+   ZYRA AI — LIVE ACTIVITY LOG UI (RESPONSIVE TEXT-DRIVEN)
+   UI-ONLY PROMPT
+   ========================================================= */
+
+SYSTEM_ROLE = 'Senior Cyber-UI Designer';
+
+/* ===============================
+   UI COMPONENT
+   =============================== */
+CREATE UI_COMPONENT zyra_live_activity_log_responsive AS
+BEGIN
+
+  CONTAINER:
+    STYLE = terminal_panel;
+    BACKGROUND = dark_gradient_navy;
+    BORDER_RADIUS = 14px;
+    SHADOW = soft_glow;
+    WIDTH = 100%;
+    HEIGHT = auto;              -- NOT FIXED
+    MIN_HEIGHT = content_based;
+    MAX_HEIGHT = content_based;
+    OVERFLOW = hidden;           -- NO SCROLL BAR
+    RESIZE = text_driven;
+
+  TOP_BAR:
+    HEIGHT = auto;
+    PADDING = 10px 14px;
+    LEFT_ICONS = (dot_red, dot_yellow, dot_green);
+    TITLE = 'ZYRA Activity Log';
+    TITLE_STYLE = monospace_subtle;
+    RIGHT_ICON = lock_icon;
+
+  LOG_BODY:
+    FONT = monospace;
+    FONT_SIZE = 13px;
+    LINE_HEIGHT = 1.6;
+    TEXT_COLOR = soft_white;
+    PADDING = 14px;
+    WIDTH = 100%;
+    HEIGHT = auto;              -- EXPANDS WITH TEXT
+    OVERFLOW = hidden;           -- NO SCROLL
+    WORD_WRAP = break-word;
+    WHITE_SPACE = pre-wrap;      -- MULTI-LINE SUPPORT
+
+  LOG_ENTRY:
+    PREFIX = '>_';
+    PREFIX_COLOR = neon_cyan;
+    DISPLAY = block;
+    MARGIN_BOTTOM = 6px;
+    ANIMATION = fade_in_up;
+    HEIGHT = auto;
+
+  LOG_LEVELS:
+    INFO = soft_blue;
+    SYSTEM = cyan;
+    SUCCESS = neon_green;
+    WARNING = amber;
+
+  LIVE_BEHAVIOR:
+    - typing_cursor_last_line
+    - animated_dots_inline
+    - new_log_pushes_container_height
+    - previous_logs_remain_visible
+    - no_auto_scroll;            -- HEIGHT GROWS INSTEAD
+
+  INITIAL_STATE:
+    '[INFO] Initializing ZYRA monitoring engine…'
+    '[INFO] Connecting to activity stream…'
+    '[SYSTEM] Establishing real-time connection';
+
+END;
+
+/* ===============================
+   STRICT UI RULES
+   =============================== */
+
+UI_CONSTRAINTS:
+  - NO fixed height
+  - NO scrollbars
+  - Container must grow/shrink with text
+  - Logs must wrap naturally
+  - UI must stay clean at all screen sizes
+
+/* ===============================
+   END UI PROMPT
+   =============================== */
