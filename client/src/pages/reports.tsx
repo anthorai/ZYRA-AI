@@ -1,31 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-
-interface TodayIssue {
-  problemType: string;
-  entityName: string;
-  timestamp: string;
-}
-
-interface TodayFix {
-  surfaceTouched: string;
-  entityName: string;
-  timestamp: string;
-}
-
-interface RevenueImmuneStatus {
-  isActive: boolean;
-  sensitivity: string;
-  preventedRevenue: number;
-  weeklyStats: {
-    scansPerformed: number;
-    fixesExecuted: number;
-    rollbacksNeeded: number;
-  };
-  totalProductsMonitored: number;
-  todayDetectedIssues: TodayIssue[];
-  todayFixesExecuted: TodayFix[];
-}
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +39,32 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+
+interface TodayIssue {
+  problemType: string;
+  entityName: string;
+  timestamp: string;
+}
+
+interface TodayFix {
+  surfaceTouched: string;
+  entityName: string;
+  timestamp: string;
+}
+
+interface RevenueImmuneStatus {
+  isActive: boolean;
+  sensitivity: string;
+  preventedRevenue: number;
+  weeklyStats: {
+    scansPerformed: number;
+    fixesExecuted: number;
+    rollbacksNeeded: number;
+  };
+  totalProductsMonitored: number;
+  todayDetectedIssues: TodayIssue[];
+  todayFixesExecuted: TodayFix[];
+}
 
 interface AutonomousAction {
   id: string;

@@ -273,8 +273,6 @@ export default function RevenueImmuneCard() {
   const currency = immuneData?.currency ?? "₹";
   const lastScanTimestamp = immuneData?.lastScanTimestamp;
   const totalProductsMonitored = immuneData?.totalProductsMonitored ?? 0;
-  const todayDetectedIssues = immuneData?.todayDetectedIssues ?? [];
-  const todayFixesExecuted = immuneData?.todayFixesExecuted ?? [];
   const weeklyStats = immuneData?.weeklyStats;
   const protectionScope = immuneData?.protectionScope ?? ['Products', 'SEO', 'Recovery flows'];
 
@@ -369,8 +367,6 @@ export default function RevenueImmuneCard() {
     { label: "Message Fatigue", description: "Recovery flow optimization", icon: Mail, color: "text-amber-500", bgColor: "bg-amber-500/10" },
     { label: "Revenue Leakage", description: "Silent loss detection", icon: Shield, color: "text-rose-500", bgColor: "bg-rose-500/10" },
   ];
-
-  const hasActivityToday = todayDetectedIssues.length > 0 || todayFixesExecuted.length > 0;
 
   if (isLoading) {
     return (
