@@ -217,6 +217,7 @@ export default function Reports() {
   const rolledBackActions = actions?.filter(a => a.status === "rolled_back") || [];
 
   // Group actions by product for consolidated timeline view
+  // Use productName as the grouping key since productId might be unique per action
   const groupedProductActions = useMemo(() => {
     const allActions = [...completedActions, ...rolledBackActions];
     const productMap = new Map<string, {
@@ -232,8 +233,10 @@ export default function Reports() {
     }>();
 
     allActions.forEach(action => {
-      const productId = action.productId || action.id;
-      const existing = productMap.get(productId);
+      // Group by product name (normalized) to merge same products
+      const productName = action.productName?.trim() || "Product Update";
+      const groupKey = productName.toLowerCase();
+      const existing = productMap.get(groupKey);
       const revenue = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
       const isPositive = action.actualImpact?.status === "positive";
       const isNegative = action.actualImpact?.status === "negative";
@@ -246,13 +249,17 @@ export default function Reports() {
         existing.hasPositive = existing.hasPositive || isPositive;
         existing.hasNegative = existing.hasNegative || isNegative;
         existing.hasRolledBack = existing.hasRolledBack || isRolledBack;
+        // Keep the most recent image
+        if (!existing.productImage && action.productImage) {
+          existing.productImage = action.productImage;
+        }
         if (actionDate > existing.latestAction) {
           existing.latestAction = actionDate;
         }
       } else {
-        productMap.set(productId, {
-          productId,
-          productName: action.productName || "Product Update",
+        productMap.set(groupKey, {
+          productId: action.productId || action.id,
+          productName: productName,
           productImage: action.productImage || null,
           actions: [action],
           totalRevenue: typeof revenue === 'number' ? revenue : parseFloat(revenue) || 0,
