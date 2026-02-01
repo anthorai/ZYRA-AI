@@ -94,24 +94,36 @@ const PHASE_MODULE_MAP: Record<ZyraActivityEvent['phase'], string> = {
 
 const SCANNING_ENGINES = [
   {
+    id: 'product-intent',
     name: 'Product Intent Intelligence',
+    shortName: 'INTENT',
     description: 'Detecting copy decay & buyer intent mismatch',
     icon: Search,
+    keywords: ['product', 'copy', 'description', 'intent', 'detect', 'decision'],
   },
   {
+    id: 'seo-drift',
     name: 'SEO Drift Intelligence',
+    shortName: 'SEO',
     description: 'Monitoring rankings, impressions & relevance decay',
     icon: TrendingUp,
+    keywords: ['seo', 'ranking', 'search', 'keyword', 'meta', 'title'],
   },
   {
+    id: 'conversion-integrity',
     name: 'Conversion Integrity Engine',
+    shortName: 'CONV',
     description: 'Analyzing traffic vs conversion stability',
     icon: Activity,
+    keywords: ['conversion', 'traffic', 'execute', 'optimize', 'proof', 'prove'],
   },
   {
+    id: 'recovery-flow',
     name: 'Recovery Flow Intelligence',
+    shortName: 'RCVR',
     description: 'Preventing email & SMS message fatigue',
     icon: Mail,
+    keywords: ['email', 'sms', 'cart', 'recover', 'message', 'campaign', 'learn'],
   },
 ];
 
@@ -205,6 +217,35 @@ export default function RevenueImmuneCard() {
         status: event.status,
       };
     });
+  }, [sseEvents]);
+
+  // Map SSE events to engines based on keywords
+  const engineActivity = useMemo(() => {
+    const activity: Record<string, { lastEvent: ZyraActivityEvent | null; recentCount: number }> = {};
+    
+    SCANNING_ENGINES.forEach(engine => {
+      activity[engine.id] = { lastEvent: null, recentCount: 0 };
+    });
+
+    // Look at last 20 events to map to engines
+    const recentEvents = sseEvents.slice(-20);
+    
+    recentEvents.forEach(event => {
+      const messageLower = event.message.toLowerCase();
+      const phaseLower = event.phase.toLowerCase();
+      
+      SCANNING_ENGINES.forEach(engine => {
+        const matched = engine.keywords.some(keyword => 
+          messageLower.includes(keyword) || phaseLower.includes(keyword)
+        );
+        if (matched) {
+          activity[engine.id].lastEvent = event;
+          activity[engine.id].recentCount++;
+        }
+      });
+    });
+
+    return activity;
   }, [sseEvents]);
 
   useEffect(() => {
@@ -532,45 +573,172 @@ export default function RevenueImmuneCard() {
             </div>
           )}
 
-          {/* Active Scanning Engines */}
+          {/* Active Revenue Defense Engines - Terminal Style */}
           {isActive && (
-            <div className="bg-muted/20 rounded-lg p-4 mb-6 border border-border/50" data-testid="scanning-engines-block">
-              <h3 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                Active Revenue Defense Engines
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {SCANNING_ENGINES.map((engine, idx) => (
-                  <div 
-                    key={idx}
-                    data-testid={`card-engine-${engine.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    className="flex items-start gap-3 p-3 bg-background/50 rounded-lg border border-border/30"
-                  >
-                    <div className="relative flex-shrink-0">
-                      <div className="p-2 rounded-md bg-primary/10">
-                        <engine.icon className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="absolute -top-1 -right-1">
-                        <span className="relative flex h-2.5 w-2.5">
-                          <span 
-                            className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-                            style={{ animationDelay: `${idx * 0.2}s` }}
-                          ></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                        </span>
-                      </div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground truncate">{engine.name}</p>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-500/30 text-green-500 flex-shrink-0">
-                          RUNNING
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{engine.description}</p>
-                    </div>
+            <div 
+              className="rounded-[14px] mb-6 overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.1)]"
+              data-testid="scanning-engines-block"
+            >
+              {/* Terminal Header */}
+              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-3 sm:px-4 py-2.5 flex items-center justify-between border-b border-slate-700/50">
+                <div className="flex items-center gap-2">
+                  {/* macOS Window Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/90 shadow-[0_0_4px_rgba(239,68,68,0.5)]" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/90 shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/90 shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
                   </div>
-                ))}
+                  <span className="ml-3 text-[10px] sm:text-xs font-mono text-slate-400 tracking-wide">Revenue Defense Engines</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Global Connection Status */}
+                  <div className="flex items-center gap-1.5">
+                    {isConnected ? (
+                      <div className="relative">
+                        <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-400" />
+                        <div className="absolute inset-0 animate-ping">
+                          <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-400 opacity-40" />
+                        </div>
+                      </div>
+                    ) : isReconnecting ? (
+                      <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-400 animate-pulse" />
+                    ) : (
+                      <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500" />
+                    )}
+                    <span 
+                      className={`text-[9px] sm:text-[10px] font-mono uppercase tracking-wider ${
+                        isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-slate-500'
+                      }`}
+                    >
+                      {isConnected ? "ALL LIVE" : isReconnecting ? "SYNCING" : "OFFLINE"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Engine Grid Body */}
+              <div className="bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-800 p-3 sm:p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                  {SCANNING_ENGINES.map((engine, idx) => {
+                    const activity = engineActivity[engine.id];
+                    const hasRecentActivity = activity?.recentCount > 0;
+                    const engineStatus = isConnected ? 'live' : isReconnecting ? 'connecting' : 'offline';
+                    
+                    return (
+                      <div 
+                        key={engine.id}
+                        data-testid={`card-engine-${engine.id}`}
+                        className="relative bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden group"
+                      >
+                        {/* Engine Header */}
+                        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-700/30">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="relative flex-shrink-0">
+                              <div className={`p-1.5 rounded-md ${
+                                engineStatus === 'live' ? 'bg-green-500/10' : 
+                                engineStatus === 'connecting' ? 'bg-yellow-500/10' : 'bg-slate-600/20'
+                              }`}>
+                                <engine.icon className={`w-3.5 h-3.5 ${
+                                  engineStatus === 'live' ? 'text-green-400' : 
+                                  engineStatus === 'connecting' ? 'text-yellow-400' : 'text-slate-500'
+                                }`} />
+                              </div>
+                              {/* Status dot */}
+                              <div className="absolute -top-0.5 -right-0.5">
+                                {engineStatus === 'live' ? (
+                                  <span className="relative flex h-2 w-2">
+                                    <span 
+                                      className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                                      style={{ animationDelay: `${idx * 200}ms` }}
+                                    />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                                  </span>
+                                ) : engineStatus === 'connecting' ? (
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-pulse inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex rounded-full h-2 w-2 bg-slate-600" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[11px] sm:text-xs font-mono font-medium text-slate-200 truncate">
+                                {engine.shortName}
+                              </p>
+                            </div>
+                          </div>
+                          {/* Status Badge */}
+                          <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono uppercase tracking-wider ${
+                            engineStatus === 'live' 
+                              ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                              : engineStatus === 'connecting'
+                                ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                : 'bg-slate-600/20 text-slate-500 border border-slate-600/30'
+                          }`}>
+                            {engineStatus === 'live' ? (
+                              <>
+                                <span className="inline-flex gap-0.5">
+                                  <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+                                  <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '150ms' }} />
+                                </span>
+                                <span>LIVE</span>
+                              </>
+                            ) : engineStatus === 'connecting' ? (
+                              <>
+                                <span className="inline-flex gap-0.5">
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
+                                </span>
+                                <span>SYNC</span>
+                              </>
+                            ) : (
+                              <span>OFFLINE</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Engine Activity Body */}
+                        <div className="p-2.5 sm:p-3 font-mono text-[10px] sm:text-[11px] min-h-[52px]">
+                          {hasRecentActivity && activity?.lastEvent ? (
+                            <div className="flex items-start gap-1.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300">
+                              <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                              <span className="text-slate-400 break-words leading-relaxed">
+                                {activity.lastEvent.message.length > 60 
+                                  ? activity.lastEvent.message.substring(0, 60) + '...'
+                                  : activity.lastEvent.message}
+                              </span>
+                              <span className="inline-block w-1.5 h-3 bg-cyan-400/70 animate-pulse ml-0.5 flex-shrink-0" />
+                            </div>
+                          ) : (
+                            <div className="flex items-start gap-1.5">
+                              <span className="text-slate-600 flex-shrink-0">{'>_'}</span>
+                              <span className="text-slate-500 break-words leading-relaxed">
+                                {engineStatus === 'live' 
+                                  ? engine.description 
+                                  : engineStatus === 'connecting'
+                                    ? 'Syncing with monitoring system...'
+                                    : 'Engine offline'}
+                              </span>
+                              {engineStatus === 'connecting' && (
+                                <span className="inline-flex gap-0.5 ml-1 flex-shrink-0">
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '300ms' }} />
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Activity indicator line */}
+                        {hasRecentActivity && engineStatus === 'live' && (
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-400/50 to-transparent animate-pulse" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
