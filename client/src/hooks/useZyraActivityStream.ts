@@ -33,6 +33,7 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
   const abortControllerRef = useRef<AbortController | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
+  const isMountedRef = useRef(true);
   const maxReconnectAttempts = 5;
   const baseReconnectDelay = 2000;
 
@@ -59,10 +60,11 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
         },
         signal: abortController.signal,
       });
-
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -71,9 +73,11 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
         throw new Error('No response body');
       }
 
-      setIsConnected(true);
-      setIsReconnecting(false);
-      setError(null);
+      if (isMountedRef.current) {
+        setIsConnected(true);
+        setIsReconnecting(false);
+        setError(null);
+      }
       reconnectAttempts.current = 0;
 
       const reader = response.body.getReader();
@@ -84,10 +88,11 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
         const { done, value } = await reader.read();
         
         if (done) {
-          console.log('[SSE] Stream ended normally');
-          setIsConnected(false);
+          if (isMountedRef.current) {
+            setIsConnected(false);
+          }
           // Attempt reconnection on normal stream end
-          if (reconnectAttempts.current < maxReconnectAttempts) {
+          if (reconnectAttempts.current < maxReconnectAttempts && isMountedRef.current) {
             const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts.current);
             setIsReconnecting(true);
             reconnectTimeoutRef.current = setTimeout(() => {
@@ -112,17 +117,19 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
               if (data.type === 'connected') {
                 console.log('[SSE] Server acknowledged connection');
               } else if (data.type === 'history') {
-                if (data.events && Array.isArray(data.events)) {
+                if (data.events && Array.isArray(data.events) && isMountedRef.current) {
                   setEvents(data.events);
                 }
               } else if (data.type === 'activity') {
-                setEvents(prev => {
-                  const newEvents = [...prev, data.event];
-                  if (newEvents.length > 50) {
-                    return newEvents.slice(-50);
-                  }
-                  return newEvents;
-                });
+                if (isMountedRef.current) {
+                  setEvents(prev => {
+                    const newEvents = [...prev, data.event];
+                    if (newEvents.length > 50) {
+                      return newEvents.slice(-50);
+                    }
+                    return newEvents;
+                  });
+                }
               }
             } catch (parseError) {
               console.error('[SSE] Failed to parse event:', parseError);
@@ -137,10 +144,12 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
       }
       
       console.error('[SSE] Connection error:', err);
-      setIsConnected(false);
+      if (isMountedRef.current) {
+        setIsConnected(false);
+      }
       
       // Attempt reconnection
-      if (reconnectAttempts.current < maxReconnectAttempts) {
+      if (reconnectAttempts.current < maxReconnectAttempts && isMountedRef.current) {
         const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts.current);
         setIsReconnecting(true);
         setError('Connection lost. Reconnecting...');
@@ -156,20 +165,35 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
     }
   }, [session?.access_token]);
 
+  // Store connect in a ref to avoid dependency issues
+  const connectRef = useRef(connect);
+  connectRef.current = connect;
+  const hasConnectedRef = useRef(false);
+  
+  // Single effect that handles connection based on token availability
   useEffect(() => {
-    if (session?.access_token) {
-      connect();
+    isMountedRef.current = true;
+    
+    if (session?.access_token && !hasConnectedRef.current) {
+      hasConnectedRef.current = true;
+      connectRef.current();
     }
 
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      const wasConnected = hasConnectedRef.current;
+      isMountedRef.current = false;
+      
+      if (wasConnected) {
+        hasConnectedRef.current = false;
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
       }
     };
-  }, [session?.access_token, connect]);
+  }, [session?.access_token]);
 
   return {
     events,
