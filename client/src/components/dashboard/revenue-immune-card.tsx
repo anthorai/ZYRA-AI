@@ -42,6 +42,7 @@ import {
   Radio,
   Wifi,
   WifiOff,
+  Lock,
 } from "lucide-react";
 
 interface TodayIssue {
@@ -382,62 +383,115 @@ export default function RevenueImmuneCard() {
             </div>
           )}
 
-          {/* Live Activity Log */}
+          {/* Live Activity Log - Terminal Style */}
           {isActive && (
-            <div className="bg-muted/30 rounded-lg p-4 mb-6 border border-border/50" data-testid="live-activity-log">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="relative">
-                  {isConnected ? (
-                    <>
-                      <Wifi className="w-4 h-4 text-green-500" />
-                      <div className="absolute inset-0 animate-ping">
-                        <Wifi className="w-4 h-4 text-green-500 opacity-50" />
-                      </div>
-                    </>
-                  ) : (
-                    <WifiOff className="w-4 h-4 text-muted-foreground" />
-                  )}
+            <div 
+              className="rounded-[14px] mb-6 overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.15)]" 
+              style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}
+              data-testid="live-activity-log"
+            >
+              {/* Terminal Top Bar */}
+              <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  {/* macOS Window Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/90 shadow-[0_0_4px_rgba(239,68,68,0.5)]" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/90 shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/90 shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
+                  </div>
+                  <span className="ml-3 text-xs font-mono text-slate-400 tracking-wide">ZYRA Activity Log</span>
                 </div>
-                <h3 className="text-sm font-medium text-foreground">ZYRA Live Activity Log</h3>
-                <Badge 
-                  variant="outline" 
-                  className={`text-xs ml-auto ${
-                    isConnected 
-                      ? "border-green-500/30 text-green-500" 
-                      : isReconnecting 
-                        ? "border-yellow-500/30 text-yellow-500"
-                        : "border-muted-foreground/30 text-muted-foreground"
-                  }`}
-                  data-testid="badge-sse-status"
-                >
-                  {isConnected ? "LIVE" : isReconnecting ? "RECONNECTING..." : "CONNECTING..."}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {/* Connection Status */}
+                  <div className="flex items-center gap-1.5">
+                    {isConnected ? (
+                      <div className="relative">
+                        <Wifi className="w-3.5 h-3.5 text-green-400" />
+                        <div className="absolute inset-0 animate-ping">
+                          <Wifi className="w-3.5 h-3.5 text-green-400 opacity-40" />
+                        </div>
+                      </div>
+                    ) : (
+                      <WifiOff className="w-3.5 h-3.5 text-slate-500" />
+                    )}
+                    <span 
+                      className={`text-[10px] font-mono uppercase tracking-wider ${
+                        isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-slate-500'
+                      }`}
+                      data-testid="badge-sse-status"
+                    >
+                      {isConnected ? "LIVE" : isReconnecting ? "RECONNECTING" : "CONNECTING"}
+                    </span>
+                  </div>
+                  <Lock className="w-3.5 h-3.5 text-slate-500" />
+                </div>
               </div>
+
+              {/* Terminal Log Body */}
               <div 
                 ref={logContainerRef}
-                className="bg-background/50 rounded-md p-3 font-mono text-xs space-y-1.5 max-h-[200px] overflow-y-auto scroll-smooth"
-                style={{ scrollBehavior: 'smooth' }}
+                className="p-4 font-mono text-[13px] leading-relaxed"
+                data-testid="log-body"
               >
                 {activityLog.length === 0 ? (
-                  <p className="text-muted-foreground" data-testid="text-log-initializing">
-                    {isConnected 
-                      ? "Listening for scanning events..." 
-                      : isReconnecting 
-                        ? "Reconnecting to activity stream..."
-                        : "Connecting to ZYRA activity stream..."}
-                  </p>
-                ) : (
-                  activityLog.map((event) => (
-                    <div 
-                      key={event.id}
-                      data-testid={`row-activity-${event.id}`}
-                      className="flex items-start gap-2 text-muted-foreground animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-                    >
-                      <span className="text-primary/70 flex-shrink-0">[{event.timestamp}]</span>
-                      <span className="text-foreground/80 font-medium">{event.module}:</span>
-                      <span>{event.message}</span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-start gap-2 animate-in fade-in-0 duration-500">
+                      <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                      <span className="text-blue-300">[INFO]</span>
+                      <span className="text-slate-300">Initializing ZYRA monitoring engine...</span>
                     </div>
-                  ))
+                    <div className="flex items-start gap-2 animate-in fade-in-0 duration-500 delay-150">
+                      <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                      <span className="text-cyan-300">[SYSTEM]</span>
+                      <span className="text-slate-300">
+                        {isConnected 
+                          ? "Listening for scanning events..." 
+                          : isReconnecting 
+                            ? "Reconnecting to activity stream..."
+                            : "Establishing real-time connection..."}
+                      </span>
+                      {/* Typing cursor animation */}
+                      <span className="inline-block w-2 h-4 bg-cyan-400/80 animate-pulse" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {activityLog.map((event, index) => {
+                      const isLast = index === activityLog.length - 1;
+                      const logLevel = event.status === 'warning' ? 'WARNING'
+                        : event.status === 'error' ? 'ERROR'
+                        : event.status === 'success' ? 'SUCCESS'
+                        : event.module.includes('Detection') ? 'INFO' 
+                        : event.module.includes('Decision') ? 'SYSTEM'
+                        : event.module.includes('Execution') ? 'SUCCESS'
+                        : event.module.includes('Proof') ? 'SUCCESS'
+                        : event.module.includes('Learn') ? 'INFO'
+                        : 'SYSTEM';
+                      const levelColor = logLevel === 'INFO' ? 'text-blue-300'
+                        : logLevel === 'SYSTEM' ? 'text-cyan-300'
+                        : logLevel === 'SUCCESS' ? 'text-green-400'
+                        : logLevel === 'WARNING' ? 'text-amber-400'
+                        : logLevel === 'ERROR' ? 'text-red-400'
+                        : 'text-amber-400';
+                      
+                      return (
+                        <div 
+                          key={event.id}
+                          data-testid={`row-activity-${event.id}`}
+                          className="flex items-start gap-2 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+                          style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}
+                        >
+                          <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                          <span className={`${levelColor} flex-shrink-0`}>[{logLevel}]</span>
+                          <span className="text-slate-300">{event.message}</span>
+                          {/* Typing cursor on last entry */}
+                          {isLast && (
+                            <span className="inline-block w-2 h-4 bg-cyan-400/80 animate-pulse ml-0.5" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
