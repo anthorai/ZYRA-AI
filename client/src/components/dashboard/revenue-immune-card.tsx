@@ -43,6 +43,10 @@ import {
   Wifi,
   WifiOff,
   Lock,
+  Wrench,
+  SlidersHorizontal,
+  Cpu,
+  Radar,
 } from "lucide-react";
 
 interface TodayIssue {
@@ -124,6 +128,51 @@ const SCANNING_ENGINES = [
     description: 'Preventing email & SMS message fatigue',
     icon: Mail,
     keywords: ['email', 'sms', 'cart', 'recover', 'message', 'campaign', 'learn'],
+  },
+];
+
+const SYSTEM_CAPABILITIES = [
+  {
+    icon: Clock,
+    title: '24/7 Monitoring',
+    description: 'Always-on autonomous protection',
+    color: 'text-blue-500',
+  },
+  {
+    icon: Shield,
+    title: '4 Defense Engines',
+    description: 'Multi-layer revenue protection',
+    color: 'text-green-500',
+  },
+  {
+    icon: Radar,
+    title: 'Auto Detection',
+    description: 'Issues found before impact',
+    color: 'text-amber-500',
+  },
+  {
+    icon: Wrench,
+    title: 'Silent Repairs',
+    description: 'Automatic fixes applied',
+    color: 'text-purple-500',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Revenue Tracking',
+    description: 'Prevention value measured',
+    color: 'text-emerald-500',
+  },
+  {
+    icon: SlidersHorizontal,
+    title: 'Configurable',
+    description: 'Adjust sensitivity levels',
+    color: 'text-cyan-500',
+  },
+  {
+    icon: Radio,
+    title: 'Real-Time Stream',
+    description: 'Live SSE activity feed',
+    color: 'text-pink-500',
   },
 ];
 
@@ -875,6 +924,28 @@ export default function RevenueImmuneCard() {
                 <p className="text-xs mt-0.5">Prevention happens before loss — this is a good sign</p>
               </div>
             )}
+          </div>
+
+          {/* System Capabilities Badges */}
+          <div className="mb-6" data-testid="system-capabilities-block">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-medium">System Capabilities</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {SYSTEM_CAPABILITIES.map((capability, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30 hover-elevate"
+                  data-testid={`badge-capability-${idx}`}
+                >
+                  <div className={`p-1.5 rounded-md bg-background/50 ${capability.color}`}>
+                    <capability.icon className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground truncate">{capability.title}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{capability.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Today's Activity Block */}
