@@ -310,7 +310,18 @@ export default function Reports() {
       }
     });
 
-    return Array.from(productMap.values())
+    // Filter to only include products that have at least one action with recorded before/after data
+    const productsWithChanges = Array.from(productMap.values()).filter(group => {
+      return group.actions.some(action => {
+        const before = action.payload?.before || {};
+        const after = action.payload?.after || action.result?.optimizedContent || {};
+        const hasBeforeData = before.title || before.description || before.seoTitle || before.metaDescription;
+        const hasAfterData = after.title || after.description || after.seoTitle || after.metaDescription;
+        return hasBeforeData || hasAfterData;
+      });
+    });
+    
+    return productsWithChanges
       .sort((a, b) => b.latestAction.getTime() - a.latestAction.getTime())
       .slice(0, 15);
   }, [completedActions, rolledBackActions]);
