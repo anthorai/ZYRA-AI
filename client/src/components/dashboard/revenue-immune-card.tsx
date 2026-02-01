@@ -133,8 +133,37 @@ export default function RevenueImmuneCard() {
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
+  const [connectionElapsed, setConnectionElapsed] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const connectionTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { events: sseEvents, isConnected, isReconnecting } = useZyraActivityStream();
+
+  // Track connection time and retry count
+  useEffect(() => {
+    if (isConnected) {
+      setConnectionElapsed(0);
+      setRetryCount(0);
+      if (connectionTimerRef.current) {
+        clearInterval(connectionTimerRef.current);
+        connectionTimerRef.current = null;
+      }
+    } else {
+      if (!connectionTimerRef.current) {
+        connectionTimerRef.current = setInterval(() => {
+          setConnectionElapsed(prev => prev + 1);
+        }, 1000);
+      }
+      if (isReconnecting) {
+        setRetryCount(prev => prev + 1);
+      }
+    }
+    return () => {
+      if (connectionTimerRef.current) {
+        clearInterval(connectionTimerRef.current);
+      }
+    };
+  }, [isConnected, isReconnecting]);
 
   const { data: immuneData, isLoading: isLoadingImmune } = useQuery<RevenueImmuneData>({
     queryKey: ['/api/revenue-immune/status'],
@@ -476,11 +505,14 @@ export default function RevenueImmuneCard() {
               >
                 {activityLog.length === 0 ? (
                   <div className="space-y-2 sm:space-y-1.5">
+                    {/* Line 1: Initializing */}
                     <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 duration-500">
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                       <span className="text-blue-300 flex-shrink-0">[INFO]</span>
                       <span className="text-slate-300 break-words">Initializing ZYRA monitoring engine...</span>
                     </div>
+                    
+                    {/* Line 2: Connection status */}
                     <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 duration-500 delay-150">
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                       <span className={`flex-shrink-0 ${isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-cyan-300'}`}>
@@ -501,6 +533,9 @@ export default function RevenueImmuneCard() {
                         ) : isReconnecting ? (
                           <>
                             <span className="text-yellow-400">Reconnecting</span>
+                            {retryCount > 0 && (
+                              <span className="text-slate-500 text-[10px]">(attempt {retryCount})</span>
+                            )}
                             <span className="inline-flex gap-0.5 ml-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
                               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
@@ -510,6 +545,7 @@ export default function RevenueImmuneCard() {
                         ) : (
                           <>
                             <span>Establishing connection</span>
+                            <span className="text-slate-500 text-[10px] ml-1">({connectionElapsed}s)</span>
                             <span className="inline-flex gap-0.5 ml-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
                               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
@@ -519,13 +555,61 @@ export default function RevenueImmuneCard() {
                         )}
                       </span>
                     </div>
+
+                    {/* Line 3: Wait message or timeout warning */}
                     {!isConnected && (
                       <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-300">
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
-                        <span className="text-slate-500 flex-shrink-0">[WAIT]</span>
-                        <span className="text-slate-400 break-words text-[10px] sm:text-[12px]">
-                          Real-time stream will activate shortly
-                          <span className="inline-block w-1.5 h-3 sm:h-4 bg-cyan-400/70 animate-pulse ml-1" />
+                        {connectionElapsed >= 10 ? (
+                          <>
+                            <span className="text-amber-400 flex-shrink-0">[SLOW]</span>
+                            <span className="text-amber-300 break-words text-[10px] sm:text-[12px]">
+                              Connection taking longer than expected. Auto-retrying...
+                              <span className="inline-block w-1.5 h-3 sm:h-4 bg-amber-400/70 animate-pulse ml-1" />
+                            </span>
+                          </>
+                        ) : connectionElapsed >= 5 ? (
+                          <>
+                            <span className="text-yellow-400 flex-shrink-0">[WAIT]</span>
+                            <span className="text-yellow-300 break-words text-[10px] sm:text-[12px]">
+                              Taking longer than expected. Please wait...
+                              <span className="inline-block w-1.5 h-3 sm:h-4 bg-yellow-400/70 animate-pulse ml-1" />
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-slate-500 flex-shrink-0">[WAIT]</span>
+                            <span className="text-slate-400 break-words text-[10px] sm:text-[12px]">
+                              Real-time stream will activate shortly
+                              <span className="inline-block w-1.5 h-3 sm:h-4 bg-cyan-400/70 animate-pulse ml-1" />
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Line 4: Additional status when connection is slow */}
+                    {!isConnected && connectionElapsed >= 5 && (
+                      <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                        <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                        <span className="text-slate-600 flex-shrink-0">[DEBUG]</span>
+                        <span className="text-slate-500 break-words text-[9px] sm:text-[11px]">
+                          {connectionElapsed >= 15 
+                            ? `Reconnection in progress... (${connectionElapsed}s elapsed)`
+                            : connectionElapsed >= 10
+                              ? 'Checking server availability...'
+                              : 'Waiting for SSE endpoint response...'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Line 5: Network hint when very slow */}
+                    {!isConnected && connectionElapsed >= 15 && (
+                      <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                        <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                        <span className="text-slate-600 flex-shrink-0">[HINT]</span>
+                        <span className="text-slate-500 break-words text-[9px] sm:text-[11px]">
+                          Check network connection or refresh page if issue persists
                         </span>
                       </div>
                     )}
