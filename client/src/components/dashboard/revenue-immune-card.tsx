@@ -430,29 +430,64 @@ export default function RevenueImmuneCard() {
               {/* Terminal Log Body */}
               <div 
                 ref={logContainerRef}
-                className="p-4 font-mono text-[13px] leading-relaxed"
+                className="p-3 sm:p-4 font-mono text-[11px] sm:text-[13px] leading-relaxed"
                 data-testid="log-body"
               >
                 {activityLog.length === 0 ? (
-                  <div className="space-y-1.5">
-                    <div className="flex items-start gap-2 animate-in fade-in-0 duration-500">
+                  <div className="space-y-2 sm:space-y-1.5">
+                    <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 duration-500">
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
-                      <span className="text-blue-300">[INFO]</span>
-                      <span className="text-slate-300">Initializing ZYRA monitoring engine...</span>
+                      <span className="text-blue-300 flex-shrink-0">[INFO]</span>
+                      <span className="text-slate-300 break-words">Initializing ZYRA monitoring engine...</span>
                     </div>
-                    <div className="flex items-start gap-2 animate-in fade-in-0 duration-500 delay-150">
+                    <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 duration-500 delay-150">
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
-                      <span className="text-cyan-300">[SYSTEM]</span>
-                      <span className="text-slate-300">
-                        {isConnected 
-                          ? "Listening for scanning events..." 
-                          : isReconnecting 
-                            ? "Reconnecting to activity stream..."
-                            : "Establishing real-time connection..."}
+                      <span className={`flex-shrink-0 ${isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-cyan-300'}`}>
+                        [{isConnected ? 'OK' : isReconnecting ? 'RETRY' : 'SYSTEM'}]
                       </span>
-                      {/* Typing cursor animation */}
-                      <span className="inline-block w-2 h-4 bg-cyan-400/80 animate-pulse" />
+                      <span className="text-slate-300 break-words flex items-center gap-1 flex-wrap">
+                        {isConnected ? (
+                          <>
+                            <span className="text-green-400">Connected</span>
+                            <span className="hidden sm:inline">—</span>
+                            <span>Listening for scanning events</span>
+                            <span className="inline-flex gap-0.5 ml-1">
+                              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+                              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '300ms' }} />
+                            </span>
+                          </>
+                        ) : isReconnecting ? (
+                          <>
+                            <span className="text-yellow-400">Reconnecting</span>
+                            <span className="inline-flex gap-0.5 ml-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '300ms' }} />
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Establishing connection</span>
+                            <span className="inline-flex gap-0.5 ml-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '300ms' }} />
+                            </span>
+                          </>
+                        )}
+                      </span>
                     </div>
+                    {!isConnected && (
+                      <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-300">
+                        <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                        <span className="text-slate-500 flex-shrink-0">[WAIT]</span>
+                        <span className="text-slate-400 break-words text-[10px] sm:text-[12px]">
+                          Real-time stream will activate shortly
+                          <span className="inline-block w-1.5 h-3 sm:h-4 bg-cyan-400/70 animate-pulse ml-1" />
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-1.5">
