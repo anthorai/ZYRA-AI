@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useZyraActivityStream, ZyraActivityEvent } from "@/hooks/useZyraActivityStream";
 import {
   ShieldCheck,
   Info,
@@ -39,6 +40,8 @@ import {
   TrendingUp,
   Mail,
   Radio,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
 interface TodayIssue {
@@ -79,51 +82,14 @@ interface AutomationSettings {
   autopilotMode: string;
 }
 
-interface ActivityLogEvent {
-  id: string;
-  timestamp: string;
-  module: string;
-  message: string;
-}
-
-const ACTIVITY_MODULES = [
-  { name: 'Product Scanner', messages: [
-    'Scanning products for intent decay',
-    'Analyzing product descriptions for buyer alignment',
-    'Checking title optimization across catalog',
-    'Verifying product metadata consistency',
-  ]},
-  { name: 'SEO Monitor', messages: [
-    'Comparing keyword relevance against competitors',
-    'Checking meta tag optimization',
-    'Analyzing search ranking positions',
-    'Monitoring organic traffic patterns',
-  ]},
-  { name: 'Conversion Watcher', messages: [
-    'Traffic-to-revenue ratio stable',
-    'Analyzing checkout funnel performance',
-    'Monitoring add-to-cart conversion rates',
-    'Checking page load impact on conversions',
-  ]},
-  { name: 'Recovery Guard', messages: [
-    'Monitoring active recovery flows',
-    'Checking email sequence engagement',
-    'Analyzing SMS campaign effectiveness',
-    'Evaluating message fatigue signals',
-  ]},
-  { name: 'Revenue Engine', messages: [
-    'No leakage detected',
-    'Revenue streams verified healthy',
-    'Checking pricing consistency',
-    'Monitoring discount impact',
-  ]},
-  { name: 'System Status', messages: [
-    'Store health stable',
-    'All defense systems operational',
-    'Protection layers verified',
-    'Scan cycle completed successfully',
-  ]},
-];
+const PHASE_MODULE_MAP: Record<ZyraActivityEvent['phase'], string> = {
+  'detect': 'Detection Engine',
+  'decide': 'Decision Engine',
+  'execute': 'Execution Engine',
+  'prove': 'Proof Engine',
+  'learn': 'Learning Engine',
+  'standby': 'System Status',
+};
 
 const SCANNING_ENGINES = [
   {
@@ -153,8 +119,9 @@ export default function RevenueImmuneCard() {
   const queryClient = useQueryClient();
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [activityLog, setActivityLog] = useState<ActivityLogEvent[]>([]);
   const logContainerRef = useRef<HTMLDivElement>(null);
+  
+  const { events: sseEvents, isConnected, isReconnecting } = useZyraActivityStream();
 
   const { data: immuneData, isLoading: isLoadingImmune } = useQuery<RevenueImmuneData>({
     queryKey: ['/api/revenue-immune/status'],
@@ -221,68 +188,23 @@ export default function RevenueImmuneCard() {
   const weeklyStats = immuneData?.weeklyStats;
   const protectionScope = immuneData?.protectionScope ?? ['Products', 'SEO', 'Recovery flows'];
 
-  const activityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const generateActivityEvent = useCallback((): ActivityLogEvent => {
-    const moduleIndex = Math.floor(Math.random() * ACTIVITY_MODULES.length);
-    const module = ACTIVITY_MODULES[moduleIndex];
-    const messageIndex = Math.floor(Math.random() * module.messages.length);
-    const now = new Date();
-    const timestamp = now.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit' 
+  const activityLog = useMemo(() => {
+    return sseEvents.slice(-8).map(event => {
+      const timestamp = new Date(event.timestamp).toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      return {
+        id: event.id,
+        timestamp,
+        module: PHASE_MODULE_MAP[event.phase] || 'System',
+        message: event.message,
+        status: event.status,
+      };
     });
-    
-    return {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp,
-      module: module.name,
-      message: module.messages[messageIndex],
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isActive) {
-      setActivityLog([]);
-      if (activityTimeoutRef.current) {
-        clearTimeout(activityTimeoutRef.current);
-        activityTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    const initialEvents: ActivityLogEvent[] = [];
-    for (let i = 0; i < 5; i++) {
-      initialEvents.push(generateActivityEvent());
-    }
-    setActivityLog(initialEvents);
-
-    const scheduleNextEvent = () => {
-      const delay = 2000 + Math.random() * 4000;
-      activityTimeoutRef.current = setTimeout(() => {
-        setActivityLog(prev => {
-          const newEvent = generateActivityEvent();
-          const updated = [...prev, newEvent];
-          if (updated.length > 8) {
-            return updated.slice(-8);
-          }
-          return updated;
-        });
-        scheduleNextEvent();
-      }, delay);
-    };
-
-    scheduleNextEvent();
-
-    return () => {
-      if (activityTimeoutRef.current) {
-        clearTimeout(activityTimeoutRef.current);
-        activityTimeoutRef.current = null;
-      }
-    };
-  }, [isActive, generateActivityEvent]);
+  }, [sseEvents]);
 
   useEffect(() => {
     if (logContainerRef.current) {
@@ -465,14 +387,30 @@ export default function RevenueImmuneCard() {
             <div className="bg-muted/30 rounded-lg p-4 mb-6 border border-border/50" data-testid="live-activity-log">
               <div className="flex items-center gap-2 mb-3">
                 <div className="relative">
-                  <Zap className="w-4 h-4 text-primary" />
-                  <div className="absolute inset-0 animate-ping">
-                    <Zap className="w-4 h-4 text-primary opacity-50" />
-                  </div>
+                  {isConnected ? (
+                    <>
+                      <Wifi className="w-4 h-4 text-green-500" />
+                      <div className="absolute inset-0 animate-ping">
+                        <Wifi className="w-4 h-4 text-green-500 opacity-50" />
+                      </div>
+                    </>
+                  ) : (
+                    <WifiOff className="w-4 h-4 text-muted-foreground" />
+                  )}
                 </div>
                 <h3 className="text-sm font-medium text-foreground">ZYRA Live Activity Log</h3>
-                <Badge variant="outline" className="text-xs ml-auto border-green-500/30 text-green-500">
-                  LIVE
+                <Badge 
+                  variant="outline" 
+                  className={`text-xs ml-auto ${
+                    isConnected 
+                      ? "border-green-500/30 text-green-500" 
+                      : isReconnecting 
+                        ? "border-yellow-500/30 text-yellow-500"
+                        : "border-muted-foreground/30 text-muted-foreground"
+                  }`}
+                  data-testid="badge-sse-status"
+                >
+                  {isConnected ? "LIVE" : isReconnecting ? "RECONNECTING..." : "CONNECTING..."}
                 </Badge>
               </div>
               <div 
@@ -481,7 +419,13 @@ export default function RevenueImmuneCard() {
                 style={{ scrollBehavior: 'smooth' }}
               >
                 {activityLog.length === 0 ? (
-                  <p className="text-muted-foreground" data-testid="text-log-initializing">Initializing scan engines...</p>
+                  <p className="text-muted-foreground" data-testid="text-log-initializing">
+                    {isConnected 
+                      ? "Listening for scanning events..." 
+                      : isReconnecting 
+                        ? "Reconnecting to activity stream..."
+                        : "Connecting to ZYRA activity stream..."}
+                  </p>
                 ) : (
                   activityLog.map((event) => (
                     <div 
