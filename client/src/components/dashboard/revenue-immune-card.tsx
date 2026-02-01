@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useZyraActivityStream, ZyraActivityEvent } from "@/hooks/useZyraActivityStream";
+import { useZyraActivity, ZyraActivityEvent } from "@/contexts/ZyraActivityContext";
 import {
   ShieldCheck,
   Info,
@@ -182,16 +182,14 @@ export default function RevenueImmuneCard() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const [connectionElapsed, setConnectionElapsed] = useState(0);
-  const [retryCount, setRetryCount] = useState(0);
   const connectionTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { events: sseEvents, isConnected, isReconnecting } = useZyraActivityStream();
+  const { events: sseEvents, isConnected, isReconnecting, retryCount } = useZyraActivity();
 
-  // Track connection time and retry count
+  // Track connection elapsed time
   useEffect(() => {
     if (isConnected) {
       setConnectionElapsed(0);
-      setRetryCount(0);
       if (connectionTimerRef.current) {
         clearInterval(connectionTimerRef.current);
         connectionTimerRef.current = null;
@@ -202,16 +200,13 @@ export default function RevenueImmuneCard() {
           setConnectionElapsed(prev => prev + 1);
         }, 1000);
       }
-      if (isReconnecting) {
-        setRetryCount(prev => prev + 1);
-      }
     }
     return () => {
       if (connectionTimerRef.current) {
         clearInterval(connectionTimerRef.current);
       }
     };
-  }, [isConnected, isReconnecting]);
+  }, [isConnected]);
 
   const { data: immuneData, isLoading: isLoadingImmune } = useQuery<RevenueImmuneData>({
     queryKey: ['/api/revenue-immune/status'],

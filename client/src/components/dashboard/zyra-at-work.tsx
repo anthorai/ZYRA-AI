@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RevenueDelta } from "@/components/ui/revenue-delta";
-import { useZyraActivityStream, ZyraActivityEvent } from "@/hooks/useZyraActivityStream";
+import { useZyraActivity, ZyraActivityEvent } from "@/contexts/ZyraActivityContext";
 import { 
   Activity, 
   Search, 
@@ -836,7 +836,7 @@ function ProgressStages({
   const targetStage = phaseToMinStage[detectionPhase] || 0;
   
   // Real-time activity stream
-  const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivityStream();
+  const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivity();
 
   // Map SSE event phases to progress stages (1-8)
   // Stages 1-4: DETECT phase (checking store, identifying friction, estimating revenue, selecting opportunity)
@@ -1859,7 +1859,7 @@ export default function ZyraAtWork() {
   const [, setLocation] = useLocation();
   
   // Real-time SSE activity stream for phase indicators
-  const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivityStream();
+  const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivity();
   
   // Optimization mode preference (stored in localStorage)
   const [optimizationMode, setOptimizationMode] = useState<OptimizationMode>(() => {

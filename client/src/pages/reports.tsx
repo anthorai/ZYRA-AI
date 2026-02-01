@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useZyraActivityStream } from "@/hooks/useZyraActivityStream";
+import { useZyraActivity } from "@/contexts/ZyraActivityContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -151,7 +151,7 @@ export default function Reports() {
     enabled: !!user,
   });
 
-  const { events: sseEvents, isConnected, isReconnecting } = useZyraActivityStream();
+  const { events: sseEvents, isConnected, isReconnecting } = useZyraActivity();
 
   const [todayReportExpanded, setTodayReportExpanded] = useState(true);
 
