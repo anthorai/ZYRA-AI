@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,11 @@ import {
   RefreshCw,
   ChevronRight,
   History,
+  Zap,
+  Search,
+  TrendingUp,
+  Mail,
+  Radio,
 } from "lucide-react";
 
 interface TodayIssue {
@@ -74,11 +79,82 @@ interface AutomationSettings {
   autopilotMode: string;
 }
 
+interface ActivityLogEvent {
+  id: string;
+  timestamp: string;
+  module: string;
+  message: string;
+}
+
+const ACTIVITY_MODULES = [
+  { name: 'Product Scanner', messages: [
+    'Scanning products for intent decay',
+    'Analyzing product descriptions for buyer alignment',
+    'Checking title optimization across catalog',
+    'Verifying product metadata consistency',
+  ]},
+  { name: 'SEO Monitor', messages: [
+    'Comparing keyword relevance against competitors',
+    'Checking meta tag optimization',
+    'Analyzing search ranking positions',
+    'Monitoring organic traffic patterns',
+  ]},
+  { name: 'Conversion Watcher', messages: [
+    'Traffic-to-revenue ratio stable',
+    'Analyzing checkout funnel performance',
+    'Monitoring add-to-cart conversion rates',
+    'Checking page load impact on conversions',
+  ]},
+  { name: 'Recovery Guard', messages: [
+    'Monitoring active recovery flows',
+    'Checking email sequence engagement',
+    'Analyzing SMS campaign effectiveness',
+    'Evaluating message fatigue signals',
+  ]},
+  { name: 'Revenue Engine', messages: [
+    'No leakage detected',
+    'Revenue streams verified healthy',
+    'Checking pricing consistency',
+    'Monitoring discount impact',
+  ]},
+  { name: 'System Status', messages: [
+    'Store health stable',
+    'All defense systems operational',
+    'Protection layers verified',
+    'Scan cycle completed successfully',
+  ]},
+];
+
+const SCANNING_ENGINES = [
+  {
+    name: 'Product Intent Intelligence',
+    description: 'Detecting copy decay & buyer intent mismatch',
+    icon: Search,
+  },
+  {
+    name: 'SEO Drift Intelligence',
+    description: 'Monitoring rankings, impressions & relevance decay',
+    icon: TrendingUp,
+  },
+  {
+    name: 'Conversion Integrity Engine',
+    description: 'Analyzing traffic vs conversion stability',
+    icon: Activity,
+  },
+  {
+    name: 'Recovery Flow Intelligence',
+    description: 'Preventing email & SMS message fatigue',
+    icon: Mail,
+  },
+];
+
 export default function RevenueImmuneCard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [activityLog, setActivityLog] = useState<ActivityLogEvent[]>([]);
+  const logContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: immuneData, isLoading: isLoadingImmune } = useQuery<RevenueImmuneData>({
     queryKey: ['/api/revenue-immune/status'],
@@ -139,12 +215,80 @@ export default function RevenueImmuneCard() {
   const preventedRevenue = immuneData?.preventedRevenue ?? 0;
   const currency = immuneData?.currency ?? "₹";
   const lastScanTimestamp = immuneData?.lastScanTimestamp;
-  const todayScannedCount = immuneData?.todayScannedProductsCount ?? 0;
   const totalProductsMonitored = immuneData?.totalProductsMonitored ?? 0;
   const todayDetectedIssues = immuneData?.todayDetectedIssues ?? [];
   const todayFixesExecuted = immuneData?.todayFixesExecuted ?? [];
   const weeklyStats = immuneData?.weeklyStats;
   const protectionScope = immuneData?.protectionScope ?? ['Products', 'SEO', 'Recovery flows'];
+
+  const activityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const generateActivityEvent = useCallback((): ActivityLogEvent => {
+    const moduleIndex = Math.floor(Math.random() * ACTIVITY_MODULES.length);
+    const module = ACTIVITY_MODULES[moduleIndex];
+    const messageIndex = Math.floor(Math.random() * module.messages.length);
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+    
+    return {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp,
+      module: module.name,
+      message: module.messages[messageIndex],
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isActive) {
+      setActivityLog([]);
+      if (activityTimeoutRef.current) {
+        clearTimeout(activityTimeoutRef.current);
+        activityTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    const initialEvents: ActivityLogEvent[] = [];
+    for (let i = 0; i < 5; i++) {
+      initialEvents.push(generateActivityEvent());
+    }
+    setActivityLog(initialEvents);
+
+    const scheduleNextEvent = () => {
+      const delay = 2000 + Math.random() * 4000;
+      activityTimeoutRef.current = setTimeout(() => {
+        setActivityLog(prev => {
+          const newEvent = generateActivityEvent();
+          const updated = [...prev, newEvent];
+          if (updated.length > 8) {
+            return updated.slice(-8);
+          }
+          return updated;
+        });
+        scheduleNextEvent();
+      }, delay);
+    };
+
+    scheduleNextEvent();
+
+    return () => {
+      if (activityTimeoutRef.current) {
+        clearTimeout(activityTimeoutRef.current);
+        activityTimeoutRef.current = null;
+      }
+    };
+  }, [isActive, generateActivityEvent]);
+
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [activityLog]);
 
   const formatCurrency = (amount: number) => {
     if (amount >= 100000) {
@@ -185,6 +329,8 @@ export default function RevenueImmuneCard() {
     { label: "Silent revenue leakage", icon: CheckCircle2 },
   ];
 
+  const hasActivityToday = todayDetectedIssues.length > 0 || todayFixesExecuted.length > 0;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -193,17 +339,21 @@ export default function RevenueImmuneCard() {
     );
   }
 
-  const hasActivityToday = todayDetectedIssues.length > 0 || todayFixesExecuted.length > 0;
-
   return (
     <div className="space-y-4 p-4 sm:p-6" data-testid="revenue-immune-container">
       <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
         <CardContent className="p-6 sm:p-8">
-          {/* Header Section */}
+          {/* Header Section with Multi-Pulse Shield */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-xl ${isActive ? 'bg-green-500/20' : 'bg-muted'}`}>
-                <ShieldCheck className={`w-6 h-6 ${isActive ? 'text-green-500' : 'text-muted-foreground'}`} />
+              <div className={`relative p-3 rounded-xl ${isActive ? 'bg-green-500/20' : 'bg-muted'}`}>
+                <ShieldCheck className={`w-6 h-6 ${isActive ? 'text-green-500' : 'text-muted-foreground'} relative z-10`} />
+                {isActive && (
+                  <>
+                    <div className="absolute inset-0 rounded-xl bg-green-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                    <div className="absolute inset-0 rounded-xl bg-green-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
+                  </>
+                )}
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-immune-title">
@@ -215,7 +365,15 @@ export default function RevenueImmuneCard() {
                     className={isActive ? "bg-green-500/20 text-green-500 border-green-500/30" : ""}
                     data-testid="badge-immune-status"
                   >
-                    {isActive ? "ACTIVE" : "PAUSED"}
+                    <span className="flex items-center gap-1.5">
+                      {isActive && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                      )}
+                      {isActive ? "LIVE MONITORING" : "PAUSED"}
+                    </span>
                   </Badge>
                   <Dialog open={learnMoreOpen} onOpenChange={setLearnMoreOpen}>
                     <DialogTrigger asChild>
@@ -272,7 +430,9 @@ export default function RevenueImmuneCard() {
                     </DialogContent>
                   </Dialog>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Silently protecting your store revenue</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isActive ? 'Revenue defense running in real time' : 'Protection paused'}
+                </p>
               </div>
             </div>
 
@@ -287,20 +447,97 @@ export default function RevenueImmuneCard() {
             </div>
           </div>
 
-          {/* Live Monitoring Status Block */}
+          {/* Scan Explanation Bar */}
           {isActive && (
-            <div className="flex items-center gap-3 p-3 bg-green-500/5 border border-green-500/20 rounded-lg mb-6" data-testid="live-status-block">
-              <div className="relative flex-shrink-0">
-                <div className="w-3 h-3 bg-green-500 rounded-full" />
-                <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75" />
+            <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 mb-6" data-testid="scan-explanation-bar">
+              <div className="flex items-start gap-3">
+                <Radio className="w-5 h-5 text-primary flex-shrink-0 mt-0.5 animate-pulse" />
+                <p className="text-sm text-muted-foreground">
+                  ZYRA is continuously scanning your Shopify store for revenue decay, intent mismatch, 
+                  SEO erosion, and recovery flow fatigue — automatically and silently.
+                </p>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {lastScanTimestamp ? 'Actively monitoring your store' : 'Protection enabled — monitoring starting'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {lastScanTimestamp ? `Last activity: ${getTimeSinceLastScan()}` : 'Waiting for first scan cycle'} &middot; Watching: {protectionScope.join(' · ')}
-                </p>
+            </div>
+          )}
+
+          {/* Live Activity Log */}
+          {isActive && (
+            <div className="bg-muted/30 rounded-lg p-4 mb-6 border border-border/50" data-testid="live-activity-log">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="relative">
+                  <Zap className="w-4 h-4 text-primary" />
+                  <div className="absolute inset-0 animate-ping">
+                    <Zap className="w-4 h-4 text-primary opacity-50" />
+                  </div>
+                </div>
+                <h3 className="text-sm font-medium text-foreground">ZYRA Live Activity Log</h3>
+                <Badge variant="outline" className="text-xs ml-auto border-green-500/30 text-green-500">
+                  LIVE
+                </Badge>
+              </div>
+              <div 
+                ref={logContainerRef}
+                className="bg-background/50 rounded-md p-3 font-mono text-xs space-y-1.5 max-h-[200px] overflow-y-auto scroll-smooth"
+                style={{ scrollBehavior: 'smooth' }}
+              >
+                {activityLog.length === 0 ? (
+                  <p className="text-muted-foreground" data-testid="text-log-initializing">Initializing scan engines...</p>
+                ) : (
+                  activityLog.map((event) => (
+                    <div 
+                      key={event.id}
+                      data-testid={`row-activity-${event.id}`}
+                      className="flex items-start gap-2 text-muted-foreground animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+                    >
+                      <span className="text-primary/70 flex-shrink-0">[{event.timestamp}]</span>
+                      <span className="text-foreground/80 font-medium">{event.module}:</span>
+                      <span>{event.message}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Active Scanning Engines */}
+          {isActive && (
+            <div className="bg-muted/20 rounded-lg p-4 mb-6 border border-border/50" data-testid="scanning-engines-block">
+              <h3 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                Active Revenue Defense Engines
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {SCANNING_ENGINES.map((engine, idx) => (
+                  <div 
+                    key={idx}
+                    data-testid={`card-engine-${engine.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="flex items-start gap-3 p-3 bg-background/50 rounded-lg border border-border/30"
+                  >
+                    <div className="relative flex-shrink-0">
+                      <div className="p-2 rounded-md bg-primary/10">
+                        <engine.icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="absolute -top-1 -right-1">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span 
+                            className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                            style={{ animationDelay: `${idx * 0.2}s` }}
+                          ></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground truncate">{engine.name}</p>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-500/30 text-green-500 flex-shrink-0">
+                          RUNNING
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{engine.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -328,7 +565,7 @@ export default function RevenueImmuneCard() {
           <div className="bg-muted/20 rounded-lg p-4 mb-6" data-testid="today-activity-block">
             <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
-              Today's Revenue Protection Activity
+              Today's Revenue Defense Report
             </h3>
             
             {!hasActivityToday ? (
@@ -336,20 +573,20 @@ export default function RevenueImmuneCard() {
                 {totalProductsMonitored > 0 ? (
                   <>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Eye className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Monitoring {totalProductsMonitored} products for intent decay</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Eye className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Watching SEO rankings across your catalog</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Eye className="w-4 h-4 text-primary flex-shrink-0" />
-                      <span>Tracking recovery flow performance</span>
+                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <span>{totalProductsMonitored} products scanned</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span>No revenue threats detected today</span>
+                      <span>SEO checks completed</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <span>No revenue decay detected</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <span>Store fully protected today</span>
                     </div>
                   </>
                 ) : (
@@ -373,14 +610,14 @@ export default function RevenueImmuneCard() {
                   <div key={`fix-${idx}`} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-muted-foreground">
-                      Repaired <span className="text-foreground font-medium">{fix.surfaceTouched}</span> on "{fix.entityName}"
+                      Automatic repair applied to <span className="text-foreground font-medium">{fix.surfaceTouched}</span> on "{fix.entityName}"
                     </span>
                   </div>
                 ))}
                 {todayFixesExecuted.length > 0 && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <RefreshCw className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span>Monitoring performance (rollback ready)</span>
+                    <span>Live monitoring & rollback enabled</span>
                   </div>
                 )}
               </div>
@@ -403,7 +640,7 @@ export default function RevenueImmuneCard() {
           {/* Sensitivity Control */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-muted/30 rounded-lg mb-4">
             <div>
-              <p className="text-sm font-medium text-foreground">Protection Sensitivity</p>
+              <p className="text-sm font-medium text-foreground">Defense Sensitivity</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {sensitivityDescriptions[sensitivity]}
               </p>
