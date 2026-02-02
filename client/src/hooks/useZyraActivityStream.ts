@@ -117,19 +117,39 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
               
               if (data.type === 'connected') {
                 console.log('[SSE] Server acknowledged connection');
+                if (isMountedRef.current) {
+                  setIsConnected(true);
+                  setIsReconnecting(false);
+                }
+              } else if (data.type === 'heartbeat') {
+                // Heartbeat keeps connection alive - reset reconnecting state
+                if (isMountedRef.current) {
+                  setIsConnected(true);
+                  setIsReconnecting(false);
+                  reconnectAttempts.current = 0;
+                  setError(null);
+                }
               } else if (data.type === 'history') {
                 if (data.events && Array.isArray(data.events) && isMountedRef.current) {
-                  setEvents(data.events);
+                  // Filter events to only show valid ZYRA loop phases
+                  const validEvents = data.events.filter((e: any) => 
+                    e.phase && ['detect', 'decide', 'execute', 'prove', 'learn', 'standby'].includes(e.phase)
+                  );
+                  setEvents(validEvents);
                 }
               } else if (data.type === 'activity') {
                 if (isMountedRef.current) {
-                  setEvents(prev => {
-                    const newEvents = [...prev, data.event];
-                    if (newEvents.length > 50) {
-                      return newEvents.slice(-50);
-                    }
-                    return newEvents;
-                  });
+                  // Only add events with valid ZYRA loop phases
+                  const event = data.event;
+                  if (event.phase && ['detect', 'decide', 'execute', 'prove', 'learn', 'standby'].includes(event.phase)) {
+                    setEvents(prev => {
+                      const newEvents = [...prev, event];
+                      if (newEvents.length > 50) {
+                        return newEvents.slice(-50);
+                      }
+                      return newEvents;
+                    });
+                  }
                 }
               }
             } catch (parseError) {

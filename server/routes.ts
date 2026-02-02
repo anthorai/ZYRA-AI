@@ -21504,18 +21504,25 @@ Return JSON array of segments only, no explanation text.`;
         }
       });
       
-      // Send heartbeat every 15 seconds to keep connection alive
+      // Send heartbeat every 10 seconds to keep connection alive
+      // CRITICAL: Uses 'zyra_activity' type with phase info to reset reconnecting state on frontend
       const heartbeatInterval = setInterval(() => {
         try {
           if (!res.writableEnded) {
-            res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
+            res.write(`data: ${JSON.stringify({ 
+              type: 'heartbeat', 
+              timestamp: new Date().toISOString(),
+              phase: 'detect',
+              status: 'LIVE',
+              message: 'Monitoring live store signals'
+            })}\n\n`);
           } else {
             clearInterval(heartbeatInterval);
           }
         } catch (err) {
           clearInterval(heartbeatInterval);
         }
-      }, 15000);
+      }, 10000);
       
       // Cleanup on connection close
       req.on('close', () => {

@@ -123,6 +123,7 @@ interface AILogEntry {
   message: string;
   detail?: string;
   metrics?: { label: string; value: string | number }[];
+  phase?: 'detect' | 'decide' | 'execute' | 'prove' | 'learn' | 'standby';
 }
 
 const LOG_TYPE_CONFIG = {
@@ -134,9 +135,34 @@ const LOG_TYPE_CONFIG = {
   insight: { icon: Lightbulb, color: 'text-cyan-400', prefix: '[INSIGHT]', bgColor: 'bg-cyan-500/10' },
 };
 
+const PHASE_PREFIXES: Record<string, { label: string; color: string }> = {
+  detect: { label: 'DETECT', color: 'text-blue-400' },
+  decide: { label: 'DECIDE', color: 'text-purple-400' },
+  execute: { label: 'EXECUTE', color: 'text-amber-400' },
+  prove: { label: 'PROVE', color: 'text-emerald-400' },
+  learn: { label: 'LEARN', color: 'text-cyan-400' },
+  standby: { label: 'STANDBY', color: 'text-slate-400' },
+};
+
+const OLD_LOOP_TERMS = ['scan', 'scanning', 'optimize discoverability', 'growth move', 'analyzing store'];
+
+function isValidNewLoopEvent(event: any): boolean {
+  if (!event.phase || !['detect', 'decide', 'execute', 'prove', 'learn', 'standby'].includes(event.phase)) {
+    return false;
+  }
+  if (event.message) {
+    const msgLower = event.message.toLowerCase();
+    if (OLD_LOOP_TERMS.some(term => msgLower.includes(term))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function AILogEntryComponent({ entry, isNew = false }: { entry: AILogEntry; isNew?: boolean }) {
   const config = LOG_TYPE_CONFIG[entry.type];
   const Icon = config.icon;
+  const phaseConfig = entry.phase ? PHASE_PREFIXES[entry.phase] : null;
   const timeStr = entry.timestamp.toLocaleTimeString('en-US', { 
     hour: '2-digit', 
     minute: '2-digit', 
@@ -156,9 +182,15 @@ function AILogEntryComponent({ entry, isNew = false }: { entry: AILogEntry; isNe
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className={`text-[10px] font-mono font-bold ${config.color}`}>
-            {config.prefix}
-          </span>
+          {phaseConfig ? (
+            <span className={`text-[10px] font-mono font-bold ${phaseConfig.color}`}>
+              [{phaseConfig.label}]
+            </span>
+          ) : (
+            <span className={`text-[10px] font-mono font-bold ${config.color}`}>
+              {config.prefix}
+            </span>
+          )}
           <span className="text-[10px] font-mono text-slate-600">
             {timeStr}
           </span>
@@ -1043,23 +1075,27 @@ function ProgressStages({
   };
 
   // Generate dynamic activity log entries based on current phase
-  // PRIORITY: Real-time SSE events only - no simulated fallback
+  // PRIORITY: Real-time SSE events only - filter out old loop events
   const generateLogEntries = useCallback((): AILogEntry[] => {
     const entries: AILogEntry[] = [];
     const now = new Date();
     
-    // Use real-time SSE events (keep showing even if disconnected)
+    // Use real-time SSE events - only show valid new ZYRA loop events
     if (streamEvents.length > 0) {
-      streamEvents.forEach((event: ZyraActivityEvent) => {
-        entries.push({
-          id: event.id,
-          timestamp: new Date(event.timestamp),
-          type: event.status as AILogEntry['type'],
-          message: event.message,
-          detail: event.detail,
-          metrics: event.metrics?.map(m => ({ label: m.label, value: m.value })),
+      streamEvents
+        .filter(isValidNewLoopEvent)
+        .forEach((event: ZyraActivityEvent) => {
+          const phasePrefix = PHASE_PREFIXES[event.phase];
+          entries.push({
+            id: event.id,
+            timestamp: new Date(event.timestamp),
+            type: event.status as AILogEntry['type'],
+            message: event.message,
+            detail: event.detail,
+            metrics: event.metrics?.map(m => ({ label: m.label, value: m.value })),
+            phase: event.phase,
+          } as AILogEntry);
         });
-      });
     }
     
     // Add execution activities if any

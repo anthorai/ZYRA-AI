@@ -1,0 +1,133 @@
+/* ===============================================================
+   ZYRA LIVE ACTIVITY LOG FIX — SSE + NEW LOOP ONLY
+   TARGET: REPLIT AGENT (BACKEND + FRONTEND)
+   PURPOSE: Unstick Live Log and show only new-loop actions
+   =============================================================== */
+
+-- ROLE
+-- You are fixing ZYRA’s Live Activity Log.
+-- The log must reflect ONLY the NEW ZYRA LOOP:
+-- DETECT → DECIDE → EXECUTE → PROVE → LEARN
+-- with MAIN ACTIONS + SUB-ACTIONS.
+-- Old scan-style events MUST NEVER appear.
+
+---------------------------------------------------------------
+-- STEP 1: DEFINE SINGLE SSE EVENT CONTRACT (BACKEND)
+---------------------------------------------------------------
+-- ALL live activity must use ONE event name only.
+
+-- SSE EVENT NAME (MANDATORY):
+--   zyra_activity
+
+-- SSE PAYLOAD (MANDATORY STRUCTURE):
+-- {
+--   phase: "DETECT" | "DECIDE" | "EXECUTE" | "PROVE" | "LEARN",
+--   status: "LIVE" | "RUNNING" | "COMPLETED" | "ROLLED_BACK",
+--   store_situation: "NEW_FRESH" | "MEDIUM_GROWING" | "ENTERPRISE_SCALE",
+--   active_plan: "STARTER" | "GROWTH" | "ENTERPRISE",
+--   action: null | {
+--     main_action_type: "FOUNDATION" | "GROWTH" | "GUARD",
+--     action_name: string,
+--     sub_actions: string[]
+--   },
+--   message: string,
+--   timestamp: ISO_STRING
+-- }
+
+---------------------------------------------------------------
+-- STEP 2: EMIT EVENTS AT EVERY LOOP STAGE (BACKEND)
+---------------------------------------------------------------
+
+-- DETECT (always emits, even if no action yet)
+EMIT zyra_activity WHEN phase = DETECT WITH status = LIVE;
+
+-- DECIDE (when an action is selected)
+EMIT zyra_activity WHEN phase = DECIDE WITH:
+-- selected action_name + sub_actions
+
+-- EXECUTE (before and during execution)
+EMIT zyra_activity WHEN phase = EXECUTE WITH status = RUNNING;
+
+-- PROVE (after execution, metrics ready)
+EMIT zyra_activity WHEN phase = PROVE WITH status = COMPLETED;
+
+-- LEARN (silent but logged)
+EMIT zyra_activity WHEN phase = LEARN WITH status = COMPLETED;
+
+---------------------------------------------------------------
+-- STEP 3: ADD SSE HEARTBEAT (CRITICAL)
+---------------------------------------------------------------
+-- Prevent UI from thinking SSE is disconnected.
+
+EVERY 10 SECONDS:
+EMIT zyra_activity WITH:
+-- phase = DETECT
+-- status = LIVE
+-- message = "Monitoring live store signals"
+
+---------------------------------------------------------------
+-- STEP 4: FRONTEND — FIX EVENT LISTENER
+---------------------------------------------------------------
+
+CONNECT EventSource('/api/zyra/sse');
+
+ON event 'zyra_activity':
+    RESET "Reconnecting..." state;
+    APPEND event to Live Activity Log;
+
+---------------------------------------------------------------
+-- STEP 5: FILTER OUT OLD / INVALID EVENTS (FRONTEND)
+---------------------------------------------------------------
+
+-- DO NOT RENDER events if:
+-- ❌ phase is missing
+-- ❌ action_name is not one of the 17 actions
+-- ❌ sub_actions are not from the 51 defined sub-actions
+-- ❌ message contains old terms:
+--    "scan", "scanning", "optimize discoverability", "growth move"
+
+---------------------------------------------------------------
+-- STEP 6: LIVE ACTIVITY LOG RENDER FORMAT (STRICT)
+---------------------------------------------------------------
+
+-- Each log entry MUST follow this format:
+
+-- [TIME] [PHASE] [STATUS]
+-- Main Action: <Action Name>
+-- Sub-Actions:
+--  • <Sub-action 1>
+--  • <Sub-action 2>
+--  • <Sub-action 3>
+
+---------------------------------------------------------------
+-- STEP 7: EMPTY STATE (ONLY IF NO SSE DATA)
+---------------------------------------------------------------
+
+IF no events received yet THEN
+SHOW:
+-- "Waiting for ZYRA engine activity…"
+-- "Live updates will appear here"
+
+DO NOT show "Reconnecting…" unless SSE is truly disconnected.
+
+---------------------------------------------------------------
+-- STEP 8: FAILURE STATE
+---------------------------------------------------------------
+
+IF SSE disconnected > timeout THEN
+SHOW:
+-- "Live connection lost. Reconnecting to ZYRA engine…"
+
+---------------------------------------------------------------
+-- HARD RULES (DO NOT BREAK)
+---------------------------------------------------------------
+-- NEVER show fake activity
+-- NEVER show old-loop messages
+-- NEVER show percentages or scanning text
+-- Live Log = Source of Truth
+
+---------------------------------------------------------------
+-- SYSTEM TRUTH
+---------------------------------------------------------------
+-- If ZYRA did not emit it,
+-- the Live Activity Log must not display it.
