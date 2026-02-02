@@ -632,9 +632,9 @@ const PHASE_CONFIG: Record<string, {
     label: 'DETECT', 
     color: 'text-blue-400', 
     bgColor: 'bg-blue-500/10',
-    primaryText: 'ZYRA is identifying revenue friction',
-    secondaryText: 'Analyzing where buyers hesitate before purchasing',
-    statusMessage: 'Scanning your store for revenue opportunities...'
+    primaryText: 'Monitoring store signals in real time',
+    secondaryText: 'Revenue signals active',
+    statusMessage: 'Live intelligence layer active'
   },
   decide: { 
     icon: Brain, 
@@ -680,11 +680,11 @@ const PROGRESS_STAGES = [
   {
     id: 1,
     icon: TrendingUp,
-    title: 'Checking store performance',
+    title: 'Monitoring store performance',
     descriptions: [
-      'Reviewing your recent sales data and conversion rates',
-      'Analyzing your store\'s revenue patterns',
-      'Looking at what\'s working well in your store'
+      'Tracking your real-time sales data and conversion rates',
+      'Analyzing live revenue patterns',
+      'Detecting active traffic and engagement signals'
     ],
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10',
@@ -693,11 +693,11 @@ const PROGRESS_STAGES = [
   {
     id: 2,
     icon: Search,
-    title: 'Identifying where buyers hesitate',
+    title: 'Detecting revenue friction points',
     descriptions: [
-      'Finding the moments where potential customers leave without buying',
-      'Spotting drop-off points in the buying journey',
-      'Discovering where interest doesn\'t convert to sales'
+      'Monitoring the moments where potential customers hesitate',
+      'Tracking drop-off points in the buying journey',
+      'Detecting where interest doesn\'t convert to sales'
     ],
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10',
@@ -1186,12 +1186,12 @@ function ProgressStages({
 
   return (
     <div className="py-4">
-      {/* Header with Phase Status */}
+      {/* Header with Phase Status - Live Intelligence Display */}
       <div className={`mb-4 p-3 rounded-lg ${phaseConfig.bgColor} border border-slate-700/50`}>
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-full ${phaseConfig.bgColor} flex items-center justify-center relative`}>
             <PhaseIcon className={`w-4.5 h-4.5 ${phaseConfig.color}`} />
-            {(executionStatus === 'running' || executionStatus === 'pending' || !isDetectionComplete) && (
+            {isStreamConnected && (
               <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
             )}
           </div>
@@ -1200,16 +1200,42 @@ function ProgressStages({
               <span className={`text-sm font-semibold ${phaseConfig.color}`}>
                 {phaseConfig.label}
               </span>
-              {!isDetectionComplete && (
-                <RefreshCw className="w-3 h-3 animate-spin text-slate-400" />
+              {isStreamConnected && activePhase === 'detect' && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
+                  LIVE
+                </span>
+              )}
+              {isReconnecting && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+                  RECONNECTING
+                </span>
               )}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              {phaseConfig.statusMessage}
+              {activePhase === 'detect' && isStreamConnected 
+                ? phaseConfig.primaryText
+                : isReconnecting 
+                  ? 'Reconnecting to live intelligence'
+                  : phaseConfig.statusMessage}
             </p>
           </div>
           <div className="text-right">
-            <div className="text-xs font-mono text-slate-500">{Math.round(progress)}%</div>
+            {isStreamConnected ? (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] text-emerald-400 font-medium">Active</span>
+              </div>
+            ) : isReconnecting ? (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[10px] text-amber-400 font-medium">Reconnecting</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-slate-500" />
+                <span className="text-[10px] text-slate-500 font-medium">Connecting</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1247,16 +1273,27 @@ function ProgressStages({
         </div>
       </div>
 
-      {/* Compact Progress Bar */}
+      {/* Live Signals Status Bar */}
       <div className="mb-4">
-        <div className="h-1 bg-slate-700/50 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-1.5 px-1">
-          <span className="text-[10px] text-slate-600">Step {currentStage + 1}/{PROGRESS_STAGES.length}</span>
+        <div className="flex items-center gap-3 px-1">
+          {/* Live signal indicators */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-500">Signals:</span>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${isStreamConnected ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+              <span className={`text-[10px] ${isStreamConnected ? 'text-emerald-400' : 'text-slate-500'}`}>Traffic</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${isStreamConnected ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+              <span className={`text-[10px] ${isStreamConnected ? 'text-emerald-400' : 'text-slate-500'}`}>Conversions</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${isStreamConnected ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+              <span className={`text-[10px] ${isStreamConnected ? 'text-emerald-400' : 'text-slate-500'}`}>Revenue</span>
+            </div>
+          </div>
+          <div className="flex-1" />
+          {/* Connection status */}
           <div className="flex items-center gap-1.5">
             {isStreamConnected ? (
               <>

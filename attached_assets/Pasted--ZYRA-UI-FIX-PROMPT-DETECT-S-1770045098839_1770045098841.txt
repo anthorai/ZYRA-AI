@@ -1,0 +1,140 @@
+/* ===============================================================
+   ZYRA UI FIX PROMPT — DETECT STATUS CARD (LIVE + SSE CONNECTED)
+   TARGET: REPLIT AGENT (FRONTEND + BACKEND COORDINATION)
+   PURPOSE: Replace fake scanning UI with real-time loop status
+   =============================================================== */
+
+-- ROLE
+-- You are maintaining ZYRA’s UI + loop integration.
+-- Your task is to FIX the DETECT status card so it reflects
+-- REAL, LIVE intelligence from the ZYRA loop using SSE.
+-- You MUST NOT show fake progress, percentages, or static text.
+
+---------------------------------------------------------------
+-- CORE RULE (NON-NEGOTIABLE)
+---------------------------------------------------------------
+-- DETECT is NOT a one-time scan.
+-- DETECT is a continuous intelligence layer.
+-- The UI must show LIVE STATUS, not COMPLETION.
+
+---------------------------------------------------------------
+-- STEP 1: DEFINE LOOP STATUS STATES (BACKEND)
+---------------------------------------------------------------
+-- The ZYRA loop emits status events via SSE.
+-- Each event MUST include the following payload:
+
+-- SSE EVENT: zyra_loop_status
+-- PAYLOAD:
+-- {
+--   phase: "DETECT" | "DECIDE" | "EXECUTE" | "PROVE" | "LEARN",
+--   store_situation: "NEW_FRESH" | "MEDIUM_GROWING" | "ENTERPRISE_SCALE",
+--   active_plan: "STARTER" | "GROWTH" | "ENTERPRISE",
+--   live_signals: {
+--     traffic: true/false,
+--     conversions: true/false,
+--     checkout: true/false,
+--     revenue: true/false
+--   },
+--   current_action: null | {
+--     main_action: string,
+--     sub_actions: array
+--   },
+--   timestamp: ISO_STRING
+-- }
+
+---------------------------------------------------------------
+-- STEP 2: SSE CONNECTION (FRONTEND)
+---------------------------------------------------------------
+-- Establish a persistent SSE connection:
+
+CONNECT EventSource('/api/zyra/sse');
+
+ON event 'zyra_loop_status':
+    UPDATE DETECT CARD STATE WITH PAYLOAD;
+
+---------------------------------------------------------------
+-- STEP 3: DETECT CARD UI LOGIC (FRONTEND)
+---------------------------------------------------------------
+-- REMOVE:
+-- ❌ Progress bars
+-- ❌ Percentages (e.g. 100%)
+-- ❌ "Scanning complete"
+-- ❌ Static scanning text
+
+-- REPLACE WITH STATE-DRIVEN RENDERING:
+
+IF phase = 'DETECT' THEN
+    SET card.title = 'DETECT';
+    SET card.primary_text = 'Monitoring store signals in real time';
+    SET card.secondary_text = CONCAT(
+        'Store situation: ', store_situation,
+        ' • Plan: ', active_plan
+    );
+    SET card.status_indicator = 'LIVE'; -- pulsing dot
+END IF;
+
+---------------------------------------------------------------
+-- STEP 4: LIVE SIGNAL DISPLAY (OPTIONAL BUT RECOMMENDED)
+---------------------------------------------------------------
+-- Show live signals ONLY if backend confirms them as active.
+
+IF live_signals.traffic = true THEN SHOW 'Traffic signals active';
+IF live_signals.conversions = true THEN SHOW 'Conversion signals active';
+IF live_signals.checkout = true THEN SHOW 'Checkout signals active';
+IF live_signals.revenue = true THEN SHOW 'Revenue signals active';
+
+---------------------------------------------------------------
+-- STEP 5: ACCURATE STATUS TRANSITION
+---------------------------------------------------------------
+-- The DETECT card must react instantly to loop transitions.
+
+IF phase CHANGES FROM 'DETECT' TO 'DECIDE' THEN
+    UPDATE card.primary_text = 'Analyzing detected revenue signals';
+END IF;
+
+IF phase = 'EXECUTE' THEN
+    HIDE DETECT card OR DIM IT;
+END IF;
+
+---------------------------------------------------------------
+-- STEP 6: FAILURE & SAFETY STATES
+---------------------------------------------------------------
+-- If SSE disconnects or no heartbeat received:
+
+IF SSE_DISCONNECTED OR LAST_EVENT > TIMEOUT THEN
+    SET card.primary_text = 'Reconnecting to live intelligence';
+    SET card.status_indicator = 'RECONNECTING';
+END IF;
+
+---------------------------------------------------------------
+-- STEP 7: STRICT UI LANGUAGE RULES
+---------------------------------------------------------------
+-- NEVER use:
+-- "Scanning"
+-- "Completed"
+-- "100%"
+-- "Finished"
+
+-- ALWAYS use:
+-- "Monitoring"
+-- "Live"
+-- "Active"
+-- "Real-time"
+
+---------------------------------------------------------------
+-- FINAL UI COPY (AUTHORITATIVE)
+---------------------------------------------------------------
+-- DEFAULT DETECT CARD COPY:
+
+-- 🔍 DETECT
+-- Monitoring store signals in real time
+-- Store situation identified • Revenue signals active
+-- ● LIVE
+
+---------------------------------------------------------------
+-- SYSTEM TRUTH (DO NOT VIOLATE)
+---------------------------------------------------------------
+-- DETECT is a live intelligence layer.
+-- UI must reflect reality, not simulate progress.
+-- If backend is not emitting live data,
+-- UI must show reconnecting — not fake success.
