@@ -50,12 +50,7 @@ Features full OAuth 2.0 integration for bidirectional product sync and store man
 Includes comprehensive bulk SEO optimization tools like "Smart Bulk Suggestions" (AI-powered fixes with previews) and "One-Click Shopify Publish" with per-product rollback.
 
 ### Change Control Dashboard (Category Tabs)
-The Change Control Dashboard now features 5 category tabs for organized action management:
-1. **Discoverability & SEO** - Comparison table view with columns: Action, Product, Unoptimized, Optimized, Status. Supports multi-select with Push Selected/Rollback Selected bulk actions.
-2. **Conversion Optimization** - Card-based before/after view with individual Push to Shopify and Rollback buttons.
-3. **Revenue Recovery** - Status cards showing Enabled/Disabled state with Enable/Disable controls and expected revenue recovery estimates.
-4. **Revenue Protection** - Warning-badged cards with one-click Rollback and Freeze buttons for underperforming changes.
-5. **Learning & Intelligence** - Read-only status cards (no action buttons) showing Store Conversion Pattern Learning and Performance Baseline Update with "Used internally to improve future decisions" tooltip.
+The Change Control Dashboard now features 5 category tabs for organized action management: Discoverability & SEO, Conversion Optimization, Revenue Recovery, Revenue Protection, and Learning & Intelligence. These tabs facilitate actions like bulk updates, individual pushes/rollbacks, enabling/disabling features, and monitoring learning insights.
 
 ### Autonomous AI Store Manager
 This system transforms manual optimization into autonomous, AI-driven processes, including Autonomous SEO (daily audits, AI-powered action processing), Dynamic Pricing AI, and Autonomous Marketing (multi-channel automation, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system.
@@ -67,71 +62,22 @@ Autonomous revenue optimization using the DETECT→DECIDE→EXECUTE→PROVE→LE
 ZYRA detects and removes "revenue friction" – moments where buyer intent exists but a sale doesn't happen. It identifies four friction types: `view_no_cart`, `cart_no_checkout`, `checkout_drop`, and `purchase_no_upsell`. A detection engine identifies friction from performance data, abandoned carts, and order analysis, using a scoring formula to prioritize opportunities.
 
 ### Revenue Immune System
-The Revenue Immune System is ZYRA's core revenue protection feature that operates silently in the background like a store's immune system. Unlike the previous suggestion-based "Next Move" feature, this system:
-- Displays a single truth metric: "Prevented Revenue" - the estimated value of revenue loss that ZYRA prevented this month
-- Provides ACTIVE/PAUSED status toggle to enable/disable autonomous protection
-- Offers sensitivity controls (Conservative/Balanced/Aggressive) mapped to automation settings
-- Operates silently 24/7 detecting and fixing issues (content decay, SEO erosion, copy fatigue) before they impact sales
-- All changes are reversible and logged for transparency
-- Backend calculates prevented revenue from `revenue_loop_proof` table entries with status 'proven' or 'positive'
-- API endpoint: `/api/revenue-immune/status` provides current protection status and metrics
+The Revenue Immune System is ZYRA's core revenue protection feature that operates silently in the background. It displays a "Prevented Revenue" metric, offers ACTIVE/PAUSED status toggle, sensitivity controls (Conservative/Balanced/Aggressive), and operates silently 24/7 detecting and fixing issues (content decay, SEO erosion, copy fatigue) before they impact sales. All changes are reversible and logged.
 
 ### ZYRA Detection Engine (3-Layer Architecture)
-This high-performance engine ensures ≤10s response time for revenue opportunity detection using a three-layer architecture:
-1.  **Background Precomputation Worker**: Runs on schedule and data changes, precomputes product funnel stats, friction scores, and revenue signals, and pre-builds execution payloads.
-2.  **Fast Detect**: Hard 10-second timeout, reads only from precomputed cache, and returns detection phases.
-3.  **Deep Detect**: An async worker for optional accuracy improvements, triggered by stale cache or low confidence scores, but does not block Fast Detect.
-The PROVE phase is event-driven, using `interimProofEvents` database table and Shopify webhooks for real-time attribution. The frontend integrates with detection status polling and displays progress.
+This high-performance engine ensures ≤10s response time for revenue opportunity detection using a three-layer architecture: Background Precomputation Worker, Fast Detect, and Deep Detect. The PROVE phase is event-driven, using `interimProofEvents` database table and Shopify webhooks for real-time attribution. The frontend integrates with detection status polling and displays progress.
 
 ### Credit Consumption System
 A plan-aware credit consumption system where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs. Monthly credits vary by plan, and credit cost multipliers are applied based on action type, plan, SERP usage, and autonomy. The system includes "soft nudges" for low credit situations and backend enforcement with credit checks before execution and a 5% credit reserve.
 
 ### Live Activity Log (SSE Streaming)
-Real-time activity streaming using Server-Sent Events (SSE) to show ZYRA engine activities as they happen. Features include:
-- SSE endpoint at `/api/zyra/activity-stream` with persistent connections and 15-second heartbeat
-- Event emitter system (`zyraEventEmitter`) tracking detection phases (DETECT, DECIDE, EXECUTE, PROVE, LEARN)
-- Frontend hook (`useZyraActivityStream`) using fetch API with streaming for Authorization header support
-- Exponential backoff reconnection on both errors and normal stream closure
-- 50-event history per user for replay on reconnection
-- Connection status indicators ("Live", "Connecting...", "Reconnecting...")
-- **8-step progress bar driven by SSE events** - Progress stages advance based on real detection phase events, not timers
-- Phase-to-stage mapping: DETECT (stages 1-4), DECIDE (stage 5), EXECUTE (stage 6), PROVE (stage 7), LEARN (stage 8)
-- Fallback auto-advance only activates when SSE is not connected
+Real-time activity streaming using Server-Sent Events (SSE) to show ZYRA engine activities as they happen. Features include an SSE endpoint, event emitter system, frontend hook for streaming with authorization, exponential backoff reconnection, 50-event history per user, connection status indicators, and an 8-step progress bar driven by SSE events (DETECT, DECIDE, EXECUTE, PROVE, LEARN).
 
 ### Dynamic Recommendation Reasoning
-Context-specific "Why ZYRA recommends this" explanations generated dynamically based on:
-- Actual product name and health score
-- Store situation (total products count)
-- Completed actions count for template rotation
-- Multiple template variations per action type for variety
-The `generateDynamicReasoning` method in `FastDetectionEngine` provides personalized descriptions, reasons, and expected impacts instead of static generic text.
+Context-specific "Why ZYRA recommends this" explanations generated dynamically based on product name, health score, store situation, completed actions count, and multiple template variations per action type. The `generateDynamicReasoning` method provides personalized descriptions, reasons, and expected impacts instead of static generic text.
 
 ### ZYRA Master Loop System (Production-Level Autonomous Engine)
-The Master Loop is the production-level autonomous optimization engine that operates on a strict DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. Located in `server/lib/zyra-master-loop/`.
-
-**Core Components:**
-1. **Store Situation Detector** - Classifies stores as NEW_FRESH/MEDIUM_GROWING/ENTERPRISE_SCALE based on age, orders, traffic, and revenue
-2. **Plan Permission Mapper** - Maps subscription plans (STARTER/GROWTH/ENTERPRISE) to action permissions (FOUNDATION/GROWTH/GUARD) with LIMITED/FULL/ROLLBACK_ONLY access levels. **PLAN OVERRIDES STORE SITUATION** - permission levels are never reduced by situation, only extra approval requirements
-3. **Master Action Registry** - 17 static actions with sub-actions organized by category (Trust Signals, Friction Copy, Product Clarity, etc.)
-4. **Priority Sequencing Engine** - Orders actions by Trust→Clarity→Conversion→Revenue→SEO→Learning with lower risk and earlier funnel first
-5. **KPI Monitor** - Captures baselines before execution and measures impact after 4+ hours, triggering auto-rollback when performance drops are detected
-6. **Master Loop Controller** - Orchestrates the full cycle, respecting plan gates, situation, and providing full transparency
-
-**API Endpoints** (all require authentication):
-- `GET /api/master-loop/state` - Current loop state
-- `POST /api/master-loop/run-cycle` - Execute one full DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle
-- `GET /api/master-loop/situation` - Detailed store situation analysis
-- `GET /api/master-loop/permissions` - Plan-based permissions with situation effects
-- `GET /api/master-loop/actions` - Available and skipped actions with reasons
-- `GET /api/master-loop/activities` - Activity timeline for transparency
-- `GET /api/master-loop/proof` - Loop proof metrics (cycles run, rollbacks, revenue delta)
-- `POST /api/master-loop/freeze` / `POST /api/master-loop/unfreeze` - Pause/resume autonomous actions
-- `POST /api/master-loop/check-impact` - Check impact of recent actions and trigger rollback if needed
-
-**Dashboard Integration:**
-- `MasterLoopPanel` component in `client/src/components/dashboard/master-loop-panel.tsx`
-- React hooks in `client/src/hooks/use-master-loop.ts`
-- Integrated into ZYRA at Work dashboard (`zyra-at-work.tsx`)
+The Master Loop is the production-level autonomous optimization engine that operates on a strict DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. Key components include a Store Situation Detector, Plan Permission Mapper, Master Action Registry, Priority Sequencing Engine, KPI Monitor, and Master Loop Controller. It offers various API endpoints for state management, execution, analysis, and activity tracking.
 
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
