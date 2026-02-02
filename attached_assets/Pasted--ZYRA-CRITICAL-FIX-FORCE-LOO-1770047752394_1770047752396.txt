@@ -1,0 +1,132 @@
+/* ===============================================================
+   ZYRA CRITICAL FIX — FORCE LOOP ENGINE START + SSE HEARTBEAT
+   TARGET: REPLIT AGENT (BACKEND FIRST, THEN UI)
+   =============================================================== */
+
+-- ROLE
+-- You are fixing a CRITICAL SYSTEM FAILURE.
+-- ZYRA UI is alive, but the LOOP ENGINE is silent.
+-- Your task is to START the loop engine and GUARANTEE
+-- continuous SSE emissions.
+
+---------------------------------------------------------------
+-- STEP 1: FORCE-START ZYRA LOOP ENGINE
+---------------------------------------------------------------
+-- The loop engine MUST start automatically on app boot.
+-- It MUST NOT wait for UI interaction.
+
+ON SERVER_START:
+    START ZYRA_LOOP_ENGINE();
+
+---------------------------------------------------------------
+-- STEP 2: DEFINE LOOP ENGINE STATE MACHINE
+---------------------------------------------------------------
+-- The loop engine cycles forever:
+
+-- DETECT → DECIDE → EXECUTE → PROVE → LEARN → DETECT
+
+SET loop_state = 'DETECT';
+
+---------------------------------------------------------------
+-- STEP 3: EMIT HEARTBEAT (MANDATORY)
+---------------------------------------------------------------
+-- Even if no action is running, the engine MUST emit events.
+
+EVERY 10 SECONDS:
+EMIT SSE EVENT 'zyra_activity' WITH PAYLOAD:
+{
+  phase: loop_state,
+  status: "LIVE",
+  message: "ZYRA loop active and monitoring",
+  timestamp: NOW()
+};
+
+-- This heartbeat is REQUIRED.
+-- Without this, UI MUST show reconnecting.
+
+---------------------------------------------------------------
+-- STEP 4: EMIT EVENTS ON LOOP TRANSITIONS
+---------------------------------------------------------------
+
+WHEN loop_state = 'DETECT':
+    EMIT 'zyra_activity' WITH:
+    {
+      phase: "DETECT",
+      status: "LIVE",
+      message: "Monitoring store signals in real time"
+    };
+
+WHEN loop_state CHANGES TO 'DECIDE':
+    EMIT 'zyra_activity' WITH:
+    {
+      phase: "DECIDE",
+      status: "RUNNING",
+      message: "Selecting next safe action"
+    };
+
+WHEN loop_state CHANGES TO 'EXECUTE':
+    EMIT 'zyra_activity' WITH:
+    {
+      phase: "EXECUTE",
+      status: "RUNNING",
+      action: {
+        main_action_type,
+        action_name,
+        sub_actions
+      },
+      message: "Executing action"
+    };
+
+WHEN loop_state CHANGES TO 'PROVE':
+    EMIT 'zyra_activity' WITH:
+    {
+      phase: "PROVE",
+      status: "COMPLETED",
+      message: "Measuring impact"
+    };
+
+WHEN loop_state CHANGES TO 'LEARN':
+    EMIT 'zyra_activity' WITH:
+    {
+      phase: "LEARN",
+      status: "COMPLETED",
+      message: "Updating intelligence"
+    };
+
+---------------------------------------------------------------
+-- STEP 5: FRONTEND — SINGLE SOURCE OF TRUTH
+---------------------------------------------------------------
+
+CONNECT EventSource('/api/zyra/sse');
+
+ON 'zyra_activity':
+    SET DetectCard.status = 'LIVE';
+    SET ActivityLog.status = 'LIVE';
+    APPEND event to log;
+
+---------------------------------------------------------------
+-- STEP 6: REMOVE FAKE RECONNECT LOGIC
+---------------------------------------------------------------
+-- UI must NOT show "Reconnecting" if:
+-- - SSE connection is open
+-- - Last event received < 15 seconds ago
+
+IF last_event_time < 15s THEN
+    HIDE "Reconnecting";
+END IF;
+
+---------------------------------------------------------------
+-- STEP 7: FAILURE MODE (REAL ONLY)
+---------------------------------------------------------------
+-- Show "Reconnecting" ONLY if:
+
+IF SSE_DISCONNECTED OR last_event_time > 15s THEN
+    SHOW "Reconnecting to ZYRA engine...";
+END IF;
+
+---------------------------------------------------------------
+-- HARD SYSTEM LAW
+---------------------------------------------------------------
+-- No heartbeat = engine dead
+-- Engine dead = UI must say reconnecting
+-- Engine alive = UI must NEVER say reconnecting
