@@ -65,6 +65,7 @@ const AdminContentManagement = lazy(() => import("@/pages/admin/content"));
 const AdminFileManager = lazy(() => import("@/pages/admin/files"));
 const AdminDatabaseControls = lazy(() => import("@/pages/admin/database"));
 const AdminRevenueLoop = lazy(() => import("@/pages/admin/revenue-loop"));
+const AdminMasterLoop = lazy(() => import("@/pages/admin/master-loop"));
 
 // Help/Documentation pages
 const GettingStartedPage = lazy(() => import("@/pages/help/getting-started"));
@@ -552,6 +553,13 @@ function Router() {
         <ProtectedRoute requireAdmin>
           <Suspense fallback={<PageLoader />}>
             <AdminRevenueLoop />
+          </Suspense>
+        </ProtectedRoute>
+      )} />
+      <Route path="/admin/master-loop" component={() => (
+        <ProtectedRoute requireAdmin>
+          <Suspense fallback={<PageLoader />}>
+            <AdminMasterLoop />
           </Suspense>
         </ProtectedRoute>
       )} />

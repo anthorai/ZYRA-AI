@@ -18,6 +18,7 @@ import {
   Database,
   ArrowLeft,
   CircleDot,
+  Activity,
 } from "lucide-react";
 import zyraLogo from "@assets/zyra logo_1758518826550.png";
 import {
@@ -84,6 +85,12 @@ const adminNavGroups = [
         url: "/admin/revenue-loop",
         icon: CircleDot,
         testId: "nav-admin-revenue-loop",
+      },
+      {
+        title: "Master Loop",
+        url: "/admin/master-loop",
+        icon: Activity,
+        testId: "nav-admin-master-loop",
       },
     ],
   },
