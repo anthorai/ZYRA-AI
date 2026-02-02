@@ -37,11 +37,14 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const staleCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectAttempts = useRef(0);
   const isMountedRef = useRef(true);
   const isConnectingRef = useRef(false);
+  const lastEventTimeRef = useRef<number>(Date.now());
   const maxReconnectAttempts = 10;
   const baseReconnectDelay = 2000;
+  const STALE_THRESHOLD_MS = 15000; // Show reconnecting if no events in 15s
 
   const clearEvents = useCallback(() => {
     setEvents([]);
@@ -137,11 +140,17 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
             try {
               const data = JSON.parse(line.slice(6));
               
+              // Update last event time for ANY event received
+              lastEventTimeRef.current = Date.now();
+              
               if (data.type === 'connected') {
-                // Connection acknowledged by server
+                // Connection acknowledged by server - immediately show Live
                 if (isMountedRef.current) {
                   setIsConnected(true);
                   setIsReconnecting(false);
+                  reconnectAttempts.current = 0;
+                  setRetryCount(0);
+                  setError(null);
                 }
               } else if (data.type === 'heartbeat') {
                 // Heartbeat keeps connection alive - reset reconnecting state
@@ -227,6 +236,21 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
           connect();
         }
       }, 500);
+      
+      // Check for stale connection every 5 seconds
+      // Only show "Reconnecting" if no events received in 15 seconds
+      staleCheckIntervalRef.current = setInterval(() => {
+        if (isMountedRef.current && isConnected) {
+          const timeSinceLastEvent = Date.now() - lastEventTimeRef.current;
+          if (timeSinceLastEvent > STALE_THRESHOLD_MS) {
+            // Connection might be stale - trigger reconnect
+            setIsReconnecting(true);
+            if (abortControllerRef.current) {
+              abortControllerRef.current.abort();
+            }
+          }
+        }
+      }, 5000);
     }
     
     return () => {
@@ -241,8 +265,11 @@ export function ZyraActivityProvider({ children }: { children: ReactNode }) {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      if (staleCheckIntervalRef.current) {
+        clearInterval(staleCheckIntervalRef.current);
+      }
     };
-  }, [session?.access_token, connect]);
+  }, [session?.access_token, connect, isConnected]);
 
   return (
     <ZyraActivityContext.Provider value={{ events, isConnected, isReconnecting, retryCount, error, clearEvents }}>

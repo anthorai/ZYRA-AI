@@ -33,10 +33,13 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
   const abortControllerRef = useRef<AbortController | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const staleCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectAttempts = useRef(0);
   const isMountedRef = useRef(true);
+  const lastEventTimeRef = useRef<number>(Date.now());
   const maxReconnectAttempts = 5;
   const baseReconnectDelay = 2000;
+  const STALE_THRESHOLD_MS = 15000; // Show reconnecting if no events in 15s
 
   const clearEvents = useCallback(() => {
     setEvents([]);
@@ -115,11 +118,16 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
             try {
               const data = JSON.parse(line.slice(6));
               
+              // Update last event time for ANY event received
+              lastEventTimeRef.current = Date.now();
+              
               if (data.type === 'connected') {
-                console.log('[SSE] Server acknowledged connection');
+                // Connection acknowledged by server - immediately show Live
                 if (isMountedRef.current) {
                   setIsConnected(true);
                   setIsReconnecting(false);
+                  reconnectAttempts.current = 0;
+                  setError(null);
                 }
               } else if (data.type === 'heartbeat') {
                 // Heartbeat keeps connection alive - reset reconnecting state
@@ -201,6 +209,21 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
           connectRef.current();
         }
       }, 100);
+      
+      // Check for stale connection every 5 seconds
+      // Only show "Reconnecting" if no events received in 15 seconds
+      staleCheckIntervalRef.current = setInterval(() => {
+        if (isMountedRef.current && isConnected) {
+          const timeSinceLastEvent = Date.now() - lastEventTimeRef.current;
+          if (timeSinceLastEvent > STALE_THRESHOLD_MS) {
+            // Connection might be stale - trigger reconnect
+            setIsReconnecting(true);
+            if (abortControllerRef.current) {
+              abortControllerRef.current.abort();
+            }
+          }
+        }
+      }, 5000);
     }
     
     return () => {
@@ -215,8 +238,11 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      if (staleCheckIntervalRef.current) {
+        clearInterval(staleCheckIntervalRef.current);
+      }
     };
-  }, [session?.access_token]);
+  }, [session?.access_token, isConnected]);
 
   return {
     events,

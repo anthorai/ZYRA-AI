@@ -21484,8 +21484,15 @@ Return JSON array of segments only, no explanation text.`;
     
     // Use dynamic import for the event emitter
     import('./lib/zyra-event-emitter').then(({ ZyraEventEmitter }) => {
-      // Send initial connection event
-      res.write(`data: ${JSON.stringify({ type: 'connected', userId, timestamp: new Date().toISOString() })}\n\n`);
+      // Send initial connection event with zyra_activity payload to immediately show "Live" status
+      res.write(`data: ${JSON.stringify({ 
+        type: 'connected', 
+        userId, 
+        timestamp: new Date().toISOString(),
+        phase: 'detect',
+        status: 'LIVE',
+        message: 'ZYRA engine connected and monitoring'
+      })}\n\n`);
       
       // Send recent events for context
       const recentEvents = ZyraEventEmitter.getRecentEvents(userId, 10);
