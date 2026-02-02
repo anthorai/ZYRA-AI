@@ -1055,8 +1055,33 @@ function ProgressStages({
   const description = stage.descriptions[descriptionIndex % stage.descriptions.length];
   const progress = ((currentStage + 1) / PROGRESS_STAGES.length) * 100;
 
+  // CRITICAL: Derive effective phase from latest SSE event OR queued action
+  // System Law: If an action is queued, phase MUST NOT be DETECT
+  const effectivePhase = useMemo(() => {
+    // If we have a queued/pending action, phase should be DECIDE (not DETECT)
+    if (foundationalAction && executionStatus === 'awaiting_approval') {
+      return 'decide';
+    }
+    
+    // If executing, phase is execute
+    if (executionStatus === 'running') {
+      return activePhase; // Trust the prop during execution
+    }
+    
+    // If we have SSE events, derive phase from latest event
+    if (streamEvents.length > 0) {
+      const latestEvent = streamEvents[streamEvents.length - 1];
+      if (latestEvent.phase && ['detect', 'decide', 'execute', 'prove', 'learn'].includes(latestEvent.phase)) {
+        return latestEvent.phase as 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
+      }
+    }
+    
+    // Default to prop value
+    return activePhase;
+  }, [streamEvents, activePhase, foundationalAction, executionStatus]);
+
   // Get the current phase config for status display
-  const phaseConfig = PHASE_CONFIG[activePhase] || PHASE_CONFIG.detect;
+  const phaseConfig = PHASE_CONFIG[effectivePhase] || PHASE_CONFIG.detect;
   const PhaseIcon = phaseConfig.icon;
 
   // Map backend execution activity to log entry type
@@ -1164,30 +1189,30 @@ function ProgressStages({
     }
     
     // Execution phase thoughts
-    if (executionStatus === 'running' && activePhase === 'execute') {
+    if (executionStatus === 'running' && effectivePhase === 'execute') {
       thoughts.push('Analyzing your brand voice and writing style...');
       thoughts.push('Generating compelling, conversion-focused copy...');
       thoughts.push('Applying SEO best practices to content...');
     }
     
     // Prove phase thoughts
-    if (executionStatus === 'running' && activePhase === 'prove') {
+    if (executionStatus === 'running' && effectivePhase === 'prove') {
       thoughts.push('Verifying Shopify product updates applied correctly...');
       thoughts.push('Setting baseline metrics for performance tracking...');
     }
     
     // Learn phase thoughts
-    if (executionStatus === 'running' && activePhase === 'learn') {
+    if (executionStatus === 'running' && effectivePhase === 'learn') {
       thoughts.push('Recording successful optimization patterns...');
       thoughts.push('Updating store optimization profile...');
     }
     
     return thoughts;
-  }, [currentStage, isDetectionComplete, executionStatus, activePhase]);
+  }, [currentStage, isDetectionComplete, executionStatus, effectivePhase]);
 
   const thoughts = generateThoughts();
   const isThinking = (currentStage >= 1 && currentStage < 5 && !isDetectionComplete) || 
-                     (executionStatus === 'running' && ['execute', 'prove', 'learn'].includes(activePhase));
+                     (executionStatus === 'running' && ['execute', 'prove', 'learn'].includes(effectivePhase));
 
   // Early return: ZYRA standby screen
   if (!isAutopilotEnabled) {
@@ -1235,7 +1260,7 @@ function ProgressStages({
               <span className={`text-sm font-semibold ${phaseConfig.color}`}>
                 {phaseConfig.label}
               </span>
-              {isStreamConnected && !isReconnecting && activePhase === 'detect' && (
+              {isStreamConnected && !isReconnecting && effectivePhase === 'detect' && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
                   LIVE
                 </span>
@@ -1247,7 +1272,7 @@ function ProgressStages({
               )}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              {activePhase === 'detect' && isStreamConnected 
+              {effectivePhase === 'detect' && isStreamConnected 
                 ? phaseConfig.primaryText
                 : isReconnecting 
                   ? 'Reconnecting to live intelligence'
@@ -1744,8 +1769,8 @@ function ProgressStages({
                   }`}>
                     {executionResult ? 'Optimization Complete' :
                      executionStatus === 'running' 
-                      ? (activePhase === 'prove' ? 'Proving Results...' 
-                         : activePhase === 'learn' ? 'Learning & Improving...' 
+                      ? (effectivePhase === 'prove' ? 'Proving Results...' 
+                         : effectivePhase === 'learn' ? 'Learning & Improving...' 
                          : 'Applying Optimization...') 
                       : executionStatus === 'awaiting_approval' ? 'Review & Approve' 
                       : 'Revenue Opportunity Found'}
@@ -1805,9 +1830,9 @@ function ProgressStages({
                   <div className="flex items-center gap-2 text-xs">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                     <span className="text-slate-300">
-                      {activePhase === 'execute' ? 'Applying AI-generated improvements to your products...' :
-                       activePhase === 'prove' ? 'Verifying changes and setting up tracking...' :
-                       activePhase === 'learn' ? 'Recording optimization patterns for future use...' :
+                      {effectivePhase === 'execute' ? 'Applying AI-generated improvements to your products...' :
+                       effectivePhase === 'prove' ? 'Verifying changes and setting up tracking...' :
+                       effectivePhase === 'learn' ? 'Recording optimization patterns for future use...' :
                        'Processing optimization...'}
                     </span>
                   </div>

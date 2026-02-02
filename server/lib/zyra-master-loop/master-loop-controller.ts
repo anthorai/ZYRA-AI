@@ -44,6 +44,7 @@ import { kpiMonitor, type KPIMetrics, type KPIImpactResult } from './kpi-monitor
 import { checkAIToolCredits, consumeAIToolCredits } from '../credits';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from '../ai-cache';
+import { emitZyraActivity, type ZyraEventType } from '../zyra-event-emitter';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -786,6 +787,35 @@ Be concise and specific.`;
 
     this.activityLogs.set(userId, activities);
     console.log(`📝 [${activity.phase.toUpperCase()}] ${activity.message}`);
+    
+    // CRITICAL: Emit SSE event to frontend so UI reflects current loop phase
+    // Map activity status to SSE event type
+    const phaseEventMap: Record<string, Record<string, ZyraEventType>> = {
+      detect: { in_progress: 'DETECT_STARTED', completed: 'DETECT_COMPLETED', error: 'ERROR' },
+      decide: { in_progress: 'DECIDE_STARTED', completed: 'DECIDE_COMPLETED', error: 'ERROR' },
+      execute: { in_progress: 'EXECUTE_STARTED', completed: 'EXECUTE_COMPLETED', error: 'ERROR' },
+      prove: { in_progress: 'PROVE_STARTED', completed: 'PROVE_UPDATED', error: 'ERROR' },
+      learn: { in_progress: 'LEARN_STARTED', completed: 'LEARN_COMPLETED', error: 'ERROR' },
+      idle: { completed: 'LOOP_STANDBY', in_progress: 'LOOP_STANDBY', error: 'ERROR' },
+      frozen: { warning: 'LOOP_STANDBY', completed: 'LOOP_STANDBY', error: 'ERROR' },
+    };
+    
+    const eventType = phaseEventMap[activity.phase]?.[activity.status] || 'DETECT_PROGRESS';
+    const loopId = `master_loop_${userId}_${Date.now()}`;
+    
+    // Map activity status to SSE status
+    const statusMap: Record<string, 'info' | 'thinking' | 'insight' | 'action' | 'success' | 'warning' | 'error'> = {
+      in_progress: 'thinking',
+      completed: 'success',
+      error: 'error',
+      warning: 'warning',
+    };
+    
+    emitZyraActivity(userId, loopId, eventType, activity.message, {
+      phase: activity.phase as any,
+      detail: activity.details,
+      status: statusMap[activity.status] || 'info',
+    });
   }
 
   /**

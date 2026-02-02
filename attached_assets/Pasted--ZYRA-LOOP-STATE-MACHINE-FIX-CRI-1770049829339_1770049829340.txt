@@ -1,0 +1,123 @@
+/* ============================================================
+   ZYRA LOOP STATE MACHINE FIX (CRITICAL)
+   GOAL: Prevent DETECT from getting stuck
+   ============================================================ */
+
+-- ROLE
+-- You are fixing a BROKEN LOOP STATE MACHINE.
+-- ZYRA must NEVER stay in DETECT after an action is queued.
+
+---------------------------------------------------------------
+-- STEP 1: ENFORCE SINGLE LOOP STATE
+---------------------------------------------------------------
+
+-- There must be ONE source of truth:
+-- loop_state ∈ { DETECT, DECIDE, EXECUTE, PROVE, LEARN }
+
+ASSERT loop_state IS GLOBAL AND MUTABLE;
+
+---------------------------------------------------------------
+-- STEP 2: FIX DETECT LOGIC
+---------------------------------------------------------------
+
+WHEN loop_state = DETECT:
+    issues = detectRevenueLeaks();
+
+    IF issues FOUND THEN
+        SELECT best_action;
+        SET current_action = best_action;
+
+        -- 🚨 CRITICAL FIX
+        SET loop_state = DECIDE;
+
+        EMIT zyra_activity {
+            phase: "DECIDE",
+            status: "RUNNING",
+            action: current_action,
+            message: "Action selected based on detected issue"
+        };
+    END IF;
+
+---------------------------------------------------------------
+-- STEP 3: FIX DECIDE → EXECUTE TRANSITION
+---------------------------------------------------------------
+
+WHEN loop_state = DECIDE:
+    VALIDATE action permissions;
+
+    SET loop_state = EXECUTE;
+
+    EMIT zyra_activity {
+        phase: "EXECUTE",
+        status: "RUNNING",
+        action: current_action,
+        message: "Executing selected action"
+    };
+
+---------------------------------------------------------------
+-- STEP 4: FIX EXECUTE → PROVE
+---------------------------------------------------------------
+
+WHEN loop_state = EXECUTE:
+    APPLY action.sub_actions SEQUENTIALLY;
+
+    SET loop_state = PROVE;
+
+    EMIT zyra_activity {
+        phase: "PROVE",
+        status: "RUNNING",
+        action: current_action,
+        message: "Measuring impact"
+    };
+
+---------------------------------------------------------------
+-- STEP 5: FIX PROVE → LEARN
+---------------------------------------------------------------
+
+WHEN loop_state = PROVE:
+    metrics = measureImpact();
+
+    SET loop_state = LEARN;
+
+    EMIT zyra_activity {
+        phase: "LEARN",
+        status: "COMPLETED",
+        metrics: metrics,
+        message: "Learning from results"
+    };
+
+---------------------------------------------------------------
+-- STEP 6: COMPLETE CYCLE
+---------------------------------------------------------------
+
+WHEN loop_state = LEARN:
+    STORE learnings;
+    CLEAR current_action;
+
+    SET loop_state = DETECT;
+
+    EMIT zyra_activity {
+        phase: "DETECT",
+        status: "LIVE",
+        message: "Starting next detection cycle"
+    };
+
+---------------------------------------------------------------
+-- STEP 7: FRONTEND SYNC RULE
+---------------------------------------------------------------
+
+-- UI MUST highlight phase based ONLY on loop_state.
+-- NEVER infer phase from queued actions.
+
+ASSERT UI phase indicator = loop_state;
+
+---------------------------------------------------------------
+-- HARD SYSTEM LAW
+---------------------------------------------------------------
+
+-- DETECT may NOT coexist with:
+-- queued_action
+-- running_action
+-- completed_action
+
+-- If action exists → phase MUST NOT be DETECT
