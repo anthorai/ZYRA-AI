@@ -800,16 +800,48 @@ async function executeOptimizeSEO(action: any): Promise<void> {
         });
       }
 
-      // Update action status
+      // Build changes array with before/after format for Change Control dashboard
+      const changes: Array<{ field: string; before: string; after: string; reason: string }> = [];
+      
+      const oldSeoTitle = existingSeoMeta[0]?.seoTitle || existingSeoMeta[0]?.originalTitle || product.name || '';
+      const oldMetaDescription = existingSeoMeta[0]?.metaDescription || existingSeoMeta[0]?.originalDescription || product.description || '';
+      
+      if (seoContent.seoTitle !== oldSeoTitle) {
+        changes.push({
+          field: 'SEO Title',
+          before: oldSeoTitle,
+          after: seoContent.seoTitle,
+          reason: 'AI-optimized for better search visibility',
+        });
+      }
+      
+      if (seoContent.metaDescription !== oldMetaDescription) {
+        changes.push({
+          field: 'Meta Description',
+          before: oldMetaDescription,
+          after: seoContent.metaDescription,
+          reason: 'AI-optimized for better click-through rates',
+        });
+      }
+
+      // Update action status with proper format for Change Control dashboard
       await tx
         .update(autonomousActions)
         .set({
           status: 'completed',
           completedAt: new Date(),
+          payload: {
+            ...action.payload,
+            productName: product.name,
+            changes: changes,
+            actionLabel: 'SEO Optimization',
+          } as any,
           result: {
+            success: true,
             seoTitle: seoContent.seoTitle,
             metaDescription: seoContent.metaDescription,
             seoScore: seoContent.seoScore,
+            changesApplied: changes.length,
           } as any,
           actualImpact: {
             seoScoreChange: seoContent.seoScore - (existingSeoMeta[0]?.seoScore || 0),
@@ -817,7 +849,7 @@ async function executeOptimizeSEO(action: any): Promise<void> {
         })
         .where(eq(autonomousActions.id, action.id));
 
-      console.log(`✅ [Action Processor] Optimized SEO for product: ${product.name}`);
+      console.log(`✅ [Action Processor] Optimized SEO for product: ${product.name} (${changes.length} changes)`);
       console.log(`   - SEO Score: ${seoContent.seoScore}`);
       console.log(`   - Title: ${seoContent.seoTitle}`);
     });

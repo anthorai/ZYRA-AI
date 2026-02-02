@@ -512,10 +512,19 @@ export class MasterLoopController {
     }
 
     try {
-      // Create the action record
+      // Get product before creating action record (needed for entityId)
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.userId, userId))
+        .limit(1);
+
+      // Create the action record with proper entityId for Change Control dashboard
       const [actionRecord] = await db.insert(autonomousActions).values({
         userId,
         actionType: action.id,
+        entityType: product ? 'product' : null,
+        entityId: product?.id || null,
         status: 'running',
         decisionReason: `Master Loop selected: ${action.name}`,
         payload: {
@@ -523,17 +532,12 @@ export class MasterLoopController {
           subActions: action.subActions.map(sa => sa.id),
           category: action.category,
           priority: action.priority,
+          productName: product?.name || null,
         },
         executedBy: 'agent',
       }).returning();
 
       // Create snapshot before changes
-      const [product] = await db
-        .select()
-        .from(products)
-        .where(eq(products.userId, userId))
-        .limit(1);
-
       if (product) {
         await db.insert(productSnapshots).values({
           productId: product.id,
@@ -548,11 +552,11 @@ export class MasterLoopController {
         });
       }
 
-      // Execute sub-actions
-      const changes: any[] = [];
+      // Execute sub-actions and collect properly formatted changes
+      const changes: Array<{ field: string; before: string; after: string; reason: string }> = [];
       for (const subAction of action.subActions) {
         const change = await this.executeSubAction(userId, action, subAction.id, product);
-        if (change) {
+        if (change && change.field) {
           changes.push(change);
         }
       }
@@ -560,13 +564,26 @@ export class MasterLoopController {
       // Consume credits
       await consumeAIToolCredits(userId, 'product-seo-engine', action.creditsRequired);
 
-      // Update action record
+      // Update action record with proper format for Change Control dashboard
       await db
         .update(autonomousActions)
         .set({
           status: 'completed',
           completedAt: new Date(),
-          result: { changes },
+          payload: {
+            actionId: action.id,
+            subActions: action.subActions.map(sa => sa.id),
+            category: action.category,
+            priority: action.priority,
+            productName: product?.name || null,
+            changes: changes,
+            actionLabel: action.name,
+          },
+          result: { 
+            success: true,
+            changes,
+            changesApplied: changes.length,
+          },
         })
         .where(eq(autonomousActions.id, actionRecord.id));
 
@@ -590,17 +607,14 @@ export class MasterLoopController {
   }
 
   /**
-   * Execute a single sub-action
+   * Execute a single sub-action and return change in {field, before, after, reason} format
    */
   private async executeSubAction(
     userId: string,
     action: MasterAction,
     subActionId: string,
     product: any
-  ): Promise<any | null> {
-    // This is where the actual AI-powered optimization happens
-    // For now, we'll use the existing foundational execution logic
-
+  ): Promise<{ field: string; before: string; after: string; reason: string } | null> {
     if (!product) return null;
 
     const subAction = action.subActions.find(sa => sa.id === subActionId);
@@ -608,11 +622,11 @@ export class MasterLoopController {
 
     console.log(`   Executing sub-action: ${subAction.name}`);
 
-    // Use AI to generate optimization based on sub-action type
+    // Use AI to generate optimization in structured format
     try {
       const prompt = this.buildSubActionPrompt(subAction, product);
       
-      const suggestion = await cachedTextGeneration<string>(
+      const response = await cachedTextGeneration<string>(
         {
           prompt,
           model: 'gpt-4o-mini',
@@ -620,26 +634,52 @@ export class MasterLoopController {
           maxTokens: 1000,
         },
         async () => {
-          const response = await openai.chat.completions.create({
+          const res = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
             max_tokens: 1000,
           });
-          return response.choices[0]?.message?.content || '';
+          return res.choices[0]?.message?.content || '';
         }
       );
 
-      const result = {
-        subActionId,
-        subActionName: subAction.name,
-        productId: product.id,
-        productName: product.name,
-        suggestion,
-        applied: false, // Would be true if we actually apply changes
-      };
+      // Parse AI response - try JSON first, then extract from text
+      let optimizedValue = response;
+      try {
+        const parsed = JSON.parse(response);
+        optimizedValue = parsed.optimized || parsed.suggestion || parsed.value || response;
+      } catch {
+        // Use the raw response if not valid JSON
+        optimizedValue = response.trim();
+      }
 
-      return result;
+      // Determine field name and original value based on sub-action type
+      let fieldName = subAction.name;
+      let originalValue = '';
+      
+      if (subActionId.includes('title') || subAction.name.toLowerCase().includes('title')) {
+        fieldName = 'Product Title';
+        originalValue = product.name || '';
+      } else if (subActionId.includes('description') || subAction.name.toLowerCase().includes('description')) {
+        fieldName = 'Product Description';
+        originalValue = product.description || '';
+      } else if (subActionId.includes('seo') || subAction.name.toLowerCase().includes('seo')) {
+        fieldName = 'SEO Content';
+        originalValue = product.description?.substring(0, 160) || '';
+      } else if (subActionId.includes('copy') || subAction.name.toLowerCase().includes('copy')) {
+        fieldName = 'Product Copy';
+        originalValue = product.description || '';
+      } else {
+        originalValue = product.description || product.name || '';
+      }
+
+      return {
+        field: fieldName,
+        before: originalValue,
+        after: optimizedValue,
+        reason: `AI-optimized: ${subAction.description || subAction.name}`,
+      };
     } catch (error) {
       console.error(`   Sub-action error:`, error);
       return null;
