@@ -703,6 +703,15 @@ const PHASE_CONFIG: Record<string, {
     secondaryText: 'Learning what converts better for your store',
     statusMessage: 'Updating strategies based on results...'
   },
+  complete: { 
+    icon: CheckCircle2, 
+    label: 'COMPLETE', 
+    color: 'text-emerald-400', 
+    bgColor: 'bg-emerald-500/10',
+    primaryText: 'Optimization cycle complete',
+    secondaryText: 'All phases finished successfully',
+    statusMessage: 'Loop cycle completed successfully!'
+  },
 };
 
 
@@ -2559,6 +2568,12 @@ export default function ZyraAtWork() {
     // HIGHEST PRIORITY: Real-time SSE events - most authoritative source
     if (streamEvents.length > 0 && isStreamConnected) {
       const latestEvent = streamEvents[streamEvents.length - 1];
+      // Check for loop completion events first
+      if (latestEvent.eventType === 'LOOP_COMPLETE' || 
+          latestEvent.eventType === 'LEARN_COMPLETE' ||
+          (latestEvent.phase as string) === 'complete') {
+        return 'complete';
+      }
       // Map SSE event types to phases
       if (latestEvent.eventType.startsWith('DETECT_')) {
         return 'detect';
@@ -2569,7 +2584,11 @@ export default function ZyraAtWork() {
       } else if (latestEvent.eventType.startsWith('PROVE_')) {
         return 'prove';
       } else if (latestEvent.eventType.startsWith('LEARN_')) {
-        return 'learn';
+        // Only return 'learn' for non-complete learn events
+        if (!latestEvent.eventType.includes('COMPLETE')) {
+          return 'learn';
+        }
+        return 'complete';
       }
       // Use event's phase field if event type doesn't match
       if (latestEvent.phase) {
@@ -3016,18 +3035,21 @@ export default function ZyraAtWork() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {Object.entries(PHASE_CONFIG).map(([phase, config]) => {
           const Icon = config.icon;
-          const isActive = currentPhase === phase;
           const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
           const currentIndex = phaseOrder.indexOf(currentPhase);
           const phaseIndex = phaseOrder.indexOf(phase);
-          const isCompleted = phaseIndex < currentIndex;
+          
+          // When loop is complete, ALL phases are completed
+          const isLoopComplete = currentPhase === 'complete';
+          const isActive = !isLoopComplete && currentPhase === phase;
+          const isCompleted = isLoopComplete || phaseIndex < currentIndex;
           
           return (
             <Card 
               key={phase}
-              className={`${config.bgColor} border-slate-700/50 transition-all duration-300 ${
+              className={`${isLoopComplete ? 'bg-emerald-500/10' : config.bgColor} border-slate-700/50 transition-all duration-300 ${
                 isActive ? 'ring-2 ring-offset-2 ring-offset-slate-900' : ''
-              } ${isCompleted ? 'opacity-60' : ''}`}
+              } ${isLoopComplete ? 'ring-2 ring-emerald-400/30 ring-offset-2 ring-offset-slate-900' : ''}`}
               style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
               data-testid={`phase-indicator-${phase}`}
             >
@@ -3038,15 +3060,20 @@ export default function ZyraAtWork() {
                   </div>
                 )}
                 <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  <Icon className={`w-5 h-5 ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
                 </div>
-                <span className={`text-xs font-medium ${isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
+                <span className={`text-xs font-medium ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
                   {config.label}
                 </span>
                 {isActive && isStreamConnected && (
                   <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Live
+                  </span>
+                )}
+                {isLoopComplete && phase === 'learn' && (
+                  <span className="mt-1 text-[10px] text-emerald-400 font-medium">
+                    Complete
                   </span>
                 )}
               </CardContent>
