@@ -213,11 +213,14 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
       // Check for stale connection every 5 seconds
       // Only show "Reconnecting" if no events received in 15 seconds
       staleCheckIntervalRef.current = setInterval(() => {
-        if (isMountedRef.current && isConnected) {
+        if (isMountedRef.current && isConnected && !isReconnecting) {
           const timeSinceLastEvent = Date.now() - lastEventTimeRef.current;
           if (timeSinceLastEvent > STALE_THRESHOLD_MS) {
             // Connection might be stale - trigger reconnect
+            // Set states in correct order to ensure mutual exclusivity
+            setIsConnected(false);
             setIsReconnecting(true);
+            lastEventTimeRef.current = Date.now(); // Reset to prevent repeated triggers
             if (abortControllerRef.current) {
               abortControllerRef.current.abort();
             }
@@ -242,7 +245,7 @@ export function useZyraActivityStream(): UseZyraActivityStreamReturn {
         clearInterval(staleCheckIntervalRef.current);
       }
     };
-  }, [session?.access_token, isConnected]);
+  }, [session?.access_token, isConnected, isReconnecting]);
 
   return {
     events,
