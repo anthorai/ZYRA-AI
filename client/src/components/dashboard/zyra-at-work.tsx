@@ -1058,17 +1058,18 @@ function ProgressStages({
   // CRITICAL: Derive effective phase from latest SSE event OR queued action
   // System Law: If an action is queued, phase MUST NOT be DETECT
   const effectivePhase = useMemo(() => {
-    // If we have a queued/pending action, phase should be DECIDE (not DETECT)
-    if (foundationalAction && executionStatus === 'awaiting_approval') {
+    // PRIORITY 1: If we have a queued/pending action, phase MUST be DECIDE (not DETECT)
+    // This is the core system law - any foundational action means DECIDE phase
+    if (foundationalAction && (executionStatus === 'awaiting_approval' || executionStatus === 'idle' || executionStatus === 'pending')) {
       return 'decide';
     }
     
-    // If executing, phase is execute
+    // PRIORITY 2: If executing, phase is execute (trust backend)
     if (executionStatus === 'running') {
       return activePhase; // Trust the prop during execution
     }
     
-    // If we have SSE events, derive phase from latest event
+    // PRIORITY 3: If we have SSE events, derive phase from latest event
     if (streamEvents.length > 0) {
       const latestEvent = streamEvents[streamEvents.length - 1];
       if (latestEvent.phase && ['detect', 'decide', 'execute', 'prove', 'learn'].includes(latestEvent.phase)) {
@@ -2314,6 +2315,11 @@ export default function ZyraAtWork() {
     // Local approvedPhase fallback for fast UI updates
     if (!['idle', 'complete'].includes(approvedPhase)) {
       return 'running';
+    }
+    // CRITICAL FIX: If foundational action exists and detection is complete,
+    // set to 'awaiting_approval' - this enforces the DECIDE phase display
+    if (hasFoundationalAction && isDetectionComplete && serverExecutionStatus === 'idle') {
+      return 'awaiting_approval';
     }
     // Default to server's execution status
     return serverExecutionStatus;
