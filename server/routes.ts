@@ -122,6 +122,7 @@ import { upsellRecommendationEngine } from "./lib/upsell-recommendation-engine";
 import { ShopifyGraphQLClient, graphqlProductToRest } from "./lib/shopify-graphql";
 import { ShopifyAppUninstalledError, handleShopifyUninstallError } from "./lib/shopify-client";
 import { upsellRecommendationRules } from "@shared/schema";
+import masterLoopRoutes from "./lib/zyra-master-loop/routes";
 import { grantFreeTrial } from "./lib/trial-expiration-service";
 import { getUserPlanCapabilities } from "./middleware/plan-middleware";
 import { 
@@ -165,6 +166,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve uploaded files statically
   app.use('/uploads', express.static('./uploads'));
+
+  // Mount Master Loop routes
+  app.use('/api/master-loop', masterLoopRoutes);
 
   // Health check endpoint (no auth required) for monitoring
   app.get("/api/health", async (req, res) => {

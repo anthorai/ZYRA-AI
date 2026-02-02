@@ -106,6 +106,33 @@ Context-specific "Why ZYRA recommends this" explanations generated dynamically b
 - Multiple template variations per action type for variety
 The `generateDynamicReasoning` method in `FastDetectionEngine` provides personalized descriptions, reasons, and expected impacts instead of static generic text.
 
+### ZYRA Master Loop System (Production-Level Autonomous Engine)
+The Master Loop is the production-level autonomous optimization engine that operates on a strict DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. Located in `server/lib/zyra-master-loop/`.
+
+**Core Components:**
+1. **Store Situation Detector** - Classifies stores as NEW_FRESH/MEDIUM_GROWING/ENTERPRISE_SCALE based on age, orders, traffic, and revenue
+2. **Plan Permission Mapper** - Maps subscription plans (STARTER/GROWTH/ENTERPRISE) to action permissions (FOUNDATION/GROWTH/GUARD) with LIMITED/FULL/ROLLBACK_ONLY access levels. **PLAN OVERRIDES STORE SITUATION** - permission levels are never reduced by situation, only extra approval requirements
+3. **Master Action Registry** - 17 static actions with sub-actions organized by category (Trust Signals, Friction Copy, Product Clarity, etc.)
+4. **Priority Sequencing Engine** - Orders actions by Trust→Clarity→Conversion→Revenue→SEO→Learning with lower risk and earlier funnel first
+5. **KPI Monitor** - Captures baselines before execution and measures impact after 4+ hours, triggering auto-rollback when performance drops are detected
+6. **Master Loop Controller** - Orchestrates the full cycle, respecting plan gates, situation, and providing full transparency
+
+**API Endpoints** (all require authentication):
+- `GET /api/master-loop/state` - Current loop state
+- `POST /api/master-loop/run-cycle` - Execute one full DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle
+- `GET /api/master-loop/situation` - Detailed store situation analysis
+- `GET /api/master-loop/permissions` - Plan-based permissions with situation effects
+- `GET /api/master-loop/actions` - Available and skipped actions with reasons
+- `GET /api/master-loop/activities` - Activity timeline for transparency
+- `GET /api/master-loop/proof` - Loop proof metrics (cycles run, rollbacks, revenue delta)
+- `POST /api/master-loop/freeze` / `POST /api/master-loop/unfreeze` - Pause/resume autonomous actions
+- `POST /api/master-loop/check-impact` - Check impact of recent actions and trigger rollback if needed
+
+**Dashboard Integration:**
+- `MasterLoopPanel` component in `client/src/components/dashboard/master-loop-panel.tsx`
+- React hooks in `client/src/hooks/use-master-loop.ts`
+- Integrated into ZYRA at Work dashboard (`zyra-at-work.tsx`)
+
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
 

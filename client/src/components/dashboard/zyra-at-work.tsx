@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RevenueDelta } from "@/components/ui/revenue-delta";
 import { useZyraActivity, ZyraActivityEvent } from "@/contexts/ZyraActivityContext";
+import { MasterLoopPanel } from "./master-loop-panel";
 import { 
   Activity, 
   Search, 
@@ -2543,6 +2544,9 @@ export default function ZyraAtWork() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Master Loop Panel - Production-level autonomous optimization control */}
+      <MasterLoopPanel />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="stats-grid">
         <Card className="bg-[#16162c] border-slate-700/50">
