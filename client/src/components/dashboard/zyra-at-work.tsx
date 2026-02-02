@@ -511,7 +511,7 @@ interface StoreLearning {
 // Foundational action for new stores (expanded to support all action types)
 interface FoundationalAction {
   type: ZyraActionType | LegacyActionType;
-  category?: ZyraActionCategory;
+  category?: 'FOUNDATION' | 'GROWTH' | 'GUARD';
   productId?: string;
   productName?: string;
   title: string;
@@ -519,6 +519,13 @@ interface FoundationalAction {
   whyItHelps: string;
   expectedImpact: string;
   riskLevel: 'low' | 'medium' | 'high';
+  // Sub-actions for the Master Loop card display
+  subActions?: string[];
+  // Master Loop context fields
+  storeSituation?: string;
+  activePlan?: string;
+  detectedIssue?: string;
+  funnelStage?: string;
   // Decision explanation fields (per spec)
   whyThisProduct?: string;
   whyThisAction?: string;
@@ -1273,33 +1280,21 @@ function ProgressStages({
       
       {/* Status Display for completed detection - Step 8 is ALWAYS a terminal success state */}
       {isDetectionComplete && (
-        <div className={`mt-4 p-3 rounded-lg ${
+        <div className={`mt-4 p-4 rounded-lg ${
           detectionStatus === 'friction_found' ? 'bg-emerald-500/10 border border-emerald-500/30' :
-          (detectionStatus === 'foundational_action' || isNewStore) ? 'bg-primary/10 border border-primary/30' :
+          (detectionStatus === 'foundational_action' || isNewStore) ? 'bg-slate-800/60 border border-slate-700/50' :
           'bg-blue-500/10 border border-blue-500/30'
         }`}>
-          {/* For new stores with foundational action - show the concrete Next Move */}
+          {/* ZYRA ACTION QUEUED - Enhanced card design for Master Loop actions */}
           {(detectionStatus === 'foundational_action' || isNewStore) && foundationalAction ? (
             <div className="text-left">
-              <div className="flex items-center justify-between gap-2 mb-2">
+              {/* Header: ZYRA ACTION QUEUED + Status */}
+              <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    executionStatus === 'completed' ? 'bg-emerald-400' :
-                    executionStatus === 'running' ? 'bg-amber-400' : 'bg-primary'
-                  } ${executionStatus === 'completed' ? '' : 'animate-pulse'}`} />
-                  <p className={`text-sm font-medium ${
-                    executionStatus === 'completed' ? 'text-emerald-400' :
-                    executionStatus === 'running' ? 'text-amber-400' : 'text-primary'
-                  }`}>
-                    {executionStatus === 'completed'
-                      ? 'Optimization Complete'
-                      : executionStatus === 'running' 
-                        ? (activePhase === 'prove' ? 'Proving Results...' 
-                           : activePhase === 'learn' ? 'Learning & Improving...' 
-                           : 'Applying Fix...') 
-                        : executionStatus === 'awaiting_approval' ? 'Review & Approve' 
-                        : 'Next Move Ready'}
-                  </p>
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    {executionStatus === 'completed' ? 'ZYRA ACTION COMPLETE' :
+                     executionStatus === 'running' ? 'ZYRA EXECUTING' : 'ZYRA ACTION QUEUED'}
+                  </span>
                   {executionStatus === 'running' && (
                     <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
                   )}
@@ -1332,33 +1327,119 @@ function ProgressStages({
                   </Button>
                 )}
               </div>
-              <p className="text-sm font-medium text-foreground mb-1">
-                {foundationalAction.title}
-              </p>
-              {foundationalAction.productName && (
-                <p className="text-xs text-slate-400 mb-2">
-                  Product: {foundationalAction.productName}
-                </p>
-              )}
-              <p className="text-xs text-slate-400 mb-2">
-                {foundationalAction.description}
-              </p>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
-                  Low Risk
-                </span>
-                <span className="text-xs text-slate-500">
-                  {foundationalAction.expectedImpact}
-                </span>
+              
+              {/* Action Category Badge */}
+              <div className="mb-3">
+                <Badge className={`text-[10px] uppercase tracking-wider ${
+                  foundationalAction.category === 'GUARD' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                  foundationalAction.category === 'GROWTH' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                  'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                }`}>
+                  {foundationalAction.category === 'GUARD' ? 'Guard Action' :
+                   foundationalAction.category === 'GROWTH' ? 'Growth Action' :
+                   'Foundation Action'}
+                </Badge>
               </div>
               
-              {/* AI DECISION EXPLANATION - Business Language (Per ZYRA Spec) */}
-              {/* Shows: Why this product, Why this action, Why now, Why safe */}
+              {/* Action Title */}
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                {foundationalAction.title}
+              </h3>
+              
+              {/* Product Name */}
+              {foundationalAction.productName && (
+                <div className="mb-3">
+                  <span className="text-xs text-slate-500">Product:</span>
+                  <p className="text-sm text-foreground font-medium">
+                    {foundationalAction.productName}
+                  </p>
+                </div>
+              )}
+              
+              {/* Sub-Actions List */}
+              {foundationalAction.subActions && foundationalAction.subActions.length > 0 && (
+                <div className="mb-4">
+                  <span className="text-xs text-slate-500 mb-2 block">Sub-Actions:</span>
+                  <ul className="space-y-1">
+                    {foundationalAction.subActions.map((subAction, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+                        <span className="text-primary mt-0.5">•</span>
+                        <span>{subAction}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Why ZYRA chose this - Always visible structured format */}
+              <div className="mb-4 p-3 bg-slate-900/50 rounded-md border border-slate-700/30">
+                <p className="text-xs font-medium text-slate-400 mb-2">Why ZYRA chose this:</p>
+                <div className="space-y-1.5 text-xs">
+                  {foundationalAction.storeSituation && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-400">Store Situation:</span>
+                      <span className="text-slate-300">{foundationalAction.storeSituation}</span>
+                    </div>
+                  )}
+                  {foundationalAction.activePlan && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-400">Active Plan:</span>
+                      <span className="text-slate-300">{foundationalAction.activePlan}</span>
+                    </div>
+                  )}
+                  {foundationalAction.detectedIssue && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-400">Detected Issue:</span>
+                      <span className="text-slate-300">{foundationalAction.detectedIssue}</span>
+                    </div>
+                  )}
+                  {foundationalAction.funnelStage && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-400">Funnel Stage:</span>
+                      <span className="text-slate-300">{foundationalAction.funnelStage}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-400">Risk Level:</span>
+                    <span className={`${
+                      foundationalAction.riskLevel === 'low' ? 'text-emerald-400' :
+                      foundationalAction.riskLevel === 'medium' ? 'text-amber-400' : 'text-red-400'
+                    }`}>{foundationalAction.riskLevel === 'low' ? 'Low' : foundationalAction.riskLevel === 'medium' ? 'Medium' : 'High'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Expected Impact - Dynamic from backend */}
+              <div className="mb-4">
+                <p className="text-xs font-medium text-slate-400 mb-2">Expected Impact:</p>
+                <p className="text-xs text-slate-300">{foundationalAction.expectedImpact}</p>
+              </div>
+              
+              {/* Risk Level Footer with Auto-Rollback */}
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-700/30">
+                <Badge className={`${
+                  foundationalAction.riskLevel === 'low' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                  foundationalAction.riskLevel === 'medium' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                  'bg-red-500/20 text-red-400 border-red-500/30'
+                }`}>
+                  {foundationalAction.riskLevel === 'low' ? 'Low Risk' : 
+                   foundationalAction.riskLevel === 'medium' ? 'Medium Risk' : 'High Risk'}
+                </Badge>
+                <span className="text-xs text-slate-500">|</span>
+                <span className="text-xs text-slate-400">Auto-Rollback Enabled</span>
+              </div>
+              
+              {/* Legacy AI DECISION EXPLANATION - Expandable for more details */}
               {executionStatus === 'awaiting_approval' && (
-                <details className="mt-3 group" data-testid="ai-reasoning-details">
+                <details className="mt-4 group" data-testid="ai-reasoning-details">
                   <summary className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer hover:text-slate-300 transition-colors list-none">
                     <ChevronRight className="w-3 h-3 transition-transform group-open:rotate-90" />
-                    <span>Why ZYRA selected this action</span>
+                    <span>More details on this decision</span>
                   </summary>
                   <div className="mt-2 p-2.5 bg-slate-800/40 rounded-md border border-slate-700/30">
                     <div className="space-y-2.5 text-xs">

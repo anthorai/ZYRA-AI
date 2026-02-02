@@ -856,8 +856,6 @@ export class FastDetectionEngine {
             'seo_basics',
             'product_copy_clarity', 
             'trust_signals',
-            'urgency_cues',
-            'price_anchoring',
             'recovery_setup'
           ];
           
@@ -901,15 +899,61 @@ export class FastDetectionEngine {
         userProducts.length
       );
       
+      // Get sub-actions based on action type
+      const subActionsMap: Record<FoundationalActionType, string[]> = {
+        seo_basics: [
+          'Normalize Product Title Readability',
+          'Optimize Title for Search Intent',
+          'Remove Keyword Stuffing from Titles'
+        ],
+        product_copy_clarity: [
+          'Enhance Product Description Clarity',
+          'Add Benefit-Focused Copy',
+          'Improve Scannability with Bullet Points'
+        ],
+        trust_signals: [
+          'Add Customer Review Highlights',
+          'Display Trust Badges',
+          'Clarify Return/Shipping Policies'
+        ],
+        recovery_setup: [
+          'Configure Abandoned Cart Emails',
+          'Set Up Cart Recovery Timing',
+          'Create Recovery Message Templates'
+        ]
+      };
+
+      // Determine funnel stage based on action type
+      const funnelStageMap: Record<FoundationalActionType, string> = {
+        seo_basics: 'Discoverability',
+        product_copy_clarity: 'Consideration',
+        trust_signals: 'Conversion',
+        recovery_setup: 'Recovery'
+      };
+
+      // Determine detected issue based on action type
+      const detectedIssueMap: Record<FoundationalActionType, string> = {
+        seo_basics: 'Low organic CTR',
+        product_copy_clarity: 'Low add-to-cart rate',
+        trust_signals: 'High cart abandonment',
+        recovery_setup: 'No recovery flow configured'
+      };
+
       const foundationalAction: FoundationalAction = {
         type: selectedType,
+        category: 'FOUNDATION',
         productId: targetProduct?.id,
         productName: targetProduct?.name || undefined,
         title: FOUNDATIONAL_ACTION_LABELS[selectedType],
         description: dynamicReasoning.description,
         whyItHelps: dynamicReasoning.whyItHelps,
         expectedImpact: dynamicReasoning.expectedImpact,
-        riskLevel: 'low'
+        riskLevel: 'low',
+        subActions: subActionsMap[selectedType],
+        storeSituation: 'NEW / FRESH',
+        activePlan: 'STARTER',
+        detectedIssue: detectedIssueMap[selectedType],
+        funnelStage: funnelStageMap[selectedType]
       };
       
       console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''} | Recent: [${Array.from(recentActionTypes).join(', ')}]`);
@@ -922,11 +966,21 @@ export class FastDetectionEngine {
       
       const fallbackAction: FoundationalAction = {
         type: 'trust_signals',
+        category: 'FOUNDATION',
         title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
         description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
         whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
         expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
-        riskLevel: 'low'
+        riskLevel: 'low',
+        subActions: [
+          'Add Customer Review Highlights',
+          'Display Trust Badges',
+          'Clarify Return/Shipping Policies'
+        ],
+        storeSituation: 'NEW / FRESH',
+        activePlan: 'STARTER',
+        detectedIssue: 'High cart abandonment',
+        funnelStage: 'Conversion'
       };
       
       console.log(`🔧 [Foundational Action] Using fallback "trust_signals" for user ${userId}`);

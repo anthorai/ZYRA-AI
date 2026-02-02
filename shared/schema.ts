@@ -3699,13 +3699,19 @@ export type FoundationalActionType =
 
 export interface FoundationalAction {
   type: FoundationalActionType;
+  category?: 'FOUNDATION' | 'GROWTH' | 'GUARD';
   productId?: string;
   productName?: string;
   title: string;
   description: string;
   whyItHelps: string;
   expectedImpact: string;
-  riskLevel: 'low';
+  riskLevel: 'low' | 'medium' | 'high';
+  subActions?: string[];
+  storeSituation?: string;
+  activePlan?: string;
+  detectedIssue?: string;
+  funnelStage?: string;
 }
 
 export const FOUNDATIONAL_ACTION_LABELS: Record<FoundationalActionType, string> = {
