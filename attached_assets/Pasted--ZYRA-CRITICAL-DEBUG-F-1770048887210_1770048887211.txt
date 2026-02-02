@@ -1,0 +1,201 @@
+/* =====================================================================
+   ZYRA CRITICAL DEBUG & FIX PROMPT
+   TARGET: REPLIT AGENT (BACKEND + FRONTEND)
+   GOAL: FIND WHY LIVE ACTIVITY LOG IS STUCK AND FIX IT CORRECTLY
+   STATUS: NON-NEGOTIABLE, ENGINE-LEVEL FIX
+   ===================================================================== */
+
+-- ROLE
+-- You are debugging a CRITICAL SYSTEM FAILURE in ZYRA.
+-- The UI shows LIVE and RECONNECTING at the same time.
+-- This MUST NEVER happen.
+-- Your job is to:
+-- 1) FIND the exact root cause
+-- 2) FIX the backend loop engine
+-- 3) FIX the SSE contract
+-- 4) FIX frontend status logic
+-- 5) PROVE the system is working
+
+---------------------------------------------------------------
+-- PHASE 1: DIAGNOSE BACKEND (DO NOT SKIP)
+---------------------------------------------------------------
+
+-- CHECK 1: Is the ZYRA LOOP ENGINE STARTING?
+-- Search for the loop start call.
+
+ASSERT startZyraLoop() IS CALLED on server boot.
+
+IF NOT FOUND THEN
+    ADD startZyraLoop() to server entry file
+    LOG "FIX: Loop engine was never started"
+END IF;
+
+---------------------------------------------------------------
+-- CHECK 2: IS THE LOOP ENGINE EMITTING EVENTS?
+---------------------------------------------------------------
+
+-- Search for zyraEmitter.emit(...)
+-- There MUST be emits for:
+-- DETECT
+-- DECIDE
+-- EXECUTE
+-- PROVE
+-- LEARN
+
+ASSERT zyraEmitter.emit EXISTS.
+
+IF emits EXIST BUT ARE NOT CALLED PERIODICALLY THEN
+    LOG "BUG: Loop engine running but silent"
+END IF;
+
+---------------------------------------------------------------
+-- CHECK 3: HEARTBEAT (MANDATORY)
+---------------------------------------------------------------
+
+-- There MUST be a heartbeat emit.
+-- Without heartbeat, UI WILL stay stuck forever.
+
+ASSERT heartbeat EMIT every <= 10 seconds.
+
+IF NOT FOUND THEN
+    ADD heartbeat:
+
+    EVERY 8 seconds:
+    zyraEmitter.emit("activity", {
+        phase: "DETECT",
+        status: "LIVE",
+        message: "Monitoring store signals in real time",
+        timestamp: NOW()
+    });
+
+    LOG "FIX: Added missing heartbeat"
+END IF;
+
+---------------------------------------------------------------
+-- CHECK 4: SSE EVENT NAME MATCH
+---------------------------------------------------------------
+
+-- Backend MUST emit exactly:
+-- event: zyra_activity
+
+-- Frontend MUST listen to:
+-- zyra_activity
+
+ASSERT backend event name == frontend listener name.
+
+IF MISMATCH THEN
+    STANDARDIZE to "zyra_activity"
+    LOG "FIX: SSE event name mismatch"
+END IF;
+
+---------------------------------------------------------------
+-- CHECK 5: SSE PAYLOAD SHAPE
+---------------------------------------------------------------
+
+-- Every SSE payload MUST include:
+-- phase
+-- status
+-- timestamp
+
+ASSERT payload CONTAINS (phase, status, timestamp).
+
+IF MISSING THEN
+    FIX payload shape
+    LOG "FIX: Invalid SSE payload"
+END IF;
+
+---------------------------------------------------------------
+-- PHASE 2: DIAGNOSE FRONTEND (DO NOT SKIP)
+---------------------------------------------------------------
+
+-- CHECK 6: STATUS LOGIC (CRITICAL)
+---------------------------------------------------------------
+
+-- FIND logic that renders:
+-- LIVE
+-- RECONNECTING
+
+ASSERT frontend DOES NOT use connection_open as truth.
+
+IF frontend shows LIVE AND RECONNECTING together THEN
+    REPLACE logic with:
+
+    DEFINE isReceivingEvents =
+        lastEventTimestamp != null
+        AND (NOW - lastEventTimestamp < 12 seconds);
+
+    IF isReceivingEvents THEN
+        SHOW "LIVE"
+        HIDE "RECONNECTING"
+    ELSE
+        SHOW "RECONNECTING"
+        HIDE "LIVE"
+    END IF;
+
+    LOG "FIX: Removed dual-status bug"
+END IF;
+
+---------------------------------------------------------------
+-- CHECK 7: EMPTY STATE MESSAGE
+---------------------------------------------------------------
+
+-- Message:
+-- "Waiting for ZYRA engine activity..."
+
+-- This must appear ONLY IF:
+-- SSE connected AND no events received yet.
+
+IF ANY zyra_activity event received THEN
+    REMOVE empty-state message permanently
+END IF;
+
+---------------------------------------------------------------
+-- PHASE 3: FORCE LOOP ENGINE TO RUN
+---------------------------------------------------------------
+
+-- If loop engine has conditions blocking execution
+-- (e.g. waiting for data, flags, or UI trigger)
+
+REMOVE UI DEPENDENCY.
+
+ASSERT loop runs automatically:
+DETECT → DECIDE → EXECUTE → PROVE → LEARN → DETECT
+
+LOG "FIX: Loop engine decoupled from UI"
+
+---------------------------------------------------------------
+-- PHASE 4: VERIFICATION (MANDATORY)
+---------------------------------------------------------------
+
+-- AFTER FIX, VERIFY ALL OF THE FOLLOWING:
+
+ASSERT:
+1) zyra_activity event received every <= 10 seconds
+2) LIVE and RECONNECTING NEVER show together
+3) Activity log receives DETECT events even with no actions
+4) "Waiting for activity" disappears after first event
+5) Network tab shows continuous SSE data flow
+
+IF ANY ASSERT FAILS THEN
+    MARK FIX AS FAILED
+ELSE
+    MARK FIX AS SUCCESS
+END IF;
+
+---------------------------------------------------------------
+-- FINAL SYSTEM LAW (DO NOT VIOLATE)
+---------------------------------------------------------------
+
+-- Connection ≠ Live
+-- Live = Receiving valid loop events
+-- No heartbeat = dead engine
+-- UI must reflect engine truth ONLY
+
+---------------------------------------------------------------
+-- OUTPUT REQUIRED FROM YOU (REPLIT AGENT)
+---------------------------------------------------------------
+
+-- 1) List of bugs found
+-- 2) Files changed (backend + frontend)
+-- 3) Confirmation that heartbeat is active
+-- 4) Screenshot or log proof of live events flowing

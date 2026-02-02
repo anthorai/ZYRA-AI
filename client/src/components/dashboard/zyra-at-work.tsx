@@ -1235,12 +1235,12 @@ function ProgressStages({
               <span className={`text-sm font-semibold ${phaseConfig.color}`}>
                 {phaseConfig.label}
               </span>
-              {isStreamConnected && activePhase === 'detect' && (
+              {isStreamConnected && !isReconnecting && activePhase === 'detect' && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
                   LIVE
                 </span>
               )}
-              {isReconnecting && (
+              {isReconnecting && !isStreamConnected && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
                   RECONNECTING
                 </span>
@@ -1289,8 +1289,8 @@ function ProgressStages({
           </div>
           <span className="text-[10px] font-mono text-slate-500 ml-2">
             ZYRA Activity Log
-            {isStreamConnected && <span className="text-emerald-400 ml-1">(Live)</span>}
-            {isReconnecting && <span className="text-yellow-400 ml-1">(Reconnecting...)</span>}
+            {isStreamConnected && !isReconnecting && <span className="text-emerald-400 ml-1">(Live)</span>}
+            {isReconnecting && !isStreamConnected && <span className="text-yellow-400 ml-1">(Reconnecting...)</span>}
           </span>
           <div className="flex-1" />
           <Bot className="w-3.5 h-3.5 text-primary" />
