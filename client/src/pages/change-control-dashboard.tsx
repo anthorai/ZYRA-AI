@@ -274,9 +274,11 @@ export default function ChangeControlDashboard() {
     let filtered = changes;
     
     // Allow store-wide actions (upsell, recovery, etc.) even without product names
+    // Also allow any record with entity_type = 'store'
     const storeWideActionTypes = ['upsell', 'send_cart_recovery', 'cart_recovery', 'abandoned_cart_recovery', 'checkout_drop_mitigation'];
     filtered = filtered.filter(c => {
       if (storeWideActionTypes.includes(c.actionType)) return true;
+      if (c.entityType === 'store') return true;
       const productName = c.productName || c.payload?.productName;
       return productName && productName !== "Unknown Product";
     });
@@ -892,7 +894,7 @@ export default function ChangeControlDashboard() {
                                 )}
                                 <div>
                                   <p className="font-medium text-sm">
-                                    {change.productName || "Unknown Product"}
+                                    {change.productName || (change.entityType === 'store' ? "Store-wide" : "Unknown Product")}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="outline" className={cn("text-xs", config.color)}>
@@ -1045,7 +1047,7 @@ export default function ChangeControlDashboard() {
                                       </Badge>
                                     </h4>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                      {change.productName || "Unknown Product"}
+                                      {change.productName || (change.entityType === 'store' ? "Store-wide" : "Unknown Product")}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-2">
                                       {change.decisionReason || "Revenue impact detected"}
@@ -1253,7 +1255,7 @@ export default function ChangeControlDashboard() {
                                 )}
                                 <div>
                                   <p className="font-medium text-sm">
-                                    {change.productName || "Unknown Product"}
+                                    {change.productName || (change.entityType === 'store' ? "Store-wide" : "Unknown Product")}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="outline" className={cn("text-xs", config.color)}>
