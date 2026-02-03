@@ -225,7 +225,7 @@ export class FoundationalExecutionService {
               userId,
               actionType: actionType === 'seo_basics' ? 'optimize_seo' : 
                           actionType === 'product_copy_clarity' ? 'fix_product' : 
-                          actionType === 'trust_signals' ? 'optimize_seo' :
+                          actionType === 'trust_signals' ? 'trust_signal_enhancement' :
                           actionType === 'recovery_setup' ? 'send_cart_recovery' : 'optimize_seo',
               entityType: 'product',
               entityId: optimized.productId,
