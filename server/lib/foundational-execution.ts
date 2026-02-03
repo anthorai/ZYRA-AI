@@ -247,6 +247,7 @@ export class FoundationalExecutionService {
                 description: this.generateImpactSummary(actionType, optimized.changes.length),
               },
               executedBy: 'agent',
+              creditsUsed: 1,
               dryRun: false,
               publishedToShopify: false,
               completedAt: new Date(),

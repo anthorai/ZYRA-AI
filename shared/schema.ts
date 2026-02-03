@@ -174,6 +174,7 @@ export const autonomousActions = pgTable("autonomous_actions", {
   estimatedImpact: jsonb("estimated_impact"), // Before: predicted changes
   actualImpact: jsonb("actual_impact"), // After: measured changes
   executedBy: text("executed_by").default("agent"), // 'agent' | 'user' | 'scheduler'
+  creditsUsed: integer("credits_used").default(0), // How many credits this action consumed
   dryRun: boolean("dry_run").default(false),
   publishedToShopify: boolean("published_to_shopify").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),

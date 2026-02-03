@@ -264,6 +264,7 @@ async function sendRecoveryMessage(
       status: 'completed',
       decisionReason: `Cart recovery sequence: ${sequence.stage}`,
       ruleId: sequence.ruleId,
+      creditsUsed: 1,
       payload: {
         stage: sequence.stage,
         channel,

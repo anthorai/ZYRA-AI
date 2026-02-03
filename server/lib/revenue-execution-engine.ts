@@ -125,6 +125,7 @@ export class RevenueExecutionEngine {
             revenueLift: opportunity.estimatedRevenueLift,
           },
           executedBy: 'agent',
+          creditsUsed: creditsUsed,
           completedAt: new Date(),
         })
         .returning();

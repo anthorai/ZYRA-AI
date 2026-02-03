@@ -571,6 +571,7 @@ export class MasterLoopController {
         .set({
           status: 'completed',
           completedAt: new Date(),
+          creditsUsed: action.creditsRequired,
           payload: {
             actionId: action.id,
             subActions: action.subActions.map(sa => sa.id),

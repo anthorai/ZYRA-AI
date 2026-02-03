@@ -122,6 +122,7 @@ async function executeRuleActions(
         : `Triggered by rule: ${context.ruleId}`,
       ruleId: context.ruleId,
       executedBy: 'agent',
+      creditsUsed: 1,
     });
 
     // Actual execution will happen in the action processor (unless dry-run)

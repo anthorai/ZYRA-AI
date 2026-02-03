@@ -1107,6 +1107,7 @@ export async function approveNextMove(userId: string, opportunityId: string): Pr
       entityId: opportunity.entityId,
       status: 'pending',
       decisionReason: description,
+      creditsUsed: creditCost,
       estimatedImpact: {
         opportunityId: opportunity.id,
         expectedRevenue: opportunity.estimatedRevenueLift,

@@ -296,6 +296,7 @@ export async function promoteWinner(testId: string): Promise<boolean> {
     status: 'completed',
     decisionReason: result.reason,
     ruleId: null,
+    creditsUsed: 1,
     payload: {
       testId,
       testName: test.name,
