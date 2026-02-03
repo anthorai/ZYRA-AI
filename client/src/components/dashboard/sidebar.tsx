@@ -17,7 +17,8 @@ import {
   Shield,
   Activity,
   BarChart3,
-  LayoutDashboard
+  LayoutDashboard,
+  ClipboardList
 } from "lucide-react";
 
 interface SidebarProps {
@@ -158,7 +159,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
   // Build navigation items - simplified "one-brain" navigation
   const navItems = [
     { id: "revenue-immune", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "revenue-immune" },
-    { id: "change-control", label: "Change Control", icon: <Activity className="w-4 h-4 sm:w-5 sm:h-5" />, onClick: () => setLocation("/change-control"), tourAttr: "change-control" },
+    { id: "change-control", label: "Change Control", icon: <ClipboardList className="w-4 h-4 sm:w-5 sm:h-5" />, onClick: () => setLocation("/change-control"), tourAttr: "change-control" },
     { id: "zyra-at-work", label: "ZYRA at Work", icon: <Activity className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "zyra-at-work" },
     { id: "products", label: "Products", icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />, tourAttr: "products" },
     { id: "reports", label: "Reports", icon: <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />, onClick: () => setLocation("/reports") },
