@@ -740,12 +740,12 @@ export default function Reports() {
                                                     )}
                                                     data-testid={`change-detail-${action.id}`}
                                                   >
-                                                    {/* Header row with type, status, credits */}
+                                                    {/* Header row with action name prominently displayed */}
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                       <div className="flex items-center gap-2 flex-wrap">
-                                                        <Badge variant="outline" className="text-xs">
+                                                        <span className="font-semibold text-sm text-foreground">
                                                           {action.payload?.actionLabel || ACTION_TYPE_LABELS[action.actionType] || action.actionType}
-                                                        </Badge>
+                                                        </span>
                                                         {isRolledBack ? (
                                                           <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
                                                             <RotateCcw className="w-3 h-3 mr-1" />
@@ -774,9 +774,9 @@ export default function Reports() {
                                                         )}
                                                       </div>
                                                       {credits > 0 && (
-                                                        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
+                                                        <Badge className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-medium">
                                                           <Coins className="w-3 h-3 mr-1" />
-                                                          {credits}
+                                                          {credits} {credits === 1 ? 'credit' : 'credits'}
                                                         </Badge>
                                                       )}
                                                     </div>
