@@ -743,9 +743,9 @@ export default function Reports() {
                                                     {/* Header row with action name prominently displayed */}
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                       <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="font-semibold text-sm text-foreground">
+                                                        <Badge className="text-xs font-semibold bg-primary/10 text-primary border-primary/20">
                                                           {action.payload?.actionLabel || ACTION_TYPE_LABELS[action.actionType] || action.actionType}
-                                                        </span>
+                                                        </Badge>
                                                         {isRolledBack ? (
                                                           <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
                                                             <RotateCcw className="w-3 h-3 mr-1" />
