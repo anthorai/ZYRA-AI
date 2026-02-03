@@ -310,9 +310,15 @@ export default function Reports() {
       }
     });
 
-    // Filter to only include products that have at least one action with recorded before/after data
+    // Filter to only include products that have at least one action with recorded changes
     const productsWithChanges = Array.from(productMap.values()).filter(group => {
       return group.actions.some(action => {
+        // Check for changes array structure (from fix_product actions)
+        const changes = action.payload?.changes;
+        if (changes && Array.isArray(changes) && changes.length > 0) {
+          return changes.some((change: any) => change.before || change.after);
+        }
+        // Fallback to original structure
         const before = action.payload?.before || {};
         const after = action.payload?.after || action.result?.optimizedContent || {};
         const hasBeforeData = before.title || before.description || before.seoTitle || before.metaDescription;
@@ -686,6 +692,10 @@ export default function Reports() {
                                     {/* Compute actions with recorded changes once */}
                                     {(() => {
                                       const actionsWithChanges = productGroup.actions.filter((action) => {
+                                        const changes = action.payload?.changes;
+                                        if (changes && Array.isArray(changes) && changes.length > 0) {
+                                          return changes.some((change: any) => change.before || change.after);
+                                        }
                                         const before = action.payload?.before || {};
                                         const after = action.payload?.after || action.result?.optimizedContent || {};
                                         const hasBeforeData = before.title || before.description || before.seoTitle || before.metaDescription;
@@ -712,8 +722,7 @@ export default function Reports() {
                                             <div className="mb-3 space-y-2 max-h-[300px] overflow-y-auto">
                                               {actionsWithChanges.map((action) => {
                                                 const actionAny = action as any;
-                                                const before = action.payload?.before || {};
-                                                const after = action.payload?.after || action.result?.optimizedContent || {};
+                                                const changes = action.payload?.changes as Array<{field?: string; before?: string; after?: string; reason?: string}> | undefined;
                                                 const credits = actionAny.creditsUsed || actionAny.creditCost || 0;
                                                 const isRolledBack = action.status === "rolled_back";
                                                 const isCompleted = action.status === "completed";
@@ -735,7 +744,7 @@ export default function Reports() {
                                                     <div className="flex items-center justify-between gap-2 mb-2">
                                                       <div className="flex items-center gap-2 flex-wrap">
                                                         <Badge variant="outline" className="text-xs">
-                                                          {ACTION_TYPE_LABELS[action.actionType] || action.actionType}
+                                                          {action.payload?.actionLabel || ACTION_TYPE_LABELS[action.actionType] || action.actionType}
                                                         </Badge>
                                                         {isRolledBack ? (
                                                           <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
@@ -767,60 +776,52 @@ export default function Reports() {
                                                       )}
                                                     </div>
                                                     
-                                                    {/* Before/After content */}
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                      {/* Before column */}
-                                                      <div className="p-2 rounded bg-muted/50 border border-border/30">
-                                                        <p className="text-xs text-muted-foreground font-medium mb-1">Original</p>
-                                                        {before.title && (
-                                                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                                                            <span className="font-medium">Title:</span> {before.title}
-                                                          </p>
-                                                        )}
-                                                        {before.description && (
-                                                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                                                            <span className="font-medium">Desc:</span> {before.description.substring(0, 80)}...
-                                                          </p>
-                                                        )}
-                                                        {before.seoTitle && (
-                                                          <p className="text-xs text-muted-foreground line-clamp-1">
-                                                            <span className="font-medium">SEO:</span> {before.seoTitle}
-                                                          </p>
-                                                        )}
-                                                        {!before.title && !before.description && !before.seoTitle && (
-                                                          <p className="text-xs text-muted-foreground italic">-</p>
-                                                        )}
+                                                    {/* Before/After content from changes array */}
+                                                    {changes && changes.length > 0 ? (
+                                                      <div className="space-y-2">
+                                                        {changes.map((change, idx) => (
+                                                          <div key={idx} className="grid grid-cols-2 gap-2">
+                                                            <div className="p-2 rounded bg-muted/50 border border-border/30">
+                                                              <p className="text-xs text-muted-foreground font-medium mb-1">
+                                                                Original {change.field && `(${change.field})`}
+                                                              </p>
+                                                              <p className="text-xs text-muted-foreground line-clamp-3">
+                                                                {change.before ? (change.before.length > 120 ? change.before.substring(0, 120) + '...' : change.before) : '-'}
+                                                              </p>
+                                                            </div>
+                                                            <div className={cn(
+                                                              "p-2 rounded border",
+                                                              isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
+                                                            )}>
+                                                              <p className={cn(
+                                                                "text-xs font-medium mb-1",
+                                                                isRolledBack ? "text-blue-400" : "text-primary"
+                                                              )}>Changed To</p>
+                                                              <p className="text-xs line-clamp-3">
+                                                                {change.after ? (change.after.length > 120 ? change.after.substring(0, 120) + '...' : change.after) : '-'}
+                                                              </p>
+                                                            </div>
+                                                          </div>
+                                                        ))}
                                                       </div>
-                                                      
-                                                      {/* After column */}
-                                                      <div className={cn(
-                                                        "p-2 rounded border",
-                                                        isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
-                                                      )}>
-                                                        <p className={cn(
-                                                          "text-xs font-medium mb-1",
-                                                          isRolledBack ? "text-blue-400" : "text-primary"
-                                                        )}>Changed To</p>
-                                                        {after.title && (
-                                                          <p className="text-xs line-clamp-2 mb-1">
-                                                            <span className="font-medium">Title:</span> {after.title}
-                                                          </p>
-                                                        )}
-                                                        {after.description && (
-                                                          <p className="text-xs line-clamp-2 mb-1">
-                                                            <span className="font-medium">Desc:</span> {after.description.substring(0, 80)}...
-                                                          </p>
-                                                        )}
-                                                        {after.seoTitle && (
-                                                          <p className="text-xs line-clamp-1">
-                                                            <span className="font-medium">SEO:</span> {after.seoTitle}
-                                                          </p>
-                                                        )}
-                                                        {!after.title && !after.description && !after.seoTitle && (
+                                                    ) : (
+                                                      <div className="grid grid-cols-2 gap-2">
+                                                        <div className="p-2 rounded bg-muted/50 border border-border/30">
+                                                          <p className="text-xs text-muted-foreground font-medium mb-1">Original</p>
                                                           <p className="text-xs text-muted-foreground italic">-</p>
-                                                        )}
+                                                        </div>
+                                                        <div className={cn(
+                                                          "p-2 rounded border",
+                                                          isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
+                                                        )}>
+                                                          <p className={cn(
+                                                            "text-xs font-medium mb-1",
+                                                            isRolledBack ? "text-blue-400" : "text-primary"
+                                                          )}>Changed To</p>
+                                                          <p className="text-xs text-muted-foreground italic">-</p>
+                                                        </div>
                                                       </div>
-                                                    </div>
+                                                    )}
                                                   </div>
                                                 );
                                               })}
