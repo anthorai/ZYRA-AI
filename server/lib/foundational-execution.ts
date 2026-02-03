@@ -96,8 +96,15 @@ export class FoundationalExecutionService {
     });
 
     try {
+      // Initial credit check - need at least 1 credit to start
       const creditCheck = await checkAIToolCredits(userId, 'product-seo-engine', 1);
       if (!creditCheck.hasEnoughCredits) {
+        this.addActivity(userId, {
+          phase: 'decide',
+          message: 'Insufficient credits to run optimization',
+          status: 'warning',
+          details: `You need at least 1 credit. Available: ${creditCheck.creditsRemaining}`,
+        });
         return {
           success: false,
           actionType,
@@ -115,6 +122,7 @@ export class FoundationalExecutionService {
         phase: 'decide',
         message: `Selected action: ${ACTION_LABELS[actionType] || actionType}`,
         status: 'completed',
+        details: `Available credits: ${creditCheck.creditsRemaining}`,
       });
 
       // Prefer products that haven't been optimized yet (no optimizedTitle in seoMeta)
@@ -166,8 +174,16 @@ export class FoundationalExecutionService {
 
       const productsOptimized: ProductOptimization[] = [];
       let totalChanges = 0;
+      let totalCreditsConsumed = 0;
 
       for (const product of userProducts) {
+        // Check and consume 1 credit per product optimization
+        const creditCheck = await checkAIToolCredits(userId, 'product-seo-engine', 1);
+        if (!creditCheck.hasEnoughCredits) {
+          console.log(`[Foundational] Stopping - insufficient credits for product ${product.name}`);
+          break; // Stop if no more credits
+        }
+
         let optimization: ProductOptimization;
 
         switch (actionType) {
@@ -188,12 +204,16 @@ export class FoundationalExecutionService {
         }
 
         if (optimization.changes.length > 0) {
+          // Consume 1 credit per product with actual changes
+          await consumeAIToolCredits(userId, 'product-seo-engine', 1);
+          totalCreditsConsumed += 1;
+          
           productsOptimized.push(optimization);
           totalChanges += optimization.changes.length;
 
           this.addActivity(userId, {
             phase: 'execute',
-            message: `Optimized: ${product.name}`,
+            message: `Optimized: ${product.name} (1 credit used)`,
             status: 'completed',
             productName: product.name,
             changes: optimization.changes,
@@ -202,11 +222,11 @@ export class FoundationalExecutionService {
         }
       }
 
-      await consumeAIToolCredits(userId, 'product-seo-engine', 1);
+      console.log(`[Foundational] Total credits consumed: ${totalCreditsConsumed} for ${productsOptimized.length} products`);
 
       this.addActivity(userId, {
         phase: 'prove',
-        message: `Completed ${totalChanges} improvement${totalChanges !== 1 ? 's' : ''} across ${productsOptimized.length} product${productsOptimized.length !== 1 ? 's' : ''}`,
+        message: `Completed ${totalChanges} improvement${totalChanges !== 1 ? 's' : ''} across ${productsOptimized.length} product${productsOptimized.length !== 1 ? 's' : ''} (${totalCreditsConsumed} credit${totalCreditsConsumed !== 1 ? 's' : ''} used)`,
         status: 'completed',
         details: this.generateImpactSummary(actionType, totalChanges),
       });
