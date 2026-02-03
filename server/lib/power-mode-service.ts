@@ -15,7 +15,10 @@
 import { analyzeSERP, checkSERPHealth, type SERPAnalysis } from '../services/serp-analyzer';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+});
 
 export interface PowerModeInput {
   productName: string;

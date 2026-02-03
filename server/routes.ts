@@ -136,7 +136,8 @@ import { getPlanIdByName, AUTONOMY_LEVELS, EXECUTION_PRIORITY } from "./lib/cons
 
 // Initialize OpenAI
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || ""
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || "",
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
 // Types for authenticated user from Supabase
@@ -20459,7 +20460,10 @@ Generate 5 high-impact trigger recommendations that would benefit this store.`
       }
       
       // Use AI to analyze customer data and suggest segments
-      const openai = new OpenAI();
+      const openaiClient = new OpenAI({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      });
       
       const analysisPrompt = `Analyze this e-commerce customer data and suggest smart customer segments.
 
@@ -20488,7 +20492,7 @@ Based on this data, suggest 4-6 customer segments. For each segment provide:
 
 Return JSON array of segments only, no explanation text.`;
 
-      const completion = await openai.chat.completions.create({
+      const completion = await openaiClient.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {

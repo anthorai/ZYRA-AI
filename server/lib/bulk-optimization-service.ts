@@ -11,7 +11,10 @@ function getOpenAI(): OpenAI {
     if (!apiKey) {
       throw new Error('OpenAI API key is required for bulk optimization. Please set AI_INTEGRATIONS_OPENAI_API_KEY or OPENAI_API_KEY environment variable.');
     }
-    openai = new OpenAI({ apiKey });
+    openai = new OpenAI({ 
+      apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
   }
   return openai;
 }
