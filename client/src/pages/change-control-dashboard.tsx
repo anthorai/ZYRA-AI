@@ -797,103 +797,20 @@ export default function ChangeControlDashboard() {
                     </CardContent>
                   </Card>
                 ) : activeCategory === "seo" ? (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Search className="w-5 h-5 text-blue-400" />
-                        SEO Comparison Table
-                      </CardTitle>
-                      <CardDescription>
-                        Compare unoptimized vs optimized product content
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm" data-testid="table-seo-comparison">
-                          <thead>
-                            <tr className="border-b border-border">
-                              <th className="p-3 text-left font-medium w-8">
-                                <Checkbox 
-                                  checked={selectedIds.size === categoryFilteredChanges.length && categoryFilteredChanges.length > 0}
-                                  onCheckedChange={selectAll}
-                                  data-testid="checkbox-select-all-seo"
-                                />
-                              </th>
-                              <th className="p-3 text-left font-medium">Action</th>
-                              <th className="p-3 text-left font-medium">Product</th>
-                              <th className="p-3 text-left font-medium text-muted-foreground">Unoptimized</th>
-                              <th className="p-3 text-left font-medium text-primary">Optimized</th>
-                              <th className="p-3 text-left font-medium">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {categoryFilteredChanges.map((change) => {
-                              const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.optimize_seo;
-                              const statusConfig = STATUS_CONFIG[change.status];
-                              const { before, after } = getBeforeAfterContent(change);
-                              const isChecked = selectedIds.has(change.id);
-                              const beforeText = Object.values(before)[0] || "—";
-                              const afterText = Object.values(after)[0] || "—";
-                              
-                              return (
-                                <tr 
-                                  key={change.id} 
-                                  className={cn(
-                                    "border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors",
-                                    isChecked && "bg-primary/5"
-                                  )}
-                                  onClick={() => setSelectedChange(selectedChange?.id === change.id ? null : change)}
-                                  data-testid={`row-seo-${change.id}`}
-                                >
-                                  <td className="p-3">
-                                    <Checkbox 
-                                      checked={isChecked}
-                                      onCheckedChange={() => toggleSelection(change.id)}
-                                      onClick={(e) => e.stopPropagation()}
-                                      data-testid={`checkbox-seo-${change.id}`}
-                                    />
-                                  </td>
-                                  <td className="p-3">
-                                    <Badge variant="outline" className={cn("text-xs", config.color)}>
-                                      {config.label}
-                                    </Badge>
-                                  </td>
-                                  <td className="p-3">
-                                    <div className="flex items-center gap-2">
-                                      {change.productImage ? (
-                                        <img src={change.productImage} alt="" className="w-8 h-8 rounded object-cover" />
-                                      ) : (
-                                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-                                          <Package className="w-4 h-4 text-muted-foreground" />
-                                        </div>
-                                      )}
-                                      <span className="truncate max-w-[150px]">{change.productName || "Unknown"}</span>
-                                    </div>
-                                  </td>
-                                  <td className="p-3 max-w-[200px]">
-                                    <p className="text-xs text-muted-foreground truncate" title={beforeText}>
-                                      {beforeText.length > 60 ? beforeText.substring(0, 60) + "..." : beforeText}
-                                    </p>
-                                  </td>
-                                  <td className="p-3 max-w-[200px]">
-                                    <p className="text-xs text-primary truncate" title={afterText}>
-                                      {afterText.length > 60 ? afterText.substring(0, 60) + "..." : afterText}
-                                    </p>
-                                  </td>
-                                  <td className="p-3">
-                                    <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
-                                      {statusConfig.label}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-3">
+                        <Checkbox 
+                          checked={selectedIds.size === categoryFilteredChanges.length && categoryFilteredChanges.length > 0}
+                          onCheckedChange={selectAll}
+                          data-testid="checkbox-select-all-seo"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+                        </span>
                       </div>
-                      
                       {selectedIds.size > 0 && (
-                        <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                        <div className="flex items-center gap-2">
                           <Button
                             size="sm"
                             onClick={() => {
@@ -907,10 +824,10 @@ export default function ChangeControlDashboard() {
                             }}
                             disabled={bulkPushMutation.isPending}
                             className="gap-2"
-                            data-testid="button-push-selected-seo"
+                            data-testid="button-bulk-push-seo"
                           >
                             <Upload className="w-4 h-4" />
-                            Push Selected to Shopify ({selectedIds.size})
+                            Push Selected ({selectedIds.size})
                           </Button>
                           <Button
                             variant="destructive"
@@ -926,15 +843,126 @@ export default function ChangeControlDashboard() {
                             }}
                             disabled={bulkRollbackMutation.isPending}
                             className="gap-2"
-                            data-testid="button-rollback-selected-seo"
+                            data-testid="button-bulk-rollback-seo"
                           >
                             <RotateCcw className="w-4 h-4" />
                             Rollback Selected
                           </Button>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                    {categoryFilteredChanges.map((change) => {
+                      const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.optimize_seo;
+                      const statusConfig = STATUS_CONFIG[change.status];
+                      const Icon = config.icon;
+                      const { before, after } = getBeforeAfterContent(change);
+                      const beforeText = Object.values(before)[0] || "No previous content";
+                      const afterText = Object.values(after)[0] || "Optimized content pending";
+                      const fieldName = Object.keys(before)[0] || Object.keys(after)[0] || "Content";
+                      const isChecked = selectedIds.has(change.id);
+                      
+                      return (
+                        <Card 
+                          key={change.id}
+                          className={cn(
+                            "border-blue-500/20 bg-blue-500/5 transition-all",
+                            isChecked && "ring-2 ring-primary/50"
+                          )}
+                          data-testid={`card-seo-${change.id}`}
+                        >
+                          <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
+                                <Checkbox 
+                                  checked={isChecked}
+                                  onCheckedChange={() => toggleSelection(change.id)}
+                                  className="mt-1"
+                                  data-testid={`checkbox-seo-${change.id}`}
+                                />
+                                {change.productImage ? (
+                                  <img 
+                                    src={change.productImage} 
+                                    alt="" 
+                                    className="w-12 h-12 rounded-md object-cover border border-border"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                                    <Package className="w-6 h-6 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {change.productName || "Unknown Product"}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="outline" className={cn("text-xs", config.color)}>
+                                      <Icon className="w-3 h-3 mr-1" />
+                                      {config.label}
+                                    </Badge>
+                                    <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
+                                      {statusConfig.label}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                {!change.publishedToShopify && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => pushToShopifyMutation.mutate(change.id)}
+                                    disabled={pushToShopifyMutation.isPending}
+                                    className="gap-1"
+                                    data-testid={`button-push-seo-${change.id}`}
+                                  >
+                                    <Upload className="w-4 h-4" />
+                                    Push to Shopify
+                                  </Button>
+                                )}
+                                {(change.status === "completed" || change.status === "dry_run") && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => rollbackMutation.mutate(change.id)}
+                                    disabled={rollbackMutation.isPending}
+                                    className="gap-1"
+                                    data-testid={`button-rollback-seo-${change.id}`}
+                                  >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Rollback
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-2">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                              {fieldName}
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                                  <X className="w-3 h-3 text-red-400" />
+                                  Before (Unoptimized)
+                                </p>
+                                <p className="text-sm">
+                                  {beforeText.length > 200 ? beforeText.substring(0, 200) + "..." : beforeText}
+                                </p>
+                              </div>
+                              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                                <p className="text-xs text-blue-400 mb-2 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  After (Optimized)
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {afterText.length > 200 ? afterText.substring(0, 200) + "..." : afterText}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 ) : activeCategory === "learning" ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-purple-500/5 border-purple-500/20">
