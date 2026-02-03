@@ -124,6 +124,7 @@ const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: stri
   cart_recovery: { label: "Cart Recovery", icon: DollarSign, color: "text-yellow-400", category: "revenue_recovery" },
   abandoned_cart_recovery: { label: "Abandoned Cart Recovery Activation", icon: ShoppingCart, color: "text-yellow-400", category: "revenue_recovery" },
   post_purchase_upsell: { label: "Post-Purchase Upsell Enablement", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
+  upsell: { label: "Upsell Opportunity", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
   checkout_drop_mitigation: { label: "Checkout Drop-Off Mitigation", icon: DollarSign, color: "text-rose-400", category: "revenue_recovery" },
   
   // Revenue Protection Actions
@@ -272,8 +273,10 @@ export default function ChangeControlDashboard() {
     
     let filtered = changes;
     
-    // Filter out entries without real product names
+    // Allow store-wide actions (upsell, recovery, etc.) even without product names
+    const storeWideActionTypes = ['upsell', 'send_cart_recovery', 'cart_recovery', 'abandoned_cart_recovery', 'checkout_drop_mitigation'];
     filtered = filtered.filter(c => {
+      if (storeWideActionTypes.includes(c.actionType)) return true;
       const productName = c.productName || c.payload?.productName;
       return productName && productName !== "Unknown Product";
     });
