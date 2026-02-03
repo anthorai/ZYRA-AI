@@ -767,6 +767,11 @@ export default function Reports() {
                                                             Applied
                                                           </Badge>
                                                         )}
+                                                        {action.entityType && (
+                                                          <Badge variant="outline" className="text-xs bg-slate-500/10 text-slate-400 border-slate-500/20">
+                                                            {action.entityType === 'product' ? 'Product' : action.entityType === 'store' ? 'Store-wide' : action.entityType}
+                                                          </Badge>
+                                                        )}
                                                       </div>
                                                       {credits > 0 && (
                                                         <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
@@ -775,6 +780,29 @@ export default function Reports() {
                                                         </Badge>
                                                       )}
                                                     </div>
+                                                    
+                                                    {/* Metadata row: date, time, executed by */}
+                                                    <div className="flex items-center gap-3 mb-2 text-xs text-muted-foreground">
+                                                      <span className="flex items-center gap-1" data-testid={`action-timestamp-${action.id}`}>
+                                                        <Clock className="w-3 h-3" />
+                                                        {new Date(action.completedAt || action.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                        {' '}
+                                                        {new Date(action.completedAt || action.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                                      </span>
+                                                      {action.executedBy && (
+                                                        <span className="flex items-center gap-1" data-testid={`action-executor-${action.id}`}>
+                                                          <Bot className="w-3 h-3" />
+                                                          {action.executedBy === 'agent' ? 'ZYRA AI' : action.executedBy}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                    
+                                                    {/* Decision reason */}
+                                                    {action.decisionReason && (
+                                                      <p className="text-xs text-muted-foreground mb-2 italic" data-testid={`action-reason-${action.id}`}>
+                                                        {action.decisionReason}
+                                                      </p>
+                                                    )}
                                                     
                                                     {/* Before/After content from changes array */}
                                                     {changes && changes.length > 0 ? (
