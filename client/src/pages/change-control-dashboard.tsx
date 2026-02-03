@@ -1131,6 +1131,59 @@ export default function ChangeControlDashboard() {
                   </div>
                 ) : activeCategory === "conversion" ? (
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-3">
+                        <Checkbox 
+                          checked={selectedIds.size === categoryFilteredChanges.length && categoryFilteredChanges.length > 0}
+                          onCheckedChange={selectAll}
+                          data-testid="checkbox-select-all-conversion"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+                        </span>
+                      </div>
+                      {selectedIds.size > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const idsToPush = Array.from(selectedIds).filter(id => {
+                                const change = changes?.find(c => c.id === id);
+                                return change && !change.publishedToShopify;
+                              });
+                              if (idsToPush.length > 0) {
+                                bulkPushMutation.mutate(idsToPush);
+                              }
+                            }}
+                            disabled={bulkPushMutation.isPending}
+                            className="gap-2"
+                            data-testid="button-bulk-push-conversion"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Push Selected ({selectedIds.size})
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const idsToRollback = Array.from(selectedIds).filter(id => {
+                                const change = changes?.find(c => c.id === id);
+                                return change && (change.status === "completed" || change.status === "dry_run");
+                              });
+                              if (idsToRollback.length > 0) {
+                                bulkRollbackMutation.mutate(idsToRollback);
+                              }
+                            }}
+                            disabled={bulkRollbackMutation.isPending}
+                            className="gap-2"
+                            data-testid="button-bulk-rollback-conversion"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            Rollback Selected
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                     {categoryFilteredChanges.map((change) => {
                       const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.description_clarity;
                       const statusConfig = STATUS_CONFIG[change.status];
@@ -1139,16 +1192,26 @@ export default function ChangeControlDashboard() {
                       const beforeText = Object.values(before)[0] || "No previous content";
                       const afterText = Object.values(after)[0] || "Optimized content pending";
                       const fieldName = Object.keys(before)[0] || Object.keys(after)[0] || "Content";
+                      const isChecked = selectedIds.has(change.id);
                       
                       return (
                         <Card 
                           key={change.id}
-                          className="border-green-500/20 bg-green-500/5"
+                          className={cn(
+                            "border-green-500/20 bg-green-500/5 transition-all",
+                            isChecked && "ring-2 ring-primary/50"
+                          )}
                           data-testid={`card-conversion-${change.id}`}
                         >
                           <CardHeader className="pb-2">
                             <div className="flex items-start justify-between">
                               <div className="flex items-start gap-3">
+                                <Checkbox 
+                                  checked={isChecked}
+                                  onCheckedChange={() => toggleSelection(change.id)}
+                                  className="mt-1"
+                                  data-testid={`checkbox-conversion-${change.id}`}
+                                />
                                 {change.productImage ? (
                                   <img 
                                     src={change.productImage} 
