@@ -251,7 +251,7 @@ export default function ChangeControlDashboard() {
   const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  const [showLatestOnly, setShowLatestOnly] = useState(true);
+  const [showLatestOnly, setShowLatestOnly] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ActionCategory>("seo");
 
   const handleCategoryChange = (category: ActionCategory) => {
