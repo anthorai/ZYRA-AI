@@ -480,39 +480,41 @@ export default function Landing() {
         <section id="pricing" className="py-24 px-4 sm:px-6 cta-section relative overflow-hidden">
           <div className="floating-orb orb-cyan w-[400px] h-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20" />
           <div className="container mx-auto max-w-3xl text-center relative z-10">
-            <Badge className="mb-6 bg-primary/10 text-primary border-primary/20">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Simple Pricing
-            </Badge>
-            <AnimatedSectionTitle>
-              Simple, <span className="gradient-text">Permission-Based</span> Pricing
-            </AnimatedSectionTitle>
-            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-              Plans control what ZYRA is allowed to do. Higher plans unlock growth actions and revenue protection.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
-                <Button asChild size="lg" className="relative rounded-xl font-bold px-10 shadow-lg shadow-primary/25" data-testid="button-view-pricing">
-                  <Link href="/pricing">
-                    VIEW PRICING
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Link>
-                </Button>
+            <div className="glass-card p-10 md:p-14">
+              <Badge className="mb-6 bg-primary/10 text-primary border-primary/20">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Simple Pricing
+              </Badge>
+              <AnimatedSectionTitle>
+                Simple, <span className="gradient-text">Permission-Based</span> Pricing
+              </AnimatedSectionTitle>
+              <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
+                Plans control what ZYRA is allowed to do. Higher plans unlock growth actions and revenue protection.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
+                  <Button asChild size="lg" className="relative rounded-xl font-bold px-10 shadow-lg shadow-primary/25" data-testid="button-view-pricing">
+                    <Link href="/pricing">
+                      VIEW PRICING
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" />
-                <span>Billed through Shopify</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
-                <span>Cancel anytime</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
-                <span>No contracts</span>
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span>Billed through Shopify</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary" />
+                  <span>Cancel anytime</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary" />
+                  <span>No contracts</span>
+                </div>
               </div>
             </div>
           </div>
