@@ -343,7 +343,7 @@ export default function Auth() {
           </Alert>
         )}
         
-        <Card className="glass-card-hover border-0" data-testid="card-auth">
+        <Card className="glass-card-hover border-0 !bg-transparent" data-testid="card-auth" style={{ background: 'rgba(35, 35, 75, 1)', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
           <CardContent className="p-6 sm:p-8">
             <div className="text-center mb-6 sm:mb-8">
               <div className="mx-auto mb-3 sm:mb-4">
