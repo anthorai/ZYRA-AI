@@ -331,7 +331,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12" style={{ backgroundColor: '#0d0d1a' }}>
       <div className="max-w-sm sm:max-w-md w-full">
         {/* Shopify Installation Banner */}
         {shopifyInstallState && (
