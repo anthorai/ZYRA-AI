@@ -232,7 +232,7 @@ export default function Landing() {
               </Card>
             </div>
 
-            <div className="text-center border border-primary/20 rounded-none p-8 bg-card">
+            <div className="text-center border border-primary/20 rounded-lg p-8 bg-card">
               <p className="text-lg font-medium">
                 <span className="text-primary">ZYRA does the work.</span> You supervise.
               </p>
@@ -253,7 +253,7 @@ export default function Landing() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border">
                 <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <ShoppingCart className="w-5 h-5 text-orange-400" />
                 </div>
@@ -263,7 +263,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border">
                 <div className="w-10 h-10 bg-pink-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Mail className="w-5 h-5 text-pink-400" />
                 </div>
@@ -273,7 +273,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border">
                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Search className="w-5 h-5 text-primary" />
                 </div>
@@ -283,7 +283,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border">
                 <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Layers className="w-5 h-5 text-blue-400" />
                 </div>
@@ -293,7 +293,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border">
                 <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Users className="w-5 h-5 text-purple-400" />
                 </div>
@@ -303,7 +303,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border">
                 <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <RefreshCw className="w-5 h-5 text-amber-400" />
                 </div>
@@ -313,7 +313,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-6 bg-card rounded-none border md:col-span-2">
+              <div className="flex items-start gap-4 p-6 bg-card rounded-lg border md:col-span-2">
                 <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Trophy className="w-5 h-5 text-amber-400" />
                 </div>
@@ -370,7 +370,7 @@ export default function Landing() {
               </Card>
             </div>
 
-            <div className="border border-primary/20 rounded-none p-8 text-center bg-card">
+            <div className="border border-primary/20 rounded-lg p-8 text-center bg-card">
               <Shield className="w-8 h-8 text-primary mx-auto mb-4" />
               <p className="text-lg font-medium mb-2">Autonomy only when you allow it.</p>
               <p className="text-muted-foreground">Turn on autonomous mode when you're ready. Until then, ZYRA waits for your approval.</p>
@@ -392,7 +392,7 @@ export default function Landing() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <Card className="bg-card border">
-                <CardContent className="sm:p-6 p-6 space-y-5 rounded-none">
+                <CardContent className="sm:p-6 p-6 space-y-5">
                   <div className="flex items-start gap-4">
                     <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
                       <Check className="w-4 h-4 text-primary" />
