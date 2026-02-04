@@ -10,6 +10,7 @@ import {
   storeConnections,
   usageStats,
   activityLogs,
+  actionLocks,
   FrictionType,
   FRICTION_TYPE_LABELS,
   FoundationalActionType,
@@ -17,7 +18,7 @@ import {
   FOUNDATIONAL_ACTION_LABELS,
   FOUNDATIONAL_ACTION_DESCRIPTIONS
 } from '@shared/schema';
-import { eq, and, desc, sql, gte, isNull, or, count } from 'drizzle-orm';
+import { eq, and, desc, sql, gte, isNull, or, count, ne, inArray } from 'drizzle-orm';
 import { emitZyraActivity, ZyraEventType } from './zyra-event-emitter';
 import { ACTION_MAP, type ActionId } from './zyra-master-loop/master-action-registry';
 
@@ -806,6 +807,7 @@ export class FastDetectionEngine {
    * Select ONE foundational action for a new store
    * Priority: SEO basics > Product copy clarity > Trust signals > Recovery setup
    * RULE: This method ALWAYS returns an action - never null for new stores
+   * LOCK CHECK: Skips products that already have a locked action to prevent duplicate credit consumption
    */
   async selectFoundationalAction(userId: string): Promise<FoundationalAction> {
     try {
@@ -824,6 +826,30 @@ export class FastDetectionEngine {
         .where(eq(products.userId, userId))
         .orderBy(sql`COALESCE(${products.revenueHealthScore}, 0) ASC`)
         .limit(10);
+      
+      // Query all LOCKED actions for this user to prevent duplicate recommendations
+      // Only locked actions prevent re-execution; unlocked ones (due to material change) can be re-run
+      const lockedActions = await db
+        .select({
+          entityId: actionLocks.entityId,
+          actionType: actionLocks.actionType,
+          status: actionLocks.status,
+          lockedAt: actionLocks.lockedAt,
+        })
+        .from(actionLocks)
+        .where(and(
+          eq(actionLocks.userId, userId),
+          eq(actionLocks.entityType, 'product'),
+          eq(actionLocks.status, 'locked')
+        ));
+      
+      // Create a Set of locked product+action combinations for fast lookup
+      // Format: "productId:actionType"
+      const lockedCombinations = new Set(
+        lockedActions.map(lock => `${lock.entityId}:${lock.actionType}`)
+      );
+      
+      console.log(`🔒 [Action Locks] Found ${lockedActions.length} locked actions for user ${userId}`);
       
       // Prioritize products without optimized SEO, then those with low health scores
       const unoptimizedProducts = allProducts.filter(p => !p.hasOptimizedSeo);
@@ -861,42 +887,83 @@ export class FastDetectionEngine {
       // Find the next action type that hasn't been recently executed
       let selectedType: FoundationalActionType = 'seo_basics';
       let targetProduct = userProducts[0];
+      let isAlreadyOptimized = false; // Track if we're showing a locked action
+      
+      // Helper function to check if a product+action is locked
+      const isLocked = (productId: string | undefined, actionType: FoundationalActionType): boolean => {
+        if (!productId) return false;
+        const actionId = LEGACY_TO_ACTION_ID[actionType];
+        return lockedCombinations.has(`${productId}:${actionId}`);
+      };
+      
+      // Helper function to find an unlocked product for a given action type
+      const findUnlockedProduct = (actionType: FoundationalActionType): typeof userProducts[0] | undefined => {
+        return userProducts.find(p => !isLocked(p.id, actionType));
+      };
+      
+      // Helper function to find an unlocked action for a given product
+      const findUnlockedAction = (productId: string | undefined): FoundationalActionType | undefined => {
+        for (const actionType of actionPriority) {
+          if (!isLocked(productId, actionType)) {
+            return actionType;
+          }
+        }
+        return undefined;
+      };
+      
+      // Track if the SELECTED combination is locked (not just "all locked")
+      let selectedCombinationIsLocked = false;
       
       if (userProducts.length > 0) {
-        // Find first action type not recently executed
+        // Find first action type not recently executed AND not locked for any product
+        let foundUnlockedCombination = false;
+        
         for (const actionType of actionPriority) {
           if (!recentActionTypes.has(actionType)) {
-            selectedType = actionType;
-            break;
+            const unlockedProduct = findUnlockedProduct(actionType);
+            if (unlockedProduct) {
+              selectedType = actionType;
+              targetProduct = unlockedProduct;
+              foundUnlockedCombination = true;
+              selectedCombinationIsLocked = false;
+              console.log(`✅ [Action Locks] Found unlocked combination: ${actionType} for product ${unlockedProduct.name}`);
+              break;
+            }
           }
         }
         
-        // If all actions were recently executed, cycle through products
-        if (recentActionTypes.size >= actionPriority.length - 1) {
-          // Find a product that hasn't been optimized recently
-          const optimizedProductIds = new Set(
-            recentActions
-              .map(a => {
-                try {
-                  const meta = typeof a.metadata === 'string' ? JSON.parse(a.metadata) : a.metadata;
-                  return meta?.productId;
-                } catch { return null; }
-              })
-              .filter(Boolean)
-          );
-          
-          const unoptimizedProduct = userProducts.find(p => !optimizedProductIds.has(p.id));
-          if (unoptimizedProduct) {
-            targetProduct = unoptimizedProduct;
-            selectedType = 'seo_basics'; // Start fresh with new product
+        // If no unlocked combination found from recent actions check, try all combinations
+        if (!foundUnlockedCombination) {
+          // Try each product with each action type to find an unlocked combination
+          outerLoop: for (const product of userProducts) {
+            for (const actionType of actionPriority) {
+              if (!isLocked(product.id, actionType)) {
+                selectedType = actionType;
+                targetProduct = product;
+                foundUnlockedCombination = true;
+                selectedCombinationIsLocked = false;
+                console.log(`✅ [Action Locks] Found alternative unlocked: ${actionType} for product ${product.name}`);
+                break outerLoop;
+              }
+            }
           }
+        }
+        
+        // If still no unlocked combination, all products are fully optimized
+        if (!foundUnlockedCombination) {
+          isAlreadyOptimized = true;
+          selectedCombinationIsLocked = true;
+          console.log(`🔒 [Action Locks] All product+action combinations are locked for user ${userId}. Execution blocked.`);
+          // Still set a target product and action for display purposes only
+          targetProduct = userProducts[0];
+          selectedType = 'seo_basics';
         }
         
         // Check if all products already have optimized SEO
         const allProductsHaveSeo = unoptimizedProducts.length === 0 && optimizedProducts.length > 0;
         
-        // Smart rotation: find next action type that hasn't been done recently
-        const getNextAvailableAction = (): FoundationalActionType => {
+        // Smart rotation: find next action type that hasn't been done recently AND is unlocked
+        const getNextAvailableAction = (): { actionType: FoundationalActionType; isLocked: boolean } => {
           const rotationPriority: FoundationalActionType[] = [
             'seo_basics',
             'product_copy_clarity', 
@@ -904,34 +971,50 @@ export class FastDetectionEngine {
             'recovery_setup'
           ];
           
-          // Find first action not recently done
+          // Find first action not recently done AND not locked
           for (const actionType of rotationPriority) {
-            if (!recentActionTypes.has(actionType)) {
-              return actionType;
+            if (!recentActionTypes.has(actionType) && !isLocked(targetProduct?.id, actionType)) {
+              return { actionType, isLocked: false };
             }
           }
-          // All actions done recently - start fresh rotation
-          return rotationPriority[recentActionTypes.size % rotationPriority.length];
+          // Find any unlocked action
+          for (const actionType of rotationPriority) {
+            if (!isLocked(targetProduct?.id, actionType)) {
+              return { actionType, isLocked: false };
+            }
+          }
+          // All locked for this product - return current selection but mark as locked
+          return { 
+            actionType: rotationPriority[recentActionTypes.size % rotationPriority.length],
+            isLocked: true
+          };
         };
         
-        // Additional selection logic based on product state
-        if (targetProduct) {
+        // Additional selection logic based on product state (only if not already optimized)
+        if (targetProduct && !isAlreadyOptimized) {
           const productHasSeo = targetProduct.hasOptimizedSeo;
           
-          // Always rotate if selectedType was recently executed (ensures diversity)
-          if (recentActionTypes.has(selectedType)) {
-            selectedType = getNextAvailableAction();
+          // Always rotate if selectedType was recently executed or locked
+          if (recentActionTypes.has(selectedType) || isLocked(targetProduct.id, selectedType)) {
+            const nextAction = getNextAvailableAction();
+            selectedType = nextAction.actionType;
+            selectedCombinationIsLocked = nextAction.isLocked;
           } else if (allProductsHaveSeo && selectedType === 'seo_basics') {
             // If SEO is done for all products, rotate to next action
-            selectedType = getNextAvailableAction();
+            const nextAction = getNextAvailableAction();
+            selectedType = nextAction.actionType;
+            selectedCombinationIsLocked = nextAction.isLocked;
           } else if (productHasSeo && selectedType === 'seo_basics') {
             // If this product has SEO, rotate to next action
-            selectedType = getNextAvailableAction();
+            const nextAction = getNextAvailableAction();
+            selectedType = nextAction.actionType;
+            selectedCombinationIsLocked = nextAction.isLocked;
           }
         }
       } else {
         // No products - suggest recovery setup
         selectedType = 'recovery_setup';
+        selectedCombinationIsLocked = false;
       }
       
       const actionDetails = FOUNDATIONAL_ACTION_DESCRIPTIONS[selectedType];
@@ -970,21 +1053,30 @@ export class FastDetectionEngine {
         productId: targetProduct?.id,
         productName: targetProduct?.name || undefined,
         title: registryAction.title, // Use registry name instead of legacy label
-        description: dynamicReasoning.description,
-        whyItHelps: dynamicReasoning.whyItHelps,
-        expectedImpact: dynamicReasoning.expectedImpact,
+        description: isAlreadyOptimized 
+          ? 'All products have been optimized with this action. ZYRA is monitoring for changes that would unlock new optimization opportunities.'
+          : dynamicReasoning.description,
+        whyItHelps: isAlreadyOptimized
+          ? 'Your products are already optimized. Wait for material changes (price updates, inventory changes, or content edits) to unlock new recommendations.'
+          : dynamicReasoning.whyItHelps,
+        expectedImpact: isAlreadyOptimized ? 'N/A - Already Optimized' : dynamicReasoning.expectedImpact,
         riskLevel: 'low',
         subActions: registryAction.subActions, // Use registry sub-actions
         storeSituation: 'NEW / FRESH',
         activePlan: 'STARTER',
-        detectedIssue: detectedIssueMap[selectedType],
+        detectedIssue: isAlreadyOptimized ? 'No new issues detected' : detectedIssueMap[selectedType],
         funnelStage: funnelStageMap[selectedType],
         // Credit consumption tracking
         creditCost: registryAction.creditsRequired,
-        executionMode: 'fast' // Default to fast mode
+        executionMode: 'fast', // Default to fast mode
+        // Lock status - prevents duplicate execution
+        // Use selectedCombinationIsLocked (specific selected combo) not just isAlreadyOptimized (all combos)
+        isLocked: selectedCombinationIsLocked,
+        // Additional flag for when ALL combinations are locked
+        allCombinationsLocked: isAlreadyOptimized
       };
       
-      console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''} | Recent: [${Array.from(recentActionTypes).join(', ')}]`);
+      console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''} | Locked: ${selectedCombinationIsLocked} | AllLocked: ${isAlreadyOptimized} | Recent: [${Array.from(recentActionTypes).join(', ')}]`);
       
       return foundationalAction;
     } catch (error) {

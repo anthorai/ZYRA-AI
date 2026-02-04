@@ -3716,7 +3716,10 @@ export interface FoundationalAction {
   // Credit consumption tracking
   creditCost?: number;
   executionMode?: 'fast' | 'competitive_intelligence';
+  // Lock status - true if this specific selected product+action combination is locked
   isLocked?: boolean;
+  // Additional flag for when ALL combinations are locked (all products fully optimized)
+  allCombinationsLocked?: boolean;
   lockMessage?: string;
 }
 

@@ -70,6 +70,10 @@ This high-performance engine ensures ≤10s response time for revenue opportunit
 ### Credit Consumption System
 A plan-aware credit consumption system where credits represent AI thinking depth, SERP analysis, execution complexity, and learning costs. Monthly credits vary by plan, and credit cost multipliers are applied based on action type, plan, SERP usage, and autonomy. The system includes "soft nudges" for low credit situations and backend enforcement with credit checks before execution and a 5% credit reserve.
 
+**Execution Modes**: Two modes available - "Fast Mode" (GPT-4o-mini, base credits) and "Competitive Intelligence" mode (3× multiplier, includes SERP analysis). Dynamic credit costs display on action cards based on selected mode.
+
+**Action Lock Enforcement**: The `action_locks` database table prevents duplicate credit consumption. Composite key (userId, entityType, entityId, actionType) ensures the same action cannot be applied to the same product multiple times. Lock checking in `selectFoundationalAction()` queries locked combinations and skips them when recommending actions. Locks are removed when material changes are detected (price, inventory, content edits), allowing re-optimization.
+
 ### Live Activity Log (SSE Streaming)
 Real-time activity streaming using Server-Sent Events (SSE) to show ZYRA engine activities as they happen. Features include an SSE endpoint, event emitter system, frontend hook for streaming with authorization, exponential backoff reconnection, 50-event history per user, connection status indicators, and an 8-step progress bar driven by SSE events (DETECT, DECIDE, EXECUTE, PROVE, LEARN).
 
