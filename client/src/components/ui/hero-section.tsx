@@ -4,6 +4,7 @@ import { ArrowRight, ChevronRight, Menu, X } from "lucide-react";
 import { SiShopify } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
+import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effect";
 import { cn } from "@/lib/utils";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
@@ -81,10 +82,20 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     </div>
                   </a>
 
-                  <h1 className="mt-8 max-w-4xl mx-auto text-balance text-5xl md:text-6xl lg:mt-16 xl:text-7xl font-mono font-bold">
-                    <span>LET AI RUN YOUR </span>
-                    <span className="text-primary">SHOPIFY GROWTH</span>
-                  </h1>
+                  <div className="mt-8 max-w-4xl mx-auto lg:mt-16">
+                    <TypewriterEffectSmooth
+                      words={[
+                        { text: "LET", className: "text-foreground font-mono" },
+                        { text: "AI", className: "text-foreground font-mono" },
+                        { text: "RUN", className: "text-foreground font-mono" },
+                        { text: "YOUR", className: "text-foreground font-mono" },
+                        { text: "SHOPIFY", className: "text-primary font-mono" },
+                        { text: "GROWTH", className: "text-primary font-mono" },
+                      ]}
+                      className="justify-center"
+                      cursorClassName="bg-primary"
+                    />
+                  </div>
                   <p className="mx-auto mt-8 max-w-2xl text-balance text-lg text-muted-foreground font-mono">
                     ZYRA automatically detects, fixes, and proves what's
                     blocking your store's revenue — with full control.
