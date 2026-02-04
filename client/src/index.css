@@ -245,34 +245,34 @@
   }
 
   .form-input {
-    background: #101025;
-    border: 1px solid rgba(0, 240, 255, 0.3);
+    background: rgba(16, 16, 37, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #EAEAEA;
     border-radius: 12px;
     backdrop-filter: blur(5px);
   }
 
   .form-input:focus {
-    border-color: #00F0FF;
-    background: #141430;
+    border-color: rgba(0, 240, 255, 0.3);
+    background: rgba(20, 20, 48, 0.9);
   }
 
   .form-select {
-    background: #101025;
-    border: 1px solid rgba(0, 240, 255, 0.3);
+    background: rgba(16, 16, 37, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #EAEAEA;
     border-radius: 12px;
     backdrop-filter: blur(5px);
   }
 
   .form-select:focus {
-    border-color: #00F0FF;
-    background: #141430;
+    border-color: rgba(0, 240, 255, 0.3);
+    background: rgba(20, 20, 48, 0.9);
   }
 
   .form-textarea {
-    background: #101025;
-    border: 1px solid rgba(0, 240, 255, 0.3);
+    background: rgba(16, 16, 37, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #EAEAEA;
     border-radius: 12px;
     backdrop-filter: blur(5px);
@@ -280,8 +280,8 @@
   }
 
   .form-textarea:focus {
-    border-color: #00F0FF;
-    background: #141430;
+    border-color: rgba(0, 240, 255, 0.3);
+    background: rgba(20, 20, 48, 0.9);
   }
 
   .active-tab {
