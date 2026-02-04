@@ -308,7 +308,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="max-w-sm sm:max-w-md w-full">
-          <Card className="gradient-card border-0">
+          <Card className="glass-card-hover border-0">
             <CardContent className="p-6 sm:p-8 text-center">
               <div className="mx-auto mb-4">
                 <div className="w-16 h-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
@@ -343,7 +343,7 @@ export default function Auth() {
           </Alert>
         )}
         
-        <Card className="gradient-card border-0" data-testid="card-auth">
+        <Card className="glass-card-hover border-0" data-testid="card-auth">
           <CardContent className="p-6 sm:p-8">
             <div className="text-center mb-6 sm:mb-8">
               <div className="mx-auto mb-3 sm:mb-4">
@@ -380,7 +380,7 @@ export default function Auth() {
 
             <div className="relative my-4 sm:my-6">
               <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs sm:text-sm text-muted-foreground">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm px-3 text-xs sm:text-sm text-muted-foreground">
                 or
               </span>
             </div>
