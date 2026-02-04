@@ -1,147 +1,187 @@
+/**
+ * ZYRA ACTION-BASED PERMISSION SYSTEM
+ * 
+ * This file defines which ZYRA actions are available per subscription plan.
+ * Actions are organized by category (Foundation, Growth, Guard) matching
+ * the Master Action Registry's 51 actions.
+ * 
+ * Plan Permissions:
+ *   FREE/STARTER - Foundation: FULL, Growth: LIMITED, Guard: ROLLBACK_ONLY
+ *   GROWTH       - Foundation: FULL, Growth: FULL, Guard: LIMITED
+ *   PRO (SCALE)  - Foundation: FULL, Growth: FULL, Guard: FULL
+ */
+
 import { ZYRA_PLANS } from "./constants/plans";
+import type { ActionId } from "./zyra-master-loop/master-action-registry";
 
-export type Feature = 
-  | "OPTIMIZE_PRODUCT"
-  | "SEO_KEYWORD_DENSITY"
-  | "AI_IMAGE_ALT_TEXT"
-  | "SEO_TITLES_META_TAGS"
-  | "SEO_RANKING_TRACKER"
-  | "BULK_OPTIMIZATION"
-  | "SCHEDULED_REFRESH"
-  | "AI_GROWTH_INTELLIGENCE"
-  | "AB_TESTING"
-  | "UPSELL_EMAIL_RECEIPTS"
-  | "ABANDONED_CART_SMS"
-  | "AI_UPSELL_SUGGESTIONS"
-  | "DYNAMIC_SEGMENTATION"
-  | "BEHAVIORAL_TARGETING"
-  | "SMART_PRODUCT_DESCRIPTION"
-  | "DYNAMIC_TEMPLATES"
-  | "BRAND_VOICE_MEMORY"
-  | "CUSTOM_TEMPLATES"
-  | "MULTIMODAL_AI"
-  | "MULTI_CHANNEL_REPURPOSING"
-  | "EMAIL_SMS_ANALYTICS"
-  | "CONTENT_ROI_TRACKING"
-  | "REVENUE_ATTRIBUTION"
-  | "CSV_IMPORT_EXPORT"
-  | "SHOPIFY_PUBLISH"
-  | "ROLLBACK_BUTTON"
-  | "SMART_BULK_SUGGESTIONS"
-  | "ENTERPRISE_BULK_MANAGEMENT"
-  | "FULL_AB_TEST_DASHBOARD"
-  | "FULL_EMAIL_SMS_TRACKING"
-  | "PRODUCT_MANAGEMENT_DASHBOARD"
-  | "ENTERPRISE_ANALYTICS";
+// ============================================================================
+// ACTION CATEGORIES
+// ============================================================================
 
-// Define which features are available in each plan
-export const PLAN_FEATURES: Record<string, Feature[]> = {
-  [ZYRA_PLANS.FREE]: [
-    "OPTIMIZE_PRODUCT",
-    "SEO_KEYWORD_DENSITY",
-    "AI_GROWTH_INTELLIGENCE",
-    "AB_TESTING",
-    "SMART_PRODUCT_DESCRIPTION",
-    "DYNAMIC_TEMPLATES",
-    "EMAIL_SMS_ANALYTICS",
-    "SHOPIFY_PUBLISH",
-    "ROLLBACK_BUTTON",
-  ],
-  [ZYRA_PLANS.STARTER]: [
-    "OPTIMIZE_PRODUCT",
-    "SEO_KEYWORD_DENSITY",
-    "AI_IMAGE_ALT_TEXT",
-    "SEO_TITLES_META_TAGS",
-    "AI_GROWTH_INTELLIGENCE",
-    "AB_TESTING",
-    "UPSELL_EMAIL_RECEIPTS",
-    "ABANDONED_CART_SMS",
-    "SMART_PRODUCT_DESCRIPTION",
-    "DYNAMIC_TEMPLATES",
-    "BRAND_VOICE_MEMORY",
-    "EMAIL_SMS_ANALYTICS",
-    "CSV_IMPORT_EXPORT",
-    "SHOPIFY_PUBLISH",
-    "ROLLBACK_BUTTON",
-    "SMART_BULK_SUGGESTIONS",
-  ],
-  [ZYRA_PLANS.GROWTH]: [
-    // All Starter features
-    "OPTIMIZE_PRODUCT",
-    "SEO_KEYWORD_DENSITY",
-    "AI_IMAGE_ALT_TEXT",
-    "SEO_TITLES_META_TAGS",
-    "AI_GROWTH_INTELLIGENCE",
-    "AB_TESTING",
-    "UPSELL_EMAIL_RECEIPTS",
-    "ABANDONED_CART_SMS",
-    "SMART_PRODUCT_DESCRIPTION",
-    "DYNAMIC_TEMPLATES",
-    "BRAND_VOICE_MEMORY",
-    "EMAIL_SMS_ANALYTICS",
-    "CSV_IMPORT_EXPORT",
-    "SHOPIFY_PUBLISH",
-    "ROLLBACK_BUTTON",
-    "SMART_BULK_SUGGESTIONS",
-    // Growth-specific features
-    "SEO_RANKING_TRACKER",
-    "BULK_OPTIMIZATION",
-    "SCHEDULED_REFRESH",
-    "AI_UPSELL_SUGGESTIONS",
-    "DYNAMIC_SEGMENTATION",
-    "BEHAVIORAL_TARGETING",
-    "FULL_AB_TEST_DASHBOARD",
-    "CUSTOM_TEMPLATES",
-    "MULTIMODAL_AI",
-    "MULTI_CHANNEL_REPURPOSING",
-    "FULL_EMAIL_SMS_TRACKING",
-    "CONTENT_ROI_TRACKING",
-    "REVENUE_ATTRIBUTION",
-    "PRODUCT_MANAGEMENT_DASHBOARD",
-  ],
-  [ZYRA_PLANS.PRO]: [
-    // All Growth features + Pro exclusives
-    "OPTIMIZE_PRODUCT",
-    "SEO_KEYWORD_DENSITY",
-    "AI_IMAGE_ALT_TEXT",
-    "SEO_TITLES_META_TAGS",
-    "SEO_RANKING_TRACKER",
-    "BULK_OPTIMIZATION",
-    "SCHEDULED_REFRESH",
-    "AI_GROWTH_INTELLIGENCE",
-    "AB_TESTING",
-    "UPSELL_EMAIL_RECEIPTS",
-    "ABANDONED_CART_SMS",
-    "AI_UPSELL_SUGGESTIONS",
-    "DYNAMIC_SEGMENTATION",
-    "BEHAVIORAL_TARGETING",
-    "FULL_AB_TEST_DASHBOARD",
-    "SMART_PRODUCT_DESCRIPTION",
-    "DYNAMIC_TEMPLATES",
-    "BRAND_VOICE_MEMORY",
-    "CUSTOM_TEMPLATES",
-    "MULTIMODAL_AI",
-    "MULTI_CHANNEL_REPURPOSING",
-    "EMAIL_SMS_ANALYTICS",
-    "FULL_EMAIL_SMS_TRACKING",
-    "CONTENT_ROI_TRACKING",
-    "REVENUE_ATTRIBUTION",
-    "PRODUCT_MANAGEMENT_DASHBOARD",
-    "CSV_IMPORT_EXPORT",
-    "SHOPIFY_PUBLISH",
-    "ROLLBACK_BUTTON",
-    "SMART_BULK_SUGGESTIONS",
-    "ENTERPRISE_BULK_MANAGEMENT",
-    "ENTERPRISE_ANALYTICS",
-  ],
+export type ActionCategory = 'FOUNDATION' | 'GROWTH' | 'GUARD';
+
+// Foundation Actions (10 main actions, 30 sub-actions) - Make the store trustworthy & searchable
+export const FOUNDATION_ACTIONS: ActionId[] = [
+  'trust_signal_enhancement',
+  'friction_copy_removal',
+  'product_description_clarity',
+  'value_proposition_alignment',
+  'above_fold_optimization',
+  'product_title_optimization',
+  'meta_optimization',
+  'search_intent_alignment',
+  'image_alt_text_optimization',
+  'stale_seo_refresh',
+];
+
+// Growth Actions (3 main actions, 9 sub-actions) - Convert better & increase revenue
+export const GROWTH_ACTIONS: ActionId[] = [
+  'checkout_dropoff_mitigation',
+  'abandoned_cart_recovery',
+  'post_purchase_upsell',
+];
+
+// Guard Actions (4 main actions, 12 sub-actions) - Protect revenue & learn
+export const GUARD_ACTIONS: ActionId[] = [
+  'conversion_pattern_learning',
+  'performance_baseline_update',
+  'underperforming_rollback',
+  'risky_optimization_freeze',
+];
+
+// All 17 main actions (51 sub-actions total)
+export const ALL_ACTIONS: ActionId[] = [
+  ...FOUNDATION_ACTIONS,
+  ...GROWTH_ACTIONS,
+  ...GUARD_ACTIONS,
+];
+
+// ============================================================================
+// PLAN ACTION PERMISSIONS
+// ============================================================================
+
+export type PermissionLevel = 'NONE' | 'ROLLBACK_ONLY' | 'LIMITED' | 'FULL';
+
+export interface PlanActionPermissions {
+  foundation: PermissionLevel;
+  growth: PermissionLevel;
+  guard: PermissionLevel;
+  maxDailyActions: number;
+  maxCatalogChangePercent: number;
+}
+
+export const PLAN_ACTION_PERMISSIONS: Record<string, PlanActionPermissions> = {
+  [ZYRA_PLANS.FREE]: {
+    foundation: 'FULL',
+    growth: 'LIMITED',
+    guard: 'ROLLBACK_ONLY',
+    maxDailyActions: 10,
+    maxCatalogChangePercent: 5,
+  },
+  [ZYRA_PLANS.STARTER]: {
+    foundation: 'FULL',
+    growth: 'LIMITED',
+    guard: 'ROLLBACK_ONLY',
+    maxDailyActions: 10,
+    maxCatalogChangePercent: 5,
+  },
+  [ZYRA_PLANS.GROWTH]: {
+    foundation: 'FULL',
+    growth: 'FULL',
+    guard: 'LIMITED',
+    maxDailyActions: 50,
+    maxCatalogChangePercent: 15,
+  },
+  [ZYRA_PLANS.SCALE]: {
+    foundation: 'FULL',
+    growth: 'FULL',
+    guard: 'FULL',
+    maxDailyActions: 200,
+    maxCatalogChangePercent: 30,
+  },
+};
+
+// ============================================================================
+// ACTION ACCESS FUNCTIONS
+// ============================================================================
+
+export function getActionCategory(actionId: ActionId): ActionCategory | null {
+  if (FOUNDATION_ACTIONS.includes(actionId)) return 'FOUNDATION';
+  if (GROWTH_ACTIONS.includes(actionId)) return 'GROWTH';
+  if (GUARD_ACTIONS.includes(actionId)) return 'GUARD';
+  return null; // Unknown action - deny access
+}
+
+export function getCategoryPermission(planId: string, category: ActionCategory): PermissionLevel {
+  const permissions = PLAN_ACTION_PERMISSIONS[planId];
+  if (!permissions) return 'NONE';
+  
+  switch (category) {
+    case 'FOUNDATION': return permissions.foundation;
+    case 'GROWTH': return permissions.growth;
+    case 'GUARD': return permissions.guard;
+    default: return 'NONE';
+  }
+}
+
+export function hasActionAccess(planId: string, actionId: ActionId): boolean {
+  const category = getActionCategory(actionId);
+  if (!category) return false; // Unknown action - deny access
+  const permission = getCategoryPermission(planId, category);
+  return permission !== 'NONE';
+}
+
+export function canAutoExecuteAction(planId: string, actionId: ActionId): boolean {
+  const category = getActionCategory(actionId);
+  if (!category) return false; // Unknown action - deny access
+  const permission = getCategoryPermission(planId, category);
+  return permission === 'FULL';
+}
+
+export function getAvailableActions(planId: string): ActionId[] {
+  const permissions = PLAN_ACTION_PERMISSIONS[planId];
+  if (!permissions) return [];
+  
+  const available: ActionId[] = [];
+  
+  if (permissions.foundation !== 'NONE') {
+    available.push(...FOUNDATION_ACTIONS);
+  }
+  if (permissions.growth !== 'NONE') {
+    available.push(...GROWTH_ACTIONS);
+  }
+  if (permissions.guard !== 'NONE') {
+    available.push(...GUARD_ACTIONS);
+  }
+  
+  return available;
+}
+
+export function getPlanLimits(planId: string): { maxDailyActions: number; maxCatalogChangePercent: number } {
+  const permissions = PLAN_ACTION_PERMISSIONS[planId];
+  return {
+    maxDailyActions: permissions?.maxDailyActions || 10,
+    maxCatalogChangePercent: permissions?.maxCatalogChangePercent || 5,
+  };
+}
+
+// ============================================================================
+// LEGACY COMPATIBILITY (deprecated - use action-based functions above)
+// ============================================================================
+
+export type Feature = ActionId;
+
+export const PLAN_FEATURES: Record<string, ActionId[]> = {
+  [ZYRA_PLANS.FREE]: [...FOUNDATION_ACTIONS],
+  [ZYRA_PLANS.STARTER]: [...FOUNDATION_ACTIONS, ...GROWTH_ACTIONS],
+  [ZYRA_PLANS.GROWTH]: [...FOUNDATION_ACTIONS, ...GROWTH_ACTIONS, ...GUARD_ACTIONS],
+  [ZYRA_PLANS.SCALE]: [...FOUNDATION_ACTIONS, ...GROWTH_ACTIONS, ...GUARD_ACTIONS],
 };
 
 export function hasFeatureAccess(planId: string, feature: Feature): boolean {
-  const planFeatures = PLAN_FEATURES[planId];
-  if (!planFeatures) return false;
-  return planFeatures.includes(feature);
+  return hasActionAccess(planId, feature as ActionId);
 }
 
 export function getAvailableFeatures(planId: string): Feature[] {
-  return PLAN_FEATURES[planId] || [];
+  return getAvailableActions(planId);
 }

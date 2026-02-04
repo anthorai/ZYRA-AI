@@ -5,21 +5,21 @@
  */
 
 export const ZYRA_PLANS = {
-  FREE: "18f8da29-94cf-417b-83f8-07191b22f254",     // Free (7-day trial with 150 credits, then 50 credits/month)
-  STARTER: "357abaf6-3035-4a25-b178-b5602c09fa8a",  // Starter ($49, 1,000 credits)
-  GROWTH: "aaca603f-f064-44a7-87a4-485f84f19517",   // Growth ($249, 6,000 credits)
-  SCALE: "5a02d7c5-031f-48fe-bbbd-42847b1c39df",    // Pro ($499, 15,000 credits)
+  FREE: "18f8da29-94cf-417b-83f8-07191b22f254",     // Free (7-day trial with 499 credits)
+  STARTER: "357abaf6-3035-4a25-b178-b5602c09fa8a",  // Starter ($49, 2,000 credits/month)
+  GROWTH: "aaca603f-f064-44a7-87a4-485f84f19517",   // Growth ($249, 10,000 credits/month)
+  SCALE: "5a02d7c5-031f-48fe-bbbd-42847b1c39df",    // Pro ($499, 20,000 credits/month)
 } as const;
 
 export const CREDIT_LIMITS = {
-  [ZYRA_PLANS.FREE]: 50,       // Regular Free plan monthly credits (150 during 7-day trial)
-  [ZYRA_PLANS.STARTER]: 1000,
-  [ZYRA_PLANS.GROWTH]: 6000,
-  [ZYRA_PLANS.SCALE]: 15000,
+  [ZYRA_PLANS.FREE]: 499,       // Free plan: 499 credits for 7-day trial
+  [ZYRA_PLANS.STARTER]: 2000,   // Starter: 2,000 credits/month
+  [ZYRA_PLANS.GROWTH]: 10000,   // Growth: 10,000 credits/month
+  [ZYRA_PLANS.SCALE]: 20000,    // Pro: 20,000 credits/month
 } as const;
 
-// Free plan trial bonus - new accounts get 150 credits for 7 days
-export const FREE_PLAN_TRIAL_CREDITS = 150;
+// Free plan trial - 499 credits for 7 days
+export const FREE_PLAN_TRIAL_CREDITS = 499;
 export const FREE_PLAN_TRIAL_DAYS = 7;
 
 export const EXECUTION_PRIORITY = {
@@ -51,10 +51,10 @@ export const PLAN_PRICES = {
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
-  [ZYRA_PLANS.FREE]: "Free to install - 7-day trial with 150 credits, then 50/month",
-  [ZYRA_PLANS.STARTER]: "Powerful but cautious assistant - manual approval required",
-  [ZYRA_PLANS.GROWTH]: "Trusted autonomous operator - auto-runs low-risk actions",
-  [ZYRA_PLANS.SCALE]: "Hands-free revenue engine - full autonomy with intelligence",
+  [ZYRA_PLANS.FREE]: "Free to install - 499 credits for 7-day trial",
+  [ZYRA_PLANS.STARTER]: "Smart growth with 2,000 credits/month - manual approval required",
+  [ZYRA_PLANS.GROWTH]: "Trusted autonomous operator with 10,000 credits/month",
+  [ZYRA_PLANS.SCALE]: "Hands-free revenue engine with 20,000 credits/month",
 } as const;
 
 // Plan autonomy levels for UI display
@@ -63,6 +63,38 @@ export const PLAN_AUTONOMY = {
   [ZYRA_PLANS.STARTER]: 'manual',
   [ZYRA_PLANS.GROWTH]: 'semi_auto',
   [ZYRA_PLANS.SCALE]: 'full_auto',
+} as const;
+
+// Action category permissions per plan
+export const PLAN_ACTION_PERMISSIONS = {
+  [ZYRA_PLANS.FREE]: {
+    foundation: 'FULL',
+    growth: 'LIMITED',
+    guard: 'ROLLBACK_ONLY',
+    maxDailyActions: 10,
+    maxCatalogChangePercent: 5,
+  },
+  [ZYRA_PLANS.STARTER]: {
+    foundation: 'FULL',
+    growth: 'LIMITED',
+    guard: 'ROLLBACK_ONLY',
+    maxDailyActions: 10,
+    maxCatalogChangePercent: 5,
+  },
+  [ZYRA_PLANS.GROWTH]: {
+    foundation: 'FULL',
+    growth: 'FULL',
+    guard: 'LIMITED',
+    maxDailyActions: 50,
+    maxCatalogChangePercent: 15,
+  },
+  [ZYRA_PLANS.SCALE]: {
+    foundation: 'FULL',
+    growth: 'FULL',
+    guard: 'FULL',
+    maxDailyActions: 200,
+    maxCatalogChangePercent: 30,
+  },
 } as const;
 
 // Plan feature flags for conditional UI rendering
@@ -106,9 +138,9 @@ export const PLAN_FEATURES = {
 } as const;
 
 export const PLAN_BY_NAME: Record<string, string> = {
-  "Free": ZYRA_PLANS.FREE_PLAN,
-  "free": ZYRA_PLANS.FREE_PLAN,
-  "free_plan": ZYRA_PLANS.FREE_PLAN,
+  "Free": ZYRA_PLANS.FREE,
+  "free": ZYRA_PLANS.FREE,
+  "free_plan": ZYRA_PLANS.FREE,
   "7-Day Free Trial": ZYRA_PLANS.FREE,
   "trial": ZYRA_PLANS.FREE,
   "Starter+": ZYRA_PLANS.STARTER,
@@ -124,12 +156,17 @@ export const PLAN_BY_NAME: Record<string, string> = {
 } as const;
 
 export function getPlanIdByName(planName: string): string {
-  return PLAN_BY_NAME[planName] || ZYRA_PLANS.FREE_PLAN;
+  return PLAN_BY_NAME[planName] || ZYRA_PLANS.FREE;
 }
 
 export function getPlanFeatures(planName: string) {
   const planId = getPlanIdByName(planName);
-  return PLAN_FEATURES[planId as keyof typeof PLAN_FEATURES] || PLAN_FEATURES[ZYRA_PLANS.FREE_PLAN];
+  return PLAN_FEATURES[planId as keyof typeof PLAN_FEATURES] || PLAN_FEATURES[ZYRA_PLANS.FREE];
+}
+
+export function getPlanActionPermissions(planName: string) {
+  const planId = getPlanIdByName(planName);
+  return PLAN_ACTION_PERMISSIONS[planId as keyof typeof PLAN_ACTION_PERMISSIONS] || PLAN_ACTION_PERMISSIONS[ZYRA_PLANS.FREE];
 }
 
 export type PlanId = typeof ZYRA_PLANS[keyof typeof ZYRA_PLANS];
