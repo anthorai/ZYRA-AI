@@ -4,11 +4,11 @@
 @tailwind utilities;
 
 :root {
-  --background: 240 37% 13%;
+  --background: 240 40% 8%;
   --foreground: 0 0% 92%;
-  --card: 240 38% 11%;
+  --card: 240 42% 10%;
   --card-foreground: 0 0% 100%;
-  --popover: 240 38% 11%;
+  --popover: 240 42% 10%;
   --popover-foreground: 0 0% 92%;
   --primary: 184 100% 50%;
   --primary-foreground: 240 37% 13%;
@@ -40,17 +40,17 @@
   --font-serif: Georgia, serif;
   --font-mono: 'JetBrains Mono', monospace;
   --radius: 16px;
-  --landing-bg: #16162c;
-  --landing-bg-light: #1e1e3a;
+  --landing-bg: #0d0d1a;
+  --landing-bg-light: #141428;
   --landing-glow: rgba(0, 240, 255, 0.15);
 }
 
 .dark {
-  --background: 240 37% 13%;
+  --background: 240 40% 8%;
   --foreground: 0 0% 92%;
-  --card: 240 40% 10%;
+  --card: 240 38% 13%;
   --card-foreground: 0 0% 100%;
-  --popover: 240 40% 10%;
+  --popover: 240 38% 13%;
   --popover-foreground: 0 0% 92%;
   --primary: 184 100% 50%;
   --primary-foreground: 240 37% 13%;
@@ -74,7 +74,7 @@
 
 @layer base {
   html {
-    background-color: #16162c;
+    background-color: #0d0d1a;
     overflow-x: hidden;
     max-width: 100vw;
   }
@@ -83,8 +83,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #16162c;
-    background-image: linear-gradient(135deg, #16162c 0%, #1a1a38 50%, #16162c 100%);
+    background-color: #0d0d1a;
+    background-image: linear-gradient(135deg, #0d0d1a 0%, #121228 50%, #0d0d1a 100%);
     color: #EAEAEA;
     min-height: 100vh;
     position: relative;
@@ -99,7 +99,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #16162c 0%, #1a1a38 50%, #16162c 100%);
+    background: linear-gradient(135deg, #0d0d1a 0%, #121228 50%, #0d0d1a 100%);
     z-index: -1;
     pointer-events: none;
   }
@@ -193,7 +193,7 @@
   }
 
   .gradient-card {
-    background: #0f0f1e;
+    background: #161630;
     border: 1px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
     backdrop-filter: blur(10px);
@@ -206,7 +206,7 @@
   }
 
   .gradient-surface {
-    background: #0f0f1e;
+    background: #161630;
     border: 1px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
     backdrop-filter: blur(10px);
@@ -239,13 +239,13 @@
   }
 
   .stat-card {
-    background: #0f0f1e;
+    background: #161630;
     border: 1px solid rgba(0, 240, 255, 0.3);
     border-radius: 16px;
   }
 
   .form-input {
-    background: #0f0f1e;
+    background: #161630;
     border: 1px solid rgba(0, 240, 255, 0.3);
     color: #EAEAEA;
     border-radius: 12px;
@@ -254,11 +254,11 @@
 
   .form-input:focus {
     border-color: #00F0FF;
-    background: #14142B;
+    background: #1a1a38;
   }
 
   .form-select {
-    background: #0f0f1e;
+    background: #161630;
     border: 1px solid rgba(0, 240, 255, 0.3);
     color: #EAEAEA;
     border-radius: 12px;
@@ -267,11 +267,11 @@
 
   .form-select:focus {
     border-color: #00F0FF;
-    background: #14142B;
+    background: #1a1a38;
   }
 
   .form-textarea {
-    background: #0f0f1e;
+    background: #161630;
     border: 1px solid rgba(0, 240, 255, 0.3);
     color: #EAEAEA;
     border-radius: 12px;
@@ -281,7 +281,7 @@
 
   .form-textarea:focus {
     border-color: #00F0FF;
-    background: #14142B;
+    background: #1a1a38;
   }
 
   .active-tab {
@@ -291,7 +291,7 @@
   }
 
   .pricing-card {
-    background: #0f0f1e;
+    background: #161630;
     border: 2px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
     transition: all 0.3s ease;
@@ -320,7 +320,7 @@
   }
 
   .glass-card {
-    background: rgba(15, 15, 30, 0.7);
+    background: rgba(22, 22, 48, 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -329,7 +329,7 @@
   }
 
   .glass-card-hover {
-    background: rgba(15, 15, 30, 0.7);
+    background: rgba(22, 22, 48, 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -339,7 +339,7 @@
   }
 
   .glass-card-hover:hover {
-    background: rgba(20, 20, 40, 0.85);
+    background: rgba(26, 26, 56, 0.9);
     border-color: rgba(0, 240, 255, 0.3);
     transform: translateY(-4px);
     box-shadow: 0 16px 48px rgba(0, 240, 255, 0.1);
