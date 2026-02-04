@@ -74,6 +74,17 @@ A plan-aware credit consumption system where credits represent AI thinking depth
 
 **Action Lock Enforcement**: The `action_locks` database table prevents duplicate credit consumption. Composite key (userId, entityType, entityId, actionType) ensures the same action cannot be applied to the same product multiple times. Lock checking in `selectFoundationalAction()` queries locked combinations and skips them when recommending actions. Locks are removed when material changes are detected (price, inventory, content edits), allowing re-optimization.
 
+### Real Learning System
+ZYRA captures real learning from every optimization to improve future recommendations. The system includes:
+- **Baseline Snapshots**: Captures product metrics (views, conversions, revenue) before optimization
+- **Optimization Changes**: Records exactly what was changed (old/new values, AI reasoning, patterns applied)
+- **Measurement Period**: 14-day post-optimization tracking to calculate impact
+- **Pattern Extraction**: Identifies what works (power words, title structures, trust signals)
+- **Learned Patterns Table**: Persists patterns with success rates, confidence scores, and usage counts
+- **Scheduled Processor**: Runs every 6 hours to evaluate completed measurements and extract patterns
+- **API Endpoints**: `/api/mode-credits/learning-stats` and `/api/mode-credits/learned-patterns` expose insights
+- **Frontend Component**: `ZyraLearningInsights` displays patterns, success rates, and revenue lift
+
 ### Live Activity Log (SSE Streaming)
 Real-time activity streaming using Server-Sent Events (SSE) to show ZYRA engine activities as they happen. Features include an SSE endpoint, event emitter system, frontend hook for streaming with authorization, exponential backoff reconnection, 50-event history per user, connection status indicators, and an 8-step progress bar driven by SSE events (DETECT, DECIDE, EXECUTE, PROVE, LEARN).
 

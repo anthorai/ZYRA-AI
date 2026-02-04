@@ -52,6 +52,8 @@ import {
   Lock
 } from "lucide-react";
 
+import { ZyraLearningInsights } from './zyra-learning-insights';
+
 // ============================================================================
 // TYPEWRITER TEXT COMPONENT - Shows AI "thinking" and "writing" in real-time
 // ============================================================================
@@ -3420,6 +3422,11 @@ export default function ZyraAtWork() {
             <span className="ml-1.5 text-[10px] text-slate-500">(Silent)</span>
           </Badge>
         </div>
+      </div>
+
+      {/* ZYRA Real Learning Insights */}
+      <div className="pt-3" data-testid="section-zyra-learning-insights">
+        <ZyraLearningInsights />
       </div>
 
       {/* ZYRA CORE LOOP - DETECT → DECIDE → EXECUTE → PROVE → LEARN */}
