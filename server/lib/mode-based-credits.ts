@@ -39,6 +39,7 @@ import {
   recordCompetitiveIntelligenceUsage,
   generateContentHash,
 } from './action-lock-service';
+import { realLearningService } from './real-learning-service';
 
 // ============================================================================
 // Types
@@ -67,6 +68,8 @@ export interface ExecuteActionResult {
   success: boolean;
   creditsConsumed: number;
   lockId?: string;
+  changeId?: string | null;
+  baselineSnapshotId?: string | null;
   message: string;
   newBalance: number;
 }
@@ -251,6 +254,39 @@ export async function executeAndConsumeCredits(
   const planId = subscription?.planId || ZYRA_PLANS.FREE;
 
   try {
+    // =========================================================================
+    // REAL LEARNING: Capture baseline before optimization
+    // =========================================================================
+    let baselineSnapshotId: string | null = null;
+    
+    if (entityType === 'product' && entityContent) {
+      try {
+        baselineSnapshotId = await realLearningService.captureBaseline(
+          userId,
+          entityId,
+          {
+            title: entityContent.title || '',
+            description: entityContent.description || '',
+            price: parseFloat(entityContent.price?.toString() || '0'),
+            seoHealthScore: entityContent.seoHealthScore,
+          },
+          {
+            pageViews: entityContent.pageViews || 0,
+            addToCartCount: entityContent.addToCartCount || 0,
+            addToCartRate: entityContent.addToCartRate || 0,
+            purchaseCount: entityContent.purchaseCount || 0,
+            conversionRate: entityContent.conversionRate || 0,
+            totalRevenue: entityContent.totalRevenue || 0,
+            seoHealthScore: entityContent.seoHealthScore || 0,
+          }
+        );
+        console.log(`📊 [Credits] Baseline captured: ${baselineSnapshotId}`);
+      } catch (baselineError) {
+        console.error('Error capturing baseline:', baselineError);
+        // Don't fail the execution if baseline capture fails
+      }
+    }
+
     // Consume credits
     await incrementUsageStat(userId, 'creditsUsed', creditCost);
 
@@ -280,10 +316,49 @@ export async function executeAndConsumeCredits(
       await recordCompetitiveIntelligenceUsage(userId, actionType, creditCost, lockResult.lockId);
     }
 
+    // =========================================================================
+    // REAL LEARNING: Record the optimization change
+    // =========================================================================
+    let changeId: string | null = null;
+    
+    if (entityType === 'product' && entityContent) {
+      try {
+        // Determine what field was changed based on action type
+        const changeField = getChangeFieldFromActionType(actionType);
+        
+        changeId = await realLearningService.recordChange(
+          userId,
+          entityId,
+          baselineSnapshotId,
+          actionType,
+          {
+            field: changeField,
+            oldValue: entityContent[`old_${changeField}`] || entityContent.originalValue || null,
+            newValue: entityContent[`new_${changeField}`] || entityContent.newValue || null,
+          },
+          {
+            actionCategory: getActionCategory(actionType),
+            executionMode: mode,
+            aiReasoning: entityContent.aiReasoning || null,
+            serpDataUsed: mode === 'competitive_intelligence',
+            keywordsAdded: entityContent.keywordsAdded,
+            patternsApplied: entityContent.patternsApplied,
+            creditsConsumed: creditCost,
+          }
+        );
+        console.log(`📝 [Credits] Change recorded: ${changeId}`);
+      } catch (changeError) {
+        console.error('Error recording change:', changeError);
+        // Don't fail the execution if change recording fails
+      }
+    }
+
     return {
       success: true,
       creditsConsumed: creditCost,
       lockId: lockResult.lockId,
+      changeId,
+      baselineSnapshotId,
       message: `Action executed successfully. ${creditCost} credits consumed.`,
       newBalance: Math.max(0, check.creditsRemaining - creditCost),
     };
@@ -296,6 +371,37 @@ export async function executeAndConsumeCredits(
       newBalance: check.creditsRemaining,
     };
   }
+}
+
+/**
+ * Map action type to the primary field being changed
+ */
+function getChangeFieldFromActionType(actionType: ZyraActionType): string {
+  const fieldMap: Record<string, string> = {
+    // Foundation actions
+    'product_title_optimization': 'title',
+    'product_description_enhancement': 'description',
+    'meta_title_optimization': 'meta_title',
+    'meta_description_optimization': 'meta_description',
+    'image_alt_text_optimization': 'image_alt_text',
+    'seo_keyword_optimization': 'keywords',
+    
+    // Growth actions
+    'search_intent_alignment': 'description',
+    'conversion_copy_rewrite': 'description',
+    'trust_signal_injection': 'description',
+    'price_perception_optimization': 'price_presentation',
+    'scarcity_urgency_messaging': 'urgency_messaging',
+    'cross_sell_bundle_suggestions': 'cross_sells',
+    
+    // Guard actions
+    'stale_seo_content_refresh': 'description',
+    'broken_link_detection': 'links',
+    'image_quality_check': 'images',
+    'inventory_sync_validation': 'inventory',
+  };
+  
+  return fieldMap[actionType] || 'content';
 }
 
 // ============================================================================
