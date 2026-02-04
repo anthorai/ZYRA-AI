@@ -66,7 +66,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     className="bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950"
                   >
                     <SiShopify className="w-4 h-4 text-primary" />
-                    <span className="text-foreground text-sm font-mono">
+                    <span className="text-foreground text-sm font-medium">
                       Built for Shopify stores
                     </span>
                     <span className="dark:border-background block h-4 w-0.5 border-l bg-white dark:bg-zinc-700"></span>
@@ -85,18 +85,18 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                   <div className="mt-8 max-w-4xl mx-auto lg:mt-16">
                     <TypewriterEffectSmooth
                       words={[
-                        { text: "LET", className: "text-foreground font-mono" },
-                        { text: "AI", className: "text-foreground font-mono" },
-                        { text: "RUN", className: "text-foreground font-mono" },
-                        { text: "YOUR", className: "text-foreground font-mono" },
-                        { text: "SHOPIFY", className: "text-primary font-mono" },
-                        { text: "GROWTH", className: "text-primary font-mono" },
+                        { text: "LET", className: "text-foreground" },
+                        { text: "AI", className: "text-foreground" },
+                        { text: "RUN", className: "text-foreground" },
+                        { text: "YOUR", className: "text-foreground" },
+                        { text: "SHOPIFY", className: "text-primary" },
+                        { text: "GROWTH", className: "text-primary" },
                       ]}
                       className="justify-center"
                       cursorClassName="bg-primary"
                     />
                   </div>
-                  <p className="mx-auto mt-8 max-w-2xl text-balance text-lg text-muted-foreground font-mono">
+                  <p className="mx-auto mt-8 max-w-2xl text-balance text-lg text-muted-foreground">
                     ZYRA automatically detects, fixes, and proves what's
                     blocking your store's revenue — with full control.
                   </p>
@@ -120,7 +120,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     <Button
                       asChild
                       size="lg"
-                      className="rounded-xl px-5 text-base font-mono"
+                      className="rounded-xl px-5 text-base font-semibold"
                       data-testid="button-hero-start"
                     >
                       <Link href="/auth">
@@ -132,7 +132,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     asChild
                     size="lg"
                     variant="ghost"
-                    className="rounded-xl px-5 font-mono"
+                    className="rounded-xl px-5 font-medium"
                     data-testid="button-hero-demo"
                   >
                     <a href="#how-it-works">
@@ -166,14 +166,14 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     <div className="text-center p-8">
                       <div className="inline-flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-full px-6 py-3 mb-6">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-sm font-mono text-primary">
+                        <span className="text-sm font-semibold text-primary tracking-wide">
                           ZYRA Engine Active
                         </span>
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-mono font-bold mb-4">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">
                         Revenue Protection Dashboard
                       </h3>
-                      <p className="text-muted-foreground font-mono max-w-lg mx-auto">
+                      <p className="text-muted-foreground max-w-lg mx-auto">
                         Watch ZYRA detect friction, apply fixes, and prove
                         revenue impact in real-time.
                       </p>
@@ -189,13 +189,13 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
             <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
               <a
                 href="#testimonials"
-                className="block text-sm duration-150 font-mono"
+                className="block text-sm duration-150 font-medium"
               >
                 <span>See What Stores Are Saying</span>
                 <ChevronRight className="ml-1 inline-block size-3" />
               </a>
             </div>
-            <h3 className="text-center text-sm font-mono text-muted-foreground mb-8">
+            <h3 className="text-center text-sm uppercase tracking-wider text-muted-foreground mb-8">
               Trusted by Shopify stores worldwide
             </h3>
             <div className="group-hover:blur-xs mx-auto grid max-w-3xl grid-cols-3 gap-x-12 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:gap-x-16 sm:gap-y-14">
@@ -204,7 +204,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                     <span className="text-primary font-bold text-xs">S1</span>
                   </div>
-                  <span className="font-mono text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     Store #1
                   </span>
                 </div>
@@ -214,7 +214,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                     <span className="text-primary font-bold text-xs">S2</span>
                   </div>
-                  <span className="font-mono text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     Store #2
                   </span>
                 </div>
@@ -224,7 +224,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                     <span className="text-primary font-bold text-xs">S3</span>
                   </div>
-                  <span className="font-mono text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     Store #3
                   </span>
                 </div>
@@ -275,7 +275,7 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
             <div className="flex w-full justify-between lg:w-auto">
               <Link href="/" aria-label="home" className="flex items-center space-x-2">
                 <img src={zyraLogoUrl} alt="ZYRA" className="h-8 w-8" />
-                <span className="font-mono text-xl font-bold">ZYRA</span>
+                <span className="text-xl font-bold tracking-tight">ZYRA</span>
               </Link>
 
               <button
@@ -296,21 +296,21 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                     {item.external ? (
                       <a
                         href={item.href}
-                        className="text-muted-foreground hover:text-foreground block duration-150 font-mono"
+                        className="text-muted-foreground hover:text-foreground block duration-150 font-medium"
                       >
                         <span>{item.name}</span>
                       </a>
                     ) : item.onClick ? (
                       <button
                         onClick={item.onClick}
-                        className="text-muted-foreground hover:text-foreground block duration-150 font-mono"
+                        className="text-muted-foreground hover:text-foreground block duration-150 font-medium"
                       >
                         <span>{item.name}</span>
                       </button>
                     ) : (
                       <Link
                         href={item.href}
-                        className="text-muted-foreground hover:text-foreground block duration-150 font-mono"
+                        className="text-muted-foreground hover:text-foreground block duration-150 font-medium"
                       >
                         <span>{item.name}</span>
                       </Link>
@@ -328,7 +328,7 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                       {item.external ? (
                         <a
                           href={item.href}
-                          className="text-muted-foreground hover:text-foreground block duration-150 font-mono"
+                          className="text-muted-foreground hover:text-foreground block duration-150 font-medium"
                         >
                           <span>{item.name}</span>
                         </a>
@@ -342,7 +342,7 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                       ) : (
                         <Link
                           href={item.href}
-                          className="text-muted-foreground hover:text-foreground block duration-150 font-mono"
+                          className="text-muted-foreground hover:text-foreground block duration-150 font-medium"
                         >
                           <span>{item.name}</span>
                         </Link>
@@ -356,7 +356,7 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                   asChild
                   variant="outline"
                   size="sm"
-                  className={cn("font-mono", isScrolled && "lg:hidden")}
+                  className={cn("font-medium", isScrolled && "lg:hidden")}
                   data-testid="button-header-login"
                 >
                   <Link href="/auth">
@@ -366,7 +366,7 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                 <Button
                   asChild
                   size="sm"
-                  className={cn("font-mono", isScrolled && "lg:hidden")}
+                  className={cn("font-medium", isScrolled && "lg:hidden")}
                   data-testid="button-header-signup"
                 >
                   <Link href="/auth">
@@ -376,7 +376,7 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                 <Button
                   asChild
                   size="sm"
-                  className={cn("font-mono", isScrolled ? "lg:inline-flex" : "hidden")}
+                  className={cn("font-medium", isScrolled ? "lg:inline-flex" : "hidden")}
                   data-testid="button-header-start"
                 >
                   <Link href="/auth">
