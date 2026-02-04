@@ -91,7 +91,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Add security seals, payment badges, and social proof indicators',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 12,
       },
       {
         id: 'improve_return_policy',
@@ -99,7 +99,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Make return and refund policies clearer and more prominent',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 11,
       },
       {
         id: 'strengthen_legitimacy',
@@ -107,13 +107,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Add business credentials, certifications, and authenticity markers',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 12,
       },
     ],
     requiredDataPoints: ['product_pages', 'checkout_flow'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 30000,
-    creditsRequired: 3,
+    creditsRequired: 35, // Fast Mode: 35 credits per pricing doc
   },
   {
     id: 'friction_copy_removal',
@@ -152,7 +152,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
     requiredDataPoints: ['product_descriptions', 'legal_pages'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 25000,
-    creditsRequired: 3,
+    creditsRequired: 30, // Fast Mode: 30 credits per pricing doc
   },
   {
     id: 'product_description_clarity',
@@ -169,7 +169,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Restructure descriptions with clear value propositions',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 2,
+        creditsRequired: 20,
       },
       {
         id: 'clarify_usage',
@@ -177,7 +177,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Add or improve how-to-use sections',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 12,
       },
       {
         id: 'highlight_benefits',
@@ -185,13 +185,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Make key benefits scannable and prominent',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 13,
       },
     ],
     requiredDataPoints: ['product_descriptions', 'conversion_data'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 40000,
-    creditsRequired: 4,
+    creditsRequired: 45, // Fast Mode: 45 credits per pricing doc
   },
   {
     id: 'value_proposition_alignment',
@@ -230,7 +230,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
     requiredDataPoints: ['product_headlines', 'customer_segments'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 35000,
-    creditsRequired: 3,
+    creditsRequired: 35, // Fast Mode: 35 credits per pricing doc
   },
   {
     id: 'above_fold_optimization',
@@ -247,7 +247,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Craft compelling above-fold headlines',
         riskLevel: 'medium',
         estimatedImpact: 'high',
-        creditsRequired: 2,
+        creditsRequired: 20,
       },
       {
         id: 'improve_cta',
@@ -255,7 +255,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Make call-to-action buttons more compelling',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 15,
       },
       {
         id: 'reduce_clutter',
@@ -263,13 +263,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Remove distractions from the hero area',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 15,
       },
     ],
     requiredDataPoints: ['page_layouts', 'bounce_data'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 30000,
-    creditsRequired: 4,
+    creditsRequired: 50, // Fast Mode: 50 credits per pricing doc
   },
   {
     id: 'product_title_optimization',
@@ -286,7 +286,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Make titles human-friendly and scannable',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 7,
       },
       {
         id: 'optimize_search_intent',
@@ -294,7 +294,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Include terms customers actually search for',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 7,
       },
       {
         id: 'remove_keyword_stuffing',
@@ -302,13 +302,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Clean up over-optimized titles',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 6,
       },
     ],
     requiredDataPoints: ['product_titles', 'search_data'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 20000,
-    creditsRequired: 3,
+    creditsRequired: 20, // Fast Mode: 20 credits per pricing doc
   },
   {
     id: 'meta_optimization',
@@ -347,7 +347,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
     requiredDataPoints: ['seo_meta', 'search_rankings'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 25000,
-    creditsRequired: 3,
+    creditsRequired: 25, // Fast Mode: 25 credits per pricing doc
   },
   {
     id: 'search_intent_alignment',
@@ -364,7 +364,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Align what page says with what user searched for',
         riskLevel: 'medium',
         estimatedImpact: 'high',
-        creditsRequired: 2,
+        creditsRequired: 25,
       },
       {
         id: 'resolve_mismatch',
@@ -372,7 +372,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Fix disconnects between ads and landing pages',
         riskLevel: 'medium',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 15,
       },
       {
         id: 'reduce_bounce',
@@ -380,13 +380,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Keep users engaged by meeting their expectations',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 15,
       },
     ],
     requiredDataPoints: ['traffic_sources', 'bounce_data', 'search_queries'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 35000,
-    creditsRequired: 4,
+    creditsRequired: 55, // Fast Mode: 55 credits per pricing doc
   },
   {
     id: 'image_alt_text_optimization',
@@ -403,7 +403,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Write helpful alt text for all product images',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 5,
       },
       {
         id: 'improve_seo_signals',
@@ -411,7 +411,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Optimize image attributes for search engines',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 5,
       },
       {
         id: 'enhance_accessibility',
@@ -419,13 +419,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Ensure images meet accessibility standards',
         riskLevel: 'low',
         estimatedImpact: 'low',
-        creditsRequired: 1,
+        creditsRequired: 5,
       },
     ],
     requiredDataPoints: ['product_images'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 20000,
-    creditsRequired: 3,
+    creditsRequired: 15, // Fast Mode: 15 credits per pricing doc
   },
   {
     id: 'stale_seo_refresh',
@@ -442,7 +442,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Refresh old content with current information',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 20,
       },
       {
         id: 'remove_thin_content',
@@ -450,7 +450,7 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Eliminate low-value pages hurting SEO',
         riskLevel: 'medium',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 20,
       },
       {
         id: 'improve_freshness',
@@ -458,13 +458,13 @@ const FOUNDATION_ACTIONS: MasterAction[] = [
         description: 'Update timestamps and add recent information',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 20,
       },
     ],
     requiredDataPoints: ['content_age', 'seo_scores'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 30000,
-    creditsRequired: 3,
+    creditsRequired: 60, // Fast Mode: 60 credits per pricing doc
   },
 ];
 
@@ -488,7 +488,7 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Remove or rewrite copy that causes second-guessing',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 2,
+        creditsRequired: 70,
       },
       {
         id: 'improve_reassurance',
@@ -496,7 +496,7 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Add confidence-building elements at checkout',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 60,
       },
       {
         id: 'simplify_flow',
@@ -504,13 +504,13 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Make checkout steps clearer and faster',
         riskLevel: 'medium',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 50,
       },
     ],
     requiredDataPoints: ['checkout_data', 'cart_abandonment'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 40000,
-    creditsRequired: 4,
+    creditsRequired: 180, // Fast Mode: 180 credits per pricing doc
   },
   {
     id: 'abandoned_cart_recovery',
@@ -527,7 +527,7 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Send timely reminders to cart abandoners',
         riskLevel: 'medium',
         estimatedImpact: 'high',
-        creditsRequired: 2,
+        creditsRequired: 100,
       },
       {
         id: 'optimize_timing',
@@ -535,7 +535,7 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Find the best times to send recovery messages',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 60,
       },
       {
         id: 'control_frequency',
@@ -543,13 +543,13 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Prevent over-messaging that annoys customers',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 60,
       },
     ],
     requiredDataPoints: ['abandoned_carts', 'customer_emails', 'email_settings'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 30000,
-    creditsRequired: 4,
+    creditsRequired: 220, // Fast Mode: 220 credits per pricing doc
   },
   {
     id: 'post_purchase_upsell',
@@ -566,7 +566,7 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Recommend products that complement the purchase',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 2,
+        creditsRequired: 70,
       },
       {
         id: 'increase_aov',
@@ -574,7 +574,7 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Boost AOV without feeling pushy',
         riskLevel: 'medium',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 50,
       },
       {
         id: 'prevent_aggressive',
@@ -582,18 +582,18 @@ const GROWTH_ACTIONS: MasterAction[] = [
         description: 'Keep upsells helpful, not annoying',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 40,
       },
     ],
     requiredDataPoints: ['purchase_history', 'product_relationships', 'customer_preferences'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 35000,
-    creditsRequired: 4,
+    creditsRequired: 160, // Fast Mode: 160 credits per pricing doc
   },
 ];
 
 // ============================================================================
-// 🛡️ GUARD & INTELLIGENCE ACTIONS
+// 🛡️ GUARD & INTELLIGENCE ACTIONS (Pro Only - Always Competitive Intelligence)
 // ============================================================================
 
 const GUARD_ACTIONS: MasterAction[] = [
@@ -612,7 +612,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Find page layouts that convert well',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 100,
       },
       {
         id: 'detect_trends',
@@ -620,7 +620,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Understand which products convert best and why',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 100,
       },
       {
         id: 'segment_behavior',
@@ -628,13 +628,13 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Group users by behavior to predict actions',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 100,
       },
     ],
     requiredDataPoints: ['conversion_data', 'behavior_events', 'page_analytics'],
     safeForSituation: ['MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 60000,
-    creditsRequired: 3,
+    creditsRequired: 300, // Always Competitive Intelligence: 300 credits per pricing doc
   },
   {
     id: 'performance_baseline_update',
@@ -651,7 +651,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Record metrics before making changes',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 70,
       },
       {
         id: 'update_benchmarks',
@@ -659,7 +659,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Keep performance baselines current',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 1,
+        creditsRequired: 65,
       },
       {
         id: 'detect_anomalies',
@@ -667,13 +667,13 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Identify unusual performance changes',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 65,
       },
     ],
     requiredDataPoints: ['performance_metrics', 'historical_data'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 20000,
-    creditsRequired: 3,
+    creditsRequired: 200, // Always Competitive Intelligence: 200 credits per pricing doc
   },
   {
     id: 'underperforming_rollback',
@@ -690,7 +690,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Undo changes that caused negative impact',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 50,
       },
       {
         id: 'restore_stable',
@@ -698,7 +698,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Return to known-good configuration',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 1,
+        creditsRequired: 50,
       },
       {
         id: 'log_rollback',
@@ -706,13 +706,13 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Record why rollback was needed for future learning',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 0,
+        creditsRequired: 50,
       },
     ],
     requiredDataPoints: ['product_snapshots', 'autonomous_actions'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 15000,
-    creditsRequired: 2,
+    creditsRequired: 150, // Always Competitive Intelligence: 150 credits per pricing doc
   },
   {
     id: 'risky_optimization_freeze',
@@ -729,7 +729,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Stop new changes temporarily',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 0,
+        creditsRequired: 35,
       },
       {
         id: 'prevent_high_risk',
@@ -737,7 +737,7 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Block risky actions until stable',
         riskLevel: 'low',
         estimatedImpact: 'high',
-        creditsRequired: 0,
+        creditsRequired: 35,
       },
       {
         id: 'wait_stabilization',
@@ -745,13 +745,13 @@ const GUARD_ACTIONS: MasterAction[] = [
         description: 'Resume only after metrics stabilize',
         riskLevel: 'low',
         estimatedImpact: 'medium',
-        creditsRequired: 0,
+        creditsRequired: 30,
       },
     ],
     requiredDataPoints: ['performance_metrics', 'action_history'],
     safeForSituation: ['NEW_FRESH', 'MEDIUM_GROWING', 'ENTERPRISE_SCALE'],
     estimatedExecutionTime: 5000,
-    creditsRequired: 0,
+    creditsRequired: 100, // Always Competitive Intelligence: 100 credits per pricing doc
   },
 ];
 

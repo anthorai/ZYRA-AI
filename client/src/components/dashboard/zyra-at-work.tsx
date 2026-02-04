@@ -1467,9 +1467,10 @@ function ProgressStages({
                   <Badge 
                     className="text-[10px] bg-primary/20 text-primary border-primary/30 gap-1"
                     data-testid="badge-credit-cost"
+                    title={`This action will consume ${foundationalAction.creditCost} credits from your balance`}
                   >
                     <CreditCard className="w-3 h-3" />
-                    {foundationalAction.creditCost} credits
+                    Consumes {foundationalAction.creditCost} credits
                   </Badge>
                 )}
                 
