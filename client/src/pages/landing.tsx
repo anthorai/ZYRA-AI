@@ -14,7 +14,7 @@ import Footer from "@/components/ui/footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Helmet } from "react-helmet";
-import { MynaHero } from "@/components/ui/myna-hero";
+import { HeroSection } from "@/components/ui/hero-section";
 
 export default function Landing() {
   const { isAuthenticated, loading, logout, isLoggingOut } = useAuth();
@@ -81,12 +81,12 @@ export default function Landing() {
   ];
 
   const navigationItems = [
-    { title: "HOW IT WORKS", href: "#how-it-works", external: true },
-    { title: "PRICING", href: "/pricing" },
-    { title: "FAQ", href: "#faq", external: true },
-    ...(loading ? [{ title: "LOG IN", href: "/auth" }] : 
-        isAuthenticated ? [{ title: isLoggingOut ? "LOGGING OUT..." : "LOGOUT", onClick: handleLogout, disabled: isLoggingOut, href: "#" }] : 
-        [{ title: "LOG IN", href: "/auth" }])
+    { name: "HOW IT WORKS", href: "#how-it-works", external: true },
+    { name: "PRICING", href: "/pricing" },
+    { name: "FAQ", href: "#faq", external: true },
+    ...(loading ? [{ name: "LOG IN", href: "/auth" }] : 
+        isAuthenticated ? [{ name: isLoggingOut ? "LOGGING OUT..." : "LOGOUT", onClick: handleLogout, href: "#" }] : 
+        [{ name: "LOG IN", href: "/auth" }])
   ];
 
   return (
@@ -98,12 +98,7 @@ export default function Landing() {
         <meta property="og:description" content="One AI system that runs your revenue loop. ZYRA detects opportunities, executes safely, and proves real revenue impact." />
       </Helmet>
       
-      <MynaHero 
-        navigationItems={navigationItems}
-        onLogout={handleLogout}
-        isAuthenticated={isAuthenticated}
-        isLoggingOut={isLoggingOut}
-      />
+      <HeroSection navigationItems={navigationItems} />
 
       <main>
         {/* PROBLEM SECTION */}
