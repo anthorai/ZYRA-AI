@@ -208,7 +208,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
             </AnimatedGroup>
           </div>
         </section>
-        <section className="pb-16 pt-16 md:pb-32" style={{ backgroundColor: '#16162c' }}>
+        <section className="pb-16 pt-16 md:pb-32 bg-[#0f0f23]" style={{ backgroundColor: '#16162c' }}>
           <div className="relative m-auto max-w-6xl px-6">
             {/* Stats Section */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
