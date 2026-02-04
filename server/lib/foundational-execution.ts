@@ -4,6 +4,7 @@ import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
 import { consumeAIToolCredits, checkAIToolCredits } from './credits';
+import { ALL_ACTIONS, type ActionId, type MasterAction } from './zyra-master-loop/master-action-registry';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
@@ -33,6 +34,7 @@ export interface FoundationalExecutionResult {
   totalChanges: number;
   estimatedImpact: string;
   executionTimeMs: number;
+  subActionsExecuted: string[];
   error?: string;
 }
 
@@ -47,12 +49,41 @@ export interface ExecutionActivity {
   changes?: ContentChange[];
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  seo_basics: 'Improve Discoverability',
-  product_copy_clarity: 'Clarify Product Value',
-  trust_signals: 'Build Buyer Confidence',
-  recovery_setup: 'Prepare Revenue Safety Net',
+// Map ActionId to execution method
+const ACTION_EXECUTION_MAP: Record<ActionId, string> = {
+  // Foundation Actions
+  trust_signal_enhancement: 'trust_signals',
+  friction_copy_removal: 'friction_removal',
+  product_description_clarity: 'product_copy_clarity',
+  value_proposition_alignment: 'value_alignment',
+  above_fold_optimization: 'above_fold',
+  product_title_optimization: 'title_optimization',
+  meta_optimization: 'seo_meta',
+  search_intent_alignment: 'intent_alignment',
+  image_alt_text_optimization: 'image_alt',
+  stale_seo_refresh: 'seo_refresh',
+  // Growth Actions
+  checkout_dropoff_mitigation: 'checkout_optimization',
+  abandoned_cart_recovery: 'cart_recovery',
+  post_purchase_upsell: 'upsell_setup',
+  // Guard Actions
+  conversion_pattern_learning: 'pattern_learning',
+  performance_baseline_update: 'baseline_update',
+  underperforming_rollback: 'rollback',
+  risky_optimization_freeze: 'freeze',
 };
+
+// Get human-readable label for an action
+function getActionLabel(actionId: ActionId): string {
+  const action = ALL_ACTIONS.find((a: MasterAction) => a.id === actionId);
+  return action?.name || actionId;
+}
+
+// Get sub-action names for display
+function getSubActionNames(actionId: ActionId): string[] {
+  const action = ALL_ACTIONS.find((a: MasterAction) => a.id === actionId);
+  return action?.subActions.map(sa => sa.name) || [];
+}
 
 export class FoundationalExecutionService {
   private activityLog: Map<string, ExecutionActivity[]> = new Map();
@@ -89,6 +120,13 @@ export class FoundationalExecutionService {
 
     this.clearActivities(userId);
 
+    // Resolve action from master registry
+    const actionId = actionType as ActionId;
+    const masterAction = ALL_ACTIONS.find((a: MasterAction) => a.id === actionId);
+    const actionLabel = masterAction?.name || getActionLabel(actionId) || actionType;
+    const subActions = masterAction?.subActions || [];
+    const subActionNames = subActions.map(sa => sa.name);
+
     this.addActivity(userId, {
       phase: 'detect',
       message: 'Analyzing your store for optimization opportunities...',
@@ -108,21 +146,22 @@ export class FoundationalExecutionService {
         return {
           success: false,
           actionType,
-          actionLabel: ACTION_LABELS[actionType] || actionType,
+          actionLabel,
           summary: 'Insufficient credits to run optimization',
           productsOptimized: [],
           totalChanges: 0,
           estimatedImpact: 'N/A',
           executionTimeMs: Date.now() - startTime,
+          subActionsExecuted: [],
           error: 'Insufficient credits',
         };
       }
 
       this.addActivity(userId, {
         phase: 'decide',
-        message: `Selected action: ${ACTION_LABELS[actionType] || actionType}`,
+        message: `Selected action: ${actionLabel}`,
         status: 'completed',
-        details: `Available credits: ${creditCheck.creditsRemaining}`,
+        details: `Sub-actions: ${subActionNames.slice(0, 3).join(', ')} | Credits: ${creditCheck.creditsRemaining}`,
       });
 
       // Prefer products that haven't been optimized yet (no optimizedTitle in seoMeta)
@@ -156,12 +195,13 @@ export class FoundationalExecutionService {
         return {
           success: false,
           actionType,
-          actionLabel: ACTION_LABELS[actionType] || actionType,
+          actionLabel,
           summary: 'No products found in your store',
           productsOptimized: [],
           totalChanges: 0,
           estimatedImpact: 'N/A',
           executionTimeMs: Date.now() - startTime,
+          subActionsExecuted: [],
           error: 'No products to optimize',
         };
       }
@@ -186,18 +226,43 @@ export class FoundationalExecutionService {
 
         let optimization: ProductOptimization;
 
+        // Map ActionId to the appropriate optimization method
+        // Foundation Actions
         switch (actionType) {
-          case 'seo_basics':
-            optimization = await this.optimizeSEO(userId, product);
-            break;
-          case 'product_copy_clarity':
-            optimization = await this.improveProductCopy(userId, product);
-            break;
+          case 'trust_signal_enhancement':
           case 'trust_signals':
             optimization = await this.addTrustSignals(userId, product);
             break;
+          case 'friction_copy_removal':
+          case 'product_description_clarity':
+          case 'product_copy_clarity':
+            optimization = await this.improveProductCopy(userId, product);
+            break;
+          case 'value_proposition_alignment':
+          case 'above_fold_optimization':
+            optimization = await this.improveProductCopy(userId, product);
+            break;
+          case 'product_title_optimization':
+          case 'meta_optimization':
+          case 'search_intent_alignment':
+          case 'image_alt_text_optimization':
+          case 'stale_seo_refresh':
+          case 'seo_basics':
+            optimization = await this.optimizeSEO(userId, product);
+            break;
+          // Growth Actions
+          case 'checkout_dropoff_mitigation':
+          case 'abandoned_cart_recovery':
+          case 'post_purchase_upsell':
           case 'recovery_setup':
             optimization = await this.setupRecoveryMessages(userId, product);
+            break;
+          // Guard Actions - these don't optimize products directly
+          case 'conversion_pattern_learning':
+          case 'performance_baseline_update':
+          case 'underperforming_rollback':
+          case 'risky_optimization_freeze':
+            optimization = { productId: product.id, productName: product.name, changes: [], impactExplanation: 'Guard actions do not modify products directly.' };
             break;
           default:
             optimization = await this.optimizeSEO(userId, product);
@@ -244,18 +309,16 @@ export class FoundationalExecutionService {
           for (const optimized of productsOptimized) {
             await db.insert(autonomousActions).values({
               userId,
-              actionType: actionType === 'seo_basics' ? 'optimize_seo' : 
-                          actionType === 'product_copy_clarity' ? 'fix_product' : 
-                          actionType === 'trust_signals' ? 'trust_signal_enhancement' :
-                          actionType === 'recovery_setup' ? 'send_cart_recovery' : 'optimize_seo',
+              actionType: actionType,
               entityType: 'product',
               entityId: optimized.productId,
               status: 'completed',
-              decisionReason: `ZYRA AI detected optimization opportunity: ${ACTION_LABELS[actionType] || actionType}`,
+              decisionReason: `ZYRA AI detected optimization opportunity: ${actionLabel}`,
               payload: {
                 productName: optimized.productName,
                 changes: optimized.changes,
-                actionLabel: ACTION_LABELS[actionType] || actionType,
+                actionLabel,
+                subActions: subActionNames,
               },
               result: {
                 success: true,
@@ -284,10 +347,12 @@ export class FoundationalExecutionService {
         await db.insert(activityLogs).values({
           userId,
           action: `foundational_${actionType}`,
-          description: `Executed foundational action: ${ACTION_LABELS[actionType] || actionType}`,
+          description: `Executed foundational action: ${actionLabel}`,
           toolUsed: 'zyra-engine',
           metadata: {
             actionType,
+            actionLabel,
+            subActions: subActionNames,
             productsOptimized: productsOptimized.length,
             totalChanges,
             productIds: productsOptimized.map(p => p.productId),
@@ -302,12 +367,13 @@ export class FoundationalExecutionService {
       return {
         success: true,
         actionType,
-        actionLabel: ACTION_LABELS[actionType] || actionType,
+        actionLabel,
         summary: `Successfully optimized ${productsOptimized.length} product${productsOptimized.length !== 1 ? 's' : ''} with ${totalChanges} improvement${totalChanges !== 1 ? 's' : ''}`,
         productsOptimized,
         totalChanges,
         estimatedImpact: this.generateImpactSummary(actionType, totalChanges),
         executionTimeMs: Date.now() - startTime,
+        subActionsExecuted: subActionNames,
       };
 
     } catch (error) {
@@ -323,11 +389,12 @@ export class FoundationalExecutionService {
       return {
         success: false,
         actionType,
-        actionLabel: ACTION_LABELS[actionType] || actionType,
+        actionLabel,
         summary: 'Optimization failed',
         productsOptimized: [],
         totalChanges: 0,
         estimatedImpact: 'N/A',
+        subActionsExecuted: [],
         executionTimeMs: Date.now() - startTime,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
