@@ -19,6 +19,45 @@ import {
 } from '@shared/schema';
 import { eq, and, desc, sql, gte, isNull, or, count } from 'drizzle-orm';
 import { emitZyraActivity, ZyraEventType } from './zyra-event-emitter';
+import { ACTION_MAP, type ActionId } from './zyra-master-loop/master-action-registry';
+
+/**
+ * Map legacy FoundationalActionType to new Master Action Registry ActionIds
+ * This ensures we use the registry as the single source of truth
+ */
+const LEGACY_TO_ACTION_ID: Record<FoundationalActionType, ActionId> = {
+  seo_basics: 'product_title_optimization',
+  product_copy_clarity: 'product_description_clarity',
+  trust_signals: 'trust_signal_enhancement',
+  recovery_setup: 'abandoned_cart_recovery'
+};
+
+/**
+ * Get action title and sub-actions from the Master Action Registry
+ */
+function getRegistryAction(legacyType: FoundationalActionType): { 
+  title: string; 
+  subActions: string[];
+  actionId: ActionId;
+} {
+  const actionId = LEGACY_TO_ACTION_ID[legacyType];
+  const registryAction = ACTION_MAP.get(actionId);
+  
+  if (registryAction) {
+    return {
+      title: registryAction.name,
+      subActions: registryAction.subActions.slice(0, 3).map(sa => sa.name),
+      actionId
+    };
+  }
+  
+  // Fallback if registry lookup fails (should not happen)
+  return {
+    title: FOUNDATIONAL_ACTION_LABELS[legacyType],
+    subActions: [],
+    actionId
+  };
+}
 
 const FAST_DETECT_TIMEOUT_MS = 10000;
 const TOP_PRODUCTS_LIMIT = 20;
@@ -900,28 +939,8 @@ export class FastDetectionEngine {
       );
       
       // Get sub-actions based on action type
-      const subActionsMap: Record<FoundationalActionType, string[]> = {
-        seo_basics: [
-          'Normalize Product Title Readability',
-          'Optimize Title for Search Intent',
-          'Remove Keyword Stuffing from Titles'
-        ],
-        product_copy_clarity: [
-          'Enhance Product Description Clarity',
-          'Add Benefit-Focused Copy',
-          'Improve Scannability with Bullet Points'
-        ],
-        trust_signals: [
-          'Add Customer Review Highlights',
-          'Display Trust Badges',
-          'Clarify Return/Shipping Policies'
-        ],
-        recovery_setup: [
-          'Configure Abandoned Cart Emails',
-          'Set Up Cart Recovery Timing',
-          'Create Recovery Message Templates'
-        ]
-      };
+      // Get title and sub-actions from the Master Action Registry (single source of truth)
+      const registryAction = getRegistryAction(selectedType);
 
       // Determine funnel stage based on action type
       const funnelStageMap: Record<FoundationalActionType, string> = {
@@ -944,12 +963,12 @@ export class FastDetectionEngine {
         category: 'FOUNDATION',
         productId: targetProduct?.id,
         productName: targetProduct?.name || undefined,
-        title: FOUNDATIONAL_ACTION_LABELS[selectedType],
+        title: registryAction.title, // Use registry name instead of legacy label
         description: dynamicReasoning.description,
         whyItHelps: dynamicReasoning.whyItHelps,
         expectedImpact: dynamicReasoning.expectedImpact,
         riskLevel: 'low',
-        subActions: subActionsMap[selectedType],
+        subActions: registryAction.subActions, // Use registry sub-actions
         storeSituation: 'NEW / FRESH',
         activePlan: 'STARTER',
         detectedIssue: detectedIssueMap[selectedType],
@@ -964,19 +983,18 @@ export class FastDetectionEngine {
       // RULE: For NEW STORES, DETECT must NEVER return "no action"
       console.error(`❌ [Foundational Action] Error selecting action for user ${userId}:`, error);
       
+      // Use registry for fallback action as well
+      const fallbackRegistry = getRegistryAction('trust_signals');
+      
       const fallbackAction: FoundationalAction = {
         type: 'trust_signals',
         category: 'FOUNDATION',
-        title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
+        title: fallbackRegistry.title, // Use registry name
         description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
         whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
         expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
         riskLevel: 'low',
-        subActions: [
-          'Add Customer Review Highlights',
-          'Display Trust Badges',
-          'Clarify Return/Shipping Policies'
-        ],
+        subActions: fallbackRegistry.subActions, // Use registry sub-actions
         storeSituation: 'NEW / FRESH',
         activePlan: 'STARTER',
         detectedIssue: 'High cart abandonment',
