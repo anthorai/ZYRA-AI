@@ -6,9 +6,9 @@
 :root {
   --background: 240 37% 13%;
   --foreground: 0 0% 92%;
-  --card: 240 40% 10%;
+  --card: 240 38% 11%;
   --card-foreground: 0 0% 100%;
-  --popover: 240 40% 10%;
+  --popover: 240 38% 11%;
   --popover-foreground: 0 0% 92%;
   --primary: 184 100% 50%;
   --primary-foreground: 240 37% 13%;
@@ -48,9 +48,9 @@
 .dark {
   --background: 240 37% 13%;
   --foreground: 0 0% 92%;
-  --card: 240 35% 16%;
+  --card: 240 40% 10%;
   --card-foreground: 0 0% 100%;
-  --popover: 240 35% 16%;
+  --popover: 240 40% 10%;
   --popover-foreground: 0 0% 92%;
   --primary: 184 100% 50%;
   --primary-foreground: 240 37% 13%;
@@ -193,7 +193,7 @@
   }
 
   .gradient-card {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
     backdrop-filter: blur(10px);
@@ -206,7 +206,7 @@
   }
 
   .gradient-surface {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
     backdrop-filter: blur(10px);
@@ -239,13 +239,13 @@
   }
 
   .stat-card {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.3);
     border-radius: 16px;
   }
 
   .form-input {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.3);
     color: #EAEAEA;
     border-radius: 12px;
@@ -254,11 +254,11 @@
 
   .form-input:focus {
     border-color: #00F0FF;
-    background: #1A1A32;
+    background: #14142B;
   }
 
   .form-select {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.3);
     color: #EAEAEA;
     border-radius: 12px;
@@ -267,11 +267,11 @@
 
   .form-select:focus {
     border-color: #00F0FF;
-    background: #1A1A32;
+    background: #14142B;
   }
 
   .form-textarea {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.3);
     color: #EAEAEA;
     border-radius: 12px;
@@ -281,7 +281,7 @@
 
   .form-textarea:focus {
     border-color: #00F0FF;
-    background: #1A1A32;
+    background: #14142B;
   }
 
   .active-tab {
@@ -291,7 +291,7 @@
   }
 
   .pricing-card {
-    background: #14142B;
+    background: #0f0f1e;
     border: 2px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
     transition: all 0.3s ease;
@@ -320,7 +320,7 @@
   }
 
   .glass-card {
-    background: rgba(30, 30, 58, 0.6);
+    background: rgba(15, 15, 30, 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -329,7 +329,7 @@
   }
 
   .glass-card-hover {
-    background: rgba(30, 30, 58, 0.6);
+    background: rgba(15, 15, 30, 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -339,7 +339,7 @@
   }
 
   .glass-card-hover:hover {
-    background: rgba(30, 30, 58, 0.8);
+    background: rgba(20, 20, 40, 0.85);
     border-color: rgba(0, 240, 255, 0.3);
     transform: translateY(-4px);
     box-shadow: 0 16px 48px rgba(0, 240, 255, 0.1);
@@ -643,7 +643,7 @@
   }
   
   .dark-theme-card {
-    background: #14142B;
+    background: #0f0f1e;
     border: 1px solid rgba(0, 240, 255, 0.2);
     border-radius: 16px;
   }
