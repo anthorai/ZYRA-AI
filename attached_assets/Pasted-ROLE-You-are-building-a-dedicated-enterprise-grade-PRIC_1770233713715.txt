@@ -1,0 +1,275 @@
+ROLE:
+You are building a dedicated, enterprise-grade PRICING page for ZYRA AI.
+This page must be SEPARATE from the main landing page.
+Remove all pricing sections from the landing page and link to this page instead.
+
+The goal of this page is:
+• Transparency
+• Trust
+• Clear plan differentiation
+• Zero confusion about what users get
+
+No hype language.
+No fake promises.
+Everything must map to real ZYRA capabilities.
+
+--------------------------------------------------
+PAGE ROUTE
+--------------------------------------------------
+/pricing
+
+--------------------------------------------------
+DESIGN PRINCIPLES (NON-NEGOTIABLE)
+--------------------------------------------------
+• Clean, enterprise SaaS layout
+• Dark mode (match ZYRA Cyberwave theme)
+• Strong hierarchy, not flashy
+• Readable at a glance
+• Works for founders, operators, and teams
+• Pricing must feel “serious”, not salesy
+
+--------------------------------------------------
+PAGE STRUCTURE (TOP → BOTTOM)
+--------------------------------------------------
+
+SECTION 1: PAGE HERO (EXPLANATION FIRST, NOT PRICES)
+
+Headline:
+"Simple pricing, based on how much control you give ZYRA"
+
+Subtext:
+"ZYRA pricing is not based on store size or hype features.
+Each plan unlocks a specific level of automation, safety, and intelligence."
+
+Supporting bullets:
+• No revenue guarantees
+• No risky automation by default
+• Upgrade or downgrade anytime
+• One action per loop, always safe
+
+CTA:
+[ View Plans ]   [ Compare Plans ]
+
+--------------------------------------------------
+SECTION 2: HOW PRICING WORKS (EDUCATION BLOCK)
+
+Title:
+"How ZYRA pricing actually works"
+
+Content (short paragraphs, not bullets):
+• ZYRA pricing is permission-based, not usage-based.
+• Plans control what ZYRA is allowed to do inside your store.
+• Higher plans unlock growth actions and revenue protection.
+• Lower plans keep everything conservative and safe.
+
+Mini visual or text blocks:
+🧱 Foundation = Trust & clarity  
+🚀 Growth = Revenue optimization  
+🛡️ Guard = Risk protection  
+
+--------------------------------------------------
+SECTION 3: PRICING CARDS (PRIMARY FOCUS)
+
+Layout:
+• 4 vertical cards
+• Equal width
+• Growth plan visually highlighted (recommended)
+• Clear price, credits, and positioning
+
+--------------------------------------------------
+PLAN 1: FREE TO INSTALL — $0 / mo
+--------------------------------------------------
+
+Badge:
+"Explore ZYRA"
+
+Credits:
+499 credits / 7 days
+
+Description:
+"For merchants who want to see how ZYRA thinks before enabling automation."
+
+Includes:
+• Live store detection
+• Revenue leak insights (read-only)
+• Store situation analysis
+• Action previews (no execution)
+
+Not included:
+• No automatic changes
+• No optimization
+• No revenue impact
+
+CTA:
+[ Install & Preview ]
+
+--------------------------------------------------
+PLAN 2: STARTER — $49 / mo
+--------------------------------------------------
+
+Badge:
+"Foundation"
+
+Credits:
+2,000 credits / month
+
+Description:
+"For new or early-stage stores that want safe, low-risk optimization."
+
+Includes (CLEAR LIST):
+🧱 Foundation Actions (Full)
+• Product title optimization
+• Product description clarity
+• Trust signal enhancement
+• Friction copy removal
+• Above-the-fold optimization
+• Meta & image SEO hygiene
+
+🧠 Intelligence (Basic)
+• Performance baselines
+• Read-only learning
+
+🛡️ Safety
+• Manual rollback
+• Auto-rollback on critical failures
+
+Not included:
+• No cart recovery
+• No checkout optimization
+• No upsells
+• No risk freeze
+
+CTA:
+[ Start Starter Plan ]
+
+--------------------------------------------------
+PLAN 3: GROWTH — $249 / mo (RECOMMENDED)
+--------------------------------------------------
+
+Badge:
+"Most Popular"
+
+Credits:
+10,000 credits / month
+
+Description:
+"For stores with traffic and orders that want more revenue without more ads."
+
+Includes:
+🧱 Foundation Actions (Full)
+
+🚀 Growth Actions (Full)
+• Checkout drop-off mitigation
+• Abandoned cart recovery
+• Post-purchase upsells
+
+🧠 Intelligence (Advanced)
+• Store-specific learning
+• Action effectiveness tracking
+
+🛡️ Safety
+• Auto-rollback on KPI drops
+
+CTA:
+[ Upgrade to Growth ]
+
+--------------------------------------------------
+PLAN 4: PRO — $499 / mo
+--------------------------------------------------
+
+Badge:
+"Enterprise-grade control"
+
+Credits:
+20,000 credits / month
+
+Description:
+"For serious brands where revenue protection matters as much as growth."
+
+Includes:
+🧱 Foundation (Full)
+🚀 Growth (Full)
+🛡️ Guard & Intelligence (Full)
+
+Guard features:
+• Risky optimization freeze
+• Revenue anomaly detection
+• Segment-level learning
+• Automatic rollback on any KPI anomaly
+
+CTA:
+[ Contact Sales ] or [ Start Pro ]
+
+--------------------------------------------------
+SECTION 4: FEATURE COMPARISON TABLE
+
+Rows:
+• Detect revenue leaks
+• Foundation actions
+• Growth actions
+• Guard & risk freeze
+• Auto rollback
+• Live activity log
+• Store-specific learning
+
+Columns:
+Free | Starter | Growth | Pro
+
+Clear checkmarks and limits.
+No tiny text.
+
+--------------------------------------------------
+SECTION 5: CREDIT SYSTEM EXPLANATION
+
+Title:
+"What are credits?"
+
+Explain honestly:
+• Credits power analysis and execution
+• Higher plans run more loops and actions
+• Credits do NOT unlock risky behavior
+• Unused credits do not force actions
+
+--------------------------------------------------
+SECTION 6: WHO SHOULD CHOOSE WHICH PLAN
+
+Short, honest guidance:
+• Choose Free if you are exploring
+• Choose Starter if your store fundamentals are weak
+• Choose Growth if you already run ads or have orders
+• Choose Pro if mistakes cost real money
+
+--------------------------------------------------
+SECTION 7: TRUST & SAFETY DISCLAIMER (IMPORTANT)
+
+Text block (must be visible):
+"ZYRA does not guarantee revenue growth.
+It improves efficiency, safety, and consistency.
+Results depend on traffic, product quality, and market fit."
+
+--------------------------------------------------
+SECTION 8: FINAL CTA
+
+Headline:
+"Choose how much control you want to give ZYRA"
+
+Buttons:
+[ Start with Starter ]
+[ Upgrade to Growth ]
+[ Talk to Sales ]
+
+--------------------------------------------------
+REMOVAL RULE (IMPORTANT)
+--------------------------------------------------
+• Remove all pricing cards from the landing page
+• Replace them with a single CTA:
+  "View Pricing"
+• Route users to /pricing
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+• No fake promises
+• No hype language
+• All features must map to real ZYRA capabilities
+• Page must feel like a serious SaaS product
