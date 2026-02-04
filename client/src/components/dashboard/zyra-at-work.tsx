@@ -865,7 +865,8 @@ function ProgressStages({
   onComplete,
   activePhase = 'detect',
   executionResult = null,
-  executionActivities = []
+  executionActivities = [],
+  optimizationMode = 'fast'
 }: { 
   isAutopilotEnabled: boolean;
   detectionPhase?: DetectionPhase;
@@ -881,6 +882,7 @@ function ProgressStages({
   activePhase?: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
   executionResult?: ExecutionResult | null;
   executionActivities?: ExecutionActivityItem[];
+  optimizationMode?: 'fast' | 'competitive';
 }) {
   const [currentStage, setCurrentStage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -1462,31 +1464,29 @@ function ProgressStages({
                    'Foundation Action'}
                 </Badge>
                 
-                {/* Credit Cost Badge */}
+                {/* Credit Cost Badge - Dynamic based on selected mode */}
                 {foundationalAction.creditCost !== undefined && foundationalAction.creditCost > 0 && (
                   <Badge 
                     className="text-[10px] bg-primary/20 text-primary border-primary/30 gap-1"
                     data-testid="badge-credit-cost"
-                    title={`This action will consume ${foundationalAction.creditCost} credits from your balance`}
+                    title={`This action will consume ${optimizationMode === 'competitive' ? foundationalAction.creditCost * 3 : foundationalAction.creditCost} credits from your balance (${optimizationMode === 'competitive' ? 'Competitive Intelligence' : 'Fast Mode'})`}
                   >
                     <CreditCard className="w-3 h-3" />
-                    Consumes {foundationalAction.creditCost} credits
+                    Consumes {optimizationMode === 'competitive' ? foundationalAction.creditCost * 3 : foundationalAction.creditCost} credits
                   </Badge>
                 )}
                 
-                {/* Execution Mode Indicator */}
-                {foundationalAction.executionMode && (
-                  <Badge 
-                    className={`text-[10px] ${
-                      foundationalAction.executionMode === 'competitive_intelligence' 
-                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
-                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                    }`}
-                    data-testid="badge-execution-mode"
-                  >
-                    {foundationalAction.executionMode === 'competitive_intelligence' ? 'SERP Analysis' : 'Fast Mode'}
-                  </Badge>
-                )}
+                {/* Execution Mode Indicator - Shows currently selected mode */}
+                <Badge 
+                  className={`text-[10px] ${
+                    optimizationMode === 'competitive' 
+                      ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                      : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                  }`}
+                  data-testid="badge-execution-mode"
+                >
+                  {optimizationMode === 'competitive' ? 'SERP Analysis' : 'Fast Mode'}
+                </Badge>
                 
                 {/* Already Optimized / Locked Badge */}
                 {foundationalAction.isLocked && (
@@ -3134,6 +3134,7 @@ export default function ZyraAtWork() {
                 activePhase={currentPhase as 'detect' | 'decide' | 'execute' | 'prove' | 'learn'}
                 executionResult={executionResult}
                 executionActivities={executionActivities}
+                optimizationMode={optimizationMode}
               />
             ) : (
               events.map((event) => (
