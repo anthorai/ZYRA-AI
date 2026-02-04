@@ -502,5 +502,92 @@ export function registerModeCreditsRoutes(app: Express, requireAuth: AuthMiddlew
     }
   });
 
+  // =========================================================================
+  // Real Learning API Endpoints
+  // =========================================================================
+
+  // GET /api/mode-credits/learning-stats - Get learning statistics for user
+  app.get('/api/mode-credits/learning-stats', requireAuth, async (req, res) => {
+    try {
+      const user = getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { realLearningService } = await import('./real-learning-service');
+      const stats = await realLearningService.getLearningStats(user.id);
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error getting learning stats:', error);
+      res.status(500).json({ error: 'Failed to get learning stats' });
+    }
+  });
+
+  // GET /api/mode-credits/learned-patterns - Get learned patterns for user
+  app.get('/api/mode-credits/learned-patterns', requireAuth, async (req, res) => {
+    try {
+      const user = getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { actionType, minConfidence } = req.query;
+      const { realLearningService } = await import('./real-learning-service');
+      
+      const patterns = await realLearningService.getApplicablePatterns(
+        user.id,
+        actionType as string | undefined,
+        minConfidence ? parseInt(minConfidence as string) : 60
+      );
+
+      res.json({ patterns });
+    } catch (error) {
+      console.error('Error getting learned patterns:', error);
+      res.status(500).json({ error: 'Failed to get learned patterns' });
+    }
+  });
+
+  // POST /api/mode-credits/mark-pushed - Mark change as pushed to Shopify
+  app.post('/api/mode-credits/mark-pushed', requireAuth, async (req, res) => {
+    try {
+      const user = getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { changeId } = req.body;
+      if (!changeId) {
+        return res.status(400).json({ error: 'changeId is required' });
+      }
+
+      const { realLearningService } = await import('./real-learning-service');
+      await realLearningService.markPushedToShopify(changeId);
+
+      res.json({ success: true, message: 'Change marked as pushed, measurement period started' });
+    } catch (error) {
+      console.error('Error marking change as pushed:', error);
+      res.status(500).json({ error: 'Failed to mark change as pushed' });
+    }
+  });
+
+  // POST /api/mode-credits/process-measurements - Manually trigger measurement processing
+  app.post('/api/mode-credits/process-measurements', requireAuth, async (req, res) => {
+    try {
+      const user = getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const { realLearningService } = await import('./real-learning-service');
+      const processed = await realLearningService.processMeasurements();
+
+      res.json({ success: true, processed, message: `Processed ${processed} measurements` });
+    } catch (error) {
+      console.error('Error processing measurements:', error);
+      res.status(500).json({ error: 'Failed to process measurements' });
+    }
+  });
+
   console.log('[Mode Credits] Routes registered successfully');
 }

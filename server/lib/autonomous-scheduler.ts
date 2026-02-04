@@ -1288,7 +1288,42 @@ export function initializeAutonomousScheduler(): void {
     await runRevenueImmuneScan();
   });
 
-  console.log('✅ [Autonomous Scheduler] Initialized - ZYRA Loop (Every 15 min), Revenue Immune Scan (Every 20 min), Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Legacy Revenue Loop (Every 30 min)');
+  // Real Learning Measurement Processor - runs every 6 hours to evaluate completed measurements
+  cron.schedule('0 */6 * * *', async () => {
+    console.log('⏰ [Scheduler] Running Real Learning measurement processor...');
+    await runLearningMeasurementProcessor();
+  });
+
+  console.log('✅ [Autonomous Scheduler] Initialized - ZYRA Loop (Every 15 min), Revenue Immune Scan (Every 20 min), Learning Processor (Every 6 hrs), Daily SEO audit (2 AM), Morning Reports (8 AM), Pricing Scan (Midnight), Marketing Campaigns (Hourly at :15), and Legacy Revenue Loop (Every 30 min)');
+}
+
+/**
+ * Real Learning Measurement Processor
+ * Evaluates optimization changes that have completed their measurement period
+ * and extracts patterns from successful optimizations
+ */
+async function runLearningMeasurementProcessor(): Promise<void> {
+  const jobId = 'learning-measurement-processor';
+  if (runningJobs.has(jobId)) {
+    console.log('⚠️ [Real Learning] Measurement processor already running, skipping...');
+    return;
+  }
+
+  runningJobs.add(jobId);
+
+  try {
+    console.log('🧠 [Real Learning] Starting measurement processor...');
+    
+    const { realLearningService } = await import('./real-learning-service');
+    
+    const processed = await realLearningService.processMeasurements();
+    
+    console.log(`✅ [Real Learning] Processed ${processed} completed measurements`);
+  } catch (error) {
+    console.error('❌ [Real Learning] Error in measurement processor:', error);
+  } finally {
+    runningJobs.delete(jobId);
+  }
 }
 
 /**
