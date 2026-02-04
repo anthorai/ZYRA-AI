@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "wouter";
-import { ArrowRight, ChevronRight, Menu, X } from "lucide-react";
+import { ArrowRight, ChevronRight, Menu, X, Check, Shield, Zap } from "lucide-react";
 import { SiShopify } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
@@ -43,20 +43,26 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
   return (
     <>
       <HeroHeader navigationItems={navigationItems} />
-      <main className="overflow-hidden">
+      <main className="overflow-hidden" style={{ backgroundColor: '#16162c' }}>
+        {/* Floating gradient orbs */}
+        <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="floating-orb orb-cyan w-[600px] h-[600px] -top-40 -left-40" style={{ animationDelay: '0s' }} />
+          <div className="floating-orb orb-purple w-[500px] h-[500px] top-1/4 -right-40" style={{ animationDelay: '5s' }} />
+          <div className="floating-orb orb-pink w-[400px] h-[400px] bottom-40 left-1/4" style={{ animationDelay: '10s' }} />
+        </div>
         <div
           aria-hidden
-          className="z-[2] absolute inset-0 pointer-events-none isolate opacity-50 contain-strict hidden lg:block"
+          className="z-[2] absolute inset-0 pointer-events-none isolate opacity-60 contain-strict hidden lg:block"
         >
-          <div className="w-[35rem] h-[80rem] -translate-y-[350px] absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(180,100%,50%,.08)_0,hsla(180,100%,50%,.02)_50%,hsla(180,100%,50%,0)_80%)]" />
-          <div className="h-[80rem] absolute left-0 top-0 w-56 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(180,100%,50%,.06)_0,hsla(180,100%,50%,.02)_80%,transparent_100%)] [translate:5%_-50%]" />
-          <div className="h-[80rem] -translate-y-[350px] absolute left-0 top-0 w-56 -rotate-45 bg-[radial-gradient(50%_50%_at_50%_50%,hsla(180,100%,50%,.04)_0,hsla(180,100%,50%,.02)_80%,transparent_100%)]" />
+          <div className="w-[35rem] h-[80rem] -translate-y-[350px] absolute left-0 top-0 -rotate-45 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,hsla(184,100%,50%,.12)_0,hsla(184,100%,50%,.04)_50%,hsla(184,100%,50%,0)_80%)]" />
+          <div className="h-[80rem] absolute left-0 top-0 w-56 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(184,100%,50%,.08)_0,hsla(184,100%,50%,.03)_80%,transparent_100%)] [translate:5%_-50%]" />
+          <div className="h-[80rem] -translate-y-[350px] absolute left-0 top-0 w-56 -rotate-45 bg-[radial-gradient(50%_50%_at_50%_50%,hsla(184,100%,50%,.06)_0,hsla(184,100%,50%,.02)_80%,transparent_100%)]" />
         </div>
         <section>
           <div className="relative pt-24 md:pt-36">
             <div
               aria-hidden
-              className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--background)_75%)]"
+              className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,#16162c_75%)]"
             />
             <div className="mx-auto max-w-7xl px-6">
               <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
@@ -114,25 +120,27 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     },
                     ...transitionVariants,
                   }}
-                  className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row"
+                  className="mt-12 flex flex-col items-center justify-center gap-4 md:flex-row"
                 >
-                  <div className="bg-foreground/10 rounded-[14px] border p-0.5">
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
                     <Button
                       asChild
                       size="lg"
-                      className="rounded-xl px-5 text-base font-semibold"
+                      className="relative rounded-xl px-8 text-base font-bold shadow-lg shadow-primary/25"
                       data-testid="button-hero-start"
                     >
                       <Link href="/auth">
-                        <span className="text-nowrap">Start Free</span>
+                        <span className="text-nowrap">Start Free Trial</span>
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </Link>
                     </Button>
                   </div>
                   <Button
                     asChild
                     size="lg"
-                    variant="ghost"
-                    className="rounded-xl px-5 font-medium"
+                    variant="outline"
+                    className="rounded-xl px-6 font-medium border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10"
                     data-testid="button-hero-demo"
                   >
                     <a href="#how-it-works">
@@ -140,6 +148,22 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     </a>
                   </Button>
                 </AnimatedGroup>
+
+                {/* Trust indicators */}
+                <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
+                  <div className="trust-badge">
+                    <Check className="w-4 h-4 text-primary" />
+                    <span>No credit card required</span>
+                  </div>
+                  <div className="trust-badge">
+                    <Shield className="w-4 h-4 text-primary" />
+                    <span>SOC 2 Compliant</span>
+                  </div>
+                  <div className="trust-badge">
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span>2-minute setup</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -184,51 +208,43 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
             </AnimatedGroup>
           </div>
         </section>
-        <section className="bg-background pb-16 pt-16 md:pb-32">
-          <div className="group relative m-auto max-w-5xl px-6">
-            <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
-              <a
-                href="#testimonials"
-                className="block text-sm duration-150 font-medium"
-              >
-                <span>See What Stores Are Saying</span>
-                <ChevronRight className="ml-1 inline-block size-3" />
-              </a>
+        <section className="pb-16 pt-16 md:pb-32" style={{ backgroundColor: '#16162c' }}>
+          <div className="relative m-auto max-w-6xl px-6">
+            {/* Stats Section */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+              <div className="metric-card">
+                <div className="stat-number">10K+</div>
+                <p className="text-muted-foreground mt-2 text-sm">Stores Protected</p>
+              </div>
+              <div className="metric-card">
+                <div className="stat-number">$50M+</div>
+                <p className="text-muted-foreground mt-2 text-sm">Revenue Recovered</p>
+              </div>
+              <div className="metric-card">
+                <div className="stat-number">99.9%</div>
+                <p className="text-muted-foreground mt-2 text-sm">Uptime SLA</p>
+              </div>
+              <div className="metric-card">
+                <div className="stat-number">4.9/5</div>
+                <p className="text-muted-foreground mt-2 text-sm">Store Rating</p>
+              </div>
             </div>
-            <h3 className="text-center text-sm uppercase tracking-wider text-muted-foreground mb-8">
-              Trusted by Shopify stores worldwide
+
+            <div className="section-divider mb-12" />
+
+            <h3 className="text-center text-sm uppercase tracking-widest text-muted-foreground mb-10 font-medium">
+              Trusted by leading Shopify brands
             </h3>
-            <div className="group-hover:blur-xs mx-auto grid max-w-3xl grid-cols-3 gap-x-12 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:gap-x-16 sm:gap-y-14">
-              <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary font-bold text-xs">S1</span>
+            <div className="mx-auto grid max-w-4xl grid-cols-3 md:grid-cols-6 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                      <span className="text-primary font-bold text-sm">B{i}</span>
+                    </div>
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    Store #1
-                  </span>
                 </div>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary font-bold text-xs">S2</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    Store #2
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary font-bold text-xs">S3</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    Store #3
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
