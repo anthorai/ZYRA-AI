@@ -105,6 +105,7 @@ const RollbackChanges = lazy(() => import("@/pages/automation/rollback-changes")
 const RevenueLoopControls = lazy(() => import("@/pages/automation/revenue-loop-controls"));
 const PowerModePage = lazy(() => import("@/pages/automation/power-mode"));
 const ProductAutonomy = lazy(() => import("@/pages/automation/product-autonomy"));
+const PricingPage = lazy(() => import("@/pages/pricing"));
 const PendingApprovals = lazy(() => import("@/pages/pending-approvals"));
 const ChangeControlDashboard = lazy(() => import("@/pages/change-control-dashboard"));
 const ChangeDetailsPage = lazy(() => import("@/pages/change-details"));
@@ -278,6 +279,11 @@ function Router() {
       <Route path="/auth/callback" component={() => (
         <Suspense fallback={<PageLoader />}>
           <AuthCallback />
+        </Suspense>
+      )} />
+      <Route path="/pricing" component={() => (
+        <Suspense fallback={<PageLoader />}>
+          <PricingPage />
         </Suspense>
       )} />
       

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowRight, Play, Check, Gift, Crown, Award, 
-  Shield, ChevronDown, ChevronUp, Zap,
+  ArrowRight, Play, Check, Zap,
+  Shield, ChevronDown, ChevronUp,
   Users, DollarSign, Target, Eye, RotateCcw,
   ShoppingCart, Mail, Search, TrendingUp, Brain,
   Layers, RefreshCw, Trophy, CheckCircle2
@@ -23,7 +23,6 @@ export default function Landing() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [isAnnual, setIsAnnual] = useState(false);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -84,79 +83,6 @@ export default function Landing() {
     }
   ];
 
-  const plans = [
-    {
-      name: "7-Day Free Trial",
-      price: "$0",
-      period: "7 days",
-      icon: <Gift className="w-8 h-8" />,
-      badge: "Risk-Free",
-      description: "Explore ZYRA's revenue detection",
-      features: [
-        "100 credits included",
-        "ZYRA detects all opportunities",
-        "Manual approval mode",
-        "One-click rollback protection",
-        "Email support"
-      ],
-      popular: false
-    },
-    {
-      name: "Starter+",
-      price: "$49",
-      annualPrice: "$39",
-      period: "per month",
-      icon: <Zap className="w-8 h-8" />,
-      badge: "Smart Growth",
-      description: "Smart growth with full control",
-      features: [
-        "1,000 credits / month",
-        "ZYRA detects revenue opportunities",
-        "You approve before ZYRA acts",
-        "ZYRA optimizes product SEO",
-        "ZYRA recovers abandoned carts",
-        "Basic brand voice intelligence"
-      ],
-      popular: false
-    },
-    {
-      name: "Growth",
-      price: "$249",
-      annualPrice: "$199",
-      period: "per month",
-      icon: <Award className="w-8 h-8" />,
-      badge: "Most Popular",
-      description: "Faster growth with trusted autonomy",
-      features: [
-        "6,000 credits / month",
-        "ZYRA auto-runs low-risk actions",
-        "ZYRA optimizes products in bulk",
-        "Full brand voice intelligence",
-        "Google competitor analysis",
-        "Priority execution speed"
-      ],
-      popular: true
-    },
-    {
-      name: "Scale",
-      price: "$499",
-      annualPrice: "$399",
-      period: "per month",
-      icon: <Crown className="w-8 h-8" />,
-      badge: "Full Autonomy",
-      description: "Hands-free revenue engine",
-      features: [
-        "15,000 credits / month",
-        "ZYRA operates autonomously",
-        "Per-product autonomy controls",
-        "Deep Google SERP intelligence",
-        "Outranking-focused strategies",
-        "Priority everything"
-      ],
-      popular: false
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-[#0000001f]">
       <Helmet>
@@ -168,7 +94,7 @@ export default function Landing() {
       <ResponsiveNavbar
         navItems={[
           { label: "How It Works", href: "#how-it-works", external: true },
-          { label: "Pricing", href: "#pricing", external: true },
+          { label: "Pricing", href: "/pricing" },
           { label: "FAQ", href: "#faq", external: true },
           ...(loading ? [{ label: "Log in", href: "/auth" }] : 
               isAuthenticated ? [{ label: isLoggingOut ? "Logging out..." : "Logout", onClick: handleLogout, disabled: isLoggingOut }] : 
@@ -606,87 +532,26 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* PRICING */}
+        {/* PRICING CTA */}
         <section id="pricing" className="py-20 px-4 sm:px-6 bg-muted/30">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Simple, Transparent Pricing
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6">Start free. Scale when you're ready.</p>
-              
-              <div className="inline-flex items-center gap-3 bg-card border border-border rounded-lg p-1 mb-8">
-                <button
-                  onClick={() => setIsAnnual(false)}
-                  className={`px-4 py-2 rounded-md transition-all ${!isAnnual ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setIsAnnual(true)}
-                  className={`px-4 py-2 rounded-md transition-all ${isAnnual ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-                >
-                  Annual
-                  <Badge className="ml-2 bg-green-500 text-white">Save 20%</Badge>
-                </button>
-              </div>
+          <div className="container mx-auto max-w-3xl text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              Simple, Permission-Based Pricing
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Plans control what ZYRA is allowed to do. Higher plans unlock growth actions and revenue protection.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+              <Button asChild size="lg" className="gradient-button px-8" data-testid="button-view-pricing">
+                <Link href="/pricing">
+                  View Pricing
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-              {plans.map((plan, index) => (
-                <Card 
-                  key={index} 
-                  className={`relative bg-[#16162c] hover-elevate transition-all ${plan.popular ? 'ring-2 ring-primary md:scale-105' : ''}`}
-                  data-testid={`card-plan-${index}`}
-                >
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge className={plan.popular ? "bg-primary text-primary-foreground" : ""}>{plan.badge}</Badge>
-                    </div>
-                  )}
-                  <CardContent className="p-6 pt-8">
-                    <div className="text-center mb-6">
-                      <div className="flex justify-center text-primary mb-3">{plan.icon}</div>
-                      <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                      <div className="mb-2">
-                        <span className="text-3xl font-bold">
-                          {isAnnual && plan.annualPrice ? plan.annualPrice : plan.price}
-                        </span>
-                        {index !== 0 && <span className="text-sm text-muted-foreground">/month</span>}
-                      </div>
-                      {isAnnual && plan.annualPrice && index !== 0 && (
-                        <p className="text-xs text-muted-foreground line-through">{plan.price}/month</p>
-                      )}
-                      {plan.description && (
-                        <p className="text-sm text-primary mt-2">{plan.description}</p>
-                      )}
-                    </div>
-                    <ul className="space-y-3 mb-6">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start text-sm">
-                          <Check className="w-4 h-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button 
-                      asChild
-                      className={`w-full ${plan.popular ? 'gradient-button' : ''}`}
-                      variant={plan.popular ? "default" : "outline"}
-                      data-testid={`button-choose-plan-${index}`}
-                    >
-                      <Link href="/auth">
-                        {index === 0 ? "Start Free Trial" : "Choose Plan"}
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
             <div className="text-center text-sm text-muted-foreground">
               <Shield className="w-4 h-4 inline mr-1" />
-              Billed through Shopify • Cancel anytime • No contracts
+              Billed through Shopify · Cancel anytime · No contracts
             </div>
           </div>
         </section>
