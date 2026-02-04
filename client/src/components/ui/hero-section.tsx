@@ -185,22 +185,67 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                   aria-hidden
                   className="bg-gradient-to-b to-background absolute inset-0 z-10 from-transparent from-35%"
                 />
-                <div className="bg-background relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1 ring-background dark:shadow-none">
-                  <div className="aspect-video relative rounded-2xl bg-gradient-to-br from-primary/20 via-background to-primary/10 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <div className="inline-flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-full px-6 py-3 mb-6">
+                <div className="glass-card relative mx-auto max-w-6xl overflow-hidden p-6">
+                  <div className="aspect-video relative rounded-xl bg-gradient-to-br from-primary/10 via-[#12122a] to-primary/5 p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="inline-flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-full px-4 py-2">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-sm font-semibold text-primary tracking-wide">
+                        <span className="text-xs font-semibold text-primary tracking-wide">
                           ZYRA Engine Active
                         </span>
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                        Revenue Protection Dashboard
-                      </h3>
-                      <p className="text-muted-foreground max-w-lg mx-auto">
-                        Watch ZYRA detect friction, apply fixes, and prove
-                        revenue impact in real-time.
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        All Systems Operational
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="glass-card p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Revenue Recovered</p>
+                        <p className="text-2xl font-bold text-emerald-400">$12,847</p>
+                        <p className="text-xs text-emerald-400/80">+23% this week</p>
+                      </div>
+                      <div className="glass-card p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Carts Saved</p>
+                        <p className="text-2xl font-bold text-primary">156</p>
+                        <p className="text-xs text-primary/80">Auto-recovered</p>
+                      </div>
+                      <div className="glass-card p-4">
+                        <p className="text-xs text-muted-foreground mb-1">SEO Optimizations</p>
+                        <p className="text-2xl font-bold text-purple-400">89</p>
+                        <p className="text-xs text-purple-400/80">Products improved</p>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold">Recent ZYRA Actions</p>
+                        <span className="text-xs text-muted-foreground">Last 24h</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span className="text-muted-foreground">Cart Recovery Email Sent</span>
+                          </div>
+                          <span className="text-emerald-400 font-medium">+$247</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            <span className="text-muted-foreground">SEO Title Optimized</span>
+                          </div>
+                          <span className="text-primary font-medium">+15% CTR</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-purple-500" />
+                            <span className="text-muted-foreground">Product Description Enhanced</span>
+                          </div>
+                          <span className="text-purple-400 font-medium">+8% Conv.</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
