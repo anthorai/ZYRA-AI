@@ -583,11 +583,13 @@ interface ProductOptimization {
 
 interface ExecutionResult {
   success: boolean;
+  actionType: string;
   actionLabel: string;
   productsOptimized: ProductOptimization[];
   totalChanges: number;
   estimatedImpact: string;
   executionTimeMs: number;
+  subActionsExecuted: string[];
 }
 
 interface ExecutionActivityItem {
@@ -2822,7 +2824,8 @@ export default function ZyraAtWork() {
         </CardHeader>
         <CardContent>
           {/* EXECUTION RESULTS BANNER - Professional Design */}
-          {executionResult && executionResult.productsOptimized.length > 0 && (
+          {/* Show when executionResult exists (gated on valid execution state) */}
+          {executionResult && (
             <div className="mb-6 rounded-xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-slate-900/50 to-slate-900/80" data-testid="execution-results-banner">
               {/* Success Header */}
               <div className="p-5 border-b border-emerald-500/10 bg-gradient-to-r from-emerald-500/10 to-transparent">
@@ -2875,7 +2878,29 @@ export default function ZyraAtWork() {
                       <p className="text-xs text-slate-400">Success Rate</p>
                     </div>
                   </div>
-                ) : (
+                ) : (null)}
+                
+                {/* Sub-Actions Executed - Always show exactly 3 sub-actions */}
+                <div className="mt-4 bg-slate-800/40 rounded-lg p-3" data-testid="sub-actions-executed">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                    <Layers className="w-3 h-3" />
+                    Sub-Actions (3)
+                  </p>
+                  <ul className="space-y-1.5">
+                    {/* Ensure exactly 3 sub-actions are always displayed */}
+                    {[0, 1, 2].map((idx) => {
+                      const subAction = executionResult.subActionsExecuted?.[idx] || 'Optimizing...';
+                      return (
+                        <li key={idx} className="flex items-center gap-2 text-sm text-slate-300" data-testid={`sub-action-${idx}`}>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                          <span>{subAction}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+                
+                {executionResult.productsOptimized.length === 0 && (
                   <div className="mt-4 bg-slate-800/50 rounded-lg p-4 text-center" data-testid="stat-action-complete">
                     <p className="text-sm text-slate-300">Action processed successfully</p>
                     <p className="text-xs text-slate-500 mt-1">{executionResult.estimatedImpact || 'ZYRA will continue monitoring for improvements'}</p>

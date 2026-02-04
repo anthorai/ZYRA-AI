@@ -49,29 +49,31 @@ export interface ExecutionActivity {
   changes?: ContentChange[];
 }
 
-// Map ActionId to execution method
-const ACTION_EXECUTION_MAP: Record<ActionId, string> = {
-  // Foundation Actions
-  trust_signal_enhancement: 'trust_signals',
-  friction_copy_removal: 'friction_removal',
-  product_description_clarity: 'product_copy_clarity',
-  value_proposition_alignment: 'value_alignment',
-  above_fold_optimization: 'above_fold',
-  product_title_optimization: 'title_optimization',
-  meta_optimization: 'seo_meta',
-  search_intent_alignment: 'intent_alignment',
-  image_alt_text_optimization: 'image_alt',
-  stale_seo_refresh: 'seo_refresh',
-  // Growth Actions
-  checkout_dropoff_mitigation: 'checkout_optimization',
-  abandoned_cart_recovery: 'cart_recovery',
-  post_purchase_upsell: 'upsell_setup',
-  // Guard Actions
-  conversion_pattern_learning: 'pattern_learning',
-  performance_baseline_update: 'baseline_update',
-  underperforming_rollback: 'rollback',
-  risky_optimization_freeze: 'freeze',
+// Map legacy action type strings to ActionId (for backwards compatibility)
+const LEGACY_TO_ACTION_ID: Record<string, ActionId> = {
+  // Legacy strings -> ActionId
+  'seo_basics': 'product_title_optimization',
+  'product_copy_clarity': 'product_description_clarity',
+  'trust_signals': 'trust_signal_enhancement',
+  'recovery_setup': 'abandoned_cart_recovery',
 };
+
+// All valid ActionIds from the master registry
+const VALID_ACTION_IDS = new Set<string>(ALL_ACTIONS.map((a: MasterAction) => a.id));
+
+// Normalize legacy action type to ActionId - returns null if not found
+function normalizeToActionId(actionType: string): ActionId | null {
+  // Check if it's already a valid ActionId
+  if (VALID_ACTION_IDS.has(actionType)) {
+    return actionType as ActionId;
+  }
+  // Check if it's a legacy string that maps to an ActionId
+  if (LEGACY_TO_ACTION_ID[actionType]) {
+    return LEGACY_TO_ACTION_ID[actionType];
+  }
+  // Unknown action type
+  return null;
+}
 
 // Get human-readable label for an action
 function getActionLabel(actionId: ActionId): string {
@@ -120,12 +122,39 @@ export class FoundationalExecutionService {
 
     this.clearActivities(userId);
 
-    // Resolve action from master registry
-    const actionId = actionType as ActionId;
-    const masterAction = ALL_ACTIONS.find((a: MasterAction) => a.id === actionId);
-    const actionLabel = masterAction?.name || getActionLabel(actionId) || actionType;
-    const subActions = masterAction?.subActions || [];
+    // Normalize legacy action types to ActionId - registry is the sole source of truth
+    const actionId = normalizeToActionId(actionType);
+    
+    // Reject unknown actions - security: do not allow arbitrary action types
+    if (!actionId) {
+      console.error(`[Foundational Execution] Unknown action type: ${actionType} - not in registry`);
+      // Use fixed 3-item placeholder to maintain contract
+      return {
+        success: false,
+        actionType,
+        actionLabel: actionType,
+        summary: `Unknown action type: ${actionType}`,
+        productsOptimized: [],
+        totalChanges: 0,
+        estimatedImpact: 'N/A',
+        executionTimeMs: Date.now() - startTime,
+        subActionsExecuted: ['Unknown action', 'Not in registry', 'Please contact support'],
+        error: 'Unknown action type - not in master registry',
+      };
+    }
+    
+    // Get master action from registry (guaranteed to exist since normalization passed)
+    const masterAction = ALL_ACTIONS.find((a: MasterAction) => a.id === actionId)!;
+    
+    // Get exactly 3 sub-actions from registry (enforce the contract)
+    const actionLabel = masterAction.name;
+    const subActions = masterAction.subActions.slice(0, 3);
     const subActionNames = subActions.map(sa => sa.name);
+    
+    // Ensure we always have exactly 3 sub-actions (pad if needed for display consistency)
+    while (subActionNames.length < 3) {
+      subActionNames.push('Processing...');
+    }
 
     this.addActivity(userId, {
       phase: 'detect',
@@ -143,16 +172,17 @@ export class FoundationalExecutionService {
           status: 'warning',
           details: `You need at least 1 credit. Available: ${creditCheck.creditsRemaining}`,
         });
+        // Always return exactly 3 sub-actions for UI consistency - use normalized actionId
         return {
           success: false,
-          actionType,
+          actionType: actionId, // Use normalized actionId
           actionLabel,
           summary: 'Insufficient credits to run optimization',
           productsOptimized: [],
           totalChanges: 0,
           estimatedImpact: 'N/A',
           executionTimeMs: Date.now() - startTime,
-          subActionsExecuted: [],
+          subActionsExecuted: subActionNames, // Use padded sub-actions
           error: 'Insufficient credits',
         };
       }
@@ -192,16 +222,17 @@ export class FoundationalExecutionService {
           status: 'warning',
         });
 
+        // Always return exactly 3 sub-actions for UI consistency - use normalized actionId
         return {
           success: false,
-          actionType,
+          actionType: actionId, // Use normalized actionId
           actionLabel,
           summary: 'No products found in your store',
           productsOptimized: [],
           totalChanges: 0,
           estimatedImpact: 'N/A',
           executionTimeMs: Date.now() - startTime,
-          subActionsExecuted: [],
+          subActionsExecuted: subActionNames, // Use padded sub-actions
           error: 'No products to optimize',
         };
       }
@@ -226,46 +257,41 @@ export class FoundationalExecutionService {
 
         let optimization: ProductOptimization;
 
-        // Map ActionId to the appropriate optimization method
-        // Foundation Actions
-        switch (actionType) {
+        // Map normalized ActionId to the appropriate optimization method
+        // Only valid ActionIds from the master registry are accepted (no legacy strings, no default)
+        switch (actionId) {
+          // Foundation: Trust & Legitimacy
           case 'trust_signal_enhancement':
-          case 'trust_signals':
             optimization = await this.addTrustSignals(userId, product);
             break;
+          // Foundation: Copy & Clarity
           case 'friction_copy_removal':
           case 'product_description_clarity':
-          case 'product_copy_clarity':
-            optimization = await this.improveProductCopy(userId, product);
-            break;
           case 'value_proposition_alignment':
           case 'above_fold_optimization':
             optimization = await this.improveProductCopy(userId, product);
             break;
+          // Foundation: SEO & Discoverability
           case 'product_title_optimization':
           case 'meta_optimization':
           case 'search_intent_alignment':
           case 'image_alt_text_optimization':
           case 'stale_seo_refresh':
-          case 'seo_basics':
             optimization = await this.optimizeSEO(userId, product);
             break;
-          // Growth Actions
+          // Growth: Revenue Recovery
           case 'checkout_dropoff_mitigation':
           case 'abandoned_cart_recovery':
           case 'post_purchase_upsell':
-          case 'recovery_setup':
             optimization = await this.setupRecoveryMessages(userId, product);
             break;
-          // Guard Actions - these don't optimize products directly
+          // Guard: Learning & Protection (no product modifications)
           case 'conversion_pattern_learning':
           case 'performance_baseline_update':
           case 'underperforming_rollback':
           case 'risky_optimization_freeze':
             optimization = { productId: product.id, productName: product.name, changes: [], impactExplanation: 'Guard actions do not modify products directly.' };
             break;
-          default:
-            optimization = await this.optimizeSEO(userId, product);
         }
 
         if (optimization.changes.length > 0) {
@@ -293,7 +319,7 @@ export class FoundationalExecutionService {
         phase: 'prove',
         message: `Completed ${totalChanges} improvement${totalChanges !== 1 ? 's' : ''} across ${productsOptimized.length} product${productsOptimized.length !== 1 ? 's' : ''} (${totalCreditsConsumed} credit${totalCreditsConsumed !== 1 ? 's' : ''} used)`,
         status: 'completed',
-        details: this.generateImpactSummary(actionType, totalChanges),
+        details: this.generateImpactSummary(actionId, totalChanges),
       });
 
       this.addActivity(userId, {
@@ -304,12 +330,13 @@ export class FoundationalExecutionService {
       });
 
       // Save to autonomousActions for Change Control visibility
+      // Use normalized actionId (not original actionType) for registry alignment
       if (productsOptimized.length > 0) {
         try {
           for (const optimized of productsOptimized) {
             await db.insert(autonomousActions).values({
               userId,
-              actionType: actionType,
+              actionType: actionId, // Use normalized actionId
               entityType: 'product',
               entityId: optimized.productId,
               status: 'completed',
@@ -326,8 +353,8 @@ export class FoundationalExecutionService {
                 impactExplanation: optimized.impactExplanation,
               },
               estimatedImpact: {
-                type: actionType,
-                description: this.generateImpactSummary(actionType, optimized.changes.length),
+                type: actionId, // Use normalized actionId
+                description: this.generateImpactSummary(actionId, optimized.changes.length),
               },
               executedBy: 'agent',
               creditsUsed: 1,
@@ -342,15 +369,15 @@ export class FoundationalExecutionService {
         }
       }
 
-      // Log to database for action rotation tracking
+      // Log to database for action rotation tracking - use normalized actionId
       try {
         await db.insert(activityLogs).values({
           userId,
-          action: `foundational_${actionType}`,
+          action: `foundational_${actionId}`, // Use normalized actionId
           description: `Executed foundational action: ${actionLabel}`,
           toolUsed: 'zyra-engine',
           metadata: {
-            actionType,
+            actionId, // Use normalized actionId
             actionLabel,
             subActions: subActionNames,
             productsOptimized: productsOptimized.length,
@@ -359,19 +386,20 @@ export class FoundationalExecutionService {
             productId: productsOptimized[0]?.productId || null,
           },
         });
-        console.log(`[Foundational Execution] Logged action to database: foundational_${actionType}`);
+        console.log(`[Foundational Execution] Logged action to database: foundational_${actionId}`);
       } catch (logError) {
         console.error('[Foundational Execution] Error logging to activityLogs:', logError);
       }
 
+      // Return with normalized actionId for consistency
       return {
         success: true,
-        actionType,
+        actionType: actionId, // Use normalized actionId
         actionLabel,
         summary: `Successfully optimized ${productsOptimized.length} product${productsOptimized.length !== 1 ? 's' : ''} with ${totalChanges} improvement${totalChanges !== 1 ? 's' : ''}`,
         productsOptimized,
         totalChanges,
-        estimatedImpact: this.generateImpactSummary(actionType, totalChanges),
+        estimatedImpact: this.generateImpactSummary(actionId, totalChanges),
         executionTimeMs: Date.now() - startTime,
         subActionsExecuted: subActionNames,
       };
@@ -386,15 +414,17 @@ export class FoundationalExecutionService {
         details: error instanceof Error ? error.message : 'Unknown error',
       });
 
+      // Always return 3 sub-actions for consistency (use planned sub-actions even on error)
+      // Return with normalized actionId
       return {
         success: false,
-        actionType,
+        actionType: actionId, // Use normalized actionId
         actionLabel,
         summary: 'Optimization failed',
         productsOptimized: [],
         totalChanges: 0,
         estimatedImpact: 'N/A',
-        subActionsExecuted: [],
+        subActionsExecuted: subActionNames, // Still show planned sub-actions
         executionTimeMs: Date.now() - startTime,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
