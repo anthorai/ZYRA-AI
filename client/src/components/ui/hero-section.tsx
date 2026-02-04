@@ -127,7 +127,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     <Button
                       asChild
                       size="lg"
-                      className="relative rounded-xl px-8 text-base font-bold shadow-lg shadow-primary/25"
+                      className="relative rounded-xl px-8 text-base font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
                       data-testid="button-hero-start"
                     >
                       <Link href="/auth">

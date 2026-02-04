@@ -494,7 +494,7 @@ export default function Landing() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
-                  <Button asChild size="lg" className="relative rounded-xl font-bold px-10 shadow-lg shadow-primary/25" data-testid="button-view-pricing">
+                  <Button asChild size="lg" className="relative rounded-xl font-bold px-10 bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90" data-testid="button-view-pricing">
                     <Link href="/pricing">
                       VIEW PRICING
                       <ArrowRight className="w-5 h-5 ml-2" />
@@ -574,7 +574,7 @@ export default function Landing() {
               </p>
               <div className="relative group inline-block">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-xl opacity-60 group-hover:opacity-100 transition duration-300" />
-                <Button asChild size="lg" className="relative rounded-xl font-bold px-12 py-7 text-lg shadow-2xl shadow-primary/30" data-testid="button-final-cta">
+                <Button asChild size="lg" className="relative rounded-xl font-bold px-12 py-7 text-lg bg-primary text-primary-foreground shadow-2xl shadow-primary/30 hover:bg-primary/90" data-testid="button-final-cta">
                   <Link href="/auth">
                     INSTALL ZYRA FOR SHOPIFY
                     <ArrowRight className="w-5 h-5 ml-2" />
