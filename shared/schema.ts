@@ -3713,6 +3713,11 @@ export interface FoundationalAction {
   activePlan?: string;
   detectedIssue?: string;
   funnelStage?: string;
+  // Credit consumption tracking
+  creditCost?: number;
+  executionMode?: 'fast' | 'competitive_intelligence';
+  isLocked?: boolean;
+  lockMessage?: string;
 }
 
 export const FOUNDATIONAL_ACTION_LABELS: Record<FoundationalActionType, string> = {

@@ -21164,11 +21164,14 @@ Return JSON array of segments only, no explanation text.`;
       if (result.isNewStore && !foundationalAction) {
         foundationalAction = {
           type: 'trust_signals',
+          category: 'FOUNDATION',
           title: FOUNDATIONAL_ACTION_LABELS['trust_signals'],
           description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
           whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
           expectedImpact: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].expectedImpact,
-          riskLevel: 'low'
+          riskLevel: 'low',
+          creditCost: 3, // Default credit cost for trust signals
+          executionMode: 'fast'
         };
       }
       

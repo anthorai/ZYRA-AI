@@ -48,7 +48,8 @@ import {
   Eraser,
   BarChart,
   CreditCard,
-  Layout
+  Layout,
+  Lock
 } from "lucide-react";
 
 // ============================================================================
@@ -265,6 +266,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useExecuteAction, type ExecutionMode } from "@/hooks/use-mode-credits";
 import type { StoreReadiness } from "@shared/schema";
 
 interface AutomationSettings {
@@ -564,6 +566,11 @@ interface FoundationalAction {
   whySafe?: string;
   // Score calculation
   score?: ActionScore;
+  // Credit consumption tracking
+  creditCost?: number;
+  executionMode?: 'fast' | 'competitive_intelligence';
+  isLocked?: boolean;
+  lockMessage?: string;
 }
 
 // Execution results from real AI-powered optimization
@@ -1411,7 +1418,7 @@ function ProgressStages({
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   )}
                 </div>
-                {executionStatus === 'awaiting_approval' && committedActionId && onApprove && (
+                {executionStatus === 'awaiting_approval' && committedActionId && onApprove && !foundationalAction.isLocked && (
                   <Button
                     size="sm"
                     variant="default"
@@ -1435,10 +1442,16 @@ function ProgressStages({
                     )}
                   </Button>
                 )}
+                {foundationalAction.isLocked && (
+                  <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 bg-amber-500/10">
+                    <Lock className="w-3 h-3 mr-1" />
+                    {foundationalAction.lockMessage || 'Already Optimized'}
+                  </Badge>
+                )}
               </div>
               
-              {/* Action Category Badge */}
-              <div className="mb-3">
+              {/* Action Category Badge + Credit Cost */}
+              <div className="mb-3 flex items-center gap-2 flex-wrap">
                 <Badge className={`text-[10px] uppercase tracking-wider ${
                   foundationalAction.category === 'GUARD' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
                   foundationalAction.category === 'GROWTH' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
@@ -1448,6 +1461,42 @@ function ProgressStages({
                    foundationalAction.category === 'GROWTH' ? 'Growth Action' :
                    'Foundation Action'}
                 </Badge>
+                
+                {/* Credit Cost Badge */}
+                {foundationalAction.creditCost !== undefined && foundationalAction.creditCost > 0 && (
+                  <Badge 
+                    className="text-[10px] bg-primary/20 text-primary border-primary/30 gap-1"
+                    data-testid="badge-credit-cost"
+                  >
+                    <CreditCard className="w-3 h-3" />
+                    {foundationalAction.creditCost} credits
+                  </Badge>
+                )}
+                
+                {/* Execution Mode Indicator */}
+                {foundationalAction.executionMode && (
+                  <Badge 
+                    className={`text-[10px] ${
+                      foundationalAction.executionMode === 'competitive_intelligence' 
+                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                    }`}
+                    data-testid="badge-execution-mode"
+                  >
+                    {foundationalAction.executionMode === 'competitive_intelligence' ? 'SERP Analysis' : 'Fast Mode'}
+                  </Badge>
+                )}
+                
+                {/* Already Optimized / Locked Badge */}
+                {foundationalAction.isLocked && (
+                  <Badge 
+                    className="text-[10px] bg-slate-500/20 text-slate-400 border-slate-500/30 gap-1"
+                    data-testid="badge-already-optimized"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    Already Optimized
+                  </Badge>
+                )}
               </div>
               
               {/* Action Title */}
@@ -2127,6 +2176,9 @@ export default function ZyraAtWork() {
   // Initialize toast early since it's used by mutations below
   const { toast } = useToast();
   
+  // Credit execution mutation for mode-based credit consumption
+  const executeActionMutation = useExecuteAction();
+  
   // Approve action mutation for awaiting_approval state
   const approveActionMutation = useMutation({
     mutationFn: async (actionId: string) => {
@@ -2134,10 +2186,44 @@ export default function ZyraAtWork() {
       
       // Check if it's a foundational action
       if (actionId.startsWith('foundational_')) {
-        console.log('[ZYRA Approve] Executing foundational action:', actionId);
-        // Execute foundational action - returns real execution results
+        const actionType = actionId.replace('foundational_', '');
+        console.log('[ZYRA Approve] Executing foundational action:', actionType);
+        
+        // Get product ID from foundational action data if available
+        const productId = detectionStatusData?.foundationalAction?.productId || 'store-level';
+        const executionMode: ExecutionMode = (detectionStatusData?.foundationalAction?.executionMode as ExecutionMode) || 'fast';
+        
+        // CRITICAL: Check lock status before consuming credits to prevent duplicates
+        const foundationalAction = detectionStatusData?.foundationalAction;
+        if (foundationalAction?.isLocked) {
+          console.log('[ZYRA Approve] Action is locked - preventing duplicate credit consumption');
+          throw new Error(foundationalAction.lockMessage || 'This action has already been completed on this product');
+        }
+        
+        // Step 1: Consume credits through mode-credits system
+        try {
+          const creditResult = await executeActionMutation.mutateAsync({
+            actionType,
+            mode: executionMode,
+            entityType: 'product',
+            entityId: productId,
+            userConfirmed: true
+          });
+          
+          if (!creditResult.success) {
+            throw new Error(creditResult.message || 'Credit consumption failed');
+          }
+          
+          console.log('[ZYRA Approve] Credits consumed:', creditResult.creditsConsumed);
+        } catch (creditError) {
+          // If credits fail, don't proceed with execution
+          console.error('[ZYRA Approve] Credit check failed:', creditError);
+          throw new Error(creditError instanceof Error ? creditError.message : 'Insufficient credits for this action');
+        }
+        
+        // Step 2: Execute foundational action - returns real execution results
         const response = await apiRequest('POST', '/api/zyra/execute-foundational', { 
-          type: actionId.replace('foundational_', '') 
+          type: actionType 
         });
         const result = await response.json();
         console.log('[ZYRA Approve] Foundational action result:', result);
@@ -2201,6 +2287,10 @@ export default function ZyraAtWork() {
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
+      // Invalidate credit-related queries after action execution
+      queryClient.invalidateQueries({ queryKey: ['/api/credits/balance'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/mode-credits/lock-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/mode-credits/ci-usage'] });
     },
     onError: (error) => {
       console.error('[ZYRA Approve] Mutation error:', error);

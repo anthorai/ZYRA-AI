@@ -33,12 +33,14 @@ const LEGACY_TO_ACTION_ID: Record<FoundationalActionType, ActionId> = {
 };
 
 /**
- * Get action title and sub-actions from the Master Action Registry
+ * Get action title, sub-actions, and credit cost from the Master Action Registry
  */
 function getRegistryAction(legacyType: FoundationalActionType): { 
   title: string; 
   subActions: string[];
   actionId: ActionId;
+  creditsRequired: number;
+  category: 'FOUNDATION' | 'GROWTH' | 'GUARD';
 } {
   const actionId = LEGACY_TO_ACTION_ID[legacyType];
   const registryAction = ACTION_MAP.get(actionId);
@@ -47,7 +49,9 @@ function getRegistryAction(legacyType: FoundationalActionType): {
     return {
       title: registryAction.name,
       subActions: registryAction.subActions.slice(0, 3).map(sa => sa.name),
-      actionId
+      actionId,
+      creditsRequired: registryAction.creditsRequired,
+      category: registryAction.category as 'FOUNDATION' | 'GROWTH' | 'GUARD'
     };
   }
   
@@ -55,7 +59,9 @@ function getRegistryAction(legacyType: FoundationalActionType): {
   return {
     title: FOUNDATIONAL_ACTION_LABELS[legacyType],
     subActions: [],
-    actionId
+    actionId,
+    creditsRequired: 3, // Default credit cost
+    category: 'FOUNDATION'
   };
 }
 
@@ -960,7 +966,7 @@ export class FastDetectionEngine {
 
       const foundationalAction: FoundationalAction = {
         type: selectedType,
-        category: 'FOUNDATION',
+        category: registryAction.category,
         productId: targetProduct?.id,
         productName: targetProduct?.name || undefined,
         title: registryAction.title, // Use registry name instead of legacy label
@@ -972,7 +978,10 @@ export class FastDetectionEngine {
         storeSituation: 'NEW / FRESH',
         activePlan: 'STARTER',
         detectedIssue: detectedIssueMap[selectedType],
-        funnelStage: funnelStageMap[selectedType]
+        funnelStage: funnelStageMap[selectedType],
+        // Credit consumption tracking
+        creditCost: registryAction.creditsRequired,
+        executionMode: 'fast' // Default to fast mode
       };
       
       console.log(`🔧 [Foundational Action] Selected "${selectedType}" for user ${userId}${targetProduct ? ` (product: ${targetProduct.name})` : ''} | Recent: [${Array.from(recentActionTypes).join(', ')}]`);
@@ -988,7 +997,7 @@ export class FastDetectionEngine {
       
       const fallbackAction: FoundationalAction = {
         type: 'trust_signals',
-        category: 'FOUNDATION',
+        category: fallbackRegistry.category,
         title: fallbackRegistry.title, // Use registry name
         description: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].description,
         whyItHelps: FOUNDATIONAL_ACTION_DESCRIPTIONS['trust_signals'].whyItHelps,
@@ -998,7 +1007,10 @@ export class FastDetectionEngine {
         storeSituation: 'NEW / FRESH',
         activePlan: 'STARTER',
         detectedIssue: 'High cart abandonment',
-        funnelStage: 'Conversion'
+        funnelStage: 'Conversion',
+        // Credit consumption tracking
+        creditCost: fallbackRegistry.creditsRequired,
+        executionMode: 'fast' // Default to fast mode
       };
       
       console.log(`🔧 [Foundational Action] Using fallback "trust_signals" for user ${userId}`);
