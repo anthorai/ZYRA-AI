@@ -123,6 +123,7 @@ import { ShopifyGraphQLClient, graphqlProductToRest } from "./lib/shopify-graphq
 import { ShopifyAppUninstalledError, handleShopifyUninstallError } from "./lib/shopify-client";
 import { upsellRecommendationRules } from "@shared/schema";
 import masterLoopRoutes from "./lib/zyra-master-loop/routes";
+import { registerModeCreditsRoutes } from "./lib/mode-credits-routes";
 import { grantFreeTrial } from "./lib/trial-expiration-service";
 import { getUserPlanCapabilities } from "./middleware/plan-middleware";
 import { 
@@ -170,6 +171,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount Master Loop routes
   app.use('/api/master-loop', masterLoopRoutes);
+
+  // Note: Mode-Based Credit System routes are registered after auth middleware is defined
 
   // Health check endpoint (no auth required) for monitoring
   app.get("/api/health", async (req, res) => {
@@ -458,6 +461,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(401).json({ message: "Authentication failed" });
     }
   };
+
+  // Register Mode-Based Credit System routes (after auth middleware is defined)
+  registerModeCreditsRoutes(app, requireAuth);
 
   // Shopify Managed Pricing URL - JSON API version
   // Non-embedded app + Managed Pricing = redirect to:

@@ -3975,3 +3975,142 @@ export const storeReadinessSchema = z.object({
 });
 
 export type StoreReadiness = z.infer<typeof storeReadinessSchema>;
+
+// ============================================================================
+// ZYRA Action Lock System - Prevent Duplicate Credit Consumption
+// ============================================================================
+// Actions are LOCKED after execution. Re-execution requires material change.
+
+export const actionLockStatusEnum = pgEnum('action_lock_status', ['locked', 'unlocked', 'pending_review']);
+export const executionModeEnum = pgEnum('execution_mode', ['fast', 'competitive_intelligence']);
+
+export const actionLocks = pgTable("action_locks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Entity that was optimized
+  entityType: text("entity_type").notNull(), // 'product', 'store', 'policy_page'
+  entityId: varchar("entity_id").notNull(), // Product ID, store ID, etc.
+  
+  // Action that was executed
+  actionType: text("action_type").notNull(), // From execution-modes.ts ZyraActionType
+  actionCategory: text("action_category").notNull(), // 'foundation', 'growth', 'guard'
+  
+  // Execution details
+  executionMode: text("execution_mode").notNull(), // 'fast' or 'competitive_intelligence'
+  creditsConsumed: integer("credits_consumed").notNull(),
+  
+  // Lock status
+  status: text("status").notNull().default('locked'), // 'locked', 'unlocked', 'pending_review'
+  lockedAt: timestamp("locked_at").default(sql`NOW()`),
+  unlockedAt: timestamp("unlocked_at"),
+  unlockReason: text("unlock_reason"), // MaterialChangeType from execution-modes.ts
+  
+  // Content hash for change detection
+  contentHashAtExecution: text("content_hash_at_execution"), // Hash of entity content when executed
+  
+  // Verification
+  verifiedAt: timestamp("verified_at"),
+  verificationResult: text("verification_result"), // 'stable', 'needs_review', 'failed'
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('action_locks_user_id_idx').on(table.userId),
+  index('action_locks_entity_idx').on(table.entityType, table.entityId),
+  index('action_locks_action_type_idx').on(table.actionType),
+  index('action_locks_status_idx').on(table.status),
+  uniqueIndex('action_locks_unique').on(table.userId, table.entityType, table.entityId, table.actionType),
+]);
+
+export const insertActionLockSchema = createInsertSchema(actionLocks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ActionLock = typeof actionLocks.$inferSelect;
+export type InsertActionLock = z.infer<typeof insertActionLockSchema>;
+
+// ============================================================================
+// Competitive Intelligence Usage Tracking - Plan-Based Limits
+// ============================================================================
+// Tracks CI mode usage for Starter plan limits (2/month, 1/cycle)
+
+export const competitiveIntelligenceUsage = pgTable("competitive_intelligence_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Action details
+  actionType: text("action_type").notNull(),
+  actionLockId: varchar("action_lock_id").references(() => actionLocks.id),
+  
+  // Credits consumed
+  creditsConsumed: integer("credits_consumed").notNull(),
+  
+  // Tracking period
+  monthYear: text("month_year").notNull(), // Format: '2026-02' for monthly tracking
+  cycleId: varchar("cycle_id"), // Optional cycle identifier for cycle-based limits
+  
+  // Confirmation status (required before execution)
+  userConfirmedAt: timestamp("user_confirmed_at"),
+  warningShown: boolean("warning_shown").default(false),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('ci_usage_user_id_idx').on(table.userId),
+  index('ci_usage_month_year_idx').on(table.userId, table.monthYear),
+  index('ci_usage_created_at_idx').on(table.createdAt),
+]);
+
+export const insertCompetitiveIntelligenceUsageSchema = createInsertSchema(competitiveIntelligenceUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type CompetitiveIntelligenceUsage = typeof competitiveIntelligenceUsage.$inferSelect;
+export type InsertCompetitiveIntelligenceUsage = z.infer<typeof insertCompetitiveIntelligenceUsageSchema>;
+
+// ============================================================================
+// Material Change Detection Log
+// ============================================================================
+// Tracks material changes that unlock actions for re-optimization
+
+export const materialChanges = pgTable("material_changes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Entity that changed
+  entityType: text("entity_type").notNull(),
+  entityId: varchar("entity_id").notNull(),
+  
+  // Change details
+  changeType: text("change_type").notNull(), // From MaterialChangeType in execution-modes.ts
+  changeDescription: text("change_description"),
+  
+  // Before/after hashes for verification
+  contentHashBefore: text("content_hash_before"),
+  contentHashAfter: text("content_hash_after"),
+  
+  // Impact on locks
+  locksUnlocked: integer("locks_unlocked").default(0),
+  actionLockIds: jsonb("action_lock_ids"), // Array of lock IDs that were unlocked
+  
+  // Source of change
+  detectedBy: text("detected_by").notNull(), // 'webhook', 'scan', 'user_triggered'
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('material_changes_user_id_idx').on(table.userId),
+  index('material_changes_entity_idx').on(table.entityType, table.entityId),
+  index('material_changes_change_type_idx').on(table.changeType),
+  index('material_changes_created_at_idx').on(table.createdAt),
+]);
+
+export const insertMaterialChangeSchema = createInsertSchema(materialChanges).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type MaterialChange = typeof materialChanges.$inferSelect;
+export type InsertMaterialChange = z.infer<typeof insertMaterialChangeSchema>;
