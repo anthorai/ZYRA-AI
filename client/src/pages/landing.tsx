@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Helmet } from "react-helmet";
 import { HeroSection } from "@/components/ui/hero-section";
+import { AnimatedSectionTitle, AnimatedWords } from "@/components/ui/typewriter-effect";
 
 export default function Landing() {
   const { isAuthenticated, loading, logout, isLoggingOut } = useAuth();
@@ -109,9 +110,11 @@ export default function Landing() {
               <Badge className="mb-6 bg-destructive/10 text-destructive border-destructive/20">
                 The Problem
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6 glow-text">
-                Most Shopify Stores Don't Fail — They Leak Revenue
-              </h2>
+              <AnimatedWords 
+                text="Most Shopify Stores Don't Fail — They Leak Revenue"
+                highlightWords={["Leak", "Revenue"]}
+                className="glow-text"
+              />
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 You're not missing traffic. You're missing conversions, losing carts, and leaving money on the table.
               </p>
@@ -168,9 +171,9 @@ export default function Landing() {
                 <Brain className="w-4 h-4 mr-2" />
                 One AI System
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 One AI System. <span className="gradient-text">One Revenue Loop.</span>
-              </h2>
+              </AnimatedSectionTitle>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 ZYRA runs a continuous cycle that finds revenue opportunities, takes action, and proves the impact — automatically.
               </p>
@@ -235,9 +238,9 @@ export default function Landing() {
               <Badge className="mb-6 bg-accent/10 text-accent border-accent/20">
                 Automated Actions
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 What ZYRA <span className="gradient-text">Automatically Runs</span> for Your Store
-              </h2>
+              </AnimatedSectionTitle>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 These aren't features to configure. These are actions ZYRA takes for you.
               </p>
@@ -326,9 +329,9 @@ export default function Landing() {
                 <Shield className="w-4 h-4 mr-2" />
                 Safety First
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 Automation You Can <span className="gradient-text">Trust</span>
-              </h2>
+              </AnimatedSectionTitle>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 ZYRA never changes your store without your control.
               </p>
@@ -379,9 +382,9 @@ export default function Landing() {
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Revenue Attribution
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 See Exactly What Changed — <span className="gradient-text">And What It Made</span>
-              </h2>
+              </AnimatedSectionTitle>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Not more dashboards — just clarity.
               </p>
@@ -440,9 +443,9 @@ export default function Landing() {
                 <Users className="w-4 h-4 mr-2" />
                 Built For You
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 Who ZYRA Is <span className="gradient-text">Built For</span>
-              </h2>
+              </AnimatedSectionTitle>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -481,9 +484,9 @@ export default function Landing() {
               <DollarSign className="w-4 h-4 mr-2" />
               Simple Pricing
             </Badge>
-            <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+            <AnimatedSectionTitle>
               Simple, <span className="gradient-text">Permission-Based</span> Pricing
-            </h2>
+            </AnimatedSectionTitle>
             <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
               Plans control what ZYRA is allowed to do. Higher plans unlock growth actions and revenue protection.
             </p>
@@ -523,9 +526,9 @@ export default function Landing() {
               <Badge className="mb-6 bg-muted text-foreground border-border">
                 FAQ
               </Badge>
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 Questions? <span className="gradient-text">We've Got Answers</span>
-              </h2>
+              </AnimatedSectionTitle>
             </div>
 
             <div className="space-y-4">
@@ -561,9 +564,9 @@ export default function Landing() {
           <div className="floating-orb orb-pink w-[300px] h-[300px] bottom-10 right-10 opacity-20" />
           <div className="container mx-auto max-w-3xl text-center relative z-10">
             <div className="glass-card p-12 md:p-16">
-              <h2 className="text-3xl sm:text-5xl font-bold mb-6">
+              <AnimatedSectionTitle>
                 Stop Managing Growth. <span className="gradient-text">Start Supervising It.</span>
-              </h2>
+              </AnimatedSectionTitle>
               <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
                 Let ZYRA handle the work. You stay in control.
               </p>

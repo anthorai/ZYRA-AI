@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { motion, stagger, useAnimate, useInView } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 
 export const TypewriterEffect = ({
   words,
@@ -181,5 +181,75 @@ export const TypewriterEffectSmooth = ({
         )}
       ></motion.span>
     </div>
+  );
+};
+
+// Animated Section Title - lighter animation for section headings
+export const AnimatedSectionTitle = ({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) => {
+  return (
+    <motion.h2
+      className={cn("text-3xl sm:text-5xl font-bold mb-6", className)}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {children}
+    </motion.h2>
+  );
+};
+
+// Word-by-word reveal animation for section titles
+export const AnimatedWords = ({
+  text,
+  highlightWords = [],
+  className,
+  highlightClassName = "gradient-text",
+}: {
+  text: string;
+  highlightWords?: string[];
+  className?: string;
+  highlightClassName?: string;
+}) => {
+  const words = text.split(" ");
+  
+  return (
+    <motion.h2
+      className={cn("text-3xl sm:text-5xl font-bold mb-6", className)}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-50px" }}
+    >
+      {words.map((word, i) => {
+        const isHighlighted = highlightWords.some(hw => word.toLowerCase().includes(hw.toLowerCase()));
+        return (
+          <motion.span
+            key={i}
+            className={cn("inline-block mr-[0.25em]", isHighlighted && highlightClassName)}
+            variants={{
+              hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
+              visible: {
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+                transition: {
+                  duration: 0.4,
+                  delay: i * 0.08,
+                  ease: "easeOut",
+                },
+              },
+            }}
+          >
+            {word}
+          </motion.span>
+        );
+      })}
+    </motion.h2>
   );
 };
