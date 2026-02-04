@@ -4122,3 +4122,191 @@ export const insertMaterialChangeSchema = createInsertSchema(materialChanges).om
 
 export type MaterialChange = typeof materialChanges.$inferSelect;
 export type InsertMaterialChange = z.infer<typeof insertMaterialChangeSchema>;
+
+// ============================================================================
+// ZYRA Real Learning System
+// ============================================================================
+
+// Baseline Snapshots - Captures product metrics BEFORE optimization
+// This is critical for measuring the true impact of ZYRA's actions
+export const baselineSnapshots = pgTable("baseline_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  
+  // Snapshot timing
+  snapshotDate: timestamp("snapshot_date").default(sql`NOW()`).notNull(),
+  measurementPeriodDays: integer("measurement_period_days").default(30),
+  
+  // Traffic metrics
+  pageViews: integer("page_views").default(0),
+  uniqueVisitors: integer("unique_visitors").default(0),
+  averageTimeOnPage: numeric("average_time_on_page", { precision: 10, scale: 2 }),
+  bounceRate: numeric("bounce_rate", { precision: 5, scale: 2 }),
+  
+  // Conversion funnel metrics
+  addToCartCount: integer("add_to_cart_count").default(0),
+  addToCartRate: numeric("add_to_cart_rate", { precision: 5, scale: 2 }),
+  checkoutInitiatedCount: integer("checkout_initiated_count").default(0),
+  checkoutRate: numeric("checkout_rate", { precision: 5, scale: 2 }),
+  purchaseCount: integer("purchase_count").default(0),
+  conversionRate: numeric("conversion_rate", { precision: 5, scale: 2 }),
+  
+  // Revenue metrics
+  totalRevenue: numeric("total_revenue", { precision: 12, scale: 2 }).default('0'),
+  averageOrderValue: numeric("average_order_value", { precision: 10, scale: 2 }),
+  
+  // SEO metrics
+  seoHealthScore: integer("seo_health_score"),
+  searchImpressions: integer("search_impressions").default(0),
+  searchClicks: integer("search_clicks").default(0),
+  searchCtr: numeric("search_ctr", { precision: 5, scale: 2 }),
+  
+  // Product state at snapshot
+  productTitle: text("product_title"),
+  productDescription: text("product_description"),
+  productPrice: numeric("product_price", { precision: 10, scale: 2 }),
+  
+  // Content hash for change detection
+  contentHash: varchar("content_hash", { length: 64 }),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+}, (table) => [
+  index('baseline_snapshots_user_id_idx').on(table.userId),
+  index('baseline_snapshots_product_id_idx').on(table.productId),
+  index('baseline_snapshots_snapshot_date_idx').on(table.snapshotDate),
+]);
+
+export const insertBaselineSnapshotSchema = createInsertSchema(baselineSnapshots).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type BaselineSnapshot = typeof baselineSnapshots.$inferSelect;
+export type InsertBaselineSnapshot = z.infer<typeof insertBaselineSnapshotSchema>;
+
+// Optimization Changes - Tracks exactly what ZYRA changed
+// Links to baseline snapshot for before/after comparison
+export const optimizationChanges = pgTable("optimization_changes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  baselineSnapshotId: varchar("baseline_snapshot_id").references(() => baselineSnapshots.id),
+  
+  // What action was performed
+  actionType: text("action_type").notNull(), // Registry ActionId
+  actionCategory: text("action_category"), // 'foundation', 'growth', 'guard'
+  executionMode: text("execution_mode"), // 'fast' or 'competitive_intelligence'
+  
+  // Exact changes made
+  changeField: text("change_field").notNull(), // 'title', 'description', 'meta_title', etc.
+  oldValue: text("old_value"),
+  newValue: text("new_value"),
+  
+  // AI reasoning
+  aiReasoning: text("ai_reasoning"),
+  serpDataUsed: boolean("serp_data_used").default(false),
+  
+  // Keywords/patterns applied
+  keywordsAdded: jsonb("keywords_added"), // Array of keywords added
+  patternsApplied: jsonb("patterns_applied"), // Which learned patterns were used
+  
+  // Credits consumed
+  creditsConsumed: integer("credits_consumed").default(0),
+  
+  // Verification status
+  pushedToShopify: boolean("pushed_to_shopify").default(false),
+  shopifyPushAt: timestamp("shopify_push_at"),
+  verifiedAt: timestamp("verified_at"),
+  
+  // Performance tracking
+  measurementStartDate: timestamp("measurement_start_date"),
+  measurementEndDate: timestamp("measurement_end_date"),
+  measurementStatus: text("measurement_status").default('pending'), // 'pending', 'measuring', 'completed', 'failed'
+  
+  // Post-optimization metrics (filled after measurement period)
+  postOptimizationSnapshot: jsonb("post_optimization_snapshot"),
+  
+  // Impact calculation
+  revenueImpact: numeric("revenue_impact", { precision: 12, scale: 2 }),
+  conversionLift: numeric("conversion_lift", { precision: 5, scale: 2 }),
+  trafficLift: numeric("traffic_lift", { precision: 5, scale: 2 }),
+  
+  // Learning verdict
+  verdict: text("verdict"), // 'success', 'neutral', 'failure'
+  verdictReason: text("verdict_reason"),
+  patternsLearned: jsonb("patterns_learned"), // What patterns were extracted
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('optimization_changes_user_id_idx').on(table.userId),
+  index('optimization_changes_product_id_idx').on(table.productId),
+  index('optimization_changes_action_type_idx').on(table.actionType),
+  index('optimization_changes_measurement_status_idx').on(table.measurementStatus),
+  index('optimization_changes_verdict_idx').on(table.verdict),
+  index('optimization_changes_created_at_idx').on(table.createdAt),
+]);
+
+export const insertOptimizationChangeSchema = createInsertSchema(optimizationChanges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type OptimizationChange = typeof optimizationChanges.$inferSelect;
+export type InsertOptimizationChange = z.infer<typeof insertOptimizationChangeSchema>;
+
+// Learned Patterns - Extracted from successful optimizations
+// These patterns are used to improve future recommendations
+export const learnedPatterns = pgTable("learned_patterns", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Pattern identification
+  patternType: text("pattern_type").notNull(), // 'keyword', 'title_structure', 'description_format', 'cta', 'trust_signal'
+  patternName: text("pattern_name").notNull(),
+  patternValue: text("pattern_value").notNull(), // The actual pattern (word, phrase, structure)
+  
+  // Context where it works
+  productCategory: text("product_category"), // Which categories it works for
+  priceRange: text("price_range"), // 'low', 'mid', 'high', 'premium'
+  actionType: text("action_type"), // Which action type generated this
+  
+  // Effectiveness metrics
+  timesUsed: integer("times_used").default(1),
+  timesSucceeded: integer("times_succeeded").default(0),
+  successRate: numeric("success_rate", { precision: 5, scale: 2 }),
+  averageRevenueLift: numeric("average_revenue_lift", { precision: 12, scale: 2 }),
+  averageConversionLift: numeric("average_conversion_lift", { precision: 5, scale: 2 }),
+  
+  // Confidence in this pattern
+  confidenceScore: integer("confidence_score").default(50), // 0-100, grows with more data
+  
+  // Source optimization changes
+  sourceOptimizationIds: jsonb("source_optimization_ids"), // Array of optimization_changes IDs
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  lastUsedAt: timestamp("last_used_at"),
+  lastValidatedAt: timestamp("last_validated_at"),
+  
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+}, (table) => [
+  index('learned_patterns_user_id_idx').on(table.userId),
+  index('learned_patterns_pattern_type_idx').on(table.patternType),
+  index('learned_patterns_action_type_idx').on(table.actionType),
+  index('learned_patterns_success_rate_idx').on(table.successRate),
+  index('learned_patterns_confidence_idx').on(table.confidenceScore),
+  index('learned_patterns_is_active_idx').on(table.isActive),
+]);
+
+export const insertLearnedPatternSchema = createInsertSchema(learnedPatterns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type LearnedPattern = typeof learnedPatterns.$inferSelect;
+export type InsertLearnedPattern = z.infer<typeof insertLearnedPatternSchema>;
