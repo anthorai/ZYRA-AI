@@ -299,7 +299,7 @@ export default function Pricing() {
               {plans.map((plan) => (
                 <Card 
                   key={plan.name}
-                  className={`bg-[#16162c] relative ${plan.popular ? 'border-primary ring-2 ring-primary/20' : 'border-border/50'}`}
+                  className={`bg-[#16162c] relative ${plan.popular ? 'border-primary ring-2 ring-primary/20' : 'border-primary/20'}`}
                   data-testid={`pricing-card-${plan.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {plan.popular && (
