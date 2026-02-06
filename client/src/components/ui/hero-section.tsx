@@ -262,7 +262,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                 <p className="text-muted-foreground mt-2 text-sm">Stores Protected</p>
               </div>
               <div className="metric-card">
-                <div className="stat-number">$50M+</div>
+                <div className="stat-number">$5M+</div>
                 <p className="text-muted-foreground mt-2 text-sm">Revenue Recovered</p>
               </div>
               <div className="metric-card">
