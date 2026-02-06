@@ -113,7 +113,7 @@ export default function Landing() {
               <AnimatedWords 
                 text="Most Shopify Stores Don't Fail — They Leak Revenue"
                 highlightWords={["Leak", "Revenue"]}
-                className="glow-text"
+                className=""
               />
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 You're not missing traffic. You're missing conversions, losing carts, and leaving money on the table.
