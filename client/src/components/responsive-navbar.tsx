@@ -196,7 +196,7 @@ export default function ResponsiveNavbar({
 
   return (
     <nav className={cn(
-      "fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border",
+      "fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-primary/20",
       className
     )}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
@@ -263,7 +263,7 @@ export default function ResponsiveNavbar({
           ref={menuRef}
           id="mobile-menu"
           className={cn(
-            "md:hidden fixed left-0 right-0 top-full bg-background/98 dark:bg-background/98 backdrop-blur-lg border-b border shadow-lg transition-all duration-300 ease-in-out",
+            "md:hidden fixed left-0 right-0 top-full bg-background/98 dark:bg-background/98 backdrop-blur-lg border-b border-primary/20 shadow-lg transition-all duration-300 ease-in-out",
             isOpen
               ? "opacity-100 visible translate-y-0"
               : "opacity-0 invisible -translate-y-2"
@@ -278,7 +278,7 @@ export default function ResponsiveNavbar({
               </div>
             ))}
             {actionButton && (
-              <div className="pt-4 mt-2 border-t border">
+              <div className="pt-4 mt-2 border-t border-primary/20">
                 {renderActionButton(true)}
               </div>
             )}

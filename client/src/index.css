@@ -20,8 +20,8 @@
   --accent-foreground: 240 37% 13%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 240 15% 28%;
-  --input: 240 20% 22%;
+  --border: 184 60% 20%;
+  --input: 184 40% 18%;
   --ring: 184 100% 50%;
   --chart-1: 184 100% 50%;
   --chart-2: 171 100% 50%;
@@ -34,7 +34,7 @@
   --sidebar-primary-foreground: 240 37% 13%;
   --sidebar-accent: 240 20% 22%;
   --sidebar-accent-foreground: 171 100% 50%;
-  --sidebar-border: 240 15% 28%;
+  --sidebar-border: 184 60% 20%;
   --sidebar-ring: 184 100% 50%;
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
@@ -62,8 +62,8 @@
   --accent-foreground: 240 37% 13%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 240 15% 28%;
-  --input: 240 20% 22%;
+  --border: 184 60% 20%;
+  --input: 184 40% 18%;
   --ring: 184 100% 50%;
   --chart-1: 184 100% 50%;
   --chart-2: 171 100% 50%;
