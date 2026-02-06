@@ -525,7 +525,7 @@ export default function Landing() {
           <div className="floating-orb orb-pink w-[250px] h-[250px] top-20 -left-20 opacity-20" />
           <div className="container mx-auto max-w-3xl relative z-10">
             <div className="text-center mb-16">
-              <Badge className="mb-6 bg-muted text-foreground border-border">
+              <Badge className="mb-6 bg-muted text-foreground border-primary/30">
                 FAQ
               </Badge>
               <AnimatedSectionTitle>

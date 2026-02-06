@@ -220,7 +220,7 @@ export default function Pricing() {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
               </Button>
-              <Button asChild variant="outline" size="lg" className="px-8" data-testid="button-compare-plans">
+              <Button asChild variant="outline" size="lg" className="px-8 border-primary/50 text-primary" data-testid="button-compare-plans">
                 <a href="#comparison">
                   Compare Plans
                 </a>
@@ -341,7 +341,7 @@ export default function Pricing() {
                     </div>
                     
                     {plan.notIncluded.length > 0 && (
-                      <div className="border-t border-border/30 pt-4 mb-6 space-y-2">
+                      <div className="border-t border-primary/20 pt-4 mb-6 space-y-2">
                         {plan.notIncluded.map((item, idx) => (
                           <div key={idx} className="flex items-start gap-2 text-sm">
                             <X className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -383,7 +383,7 @@ export default function Pricing() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse" data-testid="comparison-table">
                 <thead>
-                  <tr className="border-b border-border/50">
+                  <tr className="border-b border-primary/20">
                     <th className="text-left py-4 px-4 font-medium">Feature</th>
                     <th className="text-center py-4 px-4 font-medium">Free</th>
                     <th className="text-center py-4 px-4 font-medium">Starter</th>
@@ -393,7 +393,7 @@ export default function Pricing() {
                 </thead>
                 <tbody>
                   {comparisonFeatures.map((feature, idx) => (
-                    <tr key={idx} className="border-b border-border/30">
+                    <tr key={idx} className="border-b border-primary/15">
                       <td className="py-4 px-4 text-sm">{feature.name}</td>
                       <td className="text-center py-4 px-4">
                         {typeof feature.free === 'boolean' ? (
@@ -521,7 +521,7 @@ export default function Pricing() {
         {/* SECTION 7: TRUST & SAFETY DISCLAIMER */}
         <section className="py-16 px-4 sm:px-6">
           <div className="container mx-auto max-w-3xl">
-            <Card className="bg-[#16162c] border-border/50">
+            <Card className="bg-[#16162c] border-primary/20">
               <CardContent className="p-8 text-center">
                 <Shield className="w-10 h-10 text-primary mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-4">Important: What ZYRA can and cannot do</h3>
@@ -545,7 +545,7 @@ export default function Pricing() {
               Start with what feels right. Upgrade when you're ready for more.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" variant="outline" className="px-8" data-testid="button-final-starter">
+              <Button asChild size="lg" variant="outline" className="px-8 border-primary/50 text-primary" data-testid="button-final-starter">
                 <Link href="/auth">
                   Start with Starter
                 </Link>
@@ -556,7 +556,7 @@ export default function Pricing() {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="px-8" data-testid="button-final-sales">
+              <Button asChild size="lg" variant="outline" className="px-8 border-primary/50 text-primary" data-testid="button-final-sales">
                 <Link href="/contact">
                   Talk to Sales
                 </Link>
