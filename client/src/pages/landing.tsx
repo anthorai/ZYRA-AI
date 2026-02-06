@@ -120,7 +120,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="glass-card-hover p-6 text-center">
                 <div className="w-14 h-14 mx-auto mb-4 bg-destructive/10 rounded-xl flex items-center justify-center">
                   <Target className="w-7 h-7 text-destructive" />
@@ -180,7 +180,7 @@ export default function Landing() {
             </div>
 
             {/* Revenue Loop Visualization */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
               <div className="glass-card-hover p-6 text-center">
                 <div className="w-14 h-14 mx-auto mb-4 bg-blue-500/20 rounded-xl flex items-center justify-center">
                   <Search className="w-7 h-7 text-blue-400" />
@@ -213,7 +213,7 @@ export default function Landing() {
                 <p className="text-xs text-muted-foreground">Shows real revenue impact</p>
               </div>
 
-              <div className="glass-card-hover p-6 text-center col-span-2 md:col-span-1">
+              <div className="glass-card-hover p-6 text-center sm:col-span-2 md:col-span-1">
                 <div className="w-14 h-14 mx-auto mb-4 bg-pink-500/20 rounded-xl flex items-center justify-center">
                   <RefreshCw className="w-7 h-7 text-pink-400" />
                 </div>
@@ -246,7 +246,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="glass-card-hover flex items-start gap-4 p-6">
                 <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                   <ShoppingCart className="w-6 h-6 text-orange-400" />
@@ -337,7 +337,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
               <div className="glass-card-hover p-8 text-center">
                 <div className="w-16 h-16 mx-auto mb-6 bg-primary/20 rounded-2xl flex items-center justify-center">
                   <CheckCircle2 className="w-8 h-8 text-primary" />
@@ -448,7 +448,7 @@ export default function Landing() {
               </AnimatedSectionTitle>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <div className="glass-card-hover p-8">
                 <div className="w-14 h-14 mb-6 bg-blue-500/20 rounded-2xl flex items-center justify-center">
                   <Users className="w-7 h-7 text-blue-400" />

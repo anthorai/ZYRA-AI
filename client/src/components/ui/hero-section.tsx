@@ -140,7 +140,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="rounded-xl px-6 font-medium border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10"
+                    className="rounded-xl px-6 font-medium border-primary/30 bg-primary/5 backdrop-blur-sm hover:bg-primary/10"
                     data-testid="button-hero-demo"
                   >
                     <a href="#how-it-works">
@@ -224,14 +224,14 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                         <span className="text-xs text-muted-foreground">Last 24h</span>
                       </div>
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                        <div className="flex items-center justify-between text-sm py-2 border-b border-primary/10">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500" />
                             <span className="text-muted-foreground">Cart Recovery Email Sent</span>
                           </div>
                           <span className="text-emerald-400 font-medium">+$247</span>
                         </div>
-                        <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
+                        <div className="flex items-center justify-between text-sm py-2 border-b border-primary/10">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-primary" />
                             <span className="text-muted-foreground">SEO Title Optimized</span>
@@ -256,7 +256,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
         <section className="pb-16 pt-16 md:pb-32 bg-[#0f0f23]" style={{ backgroundColor: '#16162c' }}>
           <div className="relative m-auto max-w-6xl px-6">
             {/* Stats Section */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-16">
               <div className="metric-card">
                 <div className="stat-number">10K+</div>
                 <p className="text-muted-foreground mt-2 text-sm">Stores Protected</p>
@@ -280,11 +280,11 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
             <h3 className="text-center text-sm uppercase tracking-widest text-muted-foreground mb-10 font-medium">
               Trusted by leading Shopify brands
             </h3>
-            <div className="mx-auto grid max-w-4xl grid-cols-3 md:grid-cols-6 gap-8">
+            <div className="mx-auto grid max-w-4xl grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-8">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/15 flex items-center justify-center">
                       <span className="text-primary font-bold text-sm">B{i}</span>
                     </div>
                   </div>
