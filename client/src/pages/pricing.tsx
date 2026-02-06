@@ -354,7 +354,7 @@ export default function Pricing() {
                     <Button 
                       asChild 
                       variant={plan.ctaVariant}
-                      className={`w-full ${plan.popular ? 'gradient-button' : ''}`}
+                      className={`w-full ${plan.popular ? 'gradient-button' : 'border-primary/50 text-primary bg-primary/10'}`}
                       data-testid={`button-${plan.name.toLowerCase().replace(/\s+/g, '-')}-cta`}
                     >
                       <Link href="/auth">
