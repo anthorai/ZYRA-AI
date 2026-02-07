@@ -203,25 +203,25 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
           </Button>
         </div>
 
-        <div className="p-6 relative z-10">
+        <div className="px-4 pt-5 pb-4 relative z-10">
           {/* Logo */}
-          <div className="flex items-center space-x-3 mb-8" data-testid="sidebar-logo">
+          <div className="flex items-center space-x-3 mb-5 px-2" data-testid="sidebar-logo">
             <img 
               src={zyraLogo} 
               alt="Zyra AI Logo" 
-              className="w-10 h-10 rounded-lg"
+              className="w-9 h-9 rounded-lg"
             />
-            <span className="text-xl sm:text-2xl font-bold text-foreground">Zyra AI</span>
+            <span className="text-lg font-bold text-foreground">Zyra AI</span>
           </div>
 
           {/* Navigation */}
-          <nav className="space-y-2 mt-[-17px] mb-[-17px]">
+          <nav className="space-y-1">
             {navItems.map((item) => (
               <Button
                 key={item.id}
                 onClick={() => (item as any).onClick ? (item as any).onClick() : onTabChange(item.id)}
                 variant="ghost"
-                className={`w-full justify-start px-4 py-3 h-auto ${
+                className={`w-full justify-start px-3 py-2.5 h-auto text-sm ${
                   activeTab === item.id
                     ? "bg-primary/20 text-primary hover:bg-primary/20"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -237,7 +237,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
         </div>
 
         {/* Navigation Header Style User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-primary/20 relative z-10">
+        <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-primary/20 relative z-10">
           <div className="flex items-center justify-between space-x-3" data-testid="user-profile">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <Avatar className="h-10 w-10 flex-shrink-0">
