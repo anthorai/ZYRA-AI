@@ -1,0 +1,203 @@
+/* =====================================================================
+   ZYRA AI — REVENUE IMMUNE SYSTEM UI CONTRAST & HIERARCHY FIX
+   MODULE: REVENUE IMMUNE SYSTEM CARD
+   PRIORITY: CRITICAL — EVERYTHING LOOKS SAME = NO HIERARCHY
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to FIX COLOR CONTRAST, VISUAL HIERARCHY, and
+INFORMATION SEPARATION inside the “Revenue Immune System” card.
+
+The problem is NOT layout.
+The problem is EVERYTHING LOOKS THE SAME.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM (WHY THIS UI FAILS)
+---------------------------------------------------------------------
+
+Current issues:
+- Same background tone everywhere
+- Same border color everywhere
+- Same text weight everywhere
+- Same glow everywhere
+- No visual priority
+- No scanning path
+
+Result:
+→ User cannot tell:
+  - What is status
+  - What is important
+  - What is active vs passive
+  - What requires attention
+
+THIS MUST BE FIXED.
+
+---------------------------------------------------------------------
+2. NEW VISUAL HIERARCHY (MANDATORY)
+---------------------------------------------------------------------
+
+You MUST create CLEAR LAYERS:
+
+LAYER 1 — SYSTEM STATUS (MOST IMPORTANT)
+LAYER 2 — PRIMARY METRIC (Revenue Impact)
+LAYER 3 — ACTIVE PROTECTION AREAS
+LAYER 4 — CAPABILITIES (SECONDARY)
+LAYER 5 — CONTROLS / HISTORY (TERTIARY)
+
+Each layer MUST look visually different.
+
+---------------------------------------------------------------------
+3. SYSTEM STATUS BAR — STRONG DIFFERENTIATION
+---------------------------------------------------------------------
+
+ELEMENT:
+Top bar: “Revenue Immune System”
+
+FIXES:
+- Use a DISTINCT background shade (slightly lighter or darker)
+- Increase height slightly
+- Strong border or glow ONLY for this bar
+- Status pill (PAUSED / ACTIVE) must be HIGH-CONTRAST
+
+STATUS COLORS:
+- ACTIVE → Calm green / teal
+- PAUSED → Neutral amber / muted orange
+- OFF → Red (already exists but increase contrast)
+
+This bar must instantly communicate SYSTEM STATE.
+
+---------------------------------------------------------------------
+4. PRIMARY METRIC CARD — MAKE IT DOMINANT
+---------------------------------------------------------------------
+
+ELEMENT:
+“Revenue loss prevented this month”
+
+FIXES:
+- Isolate into a STRONG METRIC CARD
+- Use different background than rest of UI
+- Increase font size of ₹0 significantly
+- Add subtle gradient or glow behind number
+- Supporting text must be lower contrast
+
+RULE:
+This should be the FIRST thing eyes land on.
+
+---------------------------------------------------------------------
+5. SYSTEM CAPABILITIES — DE-EMPHASIZE
+---------------------------------------------------------------------
+
+ELEMENT:
+Capability chips (Monitoring, Detection, Streams, etc.)
+
+FIXES:
+- Reduce border brightness
+- Reduce glow
+- Use flatter background
+- Smaller text
+- Icons slightly muted
+
+RULE:
+Capabilities are informational, NOT focal.
+
+---------------------------------------------------------------------
+6. “WHAT ZYRA IS PROTECTING” — MAKE THIS POP
+---------------------------------------------------------------------
+
+THIS IS CRITICAL — IT MUST STAND OUT.
+
+FIXES:
+- Each protection item must have:
+  - UNIQUE ACCENT COLOR per category
+  - Colored LEFT BORDER or ICON BACKPLATE
+- Increase contrast between cards
+- Increase spacing between cards
+- Use slightly elevated cards
+
+CATEGORY COLOR CODING (EXAMPLE):
+- Product Copy Decay → Blue
+- SEO Ranking Erosion → Green
+- Conversion Mismatch → Purple
+- Message Fatigue → Orange
+- Revenue Leakage → Red
+
+RULE:
+User must instantly understand DIFFERENT RISK TYPES.
+
+---------------------------------------------------------------------
+7. STATUS INDICATORS — CLEAR & SCANNABLE
+---------------------------------------------------------------------
+
+Green checkmarks currently blend in.
+
+FIXES:
+- Place status icon inside colored circle
+- Increase icon size slightly
+- Add label:
+  - “Stable”
+  - “Protected”
+  - “Monitoring”
+
+NO ambiguous icons.
+
+---------------------------------------------------------------------
+8. DEFENSE SENSITIVITY CONTROL — SEPARATE VISUALLY
+---------------------------------------------------------------------
+
+ELEMENT:
+“Defense Sensitivity” + dropdown
+
+FIXES:
+- Place in its OWN visual container
+- Use lighter background
+- Clear label hierarchy
+- Dropdown must look interactive
+
+RULE:
+Controls ≠ Information.
+They must not look the same.
+
+---------------------------------------------------------------------
+9. BORDER & BACKGROUND RULES (VERY IMPORTANT)
+---------------------------------------------------------------------
+
+GLOBAL FIXES:
+- Do NOT use same border color everywhere
+- Do NOT use same background everywhere
+- Do NOT overuse glow
+
+ALLOWED:
+- 2–3 background shades max
+- Accent colors ONLY where meaning exists
+- Glow ONLY for primary or active elements
+
+---------------------------------------------------------------------
+10. TEXT HIERARCHY RULES
+---------------------------------------------------------------------
+
+- Headings: brighter, heavier
+- Metrics: largest, boldest
+- Descriptions: muted
+- Metadata: smallest, lowest contrast
+
+Right now everything is same → FIX THIS.
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This UI is SUCCESSFUL only if:
+- User can scan in 3 seconds
+- Status is instantly clear
+- Metric dominates visually
+- Protection areas feel distinct
+- UI feels enterprise-grade, not decorative
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+INTRODUCE CLEAR COLOR CONTRAST,
+VISUAL HIERARCHY,
+AND SEMANTIC ACCENT COLORS.
+NOT EVERYTHING SHOULD LOOK THE SAME.
+===================================================================== */

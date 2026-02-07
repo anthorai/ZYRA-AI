@@ -356,11 +356,11 @@ export default function RevenueImmuneCard() {
   };
 
   const protectedSurfaces = [
-    { label: "Product Copy Decay", description: "Content freshness monitoring", icon: Search, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-    { label: "SEO Ranking Erosion", description: "Search visibility tracking", icon: TrendingUp, color: "text-green-500", bgColor: "bg-green-500/10" },
-    { label: "Conversion Mismatch", description: "Buyer intent alignment", icon: Activity, color: "text-purple-500", bgColor: "bg-purple-500/10" },
-    { label: "Message Fatigue", description: "Recovery flow optimization", icon: Mail, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    { label: "Revenue Leakage", description: "Silent loss detection", icon: Shield, color: "text-rose-500", bgColor: "bg-rose-500/10" },
+    { label: "Product Copy Decay", description: "Content freshness monitoring", icon: Search, color: "text-blue-400", bgColor: "bg-blue-500/15", borderColor: "border-l-blue-500", accentBg: "bg-blue-500/5" },
+    { label: "SEO Ranking Erosion", description: "Search visibility tracking", icon: TrendingUp, color: "text-emerald-400", bgColor: "bg-emerald-500/15", borderColor: "border-l-emerald-500", accentBg: "bg-emerald-500/5" },
+    { label: "Conversion Mismatch", description: "Buyer intent alignment", icon: Activity, color: "text-purple-400", bgColor: "bg-purple-500/15", borderColor: "border-l-purple-500", accentBg: "bg-purple-500/5" },
+    { label: "Message Fatigue", description: "Recovery flow optimization", icon: Mail, color: "text-orange-400", bgColor: "bg-orange-500/15", borderColor: "border-l-orange-500", accentBg: "bg-orange-500/5" },
+    { label: "Revenue Leakage", description: "Silent loss detection", icon: Shield, color: "text-rose-400", bgColor: "bg-rose-500/15", borderColor: "border-l-rose-500", accentBg: "bg-rose-500/5" },
   ];
 
   if (isLoading) {
@@ -373,172 +373,199 @@ export default function RevenueImmuneCard() {
 
   return (
     <div className="space-y-4 p-4 sm:p-6" data-testid="revenue-immune-container">
-      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
-        <CardContent className="p-6 sm:p-8">
-          {/* Header Section with Multi-Pulse Shield */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className={`relative p-3 rounded-xl ${isActive ? 'bg-green-500/20' : 'bg-muted'}`}>
-                <ShieldCheck className={`w-6 h-6 ${isActive ? 'text-green-500' : 'text-muted-foreground'} relative z-10`} />
-                {isActive && (
-                  <>
-                    <div className="absolute inset-0 rounded-xl bg-green-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                    <div className="absolute inset-0 rounded-xl bg-green-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
-                  </>
-                )}
-              </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-immune-title">
-                  Revenue Immune System
-                </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge 
-                    variant={isActive ? "default" : "secondary"}
-                    className={
-                      !isActive 
-                        ? "" 
-                        : isConnected 
-                          ? "bg-green-500/20 text-green-500 border-green-500/30" 
-                          : isReconnecting 
-                            ? "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
-                            : "bg-slate-500/20 text-slate-400 border-slate-500/30"
-                    }
-                    data-testid="badge-immune-status"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {isActive && isConnected && (
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                      )}
-                      {isActive && isReconnecting && !isConnected && (
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-pulse inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
-                        </span>
-                      )}
-                      {isActive && !isConnected && !isReconnecting && (
-                        <span className="inline-flex gap-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
-                        </span>
-                      )}
+      <Card className="overflow-hidden border-slate-700/60 bg-[#0d0d1a]">
+        <CardContent className="p-0">
+          {/* LAYER 1 — SYSTEM STATUS BAR (MOST IMPORTANT) */}
+          <div className={`px-6 sm:px-8 py-5 border-b ${
+            isActive 
+              ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/20' 
+              : 'bg-gradient-to-r from-amber-500/8 via-amber-500/3 to-transparent border-amber-500/15'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`relative p-3.5 rounded-xl ${isActive ? 'bg-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.15)]' : 'bg-amber-500/15'}`}>
+                  <ShieldCheck className={`w-7 h-7 ${isActive ? 'text-emerald-400' : 'text-amber-400'} relative z-10`} />
+                  {isActive && (
+                    <>
+                      <div className="absolute inset-0 rounded-xl bg-emerald-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                      <div className="absolute inset-0 rounded-xl bg-emerald-500/10 animate-pulse" style={{ animationDuration: '1.5s' }} />
+                    </>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white" data-testid="text-immune-title">
+                      Revenue Immune System
+                    </h2>
+                    <Badge 
+                      className={`text-xs font-bold uppercase tracking-wider px-3 py-1 ${
+                        !isActive 
+                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' 
+                          : isConnected 
+                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' 
+                            : isReconnecting 
+                              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40'
+                              : 'bg-slate-500/20 text-slate-400 border-slate-500/40'
+                      }`}
+                      data-testid="badge-immune-status"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {isActive && isConnected && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                        )}
+                        {isActive && isReconnecting && !isConnected && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-pulse inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                          </span>
+                        )}
+                        {!isActive 
+                          ? "PAUSED" 
+                          : isConnected 
+                            ? "LIVE" 
+                            : isReconnecting 
+                              ? "RECONNECTING" 
+                              : "CONNECTING"}
+                      </span>
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <p className="text-sm text-slate-400">
                       {!isActive 
-                        ? "PAUSED" 
+                        ? 'Protection paused — your store is unguarded' 
                         : isConnected 
-                          ? "LIVE" 
+                          ? 'Revenue defense running in real time' 
                           : isReconnecting 
-                            ? "RECONNECTING" 
-                            : "CONNECTING"}
-                    </span>
-                  </Badge>
-                  <Dialog open={learnMoreOpen} onOpenChange={setLearnMoreOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        data-testid="button-learn-more"
-                      >
-                        <Info className="w-3 h-3 mr-1" />
-                        Learn how protection works
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-lg">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          <ShieldCheck className="w-5 h-5 text-primary" />
-                          How Revenue Protection Works
-                        </DialogTitle>
-                        <DialogDescription className="text-left space-y-4 pt-4">
-                          <p>
-                            The Revenue Immune System is your store's silent guardian. It continuously monitors 
-                            for revenue-threatening patterns and fixes them automatically before they hurt your sales.
-                          </p>
-                          <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                              <Eye className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-foreground">24/7 Vigilance</p>
-                                <p className="text-sm text-muted-foreground">Scans your products, SEO rankings, and recovery flows continuously</p>
+                            ? 'Reconnecting to monitoring system...'
+                            : 'Establishing connection to monitoring system...'}
+                    </p>
+                    <Dialog open={learnMoreOpen} onOpenChange={setLearnMoreOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs text-slate-500"
+                          data-testid="button-learn-more"
+                        >
+                          <Info className="w-3 h-3 mr-1" />
+                          Learn more
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-primary" />
+                            How Revenue Protection Works
+                          </DialogTitle>
+                          <DialogDescription className="text-left space-y-4 pt-4">
+                            <p>
+                              The Revenue Immune System is your store's silent guardian. It continuously monitors 
+                              for revenue-threatening patterns and fixes them automatically before they hurt your sales.
+                            </p>
+                            <div className="space-y-3">
+                              <div className="flex items-start gap-3">
+                                <Eye className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="font-medium text-foreground">24/7 Vigilance</p>
+                                  <p className="text-sm text-muted-foreground">Scans your products, SEO rankings, and recovery flows continuously</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-3">
+                                <Activity className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="font-medium text-foreground">Silent Repairs</p>
+                                  <p className="text-sm text-muted-foreground">Automatically updates titles, descriptions, and meta tags when decay is detected</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-3">
+                                <RefreshCw className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="font-medium text-foreground">Safe & Reversible</p>
+                                  <p className="text-sm text-muted-foreground">All changes are versioned and can be rolled back instantly if needed</p>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex items-start gap-3">
-                              <Activity className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-foreground">Silent Repairs</p>
-                                <p className="text-sm text-muted-foreground">Automatically updates titles, descriptions, and meta tags when decay is detected</p>
-                              </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                              <RefreshCw className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-foreground">Safe & Reversible</p>
-                                <p className="text-sm text-muted-foreground">All changes are versioned and can be rolled back instantly if needed</p>
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground border-t pt-4">
-                            Think of it like an immune system: it works in the background so you don't have to.
-                            You can be inactive for weeks and your store stays protected.
-                          </p>
-                        </DialogDescription>
-                      </DialogHeader>
-                    </DialogContent>
-                  </Dialog>
+                            <p className="text-sm text-muted-foreground border-t pt-4">
+                              Think of it like an immune system: it works in the background so you don't have to.
+                              You can be inactive for weeks and your store stays protected.
+                            </p>
+                          </DialogDescription>
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {!isActive 
-                    ? 'Protection paused' 
-                    : isConnected 
-                      ? 'Revenue defense running in real time' 
-                      : isReconnecting 
-                        ? 'Reconnecting to monitoring system...'
-                        : 'Establishing connection to monitoring system...'}
-                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-white tracking-wide uppercase">Protection</span>
+                <button
+                  onClick={() => toggleMutation.mutate(!isActive)}
+                  disabled={toggleMutation.isPending}
+                  className={`relative flex items-center rounded-full p-1 w-[88px] h-[40px] transition-all duration-300 cursor-pointer border-2 ${
+                    isActive 
+                      ? 'bg-emerald-500/20 border-emerald-500/50' 
+                      : 'bg-red-500/20 border-red-500/40'
+                  } ${toggleMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  data-testid="switch-immune-toggle"
+                >
+                  <span className={`absolute left-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
+                    isActive ? 'opacity-100 text-emerald-400' : 'opacity-0'
+                  }`}>ON</span>
+                  <span className={`absolute right-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
+                    !isActive ? 'opacity-100 text-red-400' : 'opacity-0'
+                  }`}>OFF</span>
+                  <div className={`w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
+                    isActive 
+                      ? 'translate-x-[48px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' 
+                      : 'translate-x-0 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                  }`}>
+                    {isActive 
+                      ? <Zap className="w-4 h-4 text-white" />
+                      : <Pause className="w-4 h-4 text-white" />
+                    }
+                  </div>
+                </button>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-foreground tracking-wide uppercase">Protection</span>
-              <button
-                onClick={() => toggleMutation.mutate(!isActive)}
-                disabled={toggleMutation.isPending}
-                className={`relative flex items-center rounded-full p-1 w-[88px] h-[40px] transition-all duration-300 cursor-pointer border-2 ${
-                  isActive 
-                    ? 'bg-emerald-500/20 border-emerald-500/50' 
-                    : 'bg-red-500/20 border-red-500/40'
-                } ${toggleMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                data-testid="switch-immune-toggle"
+          <div className="p-6 sm:p-8 space-y-6">
+
+          {/* LAYER 2 — PRIMARY METRIC (Revenue Impact) */}
+          <div className={`rounded-xl p-6 sm:p-8 text-center ${
+            isActive 
+              ? 'bg-gradient-to-br from-emerald-500/8 via-[#111125] to-[#111125] border border-emerald-500/15' 
+              : 'bg-[#111125] border border-slate-700/40'
+          }`}>
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-3">Revenue loss prevented this month</p>
+            <div className="flex items-baseline justify-center gap-1">
+              <span 
+                className={`text-5xl sm:text-6xl font-black tracking-tight ${isActive ? 'text-emerald-400' : 'text-white'}`}
+                style={isActive && preventedRevenue > 0 ? { textShadow: '0 0 30px rgba(16,185,129,0.3)' } : undefined}
+                data-testid="text-prevented-revenue"
               >
-                <span className={`absolute left-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
-                  isActive ? 'opacity-100 text-emerald-400' : 'opacity-0'
-                }`}>ON</span>
-                <span className={`absolute right-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
-                  !isActive ? 'opacity-100 text-red-400' : 'opacity-0'
-                }`}>OFF</span>
-                <div className={`w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
-                  isActive 
-                    ? 'translate-x-[48px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' 
-                    : 'translate-x-0 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-                }`}>
-                  {isActive 
-                    ? <Zap className="w-4 h-4 text-white" />
-                    : <Pause className="w-4 h-4 text-white" />
-                  }
-                </div>
-              </button>
+                {formatCurrency(preventedRevenue)}
+              </span>
             </div>
+            {preventedRevenue === 0 && (
+              <div className="mt-4">
+                <p className="text-sm text-slate-300 font-medium">No revenue decay detected yet</p>
+                <p className="text-xs text-slate-500 mt-1">Prevention happens before loss -- this is a good sign</p>
+              </div>
+            )}
           </div>
 
           {/* Scan Explanation Bar */}
           {isActive && (
-            <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 mb-6" data-testid="scan-explanation-bar">
+            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-4" data-testid="scan-explanation-bar">
               <div className="flex items-start gap-3">
-                <Radio className="w-5 h-5 text-primary flex-shrink-0 mt-0.5 animate-pulse" />
-                <p className="text-sm text-muted-foreground">
+                <Radio className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5 animate-pulse" />
+                <p className="text-sm text-slate-400">
                   ZYRA is continuously scanning your Shopify store for revenue decay, intent mismatch, 
-                  SEO erosion, and recovery flow fatigue — automatically and silently.
+                  SEO erosion, and recovery flow fatigue -- automatically and silently.
                 </p>
               </div>
             </div>
@@ -547,7 +574,7 @@ export default function RevenueImmuneCard() {
           {/* Live Activity Log - Terminal Style */}
           {isActive && (
             <div 
-              className="rounded-[14px] mb-6 overflow-hidden border border-slate-600/50" 
+              className="rounded-[14px] overflow-hidden border border-slate-600/50" 
               style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}
               data-testid="live-activity-log"
             >
@@ -751,7 +778,7 @@ export default function RevenueImmuneCard() {
           {/* Active Revenue Defense Engines - Terminal Style */}
           {isActive && (
             <div 
-              className="rounded-[14px] mb-6 overflow-hidden border border-slate-600/50"
+              className="rounded-[14px] overflow-hidden border border-slate-600/50"
               data-testid="scanning-engines-block"
             >
               {/* Terminal Header */}
@@ -918,151 +945,147 @@ export default function RevenueImmuneCard() {
             </div>
           )}
 
-          {/* Monthly Protection Value Block */}
-          <div className="bg-card/50 rounded-xl p-6 border border-border/50 mb-6">
-            <p className="text-sm text-muted-foreground mb-2">Revenue loss prevented this month</p>
-            <div className="flex items-baseline gap-2">
-              <span 
-                className="text-4xl sm:text-5xl font-bold text-foreground"
-                data-testid="text-prevented-revenue"
-              >
-                {formatCurrency(preventedRevenue)}
-              </span>
+          {/* LAYER 3 — WHAT ZYRA IS PROTECTING (DISTINCT ACCENT COLORS) */}
+          <div data-testid="protected-surfaces-block">
+            <p className="text-sm font-semibold text-white uppercase tracking-wider mb-4">What ZYRA is Protecting</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {protectedSurfaces.map((surface, idx) => (
+                <div 
+                  key={idx}
+                  className={`flex items-center gap-3 p-4 rounded-lg ${surface.accentBg} border border-slate-700/40 hover-elevate transition-all`}
+                  data-testid={`badge-protected-${idx}`}
+                >
+                  <div className={`p-2.5 rounded-lg ${surface.bgColor}`}>
+                    <surface.icon className={`w-4.5 h-4.5 ${surface.color}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white truncate">{surface.label}</p>
+                    <p className="text-xs text-slate-400 truncate">{surface.description}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className={`p-1 rounded-full ${isActive ? 'bg-emerald-500/20' : 'bg-slate-600/30'}`}>
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />
+                    </div>
+                    <span className={`text-[10px] font-medium ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      {isActive ? 'Protected' : 'Idle'}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            {preventedRevenue === 0 && (
-              <div className="mt-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground/80">No revenue decay detected yet</p>
-                <p className="text-xs mt-0.5">Prevention happens before loss — this is a good sign</p>
-              </div>
-            )}
           </div>
 
-          {/* System Capabilities Badges */}
-          <div className="mb-6" data-testid="system-capabilities-block">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-medium">System Capabilities</p>
+          {/* LAYER 4 — SYSTEM CAPABILITIES (DE-EMPHASIZED) */}
+          <div data-testid="system-capabilities-block">
+            <p className="text-xs text-slate-500 uppercase tracking-wider mb-3 font-medium">System Capabilities</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {SYSTEM_CAPABILITIES.map((capability, idx) => (
                 <div 
                   key={idx}
-                  className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/30 hover-elevate"
+                  className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-800/30 border border-slate-700/20"
                   data-testid={`badge-capability-${idx}`}
                 >
-                  <div className={`p-1.5 rounded-md bg-background/50 ${capability.color}`}>
-                    <capability.icon className="w-3.5 h-3.5" />
+                  <div className="p-1.5 rounded-md bg-slate-700/30">
+                    <capability.icon className={`w-3 h-3 text-slate-400`} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground truncate">{capability.title}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{capability.description}</p>
+                    <p className="text-[11px] font-medium text-slate-300 truncate">{capability.title}</p>
+                    <p className="text-[9px] text-slate-500 truncate">{capability.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Protected Surfaces Block - Badge Style */}
-          <div className="mb-6" data-testid="protected-surfaces-block">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-medium">What ZYRA is Protecting</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {protectedSurfaces.map((surface, idx) => (
-                <div 
-                  key={idx}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-card/50 border border-border/50 hover-elevate"
-                  data-testid={`badge-protected-${idx}`}
-                >
-                  <div className={`p-2 rounded-lg ${surface.bgColor}`}>
-                    <surface.icon className={`w-4 h-4 ${surface.color}`} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{surface.label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{surface.description}</p>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+          {/* LAYER 5 — CONTROLS (VISUALLY SEPARATE) */}
+          <div className="rounded-xl bg-[#111125] border border-slate-700/40 p-5 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+                  <p className="text-sm font-semibold text-white">Defense Sensitivity</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Sensitivity Control */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-muted/30 rounded-lg mb-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">Defense Sensitivity</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {sensitivityDescriptions[sensitivity]}
-              </p>
-            </div>
-            <Select
-              value={sensitivity}
-              onValueChange={(value) => sensitivityMutation.mutate(value)}
-              disabled={sensitivityMutation.isPending || !isActive}
-            >
-              <SelectTrigger 
-                className="w-[160px]" 
-                data-testid="select-sensitivity"
-              >
-                <SelectValue placeholder="Select sensitivity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="safe" data-testid="option-conservative">
-                  Conservative
-                </SelectItem>
-                <SelectItem value="balanced" data-testid="option-balanced">
-                  Balanced
-                </SelectItem>
-                <SelectItem value="aggressive" data-testid="option-aggressive">
-                  Aggressive
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* View Protection History Expander */}
-          <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="default" 
-                className="w-full justify-between bg-primary/15 text-primary border border-primary/30"
-                data-testid="button-view-history"
-              >
-                <span className="flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  View protection history
-                </span>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <History className="w-5 h-5 text-primary" />
-                  Recent Protection Summary
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <p className="text-sm font-medium text-foreground">Last 7 days:</p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Intent decay scans</span>
-                    <span className="font-medium text-foreground">{weeklyStats?.scansPerformed ?? 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">SEO drift checks</span>
-                    <span className="font-medium text-foreground">{Math.floor((weeklyStats?.scansPerformed ?? 0) / 3)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Copy repairs executed</span>
-                    <span className="font-medium text-foreground">{weeklyStats?.fixesExecuted ?? 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Rollbacks needed</span>
-                    <span className="font-medium text-foreground">{weeklyStats?.rollbacksNeeded ?? 0}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground border-t pt-3">
-                  All changes are logged and reversible. ZYRA learns from each action to improve future decisions.
+                <p className="text-xs text-slate-500 ml-6">
+                  {sensitivityDescriptions[sensitivity]}
                 </p>
               </div>
-            </DialogContent>
-          </Dialog>
+              <Select
+                value={sensitivity}
+                onValueChange={(value) => sensitivityMutation.mutate(value)}
+                disabled={sensitivityMutation.isPending || !isActive}
+              >
+                <SelectTrigger 
+                  className="w-[180px] bg-slate-800/60 border-slate-600/50" 
+                  data-testid="select-sensitivity"
+                >
+                  <SelectValue placeholder="Select sensitivity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="safe" data-testid="option-conservative">
+                    Conservative
+                  </SelectItem>
+                  <SelectItem value="balanced" data-testid="option-balanced">
+                    Balanced
+                  </SelectItem>
+                  <SelectItem value="aggressive" data-testid="option-aggressive">
+                    Aggressive
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="border-t border-slate-700/30 pt-4">
+              <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between border-slate-600/50 bg-slate-800/40 text-slate-300"
+                    data-testid="button-view-history"
+                  >
+                    <span className="flex items-center gap-2">
+                      <History className="w-4 h-4" />
+                      View protection history
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <History className="w-5 h-5 text-primary" />
+                      Recent Protection Summary
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <p className="text-sm font-medium text-foreground">Last 7 days:</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Intent decay scans</span>
+                        <span className="font-medium text-foreground">{weeklyStats?.scansPerformed ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">SEO drift checks</span>
+                        <span className="font-medium text-foreground">{Math.floor((weeklyStats?.scansPerformed ?? 0) / 3)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Copy repairs executed</span>
+                        <span className="font-medium text-foreground">{weeklyStats?.fixesExecuted ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Rollbacks needed</span>
+                        <span className="font-medium text-foreground">{weeklyStats?.rollbacksNeeded ?? 0}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground border-t pt-3">
+                      All changes are logged and reversible. ZYRA learns from each action to improve future decisions.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          </div>
         </CardContent>
       </Card>
 
