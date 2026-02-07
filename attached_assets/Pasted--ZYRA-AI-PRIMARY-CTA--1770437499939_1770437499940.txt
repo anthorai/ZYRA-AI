@@ -1,0 +1,95 @@
+/* =====================================================================
+   ZYRA AI — PRIMARY CTA + TRUST BADGES VISIBILITY FIX
+   ELEMENTS: "INSTALL ZYRA FOR SHOPIFY" CTA + TRUST BADGES
+   PRIORITY: HIGH — CONVERSION & CLARITY ABOVE THE FOLD
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to make the PRIMARY CTA BUTTON and the
+TRUST BADGES immediately VISIBLE, SCANNABLE, and
+HIGH-CONFIDENCE on the landing page.
+
+DO NOT change wording.
+DO NOT change layout structure.
+ONLY improve VISIBILITY, CONTRAST, and HIERARCHY.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+Current issues:
+- CTA button blends into background
+- Trust badges look like passive text
+- No strong visual hierarchy
+- User does not instantly see “what to click” or “why trust”
+
+THIS REDUCES CONVERSION.
+
+---------------------------------------------------------------------
+2. PRIMARY CTA — "INSTALL ZYRA FOR SHOPIFY"
+---------------------------------------------------------------------
+
+MAKE THIS BUTTON DOMINANT.
+
+REQUIRED CHANGES:
+
+BUTTON BACKGROUND:
+- Use SOLID high-contrast brand color
+- No transparent or outline-only style
+- Clearly separated from background
+
+BUTTON SIZE:
+- Increase height by ~15–20%
+- Increase horizontal padding
+- Button must feel authoritative
+
+BUTTON TEXT:
+- Increase font size slightly
+- Use semi-bold weight
+- Ensure strong text contrast
+
+BUTTON ICON (→):
+- Increase icon size slightly
+- Add spacing between text and icon
+
+INTERACTION:
+- Hover: subtle glow or lift
+- Active: slight press-down
+- Cursor: pointer
+
+THIS BUTTON MUST BE THE FIRST THING THE EYE SEES.
+
+---------------------------------------------------------------------
+3. TRUST BADGES — CONVERT TO VISUAL BADGES
+---------------------------------------------------------------------
+
+TRANSFORM EACH ITEM INTO A BADGE:
+
+- "No credit card required"
+- "Safe, reversible automation"
+- "Built for long-term growth"
+
+BADGE DESIGN RULES:
+
+BADGE CONTAINER:
+- Soft rectangular or pill shape
+- Slightly lighter background than page
+- Clear border or subtle glow
+
+ICON:
+- Larger and clearer
+- High contrast
+- Consistent icon style
+
+TEXT:
+- Increase font weight slightly
+- Improve contrast
+- Keep text short and readable
+
+SPACING:
+- Even spacing between badges
+- Align badges horizontally on desktop
+- Stack vertically on mobile
+
+----------

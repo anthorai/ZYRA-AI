@@ -573,27 +573,29 @@ export default function Landing() {
                 Let ZYRA handle the work. You stay in control.
               </p>
               <div className="relative group inline-block">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-xl opacity-60 group-hover:opacity-100 transition duration-300" />
-                <Button asChild size="lg" className="relative rounded-xl font-bold px-12 py-7 text-lg bg-primary text-primary-foreground shadow-2xl shadow-primary/30 hover:bg-primary/90" data-testid="button-final-cta">
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-primary rounded-2xl blur-xl opacity-70 group-hover:opacity-100 transition duration-300" />
+                <Button asChild size="lg" className="relative gradient-button rounded-2xl font-bold px-14 py-8 text-lg tracking-wide" data-testid="button-final-cta">
                   <Link href="/auth">
                     INSTALL ZYRA FOR SHOPIFY
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-6 h-6 ml-3" />
                   </Link>
                 </Button>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>No credit card required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>Safe, reversible automation</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>Built for long-term growth</span>
-                </div>
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-12">
+                {[
+                  { text: "No credit card required" },
+                  { text: "Safe, reversible automation" },
+                  { text: "Built for long-term growth" },
+                ].map((item) => (
+                  <div
+                    key={item.text}
+                    className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/15 text-sm font-medium text-foreground/80"
+                    style={{ background: 'rgba(0, 240, 255, 0.04)', boxShadow: '0 0 12px rgba(0, 240, 255, 0.04)' }}
+                  >
+                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span>{item.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
