@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "wouter";
-import { ArrowRight, ChevronRight, Menu, X, Check, Shield, Zap } from "lucide-react";
+import { ArrowRight, ChevronRight, Menu, X, Check, Shield, Zap, Shirt, Sparkles, Monitor, Home, HeartPulse, FileBox } from "lucide-react";
 import { SiShopify } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { AnimatedGroup } from "@/components/ui/animated-group";
@@ -278,16 +278,25 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
             <div className="section-divider mb-12" />
 
             <h3 className="text-center text-sm uppercase tracking-widest text-muted-foreground mb-10 font-medium">
-              Trusted by leading Shopify brands
+              Used by Shopify stores across categories
             </h3>
-            <div className="mx-auto grid max-w-4xl grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-8">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/15 flex items-center justify-center">
-                      <span className="text-primary font-bold text-sm">B{i}</span>
-                    </div>
+            <div className="mx-auto grid max-w-4xl grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+              {[
+                { icon: Shirt, label: "Apparel" },
+                { icon: Sparkles, label: "Beauty" },
+                { icon: Monitor, label: "Electronics" },
+                { icon: Home, label: "Home & Living" },
+                { icon: HeartPulse, label: "Health" },
+                { icon: FileBox, label: "Digital" },
+              ].map((cat) => (
+                <div key={cat.label} className="flex flex-col items-center gap-2.5 opacity-70 hover:opacity-100 transition-opacity">
+                  <div
+                    className="w-11 h-11 rounded-lg border border-primary/15 flex items-center justify-center"
+                    style={{ background: 'rgba(0, 240, 255, 0.04)' }}
+                  >
+                    <cat.icon className="w-5 h-5 text-primary" />
                   </div>
+                  <span className="text-xs text-muted-foreground font-medium tracking-wide">{cat.label}</span>
                 </div>
               ))}
             </div>
