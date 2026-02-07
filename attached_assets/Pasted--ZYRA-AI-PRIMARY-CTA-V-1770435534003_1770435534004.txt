@@ -1,0 +1,121 @@
+/* =====================================================================
+   ZYRA AI — PRIMARY CTA VISIBILITY FIX
+   ELEMENT: "Access Zyra Dashboard" BUTTON
+   PRIORITY: CRITICAL — PRIMARY ACTION MUST DOMINATE
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to make the PRIMARY CTA BUTTON
+("Access Zyra Dashboard") immediately visible, dominant,
+and unmistakable as the main action on the Auth page.
+
+DO NOT change layout.
+DO NOT add new content.
+ONLY enhance visibility and hierarchy.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+The current button:
+- Blends into the background
+- Lacks contrast and visual weight
+- Does not look clickable at first glance
+- Fails to signal “primary action”
+
+THIS IS UNACCEPTABLE FOR A LOGIN CTA.
+
+---------------------------------------------------------------------
+2. BUTTON VISIBILITY REQUIREMENTS (MANDATORY)
+---------------------------------------------------------------------
+
+The "Access Zyra Dashboard" button MUST:
+
+- Be the MOST visually dominant element in the card
+- Stand out clearly from background and inputs
+- Look clickable even without hover
+- Attract attention within 0.5 seconds
+
+---------------------------------------------------------------------
+3. REQUIRED VISUAL CHANGES
+---------------------------------------------------------------------
+
+APPLY ALL OF THE FOLLOWING:
+
+BUTTON BACKGROUND:
+- Use a solid, high-contrast brand color
+- NOT transparent
+- NOT outline-only
+
+BUTTON SIZE:
+- Increase height by 15–20%
+- Increase horizontal padding for authority
+
+BUTTON TEXT:
+- Increase font size slightly
+- Increase font weight (semi-bold)
+- Ensure strong contrast against button background
+
+BUTTON BORDER / SHAPE:
+- Rounded corners (subtle, professional)
+- Optional thin border for definition
+
+---------------------------------------------------------------------
+4. INTERACTION STATES (VERY IMPORTANT)
+---------------------------------------------------------------------
+
+HOVER STATE:
+- Slight glow or elevation
+- Background brightens subtly
+- Cursor must clearly indicate click
+
+ACTIVE / PRESSED STATE:
+- Small scale-down or depth change
+- Visual confirmation of interaction
+
+DISABLED STATE (IF APPLICABLE):
+- Clearly muted
+- Never confused with active state
+
+---------------------------------------------------------------------
+5. COLOR & STYLE RULES
+---------------------------------------------------------------------
+
+- Use Zyra’s primary accent color
+- Avoid neon or flashy gradients
+- Keep enterprise-grade restraint
+- Button must feel SYSTEM-LEVEL, not playful
+
+---------------------------------------------------------------------
+6. ACCESSIBILITY & CONTRAST
+---------------------------------------------------------------------
+
+- Button contrast must meet accessibility standards
+- Text readable in low-light conditions
+- Focus state must be clearly visible (keyboard users)
+
+---------------------------------------------------------------------
+7. PLACEMENT CONFIRMATION
+---------------------------------------------------------------------
+
+- Button must sit directly below form inputs
+- Clear spacing above and below
+- No competing elements nearby
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This fix is SUCCESSFUL only if:
+- User instantly sees where to click
+- Button visually outweighs secondary links
+- CTA feels confident and secure
+- Page conversion clarity improves immediately
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+MAKE THE "ACCESS ZYRA DASHBOARD" BUTTON
+CLEAR, SOLID, AND DOMINANT.
+NO TRANSPARENT OR LOW-CONTRAST STYLES ALLOWED.
+===================================================================== */

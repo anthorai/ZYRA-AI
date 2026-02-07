@@ -504,7 +504,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full gradient-button border border-primary/50 text-sm min-h-11"
+                    className="w-full gradient-button min-h-12 mt-2"
                     disabled={isLoggingIn}
                     data-testid="button-login"
                   >
@@ -599,7 +599,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full gradient-button border border-primary/50 text-sm min-h-11"
+                    className="w-full gradient-button min-h-12 mt-2"
                     disabled={isRegistering}
                     data-testid="button-register"
                   >

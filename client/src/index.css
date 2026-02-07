@@ -213,23 +213,39 @@
   }
 
   .gradient-button {
-    background: #00F0FF;
-    color: #0D0D1F;
-    border: none;
-    border-radius: 16px;
-    transition: all 0.3s ease;
-    font-weight: 600;
+    background: #00F0FF !important;
+    color: #0A0A1A !important;
+    border: 1px solid rgba(0, 240, 255, 0.6) !important;
+    border-radius: 12px;
+    transition: all 0.25s ease;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .gradient-button:hover {
-    background: #00FFE5;
-    transform: translateY(-2px);
-    scale: 1.02;
+    background: #1AFFFE !important;
+    transform: translateY(-1px);
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), 0 6px 20px rgba(0, 0, 0, 0.35);
   }
 
-  .gradient-button:focus {
-    outline: 2px solid var(--ring);
+  .gradient-button:active {
+    transform: translateY(0px) scale(0.99);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .gradient-button:focus-visible {
+    outline: 2px solid #00F0FF;
     outline-offset: 2px;
+  }
+
+  .gradient-button:disabled {
+    background: rgba(0, 240, 255, 0.25) !important;
+    color: rgba(10, 10, 26, 0.5) !important;
+    box-shadow: none;
+    transform: none;
+    cursor: not-allowed;
   }
 
   .sidebar-gradient {
