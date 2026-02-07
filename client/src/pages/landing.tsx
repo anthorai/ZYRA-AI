@@ -492,7 +492,7 @@ export default function Landing() {
                 Plans control what ZYRA is allowed to do. Higher plans unlock growth actions and revenue protection.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-                <Button asChild size="lg" variant="outline" className="rounded-xl font-semibold px-10 py-6 text-base border-primary/40 tracking-wide" data-testid="button-view-pricing">
+                <Button asChild size="lg" className="gradient-button rounded-xl font-semibold px-10 py-6 text-base tracking-wide" data-testid="button-view-pricing">
                   <Link href="/pricing">
                     VIEW PRICING
                     <ArrowRight className="w-5 h-5 ml-3" />
