@@ -1,0 +1,127 @@
+/* =====================================================================
+   ZYRA AI — HEADER AUTH BUTTONS VISIBILITY & PROFESSIONAL FIX
+   ELEMENT: LANDING PAGE HEADER (LOGIN / SIGN UP)
+   PRIORITY: HIGH — FIRST IMPRESSION & NAVIGATION CLARITY
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to FIX and STANDARDIZE the Login / Sign Up buttons
+in the LANDING PAGE HEADER so they:
+- Are clearly visible on dark backgrounds
+- Look professional and intentional
+- Match the Auth page toggle behavior
+- Signal PRIMARY vs SECONDARY actions correctly
+
+NO layout restructuring.
+ONLY visual clarity, hierarchy, and consistency upgrades.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+The current header buttons:
+- Blend into the dark header background
+- Lack contrast and visual priority
+- Do not clearly differentiate Login vs Sign Up
+- Feel inconsistent with the Auth page styling
+
+THIS WEAKENS TRUST AT FIRST TOUCH.
+
+---------------------------------------------------------------------
+2. HEADER BUTTON STRATEGY (MANDATORY)
+---------------------------------------------------------------------
+
+DEFINE CLEAR ROLES:
+
+- LOGIN = Secondary action
+- SIGN UP / START FREE = Primary action
+
+This hierarchy MUST be visually obvious.
+
+---------------------------------------------------------------------
+3. SIGN UP / START FREE BUTTON (PRIMARY)
+---------------------------------------------------------------------
+
+PRIMARY BUTTON MUST:
+- Use solid, high-contrast background
+- Use Zyra primary accent color
+- Have strong text contrast
+- Be slightly larger than Login
+- Have rounded, professional corners
+
+STATES:
+- Default: solid + confident
+- Hover: subtle glow or elevation
+- Active: slight press-down effect
+
+This button should be visible instantly.
+
+---------------------------------------------------------------------
+4. LOGIN BUTTON (SECONDARY)
+---------------------------------------------------------------------
+
+SECONDARY BUTTON MUST:
+- Use outline or muted background
+- Have clear border visibility
+- High-contrast text (but less dominant than primary)
+- Never look disabled or invisible
+
+STATES:
+- Hover: background fill or subtle highlight
+- Focus: visible focus ring
+
+---------------------------------------------------------------------
+5. GROUPING & SPACING
+---------------------------------------------------------------------
+
+- Place Login and Sign Up in a single button group
+- Maintain consistent spacing between them
+- Align vertically centered with header nav items
+- Do NOT push them to the edge without breathing room
+
+---------------------------------------------------------------------
+6. CONSISTENCY WITH AUTH PAGE
+---------------------------------------------------------------------
+
+- Button shapes, border radius, and font styles
+  MUST match Auth page toggle buttons
+- Color logic (active vs inactive) must feel unified
+- Users should feel continuity between header and login page
+
+---------------------------------------------------------------------
+7. RESPONSIVE RULES
+---------------------------------------------------------------------
+
+- Desktop: buttons always visible, no collapse
+- Tablet: maintain hierarchy and spacing
+- Mobile:
+  - Primary button remains visible
+  - Secondary button may collapse into menu if needed
+
+---------------------------------------------------------------------
+8. ACCESSIBILITY & CONTRAST
+---------------------------------------------------------------------
+
+- Button contrast must meet accessibility standards
+- Text readable in low-light conditions
+- Focus states visible for keyboard navigation
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This fix is SUCCESSFUL only if:
+- Header buttons are visible at first glance
+- Sign Up clearly stands out as the primary action
+- Login is easy to find but not dominant
+- Header feels enterprise-grade and intentional
+- Auth experience feels cohesive end-to-end
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+FIX HEADER LOGIN / SIGN UP BUTTONS TO BE
+HIGH-CONTRAST, PROFESSIONAL, AND CONSISTENT
+WITH AUTH PAGE CONTROLS.
+NO LOW-VISIBILITY STYLES ALLOWED.
+===================================================================== */

@@ -412,12 +412,16 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 md:w-fit">
                 <Button
                   asChild
                   variant="outline"
                   size="sm"
-                  className={cn("font-medium", isScrolled && "lg:hidden")}
+                  className={cn(
+                    "font-semibold tracking-wide",
+                    "border-primary/30 text-foreground/80",
+                    isScrolled && "lg:hidden"
+                  )}
                   data-testid="button-header-login"
                 >
                   <Link href="/auth">
@@ -427,7 +431,10 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                 <Button
                   asChild
                   size="sm"
-                  className={cn("font-medium", isScrolled && "lg:hidden")}
+                  className={cn(
+                    "gradient-button font-semibold tracking-wide",
+                    isScrolled && "lg:hidden"
+                  )}
                   data-testid="button-header-signup"
                 >
                   <Link href="/auth">
@@ -437,7 +444,10 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                 <Button
                   asChild
                   size="sm"
-                  className={cn("font-medium", isScrolled ? "lg:inline-flex" : "hidden")}
+                  className={cn(
+                    "gradient-button font-semibold tracking-wide",
+                    isScrolled ? "lg:inline-flex" : "hidden"
+                  )}
                   data-testid="button-header-start"
                 >
                   <Link href="/auth">
