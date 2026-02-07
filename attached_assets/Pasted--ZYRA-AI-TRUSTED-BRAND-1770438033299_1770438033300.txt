@@ -1,0 +1,142 @@
+/* =====================================================================
+   ZYRA AI — TRUSTED BRANDS SECTION FIX (LOGOS REPLACEMENT)
+   MODULE: LANDING PAGE / SOCIAL PROOF
+   PRIORITY: CRITICAL — PLACEHOLDER CONTENT MUST NEVER SHIP
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to FIX the “Trusted by leading Shopify brands” section
+by REMOVING placeholder labels (B1, B2, B3, B4, B5, B6) and
+REPLACING them with REAL, PROFESSIONAL SOCIAL PROOF ELEMENTS.
+
+THIS SECTION DIRECTLY AFFECTS TRUST.
+PLACEHOLDERS ARE UNACCEPTABLE.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+Current issues:
+- Showing generic placeholders (B1–B6)
+- Looks unfinished and unprofessional
+- Breaks trust instantly
+- Makes Zyra feel early-stage or fake
+
+THIS MUST BE FIXED IMMEDIATELY.
+
+---------------------------------------------------------------------
+2. REQUIRED FIX (NON-NEGOTIABLE)
+---------------------------------------------------------------------
+
+REMOVE:
+- All B1, B2, B3, B4, B5, B6 placeholders
+- Any generic or fake brand markers
+
+REPLACE WITH ONE OF THE APPROVED OPTIONS BELOW.
+
+---------------------------------------------------------------------
+3. OPTION A — REAL SHOPIFY ECOSYSTEM LOGOS (RECOMMENDED)
+---------------------------------------------------------------------
+
+Display REAL, NON-MISLEADING logos such as:
+
+- Shopify
+- Shopify Plus
+- Klaviyo
+- Stripe
+- Google Analytics
+- Meta (Facebook Ads)
+
+RULES:
+- Logos must be monochrome (white / light gray)
+- Equal visual weight
+- No bright brand colors
+- Consistent height
+- Slight opacity (70–85%) for elegance
+
+CAPTION:
+"Built for the Shopify ecosystem"
+
+This is SAFE and TRUSTWORTHY.
+
+---------------------------------------------------------------------
+4. OPTION B — “USED BY STORES ACROSS” (IF NO CLIENT LOGOS YET)
+---------------------------------------------------------------------
+
+If real client logos are not available, USE THIS INSTEAD:
+
+SECTION TITLE:
+"Used by Shopify stores across categories"
+
+REPLACE B1–B6 WITH:
+- Apparel
+- Beauty
+- Electronics
+- Home & Living
+- Health & Wellness
+- Digital Products
+
+Each shown as:
+- Icon + category name
+- Clean, minimal style
+
+THIS IS HONEST AND PROFESSIONAL.
+
+---------------------------------------------------------------------
+5. OPTION C — METRICS-BASED SOCIAL PROOF (STRONG FALLBACK)
+---------------------------------------------------------------------
+
+Replace placeholders with METRIC CARDS:
+
+Examples:
+- “Optimizations applied safely”
+- “Stores analyzed”
+- “Revenue leaks detected”
+- “Actions locked after fix”
+
+RULES:
+- No fake numbers
+- Use ranges or qualitative metrics if needed
+- Clean card-style layout
+
+---------------------------------------------------------------------
+6. VISUAL DESIGN RULES
+---------------------------------------------------------------------
+
+- NO circles with letters
+- NO placeholders of any kind
+- Use logos or icons only
+- Maintain horizontal alignment
+- Adequate spacing between items
+- Blend naturally with dark background
+
+---------------------------------------------------------------------
+7. RESPONSIVE BEHAVIOR
+---------------------------------------------------------------------
+
+DESKTOP:
+- Logos/icons in a single row
+- Even spacing
+
+MOBILE:
+- Logos wrap or scroll horizontally
+- No overcrowding
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This fix is SUCCESSFUL only if:
+- No placeholder text exists
+- Section looks finished and trustworthy
+- User immediately feels legitimacy
+- Zyra appears ecosystem-ready and professional
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+REMOVE ALL PLACEHOLDERS (B1–B6).
+REPLACE WITH REAL LOGOS, REAL CATEGORIES,
+OR HONEST METRICS — NEVER FAKE BRANDS.
+SOCIAL PROOF MUST BE REAL OR NEUTRAL.
+===================================================================== */
