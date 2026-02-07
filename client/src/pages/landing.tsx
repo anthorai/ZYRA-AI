@@ -24,6 +24,17 @@ export default function Landing() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shop = params.get('shop');
+    const hmac = params.get('hmac');
+    const timestamp = params.get('timestamp');
+
+    if (shop && hmac && timestamp) {
+      const installParams = window.location.search;
+      setLocation(`/shopify/install${installParams}`);
+      return;
+    }
+
     if (!loading && isAuthenticated) {
       setLocation("/dashboard");
     }

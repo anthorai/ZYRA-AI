@@ -99,12 +99,17 @@ export default function ShopifyOnboarding() {
       const response = await fetch(`/api/shopify/install?${currentParams.toString()}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Accept': 'application/json'
+        },
+        redirect: 'manual'
       });
 
+      if (response.type === 'opaqueredirect' || response.status === 0) {
+        throw new Error('Server redirected instead of returning JSON. Please try installing from the Shopify App Store.');
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Failed to initiate Shopify OAuth' }));
         throw new Error(errorData.error || 'Failed to initiate Shopify OAuth');
       }
 

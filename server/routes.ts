@@ -11667,13 +11667,22 @@ Output format: Markdown with clear section headings.`;
       
       const authUrl = `https://${shopDomain}/admin/oauth/authorize?client_id=${apiKey}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
       
-      console.log('🚀 [SHOPIFY INSTALL] Redirecting to Shopify OAuth consent page');
+      console.log('🚀 [SHOPIFY INSTALL] Generated Shopify OAuth URL');
       console.log('  Auth URL:', authUrl.substring(0, 100) + '...');
       
-      // CRITICAL: Redirect browser to Shopify OAuth - NOT return JSON!
-      // When users install from Shopify App Store, their browser comes here directly
-      // and expects a redirect to the OAuth consent page
-      return res.redirect(authUrl);
+      // Detect if this is a fetch/AJAX call (from ShopifyOnboarding page) vs direct browser visit
+      const acceptHeader = req.get('Accept') || '';
+      const isAjaxRequest = acceptHeader.includes('application/json') || req.xhr;
+      
+      if (isAjaxRequest) {
+        // Called via fetch() from ShopifyOnboarding - return JSON so frontend can redirect
+        console.log('  Responding with JSON authUrl (AJAX request)');
+        return res.json({ authUrl });
+      } else {
+        // Direct browser visit (e.g., from Shopify App Store) - redirect immediately
+        console.log('  Redirecting browser to Shopify OAuth (direct visit)');
+        return res.redirect(authUrl);
+      }
     } catch (error) {
       console.error('Shopify installation OAuth error:', error);
       // For browser-based errors, show a user-friendly page
@@ -12066,7 +12075,7 @@ Output format: Markdown with clear section headings.`;
 
       // Step 6: Get shop info
       console.log('📋 Step 6: Fetching shop information...');
-      const shopInfoResponse = await fetch(`https://${shop}/admin/api/2025-10/shop.json`, {
+      const shopInfoResponse = await fetch(`https://${shop}/admin/api/2025-01/shop.json`, {
         headers: {
           'X-Shopify-Access-Token': accessToken
         }
