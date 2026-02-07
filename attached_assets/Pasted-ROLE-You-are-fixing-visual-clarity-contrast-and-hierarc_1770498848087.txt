@@ -1,0 +1,179 @@
+ROLE:
+You are fixing visual clarity, contrast, and hierarchy on ZYRA’s
+Support & Help page.
+
+The layout, spacing, and content are correct.
+ONLY colors, borders, accents, and text hierarchy must be improved.
+
+IMPORTANT CONSTRAINTS:
+• DO NOT change layout
+• DO NOT add heavy or deep shadows
+• DO NOT redesign components
+• ONLY improve visibility and separation
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Top help cards look visually similar
+• Resource list blends into background
+• Contact form does not stand out as an action area
+• Page feels flat and hard to scan
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+TOP HELP OPTION CARDS (LIVE CHAT / DOCS / COMMUNITY)
+--------------------------------------------------
+
+Card Background:
+#121833
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Border-radius:
+14px
+
+NO SHADOWS.
+
+LEFT ACCENT BAR (DIFFERENTIATION):
+• Live Chat → #22C55E
+• Documentation → #00F0FF
+• Community → #A78BFA
+
+Accent Width:
+3px
+
+--------------------------------------------------
+HELP RESOURCES SECTION
+--------------------------------------------------
+
+Section Wrapper:
+Background: #0F152B
+Border-radius: 16px
+Border: 1px solid rgba(255,255,255,0.05)
+
+Resource Item Row:
+Background: #121833
+Border-bottom: 1px solid rgba(255,255,255,0.05)
+
+Hover:
+Background: #161C36
+
+Resource Title:
+Color: #E6F7FF
+
+Resource Description:
+Color: #A9B4E5
+
+Action Link (View / Watch / Read):
+Color: #00F0FF
+
+--------------------------------------------------
+CONTACT SUPPORT SECTION (ACTION AREA)
+--------------------------------------------------
+
+Section Wrapper:
+Background: #131B34
+Border-radius: 16px
+Border-left: 3px solid #00F0FF
+
+RULE:
+This section must feel more important than resources.
+
+--------------------------------------------------
+INPUT FIELDS
+--------------------------------------------------
+
+Input Background:
+#0F152B
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Text Color:
+#E6F7FF
+
+Placeholder:
+#7C86B8
+
+Focus State:
+Border-color: #00F0FF
+
+--------------------------------------------------
+PRIMARY CTA BUTTON (SEND MESSAGE)
+--------------------------------------------------
+
+Send Button:
+Background: #00F0FF
+Text: #04141C
+Font-weight: 600
+Border-radius: 10px
+
+Hover:
+Background: #1AF5FF
+
+NO GLOW
+NO SHADOW
+
+--------------------------------------------------
+URGENT SUPPORT FOOTER
+--------------------------------------------------
+
+Footer Wrapper:
+Background: #0F152B
+Border: 1px solid rgba(255,255,255,0.06)
+Border-radius: 12px
+
+Email Support Button:
+Background: transparent
+Border: 1px solid rgba(0,240,255,0.4)
+Text: #00F0FF
+
+Schedule Call Button:
+Background: transparent
+Border: 1px solid rgba(167,139,250,0.4)
+Text: #A78BFA
+
+--------------------------------------------------
+ICON VISIBILITY
+--------------------------------------------------
+
+Icons:
+Use accent color at ~80% opacity
+DO NOT use gray icons
+
+--------------------------------------------------
+TEXT HIERARCHY RULES
+--------------------------------------------------
+
+• Section Titles → #E6F7FF
+• Body Text → #A9B4E5
+• Helper / Meta → #7C86B8
+• Links / Actions → Accent colors
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No heavy shadows
+• No glowing cards
+• No white borders
+• Contrast comes from color + borders
+• Each section must be visually identifiable
+• Action areas must stand out from info areas
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Top help options are distinguishable at a glance
+• Resource list is readable and scannable
+• Contact form clearly feels actionable
+• Urgent support stands apart visually
+• Page feels clean, calm, and enterprise-grade
