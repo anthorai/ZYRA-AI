@@ -3274,155 +3274,155 @@ export default function ZyraAtWork() {
       </div>
 
       {/* APPROVED ZYRA ACTION TYPES (17 Total) - Per Core Specification */}
-      <div className="space-y-4" data-testid="section-zyra-action-types">
-        {/* 🔍 DISCOVERABILITY & SEO (5 Actions) */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Discoverability & SEO:</span>
-          <Badge 
-            className="bg-blue-500/10 text-blue-400 border-blue-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-product-title"
-          >
-            <Tag className="w-3 h-3 mr-1.5" />
-            Product Title Optimization
-          </Badge>
-          <Badge 
-            className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-meta-optimization"
-          >
-            <Globe className="w-3 h-3 mr-1.5" />
-            Meta Title, Description & Tags
-          </Badge>
-          <Badge 
-            className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-search-intent"
-          >
-            <Target className="w-3 h-3 mr-1.5" />
-            Search Intent Alignment Fix
-          </Badge>
-          <Badge 
-            className="bg-purple-500/10 text-purple-400 border-purple-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-image-alt"
-          >
-            <ImageIcon className="w-3 h-3 mr-1.5" />
-            Image Alt-Text Optimization
-          </Badge>
-          <Badge 
-            className="bg-teal-500/10 text-teal-400 border-teal-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-stale-refresh"
-          >
-            <RefreshCw className="w-3 h-3 mr-1.5" />
-            Stale SEO Content Refresh
-          </Badge>
-        </div>
+      <Card className="bg-[#16162c] border-slate-700/50" data-testid="section-zyra-action-types">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Layers className="w-5 h-5 text-primary" />
+            <span className="text-white">ZYRA Action Types</span>
+            <Badge variant="outline" className="text-slate-400 border-slate-600 ml-auto">17 Actions</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* DISCOVERABILITY & SEO (5 Actions) */}
+          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-md bg-blue-500/15">
+                <Search className="w-3.5 h-3.5 text-blue-400" />
+              </div>
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Discoverability & SEO</span>
+              <span className="text-[10px] text-slate-500 ml-auto">5 actions</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-product-title">
+                <Tag className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Product Title Optimization</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-meta-optimization">
+                <Globe className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Meta Title, Description & Tags</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-search-intent">
+                <Target className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Search Intent Alignment Fix</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-image-alt">
+                <ImageIcon className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Image Alt-Text Optimization</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-stale-refresh">
+                <RefreshCw className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Stale SEO Content Refresh</span>
+              </div>
+            </div>
+          </div>
 
-        {/* 🛒 CONVERSION OPTIMIZATION (5 Actions) */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Conversion Optimization:</span>
-          <Badge 
-            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-product-description"
-          >
-            <FileText className="w-3 h-3 mr-1.5" />
-            Product Description Clarity Upgrade
-          </Badge>
-          <Badge 
-            className="bg-amber-500/10 text-amber-400 border-amber-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-value-proposition"
-          >
-            <Sparkles className="w-3 h-3 mr-1.5" />
-            Value Proposition Alignment Fix
-          </Badge>
-          <Badge 
-            className="bg-green-500/10 text-green-400 border-green-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-trust-signals"
-          >
-            <Shield className="w-3 h-3 mr-1.5" />
-            Trust Signal Enhancement
-          </Badge>
-          <Badge 
-            className="bg-orange-500/10 text-orange-400 border-orange-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-friction-copy"
-          >
-            <Eraser className="w-3 h-3 mr-1.5" />
-            Friction Copy Removal
-          </Badge>
-          <Badge 
-            className="bg-pink-500/10 text-pink-400 border-pink-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-above-fold"
-          >
-            <Layout className="w-3 h-3 mr-1.5" />
-            Above-the-Fold Content Optimization
-          </Badge>
-        </div>
+          {/* CONVERSION OPTIMIZATION (5 Actions) */}
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-md bg-emerald-500/15">
+                <ShoppingCart className="w-3.5 h-3.5 text-emerald-400" />
+              </div>
+              <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Conversion Optimization</span>
+              <span className="text-[10px] text-slate-500 ml-auto">5 actions</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-product-description">
+                <FileText className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Product Description Clarity Upgrade</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-value-proposition">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Value Proposition Alignment Fix</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-trust-signals">
+                <Shield className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Trust Signal Enhancement</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-friction-copy">
+                <Eraser className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Friction Copy Removal</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-above-fold">
+                <Layout className="w-3.5 h-3.5 text-pink-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Above-the-Fold Content Optimization</span>
+              </div>
+            </div>
+          </div>
 
-        {/* 💰 REVENUE RECOVERY (3 Actions) */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Recovery:</span>
-          <Badge 
-            className="bg-red-500/10 text-red-400 border-red-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-cart-recovery"
-          >
-            <ShoppingCart className="w-3 h-3 mr-1.5" />
-            Abandoned Cart Recovery Activation
-            <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </Badge>
-          <Badge 
-            className="bg-lime-500/10 text-lime-400 border-lime-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-post-purchase"
-          >
-            <TrendingUp className="w-3 h-3 mr-1.5" />
-            Post-Purchase Upsell Enablement
-            <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </Badge>
-          <Badge 
-            className="bg-rose-500/10 text-rose-400 border-rose-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-checkout-dropoff"
-          >
-            <CreditCard className="w-3 h-3 mr-1.5" />
-            Checkout Drop-Off Mitigation
-          </Badge>
-        </div>
+          {/* REVENUE RECOVERY (3 Actions) */}
+          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-md bg-red-500/15">
+                <DollarSign className="w-3.5 h-3.5 text-red-400" />
+              </div>
+              <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Revenue Recovery</span>
+              <span className="text-[10px] text-slate-500 ml-auto">3 actions</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-cart-recovery">
+                <ShoppingCart className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Abandoned Cart Recovery</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0 ml-auto" />
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-post-purchase">
+                <TrendingUp className="w-3.5 h-3.5 text-lime-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Post-Purchase Upsell</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0 ml-auto" />
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-checkout-dropoff">
+                <CreditCard className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+                <span className="text-xs text-slate-300">Checkout Drop-Off Mitigation</span>
+              </div>
+            </div>
+          </div>
 
-        {/* 🛡️ REVENUE PROTECTION (2 Actions) */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Revenue Protection:</span>
-          <Badge 
-            className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-rollback"
-          >
-            <RotateCcw className="w-3 h-3 mr-1.5" />
-            Underperforming Change Rollback
-          </Badge>
-          <Badge 
-            className="bg-slate-500/10 text-slate-400 border-slate-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-freeze"
-          >
-            <Pause className="w-3 h-3 mr-1.5" />
-            Risky Optimization Freeze
-          </Badge>
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* REVENUE PROTECTION (2 Actions) */}
+            <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-md bg-yellow-500/15">
+                  <Shield className="w-3.5 h-3.5 text-yellow-400" />
+                </div>
+                <span className="text-xs font-semibold text-yellow-400 uppercase tracking-wider">Revenue Protection</span>
+                <span className="text-[10px] text-slate-500 ml-auto">2</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-rollback">
+                  <RotateCcw className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-300">Underperforming Change Rollback</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-freeze">
+                  <Pause className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-300">Risky Optimization Freeze</span>
+                </div>
+              </div>
+            </div>
 
-        {/* 🧠 LEARNING & INTELLIGENCE - Silent (2 Actions) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-2">Learning & Intelligence:</span>
-          <Badge 
-            className="bg-violet-500/10 text-violet-400 border-violet-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-pattern-learning"
-          >
-            <Brain className="w-3 h-3 mr-1.5" />
-            Store Conversion Pattern Learning
-            <span className="ml-1.5 text-[10px] text-slate-500">(Silent)</span>
-          </Badge>
-          <Badge 
-            className="bg-sky-500/10 text-sky-400 border-sky-500/30 hover-elevate cursor-default" 
-            data-testid="badge-action-baseline-update"
-          >
-            <BarChart className="w-3 h-3 mr-1.5" />
-            Product Performance Baseline Update
-            <span className="ml-1.5 text-[10px] text-slate-500">(Silent)</span>
-          </Badge>
-        </div>
-      </div>
+            {/* LEARNING & INTELLIGENCE (2 Actions) */}
+            <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-md bg-violet-500/15">
+                  <Brain className="w-3.5 h-3.5 text-violet-400" />
+                </div>
+                <span className="text-xs font-semibold text-violet-400 uppercase tracking-wider">Learning & Intelligence</span>
+                <span className="text-[10px] text-slate-500 ml-auto">2</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-pattern-learning">
+                  <Brain className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-300">Conversion Pattern Learning</span>
+                  <Badge variant="outline" className="text-[9px] text-slate-500 border-slate-600 ml-auto no-default-hover-elevate no-default-active-elevate">Silent</Badge>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-baseline-update">
+                  <BarChart className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-300">Performance Baseline Update</span>
+                  <Badge variant="outline" className="text-[9px] text-slate-500 border-slate-600 ml-auto no-default-hover-elevate no-default-active-elevate">Silent</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ZYRA Real Learning Insights */}
       <div className="pt-3" data-testid="section-zyra-learning-insights">
