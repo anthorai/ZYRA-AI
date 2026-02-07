@@ -274,15 +274,7 @@ export default function ResponsiveNavbar({
 
   return (
     <nav
-      className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-300 ease-in-out",
-        scrollAware && isScrolled
-          ? "py-2 px-4"
-          : scrollAware
-            ? "bg-black/20 backdrop-blur-md"
-            : "bg-black/20 backdrop-blur-md border-b border-primary/20",
-        className
-      )}
+      className="fixed top-0 w-full z-50 transition-all duration-300 ease-in-out backdrop-blur-md bg-[#0a0a1a]"
     >
       <div
         className={cn(
