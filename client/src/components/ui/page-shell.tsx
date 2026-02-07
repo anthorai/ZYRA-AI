@@ -58,7 +58,13 @@ export function PageShell({
         )}>
           {/* Simple Page Header */}
           {(title || backTo) && (
-            <div className="bg-card rounded-md border border-border py-[17px] px-4 sm:px-6 mt-[-20px] mb-6 ml-[-22px] mr-[-22px]">
+            <div
+              className="rounded-md py-[17px] px-4 sm:px-6 mt-[-20px] mb-6 ml-[-22px] mr-[-22px]"
+              style={{
+                background: 'linear-gradient(180deg, #0F152B, #0B0E1A)',
+                boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)',
+              }}
+            >
               <div className="flex items-start gap-4">
                 {/* Back Button */}
                 {(backTo || useHistoryBack) && (
@@ -90,14 +96,16 @@ export function PageShell({
                 {title && (
                   <div className="flex-1">
                     <h1 
-                      className="text-xl sm:text-2xl font-bold"
+                      className="text-xl sm:text-2xl font-semibold"
+                      style={{ color: '#E6F7FF' }}
                       data-testid="page-title"
                     >
                       {title}
                     </h1>
                     {subtitle && (
                       <p 
-                        className="text-sm text-muted-foreground mt-1"
+                        className="text-sm mt-1"
+                        style={{ color: '#9AA6D6' }}
                         data-testid="page-subtitle"
                       >
                         {subtitle}

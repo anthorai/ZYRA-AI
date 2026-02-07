@@ -1,0 +1,182 @@
+ROLE:
+You are fixing visibility, contrast, and hierarchy issues on the
+“AI Preferences” page in ZYRA.
+
+The layout, spacing, and content are correct.
+Only COLOR, DEPTH, and EMPHASIS must be fixed.
+
+IMPORTANT:
+• REMOVE the white border from the page header
+• DO NOT redesign
+• DO NOT change structure
+• ONLY improve visual clarity
+
+--------------------------------------------------
+ROOT PROBLEMS
+--------------------------------------------------
+• White header border breaks dark Cyberwave theme
+• Sections blend into each other
+• Inputs, cards, and containers share similar tones
+• No clear visual priority between sections
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+HEADER FIX (CRITICAL)
+--------------------------------------------------
+
+REMOVE:
+• Any white or light border around header
+
+HEADER CONTAINER:
+Background: linear-gradient(180deg, #0F152B, #0B0E1A)
+Border: none
+Shadow: inset 0 -1px 0 rgba(255,255,255,0.04)
+
+HEADER TITLE:
+Color: #E6F7FF
+Font-weight: 600
+
+SUBTEXT (if any):
+Color: #9AA6D6
+
+RULE:
+Header must blend smoothly into the page, not look boxed.
+
+--------------------------------------------------
+SECTION DEPTH SYSTEM
+--------------------------------------------------
+
+LAYER 1 — SECTION WRAPPERS
+Used for:
+• Brand Voice & Tone
+• Automation Settings
+• Performance Settings
+
+Background: #121833
+Border-radius: 16px
+Shadow: 0 8px 32px rgba(0,0,0,0.45)
+
+--------------------------------------------------
+SECTION ACCENT BARS (VISUAL SEPARATION)
+--------------------------------------------------
+
+Brand Voice & Tone:
+Left accent bar: #00F0FF
+
+Automation Settings:
+Left accent bar: #A78BFA
+
+Performance Settings:
+Left accent bar: #22C55E
+
+Accent bar:
+Width: 3px
+Border-radius: 2px
+
+--------------------------------------------------
+TEXT HIERARCHY FIX
+--------------------------------------------------
+
+Section Title:
+Color: #E6F7FF
+Font-weight: 600
+
+Description Text:
+Color: #A9B4E5
+
+Helper / Meta Text:
+Color: #7C86B8
+
+RULE:
+Never reuse same color for all text levels.
+
+--------------------------------------------------
+INPUT & DROPDOWN FIX
+--------------------------------------------------
+
+Input Background:
+#0F152B
+
+Input Border:
+1px solid rgba(255,255,255,0.06)
+
+Focused State:
+Border-color: #00F0FF
+Glow: 0 0 0 1px rgba(0,240,255,0.35)
+
+Text Color:
+#E6F7FF
+
+Placeholder:
+#7C86B8
+
+--------------------------------------------------
+SLIDER / TOGGLE FIX
+--------------------------------------------------
+
+Track Background:
+#0F1F2E
+
+Active Track:
+#00F0FF
+
+Knob:
+#E6F7FF
+Shadow: 0 2px 8px rgba(0,0,0,0.4)
+
+--------------------------------------------------
+PERFORMANCE MODE CARDS (IMPORTANT)
+--------------------------------------------------
+
+Default Card:
+Background: #161C36
+Shadow: 0 6px 24px rgba(0,0,0,0.45)
+
+Selected Card:
+Background: linear-gradient(135deg, #0E3B44, #122B3A)
+Glow outline: 0 0 0 1px rgba(0,240,255,0.35)
+Icon Color: #00F0FF
+
+Text:
+Title: #E6F7FF
+Description: #B6C2FF
+
+--------------------------------------------------
+PRIMARY ACTION BUTTON
+--------------------------------------------------
+
+SAVE CHANGES BUTTON:
+Background: linear-gradient(135deg, #00F0FF, #00FFE5)
+Text: #04141C
+Font-weight: 600
+Shadow: 0 6px 20px rgba(0,240,255,0.45)
+
+Hover:
+Increase glow + slight lift
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No white borders anywhere
+• No same background for page + sections
+• Accent colors must indicate meaning
+• Inputs must feel recessed
+• Active selections must glow
+• Depth > outlines
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Header blends naturally into page
+• Each section is visually distinct
+• Inputs are clearly interactive
+• Selected options are obvious
+• Page feels calm, premium, and readable
