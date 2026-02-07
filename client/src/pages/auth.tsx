@@ -335,40 +335,41 @@ export default function Auth() {
 
       {/* ── LEFT PANEL: BRAND & TRUST (hidden on mobile, shown on lg+) ── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden flex-col justify-center px-12 xl:px-20" data-testid="panel-brand">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/3 pointer-events-none" />
-        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-10 w-56 h-56 bg-primary/4 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-10 w-64 h-64 bg-primary/6 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[30%] left-[15%] w-96 h-48 bg-primary/4 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative z-10 max-w-lg">
-          <img src={zyraLogoUrl} alt="Zyra AI" className="w-14 h-14 object-contain mb-10" data-testid="img-brand-logo" />
+          <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 object-contain mb-10" data-testid="img-brand-logo" />
 
-          <h1 className="text-3xl xl:text-4xl font-bold leading-tight mb-4" data-testid="text-brand-headline">
+          <h1 className="text-4xl xl:text-[2.75rem] font-extrabold leading-[1.15] tracking-tight mb-5" data-testid="text-brand-headline">
             Secure access to your
-            <span className="block text-primary mt-1">Zyra AI control panel.</span>
+            <span className="block text-primary mt-1.5">Zyra AI control panel.</span>
           </h1>
-          <p className="text-muted-foreground text-base leading-relaxed mb-10 max-w-md">
+          <p className="text-foreground/60 text-[15px] leading-relaxed mb-12 max-w-md">
             Monitor, optimize, and protect your store with
             decision-based AI — safely.
           </p>
 
-          <div className="space-y-5" data-testid="trust-signals">
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-4 h-4 text-primary" />
+          <div className="space-y-6" data-testid="trust-signals">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-[18px] h-[18px] text-primary" />
               </div>
-              <span className="text-sm text-muted-foreground" data-testid="text-trust-permission">Permission-based execution</span>
+              <span className="text-[15px] text-foreground/70 font-medium" data-testid="text-trust-permission">Permission-based execution</span>
             </div>
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Lock className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-[18px] h-[18px] text-primary" />
               </div>
-              <span className="text-sm text-muted-foreground" data-testid="text-trust-locked">One-time fixes, locked after apply</span>
+              <span className="text-[15px] text-foreground/70 font-medium" data-testid="text-trust-locked">One-time fixes, locked after apply</span>
             </div>
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <BarChart3 className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-[18px] h-[18px] text-primary" />
               </div>
-              <span className="text-sm text-muted-foreground" data-testid="text-trust-automation">Revenue-safe automation</span>
+              <span className="text-[15px] text-foreground/70 font-medium" data-testid="text-trust-automation">Revenue-safe automation</span>
             </div>
           </div>
         </div>
@@ -381,10 +382,10 @@ export default function Auth() {
           {/* Mobile brand header (shown below lg) */}
           <div className="lg:hidden text-center mb-6">
             <img src={zyraLogoUrl} alt="Zyra AI" className="w-14 h-14 object-contain mx-auto mb-4" data-testid="img-brand-logo-mobile" />
-            <h1 className="text-xl font-bold mb-1">
+            <h1 className="text-[1.35rem] font-extrabold tracking-tight mb-1.5">
               Secure access to <span className="text-primary">Zyra AI</span>
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground/50">
               Monitor, optimize, and protect your store.
             </p>
           </div>
@@ -399,15 +400,15 @@ export default function Auth() {
             </Alert>
           )}
 
-          <Card className="glass-card border-primary/15" data-testid="card-auth">
-            <CardContent className="p-6 sm:p-8">
-              <div className="mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-auth-title">
+          <Card className="glass-card border-primary/20" style={{ boxShadow: '0 8px 40px rgba(0, 0, 0, 0.6), 0 0 80px rgba(0, 240, 255, 0.04)' }} data-testid="card-auth">
+            <CardContent className="p-7 sm:p-9">
+              <div className="mb-7">
+                <h2 className="text-2xl sm:text-[1.65rem] font-bold tracking-tight" data-testid="text-auth-title">
                   {shopifyInstallState 
                     ? 'Complete Setup' 
                     : (mode === 'login' ? 'Welcome Back' : 'Create Your Account')}
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1" data-testid="text-auth-subtitle">
+                <p className="text-sm text-foreground/50 mt-1.5" data-testid="text-auth-subtitle">
                   {shopifyInstallState 
                     ? 'Sign in or create an account to connect your store'
                     : (mode === 'login' ? 'Sign in to your Zyra AI control panel' : 'Set up your secure Zyra AI account')}
@@ -431,9 +432,9 @@ export default function Auth() {
                 Continue with Google
               </Button>
 
-              <div className="relative my-5">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#12122a] px-3 text-xs text-muted-foreground">
+              <div className="relative my-6">
+                <Separator className="opacity-40" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#12122a] px-3 text-xs text-foreground/40 uppercase tracking-wider">
                   or
                 </span>
               </div>
@@ -471,7 +472,7 @@ export default function Auth() {
                       <button
                         type="button"
                         onClick={() => setShowLoginPassword(!showLoginPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50"
                         data-testid="button-toggle-password-visibility"
                       >
                         {showLoginPassword ? (
@@ -503,7 +504,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full gradient-button border border-primary/50 text-sm"
+                    className="w-full gradient-button border border-primary/50 text-sm min-h-11"
                     disabled={isLoggingIn}
                     data-testid="button-login"
                   >
@@ -559,7 +560,7 @@ export default function Auth() {
                       <button
                         type="button"
                         onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50"
                         data-testid="button-toggle-password-visibility"
                       >
                         {showRegisterPassword ? (
@@ -598,7 +599,7 @@ export default function Auth() {
 
                   <Button 
                     type="submit" 
-                    className="w-full gradient-button border border-primary/50 text-sm"
+                    className="w-full gradient-button border border-primary/50 text-sm min-h-11"
                     disabled={isRegistering}
                     data-testid="button-register"
                   >
@@ -608,9 +609,9 @@ export default function Auth() {
               )}
 
               {/* Trust reassurance */}
-              <div className="mt-4 flex items-center justify-center gap-1.5">
-                <Lock className="w-3 h-3 text-muted-foreground/50" />
-                <p className="text-[11px] text-muted-foreground/50" data-testid="text-trust-reassurance">
+              <div className="mt-5 flex items-center justify-center gap-2">
+                <Shield className="w-3.5 h-3.5 text-primary/40 flex-shrink-0" />
+                <p className="text-xs text-foreground/45" data-testid="text-trust-reassurance">
                   Your data is protected. Zyra only acts with your permission.
                 </p>
               </div>
