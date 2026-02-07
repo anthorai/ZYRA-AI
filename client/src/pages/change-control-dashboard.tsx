@@ -639,7 +639,7 @@ export default function ChangeControlDashboard() {
                             }
                           }}
                           disabled={bulkPushMutation.isPending}
-                          className="gap-2"
+                          className="gap-2 gradient-button font-semibold tracking-wide"
                           data-testid="button-bulk-push"
                         >
                           <Upload className="w-4 h-4" />
@@ -825,7 +825,7 @@ export default function ChangeControlDashboard() {
                               }
                             }}
                             disabled={bulkPushMutation.isPending}
-                            className="gap-2"
+                            className="gap-2 gradient-button font-semibold tracking-wide"
                             data-testid="button-bulk-push-seo"
                           >
                             <Upload className="w-4 h-4" />
@@ -913,7 +913,7 @@ export default function ChangeControlDashboard() {
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}
                                     disabled={pushToShopifyMutation.isPending}
-                                    className="gap-1"
+                                    className="gap-1 gradient-button font-semibold tracking-wide"
                                     data-testid={`button-push-seo-${change.id}`}
                                   >
                                     <Upload className="w-4 h-4" />
@@ -926,7 +926,7 @@ export default function ChangeControlDashboard() {
                                     size="sm"
                                     onClick={() => rollbackMutation.mutate(change.id)}
                                     disabled={rollbackMutation.isPending}
-                                    className="gap-1"
+                                    className="gap-1 border-red-500/40 text-red-400 font-semibold"
                                     data-testid={`button-rollback-seo-${change.id}`}
                                   >
                                     <RotateCcw className="w-4 h-4" />
@@ -1060,7 +1060,7 @@ export default function ChangeControlDashboard() {
                                     size="sm"
                                     onClick={() => rollbackMutation.mutate(change.id)}
                                     disabled={rollbackMutation.isPending}
-                                    className="gap-1"
+                                    className="gap-1 font-semibold tracking-wide"
                                     data-testid={`button-rollback-protection-${change.id}`}
                                   >
                                     <RotateCcw className="w-4 h-4" />
@@ -1070,7 +1070,7 @@ export default function ChangeControlDashboard() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="gap-1 border-orange-500/30 text-orange-400"
+                                      className="gap-1 border-orange-500/40 text-orange-400 font-semibold"
                                       data-testid={`button-freeze-${change.id}`}
                                     >
                                       <Pause className="w-4 h-4" />
@@ -1134,7 +1134,7 @@ export default function ChangeControlDashboard() {
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}
                                     disabled={pushToShopifyMutation.isPending}
-                                    className="gap-1"
+                                    className="gap-1 gradient-button font-semibold tracking-wide"
                                     data-testid={`button-enable-${change.id}`}
                                   >
                                     <CheckCircle2 className="w-4 h-4" />
@@ -1146,7 +1146,7 @@ export default function ChangeControlDashboard() {
                                   size="sm"
                                   onClick={() => rollbackMutation.mutate(change.id)}
                                   disabled={rollbackMutation.isPending}
-                                  className="gap-1"
+                                  className="gap-1 border-red-500/40 text-red-400 font-semibold"
                                   data-testid={`button-disable-${change.id}`}
                                 >
                                   <X className="w-4 h-4" />
@@ -1186,7 +1186,7 @@ export default function ChangeControlDashboard() {
                               }
                             }}
                             disabled={bulkPushMutation.isPending}
-                            className="gap-2"
+                            className="gap-2 gradient-button font-semibold tracking-wide"
                             data-testid="button-bulk-push-conversion"
                           >
                             <Upload className="w-4 h-4" />
@@ -1274,7 +1274,7 @@ export default function ChangeControlDashboard() {
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}
                                     disabled={pushToShopifyMutation.isPending}
-                                    className="gap-1"
+                                    className="gap-1 gradient-button font-semibold tracking-wide"
                                     data-testid={`button-push-conversion-${change.id}`}
                                   >
                                     <Upload className="w-4 h-4" />
@@ -1287,7 +1287,7 @@ export default function ChangeControlDashboard() {
                                     size="sm"
                                     onClick={() => rollbackMutation.mutate(change.id)}
                                     disabled={rollbackMutation.isPending}
-                                    className="gap-1"
+                                    className="gap-1 border-red-500/40 text-red-400 font-semibold"
                                     data-testid={`button-rollback-conversion-${change.id}`}
                                   >
                                     <RotateCcw className="w-4 h-4" />
