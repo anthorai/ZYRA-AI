@@ -12575,7 +12575,7 @@ Output format: Markdown with clear section headings.`;
         const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
         
         const redirectPath = isShopifyInitiatedInstall 
-          ? `/zyra-at-work?shopify_connected=true&store_name=${encodedStoreName}`
+          ? `/dashboard?shopify_connected=true&store_name=${encodedStoreName}`
           : `/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`;
         
         // Build auto-login hash fragment with Supabase tokens (if available)

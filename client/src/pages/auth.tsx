@@ -242,7 +242,6 @@ export default function Auth() {
       
       // If we have a pending Shopify installation, associate it first
       if (pendingState && !isAssociatingShopify) {
-        hasAssociatedRef.current = true;
         setIsAssociatingShopify(true);
         console.log('Associating pending Shopify connection:', pendingState);
         
@@ -254,13 +253,14 @@ export default function Auth() {
           if (response.ok) {
             const data = await response.json();
             console.log('Shopify connection associated successfully:', data);
+            hasAssociatedRef.current = true;
             
             // Clear localStorage since association was successful
             localStorage.removeItem('pending_shopify_install');
             localStorage.removeItem('pending_shopify_shop');
             
-            // Redirect to integrations page with success indicator (toast will show there)
-            setLocation("/settings/integrations?shopify_connected=true");
+            // Redirect to dashboard with success indicator
+            setLocation("/dashboard?shopify_connected=true");
           } else {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
             console.error('Failed to associate Shopify connection:', errorData);

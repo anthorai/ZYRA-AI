@@ -198,13 +198,20 @@ function PasswordRecoveryHandler({ children }: { children: React.ReactNode }) {
       }).then(({ error: sessionErr }: { error: Error | null }) => {
         if (sessionErr) {
           console.error('Failed to set Shopify auto-login session:', sessionErr);
+          const cleanUrl = window.location.pathname + window.location.search;
+          window.history.replaceState({}, '', cleanUrl);
+          setIsChecking(false);
         } else {
-          console.log('Shopify auto-login session set successfully');
+          console.log('Shopify auto-login session set successfully, redirecting to dashboard');
+          const searchParams = new URLSearchParams(window.location.search);
+          const shopifyConnected = searchParams.get('shopify_connected');
+          const storeName = searchParams.get('store_name');
+          let dashboardUrl = '/dashboard?shopify_connected=true';
+          if (storeName) {
+            dashboardUrl += `&store_name=${encodeURIComponent(storeName)}`;
+          }
+          window.location.href = dashboardUrl;
         }
-        // Clean the hash fragment to remove tokens from URL
-        const cleanUrl = window.location.pathname + window.location.search;
-        window.history.replaceState({}, '', cleanUrl);
-        setIsChecking(false);
       });
       return;
     }

@@ -132,6 +132,20 @@ export default function Dashboard() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
+    const shopifyConnected = urlParams.get('shopify_connected');
+    const storeName = urlParams.get('store_name');
+    
+    // Show success toast when redirected after Shopify store connection
+    if (shopifyConnected === 'true') {
+      toast({
+        title: "Store Connected Successfully",
+        description: storeName 
+          ? `Your store "${decodeURIComponent(storeName)}" has been connected to ZYRA AI.`
+          : "Your Shopify store has been connected to ZYRA AI.",
+      });
+      window.history.replaceState({}, '', '/dashboard');
+      return;
+    }
     
     // Only allow valid tabs in the simplified navigation
     const validTabs = ['zyra-at-work', 'products', 'settings', 'revenue-immune'];
@@ -150,7 +164,7 @@ export default function Dashboard() {
         setActiveTab('settings');
       }
     }
-  }, []);
+  }, [toast]);
 
   // Save sidebar state to localStorage whenever it changes
   useEffect(() => {
