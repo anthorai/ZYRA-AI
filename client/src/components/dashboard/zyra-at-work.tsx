@@ -2827,18 +2827,33 @@ export default function ZyraAtWork() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-sm font-bold tracking-wide uppercase ${isAutopilotEnabled ? 'text-emerald-400' : 'text-red-400'}`}>
-                {isAutopilotEnabled ? 'ON' : 'OFF'}
-              </span>
-              <Switch
-                checked={isAutopilotEnabled}
-                onCheckedChange={(checked) => toggleAutopilotMutation.mutate(checked)}
-                disabled={toggleAutopilotMutation.isPending}
-                className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-red-500/60 scale-125"
-                data-testid="switch-autopilot-toggle"
-              />
-            </div>
+            <button
+              onClick={() => toggleAutopilotMutation.mutate(!isAutopilotEnabled)}
+              disabled={toggleAutopilotMutation.isPending}
+              className={`relative flex items-center rounded-full p-1 w-[88px] h-[40px] transition-all duration-300 cursor-pointer border-2 ${
+                isAutopilotEnabled 
+                  ? 'bg-emerald-500/20 border-emerald-500/50' 
+                  : 'bg-red-500/20 border-red-500/40'
+              } ${toggleAutopilotMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+              data-testid="switch-autopilot-toggle"
+            >
+              <span className={`absolute left-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
+                isAutopilotEnabled ? 'opacity-100 text-emerald-400' : 'opacity-0'
+              }`}>ON</span>
+              <span className={`absolute right-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
+                !isAutopilotEnabled ? 'opacity-100 text-red-400' : 'opacity-0'
+              }`}>OFF</span>
+              <div className={`w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
+                isAutopilotEnabled 
+                  ? 'translate-x-[48px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' 
+                  : 'translate-x-0 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+              }`}>
+                {isAutopilotEnabled 
+                  ? <Zap className="w-4 h-4 text-white" />
+                  : <Pause className="w-4 h-4 text-white" />
+                }
+              </div>
+            </button>
           </div>
         </CardContent>
       </Card>
