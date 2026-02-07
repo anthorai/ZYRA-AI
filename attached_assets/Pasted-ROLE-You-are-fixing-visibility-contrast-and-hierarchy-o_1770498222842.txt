@@ -1,0 +1,168 @@
+ROLE:
+You are fixing visibility, contrast, and hierarchy on ZYRA’s
+Security settings page.
+
+The layout, spacing, and structure are correct.
+ONLY color usage, borders, and subtle separation must be adjusted.
+
+IMPORTANT CONSTRAINTS:
+• DO NOT change layout
+• DO NOT add heavy or deep shadows
+• DO NOT redesign components
+• ONLY improve readability and visual separation
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• All security sections look visually identical
+• Critical vs normal actions are not distinct
+• Status (enabled/disabled) is not obvious
+• Destructive actions don’t feel serious enough
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+SECTION CARD BASE (ALL SECTIONS)
+--------------------------------------------------
+
+Section Card Background:
+#121833
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Border-radius:
+14px
+
+NO DROP SHADOWS.
+
+Spacing:
+Maintain consistent vertical spacing between cards.
+
+--------------------------------------------------
+SECTION DIFFERENTIATION (KEY FIX)
+--------------------------------------------------
+
+Each section must have a LEFT ACCENT BAR
+to visually indicate its purpose.
+
+Two-Factor Authentication:
+Accent: #22C55E   (security / protection)
+
+Password:
+Accent: #00F0FF   (credentials)
+
+Active Sessions:
+Accent: #A78BFA   (access monitoring)
+
+Data Management:
+Accent: #EF4444   (destructive / irreversible)
+
+Accent Bar:
+Width: 3px
+Border-radius: 2px
+
+--------------------------------------------------
+SECTION TITLE & DESCRIPTION
+--------------------------------------------------
+
+Section Title:
+Color: #E6F7FF
+Font-weight: 600
+
+Description Text:
+Color: #A9B4E5
+
+Helper / Meta Text:
+Color: #7C86B8
+
+RULE:
+Titles must clearly dominate descriptions.
+
+--------------------------------------------------
+STATUS INDICATORS (IMPORTANT)
+--------------------------------------------------
+
+Enabled / Active:
+Text: #9EFFC3
+Background pill: rgba(34,197,94,0.15)
+Border: 1px solid rgba(34,197,94,0.35)
+
+Disabled / Inactive:
+Text: #FFD27D
+Background pill: rgba(245,158,11,0.15)
+Border: 1px solid rgba(245,158,11,0.35)
+
+RULE:
+User must understand status without reading paragraphs.
+
+--------------------------------------------------
+PRIMARY ACTION BUTTONS
+--------------------------------------------------
+
+Standard Action (Change Password, Export Data):
+Background: #1A2142
+Text: #E6F7FF
+Border: 1px solid rgba(255,255,255,0.08)
+
+Hover:
+Background: #232B52
+
+--------------------------------------------------
+DESTRUCTIVE ACTION (DELETE ACCOUNT)
+--------------------------------------------------
+
+Delete Button:
+Background: rgba(239,68,68,0.15)
+Text: #FCA5A5
+Border: 1px solid rgba(239,68,68,0.35)
+
+Hover:
+Background: rgba(239,68,68,0.25)
+
+RULE:
+Destructive actions must NEVER look neutral.
+
+--------------------------------------------------
+ICON VISIBILITY
+--------------------------------------------------
+
+Icons:
+Use section accent color at ~80% opacity
+DO NOT use gray icons
+
+--------------------------------------------------
+TEXT CONTRAST RULES
+--------------------------------------------------
+
+• Titles = #E6F7FF
+• Descriptions = #A9B4E5
+• Meta info = #7C86B8
+• Status text uses semantic colors
+• Never use one color for all text
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No heavy shadows
+• No glowing cards
+• No white borders
+• Color indicates meaning
+• Destructive ≠ normal ≠ secure
+• Contrast comes from color + borders only
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Each security section is visually distinct
+• Critical actions stand out immediately
+• Status (enabled/disabled) is obvious
+• Delete action feels dangerous
+• Page feels clean, serious, and trustworthy
