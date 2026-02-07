@@ -1425,7 +1425,7 @@ function ProgressStages({
                 {executionStatus === 'awaiting_approval' && committedActionId && onApprove && !foundationalAction.isLocked && (
                   <Button
                     size="sm"
-                    variant="default"
+                    className="gradient-button font-semibold tracking-wide"
                     onClick={() => {
                       console.log('[ZYRA Button] Approve button clicked for:', committedActionId);
                       onApprove(committedActionId);
@@ -1435,12 +1435,12 @@ function ProgressStages({
                   >
                     {isApproving ? (
                       <>
-                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         Running...
                       </>
                     ) : (
                       <>
-                        <Zap className="w-3 h-3 mr-1" />
+                        <Zap className="w-3.5 h-3.5 mr-1.5" />
                         Approve & Run
                       </>
                     )}
@@ -1785,19 +1785,19 @@ function ProgressStages({
                 {executionStatus === 'awaiting_approval' && onApprove && (
                   <Button
                     size="sm"
-                    variant="default"
+                    className="gradient-button font-semibold tracking-wide"
                     onClick={() => onApprove('foundational_trust_signals')}
                     disabled={isApproving}
                     data-testid="button-approve-fallback-action"
                   >
                     {isApproving ? (
                       <>
-                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         Running...
                       </>
                     ) : (
                       <>
-                        <Zap className="w-3 h-3 mr-1" />
+                        <Zap className="w-3.5 h-3.5 mr-1.5" />
                         Approve & Run
                       </>
                     )}
@@ -1849,19 +1849,19 @@ function ProgressStages({
                 {executionStatus === 'awaiting_approval' && committedActionId && onApprove && !executionResult && (
                   <Button
                     size="sm"
-                    variant="default"
+                    className="gradient-button font-semibold tracking-wide"
                     onClick={() => onApprove(committedActionId)}
                     disabled={isApproving}
                     data-testid="button-approve-friction-action"
                   >
                     {isApproving ? (
                       <>
-                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         Running...
                       </>
                     ) : (
                       <>
-                        <Zap className="w-3 h-3 mr-1" />
+                        <Zap className="w-3.5 h-3.5 mr-1.5" />
                         Approve & Fix
                       </>
                     )}
