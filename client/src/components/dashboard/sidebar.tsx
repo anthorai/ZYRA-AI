@@ -203,9 +203,9 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
           </Button>
         </div>
 
-        <div className="px-4 pt-5 pb-4 relative z-10">
+        <div className="px-3 pt-5 pb-4 relative z-10">
           {/* Logo */}
-          <div className="flex items-center space-x-3 mb-5 px-2" data-testid="sidebar-logo">
+          <div className="flex items-center space-x-3 mb-5 px-3" data-testid="sidebar-logo">
             <img 
               src={zyraLogo} 
               alt="Zyra AI Logo" 
@@ -221,7 +221,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
                 key={item.id}
                 onClick={() => (item as any).onClick ? (item as any).onClick() : onTabChange(item.id)}
                 variant="ghost"
-                className={`w-full justify-start px-3 py-2.5 h-auto text-sm ${
+                className={`w-full justify-start px-3 h-10 text-sm ${
                   activeTab === item.id
                     ? "bg-primary/20 text-primary hover:bg-primary/20"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
