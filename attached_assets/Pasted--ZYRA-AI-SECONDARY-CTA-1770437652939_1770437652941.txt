@@ -1,0 +1,132 @@
+/* =====================================================================
+   ZYRA AI — SECONDARY CTA + TRUST BADGES VISIBILITY FIX
+   ELEMENTS: "VIEW PRICING" BUTTON + BILLING TRUST BADGES
+   PRIORITY: HIGH — CLARITY WITHOUT COMPETING WITH PRIMARY CTA
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to make the SECONDARY CTA ("VIEW PRICING")
+and its TRUST BADGES clearly visible, scannable, and professional
+— without overpowering the primary CTA.
+
+DO NOT change wording.
+DO NOT change layout.
+ONLY improve visibility, contrast, and hierarchy.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+Current issues:
+- "View Pricing" button blends into background
+- Trust badges appear as low-contrast text
+- Section feels passive and ignorable
+- User does not immediately notice this option
+
+THIS REDUCES DISCOVERY OF PRICING.
+
+---------------------------------------------------------------------
+2. SECONDARY CTA — "VIEW PRICING"
+---------------------------------------------------------------------
+
+MAKE THIS BUTTON CLEAR BUT SECONDARY.
+
+REQUIRED CHANGES:
+
+BUTTON STYLE:
+- Outline or soft-filled button (NOT transparent text)
+- High-contrast border
+- Slight background tint on hover
+
+BUTTON SIZE:
+- Increase height slightly
+- Increase horizontal padding
+- Clear clickable shape
+
+BUTTON TEXT:
+- Increase font size slightly
+- Medium font weight
+- Strong contrast against background
+
+ICON (→):
+- Increase icon size slightly
+- Improve spacing from text
+
+INTERACTION:
+- Hover: subtle background fill or glow
+- Active: slight press feedback
+
+---------------------------------------------------------------------
+3. TRUST BADGES — CONVERT TO BADGE STYLE
+---------------------------------------------------------------------
+
+TRANSFORM:
+- "Billed through Shopify"
+- "Cancel anytime"
+- "No contracts"
+
+INTO:
+VISUAL BADGES.
+
+BADGE DESIGN RULES:
+
+- Soft rectangular or pill shape
+- Slightly lighter background than page
+- Thin border or subtle glow
+- Clear icon + text pairing
+- Increased font weight for readability
+
+SPACING:
+- Even spacing between badges
+- Horizontal layout on desktop
+- Stacked on mobile
+
+---------------------------------------------------------------------
+4. VISUAL HIERARCHY RULES
+---------------------------------------------------------------------
+
+This section must rank:
+1) Primary CTA (Install Zyra)
+2) Secondary CTA (View Pricing)
+3) Trust badges
+
+Ensure secondary CTA does not compete with primary.
+
+---------------------------------------------------------------------
+5. COLOR & STYLE RULES
+---------------------------------------------------------------------
+
+- Use neutral brand tones
+- No neon or aggressive colors
+- Maintain enterprise-grade feel
+- Badges should feel informative, not promotional
+
+---------------------------------------------------------------------
+6. RESPONSIVE RULES
+---------------------------------------------------------------------
+
+DESKTOP:
+- Button clearly visible
+- Badges readable at a glance
+
+MOBILE:
+- Button full-width or centered
+- Badges stacked cleanly
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This fix is SUCCESSFUL only if:
+- "View Pricing" is immediately noticeable
+- Badges are clearly visible and readable
+- Section feels intentional, not decorative
+- User understands billing safety at a glance
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+MAKE "VIEW PRICING" BUTTON AND BILLING BADGES
+CLEAR, CLICKABLE, AND PROFESSIONAL.
+NO LOW-CONTRAST OR PASSIVE STYLES ALLOWED.
+===================================================================== */

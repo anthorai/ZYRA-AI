@@ -491,30 +491,29 @@ export default function Landing() {
               <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
                 Plans control what ZYRA is allowed to do. Higher plans unlock growth actions and revenue protection.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
-                  <Button asChild size="lg" className="relative rounded-xl font-bold px-10 bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90" data-testid="button-view-pricing">
-                    <Link href="/pricing">
-                      VIEW PRICING
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Link>
-                  </Button>
-                </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+                <Button asChild size="lg" variant="outline" className="rounded-xl font-semibold px-10 py-6 text-base border-primary/40 tracking-wide" data-testid="button-view-pricing">
+                  <Link href="/pricing">
+                    VIEW PRICING
+                    <ArrowRight className="w-5 h-5 ml-3" />
+                  </Link>
+                </Button>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-primary" />
-                  <span>Billed through Shopify</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>Cancel anytime</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>No contracts</span>
-                </div>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                {[
+                  { icon: Shield, text: "Billed through Shopify" },
+                  { icon: Check, text: "Cancel anytime" },
+                  { icon: Check, text: "No contracts" },
+                ].map((item) => (
+                  <div
+                    key={item.text}
+                    className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/15 text-sm font-medium text-foreground/80"
+                    style={{ background: 'rgba(0, 240, 255, 0.04)', boxShadow: '0 0 12px rgba(0, 240, 255, 0.04)' }}
+                  >
+                    <item.icon className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span>{item.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
