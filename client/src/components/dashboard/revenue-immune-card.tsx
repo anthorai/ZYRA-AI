@@ -526,12 +526,12 @@ export default function RevenueImmuneCard() {
           {/* Live Activity Log - Terminal Style */}
           {isActive && (
             <div 
-              className="rounded-[14px] mb-6 overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.15)]" 
+              className="rounded-[14px] mb-6 overflow-hidden border border-slate-600/50" 
               style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}
               data-testid="live-activity-log"
             >
               {/* Terminal Top Bar */}
-              <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-white/5">
+              <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-slate-700/60">
                 <div className="flex items-center gap-2">
                   {/* macOS Window Buttons */}
                   <div className="flex items-center gap-1.5">
@@ -730,7 +730,7 @@ export default function RevenueImmuneCard() {
           {/* Active Revenue Defense Engines - Terminal Style */}
           {isActive && (
             <div 
-              className="rounded-[14px] mb-6 overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.1)]"
+              className="rounded-[14px] mb-6 overflow-hidden border border-slate-600/50"
               data-testid="scanning-engines-block"
             >
               {/* Terminal Header */}
