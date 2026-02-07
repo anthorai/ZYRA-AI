@@ -129,10 +129,10 @@ export default function ResponsiveNavbar({
 
   const renderNavItem = (item: NavItem, index: number, isMobile: boolean = false) => {
     const baseClassName = cn(
-      "transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md font-medium",
+      "transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md font-medium uppercase tracking-wider",
       isMobile
         ? "block w-full text-left px-4 py-3 text-base text-foreground hover:text-primary hover:bg-muted"
-        : "text-sm lg:text-base text-muted-foreground hover:text-foreground px-3 py-2 whitespace-nowrap",
+        : "text-xs lg:text-sm text-muted-foreground hover:text-foreground px-3 py-2 whitespace-nowrap",
       item.disabled ? "opacity-50 cursor-not-allowed" : ""
     );
 
