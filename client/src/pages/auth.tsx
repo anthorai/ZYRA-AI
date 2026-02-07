@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { FcGoogle } from "react-icons/fc";
-import { Store, Eye, EyeOff } from "lucide-react";
+import { Store, Eye, EyeOff, Shield, Lock, BarChart3 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import zyraLogoUrl from "@assets/zyra logo_1758694880266.png";
 
@@ -331,243 +331,305 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12" style={{ backgroundColor: '#0d0d1a' }}>
-      <div className="max-w-sm sm:max-w-md w-full">
-        {/* Shopify Installation Banner */}
-        {shopifyInstallState && (
-          <Alert className="mb-4 bg-primary/10 border-primary/30">
-            <Store className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Almost there!</strong> {shopifyShopName ? `Sign up to connect ${shopifyShopName}` : 'Create an account to complete your Shopify store connection'}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <Card className="glass-card-hover border-0 !bg-transparent" data-testid="card-auth">
-          <CardContent className="p-6 sm:p-8">
-            <div className="text-center mb-6 sm:mb-8">
-              <div className="mx-auto mb-3 sm:mb-4">
-                <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto" />
+    <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a1a' }}>
+
+      {/* ── LEFT PANEL: BRAND & TRUST (hidden on mobile, shown on lg+) ── */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden flex-col justify-center px-12 xl:px-20" data-testid="panel-brand">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/3 pointer-events-none" />
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-10 w-56 h-56 bg-primary/4 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 max-w-lg">
+          <img src={zyraLogoUrl} alt="Zyra AI" className="w-14 h-14 object-contain mb-10" data-testid="img-brand-logo" />
+
+          <h1 className="text-3xl xl:text-4xl font-bold leading-tight mb-4" data-testid="text-brand-headline">
+            Secure access to your
+            <span className="block text-primary mt-1">Zyra AI control panel.</span>
+          </h1>
+          <p className="text-muted-foreground text-base leading-relaxed mb-10 max-w-md">
+            Monitor, optimize, and protect your store with
+            decision-based AI — safely.
+          </p>
+
+          <div className="space-y-5" data-testid="trust-signals">
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-4 h-4 text-primary" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold" data-testid="text-auth-title">
-                {shopifyInstallState 
-                  ? 'Complete Setup' 
-                  : (mode === 'login' ? 'Welcome Back' : 'Get Started')}
-              </h2>
-              <p className="text-sm sm:text-base text-muted-foreground" data-testid="text-auth-subtitle">
-                {shopifyInstallState 
-                  ? 'Sign in or create an account to connect your store'
-                  : (mode === 'login' ? 'Sign in to your Zyra AI account' : 'Create your free Zyra AI account')}
-              </p>
+              <span className="text-sm text-muted-foreground" data-testid="text-trust-permission">Permission-based execution</span>
             </div>
-
-            {/* Google Sign In */}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full text-sm sm:text-base py-2 sm:py-3"
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading || isLoggingIn || isRegistering}
-              data-testid="button-google-signin"
-            >
-              {isGoogleLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2" />
-              ) : (
-                <FcGoogle className="w-5 h-5 mr-2" />
-              )}
-              Continue with Google
-            </Button>
-
-            <div className="relative my-4 sm:my-6">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm px-3 text-xs sm:text-sm text-muted-foreground">
-                or
-              </span>
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-sm text-muted-foreground" data-testid="text-trust-locked">One-time fixes, locked after apply</span>
             </div>
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-sm text-muted-foreground" data-testid="text-trust-automation">Revenue-safe automation</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            {mode === 'login' ? (
-              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4 sm:space-y-6">
-                <div>
-                  <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    className="form-input mt-1 sm:mt-2 text-sm sm:text-base"
-                    placeholder="Enter your email"
-                    {...loginForm.register("email")}
-                    data-testid="input-email"
-                  />
-                  {loginForm.formState.errors.email && (
-                    <p className="text-destructive text-xs sm:text-sm mt-1">{loginForm.formState.errors.email.message}</p>
-                  )}
-                </div>
+      {/* ── RIGHT PANEL: AUTH FORM ── */}
+      <div className="w-full lg:w-[45%] flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+        <div className="max-w-sm sm:max-w-md w-full">
 
-                <div>
-                  <Label htmlFor="password" data-testid="label-password">Password</Label>
-                  <div className="relative mt-1 sm:mt-2">
-                    <Input
-                      id="password"
-                      type={showLoginPassword ? "text" : "password"}
-                      autoComplete="current-password"
-                      className="form-input pr-10 text-sm sm:text-base"
-                      placeholder="Enter your password"
-                      {...loginForm.register("password")}
-                      data-testid="input-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      data-testid="button-toggle-password-visibility"
-                    >
-                      {showLoginPassword ? (
-                        <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
-                      ) : (
-                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                      )}
-                    </button>
-                  </div>
-                  {loginForm.formState.errors.password && (
-                    <p className="text-destructive text-xs sm:text-sm mt-1">{loginForm.formState.errors.password.message}</p>
-                  )}
-                </div>
+          {/* Mobile brand header (shown below lg) */}
+          <div className="lg:hidden text-center mb-6">
+            <img src={zyraLogoUrl} alt="Zyra AI" className="w-14 h-14 object-contain mx-auto mb-4" data-testid="img-brand-logo-mobile" />
+            <h1 className="text-xl font-bold mb-1">
+              Secure access to <span className="text-primary">Zyra AI</span>
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Monitor, optimize, and protect your store.
+            </p>
+          </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="remember" />
-                    <Label htmlFor="remember" className="text-xs sm:text-sm text-muted-foreground">Remember me</Label>
-                  </div>
-                  <button 
-                    type="button" 
-                    className="text-xs sm:text-sm text-primary hover:underline"
-                    onClick={() => setLocation("/forgot-password")}
-                    data-testid="button-forgot-password"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+          {/* Shopify Installation Banner */}
+          {shopifyInstallState && (
+            <Alert className="mb-4 bg-primary/10 border-primary/30">
+              <Store className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Almost there!</strong> {shopifyShopName ? `Sign up to connect ${shopifyShopName}` : 'Create an account to complete your Shopify store connection'}
+              </AlertDescription>
+            </Alert>
+          )}
 
-                <Button 
-                  type="submit" 
-                  className="w-full gradient-button text-sm sm:text-base py-2 sm:py-3"
-                  disabled={isLoggingIn}
-                  data-testid="button-login"
-                >
-                  {isLoggingIn ? "Signing In..." : "Sign In"}
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4 sm:space-y-6">
-                <div>
-                  <Label htmlFor="fullName" className="text-sm sm:text-base">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    autoComplete="name"
-                    className="form-input mt-1 sm:mt-2 text-sm sm:text-base"
-                    placeholder="Enter your full name"
-                    {...registerForm.register("fullName")}
-                    data-testid="input-fullname"
-                  />
-                  {registerForm.formState.errors.fullName && (
-                    <p className="text-destructive text-xs sm:text-sm mt-1">{registerForm.formState.errors.fullName.message}</p>
-                  )}
-                </div>
+          <Card className="glass-card border-primary/15" data-testid="card-auth">
+            <CardContent className="p-6 sm:p-8">
+              <div className="mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-auth-title">
+                  {shopifyInstallState 
+                    ? 'Complete Setup' 
+                    : (mode === 'login' ? 'Welcome Back' : 'Create Your Account')}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1" data-testid="text-auth-subtitle">
+                  {shopifyInstallState 
+                    ? 'Sign in or create an account to connect your store'
+                    : (mode === 'login' ? 'Sign in to your Zyra AI control panel' : 'Set up your secure Zyra AI account')}
+                </p>
+              </div>
 
-                <div>
-                  <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    className="form-input mt-1 sm:mt-2 text-sm sm:text-base"
-                    placeholder="Enter your email"
-                    {...registerForm.register("email")}
-                    data-testid="input-email"
-                  />
-                  {registerForm.formState.errors.email && (
-                    <p className="text-destructive text-xs sm:text-sm mt-1">{registerForm.formState.errors.email.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="password" data-testid="label-password">Password</Label>
-                  <div className="relative mt-1 sm:mt-2">
-                    <Input
-                      id="password"
-                      type={showRegisterPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      className="form-input pr-10 text-sm sm:text-base"
-                      placeholder="Create a password"
-                      {...registerForm.register("password")}
-                      data-testid="input-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      data-testid="button-toggle-password-visibility"
-                    >
-                      {showRegisterPassword ? (
-                        <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
-                      ) : (
-                        <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                      )}
-                    </button>
-                  </div>
-                  {registerForm.formState.errors.password && (
-                    <p className="text-destructive text-xs sm:text-sm mt-1">{registerForm.formState.errors.password.message}</p>
-                  )}
-                </div>
-
-                <div className="flex items-start space-x-2">
-                  <Controller
-                    name="terms"
-                    control={registerForm.control}
-                    render={({ field }) => (
-                      <Checkbox 
-                        id="terms"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="mt-0.5"
-                        data-testid="checkbox-terms"
-                      />
-                    )}
-                  />
-                  <Label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                    I agree to the <button type="button" className="text-primary hover:underline">Terms of Service</button> and <button type="button" className="text-primary hover:underline">Privacy Policy</button>
-                  </Label>
-                </div>
-                {registerForm.formState.errors.terms && (
-                  <p className="text-destructive text-xs sm:text-sm">{registerForm.formState.errors.terms.message}</p>
+              {/* Google Sign In */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-sm"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleLoading || isLoggingIn || isRegistering}
+                data-testid="button-google-signin"
+              >
+                {isGoogleLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-2" />
+                ) : (
+                  <FcGoogle className="w-5 h-5 mr-2" />
                 )}
+                Continue with Google
+              </Button>
 
-                <Button 
-                  type="submit" 
-                  className="w-full gradient-button text-sm sm:text-base py-2 sm:py-3"
-                  disabled={isLoggingIn}
-                  data-testid="button-register"
-                >
-                  {isRegistering ? "Creating Account..." : "Start Free Trial"}
-                </Button>
-              </form>
-            )}
+              <div className="relative my-5">
+                <Separator />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#12122a] px-3 text-xs text-muted-foreground">
+                  or
+                </span>
+              </div>
 
-            <div className="mt-4 sm:mt-6 text-center">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                <button 
-                  onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                  className="text-primary hover:underline"
-                  data-testid="button-switch-mode"
-                >
-                  {mode === 'login' ? 'Sign up' : 'Sign in'}
-                </button>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {mode === 'login' ? (
+                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                  <div>
+                    <Label htmlFor="email" className="text-sm">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      className="form-input mt-1.5 text-sm"
+                      placeholder="Enter your email"
+                      {...loginForm.register("email")}
+                      data-testid="input-email"
+                    />
+                    {loginForm.formState.errors.email && (
+                      <p className="text-destructive text-xs mt-1" data-testid="text-error-login-email">{loginForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="password" className="text-sm" data-testid="label-password">Password</Label>
+                    <div className="relative mt-1.5">
+                      <Input
+                        id="password"
+                        type={showLoginPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        className="form-input pr-10 text-sm"
+                        placeholder="Enter your password"
+                        {...loginForm.register("password")}
+                        data-testid="input-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        data-testid="button-toggle-password-visibility"
+                      >
+                        {showLoginPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {loginForm.formState.errors.password && (
+                      <p className="text-destructive text-xs mt-1" data-testid="text-error-login-password">{loginForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="remember" data-testid="checkbox-remember" />
+                      <Label htmlFor="remember" className="text-xs text-muted-foreground">Remember me</Label>
+                    </div>
+                    <button 
+                      type="button" 
+                      className="text-xs text-primary underline-offset-2 underline opacity-80"
+                      onClick={() => setLocation("/forgot-password")}
+                      data-testid="button-forgot-password"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full gradient-button border border-primary/50 text-sm"
+                    disabled={isLoggingIn}
+                    data-testid="button-login"
+                  >
+                    {isLoggingIn ? "Signing In..." : "Access Zyra Dashboard"}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                  <div>
+                    <Label htmlFor="fullName" className="text-sm">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      autoComplete="name"
+                      className="form-input mt-1.5 text-sm"
+                      placeholder="Enter your full name"
+                      {...registerForm.register("fullName")}
+                      data-testid="input-fullname"
+                    />
+                    {registerForm.formState.errors.fullName && (
+                      <p className="text-destructive text-xs mt-1" data-testid="text-error-register-name">{registerForm.formState.errors.fullName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email" className="text-sm">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      className="form-input mt-1.5 text-sm"
+                      placeholder="Enter your email"
+                      {...registerForm.register("email")}
+                      data-testid="input-email"
+                    />
+                    {registerForm.formState.errors.email && (
+                      <p className="text-destructive text-xs mt-1" data-testid="text-error-register-email">{registerForm.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="password" className="text-sm" data-testid="label-password">Password</Label>
+                    <div className="relative mt-1.5">
+                      <Input
+                        id="password"
+                        type={showRegisterPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        className="form-input pr-10 text-sm"
+                        placeholder="Create a password"
+                        {...registerForm.register("password")}
+                        data-testid="input-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        data-testid="button-toggle-password-visibility"
+                      >
+                        {showRegisterPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {registerForm.formState.errors.password && (
+                      <p className="text-destructive text-xs mt-1" data-testid="text-error-register-password">{registerForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-start space-x-2">
+                    <Controller
+                      name="terms"
+                      control={registerForm.control}
+                      render={({ field }) => (
+                        <Checkbox 
+                          id="terms"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-0.5"
+                          data-testid="checkbox-terms"
+                        />
+                      )}
+                    />
+                    <Label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed">
+                      I agree to the <button type="button" className="text-primary underline underline-offset-2 opacity-80" data-testid="button-terms">Terms of Service</button> and <button type="button" className="text-primary underline underline-offset-2 opacity-80" data-testid="button-privacy">Privacy Policy</button>
+                    </Label>
+                  </div>
+                  {registerForm.formState.errors.terms && (
+                    <p className="text-destructive text-xs" data-testid="text-error-register-terms">{registerForm.formState.errors.terms.message}</p>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full gradient-button border border-primary/50 text-sm"
+                    disabled={isRegistering}
+                    data-testid="button-register"
+                  >
+                    {isRegistering ? "Creating Account..." : "Create Secure Account"}
+                  </Button>
+                </form>
+              )}
+
+              {/* Trust reassurance */}
+              <div className="mt-4 flex items-center justify-center gap-1.5">
+                <Lock className="w-3 h-3 text-muted-foreground/50" />
+                <p className="text-[11px] text-muted-foreground/50" data-testid="text-trust-reassurance">
+                  Your data is protected. Zyra only acts with your permission.
+                </p>
+              </div>
+
+              <div className="mt-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+                  <button 
+                    onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                    className="text-primary underline underline-offset-2 opacity-80"
+                    data-testid="button-switch-mode"
+                  >
+                    {mode === 'login' ? 'Sign up' : 'Sign in'}
+                  </button>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
