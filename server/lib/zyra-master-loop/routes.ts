@@ -483,4 +483,80 @@ router.post('/check-impact', requireAuth, async (req: Request, res: Response) =>
   }
 });
 
+/**
+ * GET /api/master-loop/guard-stats
+ * Get deduplication guard statistics and decision log
+ * RULE 9: Transparency & Logging
+ */
+router.get('/guard-stats', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthenticatedRequest).user.id;
+
+    const { actionDeduplicationGuard } = await import('../action-deduplication-guard');
+    const stats = await actionDeduplicationGuard.getGuardStats(userId);
+    const recentDecisions = actionDeduplicationGuard.getDecisionLog(userId).slice(-20);
+
+    res.json({
+      success: true,
+      stats,
+      recentDecisions: recentDecisions.map(d => ({
+        allowed: d.allowed,
+        reason: d.reason,
+        ruleTriggered: d.ruleTriggered,
+        actionType: d.actionType,
+        targetId: d.targetId,
+        targetType: d.targetType,
+        timestamp: d.timestamp,
+      })),
+    });
+  } catch (error) {
+    console.error('Error getting guard stats:', error);
+    res.status(500).json({ 
+      error: 'Failed to get guard stats',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * POST /api/master-loop/validate-action
+ * Pre-validate an action before execution
+ * Returns whether the action would be allowed or blocked
+ */
+router.post('/validate-action', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthenticatedRequest).user.id;
+    const { entityType, entityId, actionType } = req.body;
+
+    if (!entityType || !entityId || !actionType) {
+      return res.status(400).json({ error: 'entityType, entityId, and actionType are required' });
+    }
+
+    const { actionDeduplicationGuard } = await import('../action-deduplication-guard');
+    const decision = await actionDeduplicationGuard.validateAction(
+      userId, entityType, entityId, actionType
+    );
+
+    res.json({
+      success: true,
+      decision: {
+        allowed: decision.allowed,
+        reason: decision.reason,
+        ruleTriggered: decision.ruleTriggered,
+        actionType: decision.actionType,
+        targetId: decision.targetId,
+        message: decision.allowed
+          ? 'Action is eligible for execution'
+          : actionDeduplicationGuard.getNoActionMessage(entityType, entityId),
+      },
+    });
+  } catch (error) {
+    console.error('Error validating action:', error);
+    res.status(500).json({ 
+      error: 'Failed to validate action',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 export default router;

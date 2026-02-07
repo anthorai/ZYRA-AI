@@ -94,6 +94,21 @@ Context-specific "Why ZYRA recommends this" explanations generated dynamically b
 ### ZYRA Master Loop System (Production-Level Autonomous Engine)
 The Master Loop is the production-level autonomous optimization engine that operates on a strict DETECT→DECIDE→EXECUTE→PROVE→LEARN cycle. Key components include a Store Situation Detector, Plan Permission Mapper, Master Action Registry, Priority Sequencing Engine, KPI Monitor, and Master Loop Controller. It offers various API endpoints for state management, execution, analysis, and activity tracking.
 
+### Action Deduplication Guard System
+The `ActionDeduplicationGuard` (`server/lib/action-deduplication-guard.ts`) enforces 10 core rules to prevent wasteful duplicate AI actions:
+1. **Global Non-Repetition**: Same action on same product = NEVER repeated without material change
+2. **Cooldown Enforcement**: Action-type-specific cooldowns (4h default, up to 24h for pattern learning)
+3. **New Problem Required**: Loops detect problems but don't auto-re-execute old actions
+4. **Material Change Detection**: Actions only unlock when price, inventory, or content actually changes
+5. **"No Action Needed" Valid**: System prefers doing nothing over doing too much
+6. **Sequential Execution**: Fix most critical issue first, lock it, then re-evaluate
+7. **One Active Action Per Product**: No parallel actions on the same product
+8. **Cooldown Periods**: Type-specific cooldowns (4-24h) between same action types
+9. **Transparency Logging**: Every decision (allowed/blocked) logged with rule and reason
+10. **User-Facing Messages**: Clear "no action needed" messaging instead of silent failures
+- **API Endpoints**: `/api/master-loop/guard-stats` (decision log) and `/api/master-loop/validate-action` (pre-validation)
+- **Integration Points**: MasterLoopController.runCycle(), FastDetectionEngine.selectFoundationalAction()
+
 ## System Design Choices
 The application uses two storage implementations: `MemStorage` (in-memory for general data like billing/dashboard operations) and `DatabaseStorage` (PostgreSQL-backed for persistent data like bulk optimization jobs). Bulk optimization jobs specifically use `DatabaseStorage` to ensure job persistence across server restarts.
 

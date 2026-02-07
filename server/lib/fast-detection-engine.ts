@@ -11,6 +11,7 @@ import {
   usageStats,
   activityLogs,
   actionLocks,
+  autonomousActions,
   FrictionType,
   FRICTION_TYPE_LABELS,
   FoundationalActionType,
@@ -21,6 +22,7 @@ import {
 import { eq, and, desc, sql, gte, isNull, or, count, ne, inArray } from 'drizzle-orm';
 import { emitZyraActivity, ZyraEventType } from './zyra-event-emitter';
 import { ACTION_MAP, type ActionId } from './zyra-master-loop/master-action-registry';
+import { actionDeduplicationGuard } from './action-deduplication-guard';
 
 /**
  * Map legacy FoundationalActionType to new Master Action Registry ActionIds
@@ -889,11 +891,71 @@ export class FastDetectionEngine {
       let targetProduct = userProducts[0];
       let isAlreadyOptimized = false; // Track if we're showing a locked action
       
-      // Helper function to check if a product+action is locked
+      // RULE 8: Check per-action-type cooldowns for recently executed actions
+      // Uses ActionDeduplicationGuard's cooldown config instead of hardcoded duration
+      const cooldownCombinations = new Set<string>();
+      try {
+        const maxCooldownMs = actionDeduplicationGuard.getMaxCooldownMs();
+        const cooldownCutoff = new Date(Date.now() - maxCooldownMs);
+        
+        const recentExecutions = await db
+          .select({
+            entityId: autonomousActions.entityId,
+            actionType: autonomousActions.actionType,
+            completedAt: autonomousActions.completedAt,
+          })
+          .from(autonomousActions)
+          .where(and(
+            eq(autonomousActions.userId, userId),
+            eq(autonomousActions.status, 'completed'),
+            gte(autonomousActions.completedAt, cooldownCutoff)
+          ));
+
+        for (const exec of recentExecutions) {
+          if (exec.entityId && exec.actionType && exec.completedAt) {
+            const cooldownMs = actionDeduplicationGuard.getCooldownMs(exec.actionType);
+            const completedAt = new Date(exec.completedAt).getTime();
+            const cooldownExpiresAt = completedAt + cooldownMs;
+            
+            if (Date.now() < cooldownExpiresAt) {
+              cooldownCombinations.add(`${exec.entityId}:${exec.actionType}`);
+            }
+          }
+        }
+        console.log(`⏳ [Cooldown] Found ${cooldownCombinations.size} actions in cooldown for user ${userId}`);
+      } catch (error) {
+        console.error('[Cooldown] Error checking cooldowns:', error);
+      }
+
+      // RULE 7: Check active actions per product (only ONE active action at a time)
+      const activeProductActions = new Set<string>();
+      try {
+        const runningActions = await db
+          .select({ entityId: autonomousActions.entityId })
+          .from(autonomousActions)
+          .where(and(
+            eq(autonomousActions.userId, userId),
+            eq(autonomousActions.status, 'running')
+          ));
+
+        for (const action of runningActions) {
+          if (action.entityId) {
+            activeProductActions.add(action.entityId);
+          }
+        }
+        console.log(`🔄 [Product Protection] ${activeProductActions.size} products have active actions`);
+      } catch (error) {
+        console.error('[Product Protection] Error checking active actions:', error);
+      }
+
+      // Helper function to check if a product+action is locked, in cooldown, or has active actions
       const isLocked = (productId: string | undefined, actionType: FoundationalActionType): boolean => {
         if (!productId) return false;
         const actionId = LEGACY_TO_ACTION_ID[actionType];
-        return lockedCombinations.has(`${productId}:${actionId}`);
+        if (lockedCombinations.has(`${productId}:${actionId}`)) return true;
+        if (cooldownCombinations.has(`${productId}:${actionId}`)) return true;
+        if (activeProductActions.has(productId)) return true;
+        return false;
       };
       
       // Helper function to find an unlocked product for a given action type

@@ -32,7 +32,8 @@ import {
   pendingApprovals,
   products,
   seoMeta,
-  automationSettings
+  automationSettings,
+  detectionStatus
 } from '@shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
@@ -45,6 +46,8 @@ import { checkAIToolCredits, consumeAIToolCredits } from '../credits';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from '../ai-cache';
 import { emitZyraActivity, type ZyraEventType } from '../zyra-event-emitter';
+import { actionDeduplicationGuard } from '../action-deduplication-guard';
+import { createActionLock, generateContentHash } from '../action-lock-service';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
@@ -184,6 +187,51 @@ export class MasterLoopController {
 
     try {
       // ============================
+      // PRE-CHECK: RULE 3 — No Loop-Based Re-execution
+      // Loops are for DETECTION, not automatic re-execution of old actions.
+      // Must verify that NEW problems exist before proceeding.
+      // ============================
+      const newProblemsCheck = await actionDeduplicationGuard.hasNewProblems(userId);
+      
+      this.addActivity(userId, {
+        phase: 'detect',
+        message: newProblemsCheck.hasNewIssues
+          ? `${newProblemsCheck.newIssueCount} new issue(s) detected — proceeding with cycle`
+          : 'No new problems detected — all products are stable',
+        status: newProblemsCheck.hasNewIssues ? 'in_progress' : 'completed',
+        details: newProblemsCheck.reason,
+      });
+
+      // RULE 3: If no new problems exist, ZYRA does nothing. Silence is valid.
+      if (!newProblemsCheck.hasNewIssues && state.cycleCount > 0) {
+        state.phase = 'idle';
+        this.loopStates.set(userId, state);
+
+        console.log(`🛡️ [Master Loop] RULE 3: No new problems — cycle skipped. Silence is a valid outcome.`);
+
+        return {
+          success: true,
+          phase: 'idle',
+          detected: {
+            situation: state.situation,
+            actionsAvailable: 0,
+            actionsSkipped: 0,
+          },
+          decided: {
+            action: null,
+            reason: actionDeduplicationGuard.getNoActionMessage('store'),
+            requiresApproval: false,
+          },
+          executed: null,
+          proved: null,
+          learned: null,
+          cycleTimeMs: Date.now() - startTime,
+          nextAction: null,
+          error: null,
+        };
+      }
+
+      // ============================
       // PHASE 1: DETECT
       // ============================
       state.phase = 'detect';
@@ -222,14 +270,19 @@ export class MasterLoopController {
       const nextAction = prioritySequencingEngine.getNextAction(state.actionPool);
       
       if (!nextAction) {
+        // RULE 10: User-facing "no action needed" message
+        const noActionMsg = actionDeduplicationGuard.getNoActionMessage('store');
+        
         this.addActivity(userId, {
           phase: 'decide',
-          message: 'No actions available to execute',
+          message: noActionMsg,
           status: 'completed',
         });
 
         state.phase = 'idle';
         this.loopStates.set(userId, state);
+
+        console.log(`🛡️ [Master Loop] RULE 5/10: ${noActionMsg}`);
 
         return {
           success: true,
@@ -241,7 +294,7 @@ export class MasterLoopController {
           },
           decided: {
             action: null,
-            reason: 'No actions available matching plan permissions and store situation',
+            reason: noActionMsg,
             requiresApproval: false,
           },
           executed: null,
@@ -303,6 +356,115 @@ export class MasterLoopController {
       // PHASE 3: EXECUTE
       // ============================
       state.phase = 'execute';
+
+      // ============================
+      // DEDUP GUARD: RULE 1, 2, 7, 8 — Validate action before execution
+      // Resolve the ACTUAL target entity from the detection status (not an arbitrary product)
+      // ============================
+      const db = requireDb();
+      
+      // Get the target product from the latest detection result for this user
+      const [latestDetection] = await db
+        .select()
+        .from(detectionStatus)
+        .where(eq(detectionStatus.userId, userId))
+        .orderBy(desc(detectionStatus.updatedAt))
+        .limit(1);
+      
+      const detectedProductId = latestDetection?.data && typeof latestDetection.data === 'object' 
+        ? (latestDetection.data as any).productId 
+        : null;
+
+      // Resolve the actual target product from detection data
+      let targetProduct: any = null;
+      if (detectedProductId) {
+        const [detected] = await db
+          .select()
+          .from(products)
+          .where(and(eq(products.id, detectedProductId), eq(products.userId, userId)))
+          .limit(1);
+        targetProduct = detected;
+      }
+
+      // If no target product was identified by detection, block execution
+      // RULE 6: Sequential execution requires a specific target, not an arbitrary one
+      if (!targetProduct) {
+        const noTargetMsg = 'No specific target product identified by detection engine — cannot validate deduplication safely';
+        this.addActivity(userId, {
+          phase: 'execute',
+          message: noTargetMsg,
+          status: 'warning',
+          actionName: nextAction.action.name,
+        });
+        console.log(`🛡️ [Dedup Guard] BLOCKED: ${noTargetMsg}`);
+
+        state.phase = 'idle';
+        this.loopStates.set(userId, state);
+
+        return {
+          success: true,
+          phase: 'idle',
+          detected: {
+            situation: state.situation,
+            actionsAvailable: state.actionPool.totalAvailable,
+            actionsSkipped: state.actionPool.totalSkipped,
+          },
+          decided: {
+            action: nextAction.action.name,
+            reason: noTargetMsg,
+            requiresApproval: false,
+          },
+          executed: null,
+          proved: null,
+          learned: null,
+          cycleTimeMs: Date.now() - startTime,
+          nextAction: null,
+          error: null,
+        };
+      }
+
+      {
+        const guardDecision = await actionDeduplicationGuard.validateAction(
+          userId,
+          'product',
+          targetProduct.id,
+          nextAction.action.id
+        );
+
+        if (!guardDecision.allowed) {
+          this.addActivity(userId, {
+            phase: 'execute',
+            message: `Blocked: ${guardDecision.reason}`,
+            status: 'warning',
+            actionName: nextAction.action.name,
+            details: `Rule: ${guardDecision.ruleTriggered}`,
+          });
+
+          state.phase = 'idle';
+          this.loopStates.set(userId, state);
+
+          return {
+            success: true,
+            phase: 'idle',
+            detected: {
+              situation: state.situation,
+              actionsAvailable: state.actionPool.totalAvailable,
+              actionsSkipped: state.actionPool.totalSkipped,
+            },
+            decided: {
+              action: nextAction.action.name,
+              reason: guardDecision.reason,
+              requiresApproval: false,
+            },
+            executed: null,
+            proved: null,
+            learned: null,
+            cycleTimeMs: Date.now() - startTime,
+            nextAction: null,
+            error: null,
+          };
+        }
+      }
       
       // Capture baseline before execution
       state.baselineMetrics = await kpiMonitor.captureBaseline(userId);
@@ -588,6 +750,28 @@ export class MasterLoopController {
           },
         })
         .where(eq(autonomousActions.id, actionRecord.id));
+
+      // RULE 1: Create action lock after successful execution
+      // This prevents the same action from being repeated on the same product
+      if (product) {
+        const contentHash = generateContentHash({
+          name: product.name,
+          description: product.description,
+          price: product.price,
+        });
+
+        await createActionLock(
+          userId,
+          'product',
+          product.id,
+          action.id as any,
+          'fast',
+          action.creditsRequired,
+          contentHash
+        );
+
+        console.log(`🔒 [Master Loop] Action LOCKED: ${action.id} on product ${product.name}`);
+      }
 
       return {
         success: true,
@@ -921,7 +1105,7 @@ Be concise and specific.`;
         and(
           eq(autonomousActions.userId, userId),
           eq(autonomousActions.status, 'completed'),
-          sql`${autonomousActions.executedAt} < NOW() - INTERVAL '4 hours'`
+          sql`${autonomousActions.completedAt} < NOW() - INTERVAL '4 hours'`
         )
       )
       .limit(10);
@@ -932,7 +1116,8 @@ Be concise and specific.`;
     for (const action of pendingActions) {
       try {
         // Measure current impact
-        const impactResult = await kpiMonitor.measureImpact(userId, action.id);
+        const baselineMetrics = await kpiMonitor.captureBaseline(userId);
+        const impactResult = await kpiMonitor.measureImpact(userId, action.id, baselineMetrics);
 
         if (impactResult.rollbackRecommended && state?.permissions?.rollbackEnabled) {
           console.log(`⚠️ [Master Loop] Rollback recommended for action ${action.id}`);
