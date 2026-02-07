@@ -1,0 +1,187 @@
+ROLE:
+You are fixing contrast, hierarchy, and visual clarity on the
+Notifications & Channels settings page in ZYRA.
+
+The layout is correct.
+The logic is correct.
+ONLY color, depth, and emphasis need fixing.
+
+DO NOT redesign.
+DO NOT move components.
+DO NOT change text.
+ONLY improve visibility.
+
+--------------------------------------------------
+ROOT PROBLEMS
+--------------------------------------------------
+• All cards look identical
+• Channels and categories blend together
+• Toggles and inputs do not stand out
+• Quick Presets lack visual priority
+• Lists feel flat and hard to scan
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+SECTION DEPTH SYSTEM
+--------------------------------------------------
+
+LAYER 1 — SECTION WRAPPERS
+Used for:
+• Quick Presets
+• Primary Notification Channels
+• Notification Channels list
+
+Background: #121833
+Border-radius: 16px
+Shadow: 0 8px 32px rgba(0,0,0,0.45)
+
+--------------------------------------------------
+QUICK PRESETS (TOP PRIORITY)
+--------------------------------------------------
+
+Preset Cards:
+Background: #161C36
+Border-radius: 14px
+Shadow: 0 6px 24px rgba(0,0,0,0.4)
+
+Selected Preset:
+Background: linear-gradient(135deg, #0E3B44, #122B3A)
+Glow: 0 0 0 1px rgba(0,240,255,0.35)
+
+Preset Icons:
+• Work Mode → #00F0FF
+• Focus Mode → #A78BFA
+• Full Alerts → #22C55E
+
+Preset Title:
+#E6F7FF
+
+Preset Description:
+#A9B4E5
+
+--------------------------------------------------
+TAB / FILTER BAR
+--------------------------------------------------
+
+Active Tab:
+Text: #E6F7FF
+Bottom indicator: #00F0FF
+
+Inactive Tab:
+Text: #7C86B8
+
+Divider line:
+rgba(255,255,255,0.06)
+
+--------------------------------------------------
+PRIMARY NOTIFICATION CHANNELS
+--------------------------------------------------
+
+Channel Cards:
+Background: #131A33
+Shadow: 0 6px 24px rgba(0,0,0,0.45)
+Border-radius: 14px
+
+LEFT ACCENT BAR BY CHANNEL:
+• Email → #00F0FF
+• In-App → #22C55E
+• SMS → #F59E0B
+• Push → #3B82F6
+
+Accent width:
+3px
+
+--------------------------------------------------
+INPUTS & TOGGLES
+--------------------------------------------------
+
+Input Background:
+#0F152B
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Focus:
+Border-color: #00F0FF
+Glow: 0 0 0 1px rgba(0,240,255,0.35)
+
+Toggle ON:
+Track: #00F0FF
+Knob: #E6F7FF
+
+Toggle OFF:
+Track: #2A2F45
+Knob: #9AA6D6
+
+--------------------------------------------------
+NOTIFICATION CHANNELS LIST (BOTTOM SECTION)
+--------------------------------------------------
+
+List Item Cards:
+Background: #0F152B
+Border-radius: 12px
+Shadow: inset 0 0 0 1px rgba(255,255,255,0.04)
+
+Hover:
+Background: #141C3F
+
+CATEGORY COLOR CODING:
+• Campaigns → #00F0FF
+• Products → #A78BFA
+• Billing → #22C55E
+• Security → #EF4444
+• AI Insights → #06B6D4
+• System → #F59E0B
+
+Category Badge:
+Background: rgba(color, 0.15)
+Text: color
+
+--------------------------------------------------
+ICON VISIBILITY FIX
+--------------------------------------------------
+
+Icons:
+Do NOT use gray.
+Use category accent color at 80% opacity.
+
+--------------------------------------------------
+TEXT HIERARCHY
+--------------------------------------------------
+
+Titles:
+#E6F7FF
+
+Descriptions:
+#A9B4E5
+
+Meta / Helper:
+#7C86B8
+
+Never reuse the same color for all text.
+
+--------------------------------------------------
+HARD UI RULES
+--------------------------------------------------
+
+• No white borders
+• No flat cards on flat background
+• Color must indicate meaning
+• Toggles and inputs must look interactive
+• Lists must be scannable in <2 seconds
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Presets stand out immediately
+• Channels are distinguishable at a glance
+• Active vs inactive states are obvious
+• Categories are color-coded and readable
+• Page feels structured, not flat

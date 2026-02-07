@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
-import { DashboardCard } from "@/components/ui/dashboard-card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
@@ -20,23 +18,14 @@ import ChannelMatrix from "@/components/notifications/ChannelMatrix";
 import FrequencyManager from "@/components/notifications/FrequencyManager";
 import QuietHoursBuilder from "@/components/notifications/QuietHoursBuilder";
 import PriorityFilter from "@/components/notifications/PriorityFilter";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-// Preset configurations
 const PRESETS = {
   work: {
     name: "Work Mode",
     description: "Essential notifications only during work hours",
     icon: Briefcase,
-    iconColor: "text-blue-400",
+    accentColor: '#00F0FF',
     settings: {
       enableQuietHours: true,
       quietHoursStart: "18:00",
@@ -51,7 +40,7 @@ const PRESETS = {
     name: "Focus Mode",
     description: "Critical alerts only, minimize distractions",
     icon: Target,
-    iconColor: "text-purple-400",
+    accentColor: '#A78BFA',
     settings: {
       enableQuietHours: false,
       minPriority: "high",
@@ -64,7 +53,7 @@ const PRESETS = {
     name: "Full Alerts",
     description: "Receive all notifications instantly",
     icon: Bell,
-    iconColor: "text-green-400",
+    accentColor: '#22C55E',
     settings: {
       enableQuietHours: false,
       minPriority: "low",
@@ -75,20 +64,42 @@ const PRESETS = {
   }
 };
 
+const CHANNEL_ACCENTS: Record<string, string> = {
+  email: '#00F0FF',
+  inapp: '#22C55E',
+  sms: '#F59E0B',
+  push: '#3B82F6',
+};
+
+const sectionStyle = {
+  background: '#121833',
+  borderRadius: '16px',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+};
+
+const channelCardStyle = {
+  background: '#131A33',
+  borderRadius: '14px',
+  boxShadow: '0 6px 24px rgba(0,0,0,0.45)',
+};
+
+const inputAreaStyle = {
+  background: '#0F152B',
+  border: '1px solid rgba(255,255,255,0.06)',
+  borderRadius: '12px',
+};
+
 export default function NotificationsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Channel verification state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
 
-  // Fetch user preferences
   const { data: preferences, isLoading: preferencesLoading } = useQuery<NotificationPreferences>({
     queryKey: ['/api/notification-preferences'],
   });
 
-  // Fetch notification channels
   const { data: channels = [], isLoading: channelsLoading } = useQuery<NotificationChannel[]>({
     queryKey: ['/api/notification-channels'],
   });
@@ -100,7 +111,6 @@ export default function NotificationsPage() {
   const emailEnabled = emailChannel?.enabled || false;
   const smsEnabled = smsChannel?.enabled || false;
 
-  // Apply preset mode mutation
   const applyPresetMutation = useMutation({
     mutationFn: async (preset: string) => {
       return apiRequest('POST', '/api/notification-preferences/preset', { preset });
@@ -121,7 +131,6 @@ export default function NotificationsPage() {
     },
   });
 
-  // Channel mutations
   const updateChannelMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       return apiRequest('PUT', `/api/notification-channels/${id}`, updates);
@@ -246,71 +255,101 @@ export default function NotificationsPage() {
       useHistoryBack={true}
     >
       {isLoading ? (
-        <DashboardCard>
+        <div className="p-4 sm:p-6" style={sectionStyle}>
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <span className="ml-3 text-muted-foreground">Loading notification settings...</span>
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#00F0FF' }} />
+            <span className="ml-3" style={{ color: '#A9B4E5' }}>Loading notification settings...</span>
           </div>
-        </DashboardCard>
+        </div>
       ) : (
         <>
           {/* Quick Preset Modes */}
-          <DashboardCard
-            title="Quick Presets"
-            description="Apply a preset configuration to quickly adjust all your notification settings"
-            testId="card-preset-modes"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 sm:p-5 md:p-6" style={sectionStyle} data-testid="card-preset-modes">
+            <div className="space-y-1 mb-5">
+              <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }} data-testid="text-presets-title">
+                Quick Presets
+              </h2>
+              <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                Apply a preset configuration to quickly adjust all your notification settings
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               {Object.entries(PRESETS).map(([key, preset]) => {
                 const isActive = currentPreset === key;
                 const IconComponent = preset.icon;
                 return (
-                  <button
+                  <Button
                     key={key}
+                    variant="outline"
                     onClick={() => handlePresetClick(key)}
                     disabled={applyPresetMutation.isPending}
-                    className={`
-                      relative p-6 rounded-lg border-2 transition-all text-left
-                      ${isActive 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border/30 bg-slate-800/30 hover:border/60'
-                      }
-                      ${applyPresetMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    `}
+                    className={`h-auto flex flex-col items-start text-left rounded-xl sm:rounded-2xl transition-all duration-300 toggle-elevate ${isActive ? 'toggle-elevated' : ''}`}
+                    style={{
+                      background: isActive
+                        ? 'linear-gradient(135deg, #0E3B44, #122B3A)'
+                        : '#161C36',
+                      boxShadow: isActive
+                        ? '0 0 0 1px rgba(0,240,255,0.35), 0 6px 24px rgba(0,0,0,0.4)'
+                        : '0 6px 24px rgba(0,0,0,0.4)',
+                      borderColor: isActive ? 'rgba(0,240,255,0.35)' : 'rgba(255,255,255,0.06)',
+                    }}
                     data-testid={`preset-${key}`}
                   >
-                    {isActive && (
-                      <div className="absolute top-3 right-3">
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
-                      </div>
-                    )}
-                    <div className="mb-3">
-                      <IconComponent className={`w-8 h-8 ${preset.iconColor}`} />
+                    <div className="flex items-center justify-between w-full mb-3">
+                      <IconComponent
+                        className="w-6 h-6 sm:w-7 sm:h-7"
+                        style={{ color: preset.accentColor }}
+                      />
+                      {isActive && (
+                        <CheckCircle2 className="w-5 h-5" style={{ color: '#00F0FF' }} />
+                      )}
                     </div>
-                    <h3 className="text-white font-semibold mb-1">{preset.name}</h3>
-                    <p className="text-sm text-slate-400">{preset.description}</p>
-                  </button>
+                    <h3 className="font-semibold text-sm sm:text-base" style={{ color: '#E6F7FF' }}>{preset.name}</h3>
+                    <p className="text-xs sm:text-sm mt-1" style={{ color: '#A9B4E5' }}>{preset.description}</p>
+                  </Button>
                 );
               })}
             </div>
-          </DashboardCard>
+          </div>
 
           {/* Main Settings Tabs */}
           <Tabs defaultValue="channels" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
-              <TabsTrigger value="channels" data-testid="tab-channels">
+            <TabsList
+              className="grid w-full grid-cols-4"
+              style={{
+                background: '#121833',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <TabsTrigger
+                value="channels"
+                className="data-[state=active]:text-[#E6F7FF] data-[state=inactive]:text-[#7C86B8]"
+                data-testid="tab-channels"
+              >
                 <Settings2 className="w-4 h-4 mr-2" />
                 Channels
               </TabsTrigger>
-              <TabsTrigger value="frequency" data-testid="tab-frequency">
+              <TabsTrigger
+                value="frequency"
+                className="data-[state=active]:text-[#E6F7FF] data-[state=inactive]:text-[#7C86B8]"
+                data-testid="tab-frequency"
+              >
                 <Zap className="w-4 h-4 mr-2" />
                 Frequency
               </TabsTrigger>
-              <TabsTrigger value="quiet-hours" data-testid="tab-quiet-hours">
+              <TabsTrigger
+                value="quiet-hours"
+                className="data-[state=active]:text-[#E6F7FF] data-[state=inactive]:text-[#7C86B8]"
+                data-testid="tab-quiet-hours"
+              >
                 <Moon className="w-4 h-4 mr-2" />
                 Quiet Hours
               </TabsTrigger>
-              <TabsTrigger value="filters" data-testid="tab-filters">
+              <TabsTrigger
+                value="filters"
+                className="data-[state=active]:text-[#E6F7FF] data-[state=inactive]:text-[#7C86B8]"
+                data-testid="tab-filters"
+              >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </TabsTrigger>
@@ -318,200 +357,252 @@ export default function NotificationsPage() {
 
             <TabsContent value="channels" className="space-y-6">
               {/* Primary Channels */}
-              <DashboardCard
-                title="Primary Notification Channels"
-                description="Enable or disable notification channels. You'll need to verify your contact information for email and SMS."
-                testId="card-primary-channels"
-              >
-                <div className="space-y-6">
-                  {/* Email */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <div className="p-2 rounded-lg bg-slate-800/50">
-                          <Mail className="w-5 h-5 text-blue-400" />
+              <div className="p-4 sm:p-5 md:p-6" style={sectionStyle} data-testid="card-primary-channels">
+                <div className="space-y-1 mb-5">
+                  <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }} data-testid="text-channels-title">
+                    Primary Notification Channels
+                  </h2>
+                  <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                    Enable or disable notification channels. You'll need to verify your contact information for email and SMS.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  {/* Email Channel */}
+                  <div
+                    className="relative overflow-hidden p-4"
+                    style={channelCardStyle}
+                    data-testid="channel-email"
+                  >
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ backgroundColor: CHANNEL_ACCENTS.email }}
+                    />
+                    <div className="pl-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="p-2 rounded-lg" style={{ background: 'rgba(0,240,255,0.1)' }}>
+                            <Mail className="w-5 h-5" style={{ color: CHANNEL_ACCENTS.email }} />
+                          </div>
+                          <div className="space-y-1 flex-1">
+                            <Label className="font-medium" style={{ color: '#E6F7FF' }}>Email Notifications</Label>
+                            <p className="text-sm" style={{ color: '#A9B4E5' }}>
+                              {hasEmail 
+                                ? `Configured: ${emailChannel?.channelValue}` 
+                                : 'Receive updates via email'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="space-y-1 flex-1">
-                          <Label className="text-white font-medium">Email Notifications</Label>
-                          <p className="text-sm text-slate-400">
-                            {hasEmail 
-                              ? `Configured: ${emailChannel?.channelValue}` 
-                              : 'Receive updates via email'}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {!hasEmail && (
+                            <Badge variant="outline" className="text-xs" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#F59E0B' }}>
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Setup Required
+                            </Badge>
+                          )}
+                          <Switch
+                            checked={hasEmail && emailEnabled}
+                            onCheckedChange={handleEmailToggle}
+                            className="data-[state=checked]:bg-[#00F0FF]"
+                            data-testid="switch-email-notifications"
+                          />
+                        </div>
+                      </div>
+                      
+                      {!hasEmail && (
+                        <div className="mt-3 space-y-2 p-3" style={inputAreaStyle}>
+                          <Label htmlFor="email" className="text-sm" style={{ color: '#A9B4E5' }}>Email Address</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="your.email@example.com"
+                              value={emailAddress}
+                              onChange={(e) => setEmailAddress(e.target.value)}
+                              data-testid="input-email-address"
+                              className="flex-1 focus:ring-1 focus:ring-[#00F0FF]/35 focus:border-[#00F0FF]"
+                              style={{ background: '#0B0E1A', border: '1px solid rgba(255,255,255,0.06)', color: '#E6F7FF' }}
+                            />
+                            <Button
+                              onClick={handleEmailVerify}
+                              disabled={createChannelMutation.isPending || !emailAddress}
+                              data-testid="button-save-email"
+                              className="border-0 font-semibold"
+                              style={{
+                                background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
+                                color: '#04141C',
+                              }}
+                            >
+                              {createChannelMutation.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save'
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* In-App Channel */}
+                  <div
+                    className="relative overflow-hidden p-4"
+                    style={channelCardStyle}
+                    data-testid="channel-inapp"
+                  >
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ backgroundColor: CHANNEL_ACCENTS.inapp }}
+                    />
+                    <div className="pl-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg" style={{ background: 'rgba(34,197,94,0.1)' }}>
+                            <Monitor className="w-5 h-5" style={{ color: CHANNEL_ACCENTS.inapp }} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="font-medium" style={{ color: '#E6F7FF' }}>In-App Notifications</Label>
+                            <p className="text-sm" style={{ color: '#A9B4E5' }}>See alerts within the dashboard</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className="text-xs" style={{ background: 'rgba(34,197,94,0.15)', color: '#22C55E', border: 'none' }}>
+                            Always Active
+                          </Badge>
+                          <Switch
+                            checked={true}
+                            disabled
+                            className="data-[state=checked]:bg-[#00F0FF]"
+                            data-testid="switch-inapp-notifications"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SMS Channel */}
+                  <div
+                    className="relative overflow-hidden p-4"
+                    style={channelCardStyle}
+                    data-testid="channel-sms"
+                  >
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ backgroundColor: CHANNEL_ACCENTS.sms }}
+                    />
+                    <div className="pl-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="p-2 rounded-lg" style={{ background: 'rgba(245,158,11,0.1)' }}>
+                            <MessageSquare className="w-5 h-5" style={{ color: CHANNEL_ACCENTS.sms }} />
+                          </div>
+                          <div className="space-y-1 flex-1">
+                            <Label className="font-medium" style={{ color: '#E6F7FF' }}>SMS Alerts</Label>
+                            <p className="text-sm" style={{ color: '#A9B4E5' }}>
+                              {hasSMS 
+                                ? `Configured: ${smsChannel?.channelValue}` 
+                                : 'Critical alerts via text message'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {!hasSMS && (
+                            <Badge variant="outline" className="text-xs" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#F59E0B' }}>
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Setup Required
+                            </Badge>
+                          )}
+                          <Switch
+                            checked={hasSMS && smsEnabled}
+                            onCheckedChange={handleSMSToggle}
+                            className="data-[state=checked]:bg-[#00F0FF]"
+                            data-testid="switch-sms-notifications"
+                          />
+                        </div>
+                      </div>
+                      
+                      {!hasSMS && (
+                        <div className="mt-3 space-y-2 p-3" style={inputAreaStyle}>
+                          <Label htmlFor="phone" className="text-sm" style={{ color: '#A9B4E5' }}>Phone Number</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="phone"
+                              type="tel"
+                              placeholder="+1 (555) 123-4567"
+                              value={phoneNumber}
+                              onChange={(e) => setPhoneNumber(e.target.value)}
+                              data-testid="input-phone-number"
+                              className="flex-1 focus:ring-1 focus:ring-[#00F0FF]/35 focus:border-[#00F0FF]"
+                              style={{ background: '#0B0E1A', border: '1px solid rgba(255,255,255,0.06)', color: '#E6F7FF' }}
+                            />
+                            <Button
+                              onClick={handleSMSVerify}
+                              disabled={createChannelMutation.isPending || !phoneNumber}
+                              data-testid="button-save-phone"
+                              className="border-0 font-semibold"
+                              style={{
+                                background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
+                                color: '#04141C',
+                              }}
+                            >
+                              {createChannelMutation.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save'
+                              )}
+                            </Button>
+                          </div>
+                          <p className="text-xs" style={{ color: '#7C86B8' }}>
+                            Include country code (e.g., +1 for US)
                           </p>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!hasEmail && (
-                          <Badge variant="outline" className="text-xs">
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                            Setup Required
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Push Channel */}
+                  <div
+                    className="relative overflow-hidden p-4"
+                    style={channelCardStyle}
+                    data-testid="channel-push"
+                  >
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ backgroundColor: CHANNEL_ACCENTS.push }}
+                    />
+                    <div className="pl-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg" style={{ background: 'rgba(59,130,246,0.1)' }}>
+                            <Smartphone className="w-5 h-5" style={{ color: CHANNEL_ACCENTS.push }} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="font-medium" style={{ color: '#E6F7FF' }}>Push Notifications</Label>
+                            <p className="text-sm" style={{ color: '#A9B4E5' }}>Mobile and browser push alerts</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className="text-xs" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6', border: 'none' }}>
+                            Coming Soon
                           </Badge>
-                        )}
-                        <Switch
-                          checked={hasEmail && emailEnabled}
-                          onCheckedChange={handleEmailToggle}
-                          className="data-[state=checked]:bg-primary"
-                          data-testid="switch-email-notifications"
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Inline Email Input - Show when not configured */}
-                    {!hasEmail && (
-                      <div className="ml-14 space-y-2 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
-                        <Label htmlFor="email" className="text-sm text-slate-300">Email Address</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="your.email@example.com"
-                            value={emailAddress}
-                            onChange={(e) => setEmailAddress(e.target.value)}
-                            data-testid="input-email-address"
-                            className="flex-1"
+                          <Switch
+                            checked={false}
+                            disabled
+                            className="data-[state=checked]:bg-[#00F0FF]"
+                            data-testid="switch-push-notifications"
                           />
-                          <Button
-                            onClick={handleEmailVerify}
-                            disabled={createChannelMutation.isPending || !emailAddress}
-                            data-testid="button-save-email"
-                          >
-                            {createChannelMutation.isPending ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              'Save'
-                            )}
-                          </Button>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  <Separator className="bg-slate-700" />
-
-                  {/* In-App (Always Available) */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-slate-800/50">
-                        <Monitor className="w-5 h-5 text-purple-400" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-white font-medium">In-App Notifications</Label>
-                        <p className="text-sm text-slate-400">See alerts within the dashboard</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-green-500/20 text-green-400 text-xs">
-                        Always Active
-                      </Badge>
-                      <Switch
-                        checked={true}
-                        disabled
-                        className="data-[state=checked]:bg-primary"
-                        data-testid="switch-inapp-notifications"
-                      />
-                    </div>
-                  </div>
-
-                  <Separator className="bg-slate-700" />
-
-                  {/* SMS */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 flex-1">
-                        <div className="p-2 rounded-lg bg-slate-800/50">
-                          <MessageSquare className="w-5 h-5 text-green-400" />
-                        </div>
-                        <div className="space-y-1 flex-1">
-                          <Label className="text-white font-medium">SMS Alerts</Label>
-                          <p className="text-sm text-slate-400">
-                            {hasSMS 
-                              ? `Configured: ${smsChannel?.channelValue}` 
-                              : 'Critical alerts via text message'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!hasSMS && (
-                          <Badge variant="outline" className="text-xs">
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                            Setup Required
-                          </Badge>
-                        )}
-                        <Switch
-                          checked={hasSMS && smsEnabled}
-                          onCheckedChange={handleSMSToggle}
-                          className="data-[state=checked]:bg-primary"
-                          data-testid="switch-sms-notifications"
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Inline SMS Input - Show when not configured */}
-                    {!hasSMS && (
-                      <div className="ml-14 space-y-2 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
-                        <Label htmlFor="phone" className="text-sm text-slate-300">Phone Number</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="phone"
-                            type="tel"
-                            placeholder="+1 (555) 123-4567"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            data-testid="input-phone-number"
-                            className="flex-1"
-                          />
-                          <Button
-                            onClick={handleSMSVerify}
-                            disabled={createChannelMutation.isPending || !phoneNumber}
-                            data-testid="button-save-phone"
-                          >
-                            {createChannelMutation.isPending ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              'Save'
-                            )}
-                          </Button>
-                        </div>
-                        <p className="text-xs text-slate-400">
-                          Include country code (e.g., +1 for US)
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator className="bg-slate-700" />
-
-                  {/* Push (Coming Soon) */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-slate-800/50">
-                        <Smartphone className="w-5 h-5 text-orange-400" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-white font-medium">Push Notifications</Label>
-                        <p className="text-sm text-slate-400">Mobile and browser push alerts</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 text-xs">
-                        Coming Soon
-                      </Badge>
-                      <Switch
-                        checked={false}
-                        disabled
-                        className="data-[state=checked]:bg-primary"
-                        data-testid="switch-push-notifications"
-                      />
                     </div>
                   </div>
                 </div>
-              </DashboardCard>
+              </div>
 
               {/* Channel Matrix */}
               <ChannelMatrix />
