@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowRight, Check, X, Shield, Lock, TrendingUp,
+  ArrowRight, Check, Shield, Lock, TrendingUp,
   Zap, Activity, BarChart3, Eye, RefreshCcw, Cpu
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
@@ -39,16 +39,6 @@ export default function Pricing() {
       });
     }
   };
-
-  const comparisonFeatures = [
-    { name: "Detect revenue leaks", starter: true, growth: true, pro: true },
-    { name: "Foundation actions", starter: true, growth: true, pro: true },
-    { name: "Growth actions", starter: false, growth: true, pro: true },
-    { name: "Guard & risk freeze", starter: false, growth: false, pro: true },
-    { name: "Auto rollback", starter: "Critical only", growth: "On KPI drops", pro: "Any anomaly" },
-    { name: "Competitive Intelligence", starter: "Limited", growth: "With approval", pro: "Full access" },
-    { name: "Store-specific learning", starter: "Read-only", growth: true, pro: "Segment-level" },
-  ];
 
   return (
     <div className="min-h-screen bg-[#0a0a1a]">
@@ -489,58 +479,164 @@ export default function Pricing() {
         </section>
 
         {/* ============================================================
-            SECTION 4: FEATURE COMPARISON TABLE
+            SECTION 4: CONTROL LEVEL CARDS
             ============================================================ */}
         <section id="comparison" className="py-16 px-4 sm:px-6 border-t border-primary/10">
-          <div className="container mx-auto max-w-4xl">
+          <div className="container mx-auto max-w-5xl">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold mb-3" data-testid="text-section-comparison">
-                Compare control levels
+                Compare Control Levels
               </h2>
-              <p className="text-muted-foreground">
-                See exactly what each plan allows Zyra to do.
+              <p className="text-muted-foreground max-w-lg mx-auto">
+                See exactly what Zyra is allowed to fix, optimize, and protect
+                at each level of control.
               </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse" data-testid="comparison-table">
-                <thead>
-                  <tr className="border-b border-primary/20">
-                    <th className="text-left py-4 px-4 font-medium text-sm">Capability</th>
-                    <th className="text-center py-4 px-4 font-medium text-sm text-blue-300">Starter</th>
-                    <th className="text-center py-4 px-4 font-medium text-sm text-primary bg-primary/5 border-x border-primary/15">Growth</th>
-                    <th className="text-center py-4 px-4 font-medium text-sm text-amber-300">Pro</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonFeatures.map((feature, idx) => (
-                    <tr key={idx} className="border-b border-primary/10">
-                      <td className="py-4 px-4 text-sm">{feature.name}</td>
-                      <td className="text-center py-4 px-4">
-                        {typeof feature.starter === 'boolean' ? (
-                          feature.starter ? <Check className="w-5 h-5 text-blue-400 mx-auto" /> : <X className="w-5 h-5 text-muted-foreground/40 mx-auto" />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">{feature.starter}</span>
-                        )}
-                      </td>
-                      <td className="text-center py-4 px-4 bg-primary/5 border-x border-primary/15">
-                        {typeof feature.growth === 'boolean' ? (
-                          feature.growth ? <Check className="w-5 h-5 text-primary mx-auto" /> : <X className="w-5 h-5 text-muted-foreground/40 mx-auto" />
-                        ) : (
-                          <span className="text-xs text-primary">{feature.growth}</span>
-                        )}
-                      </td>
-                      <td className="text-center py-4 px-4">
-                        {typeof feature.pro === 'boolean' ? (
-                          feature.pro ? <Check className="w-5 h-5 text-amber-400 mx-auto" /> : <X className="w-5 h-5 text-muted-foreground/40 mx-auto" />
-                        ) : (
-                          <span className="text-xs text-amber-300">{feature.pro}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+              {/* ── STARTER CARD ── */}
+              <Card className="glass-card border-blue-500/20 hover-elevate transition-all duration-300" data-testid="control-card-starter">
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="mb-5">
+                    <div className="w-11 h-11 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                      <Shield className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-blue-300" data-testid="text-control-name-starter">Starter</h3>
+                    <span className="text-xs text-blue-400/70 tracking-wide uppercase font-medium">Conservative Control</span>
+                  </div>
+
+                  <div className="border-t border-blue-500/10 pt-4 mb-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Core Permissions</p>
+                    <ul className="space-y-2.5">
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Detect revenue leaks</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Run foundation actions</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Limited Competitive Intelligence</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-blue-500/10 pt-4 mb-5 flex-1">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Safety & Automation</p>
+                    <ul className="space-y-2.5">
+                      <li className="text-sm text-muted-foreground/70">Growth actions — <span className="text-muted-foreground/40">Not allowed</span></li>
+                      <li className="text-sm text-muted-foreground/70">Guard & risk freeze — <span className="text-muted-foreground/40">Not allowed</span></li>
+                      <li className="text-sm text-muted-foreground/70">Auto rollback — <span className="text-blue-400/80">Critical failures only</span></li>
+                      <li className="text-sm text-muted-foreground/70">Store learning — <span className="text-blue-400/80">Read-only</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-blue-500/10 pt-4">
+                    <p className="text-xs text-blue-300/60 text-center font-medium tracking-wide" data-testid="text-control-summary-starter">
+                      Safe fixes only. No aggressive automation.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* ── GROWTH CARD ── */}
+              <Card className="glass-card border-primary/30 shadow-[0_0_25px_rgba(0,240,255,0.08)] hover-elevate transition-all duration-300 relative" data-testid="control-card-growth">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-primary/20 text-primary border border-primary/30 text-xs px-3 py-0.5">Most Popular</Badge>
+                </div>
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="mb-5">
+                    <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold text-primary" data-testid="text-control-name-growth">Growth</h3>
+                    <span className="text-xs text-primary/70 tracking-wide uppercase font-medium">Revenue Optimization</span>
+                  </div>
+
+                  <div className="border-t border-primary/15 pt-4 mb-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Core Permissions</p>
+                    <ul className="space-y-2.5">
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Detect revenue leaks</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Foundation + growth actions</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Competitive Intelligence with approval</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-primary/15 pt-4 mb-5 flex-1">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Safety & Automation</p>
+                    <ul className="space-y-2.5">
+                      <li className="text-sm text-muted-foreground/70">Guard & risk freeze — <span className="text-muted-foreground/40">Not enabled</span></li>
+                      <li className="text-sm text-muted-foreground/70">Auto rollback — <span className="text-primary/80">On KPI drops</span></li>
+                      <li className="text-sm text-muted-foreground/70">Store learning — <span className="text-primary/80">Enabled</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-primary/15 pt-4">
+                    <p className="text-xs text-primary/60 text-center font-medium tracking-wide" data-testid="text-control-summary-growth">
+                      Optimizes revenue with human approval.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* ── PRO CARD ── */}
+              <Card className="glass-card border-amber-500/25 shadow-[0_0_30px_rgba(245,158,11,0.07)] hover-elevate transition-all duration-300" data-testid="control-card-pro">
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="mb-5">
+                    <div className="w-11 h-11 rounded-lg bg-amber-500/10 flex items-center justify-center mb-4">
+                      <Lock className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-amber-300" data-testid="text-control-name-pro">Pro</h3>
+                    <span className="text-xs text-amber-400/70 tracking-wide uppercase font-medium">Revenue Protection System</span>
+                  </div>
+
+                  <div className="border-t border-amber-500/10 pt-4 mb-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Core Permissions</p>
+                    <ul className="space-y-2.5">
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">All foundation + growth actions</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Full Competitive Intelligence</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Guard & risk freeze enabled</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-amber-500/10 pt-4 mb-5 flex-1">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Safety & Automation</p>
+                    <ul className="space-y-2.5">
+                      <li className="text-sm text-muted-foreground/70">Auto rollback — <span className="text-amber-400/80">Any anomaly</span></li>
+                      <li className="text-sm text-muted-foreground/70">Store learning — <span className="text-amber-400/80">Segment-level intelligence</span></li>
+                      <li className="text-sm text-muted-foreground/70">Risk freeze — <span className="text-amber-400/80">Automatic</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-amber-500/10 pt-4">
+                    <p className="text-xs text-amber-300/60 text-center font-medium tracking-wide" data-testid="text-control-summary-pro">
+                      Autonomous protection with intelligent safeguards.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
             </div>
           </div>
         </section>
