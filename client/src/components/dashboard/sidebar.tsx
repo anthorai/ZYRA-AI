@@ -189,28 +189,26 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Close button - visible on all screen sizes */}
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-            data-testid="button-close-sidebar"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
         <div className="px-3 pt-5 pb-4 relative z-10">
-          {/* Logo */}
-          <div className="flex items-center space-x-3 mb-5 px-3" data-testid="sidebar-logo">
-            <img 
-              src={zyraLogo} 
-              alt="Zyra AI Logo" 
-              className="w-9 h-9 rounded-lg"
-            />
-            <span className="text-lg font-bold text-foreground">Zyra AI</span>
+          {/* Logo row with close button */}
+          <div className="flex items-center justify-between gap-2 mb-5 px-3" data-testid="sidebar-logo">
+            <div className="flex items-center space-x-3">
+              <img 
+                src={zyraLogo} 
+                alt="Zyra AI Logo" 
+                className="w-9 h-9 rounded-lg"
+              />
+              <span className="text-lg font-bold text-foreground">Zyra AI</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground"
+              data-testid="button-close-sidebar"
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
 
           {/* Navigation */}
@@ -236,7 +234,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
         </div>
 
         {/* Navigation Header Style User Profile */}
-        <div className="bottom-0 left-0 right-0 px-3 py-2 border-t border-primary/20 relative z-10 mt-[136px] mb-[136px]">
+        <div className="absolute bottom-0 left-0 right-0 px-3 py-2 border-t border-primary/20 z-10">
           <div className="flex items-center justify-between space-x-3" data-testid="user-profile">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <Avatar className="h-10 w-10 flex-shrink-0">
