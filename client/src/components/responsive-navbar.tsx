@@ -278,7 +278,9 @@ export default function ResponsiveNavbar({
         "fixed top-0 w-full z-50 transition-all duration-300 ease-in-out",
         scrollAware && isScrolled
           ? "py-2 px-4"
-          : "bg-black/20 backdrop-blur-md border-b border-primary/20",
+          : scrollAware
+            ? "bg-black/20 backdrop-blur-md"
+            : "bg-black/20 backdrop-blur-md border-b border-primary/20",
         className
       )}
     >
