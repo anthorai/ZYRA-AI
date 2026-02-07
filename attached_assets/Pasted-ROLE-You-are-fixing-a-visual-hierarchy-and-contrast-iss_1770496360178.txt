@@ -1,0 +1,174 @@
+ROLE:
+You are fixing a visual hierarchy and contrast issue on ZYRA’s
+Settings / Preferences page.
+
+The layout, spacing, and content are correct.
+Only COLOR, DEPTH, and VISUAL PRIORITY must be improved.
+
+DO NOT redesign.
+DO NOT change layout.
+ONLY adjust backgrounds, shadows, borders, and accent usage.
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• All setting cards look identical
+• Section purpose is not visually obvious
+• CTAs blend into card background
+• Footer status bar blends with cards
+• No depth separation between page layers
+
+--------------------------------------------------
+DEFINE DEPTH LAYERS (MANDATORY)
+--------------------------------------------------
+
+LAYER 0 — PAGE BACKGROUND
+Background: #0B0E1A
+
+LAYER 1 — PAGE WRAPPER / SECTION AREA
+Background: transparent
+Padding only (no border)
+
+LAYER 2 — SETTING CARDS (PRIMARY)
+Background: #131A33
+Shadow: 0 8px 32px rgba(0,0,0,0.45)
+Border-radius: 16px
+
+Use for:
+• Profile & Account
+• Subscription & Billing
+• Preferences
+• Notifications
+• Integrations
+• Security
+• Support
+
+LAYER 3 — STATUS / SUMMARY STRIP
+Background: #0F1C2E
+Border-top: 1px solid rgba(255,255,255,0.06)
+
+Use for:
+• Connected stores
+• Active integrations
+• Unsecured / warnings
+• Account configuration summary
+
+--------------------------------------------------
+SETTING CARD DIFFERENTIATION (IMPORTANT)
+--------------------------------------------------
+
+Each card must have a LEFT ACCENT BAR to indicate category.
+
+Profile & Account:
+Accent: #00F0FF
+
+Subscription & Billing:
+Accent: #A78BFA
+
+Preferences:
+Accent: #22C55E
+
+Notifications:
+Accent: #F59E0B
+
+Integrations:
+Accent: #3B82F6
+
+Security:
+Accent: #EF4444
+
+Support & Resources:
+Accent: #06B6D4
+
+Accent bar:
+Width: 3px
+Border-radius: 2px
+
+--------------------------------------------------
+CARD TEXT HIERARCHY
+--------------------------------------------------
+
+Card Title:
+Color: #E6F7FF
+Font-weight: 600
+
+Card Description:
+Color: #A9B4E5
+
+Meta / Helper Text:
+Color: #7C86B8
+
+RULE:
+Never use the same color for all text levels.
+
+--------------------------------------------------
+PRIMARY CTA BUTTONS (CRITICAL FIX)
+--------------------------------------------------
+
+Buttons inside cards:
+Background: linear-gradient(135deg, #00F0FF, #00FFE5)
+Text color: #04141C
+Font-weight: 600
+Shadow: 0 6px 20px rgba(0,240,255,0.45)
+
+Hover:
+Glow increase + slight lift
+
+RULE:
+CTA must visually dominate its card.
+
+--------------------------------------------------
+STATUS STRIP FIX (BOTTOM)
+--------------------------------------------------
+
+Connected:
+Icon: #22C55E
+Text: #9EFFC3
+
+Active:
+Icon: #00F0FF
+Text: #A5F3FC
+
+Unsecured:
+Icon: #EF4444
+Text: #FCA5A5
+
+Background: #0F1C2E
+Shadow: inset 0 1px 0 rgba(255,255,255,0.04)
+
+RULE:
+Status area must feel informational, not interactive.
+
+--------------------------------------------------
+ACCOUNT CONFIGURATION SUMMARY CARD
+--------------------------------------------------
+
+Background: linear-gradient(135deg, #0E3B44, #122B3A)
+Left accent bar: #00F0FF
+Text title: #E6F7FF
+Text body: #B6C2FF
+
+RULE:
+This card should feel like a “system status”, not a setting.
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No pure white borders
+• No same background on page + card
+• Accent colors must indicate meaning
+• Buttons must outshine cards
+• Depth > outlines
+• Status ≠ actions (visual separation required)
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Cards are distinguishable at a glance
+• Each category is visually unique
+• CTA buttons stand out immediately
+• Status strip is clearly separate
+• Page feels structured, not flat
