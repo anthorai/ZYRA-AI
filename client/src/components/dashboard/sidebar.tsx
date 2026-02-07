@@ -184,7 +184,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed left-0 top-0 w-64 h-full bg-black/20 backdrop-blur-md border-r border-border rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0",
+          "fixed left-0 top-0 w-64 h-full bg-gradient-to-b from-black/40 via-black/30 to-black/40 backdrop-blur-xl backdrop-saturate-150 border-r border-border rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
