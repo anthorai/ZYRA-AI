@@ -18,52 +18,95 @@ export function ShopifyConnectionGate({ readiness }: StoreConnectionGateProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-6" data-testid="shopify-connection-gate">
-      <Card className="max-w-lg w-full border-dashed border-2 border-muted-foreground/30">
+      <Card
+        className="max-w-lg w-full border-0"
+        style={{
+          background: '#121833',
+          border: '1px dashed rgba(0,240,255,0.25)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        }}
+      >
         <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 ring-2 ring-primary/20">
-            <Store className="w-10 h-10 text-primary" />
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+            style={{
+              background: 'radial-gradient(circle, rgba(0,240,255,0.25), rgba(0,240,255,0.05))',
+              boxShadow: '0 0 24px rgba(0,240,255,0.45)',
+            }}
+          >
+            <Store className="w-10 h-10" style={{ color: '#00F0FF' }} />
           </div>
           
-          <h2 className="text-2xl font-bold text-foreground mb-3" data-testid="text-gate-title">
+          <h2
+            className="text-2xl mb-3"
+            style={{ color: '#E6F7FF', fontWeight: 600 }}
+            data-testid="text-gate-title"
+          >
             ZYRA is not connected to your Shopify store
           </h2>
           
-          <p className="text-muted-foreground mb-8 max-w-md" data-testid="text-gate-description">
+          <p className="mb-8 max-w-md" style={{ color: '#A9B4E5' }} data-testid="text-gate-description">
             Connect your Shopify store to allow ZYRA to detect revenue opportunities and run optimizations.
           </p>
 
           <div className="flex flex-col gap-4 w-full max-w-xs mb-6">
-            <Button 
-              size="lg"
+            <button
               onClick={handleConnectShopify}
-              className="w-full"
+              className="w-full inline-flex items-center justify-center rounded-md px-6 py-3 text-sm transition-all duration-200"
+              style={{
+                background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
+                color: '#04141C',
+                fontWeight: 600,
+                boxShadow: '0 6px 20px rgba(0,240,255,0.45)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #1AF5FF, #33FFE9)';
+                e.currentTarget.style.boxShadow = '0 0 24px rgba(0,240,255,0.65)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #00F0FF, #00FFE5)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,240,255,0.45)';
+              }}
               data-testid="button-connect-shopify"
             >
               <Link className="w-4 h-4 mr-2" />
               Connect Shopify Store
               <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span data-testid="text-gate-safety">No changes will be made without your approval.</span>
+          <div
+            className="flex items-center gap-2 text-sm rounded-full px-4 py-2"
+            style={{ background: 'rgba(34,197,94,0.12)' }}
+          >
+            <ShieldCheck className="w-4 h-4" style={{ color: '#22C55E' }} />
+            <span style={{ color: '#9EFFC3' }} data-testid="text-gate-safety">No changes will be made without your approval.</span>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-muted w-full">
-            <p className="text-xs text-muted-foreground mb-4">What ZYRA will do once connected:</p>
+          <div className="mt-8 pt-6 w-full" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-xs mb-4" style={{ color: '#7C86B8' }}>What ZYRA will do once connected:</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/30">
-                <Brain className="w-5 h-5 text-purple-400" />
-                <span className="text-muted-foreground text-center">Analyze products & competitors</span>
+              <div
+                className="flex flex-col items-center gap-2 p-3 rounded-lg"
+                style={{ background: '#0F1F2E' }}
+              >
+                <Brain className="w-5 h-5" style={{ color: '#00F0FF' }} />
+                <span className="text-center" style={{ color: '#B8C6FF' }}>Analyze products & competitors</span>
               </div>
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/30">
-                <Zap className="w-5 h-5 text-amber-400" />
-                <span className="text-muted-foreground text-center">Detect revenue opportunities</span>
+              <div
+                className="flex flex-col items-center gap-2 p-3 rounded-lg"
+                style={{ background: '#0F1F2E' }}
+              >
+                <Zap className="w-5 h-5" style={{ color: '#A78BFA' }} />
+                <span className="text-center" style={{ color: '#B8C6FF' }}>Detect revenue opportunities</span>
               </div>
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/30">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span className="text-muted-foreground text-center">Execute optimizations safely</span>
+              <div
+                className="flex flex-col items-center gap-2 p-3 rounded-lg"
+                style={{ background: '#0F1F2E' }}
+              >
+                <CheckCircle2 className="w-5 h-5" style={{ color: '#22C55E' }} />
+                <span className="text-center" style={{ color: '#B8C6FF' }}>Execute optimizations safely</span>
               </div>
             </div>
           </div>
