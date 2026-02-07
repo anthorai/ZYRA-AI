@@ -1,0 +1,159 @@
+/* =====================================================================
+   ZYRA AI — AUTH PAGE VISIBILITY & PRESENCE ENHANCEMENT PROMPT
+   MODULE: LOGIN / SIGN-UP (FINAL POLISH)
+   PRIORITY: HIGH — IMPROVE VISIBILITY, CONTRAST, & FOCUS
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to ENHANCE VISIBILITY and VISUAL PRESENCE of the
+existing Auth page WITHOUT changing its structure or intent.
+
+The layout is correct.
+The goal now is STRONGER VISUAL CLARITY, FOCUS, and AUTHORITY.
+
+---------------------------------------------------------------------
+1. CORE ISSUE TO FIX
+---------------------------------------------------------------------
+
+The current auth page:
+- Looks clean and professional
+- BUT feels slightly low-contrast and soft
+- Important elements do not stand out enough
+- The login card does not dominate attention
+- Headline and CTA need stronger visual pull
+
+We are NOT redesigning — we are AMPLIFYING.
+
+---------------------------------------------------------------------
+2. GLOBAL VISIBILITY RULES (MANDATORY)
+---------------------------------------------------------------------
+
+- Increase contrast between background and foreground
+- Strengthen hierarchy: Headline > Form > Secondary text
+- Improve edge definition of the auth card
+- Make primary actions visually unmistakable
+
+NO new content.
+NO layout changes.
+
+---------------------------------------------------------------------
+3. LEFT PANEL — BRAND MESSAGE AMPLIFICATION
+---------------------------------------------------------------------
+
+HEADLINE:
+- Increase font size by ~10–15%
+- Increase font weight slightly (but NOT bold-heavy)
+- Tighten line-height for stronger impact
+
+SUBTEXT:
+- Increase opacity / brightness slightly
+- Keep secondary but more readable
+
+TRUST BULLETS:
+- Increase icon size slightly
+- Increase spacing between bullets
+- Raise contrast so bullets are instantly scannable
+
+OPTIONAL (SUBTLE):
+- Add very soft radial glow or gradient behind headline area
+- Glow must feel calm, not flashy
+
+---------------------------------------------------------------------
+4. RIGHT PANEL — AUTH CARD DOMINANCE
+---------------------------------------------------------------------
+
+CARD CONTAINER:
+- Increase border visibility (thin but clearer)
+- Add subtle outer glow or shadow for separation
+- Slightly increase card width OR padding for breathing space
+
+CARD HEADER:
+- “Welcome Back” font size + weight increase
+- Subtitle slightly brighter for readability
+
+DIVIDER (“or”):
+- Increase spacing above and below
+- Make divider line slightly more visible
+
+---------------------------------------------------------------------
+5. FORM FIELD VISIBILITY
+---------------------------------------------------------------------
+
+INPUT FIELDS:
+- Increase border contrast slightly
+- Improve focus state:
+  - Clear glow or highlight on active field
+- Labels must remain clearly readable at all times
+
+PASSWORD ICON:
+- Increase icon contrast so it’s easily noticeable
+
+---------------------------------------------------------------------
+6. PRIMARY CTA — STRONGER CALL TO ACTION
+---------------------------------------------------------------------
+
+BUTTON: “Access Zyra Dashboard”
+- Increase button height slightly
+- Increase contrast vs background
+- Add subtle hover glow or elevation
+- This must be the MOST dominant element in the card
+
+SECONDARY LINKS:
+- Keep subtle, but ensure readability
+- Do not compete with primary CTA
+
+---------------------------------------------------------------------
+7. SECURITY MESSAGE VISIBILITY
+---------------------------------------------------------------------
+
+SECURITY LINE:
+“Your data is protected. Zyra only acts with your permission.”
+
+- Increase text size slightly
+- Increase contrast
+- Add lock/shield icon with clearer visibility
+
+This reinforces trust at the decision moment.
+
+---------------------------------------------------------------------
+8. COLOR & CONTRAST ADJUSTMENTS
+---------------------------------------------------------------------
+
+- Background stays dark and calm
+- Foreground text contrast increased slightly
+- Avoid pure white; use controlled bright tones
+- Maintain enterprise-grade restraint
+
+NO neon.
+NO playful effects.
+
+---------------------------------------------------------------------
+9. RESPONSIVE CHECK (MANDATORY)
+---------------------------------------------------------------------
+
+- Ensure visibility improvements apply on:
+  - Desktop
+  - Tablet
+  - Mobile
+- On mobile:
+  - Card must feel clearly separated
+  - Headline must still dominate
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This enhancement is SUCCESSFUL only if:
+- The login card instantly draws the eye
+- Headline is readable in under 1 second
+- CTA is unmistakable
+- Page feels more confident and authoritative
+- No new clutter is introduced
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+AMPLIFY VISIBILITY AND CONTRAST EXACTLY AS SPECIFIED.
+DO NOT CHANGE STRUCTURE.
+MAKE THE PAGE FEEL MORE POWERFUL AND CLEAR.
+===================================================================== */
