@@ -1,0 +1,154 @@
+ROLE:
+You are fixing a visual hierarchy and contrast problem in ZYRA’sZYRA Report PAGE UI. 
+The layout is correct. The data is correct.
+Only COLOR, DEPTH, and VISUAL PRIORITY are broken.
+
+Your task is to make the UI instantly readable and enterprise-grade
+by fixing contrast, surface separation, and status emphasis.
+
+DO NOT change layout.
+DO NOT remove components.
+ONLY adjust colors, shadows, and accents.
+
+--------------------------------------------------
+GLOBAL DESIGN GOAL
+--------------------------------------------------
+• Clear hierarchy in 1 second
+• Each section must feel distinct
+• Status and money metrics must stand out
+• Dark theme must feel deep, not flat
+
+--------------------------------------------------
+DEFINE DEPTH LAYERS (MANDATORY)
+--------------------------------------------------
+
+LAYER 0 — APP BACKGROUND
+Background: #0B0E1A
+
+LAYER 1 — MAIN SECTIONS (large containers)
+Background: #11162A
+Border: none
+Shadow: 0 0 0 1px rgba(255,255,255,0.04)
+Border-radius: 16px
+
+Use for:
+• Executive Summary
+• Revenue Defense Report
+• Decision Timeline wrapper
+
+LAYER 2 — INNER CARDS
+Background: #161C36
+Border: none
+Shadow: 0 4px 24px rgba(0,0,0,0.4)
+Border-radius: 14px
+
+Use for:
+• Revenue metric cards
+• Logs
+• Info panels
+
+LAYER 3 — HIGHLIGHT / STATUS CARDS
+Background: linear-gradient(135deg, #0E3B44, #122B3A)
+Glow outline: 0 0 0 1px rgba(0,240,255,0.35)
+Left accent bar: #00F0FF
+
+Use for:
+• “Actively Protecting Revenue”
+• Live status panels
+• Active / current state cards
+
+--------------------------------------------------
+EXECUTIVE SUMMARY (CRITICAL FIX)
+--------------------------------------------------
+
+TOTAL REVENUE IMPACT
+Background: #161C36
+Text: #FFFFFF
+
+REVENUE GAINED
+Background: linear-gradient(135deg, #0E3A28, #0F2F22)
+Text: #7CFFB2
+Icon: #22C55E
+
+REVENUE PROTECTED
+Background: linear-gradient(135deg, #0E2A44, #0F2238)
+Text: #6EC1FF
+Icon: #3B82F6
+
+NET IMPACT
+Background: linear-gradient(135deg, #2A103A, #1F1230)
+Text: #F0ABFC
+Icon: #C084FC
+
+RULE:
+Each metric must look visually different at a glance.
+
+--------------------------------------------------
+STATUS BADGES & INDICATORS
+--------------------------------------------------
+
+LIVE
+Dot: #22C55E (pulse animation)
+Text: #9EFFC3
+Background pill: rgba(34,197,94,0.15)
+
+RECONNECTING
+Dot: #F59E0B
+Text: #FFD27D
+Background pill: rgba(245,158,11,0.15)
+
+COMPLETED
+Dot: #3B82F6
+Text: #93C5FD
+
+RULE:
+Never reuse the same color for different states.
+
+--------------------------------------------------
+ACTIVITY LOG FIX
+--------------------------------------------------
+
+Log row background: #0F152B
+Hover state: #141C3F
+Divider: rgba(255,255,255,0.06)
+
+Phase badge colors:
+• DETECT → #00F0FF
+• DECIDE → #A78BFA
+• EXECUTE → #C084FC
+• PROVE → #22C55E
+• LEARN → #3B82F6
+
+--------------------------------------------------
+"WHAT ZYRA LEARNED" SECTION
+--------------------------------------------------
+
+Background: #10192E
+Left border: 2px solid #00F0FF
+Icon circle: rgba(0,240,255,0.2)
+Title text: #E5F9FF
+Body text: #B6C2FF
+
+RULE:
+Insights must look smarter than normal content.
+
+--------------------------------------------------
+HARD UI RULES (DO NOT VIOLATE)
+--------------------------------------------------
+
+• No white borders
+• No same background color on parent + child
+• No accent color without meaning
+• Use shadow and depth, not outlines
+• Color = information, not decoration
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Each section is visually distinct
+• Revenue numbers pop instantly
+• Status is readable without reading text
+• Page feels calm, not noisy
+• No redesign — only clarity improvement

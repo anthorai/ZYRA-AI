@@ -422,11 +422,11 @@ export default function Reports() {
         </header>
 
         {/* Content */}
-        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto" style={{ backgroundColor: '#0B0E1A' }}>
           <div className="container max-w-6xl mx-auto space-y-8">
         
         {/* SECTION 1: EXECUTIVE SUMMARY */}
-        <Card className="bg-gradient-to-br from-primary/10 via-background to-green-500/5 border-primary/20">
+        <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
           <CardHeader className="pb-2">
             <CardTitle className="text-xl flex items-center gap-2" data-testid="title-executive-summary">
               <DollarSign className="w-6 h-6 text-green-400" />
@@ -441,27 +441,27 @@ export default function Reports() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg bg-card border">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Revenue Impact</p>
-                  <p className="text-3xl font-bold text-foreground" data-testid="text-total-impact">{formatCurrency(netImpact)}</p>
+                <div className="p-4 border-0" style={{ background: '#161C36', borderRadius: '14px', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+                  <p className="text-xs uppercase tracking-wide mb-1" style={{ color: '#8892B0' }}>Total Revenue Impact</p>
+                  <p className="text-3xl font-bold text-white" data-testid="text-total-impact">{formatCurrency(netImpact)}</p>
                 </div>
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-                  <p className="text-xs text-green-400 uppercase tracking-wide mb-1">Revenue Gained</p>
-                  <p className="text-3xl font-bold text-green-400" data-testid="text-revenue-gained">
-                    <TrendingUp className="w-5 h-5 inline mr-1" />
+                <div className="p-4 border-0" style={{ background: 'linear-gradient(135deg, #0E3A28, #0F2F22)', borderRadius: '14px', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+                  <p className="text-xs uppercase tracking-wide mb-1" style={{ color: '#7CFFB2' }}>Revenue Gained</p>
+                  <p className="text-3xl font-bold" style={{ color: '#7CFFB2' }} data-testid="text-revenue-gained">
+                    <TrendingUp className="w-5 h-5 inline mr-1" style={{ color: '#22C55E' }} />
                     {formatCurrency(revenueGained)}
                   </p>
                 </div>
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                  <p className="text-xs text-blue-400 uppercase tracking-wide mb-1">Revenue Protected</p>
-                  <p className="text-3xl font-bold text-blue-400" data-testid="text-revenue-protected">
-                    <Shield className="w-5 h-5 inline mr-1" />
+                <div className="p-4 border-0" style={{ background: 'linear-gradient(135deg, #0E2A44, #0F2238)', borderRadius: '14px', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+                  <p className="text-xs uppercase tracking-wide mb-1" style={{ color: '#6EC1FF' }}>Revenue Protected</p>
+                  <p className="text-3xl font-bold" style={{ color: '#6EC1FF' }} data-testid="text-revenue-protected">
+                    <Shield className="w-5 h-5 inline mr-1" style={{ color: '#3B82F6' }} />
                     {formatCurrency(revenueProtected)}
                   </p>
                 </div>
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
-                  <p className="text-xs text-primary uppercase tracking-wide mb-1">Net Impact</p>
-                  <p className="text-3xl font-bold text-primary" data-testid="text-net-impact">
+                <div className="p-4 border-0" style={{ background: 'linear-gradient(135deg, #2A103A, #1F1230)', borderRadius: '14px', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}>
+                  <p className="text-xs uppercase tracking-wide mb-1" style={{ color: '#F0ABFC' }}>Net Impact</p>
+                  <p className="text-3xl font-bold" style={{ color: '#F0ABFC' }} data-testid="text-net-impact">
                     {formatCurrency(netImpact)}
                   </p>
                 </div>
@@ -471,30 +471,30 @@ export default function Reports() {
         </Card>
 
         {/* TODAY'S REVENUE DEFENSE REPORT - Collapsible with Live SSE Stream */}
-        <Card className="border-primary/20" data-testid="today-defense-report-card">
+        <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }} data-testid="today-defense-report-card">
           <button 
             onClick={() => setTodayReportExpanded(!todayReportExpanded)}
             className="w-full flex items-center justify-between p-4 hover-elevate rounded-t-lg"
             data-testid="button-toggle-today-report"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 relative">
+              <div className="p-2 rounded-lg relative" style={{ background: 'rgba(0,240,255,0.1)' }}>
                 <Clock className="w-5 h-5 text-primary" />
                 {isConnected && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: '#22C55E' }} />
                 )}
               </div>
               <div className="text-left">
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-semibold text-foreground">Today's Revenue Defense Report</h3>
                   {isConnected ? (
-                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
-                      <Radio className="w-3 h-3 mr-1 animate-pulse" />
+                    <Badge variant="outline" className="text-xs border-0" style={{ background: 'rgba(34,197,94,0.15)', color: '#9EFFC3' }}>
+                      <Radio className="w-3 h-3 mr-1 animate-pulse" style={{ color: '#22C55E' }} />
                       Live
                     </Badge>
                   ) : isReconnecting ? (
-                    <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-500 border-yellow-500/30">
-                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                    <Badge variant="outline" className="text-xs border-0" style={{ background: 'rgba(245,158,11,0.15)', color: '#FFD27D' }}>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" style={{ color: '#F59E0B' }} />
                       Reconnecting
                     </Badge>
                   ) : (
@@ -530,10 +530,11 @@ export default function Reports() {
                       <div 
                         key={event.id} 
                         className={cn(
-                          "flex items-start gap-3 p-3 rounded-lg border transition-all duration-300",
+                          "flex items-start gap-3 p-3 rounded-lg border-0 transition-all duration-300",
                           event.bgColor,
                           event.borderColor
                         )}
+                        style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}
                         data-testid={`sse-event-${event.id}`}
                       >
                         <event.Icon className={cn("w-4 h-4 flex-shrink-0 mt-0.5", event.color)} />
@@ -572,21 +573,21 @@ export default function Reports() {
                     <div className="space-y-3">
                       {totalProductsMonitored > 0 ? (
                         <>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                          <div className="flex items-center gap-3 p-3 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                             <Package className="w-5 h-5 text-primary flex-shrink-0" />
                             <span className="text-sm text-foreground">{totalProductsMonitored} products being monitored</span>
                           </div>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                          <div className="flex items-center gap-3 p-3 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                             <Eye className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                             <span className="text-sm text-muted-foreground">No activity logged today yet</span>
                           </div>
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                          <div className="flex items-center gap-3 p-3 rounded-lg border-0" style={{ background: 'linear-gradient(135deg, #0E3B44, #122B3A)', boxShadow: '0 0 0 1px rgba(0,240,255,0.35), 0 0 12px rgba(0,240,255,0.15)', borderRadius: '14px', borderLeft: '3px solid #00F0FF' }}>
                             <Bot className="w-5 h-5 text-primary flex-shrink-0" />
                             <span className="text-sm text-foreground">ZYRA is actively monitoring for issues</span>
                           </div>
                         </>
                       ) : (
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                        <div className="flex items-center gap-3 p-3 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                           <Eye className="w-5 h-5 text-primary flex-shrink-0" />
                           <span className="text-sm text-muted-foreground">Waiting for products to sync from Shopify</span>
                         </div>
@@ -627,7 +628,7 @@ export default function Reports() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* SECTION 2: DECISION → RESULT TIMELINE */}
           <div className="lg:col-span-2">
-            <Card>
+            <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
@@ -673,7 +674,7 @@ export default function Reports() {
                                 statusColor
                               )} />
                               
-                              <div className="p-4 rounded-lg border bg-card">
+                              <div className="p-4 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                                 <div className="flex items-start gap-3">
                                   <div className="flex-shrink-0">
                                     {productGroup.productImage ? (
@@ -912,7 +913,7 @@ export default function Reports() {
           {/* RIGHT COLUMN */}
           <div className="space-y-6">
             {/* SECTION 5: CURRENT STORE STATE */}
-            <Card>
+            <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Eye className="w-5 h-5 text-primary" />
@@ -920,10 +921,7 @@ export default function Reports() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={cn(
-                  "p-4 rounded-lg border flex items-center gap-3",
-                  currentStoreState.bgColor
-                )}>
+                <div className="p-4 flex items-center gap-3 border-0" style={{ background: 'linear-gradient(135deg, #0E3B44, #122B3A)', boxShadow: '0 0 0 1px rgba(0,240,255,0.35), 0 0 12px rgba(0,240,255,0.15)', borderRadius: '14px', borderLeft: '3px solid #00F0FF' }}>
                   <currentStoreState.icon className={cn("w-8 h-8", currentStoreState.color)} />
                   <div>
                     <p className={cn("font-medium", currentStoreState.color)} data-testid="text-store-state">
@@ -936,7 +934,7 @@ export default function Reports() {
             </Card>
 
             {/* SECTION 6: NEXT EXPECTED VALUE */}
-            <Card>
+            <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Clock className="w-5 h-5 text-primary" />
@@ -946,7 +944,7 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 {nextMonitoring ? (
-                  <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="p-4 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                     <div className="flex items-start gap-3">
                       <Target className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                       <div>
@@ -960,7 +958,7 @@ export default function Reports() {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-lg bg-muted/50 border text-center">
+                  <div className="p-4 rounded-lg border-0 text-center" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                     <Bot className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground" data-testid="text-no-monitoring">
                       ZYRA is continuously analyzing your store for opportunities
@@ -971,7 +969,7 @@ export default function Reports() {
             </Card>
 
             {/* SECTION 4: WHAT ZYRA LEARNED */}
-            <Card>
+            <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Lightbulb className="w-5 h-5 text-yellow-400" />
@@ -984,12 +982,15 @@ export default function Reports() {
                   {displayLearnings.slice(0, 3).map((learning, index) => (
                     <div 
                       key={learning.id || index} 
-                      className="p-3 rounded-lg bg-muted/50 border"
+                      className="p-3 rounded-lg border-0"
+                      style={{ background: '#10192E', borderLeft: '2px solid #00F0FF', borderRadius: '14px' }}
                       data-testid={`learning-item-${index}`}
                     >
                       <div className="flex items-start gap-2">
-                        <Brain className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                        <p className="text-sm" data-testid={`text-learning-${index}`}>{learning.insight}</p>
+                        <div className="p-1 rounded-full flex-shrink-0" style={{ background: 'rgba(0,240,255,0.2)' }}>
+                          <Brain className="w-4 h-4 text-primary" />
+                        </div>
+                        <p className="text-sm" style={{ color: '#B6C2FF' }} data-testid={`text-learning-${index}`}>{learning.insight}</p>
                       </div>
                     </div>
                   ))}
@@ -1001,7 +1002,7 @@ export default function Reports() {
 
         {/* SECTION 3: BEFORE / AFTER SNAPSHOTS (for high-impact decisions) */}
         {highImpactDecision && (
-          <Card>
+          <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
@@ -1012,7 +1013,7 @@ export default function Reports() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Before */}
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1">
                     Before
                   </p>
@@ -1053,7 +1054,7 @@ export default function Reports() {
                 </div>
 
                 {/* After */}
-                <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                <div className="p-4 rounded-lg border-0" style={{ background: 'linear-gradient(135deg, #0E3B44, #122B3A)', boxShadow: '0 0 0 1px rgba(0,240,255,0.35), 0 0 12px rgba(0,240,255,0.15)', borderRadius: '14px' }}>
                   <p className="text-xs text-primary uppercase tracking-wide mb-3 flex items-center gap-1">
                     <ArrowRight className="w-3 h-3" />
                     After
@@ -1114,12 +1115,12 @@ export default function Reports() {
         )}
 
         {/* CONFIDENCE FOOTER */}
-        <Card className="bg-gradient-to-r from-primary/10 to-green-500/10 border-primary/20">
+        <Card className="border-0" style={{ background: 'linear-gradient(135deg, #0E3B44, #122B3A)', boxShadow: '0 0 0 1px rgba(0,240,255,0.35), 0 0 12px rgba(0,240,255,0.15)', borderRadius: '16px' }}>
           <CardContent className="py-6">
             <div className="flex items-center justify-center gap-3 text-center">
               <Bot className="w-8 h-8 text-primary" />
               <div>
-                <p className="font-medium">ZYRA clearly earned its subscription.</p>
+                <p className="font-medium" style={{ color: '#E5F9FF' }}>ZYRA clearly earned its subscription.</p>
                 <p className="text-sm text-muted-foreground">If you turn this off, you lose clarity and protection.</p>
               </div>
             </div>
