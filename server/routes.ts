@@ -89,7 +89,7 @@ import { createClient } from "@supabase/supabase-js";
 import { storage, dbStorage } from "./storage";
 import { testSupabaseConnection } from "./lib/supabase";
 import { db, requireDb, getSubscriptionPlans, updateUserSubscription, cancelUserSubscription, getUserById, getUserByEmail, createUser as createUserInNeon, createInvoice, createBillingHistoryEntry, getUserSubscriptionRecord, getUserInvoices, getUserSubscription, getSubscriptionPlanById, type ShopifySubscriptionOptions } from "./db";
-import { eq, desc, sql, and, gte, lte, isNotNull, inArray } from "drizzle-orm";
+import { eq, desc, sql, and, gte, lte, isNotNull, inArray, or } from "drizzle-orm";
 import OpenAI from "openai";
 import { processPromptTemplate, getAvailableBrandVoices } from "../shared/prompts.js";
 import multer from "multer";
@@ -12086,13 +12086,23 @@ Output format: Markdown with clear section headings.`;
 
       // For Shopify-initiated installs without userId, try to find existing connection by shop domain
       let resolvedUserId = userId;
+      // Normalize store URL for consistent matching (lowercase, no trailing slash)
+      const normalizedStoreUrl = `https://${shopDomain}`.replace(/\/+$/, '');
+      
       if (isNewInstallation) {
         console.log('📋 Shopify-initiated install: Checking for existing connection by shop domain...');
         
         // Check if this shop is already connected to any user
+        // Use exact normalized URL and common variants only (no fuzzy matching to avoid cross-store)
         const existingConnectionResult = await db.select()
           .from(storeConnections)
-          .where(eq(storeConnections.storeUrl, `https://${shop}`))
+          .where(
+            or(
+              eq(storeConnections.storeUrl, normalizedStoreUrl),
+              eq(storeConnections.storeUrl, `${normalizedStoreUrl}/`),
+              eq(storeConnections.storeUrl, `https://${shop}`)
+            )
+          )
           .limit(1);
         
         if (existingConnectionResult.length > 0) {
@@ -12105,6 +12115,8 @@ Output format: Markdown with clear section headings.`;
 
       // Handle new installation without userId AND no existing connection (fresh from App Store)
       // AUTO-CREATE USER AND AUTO-CONNECT STORE for seamless Shopify App Store experience
+      let autoLoginTokens: { access_token: string; refresh_token: string } | null = null;
+      
       if (isNewInstallation && !resolvedUserId) {
         console.log('📋 NEW INSTALLATION FLOW: Auto-creating user and connecting store');
         
@@ -12155,50 +12167,188 @@ Output format: Markdown with clear section headings.`;
           let autoCreatedUser = await getUserByEmail(shopOwnerEmail);
           
           if (!autoCreatedUser) {
-            // Create new user with shop owner email and Free plan
-            console.log('  Creating new user account...');
+            // Step A: Create user in Supabase Auth first (required for login/sessions)
+            console.log('  Creating Supabase Auth account...');
             const cryptoModule = await import('crypto');
-            const newUserId = cryptoModule.randomUUID();
+            const tempPassword = cryptoModule.randomBytes(32).toString('hex');
             
-            // Insert user with Free plan + 7-day trial with 150 credits
-            const trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-            await db.insert(users).values({
-              id: newUserId,
+            const { data: supabaseAuthData, error: supabaseAuthError } = await supabase.auth.admin.createUser({
               email: shopOwnerEmail,
-              fullName: shopName || 'Store Owner',
-              password: null, // Shopify OAuth user - no password needed
-              role: 'user',
-              plan: 'free', // Default to Free plan
-              trialEndDate: trialEndDate, // 7-day trial with bonus credits
-              preferredLanguage: 'en',
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                full_name: shopName || 'Store Owner',
+                shopify_install: true
+              }
             });
             
-            // Initialize usage stats with 150 trial credits
-            await db.insert(usageStats).values({
-              userId: newUserId,
-              creditsRemaining: 150, // Free plan trial bonus credits
-              creditsUsed: 0,
-              totalRevenue: 0,
-              totalOrders: 0,
-              conversionRate: 0,
-              productsOptimized: 0,
-              emailsSent: 0,
-              smsSent: 0,
-              aiGenerationsUsed: 0,
-              seoOptimizationsUsed: 0
-            }).onConflictDoNothing();
+            if (supabaseAuthError) {
+              console.error('  Supabase Auth createUser error:', supabaseAuthError.message);
+              
+              if (supabaseAuthError.message?.includes('already registered') || supabaseAuthError.message?.includes('duplicate')) {
+                console.log('  User already exists in Supabase Auth, looking up existing accounts...');
+                
+                // Look up existing user in local DB
+                autoCreatedUser = await getUserByEmail(shopOwnerEmail);
+                
+                if (autoCreatedUser) {
+                  console.log('  Found existing local user with ID:', autoCreatedUser.id);
+                } else {
+                  // Local DB user doesn't exist but Supabase Auth does — fetch the Supabase Auth user ID
+                  // so we can create local user with matching ID
+                  console.log('  No local DB user found, fetching Supabase Auth user ID...');
+                  let supabaseAuthUserId: string | null = null;
+                  
+                  // Paginate through Supabase Auth users to find by email
+                  let page = 1;
+                  const perPage = 100;
+                  let found = false;
+                  while (!found && page <= 10) { // Max 1000 users to search
+                    const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
+                      page,
+                      perPage,
+                    });
+                    if (listErr || !listData?.users?.length) break;
+                    const match = listData.users.find((u: { email?: string }) => u.email === shopOwnerEmail);
+                    if (match) {
+                      supabaseAuthUserId = match.id;
+                      found = true;
+                    }
+                    if (listData.users.length < perPage) break; // Last page
+                    page++;
+                  }
+                  
+                  if (supabaseAuthUserId) {
+                    console.log('  Found Supabase Auth user ID:', supabaseAuthUserId);
+                    // Override supabaseAuthData to use the found ID
+                    supabaseAuthData = { user: { id: supabaseAuthUserId } } as any;
+                  } else {
+                    console.log('  ⚠️ Could not find Supabase Auth user by email, will generate new ID');
+                  }
+                }
+              } else {
+                throw new Error(`Supabase Auth error: ${supabaseAuthError.message}`);
+              }
+            }
             
-            // Create profile for user
-            await db.insert(profiles).values({
-              userId: newUserId,
-              name: shopName || 'Store Owner',
-            }).onConflictDoNothing();
+            // Use the Supabase Auth user ID for consistency (never fall back to random UUID)
+            const newUserId = supabaseAuthData?.user?.id || (autoCreatedUser?.id ?? cryptoModule.randomUUID());
             
-            // Get the created user
-            autoCreatedUser = await getUserByEmail(shopOwnerEmail);
-            console.log('✅ User auto-created with ID:', newUserId);
+            if (!autoCreatedUser) {
+              // Step B: Create user in local database with matching Supabase Auth ID
+              console.log('  Creating local database user with ID:', newUserId);
+              const trialEndDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+              await db.insert(users).values({
+                id: newUserId,
+                email: shopOwnerEmail,
+                fullName: shopName || 'Store Owner',
+                password: null,
+                role: 'user',
+                plan: 'free',
+                trialEndDate: trialEndDate,
+                preferredLanguage: 'en',
+              });
+              
+              await db.insert(usageStats).values({
+                userId: newUserId,
+                creditsRemaining: 150,
+                creditsUsed: 0,
+                totalRevenue: 0,
+                totalOrders: 0,
+                conversionRate: 0,
+                productsOptimized: 0,
+                emailsSent: 0,
+                smsSent: 0,
+                aiGenerationsUsed: 0,
+                seoOptimizationsUsed: 0
+              }).onConflictDoNothing();
+              
+              await db.insert(profiles).values({
+                userId: newUserId,
+                name: shopName || 'Store Owner',
+              }).onConflictDoNothing();
+              
+              autoCreatedUser = await getUserByEmail(shopOwnerEmail);
+              console.log('✅ User auto-created in both Supabase Auth and local DB, ID:', newUserId);
+            }
+            
+            // Step C: Generate a login session so the user is auto-logged in
+            if (supabaseAuthData?.user) {
+              console.log('  Generating auto-login session for new user...');
+              try {
+                const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+                  type: 'magiclink',
+                  email: shopOwnerEmail,
+                });
+                
+                if (!linkError && linkData?.properties?.hashed_token) {
+                  const { data: tokenData, error: tokenError } = await supabase.auth.verifyOtp({
+                    token_hash: linkData.properties.hashed_token,
+                    type: 'magiclink',
+                  });
+                  
+                  if (!tokenError && tokenData?.session) {
+                    autoLoginTokens = {
+                      access_token: tokenData.session.access_token,
+                      refresh_token: tokenData.session.refresh_token,
+                    };
+                    console.log('✅ Auto-login session generated successfully');
+                  } else {
+                    console.log('⚠️  Could not verify magic link OTP (non-critical):', tokenError?.message);
+                  }
+                } else {
+                  console.log('⚠️  Could not generate magic link (non-critical):', linkError?.message);
+                }
+              } catch (sessionError) {
+                console.log('⚠️  Auto-login session generation failed (non-critical):', sessionError);
+              }
+            }
           } else {
             console.log('  User already exists with this email, using existing account');
+            
+            // Ensure Supabase Auth user exists before generating magic link
+            try {
+              console.log('  Ensuring Supabase Auth account exists for existing user...');
+              
+              // Try to create in Supabase Auth (will fail gracefully if exists)
+              const cryptoModuleExisting = await import('crypto');
+              const { error: ensureError } = await supabase.auth.admin.createUser({
+                email: shopOwnerEmail,
+                password: cryptoModuleExisting.randomBytes(32).toString('hex'),
+                email_confirm: true,
+                user_metadata: { full_name: autoCreatedUser.fullName || shopName || 'Store Owner', shopify_install: true }
+              });
+              
+              if (ensureError && !ensureError.message?.includes('already registered') && !ensureError.message?.includes('duplicate')) {
+                console.log('  ⚠️ Could not ensure Supabase Auth user:', ensureError.message);
+              } else {
+                console.log('  ✅ Supabase Auth user confirmed');
+              }
+              
+              // Generate auto-login session
+              console.log('  Generating auto-login session for existing user...');
+              const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+                type: 'magiclink',
+                email: shopOwnerEmail,
+              });
+              
+              if (!linkError && linkData?.properties?.hashed_token) {
+                const { data: tokenData, error: tokenError } = await supabase.auth.verifyOtp({
+                  token_hash: linkData.properties.hashed_token,
+                  type: 'magiclink',
+                });
+                
+                if (!tokenError && tokenData?.session) {
+                  autoLoginTokens = {
+                    access_token: tokenData.session.access_token,
+                    refresh_token: tokenData.session.refresh_token,
+                  };
+                  console.log('✅ Auto-login session generated for existing user');
+                }
+              }
+            } catch (sessionError) {
+              console.log('⚠️  Auto-login for existing user failed (non-critical):', sessionError);
+            }
           }
           
           if (autoCreatedUser) {
@@ -12209,7 +12359,6 @@ Output format: Markdown with clear section headings.`;
             try {
               const existingSub = await getUserSubscription(resolvedUserId);
               if (!existingSub || existingSub.status !== 'active') {
-                // Get Free plan ID
                 const [freePlan] = await db.select()
                   .from(subscriptionPlans)
                   .where(eq(subscriptionPlans.planName, 'Free'))
@@ -12242,7 +12391,7 @@ Output format: Markdown with clear section headings.`;
           await db.insert(oauthStates).values({
             state: `pending_meta_${pendingState}`,
             userId: null,
-            shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: `https://${shop}`, currency: storeCurrency }),
+            shopDomain: JSON.stringify({ shopName, accessToken, storeUrl: normalizedStoreUrl, currency: storeCurrency }),
             expiresAt,
           });
           
@@ -12276,10 +12425,9 @@ Output format: Markdown with clear section headings.`;
 
       if (shopifyConnection) {
         console.log('  Updating existing connection:', shopifyConnection.id);
-        // Update existing connection with Shopify install flags
         await supabaseStorage.updateStoreConnection(shopifyConnection.id, {
           storeName: shopName,
-          storeUrl: `https://${shop}`,
+          storeUrl: normalizedStoreUrl,
           accessToken,
           status: 'active',
           installedViaShopify: true,
@@ -12289,12 +12437,11 @@ Output format: Markdown with clear section headings.`;
         console.log('✅ Connection updated successfully (installed via Shopify)');
       } else {
         console.log('  Creating new connection for user:', effectiveUserId);
-        // Create new connection with Shopify install flags
         await supabaseStorage.createStoreConnection({
           userId: effectiveUserId,
           platform: 'shopify',
           storeName: shopName,
-          storeUrl: `https://${shop}`,
+          storeUrl: normalizedStoreUrl,
           accessToken,
           currency: storeCurrency,
           status: 'active',
@@ -12311,8 +12458,6 @@ Output format: Markdown with clear section headings.`;
       // Only proceed if we have a valid userId
       if (effectiveUserId && effectiveUserId.length > 0) {
         try {
-          const storeUrl = `https://${shop}`;
-          
           // Check if connection already exists in local DB for this user AND platform
           const existingLocalConnection = await db
             .select()
@@ -12326,12 +12471,11 @@ Output format: Markdown with clear section headings.`;
             .limit(1);
 
           if (existingLocalConnection.length > 0) {
-            // Update existing record - scope by both userId AND platform
             await db
               .update(storeConnections)
               .set({
                 storeName: shopName,
-                storeUrl: storeUrl,
+                storeUrl: normalizedStoreUrl,
                 accessToken: accessToken,
                 status: 'active',
                 currency: storeCurrency,
@@ -12347,12 +12491,11 @@ Output format: Markdown with clear section headings.`;
               );
             console.log('✅ Local DB connection updated for user:', effectiveUserId);
           } else {
-            // Insert new record with all required fields
             await db.insert(storeConnections).values({
               userId: effectiveUserId,
               platform: 'shopify',
               storeName: shopName,
-              storeUrl: storeUrl,
+              storeUrl: normalizedStoreUrl,
               accessToken: accessToken,
               status: 'active',
               currency: storeCurrency,
@@ -12419,20 +12562,26 @@ Output format: Markdown with clear section headings.`;
           </html>
         `);
       } else {
-        // Direct installation from Shopify - redirect based on installation type
-        // For Shopify-initiated installs (new users), go to ZYRA At Work dashboard
-        // For existing users, go to integrations page
         const encodedStoreName = encodeURIComponent(shopName || shop as string);
         const baseUrl = process.env.PRODUCTION_DOMAIN || `${req.protocol}://${req.get('host')}`;
         
-        // Determine redirect destination based on whether this was a fresh Shopify install
         const redirectPath = isShopifyInitiatedInstall 
-          ? `/zyra-at-work?shopify_connected=true&store_name=${encodedStoreName}` // New installs go to ZYRA dashboard
-          : `/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`; // Existing users go to integrations
+          ? `/zyra-at-work?shopify_connected=true&store_name=${encodedStoreName}`
+          : `/settings/integrations?shopify_connected=true&store_name=${encodedStoreName}`;
         
-        const successUrl = `${baseUrl}${redirectPath}`;
-        console.log('  Redirecting to:', successUrl);
-        console.log('  Install type:', isShopifyInitiatedInstall ? 'Shopify-initiated (new user → ZYRA At Work)' : 'App-initiated (existing user → Integrations)');
+        // Build auto-login hash fragment with Supabase tokens (if available)
+        // Using hash fragment keeps tokens out of server logs and browser history
+        let hashFragment = '';
+        if (autoLoginTokens) {
+          hashFragment = `#access_token=${encodeURIComponent(autoLoginTokens.access_token)}&refresh_token=${encodeURIComponent(autoLoginTokens.refresh_token)}&type=shopify_install`;
+          console.log('  Including auto-login tokens in redirect (hash fragment)');
+        } else {
+          console.log('  No auto-login tokens available - user will need to log in manually');
+        }
+        
+        const successUrl = `${baseUrl}${redirectPath}${hashFragment}`;
+        console.log('  Redirecting to:', `${baseUrl}${redirectPath}` + (hashFragment ? ' (with auth tokens)' : ''));
+        console.log('  Install type:', isShopifyInitiatedInstall ? 'Shopify-initiated (new user)' : 'App-initiated (existing user)');
         
         res.send(`
           <html>

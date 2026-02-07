@@ -12,6 +12,7 @@ import { SkipLink } from "@/components/ui/skip-link";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { TrialWelcomeDialog } from "@/components/trial-welcome-dialog";
 import { Suspense, lazy, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Immediate imports for critical pages only
@@ -185,6 +186,26 @@ function PasswordRecoveryHandler({ children }: { children: React.ReactNode }) {
     if (accessToken && type === 'recovery') {
       console.log('Recovery access token detected! Redirecting to reset-password...');
       window.location.href = `/reset-password${hash}`;
+      return;
+    }
+    
+    // Handle Shopify auto-login tokens (from App Store install flow)
+    if (accessToken && refreshToken && type === 'shopify_install') {
+      console.log('Shopify auto-login detected! Setting session from install tokens...');
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }).then(({ error: sessionErr }: { error: Error | null }) => {
+        if (sessionErr) {
+          console.error('Failed to set Shopify auto-login session:', sessionErr);
+        } else {
+          console.log('Shopify auto-login session set successfully');
+        }
+        // Clean the hash fragment to remove tokens from URL
+        const cleanUrl = window.location.pathname + window.location.search;
+        window.history.replaceState({}, '', cleanUrl);
+        setIsChecking(false);
+      });
       return;
     }
     
