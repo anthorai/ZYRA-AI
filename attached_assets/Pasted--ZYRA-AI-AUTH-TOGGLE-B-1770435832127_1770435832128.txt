@@ -1,0 +1,117 @@
+/* =====================================================================
+   ZYRA AI — AUTH TOGGLE BUTTON VISIBILITY & PROFESSIONAL POLISH
+   ELEMENT: LOGIN / SIGN UP TOGGLE BUTTONS
+   PRIORITY: HIGH — MUST BE CLEAR, CLICKABLE, & PREMIUM
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to UPGRADE the Login / Sign Up toggle buttons so they:
+- Are clearly visible
+- Look interactive and professional
+- Communicate active vs inactive state instantly
+- Match Zyra’s enterprise-grade aesthetic
+
+NO layout changes.
+ONLY visual clarity, contrast, and hierarchy upgrades.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+The current Login / Sign Up buttons:
+- Look flat and low-contrast
+- Blend into the background
+- Do not clearly indicate which tab is active
+- Feel unfinished and unprofessional
+
+THIS MUST BE FIXED.
+
+---------------------------------------------------------------------
+2. REQUIRED TOGGLE DESIGN (MANDATORY)
+---------------------------------------------------------------------
+
+CONVERT the buttons into a CLEAR TOGGLE CONTROL:
+
+- Group Login + Sign Up inside a single container
+- Rounded container (pill or soft rectangle)
+- Distinct ACTIVE and INACTIVE states
+
+---------------------------------------------------------------------
+3. ACTIVE STATE (VERY IMPORTANT)
+---------------------------------------------------------------------
+
+ACTIVE BUTTON MUST:
+- Have solid background (brand or neutral high-contrast)
+- Elevated slightly (shadow or glow)
+- Strong text contrast
+- Semi-bold text
+
+ACTIVE = user’s current mode.
+
+---------------------------------------------------------------------
+4. INACTIVE STATE
+---------------------------------------------------------------------
+
+INACTIVE BUTTON MUST:
+- Be clearly visible but subdued
+- Outline or muted background
+- Normal font weight
+- Never look disabled
+
+---------------------------------------------------------------------
+5. COLOR & CONTRAST RULES
+---------------------------------------------------------------------
+
+- Use Zyra’s primary accent for ACTIVE
+- Avoid transparent-only buttons
+- Maintain enterprise-grade restraint
+- No neon, no playful gradients
+
+---------------------------------------------------------------------
+6. SIZE & SPACING
+---------------------------------------------------------------------
+
+- Increase button height slightly
+- Increase horizontal padding for clarity
+- Maintain equal size for both buttons
+- Clear spacing inside container
+
+---------------------------------------------------------------------
+7. INTERACTION STATES
+---------------------------------------------------------------------
+
+HOVER:
+- Subtle glow or background lift
+- Cursor pointer
+
+FOCUS:
+- Visible focus ring (accessibility)
+
+ACTIVE CLICK:
+- Slight press-down effect
+
+---------------------------------------------------------------------
+8. RESPONSIVE BEHAVIOR
+---------------------------------------------------------------------
+
+- Toggle must remain clear on mobile
+- Touch-friendly sizing
+- Active state remains obvious
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This change is SUCCESSFUL only if:
+- User instantly sees which mode is active
+- Buttons look clickable and premium
+- Toggle feels like part of a system UI
+- Overall auth page feels more confident
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+UPGRADE LOGIN / SIGN UP TOGGLE INTO A CLEAR,
+HIGH-CONTRAST, PROFESSIONAL CONTROL.
+NO FLAT OR LOW-VISIBILITY STYLES ALLOWED.
+===================================================================== */

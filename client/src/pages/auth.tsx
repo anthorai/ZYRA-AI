@@ -423,7 +423,46 @@ export default function Auth() {
 
           <Card className="glass-card border-primary/20" style={{ boxShadow: '0 8px 40px rgba(0, 0, 0, 0.6), 0 0 80px rgba(0, 240, 255, 0.04)' }} data-testid="card-auth">
             <CardContent className="p-7 sm:p-9">
-              <div className="mb-7">
+              <div
+                className="flex p-1 rounded-xl mb-7"
+                style={{ background: 'rgba(0, 240, 255, 0.04)', border: '1px solid rgba(0, 240, 255, 0.1)' }}
+                data-testid="toggle-auth-mode"
+              >
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 ${
+                    mode === 'login'
+                      ? 'text-[#0A0A1A]'
+                      : 'text-foreground/50'
+                  }`}
+                  style={mode === 'login' ? {
+                    background: '#00F0FF',
+                    boxShadow: '0 0 16px rgba(0, 240, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3)',
+                  } : {}}
+                  data-testid="button-mode-login"
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('register')}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 ${
+                    mode === 'register'
+                      ? 'text-[#0A0A1A]'
+                      : 'text-foreground/50'
+                  }`}
+                  style={mode === 'register' ? {
+                    background: '#00F0FF',
+                    boxShadow: '0 0 16px rgba(0, 240, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3)',
+                  } : {}}
+                  data-testid="button-mode-register"
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              <div className="mb-6">
                 <h2 className="text-2xl sm:text-[1.65rem] font-bold tracking-tight" data-testid="text-auth-title">
                   {shopifyInstallState 
                     ? 'Complete Setup' 
@@ -637,18 +676,6 @@ export default function Auth() {
                 </p>
               </div>
 
-              <div className="mt-4 text-center">
-                <p className="text-xs text-muted-foreground">
-                  {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                  <button 
-                    onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                    className="text-primary underline underline-offset-2 opacity-80"
-                    data-testid="button-switch-mode"
-                  >
-                    {mode === 'login' ? 'Sign up' : 'Sign in'}
-                  </button>
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>
