@@ -1,0 +1,138 @@
+ROLE:
+You are fixing contrast, depth, and hierarchy on the
+Profile Information section in ZYRA.
+
+The layout, spacing, and content are correct.
+ONLY color, depth, and emphasis must be adjusted.
+
+DO NOT redesign.
+DO NOT move elements.
+DO NOT change copy.
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Card background blends with page
+• Avatar does not stand out
+• Inputs look flat and inactive
+• Title and labels lack hierarchy
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+CARD CONTAINER (PRIMARY FIX)
+--------------------------------------------------
+
+Profile Card:
+Background: #121833
+Border-radius: 16px
+Shadow: 0 8px 32px rgba(0,0,0,0.45)
+
+Optional Accent:
+Left border: 2px solid #00F0FF (20% opacity)
+
+RULE:
+Card must visibly float above page.
+
+--------------------------------------------------
+CARD HEADER FIX
+--------------------------------------------------
+
+Title:
+Color: #E6F7FF
+Font-weight: 600
+
+Subtitle:
+Color: #9AA6D6
+
+Icon (top-right if present):
+Color: #7C86B8
+Hover: #00F0FF
+
+--------------------------------------------------
+PROFILE AVATAR (VISUAL ANCHOR)
+--------------------------------------------------
+
+Avatar Circle:
+Background: linear-gradient(135deg, #00F0FF, #00FFE5)
+Text color: #04141C
+Shadow: 0 0 24px rgba(0,240,255,0.6)
+
+Initials:
+Font-weight: 700
+
+RULE:
+Avatar must be the brightest element on the card.
+
+--------------------------------------------------
+INPUT FIELD FIX
+--------------------------------------------------
+
+Input Background:
+#0F152B
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Text Color:
+#E6F7FF
+
+Placeholder:
+#7C86B8
+
+Focus State:
+Border-color: #00F0FF
+Glow: 0 0 0 1px rgba(0,240,255,0.35)
+
+--------------------------------------------------
+LABEL & VALUE HIERARCHY
+--------------------------------------------------
+
+Field Label:
+Color: #A9B4E5
+Font-size: small
+
+Input Value:
+Color: #E6F7FF
+Font-weight: 500
+
+RULE:
+Labels must not compete with values.
+
+--------------------------------------------------
+ACTION BUTTON (IF PRESENT)
+--------------------------------------------------
+
+Save / Update Button:
+Background: linear-gradient(135deg, #00F0FF, #00FFE5)
+Text: #04141C
+Shadow: 0 6px 20px rgba(0,240,255,0.45)
+
+Hover:
+Increase glow + slight lift
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No white borders
+• No same background for page + card
+• Avatar must pop
+• Inputs must look interactive
+• Use glow only for active elements
+• Depth > outlines
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Card is clearly separated from background
+• Avatar draws eye immediately
+• Inputs are readable and interactive
+• Text hierarchy is clear
+• Page feels clean, premium, and calm
