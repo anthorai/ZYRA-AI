@@ -1,0 +1,152 @@
+/* =====================================================================
+   ZYRA AI — PRICING PAGE UI FIX (DESIGN + FRONTEND EXECUTION PROMPT)
+   SCOPE: LANDING PAGE / PRICING PAGE
+   PRIORITY: HIGH — UI MUST COMMUNICATE POWER, CONTROL, INTELLIGENCE
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR PRODUCT DESIGNER + FRONTEND ARCHITECT.
+Your task is to FIX the Zyra AI pricing page UI so it clearly
+communicates AUTHORITY, CONTROL, and SYSTEM-LEVEL POWER —
+not generic SaaS features.
+
+This is a UI RESTRUCTURE task, not a color or font tweak.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM TO FIX (NON-NEGOTIABLE)
+---------------------------------------------------------------------
+
+The current pricing page:
+- Looks flat and SaaS-generic
+- Is text-heavy with poor hierarchy
+- Hides Zyra’s real power behind feature lists
+- Does not visually justify price escalation
+- Feels like buying a tool, not granting control to an AI system
+
+YOU MUST FIX THIS PERCEPTION.
+
+---------------------------------------------------------------------
+2. NEW DESIGN PRINCIPLE (MANDATORY)
+---------------------------------------------------------------------
+
+PRICING = LEVEL OF CONTROL GIVEN TO ZYRA AI
+
+Every visual decision must reinforce:
+- Control
+- Safety
+- Authority
+- Escalation from Starter → Growth → Pro
+
+---------------------------------------------------------------------
+3. HERO SECTION — COMPLETE REPLACEMENT
+---------------------------------------------------------------------
+
+REMOVE:
+- Generic headline
+- Paragraph-heavy explanation
+
+ADD:
+- Two-column layout
+
+LEFT SIDE (TEXT):
+Headline:
+"You don’t pay for features.
+You decide how much control Zyra AI has inside your store."
+
+Subtext:
+"Each plan unlocks a different level of execution,
+automation, and protection — safely."
+
+RIGHT SIDE (VISUAL):
+- Vertical CONTROL METER
+- Levels: Starter → Growth → Pro
+- Increasing glow, intensity, and emphasis per level
+
+This must be the FIRST emotional impact.
+
+---------------------------------------------------------------------
+4. MOVE “HOW PRICING WORKS” ABOVE PLANS
+---------------------------------------------------------------------
+
+Pricing explanation MUST appear BEFORE plan cards.
+
+REPLACE paragraphs with 3 VISUAL INFO CARDS:
+
+1) Permission-Based AI
+   "Zyra only acts where you allow it."
+
+2) One-Time Fixes
+   "If Zyra fixes something, it locks it. No repeat charges."
+
+3) Credits = Execution
+   "Credits are used only when real changes are applied."
+
+Use icons + short text. NO paragraphs.
+
+---------------------------------------------------------------------
+5. PRICING CARDS — FULL REDESIGN
+---------------------------------------------------------------------
+
+GLOBAL RULES:
+- Reduce text by at least 40%
+- No long bullet lists
+- Each card answers:
+  "What kind of AI is this?"
+
+-------------------------------------------------
+STARTER PLAN — CONSERVATIVE OPERATOR
+-------------------------------------------------
+
+Visual:
+- Shield icon
+- Soft glow
+- Calm, safe tone
+
+Label:
+"Conservative Control"
+
+Main Line:
+"Zyra fixes what’s broken — and stops."
+
+Show:
+- Foundation actions
+- Fast Mode (low credit usage)
+- Limited Competitive Intelligence (with warning)
+
+CTA:
+"Start Safe"
+
+-------------------------------------------------
+GROWTH PLAN — REVENUE OPTIMIZER (MOST POPULAR)
+-------------------------------------------------
+
+Visual:
+- Flow arrows / revenue movement
+- Medium glow
+- “Most Popular” badge
+
+Main Line:
+"Zyra starts optimizing how money flows."
+
+Show:
+- Growth actions
+- Checkout & cart recovery
+- Competitive Intelligence with approval
+
+CTA:
+"Unlock Growth"
+
+-------------------------------------------------
+PRO PLAN — REVENUE PROTECTION SYSTEM
+-------------------------------------------------
+
+Visual:
+- Lock + performance graph
+- Strong glow / bold border
+- Dominant presence
+
+Main Line:
+"Zyra protects revenue even when you’re not watching."
+
+Show:
+- Gua
