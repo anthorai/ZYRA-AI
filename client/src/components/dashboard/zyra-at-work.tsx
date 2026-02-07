@@ -2828,14 +2828,14 @@ export default function ZyraAtWork() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-sm font-medium ${isAutopilotEnabled ? 'text-emerald-400' : 'text-slate-500'}`}>
+              <span className={`text-sm font-bold tracking-wide uppercase ${isAutopilotEnabled ? 'text-emerald-400' : 'text-red-400'}`}>
                 {isAutopilotEnabled ? 'ON' : 'OFF'}
               </span>
               <Switch
                 checked={isAutopilotEnabled}
                 onCheckedChange={(checked) => toggleAutopilotMutation.mutate(checked)}
                 disabled={toggleAutopilotMutation.isPending}
-                className="data-[state=checked]:bg-emerald-600 scale-125"
+                className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-red-500/60 scale-125"
                 data-testid="switch-autopilot-toggle"
               />
             </div>
