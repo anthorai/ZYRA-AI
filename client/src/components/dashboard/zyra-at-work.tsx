@@ -2623,7 +2623,7 @@ export default function ZyraAtWork() {
     timestamp: new Date(a.timestamp),
   })) || []).reverse();
 
-  const hasRealData = events.length > 0;
+  const hasRealData = isAutopilotEnabled || events.length > 0;
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -2790,7 +2790,7 @@ export default function ZyraAtWork() {
           }`}>
             <div className={`w-2 h-2 rounded-full ${hasRealData ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
             <span className={`text-xs font-medium ${hasRealData ? 'text-emerald-400' : 'text-slate-400'}`}>
-              {hasRealData ? 'Active' : 'Waiting'}
+              {hasRealData ? 'Active' : 'Idle'}
             </span>
           </div>
         </div>
