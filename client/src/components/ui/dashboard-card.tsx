@@ -60,7 +60,7 @@ export function DashboardCard({
           </div>
         </CardHeader>
       )}
-      <CardContent className="p-3 sm:p-4 md:p-6 bg-[#0f1732]">
+      <CardContent className="p-3 sm:p-4 md:p-6">
         {children}
       </CardContent>
     </Card>
