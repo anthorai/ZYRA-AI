@@ -1,0 +1,191 @@
+/* =====================================================================
+   ZYRA AI — CONTROL LEVELS UI REDESIGN
+   MODULE: REPLACE COMPARISON TABLE WITH PROFESSIONAL CARD LAYOUT
+   PRIORITY: HIGH — THIS SECTION DEFINES PERCEIVED POWER
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to REPLACE the current comparison TABLE
+with a PROFESSIONAL, CARD-BASED CONTROL LEVEL DESIGN
+that visually communicates authority, escalation, and trust.
+
+DO NOT restyle the table.
+THE TABLE MUST BE REMOVED.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM (WHY TABLE FAILS)
+---------------------------------------------------------------------
+
+The current table:
+- Looks generic and outdated
+- Feels like feature comparison, not control levels
+- Lacks visual hierarchy
+- Does not convey escalation from Starter → Pro
+- Reduces Zyra’s power to checkmarks
+
+THIS IS UNACCEPTABLE FOR AN AI CONTROL SYSTEM.
+
+---------------------------------------------------------------------
+2. NEW UI CONCEPT (MANDATORY)
+---------------------------------------------------------------------
+
+Replace the table with:
+→ THREE VERTICAL CONTROL CARDS
+→ One card per plan
+→ Cards aligned side-by-side on desktop
+→ Stacked on mobile
+
+Each card represents:
+"How much authority Zyra has inside your store"
+
+---------------------------------------------------------------------
+3. SECTION HEADER (REWRITE STRUCTURE)
+---------------------------------------------------------------------
+
+TITLE:
+"Compare Control Levels"
+
+SUBTITLE:
+"See exactly what Zyra is allowed to fix, optimize, and protect
+at each level of control."
+
+Center aligned. Clear. Minimal.
+
+---------------------------------------------------------------------
+4. CARD LAYOUT STRUCTURE (ALL CARDS)
+---------------------------------------------------------------------
+
+Each card MUST contain 4 clear sections:
+
+1) CARD HEADER
+2) CORE PERMISSIONS
+3) SAFETY & AUTOMATION BEHAVIOR
+4) CONTROL SUMMARY TAG
+
+Use spacing, dividers, and hierarchy.
+NO dense lists.
+
+---------------------------------------------------------------------
+5. STARTER CARD — CONSERVATIVE CONTROL
+---------------------------------------------------------------------
+
+CARD HEADER:
+- Title: Starter
+- Tag: Conservative Control
+- Visual: Shield icon
+- Style: Soft glow, subtle border
+
+CORE PERMISSIONS:
+- Detect revenue leaks
+- Run foundation actions
+- Limited Competitive Intelligence
+
+SAFETY & AUTOMATION:
+- Growth actions: Not allowed
+- Guard & risk freeze: Not allowed
+- Auto rollback: Critical failures only
+- Store learning: Read-only
+
+CONTROL SUMMARY TAG (BOTTOM):
+"Safe fixes only. No aggressive automation."
+
+---------------------------------------------------------------------
+6. GROWTH CARD — BALANCED CONTROL
+---------------------------------------------------------------------
+
+CARD HEADER:
+- Title: Growth
+- Tag: Revenue Optimization
+- Visual: Flow / arrows icon
+- Style: Medium glow
+- Badge: Most Popular
+
+CORE PERMISSIONS:
+- Detect revenue leaks
+- Foundation actions
+- Growth actions
+- Competitive Intelligence (with approval)
+
+SAFETY & AUTOMATION:
+- Guard & risk freeze: Not enabled
+- Auto rollback: On KPI drops
+- Store learning: Enabled
+
+CONTROL SUMMARY TAG (BOTTOM):
+"Optimizes revenue with human approval."
+
+---------------------------------------------------------------------
+7. PRO CARD — FULL SYSTEM CONTROL
+---------------------------------------------------------------------
+
+CARD HEADER:
+- Title: Pro
+- Tag: Revenue Protection System
+- Visual: Lock + graph icon
+- Style: Strong glow, dominant border
+
+CORE PERMISSIONS:
+- All foundation actions
+- All growth actions
+- Full Competitive Intelligence
+
+SAFETY & AUTOMATION:
+- Guard & risk freeze: Enabled
+- Auto rollback: Any anomaly
+- Store learning: Segment-level intelligence
+
+CONTROL SUMMARY TAG (BOTTOM):
+"Autonomous protection with intelligent safeguards."
+
+---------------------------------------------------------------------
+8. VISUAL ESCALATION RULES (VERY IMPORTANT)
+---------------------------------------------------------------------
+
+- Starter → calm, minimal emphasis
+- Growth → stronger presence, highlighted
+- Pro → dominant, visually heavier
+
+Escalation must be obvious WITHOUT reading text.
+
+---------------------------------------------------------------------
+9. INTERACTION & UX RULES
+---------------------------------------------------------------------
+
+- Hover: subtle elevation + glow increase
+- Click: expand card to show more detail (optional)
+- Mobile: cards stack, same hierarchy preserved
+
+No animations that feel playful.
+Motion must feel SYSTEM-LEVEL.
+
+---------------------------------------------------------------------
+10. REMOVE ALL CHECKMARK TABLE LOGIC
+---------------------------------------------------------------------
+
+- NO rows
+- NO columns
+- NO checkmark grids
+- NO “X” symbols
+
+Use:
+- Short descriptive lines
+- Permission language
+- Control-based wording
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This redesign is CORRECT only if:
+- The section feels enterprise-grade
+- Users instantly see control escalation
+- Pro feels powerful, not expensive
+- Starter feels safe, not limited
+- Zyra feels like infrastructure, not software
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+DELETE THE TABLE.
+IMPLEMENT CARD-BASED CONTROL LEVEL DESIGN EXACTLY AS SPECIFIED.
+===================================================================== */
