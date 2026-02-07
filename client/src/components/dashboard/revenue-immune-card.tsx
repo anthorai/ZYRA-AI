@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { StoreReadiness } from "@shared/schema";
+import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
 import {
   Dialog,
   DialogContent,
@@ -186,6 +188,11 @@ export default function RevenueImmuneCard() {
   
   const { events: sseEvents, isConnected, isReconnecting, retryCount } = useZyraActivity();
 
+  const { data: storeReadiness, isLoading: isReadinessLoading } = useQuery<StoreReadiness>({
+    queryKey: ['/api/store-readiness'],
+    refetchInterval: 30000,
+  });
+
   // Track connection elapsed time
   useEffect(() => {
     if (isConnected) {
@@ -261,7 +268,7 @@ export default function RevenueImmuneCard() {
     },
   });
 
-  const isLoading = isLoadingImmune || isLoadingSettings;
+  const isLoading = isLoadingImmune || isLoadingSettings || isReadinessLoading;
   const isActive = settings?.globalAutopilotEnabled ?? false;
   const sensitivity = (settings?.autopilotMode as "safe" | "balanced" | "aggressive") ?? "balanced";
   const preventedRevenue = immuneData?.preventedRevenue ?? 0;
@@ -369,6 +376,14 @@ export default function RevenueImmuneCard() {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (storeReadiness?.state === 'not_connected') {
+    return <ShopifyConnectionGate readiness={storeReadiness} />;
+  }
+
+  if (storeReadiness?.state === 'warming_up') {
+    return <WarmUpMode readiness={storeReadiness} />;
   }
 
   return (
