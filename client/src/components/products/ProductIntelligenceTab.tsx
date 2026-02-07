@@ -160,7 +160,8 @@ export function ProductIntelligenceTab() {
             <Button 
               onClick={handleSync}
               disabled={isSyncing}
-              className="flex-shrink-0 bg-primary text-primary-foreground"
+              variant="outline"
+              className="flex-shrink-0 border-primary/40 text-primary"
               data-testid="button-sync-products"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
