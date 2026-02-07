@@ -22,9 +22,16 @@ interface ResponsiveNavbarProps {
   navItems: NavItem[];
   actionButton?: {
     label: string;
+    scrolledLabel?: string;
     href?: string;
     onClick?: () => void;
   };
+  secondaryAction?: {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+  };
+  scrollAware?: boolean;
   className?: string;
 }
 
@@ -36,13 +43,25 @@ export default function ResponsiveNavbar({
   },
   navItems,
   actionButton,
+  secondaryAction,
+  scrollAware = false,
   className
 }: ResponsiveNavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Close menu when clicking outside
+  useEffect(() => {
+    if (!scrollAware) return;
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [scrollAware]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -64,7 +83,6 @@ export default function ResponsiveNavbar({
     };
   }, [isOpen]);
 
-  // Close menu on Escape key
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && isOpen) {
@@ -82,7 +100,6 @@ export default function ResponsiveNavbar({
     };
   }, [isOpen]);
 
-  // Lock body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -147,8 +164,27 @@ export default function ResponsiveNavbar({
       }
     }
 
+    if (item.onClick) {
+      return (
+        <button
+          key={index}
+          onClick={() => handleNavItemClick(item)}
+          className={baseClassName}
+          disabled={item.disabled}
+          aria-disabled={item.disabled || undefined}
+          data-testid={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          {item.label}
+        </button>
+      );
+    }
+
     return null;
   };
+
+  const currentActionLabel = (scrollAware && isScrolled && actionButton?.scrolledLabel)
+    ? actionButton.scrolledLabel
+    : actionButton?.label || "";
 
   const renderActionButton = (isMobile: boolean = false) => {
     if (!actionButton) return null;
@@ -158,7 +194,7 @@ export default function ResponsiveNavbar({
         <Button
           asChild
           className={cn(
-            "gradient-button font-medium whitespace-nowrap",
+            "gradient-button font-semibold tracking-wide whitespace-nowrap",
             isMobile ? "w-full text-base py-6" : "text-sm lg:text-base px-4 lg:px-6"
           )}
           data-testid={`action-button-${actionButton.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -167,7 +203,7 @@ export default function ResponsiveNavbar({
             href={actionButton.href}
             onClick={() => isMobile && closeMenu()}
           >
-            {actionButton.label}
+            {isMobile ? actionButton.label : currentActionLabel}
           </Link>
         </Button>
       );
@@ -176,7 +212,7 @@ export default function ResponsiveNavbar({
     return (
       <Button
         className={cn(
-          "gradient-button font-medium whitespace-nowrap",
+          "gradient-button font-semibold tracking-wide whitespace-nowrap",
           isMobile ? "w-full text-base py-6" : "text-sm lg:text-base px-4 lg:px-6"
         )}
         onClick={() => {
@@ -189,19 +225,76 @@ export default function ResponsiveNavbar({
         }}
         data-testid={`action-button-${actionButton.label.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        {actionButton.label}
+        {isMobile ? actionButton.label : currentActionLabel}
+      </Button>
+    );
+  };
+
+  const renderSecondaryAction = (isMobile: boolean = false) => {
+    if (!secondaryAction) return null;
+
+    if (secondaryAction.href) {
+      return (
+        <Button
+          asChild
+          variant="outline"
+          className={cn(
+            "font-semibold tracking-wide border-primary/30 text-foreground/80",
+            isMobile ? "w-full text-base py-6" : "text-sm lg:text-base"
+          )}
+          data-testid="button-nav-secondary"
+        >
+          <Link
+            href={secondaryAction.href}
+            onClick={() => isMobile && closeMenu()}
+          >
+            {secondaryAction.label}
+          </Link>
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        variant="outline"
+        className={cn(
+          "font-semibold tracking-wide border-primary/30 text-foreground/80",
+          isMobile ? "w-full text-base py-6" : "text-sm lg:text-base"
+        )}
+        onClick={() => {
+          if (secondaryAction.onClick) secondaryAction.onClick();
+          if (isMobile) closeMenu();
+        }}
+        data-testid="button-nav-secondary"
+      >
+        {secondaryAction.label}
       </Button>
     );
   };
 
   return (
-    <nav className={cn(
-      "fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-primary/20",
-      className
-    )}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+    <nav
+      className={cn(
+        "fixed top-0 w-full z-50 transition-all duration-300 ease-in-out",
+        scrollAware && isScrolled
+          ? "py-2 px-4"
+          : "bg-black/20 backdrop-blur-md border-b border-primary/20",
+        className
+      )}
+    >
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          scrollAware && isScrolled
+            ? "max-w-5xl mx-auto rounded-2xl backdrop-blur-xl border border-primary/20 px-4 sm:px-6 py-2.5"
+            : "container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4"
+        )}
+        style={scrollAware && isScrolled ? {
+          background: 'rgba(10, 10, 26, 0.85)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px rgba(0, 240, 255, 0.03)',
+        } : {}}
+      >
         <div className="flex items-center justify-between gap-4 relative">
-          {/* Logo - Left */}
           <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             {logo.href ? (
               <Link
@@ -210,36 +303,46 @@ export default function ResponsiveNavbar({
                 data-testid="nav-logo"
               >
                 {logo.icon && (
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+                  <div className={cn(
+                    "flex items-center justify-center transition-all duration-300",
+                    scrollAware && isScrolled ? "w-8 h-8 sm:w-9 sm:h-9" : "w-10 h-10 sm:w-12 sm:h-12"
+                  )}>
                     {logo.icon}
                   </div>
                 )}
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
+                <span className={cn(
+                  "font-bold text-foreground whitespace-nowrap transition-all duration-300",
+                  scrollAware && isScrolled ? "text-base sm:text-lg" : "text-lg sm:text-xl lg:text-2xl"
+                )}>{logo.text}</span>
               </Link>
             ) : (
               <div className="flex items-center space-x-2 sm:space-x-3">
                 {logo.icon && (
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+                  <div className={cn(
+                    "flex items-center justify-center transition-all duration-300",
+                    scrollAware && isScrolled ? "w-8 h-8 sm:w-9 sm:h-9" : "w-10 h-10 sm:w-12 sm:h-12"
+                  )}>
                     {logo.icon}
                   </div>
                 )}
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground whitespace-nowrap">{logo.text}</span>
+                <span className={cn(
+                  "font-bold text-foreground whitespace-nowrap transition-all duration-300",
+                  scrollAware && isScrolled ? "text-base sm:text-lg" : "text-lg sm:text-xl lg:text-2xl"
+                )}>{logo.text}</span>
               </div>
             )}
           </div>
 
-          {/* Desktop & Tablet Navigation - Centered */}
           <div className="hidden md:flex items-center gap-1 xl:gap-2 absolute left-1/2 transform -translate-x-1/2">
             {navItems.map((item, index) => renderNavItem(item, index, false))}
           </div>
 
-          {/* Action Button & Mobile Menu - Right Side */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="hidden md:block">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="hidden md:flex items-center gap-2 sm:gap-3">
+              {renderSecondaryAction(false)}
               {renderActionButton(false)}
             </div>
 
-            {/* Mobile Menu Button - Only on small screens */}
             <button
               ref={buttonRef}
               onClick={toggleMenu}
@@ -258,7 +361,6 @@ export default function ResponsiveNavbar({
           </div>
         </div>
 
-        {/* Mobile Menu - Only on small screens */}
         <div
           ref={menuRef}
           id="mobile-menu"
@@ -277,15 +379,15 @@ export default function ResponsiveNavbar({
                 {renderNavItem(item, index, true)}
               </div>
             ))}
-            {actionButton && (
-              <div className="pt-4 mt-2 border-t border-primary/20">
+            {(secondaryAction || actionButton) && (
+              <div className="pt-4 mt-2 border-t border-primary/20 space-y-3">
+                {secondaryAction && renderSecondaryAction(true)}
                 {renderActionButton(true)}
               </div>
             )}
           </div>
         </div>
       </div>
-      {/* Mobile Menu Overlay - Only on small screens */}
       {isOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"

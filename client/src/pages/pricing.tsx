@@ -54,11 +54,11 @@ export default function Pricing() {
           { label: "Home", href: "/" },
           { label: "Pricing", href: "/pricing" },
           { label: "FAQ", href: "/#faq", external: true },
-          ...(loading ? [{ label: "Log in", href: "/auth" }] : 
-              isAuthenticated ? [{ label: isLoggingOut ? "Logging out..." : "Logout", onClick: handleLogout, disabled: isLoggingOut }] : 
-              [{ label: "Log in", href: "/auth" }])
+          ...(isAuthenticated ? [{ label: isLoggingOut ? "Logging out..." : "Logout", onClick: handleLogout, disabled: isLoggingOut }] : [])
         ]}
-        actionButton={{ label: "Start Free", href: "/auth" }}
+        secondaryAction={!isAuthenticated && !loading ? { label: "Log in", href: "/auth" } : undefined}
+        actionButton={{ label: "Start Free", scrolledLabel: "Get Started", href: "/auth" }}
+        scrollAware
       />
 
       <main className="pt-20">
