@@ -184,12 +184,27 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed left-0 top-0 w-64 h-full bg-gradient-to-b from-black/40 via-black/30 to-black/40 backdrop-blur-xl backdrop-saturate-150 border-r border-border rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0",
+          "fixed left-0 top-0 w-64 h-full border-r border-border rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0 overflow-hidden",
+          "bg-[linear-gradient(165deg,rgba(15,23,42,0.97)_0%,rgba(8,12,25,0.98)_40%,rgba(15,23,42,0.97)_100%)]",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
+        {/* Glossy sheen overlay */}
+        <div 
+          className="absolute inset-0 rounded-r-2xl pointer-events-none z-0"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 15%, transparent 40%, transparent 85%, rgba(255,255,255,0.03) 100%)',
+          }}
+        />
+        <div 
+          className="absolute top-0 left-0 right-0 h-32 rounded-tr-2xl pointer-events-none z-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0,240,255,0.04) 0%, transparent 60%)',
+          }}
+        />
+
         {/* Close button - visible on all screen sizes */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 z-10">
           <Button
             variant="ghost"
             size="icon"
@@ -201,7 +216,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
           </Button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 relative z-10">
           {/* Logo */}
           <div className="flex items-center space-x-3 mb-8" data-testid="sidebar-logo">
             <img 
@@ -235,7 +250,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
         </div>
 
         {/* Navigation Header Style User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border relative z-10">
           <div className="flex items-center justify-between space-x-3" data-testid="user-profile">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <Avatar className="h-10 w-10 flex-shrink-0">
