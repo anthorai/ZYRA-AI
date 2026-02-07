@@ -500,7 +500,7 @@ export default function RevenueImmuneCard() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Protection</span>
+              <span className="text-sm font-semibold text-foreground tracking-wide uppercase">Protection</span>
               <Switch
                 checked={isActive}
                 onCheckedChange={(checked) => toggleMutation.mutate(checked)}
