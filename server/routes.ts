@@ -16872,12 +16872,18 @@ Output format: Markdown with clear section headings.`;
       const result = await revenueImmuneScanner.runFullScan(userId);
       
       if (result) {
+        if (result.fixesApplied.length > 0) {
+          const { processPendingActions } = await import('./lib/autonomous-action-processor');
+          await processPendingActions();
+        }
+        
         res.json({
           success: true,
           scanId: result.scanId,
           productsScanned: result.productsScanned,
           issuesDetected: result.issuesDetected.length,
           fixesApplied: result.fixesApplied.length,
+          fixDetails: result.fixesApplied,
           estimatedRevenueProtected: result.estimatedRevenueProtected,
           durationMs: result.durationMs,
         });

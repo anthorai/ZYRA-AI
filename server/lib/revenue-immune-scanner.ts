@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { products, seoMeta, scanActivity, automationSettings, autonomousActions } from '@shared/schema';
 import { eq, and, gte, desc, sql, lt, isNull, or } from 'drizzle-orm';
+import { ActionDeduplicationGuard } from './action-deduplication-guard';
 
 interface IssueDetail {
   type: string;
@@ -16,6 +17,7 @@ interface FixDetail {
   productName: string;
   description: string;
   estimatedImpact: number;
+  actionId?: string;
 }
 
 interface ScanResult {
@@ -27,9 +29,28 @@ interface ScanResult {
   durationMs: number;
 }
 
+const ISSUE_TO_ACTION_MAP: Record<string, { actionType: string; label: string }> = {
+  seo_erosion: { actionType: 'optimize_seo', label: 'SEO Optimization' },
+  weak_title: { actionType: 'optimize_seo', label: 'Title Optimization' },
+  thin_content: { actionType: 'optimize_seo', label: 'Content Enhancement' },
+  missing_meta: { actionType: 'optimize_seo', label: 'Meta Description Generation' },
+  content_decay: { actionType: 'optimize_seo', label: 'Content Refresh' },
+};
+
+const SEVERITY_IMPACT: Record<string, number> = {
+  high: 500,
+  medium: 200,
+  low: 50,
+};
+
 export class RevenueImmuneScanner {
   private static instance: RevenueImmuneScanner;
   private isScanning: Map<string, boolean> = new Map();
+  private dedupGuard: ActionDeduplicationGuard;
+
+  constructor() {
+    this.dedupGuard = new ActionDeduplicationGuard();
+  }
 
   static getInstance(): RevenueImmuneScanner {
     if (!RevenueImmuneScanner.instance) {
@@ -46,6 +67,77 @@ export class RevenueImmuneScanner {
       .limit(1);
     
     return settings[0]?.globalAutopilotEnabled ?? false;
+  }
+
+  private async createFixAction(
+    userId: string,
+    issue: IssueDetail,
+    scanId: string
+  ): Promise<FixDetail | null> {
+    const mapping = ISSUE_TO_ACTION_MAP[issue.type];
+    if (!mapping) {
+      console.log(`[RevenueImmuneScanner] No action mapping for issue type: ${issue.type}`);
+      return null;
+    }
+
+    try {
+      const uniquenessCheck = await this.dedupGuard.checkActionTargetUniqueness(
+        userId, 'product', issue.productId, mapping.actionType
+      );
+      if (!uniquenessCheck.allowed) {
+        console.log(`[RevenueImmuneScanner] Dedup blocked (${uniquenessCheck.ruleTriggered}): ${mapping.actionType} on ${issue.productName} — ${uniquenessCheck.reason}`);
+        return null;
+      }
+
+      const activeCheck = await this.dedupGuard.checkActiveActionLimit(
+        userId, 'product', issue.productId
+      );
+      if (!activeCheck.allowed) {
+        console.log(`[RevenueImmuneScanner] Active action limit: ${issue.productName} — ${activeCheck.reason}`);
+        return null;
+      }
+
+      const cooldownCheck = await this.dedupGuard.checkCooldown(
+        userId, 'product', issue.productId, mapping.actionType
+      );
+      if (!cooldownCheck.allowed) {
+        console.log(`[RevenueImmuneScanner] Cooldown active: ${mapping.actionType} on ${issue.productName} — ${cooldownCheck.reason}`);
+        return null;
+      }
+
+      const [action] = await db.insert(autonomousActions).values({
+        userId,
+        actionType: mapping.actionType,
+        entityType: 'product',
+        entityId: issue.productId,
+        status: 'pending',
+        decisionReason: `Revenue Immune System: ${issue.description}`,
+        executedBy: 'revenue_immune_system',
+        creditsUsed: 1,
+        payload: {
+          source: 'revenue_immune_scanner',
+          scanId,
+          issueType: issue.type,
+          severity: issue.severity,
+          actionLabel: mapping.label,
+          productName: issue.productName,
+        } as any,
+      }).returning();
+
+      console.log(`[RevenueImmuneScanner] Created fix action ${action.id}: ${mapping.label} for "${issue.productName}"`);
+
+      return {
+        type: mapping.label,
+        productId: issue.productId,
+        productName: issue.productName,
+        description: `Auto-created ${mapping.label} to fix: ${issue.description}`,
+        estimatedImpact: SEVERITY_IMPACT[issue.severity] || 100,
+        actionId: action.id,
+      };
+    } catch (error) {
+      console.error(`[RevenueImmuneScanner] Error creating fix for ${issue.productName}:`, error);
+      return null;
+    }
   }
 
   async runFullScan(userId: string): Promise<ScanResult | null> {
@@ -152,6 +244,32 @@ export class RevenueImmuneScanner {
         }
       }
 
+      console.log(`[RevenueImmuneScanner] Found ${issuesDetected.length} issues, creating fix actions...`);
+
+      const highSeverityIssues = issuesDetected.filter(i => i.severity === 'high');
+      const mediumSeverityIssues = issuesDetected.filter(i => i.severity === 'medium');
+      const prioritizedIssues = [...highSeverityIssues, ...mediumSeverityIssues];
+
+      const processedProducts = new Set<string>();
+      const MAX_FIXES_PER_SCAN = 5;
+
+      for (const issue of prioritizedIssues) {
+        if (fixesApplied.length >= MAX_FIXES_PER_SCAN) {
+          console.log(`[RevenueImmuneScanner] Reached max fixes per scan (${MAX_FIXES_PER_SCAN}), deferring remaining`);
+          break;
+        }
+
+        if (processedProducts.has(issue.productId)) {
+          continue;
+        }
+
+        const fix = await this.createFixAction(userId, issue, scanRecord.id);
+        if (fix) {
+          fixesApplied.push(fix);
+          processedProducts.add(issue.productId);
+        }
+      }
+
       const highSeverityCount = issuesDetected.filter(i => i.severity === 'high').length;
       const mediumSeverityCount = issuesDetected.filter(i => i.severity === 'medium').length;
       estimatedRevenueProtected = (highSeverityCount * 500) + (mediumSeverityCount * 200);
@@ -173,7 +291,7 @@ export class RevenueImmuneScanner {
         })
         .where(eq(scanActivity.id, scanRecord.id));
 
-      console.log(`[RevenueImmuneScanner] Scan completed for user ${userId}: ${userProducts.length} products, ${issuesDetected.length} issues found`);
+      console.log(`[RevenueImmuneScanner] Scan completed for user ${userId}: ${userProducts.length} products, ${issuesDetected.length} issues, ${fixesApplied.length} fix actions created`);
 
       return {
         scanId: scanRecord.id,

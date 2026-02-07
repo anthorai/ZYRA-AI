@@ -1358,9 +1358,14 @@ async function runRevenueImmuneScan(): Promise<void> {
         const result = await revenueImmuneScanner.runFullScan(setting.userId);
         
         if (result) {
-          console.log(`   ✅ Scanned ${result.productsScanned} products, found ${result.issuesDetected.length} issues`);
+          console.log(`   ✅ Scanned ${result.productsScanned} products, found ${result.issuesDetected.length} issues, created ${result.fixesApplied.length} fix actions`);
           if (result.estimatedRevenueProtected > 0) {
             console.log(`   💰 Estimated revenue protected: ₹${result.estimatedRevenueProtected}`);
+          }
+          if (result.fixesApplied.length > 0) {
+            const { processPendingActions } = await import('./autonomous-action-processor');
+            console.log(`   🔧 [Revenue Immune] Processing ${result.fixesApplied.length} fix actions...`);
+            await processPendingActions();
           }
         }
       } catch (error) {
