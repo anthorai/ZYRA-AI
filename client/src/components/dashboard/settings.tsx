@@ -231,7 +231,6 @@ export default function Settings() {
                     style={{
                       background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
                       color: '#04141C',
-                      boxShadow: '0 6px 20px rgba(0,240,255,0.45)',
                     }}
                     data-testid={`button-action-${card.id}`}
                   >
