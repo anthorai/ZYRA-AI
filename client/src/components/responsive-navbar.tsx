@@ -55,7 +55,7 @@ export default function ResponsiveNavbar({
   useEffect(() => {
     if (!scrollAware) return;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
+      setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
@@ -274,19 +274,22 @@ export default function ResponsiveNavbar({
 
   return (
     <nav
-      className="fixed top-0 w-full z-50 transition-all duration-300 ease-in-out backdrop-blur-md bg-[#0a0a1a]"
+      className={cn(
+        "fixed z-50 w-full transition-all duration-300 ease-in-out",
+        scrollAware
+          ? "px-2"
+          : "bg-black/20 backdrop-blur-md border-b border-primary/20"
+      )}
     >
       <div
         className={cn(
-          "transition-all duration-300 ease-in-out",
+          "mx-auto transition-all duration-300 ease-in-out",
           scrollAware && isScrolled
-            ? "max-w-5xl mx-auto rounded-2xl backdrop-blur-xl border border-primary/20 px-4 sm:px-6 py-2.5"
-            : "container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4"
+            ? "mt-2 max-w-4xl rounded-2xl border backdrop-blur-lg bg-background/50 px-6 lg:px-5 py-3"
+            : scrollAware
+              ? "max-w-6xl px-6 lg:px-12 py-3 lg:py-4"
+              : "container px-4 sm:px-6 lg:px-8 py-3 sm:py-4"
         )}
-        style={scrollAware && isScrolled ? {
-          background: 'rgba(10, 10, 26, 0.85)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px rgba(0, 240, 255, 0.03)',
-        } : {}}
       >
         <div className="flex items-center justify-between gap-4 relative">
           <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
@@ -333,7 +336,7 @@ export default function ResponsiveNavbar({
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <div className="hidden md:flex items-center gap-2 sm:gap-3">
-              {renderSecondaryAction(false)}
+              {(!scrollAware || !isScrolled) && renderSecondaryAction(false)}
               {renderActionButton(false)}
             </div>
 
