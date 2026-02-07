@@ -754,7 +754,7 @@ export default function Pricing() {
                   Start Safe
                 </Link>
               </Button>
-              <Button asChild size="lg" className="gradient-button px-8" data-testid="button-final-growth">
+              <Button asChild size="lg" className="gradient-button px-8 border border-primary/50" data-testid="button-final-growth">
                 <Link href="/auth">
                   Unlock Growth
                   <ArrowRight className="w-4 h-4 ml-2" />
