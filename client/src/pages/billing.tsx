@@ -101,14 +101,14 @@ interface UsageStats {
 }
 
 const planIcons: Record<string, JSX.Element> = {
-  "Free": <Gift className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "7-Day Free Trial": <Rocket className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "Starter": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "Starter+": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "Growth": <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "Scale": <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "Pro": <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />,
-  "Enterprise": <Building className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />
+  "Free": <Gift className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#7C86B8' }} />,
+  "7-Day Free Trial": <Rocket className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#7C86B8' }} />,
+  "Starter": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#00F0FF' }} />,
+  "Starter+": <BarChart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#00F0FF' }} />,
+  "Growth": <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#22C55E' }} />,
+  "Scale": <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#A78BFA' }} />,
+  "Pro": <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#A78BFA' }} />,
+  "Enterprise": <Building className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" style={{ color: '#A78BFA' }} />
 };
 
 interface PlanFeatureCategory {
@@ -940,26 +940,34 @@ export default function BillingPage() {
 
         <TabsContent value="plans" className="space-y-6">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4" data-testid="text-pricing-title">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4" style={{ color: '#E6F7FF' }} data-testid="text-pricing-title">
               Choose Your Plan
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground px-4 sm:px-0">
+            <p className="text-base sm:text-lg lg:text-xl px-4 sm:px-0" style={{ color: '#9AA6D6' }}>
               Start with a 7-day free trial, upgrade anytime
             </p>
             
             <div className="flex items-center justify-center gap-3 mt-6" data-testid="billing-toggle">
-              <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+              <span className="text-sm font-medium transition-colors" style={{ color: !isAnnual ? '#E6F7FF' : '#9AA6D6' }}>
                 Monthly
               </span>
               <Switch
                 checked={isAnnual}
                 onCheckedChange={setIsAnnual}
+                className="data-[state=checked]:bg-[#00F0FF]"
                 data-testid="switch-billing-period"
               />
-              <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
+              <span className="text-sm font-medium transition-colors" style={{ color: isAnnual ? '#E6F7FF' : '#9AA6D6' }}>
                 Annual
               </span>
-              <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+              <Badge
+                className="no-default-hover-elevate no-default-active-elevate"
+                style={{
+                  background: 'rgba(34,197,94,0.18)',
+                  color: '#9EFFC3',
+                  border: '1px solid rgba(34,197,94,0.35)',
+                }}
+              >
                 Save 20%
               </Badge>
             </div>
@@ -1006,53 +1014,95 @@ export default function BillingPage() {
               {plans.filter((plan: SubscriptionPlan) => plan.planName !== "7-Day Free Trial").map((plan: SubscriptionPlan, index) => {
               const isCurrentPlan = plan.id === currentSubscription?.planId;
               const isPlanPopular = plan.planName === "Growth";
+              const isPro = plan.planName === "Pro";
+              const isStarter = plan.planName === "Starter" || plan.planName === "Starter+";
+              const isFree = plan.planName === "Free" || plan.planName === "7-Day Free Trial";
               const details = planDetails[plan.planName];
               const isTrial = plan.planName?.includes('Trial') || plan.price === 0;
               const displayPrice = isTrial ? 0 : (isAnnual ? Math.round(plan.price * 12 * 0.8) : plan.price);
               const annualSavings = isTrial ? 0 : Math.round(plan.price * 12 * 0.2);
+
+              const planAccentColor = isPlanPopular ? '#22C55E' : isPro ? '#A78BFA' : isStarter ? '#00F0FF' : '#7C86B8';
+
+              const cardBg = isPlanPopular
+                ? 'linear-gradient(180deg, #0E3B44, #121833)'
+                : isPro
+                  ? 'linear-gradient(180deg, #2A103A, #121833)'
+                  : isFree
+                    ? '#10162A'
+                    : '#131B34';
+
+              const cardBorder = isPlanPopular
+                ? '1px solid rgba(34,197,94,0.25)'
+                : isPro
+                  ? '1px solid rgba(167,139,250,0.2)'
+                  : isStarter
+                    ? '1px solid rgba(0,240,255,0.15)'
+                    : '1px solid rgba(255,255,255,0.04)';
               
               return (
                 <div key={plan.id} className={`relative h-full flex flex-col ${isPlanPopular ? 'pt-6' : ''}`}>
                   {isPlanPopular && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
-                      <Badge className="bg-primary text-primary-foreground px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-lg">
-                        ⭐ Popular
+                      <Badge
+                        className="px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold no-default-hover-elevate no-default-active-elevate"
+                        style={{
+                          background: 'rgba(34,197,94,0.18)',
+                          color: '#9EFFC3',
+                          border: '1px solid rgba(34,197,94,0.35)',
+                        }}
+                        data-testid={`badge-popular-${index}`}
+                      >
+                        Popular
                       </Badge>
                     </div>
                   )}
                   <DashboardCard 
                     size="sm"
-                    className={`group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 border border-slate-700/50 hover:border-primary/30 flex-1 ${isPlanPopular ? 'border-primary/50' : ''}`}
+                    className="group relative overflow-hidden rounded-2xl transition-all duration-300 flex-1 border-0"
                     testId={`card-plan-${index}`}
                   >
-                  <div className="h-full flex flex-col">
+                  <div
+                    className="h-full flex flex-col relative overflow-hidden"
+                    style={{
+                      background: cardBg,
+                      border: cardBorder,
+                      borderRadius: '16px',
+                    }}
+                  >
+                    {(isStarter || isPlanPopular || isPro) && (
+                      <div
+                        className="absolute top-0 left-0 bottom-0 w-[3px]"
+                        style={{ background: planAccentColor, borderRadius: '16px 0 0 16px' }}
+                      />
+                    )}
                     {/* Header Section */}
-                    <div className="space-y-3 sm:space-y-4 pb-4 sm:pb-6 border-b border-slate-700/50 text-center">
+                    <div className="p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4 pb-4 sm:pb-6 text-center" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <div className="flex flex-col items-center space-y-2 sm:space-y-3">
-                        <div className="text-primary">
-                          {planIcons[plan.planName] || <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-10 xl:h-10 text-primary" />}
+                        <div style={{ color: planAccentColor }}>
+                          {planIcons[plan.planName] || <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-11 lg:h-11 xl:w-10 xl:h-10" />}
                         </div>
-                        <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-xl font-bold text-white leading-tight" data-testid={`text-plan-name-${index}`}>
+                        <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl xl:text-xl font-semibold leading-tight" style={{ color: '#E6F7FF' }} data-testid={`text-plan-name-${index}`}>
                           {plan.planName === "Free" ? "Free to Install" : plan.planName}
                         </h3>
                       </div>
                       
                       <div className="space-y-1.5 sm:space-y-2">
-                        <p className="text-white font-bold text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-3xl">
+                        <p className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-3xl" style={{ color: '#FFFFFF' }}>
                           ${displayPrice === 0 ? '0' : displayPrice.toLocaleString()}
-                          <span className="text-sm sm:text-base text-slate-400 font-normal ml-1 sm:ml-2">
+                          <span className="text-sm sm:text-base font-normal ml-1 sm:ml-2" style={{ color: '#9AA6D6' }}>
                             /{isTrial ? '7 days' : (isAnnual ? 'year' : 'mo')}
                           </span>
                         </p>
                         {isAnnual && !isTrial && annualSavings > 0 && (
-                          <p className="text-green-400 text-xs font-medium" data-testid={`text-plan-savings-${index}`}>
+                          <p className="text-xs font-medium" style={{ color: '#9EFFC3' }} data-testid={`text-plan-savings-${index}`}>
                             Save ${annualSavings.toLocaleString()} per year
                           </p>
                         )}
                         {details && (
                           <>
-                            <p className="text-primary text-sm sm:text-base font-semibold">{details.credits}</p>
-                            <p className="text-slate-300 text-xs sm:text-sm px-2 sm:px-4">{details.tagline}</p>
+                            <p className="text-sm sm:text-base font-semibold" style={{ color: planAccentColor }}>{details.credits}</p>
+                            <p className="text-xs sm:text-sm px-2 sm:px-4" style={{ color: '#A9B4E5' }}>{details.tagline}</p>
                           </>
                         )}
                       </div>
@@ -1060,13 +1110,13 @@ export default function BillingPage() {
                     
                     {/* Features Section */}
                     {details && (
-                      <div className="flex-1 py-4 sm:py-5 md:py-6 px-1 sm:px-2 space-y-3 sm:space-y-4">
+                      <div className="flex-1 py-4 sm:py-5 md:py-6 px-3 sm:px-4 space-y-3 sm:space-y-4">
                         {details.categories.map((category, catIndex) => (
                           <div key={catIndex} className="space-y-1.5 sm:space-y-2 text-left">
-                            <h4 className="text-white font-semibold text-xs sm:text-sm">{category.name}</h4>
+                            <h4 className="font-semibold text-xs sm:text-sm" style={{ color: '#E6F7FF' }}>{category.name}</h4>
                             <ul className="space-y-0.5 sm:space-y-1">
                               {category.features.map((feature, featureIndex) => (
-                                <li key={featureIndex} className="text-slate-300 text-[11px] sm:text-xs leading-relaxed">
+                                <li key={featureIndex} className="text-[11px] sm:text-xs leading-relaxed" style={{ color: '#A9B4E5' }}>
                                   {feature}
                                 </li>
                               ))}
@@ -1077,22 +1127,27 @@ export default function BillingPage() {
                     )}
                     
                     {/* CTA Button */}
-                    <div className="flex justify-center pt-3 sm:pt-4 border-t border-slate-700/50 mt-auto">
+                    <div className="flex justify-center px-3 sm:px-4 pt-3 sm:pt-4 pb-3 sm:pb-4 mt-auto" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                       <Button
-                        className={`w-full px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-200 border-0 font-semibold rounded-lg ${
-                          isCurrentPlan 
-                            ? 'bg-slate-700 text-white opacity-50 cursor-not-allowed' 
+                        size="default"
+                        className="w-full text-xs sm:text-sm transition-all duration-200 border-0 font-semibold"
+                        style={{
+                          background: isCurrentPlan
+                            ? '#1A2142'
                             : processingPlanId === plan.id
-                              ? 'bg-primary/70 text-primary-foreground cursor-wait'
+                              ? 'rgba(0,240,255,0.5)'
                               : processingPlanId !== null
-                                ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
-                                : 'bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30 hover:scale-105 active:scale-95'
-                        }`}
+                                ? '#1A2142'
+                                : 'linear-gradient(135deg, #00F0FF, #00FFE5)',
+                          color: isCurrentPlan || (processingPlanId !== null && processingPlanId !== plan.id)
+                            ? '#7C86B8'
+                            : '#04141C',
+                          opacity: isCurrentPlan ? 0.6 : 1,
+                        }}
                         disabled={isCurrentPlan || processingPlanId !== null}
                         onClick={() => {
                           if (isCurrentPlan) return;
 
-                          // Derive a "handle" for logging purposes
                           const planAny = plan as any;
                           const planHandle =
                             planAny.shopifyPlanHandle ||
@@ -1105,12 +1160,10 @@ export default function BillingPage() {
                               : undefined);
 
                           if (plan.planName === "7-Day Free Trial") {
-                            // Internal app logic – no Shopify billing redirect
                             changePlanMutation.mutate(plan.id);
                             return;
                           }
 
-                          // Paid plan → go to Managed Pricing page
                           handleUpgrade(planHandle || "");
                         }}
                         data-testid={`button-choose-plan-${index}`}

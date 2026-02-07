@@ -1,0 +1,165 @@
+ROLE:
+You are fixing visibility and contrast issues on ZYRA’s
+“Choose Your Plan” pricing page.
+
+The layout, spacing, and structure are correct.
+ONLY color hierarchy and subtle depth must be improved.
+
+IMPORTANT CONSTRAINTS:
+• DO NOT change layout
+• DO NOT add strong or heavy shadows
+• DO NOT redesign cards
+• ONLY adjust background colors, borders, accents, and text contrast
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• All pricing cards look visually similar
+• Plan hierarchy is unclear
+• Feature lists blend together
+• Popular plan does not stand out enough
+• Page feels flat, not readable
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+PRICING CARD BASE (ALL PLANS)
+--------------------------------------------------
+
+Default Card Background:
+#121833
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Border-radius:
+16px
+
+NO DROP SHADOWS.
+Use border + background contrast only.
+
+--------------------------------------------------
+PLAN DIFFERENTIATION (CRITICAL)
+--------------------------------------------------
+
+FREE PLAN:
+Background: #10162A
+Border: rgba(255,255,255,0.04)
+
+STARTER PLAN:
+Background: #131B34
+Border-left: 3px solid #00F0FF
+
+GROWTH PLAN (POPULAR):
+Background: linear-gradient(180deg, #0E3B44, #121833)
+Border-left: 3px solid #22C55E
+Badge Background: rgba(34,197,94,0.15)
+Badge Text: #9EFFC3
+
+PRO PLAN:
+Background: linear-gradient(180deg, #2A103A, #121833)
+Border-left: 3px solid #A78BFA
+
+RULE:
+Each plan must be visually identifiable even without reading text.
+
+--------------------------------------------------
+PLAN TITLE & PRICE HIERARCHY
+--------------------------------------------------
+
+Plan Name:
+Color: #E6F7FF
+Font-weight: 600
+
+Price:
+Color: #FFFFFF
+Font-size: larger than plan name
+
+Billing Text (/mo, credits):
+Color: #9AA6D6
+
+--------------------------------------------------
+FEATURE LIST READABILITY
+--------------------------------------------------
+
+Feature Text:
+Color: #A9B4E5
+
+Feature Icons / Bullets:
+• Foundation features → #00F0FF
+• Growth features → #22C55E
+• Guard / Pro features → #A78BFA
+
+Divider Lines:
+rgba(255,255,255,0.05)
+
+--------------------------------------------------
+CTA BUTTONS (NO SHADOW HEAVY)
+--------------------------------------------------
+
+CTA Button:
+Background: linear-gradient(135deg, #00F0FF, #00FFE5)
+Text Color: #04141C
+Font-weight: 600
+Border-radius: 10px
+
+Hover:
+Background slightly brighter
+NO glow
+NO large shadow
+
+--------------------------------------------------
+TAB / TOGGLE (MONTHLY / ANNUAL)
+--------------------------------------------------
+
+Active Toggle:
+Background: #00F0FF
+Text: #04141C
+
+Inactive Toggle:
+Background: #1A2142
+Text: #9AA6D6
+
+--------------------------------------------------
+POPULAR BADGE FIX
+--------------------------------------------------
+
+Badge:
+Background: rgba(34,197,94,0.18)
+Text: #9EFFC3
+Border: 1px solid rgba(34,197,94,0.35)
+
+--------------------------------------------------
+TEXT CONTRAST RULES
+--------------------------------------------------
+
+• Titles = #E6F7FF
+• Body text = #A9B4E5
+• Secondary info = #7C86B8
+• Never use same color for all text
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No heavy shadows
+• No glowing cards
+• No white borders
+• Contrast must come from color, not shadow
+• Each plan must feel distinct
+• Growth plan should attract attention naturally
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Plans are distinguishable in <1 second
+• Growth plan is clearly highlighted
+• Text is readable without strain
+• Page feels premium, not flashy
+• No visual noise added
