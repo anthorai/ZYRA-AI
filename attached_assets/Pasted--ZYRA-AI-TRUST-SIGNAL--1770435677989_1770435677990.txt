@@ -1,0 +1,125 @@
+/* =====================================================================
+   ZYRA AI — TRUST SIGNAL BADGES VISIBILITY UPGRADE
+   ELEMENT: PERMISSION / SAFETY BULLETS
+   PRIORITY: HIGH — TRUST MUST BE SEEN, NOT READ
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to CONVERT the current plain text trust bullets
+into CLEAR, BADGE-STYLE TRUST INDICATORS that are:
+- Visually distinct
+- Instantly scannable
+- High-contrast
+- Enterprise-grade
+
+NO content changes.
+ONLY presentation and hierarchy upgrades.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+The current trust items:
+- Look like passive text
+- Blend into the background
+- Do not feel authoritative
+- Are easy to ignore
+
+THIS FAILS THEIR PURPOSE.
+
+---------------------------------------------------------------------
+2. REQUIRED TRANSFORMATION
+---------------------------------------------------------------------
+
+TRANSFORM EACH TRUST ITEM INTO A BADGE.
+
+From:
+• Permission-based execution
+• One-time fixes, locked after apply
+• Revenue-safe automation
+
+To:
+→ INDIVIDUAL VISUAL BADGES
+
+---------------------------------------------------------------------
+3. BADGE DESIGN RULES (MANDATORY)
+---------------------------------------------------------------------
+
+EACH BADGE MUST HAVE:
+- Icon container (left)
+- Text label (right)
+- Background surface
+- Border or glow for separation
+
+BADGE SHAPE:
+- Pill or soft-rectangle
+- Consistent height across badges
+
+---------------------------------------------------------------------
+4. VISUAL STYLING REQUIREMENTS
+---------------------------------------------------------------------
+
+BADGE BACKGROUND:
+- Slightly lighter than page background
+- Semi-transparent or layered look
+- Must clearly separate from background
+
+BADGE BORDER / GLOW:
+- Thin border OR subtle glow
+- Use Zyra primary accent color
+- No neon or flashy effects
+
+ICON:
+- Place inside small rounded container
+- Icon contrast must be HIGH
+- Icons must be simple (shield, lock, graph)
+
+TEXT:
+- Increase font weight slightly
+- Keep text short and readable
+- High contrast vs badge background
+
+---------------------------------------------------------------------
+5. LAYOUT & SPACING
+---------------------------------------------------------------------
+
+- Stack badges vertically OR in a clean grid
+- Consistent spacing between badges
+- Align badges cleanly under headline
+- Badges must feel intentional, not decorative
+
+---------------------------------------------------------------------
+6. INTERACTION (OPTIONAL BUT RECOMMENDED)
+---------------------------------------------------------------------
+
+HOVER STATE:
+- Slight glow or elevation
+- Reinforces “this is important”
+
+NO click behavior required.
+
+---------------------------------------------------------------------
+7. RESPONSIVE RULES
+---------------------------------------------------------------------
+
+- Desktop: badges aligned neatly, easy to scan
+- Mobile: full-width badges stacked vertically
+- No wrapping that breaks readability
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This change is SUCCESSFUL only if:
+- Trust signals are immediately visible
+- Badges feel authoritative and secure
+- User notices them before the login form
+- Page feels more confident and professional
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+REPLACE TEXT BULLETS WITH BADGE-STYLE TRUST INDICATORS.
+MAKE TRUST VISUAL AND IMPOSSIBLE TO MISS.
+===================================================================== */
+``

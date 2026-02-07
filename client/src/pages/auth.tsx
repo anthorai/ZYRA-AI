@@ -352,24 +352,45 @@ export default function Auth() {
             decision-based AI — safely.
           </p>
 
-          <div className="space-y-6" data-testid="trust-signals">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-[18px] h-[18px] text-primary" />
+          <div className="space-y-3.5" data-testid="trust-signals">
+            <div
+              className="flex items-center gap-3.5 px-4 py-3 rounded-xl"
+              style={{
+                background: 'rgba(0, 240, 255, 0.04)',
+                border: '1px solid rgba(0, 240, 255, 0.12)',
+                boxShadow: '0 0 20px rgba(0, 240, 255, 0.03)',
+              }}
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-[17px] h-[17px] text-primary" />
               </div>
-              <span className="text-[15px] text-foreground/70 font-medium" data-testid="text-trust-permission">Permission-based execution</span>
+              <span className="text-[14px] text-foreground/80 font-semibold tracking-wide" data-testid="text-trust-permission">Permission-based execution</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <Lock className="w-[18px] h-[18px] text-primary" />
+            <div
+              className="flex items-center gap-3.5 px-4 py-3 rounded-xl"
+              style={{
+                background: 'rgba(0, 240, 255, 0.04)',
+                border: '1px solid rgba(0, 240, 255, 0.12)',
+                boxShadow: '0 0 20px rgba(0, 240, 255, 0.03)',
+              }}
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-[17px] h-[17px] text-primary" />
               </div>
-              <span className="text-[15px] text-foreground/70 font-medium" data-testid="text-trust-locked">One-time fixes, locked after apply</span>
+              <span className="text-[14px] text-foreground/80 font-semibold tracking-wide" data-testid="text-trust-locked">One-time fixes, locked after apply</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <BarChart3 className="w-[18px] h-[18px] text-primary" />
+            <div
+              className="flex items-center gap-3.5 px-4 py-3 rounded-xl"
+              style={{
+                background: 'rgba(0, 240, 255, 0.04)',
+                border: '1px solid rgba(0, 240, 255, 0.12)',
+                boxShadow: '0 0 20px rgba(0, 240, 255, 0.03)',
+              }}
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-[17px] h-[17px] text-primary" />
               </div>
-              <span className="text-[15px] text-foreground/70 font-medium" data-testid="text-trust-automation">Revenue-safe automation</span>
+              <span className="text-[14px] text-foreground/80 font-semibold tracking-wide" data-testid="text-trust-automation">Revenue-safe automation</span>
             </div>
           </div>
         </div>
