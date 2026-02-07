@@ -1,0 +1,137 @@
+/* =====================================================================
+   ZYRA AI — HERO CTA VISIBILITY UPGRADE
+   ELEMENTS: "START FREE TRIAL" (PRIMARY) + "SEE HOW IT WORKS" (SECONDARY)
+   PRIORITY: CRITICAL — ABOVE-THE-FOLD CONVERSION
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to make the HERO CTA BUTTONS unmistakably visible,
+clickable, and conversion-focused — while preserving a
+professional, enterprise-grade look.
+
+DO NOT change copy.
+DO NOT change layout structure.
+ONLY enhance VISIBILITY, CONTRAST, and HIERARCHY.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM
+---------------------------------------------------------------------
+
+Current issues:
+- "Start Free Trial" blends into background
+- Button does not feel primary or urgent
+- "See How It Works" lacks clear secondary styling
+- Both CTAs feel equal in weight, causing confusion
+
+THIS REDUCES CONVERSION CLARITY.
+
+---------------------------------------------------------------------
+2. CTA HIERARCHY (MANDATORY)
+---------------------------------------------------------------------
+
+DEFINE CLEAR ROLES:
+
+PRIMARY CTA:
+→ "Start Free Trial"
+
+SECONDARY CTA:
+→ "See How It Works"
+
+User must instantly know where to click first.
+
+---------------------------------------------------------------------
+3. PRIMARY CTA — "START FREE TRIAL"
+---------------------------------------------------------------------
+
+MAKE THIS BUTTON DOMINANT.
+
+REQUIRED CHANGES:
+
+BACKGROUND:
+- Use solid, high-contrast brand accent color
+- No transparent or outline-only style
+
+SIZE:
+- Increase height by 15–20%
+- Increase horizontal padding
+- Button must feel confident and clickable
+
+TEXT:
+- Increase font size slightly
+- Use semi-bold or bold weight
+- Ensure strong contrast against background
+
+ICON (→):
+- Slightly larger
+- Clear spacing from text
+
+INTERACTION:
+- Hover: subtle glow or elevation
+- Active: slight press-down
+- Cursor: pointer
+
+THIS BUTTON MUST COMMAND ATTENTION.
+
+---------------------------------------------------------------------
+4. SECONDARY CTA — "SEE HOW IT WORKS"
+---------------------------------------------------------------------
+
+MAKE THIS CLEAR BUT SUPPORTIVE.
+
+STYLE:
+- Outline or soft-filled background
+- Visible border with good contrast
+- Lower visual weight than primary CTA
+
+TEXT:
+- Medium font weight
+- Clear readability
+
+INTERACTION:
+- Hover: background fill or subtle highlight
+- Never visually compete with primary CTA
+
+---------------------------------------------------------------------
+5. SPACING & GROUPING
+---------------------------------------------------------------------
+
+- Place CTAs in a clear button group
+- Add adequate spacing between buttons
+- Align buttons horizontally on desktop
+- Stack vertically on mobile (primary first)
+
+---------------------------------------------------------------------
+6. COLOR & STYLE RULES
+---------------------------------------------------------------------
+
+- Dark background stays intact
+- CTAs must POP against it
+- No neon, no playful gradients
+- Enterprise-grade restraint
+
+---------------------------------------------------------------------
+7. ACCESSIBILITY & RESPONSIVENESS
+---------------------------------------------------------------------
+
+- Buttons must meet contrast standards
+- Focus states clearly visible
+- Touch-friendly sizing on mobile
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This fix is SUCCESSFUL only if:
+- "Start Free Trial" is immediately obvious
+- User instinctively clicks the primary CTA
+- Secondary CTA is visible but non-distracting
+- Section feels confident, not cluttered
+- Conversion clarity improves
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+MAKE "START FREE TRIAL" THE CLEAR, DOMINANT ACTION.
+ENSURE "SEE HOW IT WORKS" SUPPORTS WITHOUT COMPETING.
+NO LOW-VISIBILITY BUTTONS ALLOWED.
+===================================================================== */

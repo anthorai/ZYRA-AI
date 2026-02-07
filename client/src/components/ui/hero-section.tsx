@@ -123,16 +123,16 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                   className="mt-12 flex flex-col items-center justify-center gap-4 md:flex-row"
                 >
                   <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300" />
+                    <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-primary rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition duration-300" />
                     <Button
                       asChild
                       size="lg"
-                      className="relative rounded-xl px-8 text-base font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary/90"
+                      className="relative gradient-button rounded-xl px-10 py-6 text-base font-bold tracking-wide"
                       data-testid="button-hero-start"
                     >
                       <Link href="/auth">
                         <span className="text-nowrap">Start Free Trial</span>
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                        <ArrowRight className="w-5 h-5 ml-3" />
                       </Link>
                     </Button>
                   </div>
@@ -140,7 +140,7 @@ export function HeroSection({ navigationItems }: HeroSectionProps) {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="rounded-xl px-6 font-medium border-primary/30 bg-primary/5 backdrop-blur-sm hover:bg-primary/10"
+                    className="rounded-xl px-8 py-6 font-semibold border-primary/40 tracking-wide"
                     data-testid="button-hero-demo"
                   >
                     <a href="#how-it-works">
