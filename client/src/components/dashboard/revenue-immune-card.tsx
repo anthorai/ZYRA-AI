@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -36,6 +35,7 @@ import {
   ChevronRight,
   History,
   Zap,
+  Pause,
   Search,
   TrendingUp,
   Mail,
@@ -501,12 +501,33 @@ export default function RevenueImmuneCard() {
 
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-foreground tracking-wide uppercase">Protection</span>
-              <Switch
-                checked={isActive}
-                onCheckedChange={(checked) => toggleMutation.mutate(checked)}
+              <button
+                onClick={() => toggleMutation.mutate(!isActive)}
                 disabled={toggleMutation.isPending}
+                className={`relative flex items-center rounded-full p-1 w-[88px] h-[40px] transition-all duration-300 cursor-pointer border-2 ${
+                  isActive 
+                    ? 'bg-emerald-500/20 border-emerald-500/50' 
+                    : 'bg-red-500/20 border-red-500/40'
+                } ${toggleMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                 data-testid="switch-immune-toggle"
-              />
+              >
+                <span className={`absolute left-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
+                  isActive ? 'opacity-100 text-emerald-400' : 'opacity-0'
+                }`}>ON</span>
+                <span className={`absolute right-2.5 text-[10px] font-bold uppercase tracking-wider transition-opacity duration-200 ${
+                  !isActive ? 'opacity-100 text-red-400' : 'opacity-0'
+                }`}>OFF</span>
+                <div className={`w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
+                  isActive 
+                    ? 'translate-x-[48px] bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' 
+                    : 'translate-x-0 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                }`}>
+                  {isActive 
+                    ? <Zap className="w-4 h-4 text-white" />
+                    : <Pause className="w-4 h-4 text-white" />
+                  }
+                </div>
+              </button>
             </div>
           </div>
 
