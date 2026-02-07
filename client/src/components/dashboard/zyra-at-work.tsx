@@ -3151,56 +3151,6 @@ export default function ZyraAtWork() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {Object.entries(PHASE_CONFIG).map(([phase, config]) => {
-          const Icon = config.icon;
-          const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
-          const currentIndex = phaseOrder.indexOf(currentPhase);
-          const phaseIndex = phaseOrder.indexOf(phase);
-          
-          // When loop is complete, ALL phases are completed
-          const isLoopComplete = currentPhase === 'complete';
-          const isActive = !isLoopComplete && currentPhase === phase;
-          const isCompleted = isLoopComplete || phaseIndex < currentIndex;
-          
-          return (
-            <Card 
-              key={phase}
-              className={`${isLoopComplete ? 'bg-emerald-500/10' : config.bgColor} border-slate-700/50 transition-all duration-300 ${
-                isActive ? 'ring-2 ring-offset-2 ring-offset-slate-900' : ''
-              } ${isLoopComplete ? 'ring-2 ring-emerald-400/30 ring-offset-2 ring-offset-slate-900' : ''}`}
-              style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
-              data-testid={`phase-indicator-${phase}`}
-            >
-              <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center relative">
-                {isCompleted && (
-                  <div className="absolute top-1 right-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  </div>
-                )}
-                <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
-                </div>
-                <span className={`text-xs font-medium ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
-                  {config.label}
-                </span>
-                {isActive && isStreamConnected && (
-                  <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Live
-                  </span>
-                )}
-                {isLoopComplete && phase === 'learn' && (
-                  <span className="mt-1 text-[10px] text-emerald-400 font-medium">
-                    Complete
-                  </span>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
       {/* Optimization Mode Selector */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
