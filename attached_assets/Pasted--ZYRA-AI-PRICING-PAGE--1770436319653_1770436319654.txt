@@ -1,0 +1,172 @@
+/* =====================================================================
+   ZYRA AI — PRICING PAGE DUAL-STATE HEADER (SCROLL-AWARE UI)
+   MODULE: PRICING PAGE HEADER BEHAVIOR
+   PRIORITY: HIGH — VISUAL POLISH + BRAND AUTHORITY
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to IMPLEMENT a DUAL-STATE HEADER on the PRICING PAGE
+that changes appearance based on scroll position.
+
+This is a CONTROLLED, DELIBERATE UI TRANSITION.
+It must feel premium, intentional, and smooth.
+
+---------------------------------------------------------------------
+1. CORE REQUIREMENT (NON-NEGOTIABLE)
+---------------------------------------------------------------------
+
+On the PRICING PAGE ONLY:
+
+STATE A — TOP OF PAGE (Initial View)
+STATE B — SCROLLED STATE (Sticky Header)
+
+The header MUST visually transform between these two states.
+
+NO page reload.
+NO layout jump.
+SMOOTH transition only.
+
+---------------------------------------------------------------------
+2. STATE A — TOP OF PAGE HEADER (DEFAULT)
+---------------------------------------------------------------------
+
+WHEN:
+- User is at the top of the pricing page
+- Scroll position = 0 (or within first ~40px)
+
+STYLE:
+- Full-width header (edge-to-edge)
+- NO rounded corners
+- Transparent or subtle gradient background
+- Integrated naturally with hero section
+
+CONTENT:
+- Zyra logo (left)
+- Navigation links (center or left-aligned)
+- Login (secondary)
+- Sign Up / Get Started (primary, visible)
+
+FEEL:
+- Light
+- Open
+- Marketing-oriented
+- Inviting
+
+This matches the FIRST HEADER STYLE provided.
+
+---------------------------------------------------------------------
+3. STATE B — SCROLLED HEADER (STICKY / FLOATING)
+---------------------------------------------------------------------
+
+WHEN:
+- User scrolls down the page (past threshold, e.g. 80–120px)
+
+STYLE:
+- Header becomes STICKY
+- Constrained max-width (not full bleed)
+- Rounded corners (pill or soft rectangle)
+- Clear border or subtle shadow
+- Slight background opacity increase
+
+POSITION:
+- Fixed near top with margin from viewport
+- Appears as a FLOATING CONTROL BAR
+
+CONTENT:
+- Zyra logo (left)
+- Navigation links
+- Primary CTA changes to:
+  "Get Started" (high-contrast, solid)
+
+FEEL:
+- Focused
+- System-level
+- Control-oriented
+- Premium
+
+This matches the SECOND HEADER STYLE provided.
+
+---------------------------------------------------------------------
+4. TRANSITION & ANIMATION RULES (VERY IMPORTANT)
+---------------------------------------------------------------------
+
+- Transition MUST be smooth (300–400ms)
+- Animate:
+  - Border-radius
+  - Background opacity
+  - Shadow
+  - Header height (if needed)
+- NO snapping
+- NO sudden layout shift
+
+The transformation should feel like:
+"UI intelligently adapting to context"
+
+---------------------------------------------------------------------
+5. CTA BEHAVIOR DURING TRANSITION
+---------------------------------------------------------------------
+
+- Primary CTA remains visible in both states
+- CTA may change label:
+  - Top: "Sign Up"
+  - Scrolled: "Get Started"
+- CTA color and prominence must INCREASE in scrolled state
+
+Login remains secondary at all times.
+
+---------------------------------------------------------------------
+6. RESPONSIVE RULES
+---------------------------------------------------------------------
+
+DESKTOP:
+- Full dual-state behavior enabled
+
+TABLET:
+- Same behavior, slightly reduced width
+
+MOBILE:
+- Sticky rounded header still applies
+- Navigation may collapse into menu
+- CTA remains visible
+
+---------------------------------------------------------------------
+7. PAGE SCOPE LIMITATION
+---------------------------------------------------------------------
+
+IMPORTANT:
+- This dual-header behavior applies ONLY to:
+  → PRICING PAGE
+
+Other pages may use:
+- Static header
+- Or simpler sticky logic
+
+Do NOT apply globally unless explicitly instructed.
+
+---------------------------------------------------------------------
+8. ACCESSIBILITY & USABILITY
+---------------------------------------------------------------------
+
+- Header must not obscure content
+- Focus states must remain visible
+- CTA always reachable
+- No jitter during scroll
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This implementation is SUCCESSFUL only if:
+- Header looks clean at top of page
+- Header becomes premium, rounded, and focused on scroll
+- Transition feels smooth and intentional
+- CTA visibility improves on scroll
+- Overall page feels more polished and high-end
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+IMPLEMENT A SCROLL-AWARE, DUAL-STATE HEADER
+ON THE PRICING PAGE EXACTLY AS SPECIFIED.
+NO HARSH TRANSITIONS. NO GENERIC STICKY NAV.
+===================================================================== */
