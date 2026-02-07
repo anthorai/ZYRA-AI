@@ -3204,11 +3204,6 @@ export default function ZyraAtWork() {
                     Live
                   </span>
                 )}
-                {isLoopComplete && phase === 'learn' && (
-                  <span className="mt-1 text-[10px] text-emerald-400 font-medium">
-                    Complete
-                  </span>
-                )}
               </CardContent>
             </Card>
           );
