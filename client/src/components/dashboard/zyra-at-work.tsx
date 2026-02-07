@@ -3173,9 +3173,9 @@ export default function ZyraAtWork() {
           const currentIndex = phaseOrder.indexOf(currentPhase);
           const phaseIndex = phaseOrder.indexOf(phase);
           
-          const isLoopComplete = currentPhase === 'complete';
-          const isActive = !isLoopComplete && currentPhase === phase;
-          const isCompleted = isLoopComplete || phaseIndex < currentIndex;
+          const isLoopComplete = isAutopilotEnabled && currentPhase === 'complete';
+          const isActive = isAutopilotEnabled && !isLoopComplete && currentPhase === phase;
+          const isCompleted = isAutopilotEnabled && (isLoopComplete || phaseIndex < currentIndex);
           
           return (
             <Card 
@@ -3198,7 +3198,7 @@ export default function ZyraAtWork() {
                 <span className={`text-xs font-medium ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
                   {config.label}
                 </span>
-                {isActive && isStreamConnected && (
+                {isActive && isAutopilotEnabled && isStreamConnected && (
                   <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Live
