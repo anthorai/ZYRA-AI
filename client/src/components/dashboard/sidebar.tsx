@@ -238,7 +238,7 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
         {/* Navigation Header Style User Profile */}
         <div className="absolute bottom-0 left-0 right-0 px-3 py-2 border-t border-primary/20 relative z-10">
           <div className="flex items-center justify-between space-x-3" data-testid="user-profile">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="flex items-center space-x-3 flex-1 min-w-0 pl-[0px] pr-[0px] pt-[129px] pb-[129px]">
               <Avatar className="h-10 w-10 flex-shrink-0">
                 <AvatarImage src="" alt={displayName} />
                 <AvatarFallback className="gradient-surface text-primary border border-primary/20 text-sm">
