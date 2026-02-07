@@ -313,7 +313,7 @@ export default function ResponsiveNavbar({
                   </div>
                 )}
                 <span className={cn(
-                  "font-bold text-foreground whitespace-nowrap transition-all duration-300",
+                  "font-bold text-foreground whitespace-nowrap transition-all duration-300 uppercase tracking-wider",
                   scrollAware && isScrolled ? "text-base sm:text-lg" : "text-lg sm:text-xl lg:text-2xl"
                 )}>{logo.text}</span>
               </Link>
@@ -328,7 +328,7 @@ export default function ResponsiveNavbar({
                   </div>
                 )}
                 <span className={cn(
-                  "font-bold text-foreground whitespace-nowrap transition-all duration-300",
+                  "font-bold text-foreground whitespace-nowrap transition-all duration-300 uppercase tracking-wider",
                   scrollAware && isScrolled ? "text-base sm:text-lg" : "text-lg sm:text-xl lg:text-2xl"
                 )}>{logo.text}</span>
               </div>
