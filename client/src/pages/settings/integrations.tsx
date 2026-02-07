@@ -764,58 +764,85 @@ export default function IntegrationsPage() {
       )}
 
       {/* Connected Summary */}
-      <DashboardCard 
-        className="bg-primary/10"
-        testId="card-integration-summary"
+      <div
+        className="flex items-center justify-between gap-3 flex-wrap p-4 sm:p-5"
+        style={{
+          background: '#0F152B',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: '14px',
+        }}
+        data-testid="card-integration-summary"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link2 className="w-6 h-6 text-primary" />
-            <div>
-              <h3 className="text-white font-semibold text-lg">
-                {integrations.filter(i => i.isConnected).length} Active Integrations
-              </h3>
-              <p className="text-slate-400 text-sm">
-                {integrations.filter(i => !i.isConnected).length} more available to connect
-              </p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <Link2 className="w-6 h-6" style={{ color: '#00F0FF' }} />
+          <div>
+            <h3 className="font-semibold text-lg" style={{ color: '#E6F7FF' }}>
+              {integrations.filter(i => i.isConnected).length} Active Integrations
+            </h3>
+            <p className="text-sm" style={{ color: '#7C86B8' }}>
+              {integrations.filter(i => !i.isConnected).length} more available to connect
+            </p>
           </div>
-          <Button
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary/20"
-            data-testid="button-add-integration"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add New
-          </Button>
         </div>
-      </DashboardCard>
+        <Button
+          variant="outline"
+          data-testid="button-add-integration"
+          style={{
+            background: 'transparent',
+            border: '1px solid rgba(0,240,255,0.4)',
+            color: '#00F0FF',
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New
+        </Button>
+      </div>
 
       {/* Integrations List */}
       <TooltipProvider>
-        <div className="space-y-4">
-          {integrations.map((integration) => (
-            <DashboardCard 
-              key={integration.id} 
-              className="relative"
-              testId={`card-integration-${integration.id}`}
-            >
+        <div className="space-y-5">
+          {integrations.map((integration) => {
+            const accentColor = integration.id === 'shopify' ? '#22C55E' : '#00F0FF';
+            const iconColor = integration.isConnected ? accentColor : `${accentColor}CC`;
+
+            return (
+              <div
+                key={integration.id}
+                className="relative overflow-hidden"
+                style={{
+                  background: '#121833',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '14px',
+                }}
+                data-testid={`card-integration-${integration.id}`}
+              >
+                <div
+                  className="absolute top-0 left-0 bottom-0 w-[3px]"
+                  style={{ background: accentColor, borderRadius: '14px 0 0 14px' }}
+                />
+                <div className="p-4 sm:p-5">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-1">
-                    <div className={`p-3 rounded-lg ${integration.isConnected ? 'bg-primary/20' : 'bg-slate-800/50'} flex-shrink-0`}>
-                      <div className={integration.isConnected ? 'text-primary' : 'text-slate-400'}>
+                    <div className="p-3 rounded-lg flex-shrink-0" style={{ background: `${accentColor}15` }}>
+                      <div style={{ color: iconColor }}>
                         {integration.icon}
                       </div>
                     </div>
                     <div className="flex-1 w-full">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h3 className="text-white font-semibold text-base sm:text-lg">{integration.name}</h3>
+                        <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF' }}>{integration.name}</h3>
                         <Badge
-                          variant={integration.isConnected ? "default" : "secondary"}
-                          className={`text-xs ${integration.isConnected
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-slate-500/20 text-slate-400"
-                          }`}
+                          className="text-xs no-default-hover-elevate no-default-active-elevate"
+                          style={integration.isConnected ? {
+                            background: 'rgba(34,197,94,0.15)',
+                            color: '#9EFFC3',
+                            border: '1px solid rgba(34,197,94,0.35)',
+                          } : {
+                            background: 'rgba(255,210,125,0.1)',
+                            color: '#FFD27D',
+                            border: '1px solid rgba(255,210,125,0.25)',
+                          }}
+                          data-testid={`badge-status-${integration.id}`}
                         >
                           {integration.isConnected ? "Connected" : "Not Connected"}
                         </Badge>
@@ -847,8 +874,8 @@ export default function IntegrationsPage() {
                         </TooltipContent>
                       </Tooltip>
                       
-                      <p className="text-xs sm:text-sm text-slate-400 mt-2">{integration.type}</p>
-                      <p className="text-xs sm:text-sm text-slate-300 mt-1">{integration.description}</p>
+                      <p className="text-xs sm:text-sm mt-2" style={{ color: '#7C86B8' }}>{integration.type}</p>
+                      <p className="text-xs sm:text-sm mt-1" style={{ color: '#A9B4E5' }}>{integration.description}</p>
                     </div>
                   </div>
                 
@@ -856,7 +883,7 @@ export default function IntegrationsPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleDisconnect(integration.id, integration.name)}
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/10 w-full sm:w-auto md:w-auto"
+                    className="border-red-500/50 text-red-400 w-full sm:w-auto md:w-auto"
                     data-testid={`button-disconnect-${integration.id}`}
                   >
                     <X className="w-4 h-4 mr-2" />
@@ -865,8 +892,12 @@ export default function IntegrationsPage() {
                 ) : (
                   <Button
                     onClick={() => handleConnect(integration.id)}
-                    className="gradient-button w-full sm:w-auto md:w-auto"
+                    className="w-full sm:w-auto md:w-auto border-0 font-semibold"
                     disabled={integration.comingSoon}
+                    style={{
+                      background: '#00F0FF',
+                      color: '#04141C',
+                    }}
                     data-testid={`button-connect-${integration.id}`}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -1003,8 +1034,10 @@ export default function IntegrationsPage() {
                   )}
                 </div>
               )}
-            </DashboardCard>
-        ))}
+                </div>
+              </div>
+        );
+        })}
         </div>
       </TooltipProvider>
       

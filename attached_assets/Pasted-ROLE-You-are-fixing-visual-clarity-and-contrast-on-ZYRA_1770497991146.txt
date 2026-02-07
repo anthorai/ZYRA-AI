@@ -1,0 +1,173 @@
+ROLE:
+You are fixing visual clarity and contrast on ZYRA’s
+Integrations page.
+
+The layout, spacing, and logic are correct.
+ONLY color hierarchy, borders, and subtle accents may be adjusted.
+
+IMPORTANT CONSTRAINTS:
+• DO NOT change layout
+• DO NOT add heavy or deep shadows
+• DO NOT redesign cards
+• ONLY use background contrast, borders, and accent colors
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Page background and cards look too similar
+• Integration cards blend into each other
+• Primary action buttons do not stand out
+• “Active / Connected” state is not obvious
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+Page Background:
+#0B0E1A
+
+--------------------------------------------------
+PAGE HEADER (ACTIVE INTEGRATIONS)
+--------------------------------------------------
+
+Header Container:
+Background: #0F152B
+Border-bottom: 1px solid rgba(255,255,255,0.06)
+
+Title:
+Color: #E6F7FF
+
+Subtitle:
+Color: #7C86B8
+
+--------------------------------------------------
+INTEGRATION CARD BASE (ALL CARDS)
+--------------------------------------------------
+
+Card Background:
+#121833
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Border-radius:
+14px
+
+NO DROP SHADOWS.
+
+Spacing between cards:
+Increase vertical gap slightly for separation.
+
+--------------------------------------------------
+CARD DIFFERENTIATION BY TYPE
+--------------------------------------------------
+
+SHOPIFY INTEGRATION CARD:
+Left accent bar: 3px solid #22C55E
+
+EMAIL SERVICE CARD:
+Left accent bar: 3px solid #00F0FF
+
+Future integrations:
+Use distinct accent colors per category.
+
+RULE:
+Accent bar is the main visual separator — not shadow.
+
+--------------------------------------------------
+CARD TEXT HIERARCHY
+--------------------------------------------------
+
+Integration Name:
+Color: #E6F7FF
+Font-weight: 600
+
+Status Label (e.g. “Connected”, “Not Connected”):
+• Connected → #9EFFC3
+• Not Connected → #FFD27D
+
+Description Text:
+Color: #A9B4E5
+
+Meta / Helper Text:
+Color: #7C86B8
+
+--------------------------------------------------
+PRIMARY ACTION BUTTON (CONNECT)
+--------------------------------------------------
+
+Connect Button:
+Background: #00F0FF
+Text: #04141C
+Font-weight: 600
+Border-radius: 10px
+
+Hover:
+Background: #1AF5FF
+
+NO glow
+NO shadow
+
+RULE:
+Button must be the brightest element on the card.
+
+--------------------------------------------------
+SECONDARY ACTION (ADD NEW)
+--------------------------------------------------
+
+Add New Button:
+Background: transparent
+Border: 1px solid rgba(0,240,255,0.4)
+Text: #00F0FF
+
+Hover:
+Background: rgba(0,240,255,0.1)
+
+--------------------------------------------------
+ACTIVE / CONNECTED STATE
+--------------------------------------------------
+
+Connected Badge:
+Background: rgba(34,197,94,0.15)
+Text: #9EFFC3
+Border: 1px solid rgba(34,197,94,0.35)
+
+RULE:
+Connection status must be visible without reading description.
+
+--------------------------------------------------
+ICON VISIBILITY
+--------------------------------------------------
+
+Integration Icons:
+Use accent color at 80% opacity
+DO NOT use gray icons
+
+--------------------------------------------------
+TEXT CONTRAST RULES
+--------------------------------------------------
+
+• Titles = #E6F7FF
+• Descriptions = #A9B4E5
+• Secondary info = #7C86B8
+• Never use same color for all text
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No heavy shadows
+• No glowing cards
+• No white borders
+• Contrast must come from color + borders
+• Accent colors must indicate meaning
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Cards are clearly separated from background
+• Each integration is distinguishable at a glance
+• Primary action is obvious
+• Connected vs not connected is instantly visible
+• Page feels clean, enterprise-grade, and readable
