@@ -998,8 +998,8 @@ export default function RevenueImmuneCard() {
           <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
             <DialogTrigger asChild>
               <Button 
-                variant="ghost" 
-                className="w-full justify-between text-muted-foreground hover:text-foreground"
+                variant="outline" 
+                className="w-full justify-between"
                 data-testid="button-view-history"
               >
                 <span className="flex items-center gap-2">
