@@ -3167,7 +3167,7 @@ export default function ZyraAtWork() {
       </Card>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {Object.entries(PHASE_CONFIG).map(([phase, config]) => {
+        {Object.entries(PHASE_CONFIG).filter(([phase]) => phase !== 'complete').map(([phase, config]) => {
           const Icon = config.icon;
           const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
           const currentIndex = phaseOrder.indexOf(currentPhase);
