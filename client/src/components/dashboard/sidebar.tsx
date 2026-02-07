@@ -183,7 +183,11 @@ export default function Sidebar({ activeTab, onTabChange, user, isOpen, onClose 
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className="fixed left-0 top-0 w-64 border border-primary/20 rounded-2xl m-2 z-40 transition-transform duration-300 ease-in-out lg:top-0 overflow-hidden h-[calc(100%-16px)] bg-black/20 backdrop-blur-md translate-x-0 ml-[-2px] mr-[-2px] mt-[8px] mb-[8px]"
+        className={cn(
+          "fixed left-0 top-0 w-64 h-full border-r border-primary/20 rounded-r-2xl z-40 transition-transform duration-300 ease-in-out lg:top-0 overflow-hidden",
+          "bg-black/20 backdrop-blur-md",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
       >
         {/* Close button - visible on all screen sizes */}
         <div className="absolute top-4 right-4 z-10">
