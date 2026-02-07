@@ -18201,7 +18201,28 @@ Output format: Markdown with clear section headings.`;
       const accessToken = storeConnection[0].accessToken;
 
       // Get optimized content from payload or result
-      const optimizedContent = actionData.payload?.optimizedCopy || actionData.result?.optimizedContent || actionData.payload?.after;
+      let optimizedContent = actionData.payload?.optimizedCopy || actionData.result?.optimizedContent || actionData.payload?.after;
+
+      // If content is in the changes array format, extract it
+      if (!optimizedContent && actionData.payload?.changes && Array.isArray(actionData.payload.changes)) {
+        const changes = actionData.payload.changes as Array<{field: string; after: string; before: string; reason: string}>;
+        const extracted: any = {};
+        for (const change of changes) {
+          const fieldLower = change.field?.toLowerCase() || '';
+          if (fieldLower === 'product title' || fieldLower === 'title') {
+            extracted.title = change.after;
+          } else if (fieldLower === 'product description' || fieldLower === 'description') {
+            extracted.description = change.after;
+          } else if (fieldLower === 'seo title' || fieldLower === 'meta title') {
+            extracted.seoTitle = change.after;
+          } else if (fieldLower === 'meta description' || fieldLower === 'seo description') {
+            extracted.metaDescription = change.after;
+          }
+        }
+        if (Object.keys(extracted).length > 0) {
+          optimizedContent = extracted;
+        }
+      }
 
       if (!optimizedContent) {
         return res.status(400).json({ error: "No optimized content found for this action" });
