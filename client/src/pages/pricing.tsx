@@ -331,10 +331,20 @@ export default function Pricing() {
                 <div className="absolute -inset-[2px] bg-gradient-to-b from-primary/40 via-primary/20 to-primary/5 rounded-2xl blur-sm" />
                 <Card className="relative h-full bg-[#12122a] border-primary ring-1 ring-primary/30 overflow-visible">
                   {/* Most Popular badge */}
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <Badge className="bg-primary text-primary-foreground px-4 py-1 shadow-lg shadow-primary/30">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                    <span
+                      className="no-default-hover-elevate no-default-active-elevate inline-flex items-center gap-1.5 px-5 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full whitespace-nowrap"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(0, 200, 220, 0.95))',
+                        color: '#0a0a1a',
+                        boxShadow: '0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.15)',
+                        letterSpacing: '0.12em',
+                      }}
+                      data-testid="badge-most-popular"
+                    >
+                      <Zap className="w-3 h-3" />
                       Most Popular
-                    </Badge>
+                    </span>
                   </div>
 
                   <CardContent className="p-6 sm:p-8 flex flex-col h-full pt-8">
@@ -544,8 +554,20 @@ export default function Pricing() {
 
               {/* ── GROWTH CARD ── */}
               <Card className="glass-card border-primary/30 shadow-[0_0_25px_rgba(0,240,255,0.08)] hover-elevate transition-all duration-300 relative" data-testid="control-card-growth">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="bg-primary/20 text-primary border border-primary/30 text-xs px-3 py-0.5">Most Popular</Badge>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                  <span
+                    className="no-default-hover-elevate no-default-active-elevate inline-flex items-center gap-1.5 px-5 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full whitespace-nowrap"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(0, 200, 220, 0.95))',
+                      color: '#0a0a1a',
+                      boxShadow: '0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.15)',
+                      letterSpacing: '0.12em',
+                    }}
+                    data-testid="badge-most-popular-control"
+                  >
+                    <Zap className="w-3 h-3" />
+                    Most Popular
+                  </span>
                 </div>
                 <CardContent className="p-6 flex flex-col h-full">
                   <div className="mb-5">
