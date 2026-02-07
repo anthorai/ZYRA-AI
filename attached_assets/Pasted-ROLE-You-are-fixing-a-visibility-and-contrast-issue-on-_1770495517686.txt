@@ -1,0 +1,139 @@
+ROLE:
+You are fixing a visibility and contrast issue on the
+“ZYRA is not connected to your Shopify store” card.
+
+The layout is correct.
+The copy is correct.
+Only COLOR, DEPTH, and EMPHASIS must be fixed.
+
+Do NOT change structure.
+Do NOT change content.
+ONLY improve visual separation and readability.
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Card background is too close to page background
+• Dashed border has no visual authority
+• Primary CTA does not stand out
+• Icons and text share similar brightness
+• User’s eye has no clear focal point
+
+--------------------------------------------------
+DEPTH & BACKGROUND FIX (MANDATORY)
+--------------------------------------------------
+
+PAGE BACKGROUND:
+#0B0E1A
+
+CARD CONTAINER:
+Background: #121833
+Border: 1px dashed rgba(0,240,255,0.25)
+Border-radius: 16px
+Shadow: 0 8px 32px rgba(0,0,0,0.5)
+
+RULE:
+Card must visually “float” above page.
+
+--------------------------------------------------
+HEADER ICON FIX
+--------------------------------------------------
+
+TOP ICON CIRCLE:
+Background: radial-gradient(circle, rgba(0,240,255,0.25), rgba(0,240,255,0.05))
+Icon color: #00F0FF
+Shadow: 0 0 24px rgba(0,240,255,0.45)
+
+RULE:
+Icon must act as the visual anchor.
+
+--------------------------------------------------
+PRIMARY TEXT FIX
+--------------------------------------------------
+
+TITLE:
+Color: #E6F7FF
+Font-weight: 600
+
+DESCRIPTION TEXT:
+Color: #A9B4E5
+
+SUBTEXT / DISCLAIMER:
+Color: #7C86B8
+
+RULE:
+Three text levels — no same color repetition.
+
+--------------------------------------------------
+PRIMARY CTA BUTTON (CRITICAL)
+--------------------------------------------------
+
+CONNECT SHOPIFY BUTTON:
+Background: linear-gradient(135deg, #00F0FF, #00FFE5)
+Text: #04141C
+Font-weight: 600
+Shadow: 0 6px 20px rgba(0,240,255,0.45)
+
+Hover:
+Background: linear-gradient(135deg, #1AF5FF, #33FFE9)
+Shadow: 0 0 24px rgba(0,240,255,0.65)
+
+RULE:
+This must be the most visible element on the card.
+
+--------------------------------------------------
+SECONDARY CONFIDENCE LINE
+--------------------------------------------------
+
+TEXT:
+“No changes will be made without your approval”
+
+Icon:
+Color: #22C55E
+
+Text color:
+#9EFFC3
+
+Background pill (optional):
+rgba(34,197,94,0.12)
+
+RULE:
+This line must feel reassuring, not informational.
+
+--------------------------------------------------
+BOTTOM FEATURE ICONS FIX
+--------------------------------------------------
+
+FEATURE ICON CIRCLES:
+Background: #0F1F2E
+Icon colors:
+• Analyze → #00F0FF
+• Detect → #A78BFA
+• Execute → #22C55E
+
+FEATURE LABEL TEXT:
+Color: #B8C6FF
+
+RULE:
+Each icon must be distinguishable at a glance.
+
+--------------------------------------------------
+HARD UI RULES (DO NOT BREAK)
+--------------------------------------------------
+
+• No pure white borders
+• No same background color as page
+• CTA must outshine everything else
+• Icons must use accent colors, not gray
+• Contrast > decoration
+
+--------------------------------------------------
+FINAL QUALITY CHECK
+--------------------------------------------------
+
+Confirm:
+• Card is clearly visible from page background
+• CTA draws eye first
+• Icon draws eye second
+• Text hierarchy is obvious
+• No layout changes made
