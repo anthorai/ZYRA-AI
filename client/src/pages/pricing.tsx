@@ -395,7 +395,7 @@ export default function Pricing() {
                     </div>
 
                     {/* CTA */}
-                    <Button asChild className="w-full gradient-button" data-testid="button-growth-cta">
+                    <Button asChild className="w-full gradient-button border border-primary/50" data-testid="button-growth-cta">
                       <Link href="/auth">
                         Unlock Growth
                         <ArrowRight className="w-4 h-4 ml-2" />
