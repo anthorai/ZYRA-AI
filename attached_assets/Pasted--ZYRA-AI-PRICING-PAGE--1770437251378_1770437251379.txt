@@ -1,0 +1,113 @@
+/* =====================================================================
+   ZYRA AI — PRICING PAGE HEADER SCROLL CONSISTENCY FIX
+   GOAL: PRICING HEADER MUST MATCH LANDING HEADER WHEN SCROLLED
+   PRIORITY: CRITICAL — BRAND & UX CONSISTENCY
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ENGINEER.
+Your task is to FIX the PRICING PAGE HEADER so that
+WHEN THE USER SCROLLS DOWN, it looks EXACTLY like the
+LANDING PAGE SCROLLED HEADER.
+
+This is a BEHAVIOR + STYLE ALIGNMENT task.
+No redesign. No new components.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM (CURRENT ISSUE)
+---------------------------------------------------------------------
+
+Current behavior:
+- Landing page header (on scroll):
+  → Clean
+  → Rounded container
+  → Balanced spacing
+  → Uniform background color
+  → Premium floating control bar feel
+
+- Pricing page header (on scroll):
+  → Different background tone
+  → Misaligned padding
+  → Border / shadow mismatch
+  → Does NOT visually match landing header
+  → Feels like a different component
+
+THIS BREAKS BRAND CONSISTENCY.
+
+---------------------------------------------------------------------
+2. REQUIRED STANDARD (NON-NEGOTIABLE)
+---------------------------------------------------------------------
+
+WHEN USER SCROLLS DOWN:
+
+Pricing Page Header MUST:
+- Look IDENTICAL to Landing Page Header
+- Use the SAME:
+  - Background color / gradient
+  - Border radius
+  - Shadow / glow
+  - Height
+  - Padding
+  - CTA styling
+  - Alignment
+
+There must be NO visual difference.
+
+---------------------------------------------------------------------
+3. SCROLL STATE LOGIC (MANDATORY)
+---------------------------------------------------------------------
+
+DEFINE TWO STATES FOR PRICING PAGE HEADER:
+
+STATE A — TOP OF PAGE
+- Borderless
+- Transparent / hero-blended
+- Same as Landing page top header
+
+STATE B — SCROLLED (STICKY)
+- Rounded container
+- Floating bar appearance
+- Solid or semi-transparent background
+- SAME as Landing page scrolled header
+
+IMPORTANT:
+- Pricing page MUST reuse the SAME scrolled header styles
+  as Landing page
+- Do NOT duplicate or slightly modify styles
+
+---------------------------------------------------------------------
+4. BACKGROUND & COLOR RULES
+---------------------------------------------------------------------
+
+FOR SCROLLED STATE:
+- Use EXACT SAME background color variable
+- Use EXACT SAME opacity
+- Remove any extra overlays
+- Remove extra gradient layers
+- No edge darkening
+
+The header must look like ONE SURFACE.
+
+---------------------------------------------------------------------
+5. BORDER, SHADOW & RADIUS RULES
+---------------------------------------------------------------------
+
+- Border radius: EXACT MATCH with landing header
+- Shadow: SAME intensity, SAME spread
+- Border: SAME color OR none (match landing behavior)
+- No additional outlines or separators
+
+---------------------------------------------------------------------
+6. CTA & CONTENT ALIGNMENT
+---------------------------------------------------------------------
+
+- “Get Started” button style MUST match landing header
+- “Log in” button style MUST match landing header
+- Spacing between nav items MUST be identical
+- Logo size and alignment MUST match
+
+---------------------------------------------------------------------
+7. IMPLEMENTATION RULES (IMPORTANT)
+---------------------------------------------------------------------
+
+- Use a SHAR
