@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { StoreReadiness } from "@shared/schema";
+import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -260,8 +262,14 @@ export default function ChangeControlDashboard() {
     setSelectedChange(null);
   };
 
+  const { data: storeReadiness, isLoading: isReadinessLoading } = useQuery<StoreReadiness>({
+    queryKey: ['/api/store-readiness'],
+    refetchInterval: 30000,
+  });
+
   const { data: changes, isLoading: changesLoading, refetch } = useQuery<ChangeItem[]>({
     queryKey: ["/api/autonomous-actions"],
+    enabled: storeReadiness?.state === 'ready',
   });
 
   const { data: settings } = useQuery<AutomationSettings>({
@@ -543,6 +551,88 @@ export default function ChangeControlDashboard() {
         (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
     });
   }, [selectedIds, changes]);
+
+  if (isReadinessLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (storeReadiness?.state === 'not_connected') {
+    return (
+      <div className="min-h-screen flex">
+        <Sidebar 
+          activeTab="change-control" 
+          onTabChange={handleTabChange} 
+          user={user} 
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'sm:ml-64 ml-0' : 'ml-0'
+        }`}>
+          <header className="gradient-surface border-b px-3 sm:px-6 py-2 sm:py-4 flex-shrink-0 sticky top-0 z-50">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+                  data-testid="button-toggle-sidebar"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+                <h1 className="text-base sm:text-lg font-bold text-white truncate">Change Control</h1>
+              </div>
+            </div>
+          </header>
+          <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
+            <ShopifyConnectionGate readiness={storeReadiness} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (storeReadiness?.state === 'warming_up') {
+    return (
+      <div className="min-h-screen flex">
+        <Sidebar 
+          activeTab="change-control" 
+          onTabChange={handleTabChange} 
+          user={user} 
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'sm:ml-64 ml-0' : 'ml-0'
+        }`}>
+          <header className="gradient-surface border-b px-3 sm:px-6 py-2 sm:py-4 flex-shrink-0 sticky top-0 z-50">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="text-slate-200 hover:text-primary hover:bg-white/10 transition-all duration-300 ease-in-out flex-shrink-0"
+                  data-testid="button-toggle-sidebar"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+                <h1 className="text-base sm:text-lg font-bold text-white truncate">Change Control</h1>
+              </div>
+            </div>
+          </header>
+          <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
+            <WarmUpMode readiness={storeReadiness} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
