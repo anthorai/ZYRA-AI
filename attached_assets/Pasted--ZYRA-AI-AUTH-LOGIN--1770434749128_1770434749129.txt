@@ -1,0 +1,176 @@
+/* =====================================================================
+   ZYRA AI — AUTH (LOGIN / SIGNUP) UI PROFESSIONAL REDESIGN PROMPT
+   MODULE: LOGIN & SIGN-UP CARDS
+   PRIORITY: HIGH — FIRST IMPRESSION OF TRUST & AUTHORITY
+   =====================================================================
+
+SYSTEM ROLE:
+You are a SENIOR UI/UX DESIGNER + FRONTEND ARCHITECT.
+Your task is to REDESIGN the Login / Sign-Up UI so it feels:
+- Professional
+- Secure
+- Enterprise-grade
+- Calm and authoritative
+
+This UI must NOT feel like a generic SaaS form.
+It represents the ENTRY POINT to an AI SYSTEM that controls revenue.
+
+---------------------------------------------------------------------
+1. CORE PROBLEM TO FIX
+---------------------------------------------------------------------
+
+The current login/sign-up UI:
+- Looks basic and template-like
+- Lacks visual hierarchy
+- Feels weak and untrustworthy
+- Does not match Zyra’s “AI infrastructure” positioning
+- Overuses centered form layout without context
+
+THIS MUST BE FIXED.
+
+---------------------------------------------------------------------
+2. NEW DESIGN PRINCIPLE (MANDATORY)
+---------------------------------------------------------------------
+
+AUTH UI = SECURITY + CONTROL + CONFIDENCE
+
+The user must feel:
+"I am accessing a serious system that protects my store."
+
+---------------------------------------------------------------------
+3. LAYOUT RESTRUCTURE (DESKTOP FIRST)
+---------------------------------------------------------------------
+
+REPLACE single centered card with a TWO-PANEL LAYOUT:
+
+LEFT PANEL (60% width):
+- Brand + message
+- Purpose reinforcement
+
+RIGHT PANEL (40% width):
+- Authentication card (login / signup)
+
+On mobile:
+- Stack panels vertically
+- Brand panel first, form second
+
+---------------------------------------------------------------------
+4. LEFT PANEL — BRAND & TRUST CONTEXT
+---------------------------------------------------------------------
+
+CONTENT:
+- Zyra AI logo (top-left or centered vertically)
+- Headline:
+  "Secure access to your Zyra AI control panel"
+
+- Subtext:
+  "Monitor, optimize, and protect your store
+   with decision-based AI — safely."
+
+OPTIONAL TRUST SIGNALS:
+- 🔒 Permission-based execution
+- 🔁 One-time fixes, locked
+- 📊 Revenue-safe automation
+
+Style:
+- Dark gradient background
+- Subtle animated glow or noise texture
+- NO clutter
+
+---------------------------------------------------------------------
+5. RIGHT PANEL — AUTH CARD (LOGIN / SIGNUP)
+---------------------------------------------------------------------
+
+CARD STYLE:
+- Elevated card
+- Rounded corners (subtle, not playful)
+- Clear border or shadow
+- Visually distinct from background
+
+CARD HEADER:
+- Title: "Welcome back" (Login)
+- Title: "Create your Zyra account" (Signup)
+- Subtitle: Short, calm reassurance
+
+---------------------------------------------------------------------
+6. AUTH METHODS — CLEAN & FOCUSED
+---------------------------------------------------------------------
+
+PRIMARY OPTION:
+- Continue with Google (clean, minimal button)
+- Use neutral styling (no loud colors)
+
+SECONDARY OPTION:
+- Divider line with text: "or continue with email"
+
+Email / Password Fields:
+- Full-width
+- Clear labels ABOVE inputs (not placeholders only)
+- Subtle focus states
+- Password visibility toggle (clean icon)
+
+---------------------------------------------------------------------
+7. FORM UX IMPROVEMENTS
+---------------------------------------------------------------------
+
+- Move "Remember me" and "Forgot password" onto ONE ROW
+- Align text properly (left/right balance)
+- Reduce vertical spacing clutter
+- Make primary action button visually dominant
+
+PRIMARY CTA:
+- Login: "Access Zyra Dashboard"
+- Signup: "Create Secure Account"
+
+SECONDARY LINKS:
+- Switch login/signup with minimal emphasis
+
+---------------------------------------------------------------------
+8. SECURITY & TRUST SIGNALS (SUBTLE BUT IMPORTANT)
+---------------------------------------------------------------------
+
+Below CTA, add small reassurance text:
+"Your data is protected. Zyra only acts with your permission."
+
+Optional icon: lock or shield
+
+This increases conversion and trust.
+
+---------------------------------------------------------------------
+9. TONE & VISUAL RULES
+---------------------------------------------------------------------
+
+- Dark, enterprise-grade color palette
+- No playful illustrations
+- No excessive icons
+- Motion must feel subtle and controlled
+- Typography must feel serious, not startup-fancy
+
+Zyra must feel like INFRASTRUCTURE, not an app.
+
+---------------------------------------------------------------------
+10. REMOVE / AVOID
+---------------------------------------------------------------------
+
+- Over-centered tiny cards
+- Loud social login buttons
+- Excessive text
+- Generic SaaS spacing
+- Weak CTA labels like "Sign In"
+
+---------------------------------------------------------------------
+SUCCESS CRITERIA
+---------------------------------------------------------------------
+
+This redesign is SUCCESSFUL only if:
+- Login feels secure and premium
+- User trusts Zyra before signing in
+- UI matches pricing & dashboard authority
+- Zyra feels like a serious AI control system
+
+---------------------------------------------------------------------
+FINAL COMMAND:
+REDESIGN THE AUTH UI EXACTLY AS SPECIFIED.
+DO NOT APPLY TEMPLATE-LEVEL FIXES.
+PROFESSIONALISM AND TRUST ARE MANDATORY.
+===================================================================== */
