@@ -86,11 +86,12 @@ export function ProductIntelligenceTab() {
   const connectedStore = storeConnections.find(store => store.status === 'active');
   const hasConnectedStore = !!connectedStore;
 
-  // Only fetch products if we have a connected store
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
-    enabled: hasConnectedStore, // Only fetch when store is connected
+    enabled: hasConnectedStore,
   });
+
+  const products = allProducts.filter(p => !!p.shopifyId);
 
   const handleSync = async () => {
     setIsSyncing(true);

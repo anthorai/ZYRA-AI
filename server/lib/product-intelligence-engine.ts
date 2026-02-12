@@ -286,8 +286,9 @@ export async function getProductIntelligenceSummary(
   userId: string
 ): Promise<ProductIntelligenceSummary> {
   try {
-    const products = await supabaseStorage.getProducts(userId);
-    if (!products || products.length === 0) {
+    const allProducts = await supabaseStorage.getProducts(userId);
+    const products = allProducts?.filter(p => !!p.shopifyId) || [];
+    if (products.length === 0) {
       return {
         totalProducts: 0,
         revenueProtected: 0,
