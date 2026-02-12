@@ -23,15 +23,13 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-[16px] p-6 pr-8 transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
-        default: "border border-border bg-card text-foreground shadow-xl backdrop-blur-sm",
-        destructive:
-          "destructive group border-destructive text-destructive-foreground bg-[#101025]",
-        success:
-          "success group",
+        default: "default group",
+        destructive: "destructive group",
+        success: "success group",
       },
     },
     defaultVariants: {
@@ -40,23 +38,38 @@ const toastVariants = cva(
   }
 )
 
+const variantStyles: Record<string, React.CSSProperties> = {
+  default: {
+    background: '#16203A',
+    border: '1px solid rgba(99,130,202,0.3)',
+    borderLeft: '3px solid #3B82F6',
+    boxShadow: 'none',
+  },
+  destructive: {
+    background: '#1A1020',
+    border: '1px solid rgba(239,68,68,0.35)',
+    borderLeft: '3px solid #EF4444',
+    boxShadow: 'none',
+  },
+  success: {
+    background: '#16203A',
+    border: '1px solid rgba(34,197,94,0.35)',
+    borderLeft: '3px solid #22C55E',
+    boxShadow: 'none',
+  },
+};
+
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
 >(({ className, variant, style, ...props }, ref) => {
-  const isSuccess = variant === "success";
+  const v = variant || "default";
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), isSuccess && "!rounded-[16px]", className)}
-      style={isSuccess ? {
-        background: '#16203A',
-        border: '1px solid rgba(34,197,94,0.35)',
-        boxShadow: 'none',
-        borderLeft: '3px solid #22C55E',
-        ...style,
-      } : style}
+      className={cn(toastVariants({ variant }), className)}
+      style={{ ...variantStyles[v], ...style }}
       {...props}
     />
   )
