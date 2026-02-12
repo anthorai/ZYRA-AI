@@ -270,9 +270,7 @@ export class RevenueImmuneScanner {
         }
       }
 
-      const highSeverityCount = issuesDetected.filter(i => i.severity === 'high').length;
-      const mediumSeverityCount = issuesDetected.filter(i => i.severity === 'medium').length;
-      estimatedRevenueProtected = (highSeverityCount * 500) + (mediumSeverityCount * 200);
+      estimatedRevenueProtected = 0;
 
       const durationMs = Date.now() - startTime;
 
