@@ -108,31 +108,63 @@ export function TrialWelcomeDialog() {
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) handleClose();
     }}>
-      <DialogContent className="sm:max-w-md" data-testid="dialog-trial-welcome">
+      <DialogContent 
+        className="sm:max-w-md !rounded-[18px] [&>button]:text-[#7C86B8] [&>button:hover]:text-[#E6F7FF]" 
+        style={{ 
+          background: '#141C36', 
+          border: '1px solid rgba(0,240,255,0.35)',
+          boxShadow: 'none'
+        }}
+        data-testid="dialog-trial-welcome"
+      >
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              {content.icon}
+            <div className="p-2 rounded-lg" style={{ background: 'rgba(0,240,255,0.15)' }}>
+              {(() => {
+                const iconProps = { className: "w-6 h-6", style: { color: '#00F0FF' } };
+                if (daysRemaining === 7) return <Sparkles {...iconProps} />;
+                if (daysRemaining >= 4) return <Zap {...iconProps} />;
+                if (daysRemaining >= 2) return <Clock {...iconProps} />;
+                return <Target {...iconProps} />;
+              })()}
             </div>
-            <Badge variant={content.badgeVariant} data-testid="badge-trial-days">
+            <Badge 
+              variant="outline"
+              className="no-default-hover-elevate no-default-active-elevate"
+              style={{ 
+                background: 'rgba(0,240,255,0.15)', 
+                border: '1px solid rgba(0,240,255,0.4)',
+                color: '#00F0FF',
+                fontWeight: 600
+              }}
+              data-testid="badge-trial-days"
+            >
               {content.badgeText}
             </Badge>
           </div>
-          <DialogTitle className="text-xl" data-testid="text-trial-title">
+          <DialogTitle 
+            className="text-xl" 
+            style={{ color: '#FFFFFF', fontWeight: 700 }}
+            data-testid="text-trial-title"
+          >
             {content.title}
           </DialogTitle>
-          <DialogDescription className="text-base" data-testid="text-trial-subtitle">
+          <DialogDescription 
+            className="text-base" 
+            style={{ color: '#A9B4E5', fontWeight: 500 }}
+            data-testid="text-trial-subtitle"
+          >
             {content.subtitle}
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
-          <p className="text-muted-foreground" data-testid="text-trial-message">
+          <p style={{ color: '#C6D2FF' }} data-testid="text-trial-message">
             {content.message}
           </p>
           
           {trialEndDate && (
-            <p className="text-sm text-muted-foreground mt-3" data-testid="text-trial-end-date">
+            <p className="text-sm mt-3" style={{ color: '#9AA6D6' }} data-testid="text-trial-end-date">
               Trial ends: {trialEndDate.toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -145,19 +177,30 @@ export function TrialWelcomeDialog() {
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button 
-            variant="outline" 
             onClick={handleClose}
             disabled={isMarkingShown}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto no-default-hover-elevate"
+            style={{ 
+              background: '#00F0FF', 
+              color: '#04141C', 
+              border: 'none',
+              fontWeight: 600
+            }}
             data-testid="button-trial-continue"
           >
             {isMarkingShown ? "Saving..." : "Continue Exploring"}
           </Button>
           <Link href="/settings/billing">
             <Button 
+              variant="outline"
               onClick={handleUpgrade}
               disabled={isMarkingShown}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto no-default-hover-elevate"
+              style={{ 
+                background: 'transparent', 
+                border: '1px solid rgba(167,139,250,0.4)',
+                color: '#A78BFA'
+              }}
               data-testid="button-trial-upgrade"
             >
               <Sparkles className="w-4 h-4 mr-2" />

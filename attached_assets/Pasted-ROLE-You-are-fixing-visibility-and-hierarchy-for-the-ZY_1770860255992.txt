@@ -1,0 +1,164 @@
+ROLE:
+You are fixing visibility and hierarchy for the ZYRA
+“Free Trial Started” modal.
+
+The layout and spacing are correct.
+ONLY adjust background contrast, borders, accents, and text hierarchy.
+
+IMPORTANT:
+• DO NOT redesign
+• DO NOT add heavy shadows
+• DO NOT add large glows
+• Only use color contrast and borders
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Modal blends with dashboard background
+• Header and body text lack contrast hierarchy
+• Primary button does not dominate
+• Trial countdown is not emphasized
+
+--------------------------------------------------
+MODAL BACKGROUND SEPARATION
+--------------------------------------------------
+
+Dashboard Background:
+#0B0E1A
+
+Modal Container:
+Background: #141C36
+Border-radius: 18px
+Border: 1px solid rgba(0,240,255,0.35)
+
+RULE:
+Border must be clearly visible but not glowing.
+No outer shadow.
+
+--------------------------------------------------
+TOP STATUS BADGE ("7 days left")
+--------------------------------------------------
+
+Badge Background:
+rgba(0,240,255,0.15)
+
+Badge Border:
+1px solid rgba(0,240,255,0.4)
+
+Badge Text:
+#00F0FF
+Font-weight: 600
+
+Icon:
+#00F0FF
+
+RULE:
+This must immediately communicate trial state.
+
+--------------------------------------------------
+MAIN TITLE
+--------------------------------------------------
+
+"Welcome to Zyra AI!"
+
+Color:
+#FFFFFF
+
+Font-weight:
+700
+
+--------------------------------------------------
+SUBTITLE
+--------------------------------------------------
+
+"Your 7-day free trial has started"
+
+Color:
+#A9B4E5
+Font-weight:
+500
+
+--------------------------------------------------
+BODY TEXT
+--------------------------------------------------
+
+Main Description:
+#C6D2FF
+
+Secondary Date Line:
+#9AA6D6
+
+RULE:
+Use 3 text tones:
+• Title (brightest)
+• Description (medium)
+• Meta/date (softest)
+
+--------------------------------------------------
+PRIMARY BUTTON (Continue Exploring)
+--------------------------------------------------
+
+Background:
+#00F0FF
+
+Text:
+#04141C
+
+Border:
+none
+
+Hover:
+#1AF5FF
+
+RULE:
+This must be the brightest element in modal.
+
+--------------------------------------------------
+SECONDARY BUTTON (Upgrade Now)
+--------------------------------------------------
+
+Background:
+transparent
+
+Border:
+1px solid rgba(167,139,250,0.4)
+
+Text:
+#A78BFA
+
+Hover:
+Background: rgba(167,139,250,0.12)
+
+RULE:
+Secondary action must not compete with primary.
+
+--------------------------------------------------
+CLOSE (X) ICON
+--------------------------------------------------
+
+Color:
+#7C86B8
+
+Hover:
+#E6F7FF
+
+--------------------------------------------------
+HARD RULES
+--------------------------------------------------
+
+• No heavy shadows
+• No glowing outer effects
+• Modal must stand out through border + contrast
+• Primary button must dominate visually
+• Text must have clear 3-level hierarchy
+
+--------------------------------------------------
+FINAL CHECK
+--------------------------------------------------
+
+Confirm:
+• Modal is clearly separated from dashboard
+• Trial status is instantly visible
+• Primary action stands out
+• Page looks premium, not flashy
+• No heavy shadow used
