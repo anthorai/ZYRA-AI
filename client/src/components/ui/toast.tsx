@@ -30,6 +30,8 @@ const toastVariants = cva(
         default: "border border-border bg-card text-foreground shadow-xl backdrop-blur-sm",
         destructive:
           "destructive group border-destructive text-destructive-foreground bg-[#101025]",
+        success:
+          "success group",
       },
     },
     defaultVariants: {
@@ -42,11 +44,19 @@ const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
+>(({ className, variant, style, ...props }, ref) => {
+  const isSuccess = variant === "success";
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), className)}
+      className={cn(toastVariants({ variant }), isSuccess && "!rounded-[16px]", className)}
+      style={isSuccess ? {
+        background: '#16203A',
+        border: '1px solid rgba(34,197,94,0.35)',
+        boxShadow: 'none',
+        borderLeft: '3px solid #22C55E',
+        ...style,
+      } : style}
       {...props}
     />
   )

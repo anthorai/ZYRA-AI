@@ -68,6 +68,7 @@ export function useDashboard() {
       toast({
         title: "Dashboard Ready",
         description: "Your dashboard has been initialized successfully.",
+        variant: "success",
       });
     },
     onError: (error: any) => {

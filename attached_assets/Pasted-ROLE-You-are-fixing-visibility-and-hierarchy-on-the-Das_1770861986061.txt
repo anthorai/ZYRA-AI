@@ -1,0 +1,107 @@
+ROLE:
+You are fixing visibility and hierarchy on the
+“Dashboard Ready” success banner.
+
+The layout and structure are correct.
+ONLY adjust background tone, border, and text hierarchy.
+
+STRICT RULES:
+• No heavy shadows
+• No glowing effects
+• No layout changes
+• Use contrast + border + semantic color only
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Banner blends with dashboard background
+• White border looks generic
+• Success state is not visually obvious
+• Title and description compete visually
+
+--------------------------------------------------
+BACKGROUND SEPARATION
+--------------------------------------------------
+
+Dashboard Background:
+#0B0E1A
+
+Banner Container:
+Background: #16203A
+Border-radius: 16px
+Border: 1px solid rgba(34,197,94,0.35)
+
+REMOVE pure white border.
+No drop shadow.
+
+--------------------------------------------------
+SUCCESS SEMANTIC COLOR
+--------------------------------------------------
+
+Add LEFT ACCENT BAR:
+Width: 3px
+Color: #22C55E
+
+This instantly signals success state.
+
+--------------------------------------------------
+TITLE FIX
+--------------------------------------------------
+
+“Dashboard Ready”
+
+Color: #FFFFFF
+Font-weight: 600
+
+Add small check icon:
+Color: #22C55E
+
+RULE:
+Title must be brighter than body.
+
+--------------------------------------------------
+BODY TEXT FIX
+--------------------------------------------------
+
+Primary Line:
+“Your dashboard has been initialized successfully”
+
+Color: #C6D2FF
+
+Secondary Line (if present):
+Color: #7C86B8
+
+Use 2 text tones only.
+
+--------------------------------------------------
+CLOSE ICON (if present)
+--------------------------------------------------
+
+Default:
+#7C86B8
+
+Hover:
+#E6F7FF
+
+Must not compete with success state.
+
+--------------------------------------------------
+HARD RULES
+--------------------------------------------------
+
+• No white borders
+• No heavy shadow
+• No glow
+• Success must be communicated by green accent
+• Banner must stand out through tone contrast only
+
+--------------------------------------------------
+FINAL CHECK
+--------------------------------------------------
+
+Confirm:
+• Banner is clearly separated from dashboard
+• Success state is instantly readable
+• Title dominates body text
+• No heavy shadow used
+• Looks clean and enterprise-grade
