@@ -945,7 +945,7 @@ export default function ChangeControlDashboard() {
                     </div>
                     {categoryFilteredChanges.map((change) => {
                       const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.optimize_seo;
-                      const statusConfig = STATUS_CONFIG[change.status];
+                      const statusConfig = STATUS_CONFIG[change.status] || STATUS_CONFIG.pending;
                       const Icon = config.icon;
                       const { before, after } = getBeforeAfterContent(change);
                       const beforeText = Object.values(before)[0] || "No previous content";
@@ -1179,7 +1179,7 @@ export default function ChangeControlDashboard() {
                   <div className="space-y-4">
                     {categoryFilteredChanges.map((change) => {
                       const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.abandoned_cart_recovery;
-                      const statusConfig = STATUS_CONFIG[change.status];
+                      const statusConfig = STATUS_CONFIG[change.status] || STATUS_CONFIG.pending;
                       const Icon = config.icon;
                       const isEnabled = change.status === "completed";
                       
@@ -1306,7 +1306,7 @@ export default function ChangeControlDashboard() {
                     </div>
                     {categoryFilteredChanges.map((change) => {
                       const config = ACTION_TYPE_CONFIG[change.actionType] || ACTION_TYPE_CONFIG.description_clarity;
-                      const statusConfig = STATUS_CONFIG[change.status];
+                      const statusConfig = STATUS_CONFIG[change.status] || STATUS_CONFIG.pending;
                       const Icon = config.icon;
                       const { before, after } = getBeforeAfterContent(change);
                       const beforeText = Object.values(before)[0] || "No previous content";

@@ -1,0 +1,173 @@
+ROLE:
+You are fixing visibility and semantic clarity for the
+“Something went wrong” error screen.
+
+The layout and structure are correct.
+ONLY adjust background contrast, borders, semantic colors, and text hierarchy.
+
+STRICT RULES:
+• No heavy shadows
+• No glow effects
+• No layout changes
+• Use contrast + semantic color only
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Error state looks visually neutral
+• Warning icon is not emphasized
+• Buttons lack hierarchy
+• Screen blends with dashboard background
+
+--------------------------------------------------
+BACKGROUND SEPARATION
+--------------------------------------------------
+
+App Background:
+#0B0E1A
+
+Error Container:
+Background: #151C38
+Border-radius: 18px
+Border: 1px solid rgba(239,68,68,0.35)
+
+REMOVE any white border.
+No drop shadow.
+
+--------------------------------------------------
+ERROR SEMANTIC COLOR
+--------------------------------------------------
+
+Left Accent Bar:
+Width: 3px
+Color: #EF4444
+
+This instantly signals error state.
+
+--------------------------------------------------
+WARNING ICON
+--------------------------------------------------
+
+Icon Color:
+#EF4444
+
+Icon Background Circle:
+rgba(239,68,68,0.12)
+
+Icon Stroke:
+Slightly thicker weight if possible.
+
+RULE:
+Icon must visually communicate severity.
+
+--------------------------------------------------
+TITLE
+--------------------------------------------------
+
+“Something went wrong”
+
+Color:
+#FFFFFF
+
+Font-weight:
+700
+
+--------------------------------------------------
+DESCRIPTION TEXT
+--------------------------------------------------
+
+Primary Description:
+#C6D2FF
+
+Secondary Line (if present):
+#9AA6D6
+
+Keep description softer than title.
+
+--------------------------------------------------
+PRIMARY BUTTON (Refresh Page)
+--------------------------------------------------
+
+Background:
+#00F0FF
+
+Text:
+#04141C
+
+Border:
+none
+
+Hover:
+#1AF5FF
+
+RULE:
+Primary recovery action must dominate.
+
+--------------------------------------------------
+SECONDARY BUTTON (Try Again)
+--------------------------------------------------
+
+Background:
+transparent
+
+Border:
+1px solid rgba(255,255,255,0.15)
+
+Text:
+#E6F7FF
+
+Hover:
+Background: rgba(255,255,255,0.05)
+
+RULE:
+Secondary action must not compete with primary.
+
+--------------------------------------------------
+ERROR DETAILS TOGGLE
+--------------------------------------------------
+
+Text:
+#7C86B8
+
+Hover:
+#E6F7FF
+
+This must remain subtle.
+
+--------------------------------------------------
+TEXT HIERARCHY RULE
+--------------------------------------------------
+
+Use only 3 text tones:
+
+Primary:
+#FFFFFF
+
+Secondary:
+#C6D2FF
+
+Tertiary:
+#7C86B8
+
+Never use same tone for all text.
+
+--------------------------------------------------
+HARD RULES
+--------------------------------------------------
+
+• No white borders
+• No heavy shadow
+• No neon glow
+• Error must be communicated by red accent
+• Primary recovery action must be obvious
+
+--------------------------------------------------
+FINAL CHECK
+--------------------------------------------------
+
+Confirm:
+• Error state is instantly recognizable
+• Red accent communicates severity
+• Primary recovery button stands out
+• Screen looks structured and serious
+• No heavy shadow used
