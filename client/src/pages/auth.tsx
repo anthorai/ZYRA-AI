@@ -334,34 +334,36 @@ export default function Auth() {
     <div className="min-h-screen flex" style={{ backgroundColor: '#0a0a1a' }}>
 
       {/* ── LEFT PANEL: BRAND & TRUST (hidden on mobile, shown on lg+) ── */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden flex-col justify-center px-12 xl:px-20" data-testid="panel-brand">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 pointer-events-none" />
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-10 w-64 h-64 bg-primary/6 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-[30%] left-[15%] w-96 h-48 bg-primary/4 rounded-full blur-[100px] pointer-events-none" />
-
+      <div
+        className="hidden lg:flex lg:w-[55%] relative overflow-hidden flex-col justify-center px-12 xl:px-20"
+        style={{ background: 'linear-gradient(180deg, #111832 0%, #0B0E1A 100%)' }}
+        data-testid="panel-brand"
+      >
         <div className="relative z-10 max-w-lg">
-          <Card className="glass-card border-primary/15 p-8 xl:p-10" data-testid="card-brand-desktop">
+          <Card className="border-0 bg-transparent shadow-none" data-testid="card-brand-desktop">
             <CardContent className="p-0">
               <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20 flex-shrink-0">
+                <div
+                  className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: '#121833', border: '1px solid rgba(0, 240, 255, 0.25)' }}
+                >
                   <img src={zyraLogoUrl} alt="Zyra AI" className="w-9 h-9 object-contain" data-testid="img-brand-logo" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-white">
-                    ZYRA <span className="text-primary">AI</span>
+                  <h2 className="text-2xl font-bold tracking-tight" style={{ color: '#FFFFFF' }}>
+                    ZYRA <span style={{ color: '#00F0FF' }}>AI</span>
                   </h2>
-                  <p className="text-[0.7rem] font-semibold tracking-[0.15em] uppercase text-primary/50 mt-0.5">
+                  <p className="text-[0.7rem] font-semibold tracking-[0.18em] uppercase mt-0.5" style={{ color: '#9AA6D6' }}>
                     Autonomous Store Intelligence
                   </p>
                 </div>
               </div>
 
-              <h1 className="text-3xl xl:text-[2.25rem] font-extrabold leading-[1.2] tracking-tight mb-4 text-white" data-testid="text-brand-headline">
+              <h1 className="text-3xl xl:text-[2.25rem] font-[800] leading-[1.2] tracking-tight mb-4" style={{ color: '#FFFFFF' }} data-testid="text-brand-headline">
                 Your AI-powered
-                <span className="block text-primary mt-1">revenue engine.</span>
+                <span className="block mt-1" style={{ color: '#00F0FF' }}>revenue engine.</span>
               </h1>
-              <p className="text-foreground/55 text-[14px] leading-relaxed mb-8 max-w-sm">
+              <p className="text-[14px] leading-relaxed mb-8 max-w-sm" style={{ color: '#7A86AE' }}>
                 Zyra detects friction, optimizes listings, and grows your store autonomously — with your permission, always.
               </p>
 
@@ -371,11 +373,18 @@ export default function Auth() {
                   { icon: Lock, label: 'One-time fixes, locked after apply', testId: 'text-trust-locked' },
                   { icon: BarChart3, label: 'Revenue-safe automation', testId: 'text-trust-automation' },
                 ].map(({ icon: Icon, label, testId }) => (
-                  <div key={testId} className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-primary/[0.04] border border-primary/10">
-                    <div className="w-8 h-8 rounded-md bg-primary/12 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-4 h-4 text-primary" />
+                  <div
+                    key={testId}
+                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg"
+                    style={{ backgroundColor: 'rgba(17, 24, 50, 0.8)', border: '1px solid rgba(0, 240, 255, 0.15)' }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: 'rgba(0, 240, 255, 0.1)', border: '1px solid rgba(0, 240, 255, 0.2)' }}
+                    >
+                      <Icon className="w-4 h-4" style={{ color: '#00F0FF' }} />
                     </div>
-                    <span className="text-[13px] text-foreground/75 font-medium tracking-wide" data-testid={testId}>{label}</span>
+                    <span className="text-[13px] font-medium tracking-wide" style={{ color: '#C0C8E4' }} data-testid={testId}>{label}</span>
                   </div>
                 ))}
               </div>
