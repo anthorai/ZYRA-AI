@@ -12181,7 +12181,7 @@ Output format: Markdown with clear section headings.`;
             const cryptoModule = await import('crypto');
             const tempPassword = cryptoModule.randomBytes(32).toString('hex');
             
-            const { data: supabaseAuthData, error: supabaseAuthError } = await supabase.auth.admin.createUser({
+            let { data: supabaseAuthData, error: supabaseAuthError } = await supabase.auth.admin.createUser({
               email: shopOwnerEmail,
               password: tempPassword,
               email_confirm: true,
