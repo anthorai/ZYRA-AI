@@ -82,8 +82,10 @@ export function ProductIntelligenceTab() {
     queryKey: ['/api/store-connections'],
   });
 
-  // Get the active connected store
-  const connectedStore = storeConnections.find(store => store.status === 'active');
+  const activeStores = storeConnections
+    .filter(store => store.platform === 'shopify' && store.status === 'active')
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  const connectedStore = activeStores[0];
   const hasConnectedStore = !!connectedStore;
 
   const { data: allProducts = [], isLoading: productsLoading } = useQuery<Product[]>({
@@ -91,15 +93,7 @@ export function ProductIntelligenceTab() {
     enabled: hasConnectedStore,
   });
 
-  const activeStoreDomain = connectedStore?.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
-  const anyProductHasDomain = allProducts.some(p => !!p.shopDomain);
-  const products = allProducts.filter(p => {
-    if (!p.shopifyId) return false;
-    if (anyProductHasDomain && activeStoreDomain) {
-      return p.shopDomain === activeStoreDomain;
-    }
-    return true;
-  });
+  const products = allProducts;
 
   const handleSync = async () => {
     setIsSyncing(true);

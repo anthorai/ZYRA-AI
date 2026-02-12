@@ -288,14 +288,16 @@ export async function getProductIntelligenceSummary(
   try {
     const allProducts = await supabaseStorage.getProducts(userId);
     const connections = await supabaseStorage.getStoreConnections(userId);
-    const activeConnection = connections.find((c: any) => c.platform === 'shopify' && c.status === 'active');
+    const activeStores = connections
+      .filter((c: any) => c.platform === 'shopify' && c.status === 'active')
+      .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const activeConnection = activeStores[0];
     const activeStoreDomain = activeConnection?.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
-    const anyProductHasDomain = (allProducts || []).some(p => !!p.shopDomain);
-    
     const products = (allProducts || []).filter(p => {
       if (!p.shopifyId) return false;
-      if (anyProductHasDomain && activeStoreDomain) {
-        return p.shopDomain === activeStoreDomain;
+      if (activeStoreDomain) {
+        if (p.shopDomain) return p.shopDomain === activeStoreDomain;
+        return false;
       }
       return true;
     });

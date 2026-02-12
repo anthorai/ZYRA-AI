@@ -4736,8 +4736,51 @@ Output format: Markdown with clear section headings.`;
   app.get("/api/products", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const products = await supabaseStorage.getProducts(userId);
-      res.json(products);
+      const allProducts = await supabaseStorage.getProducts(userId);
+      
+      const connections = await supabaseStorage.getStoreConnections(userId);
+      const activeStores = connections
+        .filter(c => c.platform === 'shopify' && c.status === 'active')
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      const activeStore = activeStores[0];
+      
+      if (activeStore) {
+        const activeDomain = activeStore.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
+        if (activeDomain) {
+          const untagged = allProducts.filter(p => p.shopifyId && !p.shopDomain);
+          if (untagged.length > 0) {
+            try {
+              const shopUrl = activeDomain;
+              const graphqlClient = new ShopifyGraphQLClient(shopUrl, activeStore.accessToken);
+              const shopifyProducts = await graphqlClient.fetchAllProducts();
+              const shopifyIds = new Set(shopifyProducts.map((sp: any) => {
+                const gid = sp.id || '';
+                const match = gid.match(/\/(\d+)$/);
+                return match ? match[1] : gid.toString();
+              }));
+              
+              for (const p of untagged) {
+                if (p.shopifyId && shopifyIds.has(p.shopifyId)) {
+                  await db.update(products).set({ shopDomain: activeDomain }).where(eq(products.id, p.id));
+                  p.shopDomain = activeDomain;
+                }
+              }
+              console.log(`✅ [PRODUCTS] Auto-backfilled shop_domain for ${untagged.filter(p => p.shopDomain === activeDomain).length} products`);
+            } catch (backfillErr) {
+              console.warn('⚠️ [PRODUCTS] Auto-backfill failed, products will be tagged on next sync:', backfillErr instanceof Error ? backfillErr.message : backfillErr);
+            }
+          }
+          
+          const filtered = allProducts.filter(p => {
+            if (!p.shopifyId) return false;
+            if (p.shopDomain) return p.shopDomain === activeDomain;
+            return false;
+          });
+          return res.json(filtered);
+        }
+      }
+      
+      res.json(allProducts);
     } catch (error: any) {
       console.error("Get products error:", error);
       res.status(500).json({ message: "Failed to fetch products", error: error.message });
@@ -13226,6 +13269,8 @@ Output format: Markdown with clear section headings.`;
       let productsUpdated = 0;
       const imported = [];
       const errors = [];
+      
+      const shopDomain = shopifyConnection.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
 
       // Get last sync timestamp for delta sync
       const lastSyncTime = shopifyConnection.lastSyncAt ? new Date(shopifyConnection.lastSyncAt) : null;
@@ -13246,26 +13291,26 @@ Output format: Markdown with clear section headings.`;
           }
           
           const productUpdatedAt = new Date(product.updated_at);
+          const shopifyId = product.id.toString().trim();
           
-          // Smart delta sync: Skip if not updated since last sync
-          if (lastSyncTime && productUpdatedAt <= lastSyncTime) {
-            console.log(`⏭️  [SHOPIFY SYNC] Skipping unchanged product (delta sync):`, {
-              title: product.title,
-              productUpdatedAt: productUpdatedAt.toISOString(),
-              lastSyncTime: lastSyncTime.toISOString()
-            });
-            continue; // Skip unchanged products
+          const existingForDelta = await db.query.products.findFirst({
+            where: and(
+              eq(products.userId, userId),
+              eq(products.shopifyId, shopifyId)
+            )
+          });
+          const needsDomainBackfill = existingForDelta && !existingForDelta.shopDomain;
+          
+          if (lastSyncTime && productUpdatedAt <= lastSyncTime && !needsDomainBackfill) {
+            continue;
           }
 
-          const shopifyId = product.id.toString().trim();
           const variant = product.variants?.[0];
           
           // Extract features from product description and metafields
           // Note: For performance, we extract from description only during sync
           // To extract from metafields, use ShopifyClient.getProductMetafields(shopifyId)
           const extractedFeatures = extractProductFeatures([], product.body_html || '');
-          
-          const shopDomain = shopifyConnection.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
           
           const productPayload = {
             userId,
@@ -13283,13 +13328,7 @@ Output format: Markdown with clear section headings.`;
             isOptimized: false
           };
 
-          // Check if product exists before upsert to track stats
-          const existingProduct = await db.query.products.findFirst({
-            where: and(
-              eq(products.userId, userId),
-              eq(products.shopifyId, shopifyId)
-            )
-          });
+          const existingProduct = existingForDelta;
           
           // Use UPSERT to atomically insert or update (prevents race conditions)
           const upsertResult = await db
@@ -13362,13 +13401,14 @@ Output format: Markdown with clear section headings.`;
             .filter((p: any) => p.id)
             .map((p: any) => p.id.toString());
           
-          // Find products in our DB for this user with Shopify IDs
+          // Find products in our DB for this user from THIS store only
           const userProducts = await db
             .select({ id: products.id, shopifyId: products.shopifyId, name: products.name })
             .from(products)
             .where(and(
               eq(products.userId, userId),
-              isNotNull(products.shopifyId)
+              isNotNull(products.shopifyId),
+              eq(products.shopDomain, shopDomain)
             ));
           
           const localProductCount = userProducts.filter(p => p.shopifyId).length;
