@@ -16,7 +16,7 @@ import { analyzeSERP, checkSERPHealth, type SERPAnalysis } from '../services/ser
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'placeholder-key',
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 

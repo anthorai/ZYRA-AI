@@ -99,7 +99,8 @@ app.use(helmet({
         "https://*.supabase.co",
         "wss://*.supabase.co",
         "https://*.ingest.us.sentry.io",
-        "https://*.ingest.sentry.io"
+        "https://*.ingest.sentry.io",
+        "wss://*.replit.dev"
       ],
       frameSrc: [
         "'self'"
