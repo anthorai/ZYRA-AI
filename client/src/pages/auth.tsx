@@ -401,15 +401,27 @@ export default function Auth() {
         <div className="max-w-sm sm:max-w-md w-full">
 
           {/* Mobile brand header (shown below lg) */}
-          <div className="lg:hidden text-center mb-6">
-            <img src={zyraLogoUrl} alt="Zyra AI" className="w-14 h-14 object-contain mx-auto mb-4" data-testid="img-brand-logo-mobile" />
-            <h1 className="text-[1.35rem] font-extrabold tracking-tight mb-1.5">
-              Secure access to <span className="text-primary">Zyra AI</span>
-            </h1>
-            <p className="text-sm text-foreground/50">
-              Monitor, optimize, and protect your store.
-            </p>
-          </div>
+          <Card className="lg:hidden mb-8 glass-card border-primary/20 text-center" data-testid="card-brand-mobile">
+            <CardContent className="p-6">
+              <div className="w-[4.5rem] h-[4.5rem] mx-auto mb-4 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
+                <img
+                  src={zyraLogoUrl}
+                  alt="Zyra AI"
+                  className="w-11 h-11 object-contain"
+                  data-testid="img-brand-logo-mobile"
+                />
+              </div>
+              <h1 className="text-xl font-bold tracking-tight text-white mb-1">
+                ZYRA <span className="text-primary">AI</span>
+              </h1>
+              <p className="text-[0.8rem] font-medium tracking-wide uppercase text-primary/60 mb-2">
+                Autonomous Store Intelligence
+              </p>
+              <p className="text-xs text-foreground/45 max-w-[16rem] mx-auto leading-relaxed">
+                AI-powered revenue optimization that monitors, protects, and grows your store 24/7.
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Shopify Installation Banner */}
           {shopifyInstallState && (
