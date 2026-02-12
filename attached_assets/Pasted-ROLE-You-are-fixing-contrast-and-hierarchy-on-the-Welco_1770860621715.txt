@@ -1,0 +1,160 @@
+ROLE:
+You are fixing contrast and hierarchy on the
+“Welcome to Zyra AI” onboarding tour modal.
+
+The layout and structure are correct.
+ONLY adjust background tones, borders, accents, and text hierarchy.
+
+STRICT RULES:
+• No heavy shadows
+• No glowing effects
+• No layout changes
+• Only use contrast + borders + color hierarchy
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Modal blends with dashboard
+• Title does not dominate visually
+• Top feature icons compete with header
+• “Next” action lacks emphasis
+• White border looks generic
+
+--------------------------------------------------
+BACKGROUND SEPARATION
+--------------------------------------------------
+
+Dashboard Background:
+#0B0E1A
+
+Modal Container:
+Background: #151C38
+Border-radius: 18px
+Border: 1px solid rgba(0,240,255,0.25)
+
+REMOVE pure white border.
+No drop shadow.
+
+--------------------------------------------------
+HEADER SECTION
+--------------------------------------------------
+
+Header Background:
+linear-gradient(180deg, #1A2142 0%, #151C38 100%)
+
+Title:
+Color: #FFFFFF
+Font-weight: 700
+Letter-spacing: slight positive
+
+Subtext:
+Color: #B6C2FF
+
+RULE:
+Title must be brightest element in upper half.
+
+--------------------------------------------------
+TOP FEATURE ICON ROW
+--------------------------------------------------
+
+Feature Icons:
+• Analyze → #00F0FF
+• Detect → #A78BFA
+• Execute → #22C55E
+
+Icon Background Circles:
+rgba(accent-color, 0.12)
+
+Feature Label Text:
+#9AA6D6
+
+RULE:
+Icons should support the title, not compete with it.
+Reduce icon brightness slightly if needed.
+
+--------------------------------------------------
+CONTENT DIVIDER
+--------------------------------------------------
+
+Divider Line:
+1px solid rgba(255,255,255,0.06)
+
+This separates header from step content.
+
+--------------------------------------------------
+STEP INDICATOR
+--------------------------------------------------
+
+“Step 1 of 8”:
+Color: #7C86B8
+
+Make it subtle, not competing.
+
+--------------------------------------------------
+PRIMARY ACTION (Next)
+--------------------------------------------------
+
+Next Button:
+Background: #00F0FF
+Text: #04141C
+Font-weight: 600
+Border-radius: 10px
+
+Hover:
+#1AF5FF
+
+No shadow.
+No glow.
+
+RULE:
+Next must be visually dominant over close icon.
+
+--------------------------------------------------
+CLOSE ICON (X)
+--------------------------------------------------
+
+Default:
+#7C86B8
+
+Hover:
+#E6F7FF
+
+Must not compete with primary action.
+
+--------------------------------------------------
+TEXT HIERARCHY
+--------------------------------------------------
+
+Use 3 levels ONLY:
+
+Primary (Title):
+#FFFFFF
+
+Secondary (Main sentence):
+#C6D2FF
+
+Tertiary (Meta / Step text):
+#7C86B8
+
+Never use same tone across all text.
+
+--------------------------------------------------
+HARD DESIGN RULES
+--------------------------------------------------
+
+• No white borders
+• No heavy drop shadows
+• No neon glow
+• Contrast must come from tone differences
+• Modal must stand out via darker container vs page
+
+--------------------------------------------------
+FINAL CHECK
+--------------------------------------------------
+
+Confirm:
+• Modal clearly separates from background
+• Title dominates visually
+• Next button is most actionable element
+• Icons support but do not overpower
+• Page looks premium and structured
