@@ -287,7 +287,18 @@ export async function getProductIntelligenceSummary(
 ): Promise<ProductIntelligenceSummary> {
   try {
     const allProducts = await supabaseStorage.getProducts(userId);
-    const products = allProducts?.filter(p => !!p.shopifyId) || [];
+    const connections = await supabaseStorage.getStoreConnections(userId);
+    const activeConnection = connections.find((c: any) => c.platform === 'shopify' && c.status === 'active');
+    const activeStoreDomain = activeConnection?.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
+    const anyProductHasDomain = (allProducts || []).some(p => !!p.shopDomain);
+    
+    const products = (allProducts || []).filter(p => {
+      if (!p.shopifyId) return false;
+      if (anyProductHasDomain && activeStoreDomain) {
+        return p.shopDomain === activeStoreDomain;
+      }
+      return true;
+    });
     if (products.length === 0) {
       return {
         totalProducts: 0,

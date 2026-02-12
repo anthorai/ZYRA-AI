@@ -13265,9 +13265,12 @@ Output format: Markdown with clear section headings.`;
           // To extract from metafields, use ShopifyClient.getProductMetafields(shopifyId)
           const extractedFeatures = extractProductFeatures([], product.body_html || '');
           
+          const shopDomain = shopifyConnection.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
+          
           const productPayload = {
             userId,
             shopifyId,
+            shopDomain,
             name: product.title,
             description: product.body_html || '',
             originalDescription: product.body_html || '',
@@ -13308,6 +13311,7 @@ Output format: Markdown with clear section headings.`;
                 image: productPayload.image,
                 tags: productPayload.tags,
                 features: productPayload.features,
+                shopDomain: productPayload.shopDomain,
                 updatedAt: sql`NOW()`
               }
             })

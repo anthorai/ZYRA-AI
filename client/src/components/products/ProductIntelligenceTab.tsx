@@ -91,7 +91,15 @@ export function ProductIntelligenceTab() {
     enabled: hasConnectedStore,
   });
 
-  const products = allProducts.filter(p => !!p.shopifyId);
+  const activeStoreDomain = connectedStore?.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
+  const anyProductHasDomain = allProducts.some(p => !!p.shopDomain);
+  const products = allProducts.filter(p => {
+    if (!p.shopifyId) return false;
+    if (anyProductHasDomain && activeStoreDomain) {
+      return p.shopDomain === activeStoreDomain;
+    }
+    return true;
+  });
 
   const handleSync = async () => {
     setIsSyncing(true);

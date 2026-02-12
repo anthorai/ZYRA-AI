@@ -44,7 +44,7 @@ Ensures production-ready security with multi-tier rate limiting, input sanitizat
 Offers advanced multi-channel notification preferences (Email, SMS, In-App, Push) with granular control and proactive trial expiration notifications.
 
 ### Shopify Integration
-Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing. The connection flow uses a shared `ConnectionProgressCard` component with a 5-step visual progress and comprehensive error handling.
+Features full OAuth 2.0 integration for bidirectional product sync and store management, encompassing comprehensive OAuth scopes and robust security. GDPR-compliant webhooks ensure instant responses with asynchronous data processing. The connection flow uses a shared `ConnectionProgressCard` component with a 5-step visual progress and comprehensive error handling. Products have a `shopDomain` column linking them to their originating Shopify store, enabling Product Intelligence to filter by the currently active connected store and exclude products from disconnected/historical stores.
 
 ### Autonomous AI Store Manager
 This system transforms manual optimization into autonomous, AI-driven processes, including Autonomous SEO (daily audits, AI-powered action processing), Dynamic Pricing AI, and Autonomous Marketing (multi-channel automation, cart recovery escalation). A Master Automation Control provides a global ON/OFF toggle and a Pending Approvals system.
