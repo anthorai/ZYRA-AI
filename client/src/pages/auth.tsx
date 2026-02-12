@@ -341,58 +341,46 @@ export default function Auth() {
         <div className="absolute top-[30%] left-[15%] w-96 h-48 bg-primary/4 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative z-10 max-w-lg">
-          <img src={zyraLogoUrl} alt="Zyra AI" className="w-16 h-16 object-contain mb-10" data-testid="img-brand-logo" />
+          <Card className="glass-card border-primary/15 p-8 xl:p-10" data-testid="card-brand-desktop">
+            <CardContent className="p-0">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20 flex-shrink-0">
+                  <img src={zyraLogoUrl} alt="Zyra AI" className="w-9 h-9 object-contain" data-testid="img-brand-logo" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-white">
+                    ZYRA <span className="text-primary">AI</span>
+                  </h2>
+                  <p className="text-[0.7rem] font-semibold tracking-[0.15em] uppercase text-primary/50 mt-0.5">
+                    Autonomous Store Intelligence
+                  </p>
+                </div>
+              </div>
 
-          <h1 className="text-4xl xl:text-[2.75rem] font-extrabold leading-[1.15] tracking-tight mb-5" data-testid="text-brand-headline">
-            Secure access to your
-            <span className="block text-primary mt-1.5">Zyra AI control panel.</span>
-          </h1>
-          <p className="text-foreground/60 text-[15px] leading-relaxed mb-12 max-w-md">
-            Monitor, optimize, and protect your store with
-            decision-based AI — safely.
-          </p>
+              <h1 className="text-3xl xl:text-[2.25rem] font-extrabold leading-[1.2] tracking-tight mb-4 text-white" data-testid="text-brand-headline">
+                Your AI-powered
+                <span className="block text-primary mt-1">revenue engine.</span>
+              </h1>
+              <p className="text-foreground/55 text-[14px] leading-relaxed mb-8 max-w-sm">
+                Zyra detects friction, optimizes listings, and grows your store autonomously — with your permission, always.
+              </p>
 
-          <div className="space-y-3.5" data-testid="trust-signals">
-            <div
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl"
-              style={{
-                background: 'rgba(0, 240, 255, 0.04)',
-                border: '1px solid rgba(0, 240, 255, 0.12)',
-                boxShadow: '0 0 20px rgba(0, 240, 255, 0.03)',
-              }}
-            >
-              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-[17px] h-[17px] text-primary" />
+              <div className="space-y-2.5" data-testid="trust-signals">
+                {[
+                  { icon: Shield, label: 'Permission-based execution', testId: 'text-trust-permission' },
+                  { icon: Lock, label: 'One-time fixes, locked after apply', testId: 'text-trust-locked' },
+                  { icon: BarChart3, label: 'Revenue-safe automation', testId: 'text-trust-automation' },
+                ].map(({ icon: Icon, label, testId }) => (
+                  <div key={testId} className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-primary/[0.04] border border-primary/10">
+                    <div className="w-8 h-8 rounded-md bg-primary/12 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-[13px] text-foreground/75 font-medium tracking-wide" data-testid={testId}>{label}</span>
+                  </div>
+                ))}
               </div>
-              <span className="text-[14px] text-foreground/80 font-semibold tracking-wide" data-testid="text-trust-permission">Permission-based execution</span>
-            </div>
-            <div
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl"
-              style={{
-                background: 'rgba(0, 240, 255, 0.04)',
-                border: '1px solid rgba(0, 240, 255, 0.12)',
-                boxShadow: '0 0 20px rgba(0, 240, 255, 0.03)',
-              }}
-            >
-              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <Lock className="w-[17px] h-[17px] text-primary" />
-              </div>
-              <span className="text-[14px] text-foreground/80 font-semibold tracking-wide" data-testid="text-trust-locked">One-time fixes, locked after apply</span>
-            </div>
-            <div
-              className="flex items-center gap-3.5 px-4 py-3 rounded-xl"
-              style={{
-                background: 'rgba(0, 240, 255, 0.04)',
-                border: '1px solid rgba(0, 240, 255, 0.12)',
-                boxShadow: '0 0 20px rgba(0, 240, 255, 0.03)',
-              }}
-            >
-              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <BarChart3 className="w-[17px] h-[17px] text-primary" />
-              </div>
-              <span className="text-[14px] text-foreground/80 font-semibold tracking-wide" data-testid="text-trust-automation">Revenue-safe automation</span>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
