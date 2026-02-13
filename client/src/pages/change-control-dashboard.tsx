@@ -142,12 +142,12 @@ const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: stri
   adjust_price: { label: "Pricing", icon: DollarSign, color: "text-emerald-400", category: "revenue_recovery" },
 };
 
-const CATEGORY_CONFIG: Record<ActionCategory, { label: string; icon: any; color: string; description: string }> = {
-  seo: { label: "Discoverability & SEO", icon: Search, color: "text-blue-400", description: "Optimize product visibility in search" },
-  conversion: { label: "Conversion Optimization", icon: ShoppingCart, color: "text-green-400", description: "Turn more visitors into buyers" },
-  revenue_recovery: { label: "Revenue Recovery", icon: DollarSign, color: "text-yellow-400", description: "Recover lost sales opportunities" },
-  revenue_protection: { label: "Revenue Protection", icon: Shield, color: "text-red-400", description: "Protect against revenue loss" },
-  learning: { label: "Learning & Intelligence", icon: Brain, color: "text-purple-400", description: "AI learns and improves" },
+const CATEGORY_CONFIG: Record<ActionCategory, { label: string; icon: any; color: string; activeColor: string; description: string }> = {
+  seo: { label: "Discoverability & SEO", icon: Search, color: "text-cyan-400", activeColor: "text-cyan-400", description: "Optimize product visibility in search" },
+  conversion: { label: "Conversion Optimization", icon: ShoppingCart, color: "text-green-500", activeColor: "text-green-400", description: "Turn more visitors into buyers" },
+  revenue_recovery: { label: "Revenue Recovery", icon: DollarSign, color: "text-amber-400", activeColor: "text-amber-400", description: "Recover lost sales opportunities" },
+  revenue_protection: { label: "Revenue Protection", icon: Shield, color: "text-red-500", activeColor: "text-red-400", description: "Protect against revenue loss" },
+  learning: { label: "Learning & Intelligence", icon: Brain, color: "text-violet-400", activeColor: "text-violet-400", description: "AI learns and improves" },
 };
 
 const SEO_ACTION_ROWS = [
@@ -675,7 +675,7 @@ export default function ChangeControlDashboard() {
           </div>
         </header>
 
-        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-auto bg-slate-950">
           <div className="container max-w-7xl mx-auto space-y-6">
             
             {selectedIds.size > 0 && (
@@ -754,7 +754,7 @@ export default function ChangeControlDashboard() {
               </Card>
             )}
 
-            <Card className="mb-4">
+            <Card className="mb-4 bg-slate-900/80 border-white/5">
               <CardContent className="pt-4 pb-2">
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(CATEGORY_CONFIG) as ActionCategory[]).map((category) => {
@@ -762,29 +762,39 @@ export default function ChangeControlDashboard() {
                     const Icon = config.icon;
                     const count = changesByCategory[category]?.length || 0;
                     const isActive = activeCategory === category;
+                    
+                    const activeBgClass: Record<ActionCategory, string> = {
+                      seo: 'bg-cyan-500/15 border-cyan-500/35 text-cyan-400',
+                      conversion: 'bg-green-500/15 border-green-500/35 text-green-400',
+                      revenue_recovery: 'bg-amber-500/15 border-amber-500/35 text-amber-400',
+                      revenue_protection: 'bg-red-500/15 border-red-500/35 text-red-400',
+                      learning: 'bg-violet-500/15 border-violet-500/35 text-violet-400',
+                    };
+
                     return (
                       <Button
                         key={category}
-                        variant={isActive ? "default" : "outline"}
+                        variant={isActive ? "outline" : "outline"}
                         size="sm"
                         onClick={() => handleCategoryChange(category)}
                         className={cn(
-                          "gap-2 transition-all",
-                          isActive && config.color.replace("text-", "bg-").replace("400", "500/20"),
-                          !isActive && "hover-elevate"
+                          "gap-2 transition-all duration-150",
+                          isActive 
+                            ? activeBgClass[category]
+                            : "bg-slate-900/60 border-white/[0.08] text-slate-300 hover-elevate"
                         )}
                         data-testid={`tab-category-${category}`}
                       >
                         <Icon className={cn("w-4 h-4", config.color)} />
                         <span className="hidden sm:inline">{config.label}</span>
-                        <Badge variant="secondary" className="ml-1 text-xs">
+                        <Badge variant="secondary" className={cn("ml-1 text-xs", isActive && config.activeColor)}>
                           {count}
                         </Badge>
                       </Button>
                     );
                   })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   {CATEGORY_CONFIG[activeCategory].description}
                 </p>
               </CardContent>
@@ -792,22 +802,22 @@ export default function ChangeControlDashboard() {
 
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <Tabs value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
-                <TabsList>
-                  <TabsTrigger value="all" className="gap-2" data-testid="tab-all">
+                <TabsList className="bg-slate-900/80 border border-white/5 rounded-xl">
+                  <TabsTrigger value="all" className="gap-2 rounded-lg data-[state=active]:bg-cyan-400 data-[state=active]:text-slate-900" data-testid="tab-all">
                     <Filter className="w-4 h-4" />
                     All ({categoryFilteredChanges.length})
                   </TabsTrigger>
-                  <TabsTrigger value="applied" className="gap-2" data-testid="tab-applied">
+                  <TabsTrigger value="applied" className="gap-2 rounded-lg data-[state=active]:bg-cyan-400 data-[state=active]:text-slate-900" data-testid="tab-applied">
                     <CheckCircle2 className="w-4 h-4 text-green-400" />
-                    Applied ({categoryFilteredChanges.filter(c => c.status === "completed" || c.status === "dry_run").length})
+                    Applied <span className="text-green-400">({categoryFilteredChanges.filter(c => c.status === "completed" || c.status === "dry_run").length})</span>
                   </TabsTrigger>
-                  <TabsTrigger value="pending" className="gap-2" data-testid="tab-pending">
-                    <Clock className="w-4 h-4 text-yellow-400" />
-                    Pending ({categoryFilteredChanges.filter(c => c.status === "pending").length})
+                  <TabsTrigger value="pending" className="gap-2 rounded-lg data-[state=active]:bg-cyan-400 data-[state=active]:text-slate-900" data-testid="tab-pending">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    Pending <span className="text-amber-400">({categoryFilteredChanges.filter(c => c.status === "pending").length})</span>
                   </TabsTrigger>
-                  <TabsTrigger value="rolled_back" className="gap-2" data-testid="tab-rolled-back">
-                    <RotateCcw className="w-4 h-4 text-slate-400" />
-                    Rolled Back ({categoryFilteredChanges.filter(c => c.status === "rolled_back").length})
+                  <TabsTrigger value="rolled_back" className="gap-2 rounded-lg data-[state=active]:bg-cyan-400 data-[state=active]:text-slate-900" data-testid="tab-rolled-back">
+                    <RotateCcw className="w-4 h-4 text-violet-400" />
+                    Rolled Back <span className="text-violet-400">({categoryFilteredChanges.filter(c => c.status === "rolled_back").length})</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1609,40 +1619,44 @@ export default function ChangeControlDashboard() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-green-400" />
-                        Revenue Impact
-                      </CardTitle>
-                      <CardDescription>Only what matters: money</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/10 border border-green-500/30">
-                        <p className="text-xs text-green-400 uppercase tracking-wide mb-1">Total Revenue Added</p>
-                        <p className="text-3xl font-bold text-green-400" data-testid="text-total-revenue">{formatCurrency(totalRevenueImpact)}</p>
-                        <p className="text-xs text-muted-foreground mt-1" data-testid="text-applied-count">From {appliedChanges.length} applied changes</p>
+                  <Card className="bg-slate-900/80 border-white/5 overflow-hidden">
+                    <div className="flex">
+                      <div className="w-[3px] flex-shrink-0 bg-green-500" />
+                      <div className="flex-1">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg flex items-center gap-2 text-cyan-50">
+                            <DollarSign className="w-5 h-5 text-green-400" />
+                            Revenue Impact
+                          </CardTitle>
+                          <CardDescription className="text-slate-400">Only what matters: money</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/25">
+                            <p className="text-xs text-green-400 uppercase tracking-wide font-medium mb-1">Total Revenue Added</p>
+                            <p className="text-3xl font-bold text-green-500" data-testid="text-total-revenue">{formatCurrency(totalRevenueImpact)}</p>
+                            <p className="text-xs text-slate-400 mt-1" data-testid="text-applied-count">From {appliedChanges.length} applied changes</p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5 text-center">
+                              <p className="text-2xl font-bold text-green-400">{appliedChanges.length}</p>
+                              <p className="text-xs text-slate-400">Applied</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5 text-center">
+                              <p className="text-2xl font-bold text-amber-400">{pendingChanges.length}</p>
+                              <p className="text-xs text-slate-400">Pending</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5 text-center">
+                              <p className="text-2xl font-bold text-violet-400">{rolledBackChanges.length}</p>
+                              <p className="text-xs text-slate-400">Rolled Back</p>
+                            </div>
+                          </div>
+                        </CardContent>
                       </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="p-3 rounded-lg bg-muted/50 text-center">
-                          <p className="text-2xl font-bold text-green-400">{appliedChanges.length}</p>
-                          <p className="text-xs text-muted-foreground">Applied</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-muted/50 text-center">
-                          <p className="text-2xl font-bold text-yellow-400">{pendingChanges.length}</p>
-                          <p className="text-xs text-muted-foreground">Pending</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-muted/50 text-center">
-                          <p className="text-2xl font-bold text-slate-400">{rolledBackChanges.length}</p>
-                          <p className="text-xs text-muted-foreground">Rolled Back</p>
-                        </div>
-                      </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 )}
 
-                <Card>
+                <Card className="bg-slate-900/80 border-white/5">
                   <CardHeader className="pb-3">
                     <button 
                       onClick={() => setSettingsExpanded(!settingsExpanded)}
@@ -1650,21 +1664,21 @@ export default function ChangeControlDashboard() {
                       data-testid="button-toggle-settings"
                     >
                       <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
+                        <CardTitle className="text-lg flex items-center gap-2 text-cyan-50">
                           <Shield className="w-5 h-5 text-primary" />
                           Safety & Control
                         </CardTitle>
-                        <CardDescription>Your automation preferences</CardDescription>
+                        <CardDescription className="text-slate-400">Your automation preferences</CardDescription>
                       </div>
-                      {settingsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      {settingsExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                     </button>
                   </CardHeader>
                   {settingsExpanded && (
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label className="text-sm">Enable Autopilot</Label>
-                          <p className="text-xs text-muted-foreground">Let ZYRA auto-apply low-risk changes</p>
+                          <Label className="text-sm text-cyan-50">Enable Autopilot</Label>
+                          <p className="text-xs text-slate-400">Let ZYRA auto-apply low-risk changes</p>
                         </div>
                         <Switch 
                           checked={settings?.autopilotEnabled || false}
@@ -1672,11 +1686,11 @@ export default function ChangeControlDashboard() {
                           data-testid="switch-autopilot"
                         />
                       </div>
-                      <Separator />
+                      <Separator className="opacity-10" />
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label className="text-sm">Auto-Publish to Shopify</Label>
-                          <p className="text-xs text-muted-foreground">Automatically push approved changes</p>
+                          <Label className="text-sm text-cyan-50">Auto-Publish to Shopify</Label>
+                          <p className="text-xs text-slate-400">Automatically push approved changes</p>
                         </div>
                         <Switch 
                           checked={settings?.autoPublishEnabled || false}
@@ -1684,11 +1698,11 @@ export default function ChangeControlDashboard() {
                           data-testid="switch-auto-publish"
                         />
                       </div>
-                      <Separator />
+                      <Separator className="opacity-10" />
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label className="text-sm">Preview Mode</Label>
-                          <p className="text-xs text-muted-foreground">See changes before they go live</p>
+                          <Label className="text-sm text-cyan-50">Preview Mode</Label>
+                          <p className="text-xs text-slate-400">See changes before they go live</p>
                         </div>
                         <Switch 
                           checked={settings?.dryRunMode || false}
@@ -1696,9 +1710,9 @@ export default function ChangeControlDashboard() {
                           data-testid="switch-dry-run"
                         />
                       </div>
-                      <Separator />
+                      <Separator className="opacity-10" />
                       <div className="space-y-2">
-                        <Label className="text-sm">Autonomy Level</Label>
+                        <Label className="text-sm text-cyan-50">Autonomy Level</Label>
                         <div className="grid grid-cols-3 gap-2">
                           {(["safe", "balanced", "aggressive"] as const).map((mode) => (
                             <Button
@@ -1720,18 +1734,21 @@ export default function ChangeControlDashboard() {
                   )}
                 </Card>
 
-                <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <Bot className="w-8 h-8 text-primary flex-shrink-0" />
-                      <div>
-                        <h4 className="font-medium mb-1">ZYRA is watching</h4>
-                        <p className="text-xs text-muted-foreground">
-                          Your AI growth manager is continuously analyzing your store and finding opportunities to increase revenue.
-                        </p>
+                <Card className="bg-slate-900/80 border-white/5 overflow-hidden">
+                  <div className="flex">
+                    <div className="w-[3px] flex-shrink-0 bg-primary" />
+                    <CardContent className="pt-6 flex-1">
+                      <div className="flex items-start gap-3">
+                        <Bot className="w-8 h-8 text-primary flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium mb-1 text-cyan-50">ZYRA is watching</h4>
+                          <p className="text-xs text-slate-400">
+                            Your AI growth manager is continuously analyzing your store and finding opportunities to increase revenue.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
+                    </CardContent>
+                  </div>
                 </Card>
               </div>
             </div>

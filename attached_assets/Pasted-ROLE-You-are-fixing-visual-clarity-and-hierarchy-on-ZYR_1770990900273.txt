@@ -1,0 +1,122 @@
+ROLE:
+You are fixing visual clarity and hierarchy on ZYRA’s
+main optimization dashboard screen.
+
+The layout and structure are correct.
+ONLY adjust colors, borders, background tones, and semantic accents.
+
+STRICT RULES:
+• No heavy shadows
+• No glow effects
+• No layout changes
+• Use contrast + borders only
+• No pure white borders
+
+--------------------------------------------------
+ROOT PROBLEM
+--------------------------------------------------
+• Category tabs blend together
+• Filters lack visual hierarchy
+• Side cards feel equal importance
+• Revenue impact doesn’t pop
+• Dashboard looks flat
+
+--------------------------------------------------
+GLOBAL BACKGROUND
+--------------------------------------------------
+
+App Background:
+#0B0E1A
+
+Main Section Container:
+Background: #111832
+Border: 1px solid rgba(255,255,255,0.05)
+Border-radius: 16px
+
+--------------------------------------------------
+CATEGORY PILLS (TOP ROW)
+--------------------------------------------------
+
+Default Pill:
+Background: #121833
+Border: 1px solid rgba(255,255,255,0.08)
+Text: #A9B4E5
+
+Active Pill:
+Background: rgba(0,240,255,0.15)
+Border: 1px solid rgba(0,240,255,0.35)
+Text: #00F0FF
+
+Semantic Icon Colors:
+• Discoverability → #00F0FF
+• Conversion → #22C55E
+• Revenue Recovery → #F59E0B
+• Revenue Protection → #EF4444
+• Learning → #A78BFA
+
+RULE:
+Active pill must be clearly different without glow.
+
+--------------------------------------------------
+FILTER BAR (All / Applied / Pending / Rolled Back)
+--------------------------------------------------
+
+Default Filter:
+Text: #9AA6D6
+
+Active Filter:
+Background: #00F0FF
+Text: #04141C
+Border-radius: 10px
+
+Counter Numbers:
+Applied → #22C55E
+Pending → #F59E0B
+Rolled Back → #A78BFA
+
+--------------------------------------------------
+REVENUE IMPACT CARD (IMPORTANT)
+--------------------------------------------------
+
+Card Background:
+#131B34
+
+Left Accent Bar:
+3px solid #22C55E
+
+Title:
+#E6F7FF
+
+Money Display:
+#22C55E
+Font-weight: 700
+
+Secondary Text:
+#9AA6D6
+
+Stats (Applied / Pending / Rolled Back):
+• Applied → #22C55E
+• Pending → #F59E0B
+• Rolled Back → #A78BFA
+
+RULE:
+Revenue card must feel performance-focused.
+
+--------------------------------------------------
+SIDE CARDS (Safety & ZYRA Watching)
+--------------------------------------------------
+
+Card Background:
+#121833
+
+Border:
+1px solid rgba(255,255,255,0.05)
+
+Section Titles:
+#E6F7FF
+
+Descriptions:
+#A9B4E5
+
+“ZYRA is watching” Accent:
+Left
