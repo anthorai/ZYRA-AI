@@ -551,6 +551,7 @@ interface FoundationalAction {
   category?: 'FOUNDATION' | 'GROWTH' | 'GUARD';
   productId?: string;
   productName?: string;
+  targetProducts?: { id: string; name: string }[];
   title: string;
   description: string;
   whyItHelps: string;
@@ -1509,15 +1510,27 @@ function ProgressStages({
                 {foundationalAction.title}
               </h3>
               
-              {/* Product Name */}
-              {foundationalAction.productName && (
+              {/* Target Products */}
+              {foundationalAction.targetProducts && foundationalAction.targetProducts.length > 0 ? (
+                <div className="mb-3">
+                  <span className="text-xs text-slate-500">Products ({foundationalAction.targetProducts.length}):</span>
+                  <ul className="mt-1 space-y-0.5">
+                    {foundationalAction.targetProducts.map((p, idx) => (
+                      <li key={idx} className="flex items-center gap-1.5 text-sm text-foreground font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                        {p.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : foundationalAction.productName ? (
                 <div className="mb-3">
                   <span className="text-xs text-slate-500">Product:</span>
                   <p className="text-sm text-foreground font-medium">
                     {foundationalAction.productName}
                   </p>
                 </div>
-              )}
+              ) : null}
               
               {/* Sub-Actions List */}
               {foundationalAction.subActions && foundationalAction.subActions.length > 0 && (

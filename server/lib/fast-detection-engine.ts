@@ -1122,11 +1122,13 @@ export class FastDetectionEngine {
         recovery_setup: 'No recovery flow configured'
       };
 
+      const topProducts = userProducts.slice(0, 3).filter(p => p.id && p.name);
       const foundationalAction: FoundationalAction = {
         type: selectedType,
         category: registryAction.category,
         productId: targetProduct?.id,
         productName: targetProduct?.name || undefined,
+        targetProducts: topProducts.map(p => ({ id: p.id, name: p.name })),
         title: registryAction.title, // Use registry name instead of legacy label
         description: isAlreadyOptimized 
           ? 'All products have been optimized with this action. ZYRA is monitoring for changes that would unlock new optimization opportunities.'

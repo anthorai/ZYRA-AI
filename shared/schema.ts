@@ -3704,6 +3704,7 @@ export interface FoundationalAction {
   category?: 'FOUNDATION' | 'GROWTH' | 'GUARD';
   productId?: string;
   productName?: string;
+  targetProducts?: { id: string; name: string }[];
   title: string;
   description: string;
   whyItHelps: string;
