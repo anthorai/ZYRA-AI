@@ -3169,19 +3169,21 @@ export default function ZyraAtWork() {
                       <Crown className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white mb-1" data-testid="text-nudge-title">
+                      <p className="text-sm font-semibold text-foreground mb-1" data-testid="text-nudge-title">
                         {creditsBalance.creditsRemaining <= 0 
                           ? "You've used all your free credits" 
                           : `${creditsBalance.creditsUsed} of ${creditsBalance.creditLimit} free credits used`}
                       </p>
-                      <p className="text-xs text-slate-400 mb-3" data-testid="text-nudge-description">
+                      <p className="text-xs text-muted-foreground mb-3" data-testid="text-nudge-description">
                         {creditsBalance.creditsRemaining <= 0 
                           ? "Upgrade to Starter to keep optimizing your products with 2,000 credits/month."
+                          : creditsBalance.isLow
+                          ? `Only ${creditsBalance.creditsRemaining} credits left. Upgrade to Starter for 2,000 credits/month before you run out.`
                           : `You have ${creditsBalance.creditsRemaining} credits remaining. Upgrade to Starter for 2,000 credits/month and unlock more powerful optimizations.`}
                       </p>
                       <div className="flex items-center gap-3 flex-wrap">
                         <div className="flex-1 min-w-[120px]">
-                          <div className="h-2 rounded-full bg-slate-700/50 overflow-hidden">
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
                             <div 
                               className={`h-full rounded-full transition-all duration-500 ${
                                 creditsBalance.percentUsed >= 80 ? 'bg-red-500' : 
@@ -3191,7 +3193,7 @@ export default function ZyraAtWork() {
                               data-testid="progress-credits-used"
                             />
                           </div>
-                          <p className="text-[10px] text-slate-500 mt-1">{creditsBalance.percentUsed}% of free credits used</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{creditsBalance.percentUsed}% of free credits used</p>
                         </div>
                         <a href="/pricing" data-testid="link-upgrade-starter">
                           <Button size="sm" className="gap-1.5">
