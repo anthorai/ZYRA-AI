@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Check, Shield, Lock, TrendingUp,
-  Zap, Activity, BarChart3, Eye, RefreshCcw, Cpu
+  Zap, Activity, BarChart3, Eye, RefreshCcw, Cpu, Gift
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import Footer from "@/components/ui/footer";
@@ -258,7 +258,70 @@ export default function Pricing() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+
+              {/* ---- FREE: FREE TO INSTALL ---- */}
+              <div className="relative group" data-testid="pricing-card-free">
+                <div className="absolute -inset-[1px] bg-gradient-to-b from-emerald-500/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <Card className="relative h-full bg-[#12122a] border-emerald-500/20 overflow-visible">
+                  <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                        <Gift className="w-6 h-6 text-emerald-400" />
+                      </div>
+                      <div>
+                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-xs">
+                          Free to Install
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <h3 className="text-2xl font-bold mb-1" data-testid="text-plan-name-free">Free</h3>
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className="text-4xl font-bold" data-testid="text-plan-price-free">$0</span>
+                      <span className="text-muted-foreground text-sm">/ month</span>
+                    </div>
+
+                    <p className="text-base text-foreground/90 font-medium mb-2">
+                      See real results before you upgrade.
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      499 AI credits for 8-9 optimization actions. All results visible before upgrading.
+                    </p>
+
+                    <div className="mb-6 py-2 px-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
+                      <span className="text-sm font-medium text-emerald-300">499 credits (8-9 actions)</span>
+                    </div>
+
+                    <div className="space-y-3 mb-8 flex-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span>Up to 3 products per action</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span>SEO title & meta tag optimization</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span>Product description & copy fixes</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span>Trust signal enhancement</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span>Image alt-text optimization</span>
+                      </div>
+                    </div>
+
+                    <Button asChild variant="outline" className="w-full border-emerald-500/40 text-emerald-300 bg-emerald-500/5" data-testid="button-free-cta">
+                      <Link href="/auth">Get Started Free</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* ---- STARTER: CONSERVATIVE CONTROL ---- */}
               <div className="relative group" data-testid="pricing-card-starter">
@@ -503,7 +566,54 @@ export default function Pricing() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+              {/* ── FREE CARD ── */}
+              <Card className="glass-card border-emerald-500/20 hover-elevate transition-all duration-300" data-testid="control-card-free">
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="mb-5">
+                    <div className="w-11 h-11 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4">
+                      <Gift className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-emerald-300" data-testid="text-control-name-free">Free</h3>
+                    <span className="text-xs text-emerald-400/70 tracking-wide uppercase font-medium">Free to Install</span>
+                  </div>
+
+                  <div className="border-t border-emerald-500/10 pt-4 mb-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Core Permissions</p>
+                    <ul className="space-y-2.5">
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">SEO & product copy optimization</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Trust signal enhancement</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Up to 3 products per action</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-emerald-500/10 pt-4 mb-5 flex-1">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-3 font-medium">Limits</p>
+                    <ul className="space-y-2.5">
+                      <li className="text-sm text-muted-foreground/70">499 credits total — <span className="text-emerald-400/80">8-9 actions</span></li>
+                      <li className="text-sm text-muted-foreground/70">Growth actions — <span className="text-muted-foreground/40">Not allowed</span></li>
+                      <li className="text-sm text-muted-foreground/70">Guard & protection — <span className="text-muted-foreground/40">Not allowed</span></li>
+                      <li className="text-sm text-muted-foreground/70">Competitive Intelligence — <span className="text-muted-foreground/40">Not available</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-emerald-500/10 pt-4">
+                    <p className="text-xs text-emerald-300/60 text-center font-medium tracking-wide" data-testid="text-control-summary-free">
+                      See real results before you commit.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* ── STARTER CARD ── */}
               <Card className="glass-card border-blue-500/20 hover-elevate transition-all duration-300" data-testid="control-card-starter">
