@@ -35,6 +35,13 @@ const LEGACY_TO_ACTION_ID: Record<FoundationalActionType, ActionId> = {
   recovery_setup: 'abandoned_cart_recovery'
 };
 
+const ACTION_ID_TO_LEGACY: Record<string, FoundationalActionType> = {
+  product_title_optimization: 'seo_basics',
+  product_description_clarity: 'product_copy_clarity',
+  trust_signal_enhancement: 'trust_signals',
+  abandoned_cart_recovery: 'recovery_setup'
+};
+
 /**
  * Get action title, sub-actions, and credit cost from the Master Action Registry
  */
@@ -874,9 +881,15 @@ export class FastDetectionEngine {
         .limit(10);
       
       // Extract which action types were recently executed
+      // Activity logs store mapped action IDs (e.g. 'product_title_optimization')
+      // but rotation logic uses legacy types (e.g. 'seo_basics'), so map them back
       const recentActionTypes = new Set(
-        recentActions.map(a => a.action?.replace('foundational_', '') || '')
+        recentActions.map(a => {
+          const rawType = a.action?.replace('foundational_', '') || '';
+          return ACTION_ID_TO_LEGACY[rawType] || rawType;
+        })
       );
+      console.log(`📋 [Rotation] Recent action types (mapped to legacy): ${Array.from(recentActionTypes).join(', ')}`);
       
       // Define action type priority order for new stores
       const actionPriority: FoundationalActionType[] = [
