@@ -124,14 +124,31 @@ interface PlanDetails {
 
 const planDetails: Record<string, PlanDetails> = {
   "Free": {
-    credits: "499 Credits / 7 days",
-    tagline: "Perfect for new and growing Shopify stores",
+    credits: "499 Credits",
+    tagline: "See real results before you upgrade",
     categories: [
       {
-        name: "Core Features",
+        name: "What You Get",
         features: [
-          "ZYRA detects all opportunities",
-          "Manual approval mode",
+          "499 AI credits (8-9 optimization actions)",
+          "Up to 3 products optimized per action",
+          "All results visible before upgrading"
+        ]
+      },
+      {
+        name: "Included Actions",
+        features: [
+          "SEO title & meta tag optimization",
+          "Product description clarity & copy fixes",
+          "Trust signal enhancement",
+          "Image alt-text optimization",
+          "Search intent alignment"
+        ]
+      },
+      {
+        name: "Safety & Support",
+        features: [
+          "Manual approval mode (you control everything)",
           "One-click rollback protection",
           "Email support"
         ]
