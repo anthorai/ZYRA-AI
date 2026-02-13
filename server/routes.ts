@@ -1476,6 +1476,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continue anyway - user account was created
       }
       
+      // Auto-activate Free plan immediately on registration
+      if (userData.user?.id) {
+        try {
+          const trialResult = await grantFreeTrial(userData.user.id);
+          if (trialResult.success) {
+            console.log(`🎉 [REGISTER] Free plan auto-activated for ${email}`);
+          }
+        } catch (trialErr) {
+          console.warn('[REGISTER] Free plan activation deferred to first login:', trialErr);
+        }
+      }
+
       // Return success - user needs to confirm email before logging in
       res.json({ 
         data: { user: userData.user, session: null },

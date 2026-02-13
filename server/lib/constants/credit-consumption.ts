@@ -32,7 +32,7 @@ export type ActionType =
  */
 export const BASE_CREDIT_COSTS: Record<ActionType, Record<string, number>> = {
   product_seo_optimization: {
-    [ZYRA_PLANS.FREE]: 80,
+    [ZYRA_PLANS.FREE]: 6,
     [ZYRA_PLANS.STARTER]: 120,
     [ZYRA_PLANS.GROWTH]: 220,
     [ZYRA_PLANS.SCALE]: 350,
@@ -44,43 +44,43 @@ export const BASE_CREDIT_COSTS: Record<ActionType, Record<string, number>> = {
     [ZYRA_PLANS.SCALE]: 700,   // Per 10 products
   },
   image_alt_text_optimization: {
-    [ZYRA_PLANS.FREE]: 20,
+    [ZYRA_PLANS.FREE]: 4,
     [ZYRA_PLANS.STARTER]: 30,
     [ZYRA_PLANS.GROWTH]: 60,
     [ZYRA_PLANS.SCALE]: 90,
   },
   cart_recovery_setup: {
-    [ZYRA_PLANS.FREE]: 100,
+    [ZYRA_PLANS.FREE]: 8,
     [ZYRA_PLANS.STARTER]: 150,
     [ZYRA_PLANS.GROWTH]: 300,
     [ZYRA_PLANS.SCALE]: 450,
   },
   post_purchase_upsell: {
-    [ZYRA_PLANS.FREE]: 80,
+    [ZYRA_PLANS.FREE]: 8,
     [ZYRA_PLANS.STARTER]: 120,
     [ZYRA_PLANS.GROWTH]: 250,
     [ZYRA_PLANS.SCALE]: 400,
   },
   competitive_analysis: {
-    [ZYRA_PLANS.FREE]: 50,
+    [ZYRA_PLANS.FREE]: 10,
     [ZYRA_PLANS.STARTER]: 100,
     [ZYRA_PLANS.GROWTH]: 180,
     [ZYRA_PLANS.SCALE]: 280,
   },
   email_campaign_optimization: {
-    [ZYRA_PLANS.FREE]: 40,
+    [ZYRA_PLANS.FREE]: 6,
     [ZYRA_PLANS.STARTER]: 80,
     [ZYRA_PLANS.GROWTH]: 150,
     [ZYRA_PLANS.SCALE]: 250,
   },
   pricing_optimization: {
-    [ZYRA_PLANS.FREE]: 60,
+    [ZYRA_PLANS.FREE]: 8,
     [ZYRA_PLANS.STARTER]: 100,
     [ZYRA_PLANS.GROWTH]: 200,
     [ZYRA_PLANS.SCALE]: 320,
   },
   marketing_automation: {
-    [ZYRA_PLANS.FREE]: 50,
+    [ZYRA_PLANS.FREE]: 8,
     [ZYRA_PLANS.STARTER]: 90,
     [ZYRA_PLANS.GROWTH]: 180,
     [ZYRA_PLANS.SCALE]: 300,

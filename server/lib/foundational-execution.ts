@@ -1,10 +1,12 @@
 import { requireDb } from '../db';
+import { getUserSubscription, getSubscriptionPlanById } from '../db';
 import { products, seoMeta, automationSettings, autonomousActions, activityLogs } from '@shared/schema';
 import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
 import { consumeAIToolCredits, checkAIToolCredits } from './credits';
 import { ALL_ACTIONS, type ActionId, type MasterAction } from './zyra-master-loop/master-action-registry';
+import type { AIToolId } from '@shared/ai-credits';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'placeholder-key',
@@ -98,6 +100,21 @@ export class FoundationalExecutionService {
     this.activityLog.delete(userId);
   }
 
+  private async getCreditToolId(userId: string): Promise<AIToolId> {
+    try {
+      const subscription = await getUserSubscription(userId);
+      if (subscription) {
+        const plan = await getSubscriptionPlanById(subscription.planId);
+        if (plan && (plan.planName === 'Free' || plan.planName === 'free')) {
+          return 'product-seo-free';
+        }
+      }
+    } catch (err) {
+      console.warn('[Foundational] Could not determine plan, using default credit tool', err);
+    }
+    return 'product-seo-engine';
+  }
+
   private addActivity(userId: string, activity: Omit<ExecutionActivity, 'id' | 'timestamp'>): ExecutionActivity {
     const fullActivity: ExecutionActivity = {
       ...activity,
@@ -163,8 +180,9 @@ export class FoundationalExecutionService {
     });
 
     try {
-      // Initial credit check - need at least 1 credit to start
-      const creditCheck = await checkAIToolCredits(userId, 'product-seo-engine', 1);
+      const creditToolId = await this.getCreditToolId(userId);
+
+      const creditCheck = await checkAIToolCredits(userId, creditToolId, 1);
       if (!creditCheck.hasEnoughCredits) {
         this.addActivity(userId, {
           phase: 'decide',
@@ -248,8 +266,7 @@ export class FoundationalExecutionService {
       let totalCreditsConsumed = 0;
 
       for (const product of userProducts) {
-        // Check and consume 1 credit per product optimization
-        const creditCheck = await checkAIToolCredits(userId, 'product-seo-engine', 1);
+        const creditCheck = await checkAIToolCredits(userId, creditToolId, 1);
         if (!creditCheck.hasEnoughCredits) {
           console.log(`[Foundational] Stopping - insufficient credits for product ${product.name}`);
           break; // Stop if no more credits
@@ -295,8 +312,7 @@ export class FoundationalExecutionService {
         }
 
         if (optimization.changes.length > 0) {
-          // Consume 1 credit per product with actual changes
-          await consumeAIToolCredits(userId, 'product-seo-engine', 1);
+          await consumeAIToolCredits(userId, creditToolId, 1);
           totalCreditsConsumed += 1;
           
           productsOptimized.push(optimization);

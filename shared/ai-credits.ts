@@ -4,6 +4,11 @@ export const AI_TOOL_CREDITS = {
     credits: 5,
     description: 'Full SEO optimization (title, meta, keywords)',
   },
+  'product-seo-free': {
+    name: 'Product SEO (Free Plan)',
+    credits: 2,
+    description: 'Free plan foundational optimization per product',
+  },
   'product-seo-fast': {
     name: 'Product SEO (Fast Mode)',
     credits: 5,
