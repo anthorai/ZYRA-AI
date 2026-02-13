@@ -2202,12 +2202,14 @@ export default function ZyraAtWork() {
         const actionType = rawActionType;
         console.log('[ZYRA Approve] Executing foundational action:', actionType, '(credit type:', creditActionType, ')');
         
-        // Get product ID from foundational action data if available
-        const productId = detectionStatusData?.foundationalAction?.productId || 'store-level';
-        const executionMode: ExecutionMode = (detectionStatusData?.foundationalAction?.executionMode as ExecutionMode) || 'fast';
+        // Get product ID from foundational action data - check both detection status AND stats
+        const foundationalAction = detectionStatusData?.foundationalAction || stats?.foundationalAction;
+        const productId = foundationalAction?.productId || detectionStatusData?.foundationalAction?.productId || stats?.foundationalAction?.productId || 'store-level';
+        const executionMode: ExecutionMode = (foundationalAction?.executionMode as ExecutionMode) || 'fast';
+        
+        console.log('[ZYRA Approve] Using productId:', productId, 'from foundationalAction:', !!foundationalAction);
         
         // CRITICAL: Check lock status before consuming credits to prevent duplicates
-        const foundationalAction = detectionStatusData?.foundationalAction;
         if (foundationalAction?.isLocked) {
           console.log('[ZYRA Approve] Action is locked - preventing duplicate credit consumption');
           throw new Error(foundationalAction.lockMessage || 'This action has already been completed on this product');

@@ -214,6 +214,8 @@ export function registerModeCreditsRoutes(app: Express, requireAuth: AuthMiddlew
 
       const { actionType, mode, entityType, entityId, entityContent, userConfirmed } = validationResult.data;
 
+      console.log(`[Credits Execute] User: ${user.id}, Action: ${actionType}, Mode: ${mode}, Entity: ${entityType}/${entityId}`);
+
       if (!validateActionTypeExists(actionType)) {
         return res.status(400).json({ error: 'Invalid action type' });
       }

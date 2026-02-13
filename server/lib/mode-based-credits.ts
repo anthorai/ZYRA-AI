@@ -138,8 +138,13 @@ export async function checkModeBasedCredits(
   }
 
   // Check action lock status (prevent duplicate execution)
+  // store-level locks are legacy and should not block product-specific actions
+  const isStoreLevelProduct = entityId === 'store-level' && entityType === 'product';
   const lockCheck = await checkActionLock(userId, entityType, entityId, actionType);
-  if (lockCheck.isLocked) {
+  
+  if (lockCheck.isLocked && isStoreLevelProduct) {
+    console.log(`[Credits] Skipping store-level lock for product action ${actionType} - store-level locks are legacy`);
+  } else if (lockCheck.isLocked) {
     return {
       allowed: false,
       isLocked: true,
@@ -207,9 +212,11 @@ export async function checkModeBasedCredits(
     warnings.push('Credits running low. ZYRA is focusing on revenue-critical actions.');
   }
 
+  const isEffectivelyLocked = lockCheck.isLocked && !isStoreLevelProduct;
+  
   return {
-    allowed: hasEnoughCredits && !lockCheck.isLocked,
-    isLocked: lockCheck.isLocked,
+    allowed: hasEnoughCredits && !isEffectivelyLocked,
+    isLocked: isEffectivelyLocked,
     hasEnoughCredits,
     creditCost,
     creditsRemaining,
