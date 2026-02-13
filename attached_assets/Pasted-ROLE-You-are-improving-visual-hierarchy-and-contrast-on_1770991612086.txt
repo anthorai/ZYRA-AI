@@ -1,0 +1,236 @@
+ROLE:
+You are improving visual hierarchy and contrast on the
+ZYRA at Work page.
+
+The layout and structure are correct.
+ONLY adjust background tones, borders, semantic accents, and text hierarchy.
+
+STRICT RULES:
+• No heavy shadows
+• No glow effects
+• No layout changes
+• No white borders
+• Use surface contrast + semantic accent colors only
+
+--------------------------------------------------
+GLOBAL BACKGROUND STRUCTURE
+--------------------------------------------------
+
+App Background:
+#0B0E1A
+
+Primary Surface (Main sections):
+#111832
+
+Secondary Surface (Cards inside sections):
+#121833
+
+Deep Surface (Nested content areas):
+#0F152B
+
+Rule:
+Each nesting level must be slightly darker or lighter.
+No two adjacent surfaces can share same tone.
+
+--------------------------------------------------
+AUTOPILOT BANNER
+--------------------------------------------------
+
+Background:
+linear-gradient(90deg, #0F2E2B 0%, #121833 100%)
+
+Left Accent Bar:
+3px solid #22C55E
+
+“Running” Badge:
+Background: rgba(34,197,94,0.15)
+Border: 1px solid rgba(34,197,94,0.35)
+Text: #9EFFC3
+
+Autopilot Title:
+#FFFFFF
+
+Subtext:
+#A9B4E5
+
+--------------------------------------------------
+METRIC CARDS (Revenue / Optimizations / Pending / Success)
+--------------------------------------------------
+
+Card Background:
+#121833
+
+Border:
+1px solid rgba(255,255,255,0.06)
+
+Revenue Impact Card:
+Left Accent: #22C55E
+Dollar Value: #22C55E
+Title: #E6F7FF
+
+Optimizations Card:
+Left Accent: #00F0FF
+
+Pending Card:
+Left Accent: #F59E0B
+
+Success Rate Card:
+Left Accent: #A78BFA
+
+Rule:
+Each metric card must be identifiable by accent color.
+
+--------------------------------------------------
+LIVE ACTIVITY FEED
+--------------------------------------------------
+
+Section Background:
+#111832
+
+Header:
+#FFFFFF
+
+DECIDE label:
+Background: rgba(167,139,250,0.15)
+Text: #A78BFA
+Border: 1px solid rgba(167,139,250,0.35)
+
+Activity Log Area:
+#0F152B
+Border: 1px solid rgba(255,255,255,0.05)
+
+--------------------------------------------------
+ACTION QUEUE CARD
+--------------------------------------------------
+
+Card Background:
+#131B34
+
+Left Accent:
+Based on Action Type
+
+Foundation → #00F0FF
+Growth → #22C55E
+Revenue Recovery → #F59E0B
+Protection → #EF4444
+Learning → #A78BFA
+
+Expected Impact:
+#9AA6D6
+
+Low Risk Badge:
+Background: rgba(34,197,94,0.15)
+Text: #9EFFC3
+
+Approve & Run Button:
+Background: #00F0FF
+Text: #04141C
+
+--------------------------------------------------
+STAGE TABS (Detect / Decide / Execute / Prove / Learn)
+--------------------------------------------------
+
+Inactive:
+Background: #121833
+Text: #7C86B8
+
+Active:
+Background: rgba(0,240,255,0.15)
+Border: 1px solid rgba(0,240,255,0.35)
+Text: #00F0FF
+
+Rule:
+Active stage must be instantly visible.
+
+--------------------------------------------------
+OPTIMIZATION MODE CARDS
+--------------------------------------------------
+
+Card Background:
+#121833
+
+Active Mode:
+Border: 1px solid rgba(0,240,255,0.35)
+Background: #161F3F
+
+Mode Labels:
+Primary: #FFFFFF
+Secondary: #A9B4E5
+
+--------------------------------------------------
+ACTION TYPES SECTION
+--------------------------------------------------
+
+Section Background:
+#111832
+
+Category Headers:
+
+Discoverability → Accent #00F0FF
+Conversion → #22C55E
+Recovery → #F59E0B
+Protection → #EF4444
+Learning → #A78BFA
+
+Header Text:
+#E6F7FF
+
+Action Items:
+Background: #121833
+Border: 1px solid rgba(255,255,255,0.05)
+
+--------------------------------------------------
+LEARNING SECTION
+--------------------------------------------------
+
+Background:
+#0F152B
+
+Accent:
+#A78BFA
+
+Headline:
+#FFFFFF
+
+Subtext:
+#9AA6D6
+
+--------------------------------------------------
+TEXT HIERARCHY RULE
+--------------------------------------------------
+
+Only 3 main tones:
+
+Primary:
+#FFFFFF
+
+Secondary:
+#C6D2FF
+
+Tertiary:
+#7C86B8
+
+Never use same brightness across entire page.
+
+--------------------------------------------------
+HARD RULES
+--------------------------------------------------
+
+• No white borders
+• No heavy drop shadows
+• No glowing neon outlines
+• Accent color must indicate meaning
+• Revenue and Active states must stand out
+• Nested surfaces must have tone separation
+
+--------------------------------------------------
+FINAL CHECK
+--------------------------------------------------
+
+Confirm:
+• Autopilot banner clearly stands out
+• Active stage is obvious
+• Revenue card dominates metrics
+• Action types are clearly separated
+• Page feels structured, not flat
+• No heavy shadow used anywhere

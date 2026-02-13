@@ -2807,36 +2807,38 @@ export default function ZyraAtWork() {
       </div>
 
       {/* Autopilot Control - Direct toggle to start/stop ZYRA */}
-      <Card className={`border-2 transition-all ${
+      <Card className={`border transition-all overflow-hidden ${
         isAutopilotEnabled 
-          ? 'bg-gradient-to-r from-emerald-500/10 to-primary/10 border-emerald-500/30' 
-          : 'bg-[#16162c] border-slate-700/50'
+          ? 'bg-gradient-to-r from-emerald-950/60 to-slate-900/80 border-emerald-500/25' 
+          : 'bg-slate-900/80 border-white/[0.06]'
       }`} data-testid="card-autopilot-control">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${isAutopilotEnabled ? 'bg-emerald-500/20' : 'bg-slate-700/50'}`}>
-                <Brain className={`w-6 h-6 ${isAutopilotEnabled ? 'text-emerald-400' : 'text-slate-400'}`} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-white">ZYRA Autopilot</h3>
-                  <Badge 
-                    className={isAutopilotEnabled 
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
-                      : 'bg-slate-700 text-slate-400 border-slate-600'
-                    }
-                  >
-                    {isAutopilotEnabled ? 'Running' : 'Paused'}
-                  </Badge>
+        <div className="flex">
+          {isAutopilotEnabled && <div className="w-[3px] flex-shrink-0 bg-green-500" />}
+          <CardContent className="py-4 flex-1">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${isAutopilotEnabled ? 'bg-emerald-500/20' : 'bg-slate-700/50'}`}>
+                  <Brain className={`w-6 h-6 ${isAutopilotEnabled ? 'text-emerald-400' : 'text-slate-400'}`} />
                 </div>
-                <p className="text-sm text-slate-400">
-                  {isAutopilotEnabled 
-                    ? 'ZYRA is detecting revenue friction and removing it in real-time' 
-                    : 'Enable autopilot to let ZYRA find and remove friction where money is leaking'}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-white">ZYRA Autopilot</h3>
+                    <Badge 
+                      className={isAutopilotEnabled 
+                        ? 'bg-green-500/15 text-green-300 border-green-500/35' 
+                        : 'bg-slate-700 text-slate-400 border-slate-600'
+                      }
+                    >
+                      {isAutopilotEnabled ? 'Running' : 'Paused'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-400">
+                    {isAutopilotEnabled 
+                      ? 'ZYRA is detecting revenue friction and removing it in real-time' 
+                      : 'Enable autopilot to let ZYRA find and remove friction where money is leaking'}
+                  </p>
+                </div>
               </div>
-            </div>
             <button
               onClick={() => toggleAutopilotMutation.mutate(!isAutopilotEnabled)}
               disabled={toggleAutopilotMutation.isPending}
@@ -2865,70 +2867,79 @@ export default function ZyraAtWork() {
               </div>
             </button>
           </div>
-        </CardContent>
+          </CardContent>
+        </div>
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="stats-grid">
-        <Card className="bg-[#16162c] border-slate-700/50">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-400">Today's Revenue Impact</p>
-                <RevenueDelta 
-                  amount={stats?.todayRevenueDelta || 0} 
-                  size="lg"
-                  showSign={true}
-                />
-              </div>
-            </div>
-          </CardContent>
+        <Card className="bg-slate-900/80 border-white/[0.06] overflow-hidden">
+          <div className="flex">
+            <div className="w-[3px] flex-shrink-0 bg-green-500" />
+            <CardContent className="pt-4 pb-3 flex-1">
+              <p className="text-xs text-slate-400 mb-1">Today's Revenue Impact</p>
+              <RevenueDelta 
+                amount={stats?.todayRevenueDelta || 0} 
+                size="lg"
+                showSign={true}
+              />
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="bg-[#16162c] border-slate-700/50">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-400">Optimizations Today</p>
-                <p className="text-xl font-bold text-white">{stats?.todayOptimizations || 0}</p>
+        <Card className="bg-slate-900/80 border-white/[0.06] overflow-hidden">
+          <div className="flex">
+            <div className="w-[3px] flex-shrink-0 bg-cyan-400" />
+            <CardContent className="pt-4 pb-3 flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-400">Optimizations Today</p>
+                  <p className="text-xl font-bold text-white">{stats?.todayOptimizations || 0}</p>
+                </div>
+                <div className="p-2 rounded-full bg-cyan-500/10">
+                  <Zap className="w-4 h-4 text-cyan-400" />
+                </div>
               </div>
-              <div className="p-2 rounded-full bg-blue-500/10">
-                <Zap className="w-4 h-4 text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="bg-[#16162c] border-slate-700/50">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-400">Pending Approvals</p>
-                <p className="text-xl font-bold text-white">{stats?.pendingApprovals || 0}</p>
+        <Card className="bg-slate-900/80 border-white/[0.06] overflow-hidden">
+          <div className="flex">
+            <div className="w-[3px] flex-shrink-0 bg-amber-500" />
+            <CardContent className="pt-4 pb-3 flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-400">Pending Approvals</p>
+                  <p className="text-xl font-bold text-white">{stats?.pendingApprovals || 0}</p>
+                </div>
+                <div className="p-2 rounded-full bg-amber-500/10">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                </div>
               </div>
-              <div className="p-2 rounded-full bg-amber-500/10">
-                <Clock className="w-4 h-4 text-amber-400" />
-              </div>
-            </div>
-          </CardContent>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="bg-[#16162c] border-slate-700/50">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-400">Success Rate</p>
-                <p className="text-xl font-bold text-white">{stats?.successRate || 0}%</p>
+        <Card className="bg-slate-900/80 border-white/[0.06] overflow-hidden">
+          <div className="flex">
+            <div className="w-[3px] flex-shrink-0 bg-violet-400" />
+            <CardContent className="pt-4 pb-3 flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-400">Success Rate</p>
+                  <p className="text-xl font-bold text-white">{stats?.successRate || 0}%</p>
+                </div>
+                <div className="p-2 rounded-full bg-violet-500/10">
+                  <CheckCircle2 className="w-4 h-4 text-violet-400" />
+                </div>
               </div>
-              <div className="p-2 rounded-full bg-emerald-500/10">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              </div>
-            </div>
-          </CardContent>
+            </CardContent>
+          </div>
         </Card>
       </div>
 
       {/* Live Activity Feed */}
-      <Card className="bg-[#16162c] border-slate-700/50">
+      <Card className="bg-slate-900/80 border-white/[0.06]">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -3190,9 +3201,9 @@ export default function ZyraAtWork() {
           return (
             <Card 
               key={phase}
-              className={`${isLoopComplete ? 'bg-emerald-500/10' : config.bgColor} border-slate-700/50 transition-all duration-300 ${
-                isActive ? 'ring-2 ring-offset-2 ring-offset-slate-900' : ''
-              } ${isLoopComplete ? 'ring-2 ring-emerald-400/30 ring-offset-2 ring-offset-slate-900' : ''}`}
+              className={`${isLoopComplete ? 'bg-emerald-500/10' : isActive ? 'bg-cyan-500/15 border-cyan-500/35' : config.bgColor} border-white/[0.06] transition-all duration-300 ${
+                isActive ? 'ring-1 ring-cyan-500/30' : ''
+              } ${isLoopComplete ? 'ring-1 ring-emerald-400/30' : ''}`}
               style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
               data-testid={`phase-indicator-${phase}`}
             >
@@ -3203,9 +3214,9 @@ export default function ZyraAtWork() {
                   </div>
                 )}
                 <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  <Icon className={`w-5 h-5 ${isLoopComplete ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
                 </div>
-                <span className={`text-xs font-medium ${isLoopComplete ? 'text-emerald-400' : isActive ? config.color : isCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
+                <span className={`text-xs font-medium ${isLoopComplete ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}>
                   {config.label}
                 </span>
                 {isActive && isAutopilotEnabled && isStreamConnected && (
@@ -3229,10 +3240,10 @@ export default function ZyraAtWork() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card 
-            className={`bg-[#16162c] border-2 cursor-pointer transition-all ${
+            className={`bg-slate-900/80 border cursor-pointer transition-all ${
               optimizationMode === 'fast' 
-                ? 'border-primary ring-2 ring-primary/20' 
-                : 'border-slate-700/50 hover-elevate'
+                ? 'border-cyan-500/35 bg-slate-800/60' 
+                : 'border-white/[0.06] hover-elevate'
             }`}
             onClick={() => handleModeChange('fast')}
             data-testid="card-mode-fast"
@@ -3258,10 +3269,10 @@ export default function ZyraAtWork() {
           </Card>
 
           <Card 
-            className={`bg-[#16162c] border-2 cursor-pointer transition-all ${
+            className={`bg-slate-900/80 border cursor-pointer transition-all ${
               optimizationMode === 'competitive' 
-                ? 'border-amber-400 ring-2 ring-amber-400/20' 
-                : 'border-slate-700/50 hover-elevate'
+                ? 'border-amber-500/35 bg-slate-800/60' 
+                : 'border-white/[0.06] hover-elevate'
             }`}
             onClick={() => handleModeChange('competitive')}
             data-testid="card-mode-competitive"
@@ -3293,7 +3304,7 @@ export default function ZyraAtWork() {
       </div>
 
       {/* APPROVED ZYRA ACTION TYPES (17 Total) - Per Core Specification */}
-      <Card className="bg-[#16162c] border-slate-700/50" data-testid="section-zyra-action-types">
+      <Card className="bg-slate-900/80 border-white/[0.06]" data-testid="section-zyra-action-types">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Layers className="w-5 h-5 text-primary" />
@@ -3303,12 +3314,12 @@ export default function ZyraAtWork() {
         </CardHeader>
         <CardContent className="space-y-5">
           {/* DISCOVERABILITY & SEO (5 Actions) */}
-          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4">
+          <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 rounded-md bg-blue-500/15">
-                <Search className="w-3.5 h-3.5 text-blue-400" />
+              <div className="p-1.5 rounded-md bg-cyan-500/15">
+                <Search className="w-3.5 h-3.5 text-cyan-400" />
               </div>
-              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Discoverability & SEO</span>
+              <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Discoverability & SEO</span>
               <span className="text-[10px] text-slate-500 ml-auto">5 actions</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -3369,12 +3380,12 @@ export default function ZyraAtWork() {
           </div>
 
           {/* REVENUE RECOVERY (3 Actions) */}
-          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 rounded-md bg-red-500/15">
-                <DollarSign className="w-3.5 h-3.5 text-red-400" />
+              <div className="p-1.5 rounded-md bg-amber-500/15">
+                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
               </div>
-              <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Revenue Recovery</span>
+              <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Revenue Recovery</span>
               <span className="text-[10px] text-slate-500 ml-auto">3 actions</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -3397,17 +3408,17 @@ export default function ZyraAtWork() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* REVENUE PROTECTION (2 Actions) */}
-            <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 rounded-md bg-yellow-500/15">
-                  <Shield className="w-3.5 h-3.5 text-yellow-400" />
+                <div className="p-1.5 rounded-md bg-red-500/15">
+                  <Shield className="w-3.5 h-3.5 text-red-400" />
                 </div>
-                <span className="text-xs font-semibold text-yellow-400 uppercase tracking-wider">Revenue Protection</span>
+                <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Revenue Protection</span>
                 <span className="text-[10px] text-slate-500 ml-auto">2</span>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-rollback">
-                  <RotateCcw className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />
+                  <RotateCcw className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
                   <span className="text-xs text-slate-300">Underperforming Change Rollback</span>
                 </div>
                 <div className="flex items-center gap-2 p-2 rounded-md bg-slate-900/50 border border-slate-700/30" data-testid="badge-action-freeze">
