@@ -584,9 +584,9 @@ export default function Landing() {
               </p>
               <div className="relative group w-full sm:w-auto sm:inline-block px-4 sm:px-0">
                 <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-primary rounded-2xl blur-xl opacity-70 group-hover:opacity-100 transition duration-300" />
-                <Button asChild size="lg" className="relative gradient-button rounded-2xl font-bold px-5 sm:px-14 py-6 sm:py-8 text-sm sm:text-lg tracking-wide w-full sm:w-auto" data-testid="button-final-cta">
+                <Button asChild size="lg" className="relative gradient-button rounded-2xl font-bold px-5 sm:px-14 py-6 sm:py-8 text-sm sm:text-lg tracking-wide w-full sm:w-auto !whitespace-normal text-center" data-testid="button-final-cta">
                   <Link href="/auth">
-                    INSTALL ZYRA FOR SHOPIFY
+                    <span>INSTALL ZYRA FOR SHOPIFY</span>
                     <ArrowRight className="w-4 h-4 sm:w-6 sm:h-6 ml-2 sm:ml-3 flex-shrink-0" />
                   </Link>
                 </Button>
