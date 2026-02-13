@@ -60,67 +60,67 @@ export const FOUNDATION_ACTIONS: Record<FoundationActionType, {
   trust_signal_enhancement: {
     name: 'Trust Signal Enhancement',
     description: 'Add trust badges, reviews, guarantees to product pages',
-    fastModeCredits: 6,
+    fastModeCredits: 60,
     competitiveCredits: 105,
   },
   friction_copy_removal: {
     name: 'Friction Copy Removal',
     description: 'Remove hesitation-inducing language from product copy',
-    fastModeCredits: 6,
+    fastModeCredits: 58,
     competitiveCredits: 90,
   },
   product_description_clarity: {
     name: 'Product Description Clarity',
     description: 'Enhance product descriptions for better clarity and conversion',
-    fastModeCredits: 6,
+    fastModeCredits: 60,
     competitiveCredits: 135,
   },
   value_proposition_alignment: {
     name: 'Value Proposition Alignment',
     description: 'Align product value proposition with buyer intent',
-    fastModeCredits: 6,
+    fastModeCredits: 58,
     competitiveCredits: 105,
   },
   above_the_fold_optimization: {
     name: 'Above-the-Fold Optimization',
     description: 'Optimize visible content before page scroll',
-    fastModeCredits: 6,
+    fastModeCredits: 62,
     competitiveCredits: 150,
   },
   product_title_optimization: {
     name: 'Product Title Optimization',
     description: 'SEO-optimize product titles for search and clicks',
-    fastModeCredits: 6,
+    fastModeCredits: 55,
     competitiveCredits: 60,
   },
   meta_title_description_tags: {
     name: 'Meta Title/Description/Tags',
     description: 'Optimize meta tags for search engine visibility',
-    fastModeCredits: 6,
+    fastModeCredits: 58,
     competitiveCredits: 75,
   },
   search_intent_alignment: {
     name: 'Search Intent Alignment',
     description: 'Align content with user search intent patterns',
-    fastModeCredits: 6,
+    fastModeCredits: 62,
     competitiveCredits: 165,
   },
   image_alt_text_optimization: {
     name: 'Image Alt-Text Optimization',
     description: 'Generate SEO-friendly alt text for product images',
-    fastModeCredits: 6,
+    fastModeCredits: 55,
     competitiveCredits: 45,
   },
   stale_seo_content_refresh: {
     name: 'Stale SEO Content Refresh',
     description: 'Update outdated SEO content for improved rankings',
-    fastModeCredits: 6,
+    fastModeCredits: 62,
     competitiveCredits: 180,
   },
 };
 
-// Total Foundation Cycle Credits (10 actions × 6 credits each)
-export const TOTAL_FOUNDATION_FAST_CREDITS = 60;
+// Total Foundation Cycle Credits (avg ~59 credits per action, 499 credits = 8-9 actions)
+export const TOTAL_FOUNDATION_FAST_CREDITS = 590;
 export const TOTAL_FOUNDATION_COMPETITIVE_CREDITS = 1110;
 
 // ============================================================================

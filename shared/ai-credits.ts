@@ -6,7 +6,7 @@ export const AI_TOOL_CREDITS = {
   },
   'product-seo-free': {
     name: 'Product SEO (Free Plan)',
-    credits: 2,
+    credits: 20,
     description: 'Free plan foundational optimization per product',
   },
   'product-seo-fast': {
