@@ -582,12 +582,12 @@ export default function Landing() {
               <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
                 Let ZYRA handle the work. You stay in control.
               </p>
-              <div className="relative group inline-block">
+              <div className="relative group w-full sm:w-auto sm:inline-block">
                 <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-primary rounded-2xl blur-xl opacity-70 group-hover:opacity-100 transition duration-300" />
-                <Button asChild size="lg" className="relative gradient-button rounded-2xl font-bold px-14 py-8 text-lg tracking-wide" data-testid="button-final-cta">
+                <Button asChild size="lg" className="relative gradient-button rounded-2xl font-bold px-6 sm:px-14 py-8 text-base sm:text-lg tracking-wide w-full sm:w-auto" data-testid="button-final-cta">
                   <Link href="/auth">
                     INSTALL ZYRA FOR SHOPIFY
-                    <ArrowRight className="w-6 h-6 ml-3" />
+                    <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 flex-shrink-0" />
                   </Link>
                 </Button>
               </div>
