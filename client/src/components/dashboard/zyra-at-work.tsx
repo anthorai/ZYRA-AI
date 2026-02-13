@@ -1786,7 +1786,7 @@ function ProgressStages({
                   <Button
                     size="sm"
                     className="gradient-button font-semibold tracking-wide"
-                    onClick={() => onApprove('foundational_trust_signals')}
+                    onClick={() => onApprove(foundationalAction ? `foundational_${foundationalAction.type}` : 'foundational_trust_signals')}
                     disabled={isApproving}
                     data-testid="button-approve-fallback-action"
                   >
@@ -2189,8 +2189,18 @@ export default function ZyraAtWork() {
       
       // Check if it's a foundational action
       if (actionId.startsWith('foundational_')) {
-        const actionType = actionId.replace('foundational_', '');
-        console.log('[ZYRA Approve] Executing foundational action:', actionType);
+        const rawActionType = actionId.replace('foundational_', '');
+        
+        const detectionToCreditTypeMap: Record<string, string> = {
+          'trust_signals': 'trust_signal_enhancement',
+          'seo_basics': 'product_title_optimization',
+          'seo_foundation': 'meta_title_description_tags',
+          'product_copy_clarity': 'product_description_clarity',
+          'recovery_setup': 'abandoned_cart_recovery',
+        };
+        const creditActionType = detectionToCreditTypeMap[rawActionType] || rawActionType;
+        const actionType = rawActionType;
+        console.log('[ZYRA Approve] Executing foundational action:', actionType, '(credit type:', creditActionType, ')');
         
         // Get product ID from foundational action data if available
         const productId = detectionStatusData?.foundationalAction?.productId || 'store-level';
@@ -2206,7 +2216,7 @@ export default function ZyraAtWork() {
         // Step 1: Consume credits through mode-credits system
         try {
           const creditResult = await executeActionMutation.mutateAsync({
-            actionType,
+            actionType: creditActionType,
             mode: executionMode,
             entityType: 'product',
             entityId: productId,
