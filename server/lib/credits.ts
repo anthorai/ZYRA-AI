@@ -29,6 +29,7 @@ export interface CreditBalance {
   percentUsed: number;
   isLow: boolean;
   lowCreditThreshold: number;
+  planName?: string;
 }
 
 export async function checkCredits(userId: string, featureType: FeatureType): Promise<CreditCheckResult> {
@@ -191,6 +192,7 @@ export async function getCreditBalance(userId: string): Promise<CreditBalance> {
     percentUsed,
     isLow,
     lowCreditThreshold,
+    planName: plan.planName || 'Free',
   };
 }
 

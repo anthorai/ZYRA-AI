@@ -49,7 +49,9 @@ import {
   BarChart,
   CreditCard,
   Layout,
-  Lock
+  Lock,
+  Crown,
+  Rocket
 } from "lucide-react";
 
 import { ZyraLearningInsights } from './zyra-learning-insights';
@@ -2541,6 +2543,21 @@ export default function ZyraAtWork() {
 
   const isAutopilotEnabled = automationSettings?.globalAutopilotEnabled ?? false;
 
+  const { data: creditsBalance } = useQuery<{
+    creditsUsed: number;
+    creditsRemaining: number;
+    creditLimit: number;
+    percentUsed: number;
+    isLow: boolean;
+    planName?: string;
+  }>({
+    queryKey: ['/api/credits/balance'],
+    refetchInterval: 30000,
+    enabled: storeReadiness?.state === 'ready',
+  });
+
+  const isFreePlan = creditsBalance?.planName === 'Free' || creditsBalance?.creditLimit === 499;
+
   const triggerDetectionMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', '/api/zyra/detect', {});
@@ -3144,6 +3161,49 @@ export default function ZyraAtWork() {
                   </div>
                 </div>
               </div>
+
+              {isFreePlan && creditsBalance && (
+                <div className="mx-4 mb-4 rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-4" data-testid="upgrade-nudge-banner">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <Crown className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white mb-1" data-testid="text-nudge-title">
+                        {creditsBalance.creditsRemaining <= 0 
+                          ? "You've used all your free credits" 
+                          : `${creditsBalance.creditsUsed} of ${creditsBalance.creditLimit} free credits used`}
+                      </p>
+                      <p className="text-xs text-slate-400 mb-3" data-testid="text-nudge-description">
+                        {creditsBalance.creditsRemaining <= 0 
+                          ? "Upgrade to Starter to keep optimizing your products with 2,000 credits/month."
+                          : `You have ${creditsBalance.creditsRemaining} credits remaining. Upgrade to Starter for 2,000 credits/month and unlock more powerful optimizations.`}
+                      </p>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex-1 min-w-[120px]">
+                          <div className="h-2 rounded-full bg-slate-700/50 overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                creditsBalance.percentUsed >= 80 ? 'bg-red-500' : 
+                                creditsBalance.percentUsed >= 50 ? 'bg-amber-500' : 'bg-primary'
+                              }`}
+                              style={{ width: `${Math.min(100, creditsBalance.percentUsed)}%` }}
+                              data-testid="progress-credits-used"
+                            />
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-1">{creditsBalance.percentUsed}% of free credits used</p>
+                        </div>
+                        <a href="/pricing" data-testid="link-upgrade-starter">
+                          <Button size="sm" className="gap-1.5">
+                            <Rocket className="w-3.5 h-3.5" />
+                            Upgrade to Starter
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           

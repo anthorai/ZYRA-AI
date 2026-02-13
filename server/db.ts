@@ -504,7 +504,7 @@ export async function seedSubscriptionPlans(): Promise<void> {
           credits: 499,
           trialCredits: 499,
           trialDays: 7,
-          actionsPerMonth: 10,
+          actionsPerMonth: 15,
           autopilot: false,
           bulkOptimization: false,
           powerMode: false

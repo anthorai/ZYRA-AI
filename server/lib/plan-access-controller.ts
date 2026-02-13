@@ -234,7 +234,7 @@ export const PLAN_CAPABILITIES: Record<string, PlanCapabilities> = {
       'send_cart_recovery',
       'post_purchase_upsell',
     ],
-    maxActionsPerDay: 5, // Limited during trial
+    maxActionsPerDay: 8, // Enough to see real results and want more
     maxProductsPerBulkAction: 1,
     
     canAutoRunLowRisk: false,
