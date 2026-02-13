@@ -537,23 +537,24 @@ export class RevenueExecutionEngine {
       return { changes: { error: 'Product not found' } };
     }
 
-    const prompt = `You are an SEO expert. Optimize this product for search engines.
+    const prompt = `You are a world-class e-commerce SEO strategist. Apply the 2025 Google ranking factors (E-E-A-T, Helpful Content, mobile-first indexing) to optimize this product for maximum search visibility.
 
 Product: ${product.name}
 Description: ${product.description || 'No description'}
 Category: ${product.category}
 Price: $${product.price}
 
-Generate optimized SEO content:
-1. SEO Title (50-60 chars, include keywords)
-2. Meta Description (150-160 chars, compelling)
-3. 5 relevant keywords
+Generate optimized SEO content using the VIRAL RANKING FORMULA:
+1. SEO Title (50-60 chars, format: "Primary Keyword + Key Benefit | Brand" — front-load the most important keyword)
+2. Meta Description (150-160 chars, include primary keyword + emotional benefit + CTA like "Shop now" or "Free shipping" — this is what appears in Google search results)
+3. 5 buyer-intent keywords (mix of head terms and long-tail phrases that actual shoppers search, e.g., "best organic cotton tote bag for everyday use")
+4. SEO Score based on: keyword placement, content quality, E-E-A-T signals, mobile readiness
 
 Respond in JSON:
 {
-  "seoTitle": "...",
-  "metaDescription": "...",
-  "keywords": ["...", "...", "...", "...", "..."],
+  "seoTitle": "keyword-optimized meta title",
+  "metaDescription": "compelling description with keyword and CTA",
+  "keywords": ["long-tail keyword 1", "long-tail keyword 2", "buyer-intent keyword 3", "semantic keyword 4", "branded keyword 5"],
   "seoScore": 85
 }`;
 
@@ -631,35 +632,47 @@ Respond in JSON:
       return { changes: { error: 'Product not found' } };
     }
 
-    const prompt = `You are a conversion optimization expert. Enhance this product description to increase conversions.
+    const prompt = `You are an elite e-commerce copywriter and SEO strategist. Create a product description that ranks on Google and converts browsers into buyers using the 2025 viral SEO formula.
 
 Product: ${product.name}
 Current Description: ${product.description || 'No description'}
 Category: ${product.category}
 Price: $${product.price}
 
-Create an enhanced description that:
-1. Highlights key benefits
-2. Uses persuasive language
-3. Includes social proof elements
-4. Has a clear call-to-action
+Create an enhanced description using the VIRAL SEO STRUCTURE (150-250 words):
+
+1. ENHANCED DESCRIPTION with this exact structure:
+   a) OPENING HOOK (2-3 sentences): Lead with the #1 benefit and primary keyword. Create emotional connection — answer "how does this improve my life?"
+   b) BENEFIT-DRIVEN BULLETS (3-5 points): Start each with the BENEFIT in bold, then the feature. Use long-tail buyer-intent keywords naturally.
+   c) LIFESTYLE PARAGRAPH (2-3 sentences): Use sensory language and power words. Help the reader visualize using the product. Include semantic keywords.
+   d) MINI-FAQ (2 questions with answers): Address top buyer objections. Triggers Google Featured Snippets.
+
+2. KEY BENEFITS: 3-5 benefit statements that double as search-friendly phrases
+
+3. CALL-TO-ACTION: Benefit-focused CTA that creates urgency without being pushy
+
+RULES:
+- Write for humans first, SEO second
+- Primary keyword 2-3 times naturally
+- Use HTML: <p>, <ul><li>, <strong>, <h3>
+- No filler — every sentence must sell or inform
 
 Respond in JSON:
 {
-  "enhancedDescription": "...",
-  "keyBenefits": ["...", "...", "..."],
-  "callToAction": "..."
+  "enhancedDescription": "Full HTML-formatted description with all sections",
+  "keyBenefits": ["benefit-focused phrase 1", "benefit-focused phrase 2", "benefit-focused phrase 3"],
+  "callToAction": "benefit-driven CTA with urgency"
 }`;
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 600 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 1200 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 600,
+            max_tokens: 1200,
           });
           return response.choices[0]?.message?.content || '{}';
         }

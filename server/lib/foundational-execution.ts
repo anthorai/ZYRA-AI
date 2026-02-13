@@ -438,36 +438,48 @@ export class FoundationalExecutionService {
     const db = requireDb();
     const changes: ContentChange[] = [];
 
-    const prompt = `You are an SEO expert for e-commerce. Fully optimize this product listing for search engines and conversions.
+    const prompt = `You are a world-class e-commerce SEO strategist who specializes in making Shopify products rank #1 on Google and go viral in organic search. Apply the latest 2025 Google ranking factors (E-E-A-T, Helpful Content, mobile-first indexing) to fully optimize this product listing.
 
 Product Name: ${product.name}
 Description: ${product.description || 'No description'}
 Category: ${product.category || 'General'}
 Price: $${product.price}
 
-Generate ALL of the following:
-1. SEO Title / Meta Title (50-60 chars, include buyer-intent keywords)
-2. Meta Description (150-160 chars, compelling with call-to-action)
-3. Improved Product Title (clear, keyword-rich)
-4. Improved Product Description (benefit-focused, SEO-optimized, 2-3 sentences)
+Generate ALL of the following using the VIRAL SEO PRODUCT DESCRIPTION FORMULA:
+
+1. SEO Title / Meta Title (50-60 chars, format: "Primary Keyword + Key Benefit | Brand")
+2. Meta Description (150-160 chars, include primary keyword + emotional benefit + CTA like "Shop now" or "Free shipping")
+3. Improved Product Title (format: "Brand/Product + Key Feature + Differentiator", keyword-rich, under 70 chars)
+4. Improved Product Description (150-300 words, structured as follows):
+   - HOOK PARAGRAPH (2-3 sentences): Lead with the #1 benefit and primary keyword. Answer "why should I buy this?" Create emotional connection.
+   - FEATURE-BENEFIT BULLETS (3-5 points): Each bullet starts with the BENEFIT, then explains the feature. Use long-tail keywords naturally. Format each as "Benefit — Feature explanation"
+   - VALUE PARAGRAPH (2-3 sentences): Use sensory/power words. Include semantic keywords (related terms buyers search for). Help the reader imagine using the product.
+   - MINI-FAQ (2 common buyer questions with short answers): Address top purchase objections. These trigger Google Featured Snippets.
+
+CRITICAL SEO RULES:
+- Use the primary keyword 2-4 times naturally (never stuff)
+- Include long-tail buyer-intent keywords (e.g., "best [product] for [use case]")
+- Write for humans first, Google second
+- Every sentence must add value — no filler
+- Use HTML formatting: <p> for paragraphs, <ul><li> for bullets, <strong> for emphasis, <h3> for FAQ header
 
 Respond ONLY with valid JSON:
 {
   "seoTitle": "optimized meta title here",
-  "metaDescription": "compelling meta description here",
-  "improvedName": "better product title",
-  "improvedDescription": "SEO-optimized product description highlighting benefits"
+  "metaDescription": "compelling meta description with CTA here",
+  "improvedName": "keyword-rich product title",
+  "improvedDescription": "Full HTML-formatted description with hook + bullets + value paragraph + mini-FAQ"
 }`;
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 600 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 1500 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 600,
+            max_tokens: 1500,
           });
           return response.choices[0]?.message?.content || '{}';
         }
@@ -596,34 +608,45 @@ Respond ONLY with valid JSON:
     const db = requireDb();
     const changes: ContentChange[] = [];
 
-    const prompt = `You are a conversion copywriter. Improve this product description to increase sales.
+    const prompt = `You are an elite e-commerce copywriter who writes product descriptions that rank on Google and convert browsers into buyers. Apply the 2025 viral SEO description formula to rewrite this product listing.
 
 Product: ${product.name}
 Current Description: ${product.description || 'No description available'}
 Category: ${product.category || 'General'}
 Price: $${product.price}
 
-Write:
-1. An improved product description (2-3 sentences, benefit-focused)
-2. A compelling headline variant
+Write using the VIRAL PRODUCT DESCRIPTION STRUCTURE (150-250 words total):
 
-Focus on: Benefits over features, emotional connection, urgency.
+1. IMPROVED DESCRIPTION with this exact structure:
+   a) OPENING HOOK (2-3 sentences): Start with the primary benefit. Use an emotional trigger — answer "how does this make my life better?" Include the main keyword naturally in the first sentence.
+   b) BENEFIT-DRIVEN BULLETS (3-5 points): Start each bullet with the BENEFIT in bold, then the feature. Use long-tail keywords buyers actually search for. Format: "<strong>Benefit</strong> — feature detail"
+   c) LIFESTYLE PARAGRAPH (2-3 sentences): Paint a picture of the buyer using this product. Use sensory language and power words (transform, effortless, premium, ultimate). Include semantic keywords related to the product category.
+   d) MINI-FAQ (2 questions): Address the top 2 purchase objections. These boost Google Featured Snippets ranking.
+
+2. COMPELLING HEADLINE: A benefit-first headline with a keyword (under 70 chars). Format: "Primary Benefit + Product Type + Differentiator"
+
+RULES:
+- Write for humans first, SEO second
+- Use HTML: <p>, <ul><li>, <strong>, <h3> for FAQ
+- Primary keyword appears 2-3 times naturally
+- No filler words, no fluff — every sentence sells
+- Tone: confident, helpful, authentic
 
 Respond ONLY with valid JSON:
 {
-  "improvedDescription": "new description here",
-  "headline": "compelling headline"
+  "improvedDescription": "Full HTML-formatted description with all sections",
+  "headline": "benefit-first keyword-rich headline"
 }`;
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 400 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 1200 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 400,
+            max_tokens: 1200,
           });
           return response.choices[0]?.message?.content || '{}';
         }
@@ -680,33 +703,47 @@ Respond ONLY with valid JSON:
     const db = requireDb();
     const changes: ContentChange[] = [];
 
-    const prompt = `You are a conversion optimization expert. Add trust-building elements to this product.
+    const prompt = `You are a conversion rate optimization (CRO) expert who specializes in building buyer confidence for Shopify stores. Google's 2025 E-E-A-T algorithm heavily rewards trust signals. Generate trust elements that both increase conversions AND boost SEO rankings.
 
 Product: ${product.name}
 Description: ${product.description || 'No description'}
 Price: $${product.price}
 
-Generate trust signals to add:
-1. A quality guarantee statement
-2. A shipping/return policy highlight
-3. Social proof element (reviews mention, popularity hint)
+Generate POWERFUL trust signals that eliminate buyer hesitation and improve Google E-E-A-T scores:
+
+1. QUALITY GUARANTEE (1-2 sentences): Specific, confident guarantee that removes purchase risk. Include timeframe and what's covered. Make it feel like the store stands firmly behind the product.
+
+2. SHIPPING & RETURNS HIGHLIGHT (1-2 sentences): Clear, buyer-friendly policy that removes friction. Mention speed, free shipping thresholds, and hassle-free returns. This is a top Google Shopping ranking factor.
+
+3. SOCIAL PROOF BLOCK: A realistic, specific social proof statement. Use concrete numbers where possible (e.g., "Trusted by 2,500+ customers" or "4.8/5 average rating"). Include a brief testimonial-style quote that addresses a common buyer concern.
+
+4. TRUST BADGES TEXT (2-3 short phrases): Short trust badge labels like "Secure Checkout", "Satisfaction Guaranteed", "Fast & Free Shipping". These reduce cart abandonment.
+
+5. BUYER FAQ (2 questions with answers): The top 2 trust-related questions buyers ask before purchasing (materials, durability, sizing, returns). Short, confident answers. These trigger Google Featured Snippets and reduce support tickets.
+
+RULES:
+- Be specific, not generic — tailor to this exact product and price point
+- Sound authentic and confident, never salesy or desperate
+- Use numbers and specifics over vague claims
 
 Respond ONLY with valid JSON:
 {
-  "guaranteeStatement": "30-day money-back guarantee...",
-  "shippingHighlight": "Free shipping on orders over...",
-  "socialProof": "Join 1000+ happy customers..."
+  "guaranteeStatement": "specific guarantee with timeframe",
+  "shippingHighlight": "clear shipping and return policy",
+  "socialProof": "specific social proof with numbers and mini-testimonial",
+  "trustBadges": ["badge text 1", "badge text 2", "badge text 3"],
+  "buyerFaq": [{"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}]
 }`;
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 300 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 800 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 300,
+            max_tokens: 800,
           });
           return response.choices[0]?.message?.content || '{}';
         }
@@ -716,19 +753,49 @@ Respond ONLY with valid JSON:
 
       if (trustElements.guaranteeStatement) {
         changes.push({
-          field: 'Trust Badge',
+          field: 'Quality Guarantee',
           before: '(none)',
           after: trustElements.guaranteeStatement,
-          reason: 'Money-back guarantees reduce purchase hesitation by 18%',
+          reason: 'Money-back guarantees reduce purchase hesitation by 18% and boost Google E-E-A-T trust score',
         });
       }
 
       if (trustElements.shippingHighlight) {
         changes.push({
-          field: 'Shipping Info',
+          field: 'Shipping & Returns Policy',
           before: '(not displayed)',
           after: trustElements.shippingHighlight,
-          reason: 'Clear shipping info prevents cart abandonment at checkout',
+          reason: 'Clear shipping info prevents cart abandonment and is a top Google Shopping ranking factor',
+        });
+      }
+
+      if (trustElements.socialProof) {
+        changes.push({
+          field: 'Social Proof',
+          before: '(none)',
+          after: trustElements.socialProof,
+          reason: 'Social proof with specific numbers builds buyer confidence and improves conversion rates',
+        });
+      }
+
+      if (trustElements.trustBadges && Array.isArray(trustElements.trustBadges)) {
+        changes.push({
+          field: 'Trust Badges',
+          before: '(none)',
+          after: trustElements.trustBadges.join(' | '),
+          reason: 'Trust badge labels reduce cart abandonment by up to 17%',
+        });
+      }
+
+      if (trustElements.buyerFaq && Array.isArray(trustElements.buyerFaq)) {
+        const faqText = trustElements.buyerFaq
+          .map((faq: { question: string; answer: string }) => `Q: ${faq.question} A: ${faq.answer}`)
+          .join(' | ');
+        changes.push({
+          field: 'Buyer FAQ',
+          before: '(none)',
+          after: faqText,
+          reason: 'FAQ sections trigger Google Featured Snippets and reduce support inquiries by 30%',
         });
       }
 
@@ -737,6 +804,8 @@ Respond ONLY with valid JSON:
         ...(Array.isArray(existingFeatures) ? existingFeatures : []),
         trustElements.guaranteeStatement,
         trustElements.shippingHighlight,
+        trustElements.socialProof,
+        ...(trustElements.trustBadges || []),
       ].filter(Boolean) as string[];
 
       if (changes.length > 0) {
@@ -754,7 +823,7 @@ Respond ONLY with valid JSON:
         productName: product.name,
         changes,
         impactExplanation: changes.length > 0
-          ? 'Trust signals reassure hesitant buyers and are proven to increase conversion rates by up to 25%.'
+          ? 'Trust signals with social proof, guarantees, and FAQ sections boost Google E-E-A-T scores and increase conversion rates by up to 25%.'
           : 'Product already has trust elements.',
       };
 

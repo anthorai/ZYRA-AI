@@ -41,22 +41,22 @@ async function generateSEOContent(product: any): Promise<{
   metaDescription: string;
   seoScore: number;
 }> {
-  const prompt = `You are an SEO expert. Analyze this product and generate optimized SEO content.
+  const prompt = `You are a world-class e-commerce SEO strategist. Apply the 2025 Google ranking factors (E-E-A-T, Helpful Content, mobile-first) to generate optimized SEO content that makes this product rank on Google.
 
 Product: ${product.name}
 Description: ${product.description || 'No description available'}
 Category: ${product.category}
 Price: ${product.price}
 
-Generate:
-1. An optimized SEO title (50-60 characters, include key benefits and product name)
-2. A meta description (150-160 characters, compelling and keyword-rich)
-3. Calculate an SEO score (0-100) based on content quality
+Generate using the VIRAL SEO FORMULA:
+1. SEO Title (50-60 chars, format: "Primary Keyword + Key Benefit | Brand" — front-load the most important buyer-intent keyword)
+2. Meta Description (150-160 chars, include primary keyword + emotional benefit + CTA like "Shop now" or "Free shipping" — this appears in Google search results and must drive clicks)
+3. SEO Score (0-100) based on: keyword optimization, E-E-A-T signals, content quality, buyer-intent alignment
 
 Format your response as JSON:
 {
-  "seoTitle": "...",
-  "metaDescription": "...",
+  "seoTitle": "keyword-optimized meta title",
+  "metaDescription": "compelling description with keyword and CTA",
   "seoScore": 85
 }`;
 
