@@ -3,6 +3,21 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { StoreReadiness } from "@shared/schema";
+
+function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  let text = html;
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+  text = text.replace(/<\/li>/gi, '\n');
+  text = text.replace(/<li[^>]*>/gi, '  \u2022 ');
+  text = text.replace(/<\/ul>|<\/ol>/gi, '\n');
+  text = text.replace(/<[^>]*>/g, '');
+  text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  return text.trim();
+}
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1566,14 +1581,14 @@ export default function ChangeControlDashboard() {
                                     <div className="grid grid-cols-1 gap-2">
                                       <div className="p-2 rounded border bg-card">
                                         <p className="text-xs text-muted-foreground mb-1">Before</p>
-                                        <p className="text-xs">{before[field] || <span className="italic text-muted-foreground">Empty</span>}</p>
+                                        <p className="text-xs whitespace-pre-wrap">{before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
                                       </div>
                                       <div className="p-2 rounded border border-primary/30 bg-primary/5">
                                         <p className="text-xs text-primary mb-1 flex items-center gap-1">
                                           <ArrowRight className="w-3 h-3" />
                                           After
                                         </p>
-                                        <p className="text-xs font-medium">{after[field] || <span className="italic text-muted-foreground">Empty</span>}</p>
+                                        <p className="text-xs font-medium whitespace-pre-wrap">{after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
                                       </div>
                                     </div>
                                   </div>

@@ -10,6 +10,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/dashboard/sidebar";
+
+function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  let text = html;
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+  text = text.replace(/<\/li>/gi, '\n');
+  text = text.replace(/<li[^>]*>/gi, '  \u2022 ');
+  text = text.replace(/<\/ul>|<\/ol>/gi, '\n');
+  text = text.replace(/<[^>]*>/g, '');
+  text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  return text.trim();
+}
 import Footer from "@/components/ui/footer";
 import NotificationCenter from "@/components/dashboard/notification-center";
 import { AvatarMenu } from "@/components/ui/avatar-menu";
@@ -594,7 +609,7 @@ export default function ChangeDetailsPage() {
                             )}
                           </div>
                           <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                            {fieldChange.before || (
+                            {fieldChange.before ? stripHtmlTags(fieldChange.before) : (
                               <span className="text-muted-foreground italic">Empty or not set</span>
                             )}
                           </div>
@@ -609,7 +624,7 @@ export default function ChangeDetailsPage() {
                             <span className="text-xs text-green-400">Optimized</span>
                           </div>
                           <div className="text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
-                            {fieldChange.after || (
+                            {fieldChange.after ? stripHtmlTags(fieldChange.after) : (
                               <span className="text-muted-foreground italic">No changes</span>
                             )}
                           </div>
