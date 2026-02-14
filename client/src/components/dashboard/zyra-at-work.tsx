@@ -3273,7 +3273,7 @@ export default function ZyraAtWork() {
           
           const isLoopComplete = isAutopilotEnabled && currentPhase === 'complete';
           const isActive = isAutopilotEnabled && !isLoopComplete && currentPhase === phase;
-          const isCompleted = isAutopilotEnabled && (isLoopComplete || phaseIndex < currentIndex);
+          const isCompleted = isAutopilotEnabled && isLoopComplete;
           
           return (
             <Card 
