@@ -220,7 +220,6 @@ function getBeforeAfterContent(change: ChangeItem) {
   const before: Record<string, string> = {};
   const after: Record<string, string> = {};
 
-  // Handle payload.changes array format (new format) - most common
   if (change.payload?.changes && Array.isArray(change.payload.changes)) {
     for (const fieldChange of change.payload.changes) {
       const fieldName = fieldChange.field || "Unknown Field";
@@ -233,7 +232,6 @@ function getBeforeAfterContent(change: ChangeItem) {
     }
   }
 
-  // Handle result.changes array format (fallback)
   if (change.result?.changes && Array.isArray(change.result.changes)) {
     for (const fieldChange of change.result.changes) {
       const fieldName = fieldChange.field || "Unknown Field";
@@ -246,7 +244,6 @@ function getBeforeAfterContent(change: ChangeItem) {
     }
   }
 
-  // Handle payload.before/after object format (legacy format)
   if (change.payload?.before && typeof change.payload.before === 'object') {
     if (change.payload.before.title) before["Product Title"] = change.payload.before.title;
     if (change.payload.before.description) before["Product Description"] = change.payload.before.description;
@@ -261,13 +258,45 @@ function getBeforeAfterContent(change: ChangeItem) {
     if (change.payload.after.metaDescription) after["Meta Description"] = change.payload.after.metaDescription;
   }
 
-  // Handle optimizedCopy or optimizedContent
   const optimized = change.payload?.optimizedCopy || change.result?.optimizedContent;
   if (optimized && typeof optimized === 'object') {
     if (optimized.title && !after["Product Title"]) after["Product Title"] = optimized.title;
     if (optimized.description && !after["Product Description"]) after["Product Description"] = optimized.description;
     if (optimized.seoTitle && !after["SEO Title"]) after["SEO Title"] = optimized.seoTitle;
     if (optimized.metaDescription && !after["Meta Description"]) after["Meta Description"] = optimized.metaDescription;
+  }
+
+  if (Object.keys(before).length === 0 && Object.keys(after).length === 0) {
+    const issueLabels: Record<string, string> = {
+      weak_title: "Weak product title detected",
+      seo_erosion: "SEO ranking decline detected",
+      missing_description: "Missing product description",
+      thin_content: "Thin content detected",
+      missing_meta: "Missing meta description",
+      low_seo_score: "Low SEO score detected",
+      content_decay: "Content quality decline detected",
+      copy_fatigue: "Product copy needs refresh",
+    };
+    const issueType = change.payload?.issueType;
+    const actionLabel = change.payload?.actionLabel || change.decisionReason || "Optimization";
+    const fieldLabel = actionLabel || "Content";
+
+    if (issueType && issueLabels[issueType]) {
+      before[fieldLabel] = issueLabels[issueType];
+    } else if (change.decisionReason) {
+      before[fieldLabel] = change.decisionReason;
+    } else {
+      before[fieldLabel] = "Issue detected by ZYRA";
+    }
+
+    const resultMsg = change.result?.message || change.result?.details?.reason;
+    if (resultMsg) {
+      after[fieldLabel] = resultMsg;
+    } else if (change.status === 'failed' || change.status === 'rolled_back') {
+      after[fieldLabel] = "Action did not complete";
+    } else if (change.status === 'pending') {
+      after[fieldLabel] = "Awaiting approval to optimize";
+    }
   }
 
   return { before, after };
