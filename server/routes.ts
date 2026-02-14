@@ -18242,31 +18242,27 @@ Output format: Markdown with clear section headings.`;
         .limit(limitNum)
         .offset(offsetNum);
 
-      const latestActionPerProduct = new Map<string, string>();
-      for (const action of actions) {
-        if (action.entityId && !latestActionPerProduct.has(action.entityId)) {
-          latestActionPerProduct.set(action.entityId, action.id);
-        }
-      }
-
       const enrichedActions = actions.map((action: any) => {
         if (!action.payload?.changes || !Array.isArray(action.payload.changes)) {
           const { productDescription, ...rest } = action;
           return rest;
         }
 
-        const isLatestForProduct = action.entityId && latestActionPerProduct.get(action.entityId) === action.id;
         const fullDesc = action.productDescription;
 
         const enrichedChanges = action.payload.changes.map((change: any) => {
-          if (change.field !== 'Product Description') return change;
+          if (change.field !== 'Product Description' || !fullDesc) return change;
 
+          const isTruncatedBefore = typeof change.before === 'string' && change.before.endsWith('...') && change.before.length === 103;
           const isTruncatedAfter = typeof change.after === 'string' && change.after.endsWith('...') && change.after.length === 103;
 
-          if (isTruncatedAfter && isLatestForProduct && fullDesc) {
-            return { ...change, after: fullDesc };
-          }
-          return change;
+          if (!isTruncatedBefore && !isTruncatedAfter) return change;
+
+          return {
+            ...change,
+            before: isTruncatedBefore ? fullDesc : change.before,
+            after: isTruncatedAfter ? fullDesc : change.after,
+          };
         });
 
         const { productDescription, ...rest } = action;
