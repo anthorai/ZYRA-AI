@@ -18554,17 +18554,24 @@ Output format: Markdown with clear section headings.`;
       if (!optimizedContent && actionData.payload?.changes && Array.isArray(actionData.payload.changes)) {
         const changes = actionData.payload.changes as Array<{field: string; after: string; before: string; reason: string}>;
         const extracted: any = {};
+        const unmatchedSections: string[] = [];
         for (const change of changes) {
           const fieldLower = change.field?.toLowerCase() || '';
           if (fieldLower === 'product title' || fieldLower === 'title') {
             extracted.title = change.after;
-          } else if (fieldLower === 'product description' || fieldLower === 'description') {
+          } else if (fieldLower === 'product description' || fieldLower === 'description' || fieldLower === 'body_html') {
             extracted.description = change.after;
-          } else if (fieldLower === 'seo title' || fieldLower === 'meta title') {
+          } else if (fieldLower === 'seo title' || fieldLower === 'meta title' || fieldLower === 'title_tag') {
             extracted.seoTitle = change.after;
-          } else if (fieldLower === 'meta description' || fieldLower === 'seo description') {
+          } else if (fieldLower === 'meta description' || fieldLower === 'seo description' || fieldLower === 'description_tag') {
             extracted.metaDescription = change.after;
+          } else if (change.after) {
+            unmatchedSections.push(`<h3>${change.field || 'Additional Content'}</h3>\n<p>${change.after}</p>`);
           }
+        }
+        if (unmatchedSections.length > 0 && !extracted.description) {
+          extracted.description = unmatchedSections.join('\n');
+          extracted.appendToExisting = true;
         }
         if (Object.keys(extracted).length > 0) {
           optimizedContent = extracted;
@@ -18578,7 +18585,13 @@ Output format: Markdown with clear section headings.`;
       // Build the Shopify product update
       const productUpdate: any = {};
       if (optimizedContent.title) productUpdate.title = optimizedContent.title;
-      if (optimizedContent.description) productUpdate.body_html = optimizedContent.description;
+      if (optimizedContent.description) {
+        if (optimizedContent.appendToExisting && product[0].description) {
+          productUpdate.body_html = product[0].description + '\n\n' + optimizedContent.description;
+        } else {
+          productUpdate.body_html = optimizedContent.description;
+        }
+      }
 
       // Update product on Shopify if there are product-level changes
       if (Object.keys(productUpdate).length > 0) {
