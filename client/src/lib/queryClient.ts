@@ -213,8 +213,7 @@ export const queryClient = new QueryClient({
       networkMode: 'offlineFirst', // Use cache first for instant display
     },
     mutations: {
-      retry: 1,
-      retryDelay: 500,
+      retry: false,
       networkMode: 'offlineFirst',
     },
   },

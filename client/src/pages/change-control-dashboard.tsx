@@ -475,8 +475,13 @@ export default function ChangeControlDashboard() {
       const results = await Promise.allSettled(
         actionIds.map(id => apiRequest("POST", `/api/autonomous-actions/${id}/rollback`))
       );
-      const failed = results.filter(r => r.status === 'rejected').length;
-      if (failed > 0) throw new Error(`${failed} rollbacks failed`);
+      const realFailures = results.filter(r => {
+        if (r.status === 'fulfilled') return false;
+        const msg = r.reason?.message || '';
+        if (msg.includes('already') || msg.includes('rolled_back')) return false;
+        return true;
+      }).length;
+      if (realFailures > 0) throw new Error(`${realFailures} rollbacks failed`);
       return results;
     },
     onSuccess: () => {
@@ -502,8 +507,13 @@ export default function ChangeControlDashboard() {
       const results = await Promise.allSettled(
         actionIds.map(id => apiRequest("POST", `/api/autonomous-actions/${id}/push-to-shopify`))
       );
-      const failed = results.filter(r => r.status === 'rejected').length;
-      if (failed > 0) throw new Error(`${failed} pushes failed`);
+      const realFailures = results.filter(r => {
+        if (r.status === 'fulfilled') return false;
+        const msg = r.reason?.message || '';
+        if (msg.includes('already been published')) return false;
+        return true;
+      }).length;
+      if (realFailures > 0) throw new Error(`${realFailures} pushes failed`);
       return results;
     },
     onSuccess: () => {
