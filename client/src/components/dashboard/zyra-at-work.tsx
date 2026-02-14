@@ -1730,11 +1730,11 @@ function ProgressStages({
                                 <div className="grid grid-cols-1 gap-1 ml-2">
                                   <div className="flex items-start gap-2">
                                     <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
-                                    <span className="text-slate-500 line-through">{change.before}</span>
+                                    <span className="text-slate-500 line-through">{change.before ? stripHtmlTags(change.before) : '(empty)'}</span>
                                   </div>
                                   <div className="flex items-start gap-2">
                                     <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
-                                    <span className="text-emerald-300">{change.after}</span>
+                                    <span className="text-emerald-300">{stripHtmlTags(change.after)}</span>
                                   </div>
                                   <p className="text-slate-400 italic mt-1">{change.reason}</p>
                                 </div>
@@ -1947,11 +1947,11 @@ function ProgressStages({
                                 <div className="grid grid-cols-1 gap-1 ml-2">
                                   <div className="flex items-start gap-2">
                                     <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
-                                    <span className="text-slate-500 line-through">{change.before || '(empty)'}</span>
+                                    <span className="text-slate-500 line-through">{change.before ? stripHtmlTags(change.before) : '(empty)'}</span>
                                   </div>
                                   <div className="flex items-start gap-2">
                                     <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
-                                    <span className="text-emerald-300">{change.after}</span>
+                                    <span className="text-emerald-300">{stripHtmlTags(change.after)}</span>
                                   </div>
                                   {change.reason && (
                                     <p className="text-slate-400 italic mt-1">{change.reason}</p>
