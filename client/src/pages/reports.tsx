@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useLogout";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 import Sidebar from "@/components/dashboard/sidebar";
 import Footer from "@/components/ui/footer";
 import NotificationCenter from "@/components/dashboard/notification-center";
@@ -126,15 +128,18 @@ const STORE_STATES = [
   { id: "expanding", label: "Expanding Discoverability Safely", icon: TrendingUp, color: "text-purple-400", bgColor: "bg-purple-500/10" },
 ];
 
+let _reportsCurrencyCode = 'USD';
 function formatCurrency(num: number | string | undefined | null): string {
-  if (num === undefined || num === null) return "$0";
+  if (num === undefined || num === null) return formatCurrencyUtil(0, _reportsCurrencyCode);
   const value = typeof num === 'string' ? parseFloat(num) : num;
-  if (isNaN(value)) return "$0";
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+  if (isNaN(value)) return formatCurrencyUtil(0, _reportsCurrencyCode);
+  return formatCurrencyUtil(value, _reportsCurrencyCode);
 }
 
 export default function Reports() {
   const { user } = useAuth();
+  const { currency: storeCurrency } = useStoreCurrency();
+  _reportsCurrencyCode = storeCurrency;
 
   const { data: actions, isLoading: actionsLoading } = useQuery<AutonomousAction[]>({
     queryKey: ["/api/autonomous-actions"],
@@ -1048,7 +1053,7 @@ export default function Reports() {
                     <Separator />
                     <div>
                       <p className="text-xs text-muted-foreground">Revenue (baseline)</p>
-                      <p className="text-lg font-medium">$0</p>
+                      <p className="text-lg font-medium">{formatCurrency(0)}</p>
                     </div>
                   </div>
                 </div>
