@@ -511,6 +511,8 @@ export default function ChangeControlDashboard() {
         if (r.status === 'fulfilled') return false;
         const msg = r.reason?.message || '';
         if (msg.includes('already been published')) return false;
+        if (msg.includes('No optimized content')) return false;
+        if (msg.includes('Cannot push action')) return false;
         return true;
       }).length;
       if (realFailures > 0) throw new Error(`${realFailures} pushes failed`);
@@ -1012,7 +1014,8 @@ export default function ChangeControlDashboard() {
                             onClick={() => {
                               const idsToPush = Array.from(selectedIds).filter(id => {
                                 const change = changes?.find(c => c.id === id);
-                                return change && !change.publishedToShopify;
+                                return change && !change.publishedToShopify && 
+                                  (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
                               });
                               if (idsToPush.length > 0) {
                                 bulkPushMutation.mutate(idsToPush);
@@ -1023,7 +1026,11 @@ export default function ChangeControlDashboard() {
                             data-testid="button-bulk-push-seo"
                           >
                             <Upload className="w-4 h-4" />
-                            Push Selected ({selectedIds.size})
+                            Push Selected ({Array.from(selectedIds).filter(id => {
+                              const change = changes?.find(c => c.id === id);
+                              return change && !change.publishedToShopify && 
+                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                            }).length})
                           </Button>
                           <Button
                             variant="destructive"
@@ -1378,7 +1385,8 @@ export default function ChangeControlDashboard() {
                             onClick={() => {
                               const idsToPush = Array.from(selectedIds).filter(id => {
                                 const change = changes?.find(c => c.id === id);
-                                return change && !change.publishedToShopify;
+                                return change && !change.publishedToShopify && 
+                                  (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
                               });
                               if (idsToPush.length > 0) {
                                 bulkPushMutation.mutate(idsToPush);
@@ -1389,7 +1397,11 @@ export default function ChangeControlDashboard() {
                             data-testid="button-bulk-push-conversion"
                           >
                             <Upload className="w-4 h-4" />
-                            Push Selected ({selectedIds.size})
+                            Push Selected ({Array.from(selectedIds).filter(id => {
+                              const change = changes?.find(c => c.id === id);
+                              return change && !change.publishedToShopify && 
+                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                            }).length})
                           </Button>
                           <Button
                             variant="destructive"
