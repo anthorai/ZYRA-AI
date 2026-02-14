@@ -31,6 +31,7 @@ export const users = pgTable("users", {
   lastTrialWelcomeAt: timestamp("last_trial_welcome_at"), // Track when daily trial welcome was last shown
   imageUrl: text("image_url"),
   preferredLanguage: text("preferred_language").default("en"),
+  hasUsedFreePlan: boolean("has_used_free_plan").default(false),
   createdAt: timestamp("created_at").default(sql`NOW()`),
 });
 
