@@ -1014,9 +1014,7 @@ export default function ChangeControlDashboard() {
                       const statusConfig = STATUS_CONFIG[change.status] || STATUS_CONFIG.pending;
                       const Icon = config.icon;
                       const { before, after } = getBeforeAfterContent(change);
-                      const beforeText = Object.values(before)[0] || "No previous content";
-                      const afterText = Object.values(after)[0] || "Optimized content pending";
-                      const fieldName = Object.keys(before)[0] || Object.keys(after)[0] || "Content";
+                      const allFields = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
                       const isChecked = selectedIds.has(change.id);
                       
                       return (
@@ -1052,13 +1050,16 @@ export default function ChangeControlDashboard() {
                                   <p className="font-medium text-sm">
                                     {change.productName || (change.entityType === 'store' ? "Store-wide" : "Unknown Product")}
                                   </p>
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                                     <Badge variant="outline" className={cn("text-xs", config.color)}>
                                       <Icon className="w-3 h-3 mr-1" />
                                       {config.label}
                                     </Badge>
                                     <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
                                       {statusConfig.label}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {allFields.length} field{allFields.length !== 1 ? 's' : ''} optimized
                                     </Badge>
                                   </div>
                                 </div>
@@ -1092,30 +1093,34 @@ export default function ChangeControlDashboard() {
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent className="pt-2">
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              {fieldName}
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                                  <X className="w-3 h-3 text-red-400" />
-                                  Before (Unoptimized)
+                          <CardContent className="pt-2 space-y-3">
+                            {allFields.map((field) => (
+                              <div key={field}>
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                                  {field}
                                 </p>
-                                <p className="text-sm whitespace-pre-wrap">
-                                  {stripHtmlTags(beforeText)}
-                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                      <X className="w-3 h-3 text-red-400" />
+                                      Before
+                                    </p>
+                                    <p className="text-sm whitespace-pre-wrap">
+                                      {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                    </p>
+                                  </div>
+                                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                                    <p className="text-xs text-blue-400 mb-1 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3" />
+                                      After
+                                    </p>
+                                    <p className="text-sm font-medium whitespace-pre-wrap">
+                                      {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                                <p className="text-xs text-blue-400 mb-2 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  After (Optimized)
-                                </p>
-                                <p className="text-sm font-medium whitespace-pre-wrap">
-                                  {stripHtmlTags(afterText)}
-                                </p>
-                              </div>
-                            </div>
+                            ))}
                           </CardContent>
                         </Card>
                       );
@@ -1375,9 +1380,7 @@ export default function ChangeControlDashboard() {
                       const statusConfig = STATUS_CONFIG[change.status] || STATUS_CONFIG.pending;
                       const Icon = config.icon;
                       const { before, after } = getBeforeAfterContent(change);
-                      const beforeText = Object.values(before)[0] || "No previous content";
-                      const afterText = Object.values(after)[0] || "Optimized content pending";
-                      const fieldName = Object.keys(before)[0] || Object.keys(after)[0] || "Content";
+                      const allFields = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
                       const isChecked = selectedIds.has(change.id);
                       
                       return (
@@ -1413,13 +1416,16 @@ export default function ChangeControlDashboard() {
                                   <p className="font-medium text-sm">
                                     {change.productName || (change.entityType === 'store' ? "Store-wide" : "Unknown Product")}
                                   </p>
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                                     <Badge variant="outline" className={cn("text-xs", config.color)}>
                                       <Icon className="w-3 h-3 mr-1" />
                                       {config.label}
                                     </Badge>
                                     <Badge variant="outline" className={cn("text-xs", statusConfig.bgColor, statusConfig.color)}>
                                       {statusConfig.label}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {allFields.length} field{allFields.length !== 1 ? 's' : ''} optimized
                                     </Badge>
                                   </div>
                                 </div>
@@ -1453,30 +1459,34 @@ export default function ChangeControlDashboard() {
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent className="pt-2">
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              {fieldName}
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                                  <X className="w-3 h-3 text-red-400" />
-                                  Before (Unoptimized)
+                          <CardContent className="pt-2 space-y-3">
+                            {allFields.map((field) => (
+                              <div key={field}>
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                                  {field}
                                 </p>
-                                <p className="text-sm whitespace-pre-wrap">
-                                  {stripHtmlTags(beforeText)}
-                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                      <X className="w-3 h-3 text-red-400" />
+                                      Before
+                                    </p>
+                                    <p className="text-sm whitespace-pre-wrap">
+                                      {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                    </p>
+                                  </div>
+                                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                                    <p className="text-xs text-green-400 mb-1 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3" />
+                                      After
+                                    </p>
+                                    <p className="text-sm font-medium whitespace-pre-wrap">
+                                      {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
-                                <p className="text-xs text-green-400 mb-2 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  After (Optimized)
-                                </p>
-                                <p className="text-sm font-medium whitespace-pre-wrap">
-                                  {stripHtmlTags(afterText)}
-                                </p>
-                              </div>
-                            </div>
+                            ))}
                           </CardContent>
                         </Card>
                       );
