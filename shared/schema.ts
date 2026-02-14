@@ -3698,7 +3698,13 @@ export type FoundationalActionType =
   | 'seo_basics'           // Basic SEO optimization for discoverability
   | 'product_copy_clarity' // Product descriptions need improvement
   | 'trust_signals'        // Add trust elements (reviews, badges, policies)
-  | 'recovery_setup';      // Cart recovery not configured
+  | 'recovery_setup'       // Cart recovery not configured
+  | 'meta_optimization'    // Optimize meta titles & descriptions for SERP
+  | 'image_alt_text'       // Optimize image alt text for SEO & accessibility
+  | 'stale_seo_refresh'    // Refresh stale/outdated SEO content
+  | 'search_intent'        // Align content with search intent patterns
+  | 'value_proposition'    // Strengthen product value propositions
+  | 'above_fold';          // Optimize above-the-fold product content
 
 export interface FoundationalAction {
   type: FoundationalActionType;
@@ -3730,7 +3736,13 @@ export const FOUNDATIONAL_ACTION_LABELS: Record<FoundationalActionType, string> 
   seo_basics: 'Improve Discoverability',
   product_copy_clarity: 'Clarify Product Value',
   trust_signals: 'Build Buyer Confidence',
-  recovery_setup: 'Set Up Cart Recovery'
+  recovery_setup: 'Set Up Cart Recovery',
+  meta_optimization: 'Optimize Meta Tags',
+  image_alt_text: 'Optimize Image Alt Text',
+  stale_seo_refresh: 'Refresh Stale SEO',
+  search_intent: 'Align Search Intent',
+  value_proposition: 'Strengthen Value Props',
+  above_fold: 'Optimize Above-the-Fold'
 };
 
 export const FOUNDATIONAL_ACTION_DESCRIPTIONS: Record<FoundationalActionType, { 
@@ -3757,6 +3769,36 @@ export const FOUNDATIONAL_ACTION_DESCRIPTIONS: Record<FoundationalActionType, {
     description: 'Configure abandoned cart recovery to capture lost sales',
     whyItHelps: 'Cart abandonment is inevitable - recovery captures revenue that would otherwise be lost',
     expectedImpact: 'Prepares your store to recapture abandoned purchases'
+  },
+  meta_optimization: {
+    description: 'Optimize meta titles and descriptions for better Google SERP appearance',
+    whyItHelps: 'Well-crafted meta tags improve click-through rates from search results by 20-35%',
+    expectedImpact: 'Higher CTR from Google search results'
+  },
+  image_alt_text: {
+    description: 'Add SEO-optimized alt text to product images for accessibility and search ranking',
+    whyItHelps: 'Image alt text improves Google Image search visibility and accessibility compliance',
+    expectedImpact: 'Better image search rankings and accessibility'
+  },
+  stale_seo_refresh: {
+    description: 'Refresh outdated SEO content to maintain search rankings',
+    whyItHelps: 'Search engines favor fresh, updated content over stale listings',
+    expectedImpact: 'Prevents SEO decay and maintains rankings'
+  },
+  search_intent: {
+    description: 'Align product content with buyer search intent patterns',
+    whyItHelps: 'Matching search intent improves relevance scores and conversion rates',
+    expectedImpact: 'Better alignment with what buyers are searching for'
+  },
+  value_proposition: {
+    description: 'Strengthen product value propositions to highlight unique benefits',
+    whyItHelps: 'Clear value propositions help buyers understand why your product is the best choice',
+    expectedImpact: 'Improved conversion through clearer differentiation'
+  },
+  above_fold: {
+    description: 'Optimize the content visitors see first without scrolling',
+    whyItHelps: 'Above-the-fold content determines if visitors stay or leave within 3 seconds',
+    expectedImpact: 'Reduced bounce rate and higher engagement'
   }
 };
 

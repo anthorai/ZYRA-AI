@@ -32,14 +32,26 @@ const LEGACY_TO_ACTION_ID: Record<FoundationalActionType, ActionId> = {
   seo_basics: 'product_title_optimization',
   product_copy_clarity: 'product_description_clarity',
   trust_signals: 'trust_signal_enhancement',
-  recovery_setup: 'abandoned_cart_recovery'
+  recovery_setup: 'abandoned_cart_recovery',
+  meta_optimization: 'meta_optimization',
+  image_alt_text: 'image_alt_text_optimization',
+  stale_seo_refresh: 'stale_seo_refresh',
+  search_intent: 'search_intent_alignment',
+  value_proposition: 'value_proposition_alignment',
+  above_fold: 'above_fold_optimization'
 };
 
 const ACTION_ID_TO_LEGACY: Record<string, FoundationalActionType> = {
   product_title_optimization: 'seo_basics',
   product_description_clarity: 'product_copy_clarity',
   trust_signal_enhancement: 'trust_signals',
-  abandoned_cart_recovery: 'recovery_setup'
+  abandoned_cart_recovery: 'recovery_setup',
+  meta_optimization: 'meta_optimization',
+  image_alt_text_optimization: 'image_alt_text',
+  stale_seo_refresh: 'stale_seo_refresh',
+  search_intent_alignment: 'search_intent',
+  value_proposition_alignment: 'value_proposition',
+  above_fold_optimization: 'above_fold'
 };
 
 /**
@@ -797,6 +809,108 @@ export class FastDetectionEngine {
           `Passive revenue recapture system in place`,
           `Foundation for customer re-engagement`
         ]
+      },
+      meta_optimization: {
+        descriptions: [
+          `Optimize meta title and description for "${shortProductName}" to improve Google SERP appearance`,
+          `Craft compelling meta tags for "${shortProductName}" that drive more clicks from search results`,
+          `Enhance SERP snippet for "${shortProductName}" with keyword-rich meta content`
+        ],
+        reasons: [
+          `Meta tags are the first thing buyers see in Google results. A compelling snippet for "${shortProductName}" increases click-through rate.`,
+          `Products with optimized meta descriptions get 20-35% more clicks from search results.`,
+          `Google uses meta content to understand and rank pages. Better meta tags = higher visibility for "${shortProductName}".`
+        ],
+        impacts: [
+          `Higher click-through rate from Google for "${shortProductName}"`,
+          `Improved SERP appearance and visibility`,
+          `More qualified traffic from search engines`
+        ]
+      },
+      image_alt_text: {
+        descriptions: [
+          `Add SEO-optimized alt text to "${shortProductName}" product images`,
+          `Optimize image descriptions for "${shortProductName}" for Google Image search`,
+          `Improve accessibility and image SEO for "${shortProductName}"`
+        ],
+        reasons: [
+          `Google Image search drives significant traffic. Alt text helps "${shortProductName}" images appear in image search results.`,
+          `Missing alt text means missed ranking opportunities. Images without descriptions are invisible to search engines.`,
+          `Alt text improves accessibility compliance while boosting SEO — a dual benefit for "${shortProductName}".`
+        ],
+        impacts: [
+          `Better Google Image search visibility for "${shortProductName}"`,
+          `Improved accessibility compliance`,
+          `Additional organic traffic source from image search`
+        ]
+      },
+      stale_seo_refresh: {
+        descriptions: [
+          `Refresh outdated SEO content for "${shortProductName}" to maintain search rankings`,
+          `Update stale product content for "${shortProductName}" to keep it competitive`,
+          `Re-optimize "${shortProductName}" with fresh, current SEO best practices`
+        ],
+        reasons: [
+          `Search engines favor fresh content. Stale listings for "${shortProductName}" can gradually lose ranking position.`,
+          `Competitors update their content regularly. Refreshing "${shortProductName}" keeps it competitive in search results.`,
+          `SEO best practices evolve. Re-optimizing "${shortProductName}" ensures alignment with current Google standards.`
+        ],
+        impacts: [
+          `Maintained or improved search rankings for "${shortProductName}"`,
+          `Prevention of SEO decay and ranking loss`,
+          `Competitive edge through fresh, updated content`
+        ]
+      },
+      search_intent: {
+        descriptions: [
+          `Align "${shortProductName}" content with how buyers actually search for this type of product`,
+          `Optimize "${shortProductName}" for buyer search intent to attract ready-to-purchase visitors`,
+          `Match "${shortProductName}" content to real search query patterns`
+        ],
+        reasons: [
+          `Buyers search with specific intent. Aligning "${shortProductName}" with these patterns brings higher-converting traffic.`,
+          `Content that matches search intent ranks higher and converts better. "${shortProductName}" needs intent alignment.`,
+          `Google rewards relevance. Matching "${shortProductName}" to real search queries improves quality score and ranking.`
+        ],
+        impacts: [
+          `Better match with buyer search behavior`,
+          `Higher quality traffic to "${shortProductName}" pages`,
+          `Improved conversion from search visitors`
+        ]
+      },
+      value_proposition: {
+        descriptions: [
+          `Strengthen the value proposition for "${shortProductName}" to differentiate from competitors`,
+          `Highlight unique selling points for "${shortProductName}" to drive purchase decisions`,
+          `Clarify why "${shortProductName}" is the best choice for buyers`
+        ],
+        reasons: [
+          `Buyers compare options. A strong value proposition for "${shortProductName}" makes the purchase decision easier.`,
+          `Products with clear differentiation convert 25-40% better. "${shortProductName}" needs to stand out.`,
+          `First-time visitors need to quickly understand what makes "${shortProductName}" unique and worth buying.`
+        ],
+        impacts: [
+          `Clearer competitive differentiation for "${shortProductName}"`,
+          `Higher conversion from comparison shoppers`,
+          `Stronger brand positioning in the market`
+        ]
+      },
+      above_fold: {
+        descriptions: [
+          `Optimize what buyers see first when viewing "${shortProductName}" — the above-the-fold content`,
+          `Improve the first impression of "${shortProductName}" to reduce bounce rate`,
+          `Enhance the critical first screen of "${shortProductName}" for maximum engagement`
+        ],
+        reasons: [
+          `Visitors decide within 3 seconds whether to stay. The above-the-fold content for "${shortProductName}" must capture attention immediately.`,
+          `50% of visitors never scroll below the fold. The top content for "${shortProductName}" needs to convey value instantly.`,
+          `Bounce rate decreases by 20-30% when above-the-fold content is compelling. "${shortProductName}" needs this optimization.`
+        ],
+        impacts: [
+          `Reduced bounce rate on "${shortProductName}" product page`,
+          `Increased time-on-page and engagement`,
+          `Higher add-to-cart rate from first impressions`
+        ]
       }
     };
     
@@ -913,8 +1027,9 @@ export class FastDetectionEngine {
       }
 
       // Define action type priority order for new stores
+      // Primary actions first, then expanded actions for deeper optimization
       // recovery_setup only available when store has 10+ add-to-carts
-      const actionPriority: FoundationalActionType[] = totalStoreAddToCarts >= 10
+      const primaryActions: FoundationalActionType[] = totalStoreAddToCarts >= 10
         ? [
             'seo_basics',           // First: Help them get discovered
             'product_copy_clarity', // Second: Make listings compelling
@@ -926,6 +1041,19 @@ export class FastDetectionEngine {
             'product_copy_clarity', // Second: Make listings compelling
             'trust_signals',        // Third: Build credibility
           ];
+
+      // Expanded actions — tried when all primary actions are locked
+      const expandedActions: FoundationalActionType[] = [
+        'meta_optimization',    // Optimize meta tags for better SERP appearance
+        'image_alt_text',       // Add SEO-optimized alt text to images
+        'value_proposition',    // Strengthen value propositions
+        'search_intent',        // Align with search intent patterns
+        'above_fold',           // Optimize above-the-fold content
+        'stale_seo_refresh',    // Refresh outdated SEO content
+      ];
+
+      // Full priority list: primary first, then expanded
+      const actionPriority: FoundationalActionType[] = [...primaryActions, ...expandedActions];
       
       // Find the next action type that hasn't been recently executed
       let selectedType: FoundationalActionType = 'seo_basics';
@@ -1125,7 +1253,13 @@ export class FastDetectionEngine {
         seo_basics: 'Discoverability',
         product_copy_clarity: 'Consideration',
         trust_signals: 'Conversion',
-        recovery_setup: 'Recovery'
+        recovery_setup: 'Recovery',
+        meta_optimization: 'Discoverability',
+        image_alt_text: 'Discoverability',
+        stale_seo_refresh: 'Discoverability',
+        search_intent: 'Discoverability',
+        value_proposition: 'Consideration',
+        above_fold: 'Consideration'
       };
 
       // Determine detected issue based on action type
@@ -1133,7 +1267,13 @@ export class FastDetectionEngine {
         seo_basics: 'Low organic CTR',
         product_copy_clarity: 'Low add-to-cart rate',
         trust_signals: 'High cart abandonment',
-        recovery_setup: 'No recovery flow configured'
+        recovery_setup: 'No recovery flow configured',
+        meta_optimization: 'Missing or weak meta tags',
+        image_alt_text: 'Missing image alt text',
+        stale_seo_refresh: 'Outdated SEO content detected',
+        search_intent: 'Content misaligned with search queries',
+        value_proposition: 'Weak product differentiation',
+        above_fold: 'Poor above-the-fold engagement'
       };
 
       // Select products specifically eligible for the chosen action (not locked/in-cooldown)

@@ -56,11 +56,16 @@ export interface ExecutionActivity {
 
 // Map legacy action type strings to ActionId (for backwards compatibility)
 const LEGACY_TO_ACTION_ID: Record<string, ActionId> = {
-  // Legacy strings -> ActionId
   'seo_basics': 'product_title_optimization',
   'product_copy_clarity': 'product_description_clarity',
   'trust_signals': 'trust_signal_enhancement',
   'recovery_setup': 'abandoned_cart_recovery',
+  'meta_optimization': 'meta_optimization',
+  'image_alt_text': 'image_alt_text_optimization',
+  'stale_seo_refresh': 'stale_seo_refresh',
+  'search_intent': 'search_intent_alignment',
+  'value_proposition': 'value_proposition_alignment',
+  'above_fold': 'above_fold_optimization',
 };
 
 // All valid ActionIds from the master registry
@@ -973,6 +978,12 @@ Respond ONLY with valid JSON:
       product_copy_clarity: `Better product copy increases add-to-cart rate by 15-25%. ${totalChanges} descriptions improved.`,
       trust_signals: `Trust elements reduce cart abandonment by 18-25%. ${totalChanges} trust signals added.`,
       recovery_setup: `Cart recovery emails recover 10-15% of abandoned carts. ${totalChanges} recovery messages created.`,
+      meta_optimization: `Optimized meta tags improve click-through rates from search results by 20-35%. ${totalChanges} meta tags optimized.`,
+      image_alt_text: `Image alt text boosts Google Image search visibility and accessibility. ${totalChanges} images optimized.`,
+      stale_seo_refresh: `Refreshed SEO content maintains search rankings and prevents decay. ${totalChanges} content refreshes applied.`,
+      search_intent: `Search intent alignment improves relevance and conversion rates. ${totalChanges} pages optimized.`,
+      value_proposition: `Stronger value propositions increase conversion by 25-40%. ${totalChanges} propositions strengthened.`,
+      above_fold: `Optimized above-the-fold content reduces bounce rate by 20-30%. ${totalChanges} improvements applied.`,
     };
 
     return impacts[actionType] || `${totalChanges} improvements made to boost your store's performance.`;
