@@ -7,6 +7,8 @@ import { cachedTextGeneration } from './ai-cache';
 import { consumeAIToolCredits, checkAIToolCredits } from './credits';
 import { ALL_ACTIONS, type ActionId, type MasterAction } from './zyra-master-loop/master-action-registry';
 import type { AIToolId } from '@shared/ai-credits';
+import { realLearningService } from './real-learning-service';
+import { storeLearningService } from './store-learning-service';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'placeholder-key',
@@ -264,31 +266,44 @@ export class FoundationalExecutionService {
       const productsOptimized: ProductOptimization[] = [];
       let totalChanges = 0;
       let totalCreditsConsumed = 0;
+      const learningRecords: { productId: string; baselineId: string | null; changeIds: string[] }[] = [];
 
       for (const product of userProducts) {
         const creditCheck = await checkAIToolCredits(userId, creditToolId, 1);
         if (!creditCheck.hasEnoughCredits) {
           console.log(`[Foundational] Stopping - insufficient credits for product ${product.name}`);
-          break; // Stop if no more credits
+          break;
+        }
+
+        let baselineSnapshotId: string | null = null;
+        try {
+          baselineSnapshotId = await realLearningService.captureBaseline(
+            userId,
+            product.id,
+            {
+              title: product.name || '',
+              description: product.description || '',
+              price: parseFloat(product.price?.toString() || '0'),
+              seoHealthScore: (product as any).seoScore ?? undefined,
+            }
+          );
+          console.log(`📊 [Foundational Learning] Baseline captured: ${baselineSnapshotId} for ${product.name}`);
+        } catch (baselineErr) {
+          console.error(`[Foundational Learning] Baseline capture failed for ${product.name}:`, baselineErr);
         }
 
         let optimization: ProductOptimization;
 
-        // Map normalized ActionId to the appropriate optimization method
-        // Only valid ActionIds from the master registry are accepted (no legacy strings, no default)
         switch (actionId) {
-          // Foundation: Trust & Legitimacy
           case 'trust_signal_enhancement':
             optimization = await this.addTrustSignals(userId, product);
             break;
-          // Foundation: Copy & Clarity
           case 'friction_copy_removal':
           case 'product_description_clarity':
           case 'value_proposition_alignment':
           case 'above_fold_optimization':
             optimization = await this.improveProductCopy(userId, product);
             break;
-          // Foundation: SEO & Discoverability
           case 'product_title_optimization':
           case 'meta_optimization':
           case 'search_intent_alignment':
@@ -296,13 +311,11 @@ export class FoundationalExecutionService {
           case 'stale_seo_refresh':
             optimization = await this.optimizeSEO(userId, product);
             break;
-          // Growth: Revenue Recovery
           case 'checkout_dropoff_mitigation':
           case 'abandoned_cart_recovery':
           case 'post_purchase_upsell':
             optimization = await this.setupRecoveryMessages(userId, product);
             break;
-          // Guard: Learning & Protection (no product modifications)
           case 'conversion_pattern_learning':
           case 'performance_baseline_update':
           case 'underperforming_rollback':
@@ -317,6 +330,34 @@ export class FoundationalExecutionService {
           
           productsOptimized.push(optimization);
           totalChanges += optimization.changes.length;
+
+          const changeIds: string[] = [];
+          for (const change of optimization.changes) {
+            try {
+              const changeId = await realLearningService.recordChange(
+                userId,
+                product.id,
+                baselineSnapshotId,
+                actionId,
+                {
+                  field: change.field,
+                  oldValue: change.before || null,
+                  newValue: change.after || null,
+                },
+                {
+                  actionCategory: masterAction.category,
+                  executionMode: 'fast',
+                  aiReasoning: change.reason,
+                  creditsConsumed: 1,
+                }
+              );
+              changeIds.push(changeId);
+              console.log(`📝 [Foundational Learning] Recorded change: ${change.field} → ${changeId}`);
+            } catch (changeErr) {
+              console.error(`[Foundational Learning] Failed to record change for ${change.field}:`, changeErr);
+            }
+          }
+          learningRecords.push({ productId: product.id, baselineId: baselineSnapshotId, changeIds });
 
           this.addActivity(userId, {
             phase: 'execute',
@@ -338,11 +379,32 @@ export class FoundationalExecutionService {
         details: this.generateImpactSummary(actionId, totalChanges),
       });
 
+      const totalLearningRecords = learningRecords.reduce((sum, r) => sum + r.changeIds.length, 0);
+
+      if (totalLearningRecords > 0) {
+        try {
+          const allChangeIds = learningRecords.flatMap(r => r.changeIds);
+          const learningResult = await storeLearningService.learnFromFoundationalExecution(
+            userId,
+            actionId,
+            masterAction.category,
+            allChangeIds
+          );
+          console.log(`🧠 [Foundational] Store learning: ${learningResult.insightsCreated} insights created, ${learningResult.insightsUpdated} updated`);
+        } catch (learningErr) {
+          console.error(`[Foundational] Store learning failed:`, learningErr);
+        }
+      }
+
       this.addActivity(userId, {
         phase: 'learn',
-        message: 'Changes recorded for performance tracking',
+        message: totalLearningRecords > 0 
+          ? `Captured ${learningRecords.filter(r => r.baselineId).length} baselines and ${totalLearningRecords} optimization changes for learning`
+          : 'Changes recorded for performance tracking',
         status: 'completed',
-        details: 'ZYRA will monitor how these changes affect your conversion rates over the next 7 days.',
+        details: totalLearningRecords > 0
+          ? `ZYRA stored ${totalLearningRecords} before/after data points. These will be measured over 14 days to identify what converts best for your store.`
+          : 'ZYRA will monitor how these changes affect your conversion rates over the next 7 days.',
       });
 
       // Save to autonomousActions for Change Control visibility

@@ -3,7 +3,9 @@ import {
   storeLearningInsights, 
   revenueLoopProof, 
   revenueOpportunities,
-  revenueSignals
+  revenueSignals,
+  optimizationChanges,
+  baselineSnapshots
 } from '@shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
@@ -252,6 +254,95 @@ export class StoreLearningService {
       totalExamples,
       averageConfidence: Math.round(avgConfidence),
     };
+  }
+
+  async learnFromFoundationalExecution(
+    userId: string,
+    actionId: string,
+    actionCategory: string,
+    changeIds: string[]
+  ): Promise<LearningResult> {
+    console.log(`🧠 [Store Learning] Learning from foundational execution: ${actionId} (${changeIds.length} changes)`);
+    const db = requireDb();
+
+    const result: LearningResult = {
+      insightsCreated: 0,
+      insightsUpdated: 0,
+      patternsIdentified: [],
+    };
+
+    if (changeIds.length === 0) return result;
+
+    const changes = await db
+      .select()
+      .from(optimizationChanges)
+      .where(
+        and(
+          eq(optimizationChanges.userId, userId),
+          sql`${optimizationChanges.id} = ANY(${changeIds})`
+        )
+      );
+
+    if (changes.length === 0) return result;
+
+    const patternData: PatternData = {
+      signalType: 'foundational_optimization',
+      opportunityType: actionId,
+      category: actionCategory,
+      successIndicators: changes.map(c => c.changeField || 'unknown_field'),
+    };
+
+    const insightType = 'effective_pattern';
+
+    const existingInsight = await this.findSimilarInsight(
+      userId,
+      insightType,
+      patternData.signalType,
+      patternData.opportunityType
+    );
+
+    if (existingInsight) {
+      const newExamplesCount = (existingInsight.examplesCount || 0) + changes.length;
+      const newConfidence = Math.min(100, 50 + (newExamplesCount * 3));
+
+      await db
+        .update(storeLearningInsights)
+        .set({
+          examplesCount: newExamplesCount,
+          confidenceScore: newConfidence,
+          timesApplied: (existingInsight.timesApplied || 0) + 1,
+          lastValidatedAt: new Date(),
+          lastAppliedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(storeLearningInsights.id, existingInsight.id));
+
+      result.insightsUpdated++;
+      result.patternsIdentified.push(`Updated: ${actionCategory} -> ${actionId} (${newExamplesCount} examples)`);
+      console.log(`📈 [Store Learning] Updated foundational insight ${existingInsight.id}, confidence: ${newConfidence}%`);
+    } else {
+      await db.insert(storeLearningInsights).values({
+        userId,
+        insightType,
+        category: actionCategory,
+        patternData: patternData as any,
+        examplesCount: changes.length,
+        averageRevenueLift: '0.00',
+        successRate: '100.00',
+        confidenceScore: 55,
+        lastValidatedAt: new Date(),
+        timesApplied: 1,
+        lastAppliedAt: new Date(),
+        isActive: true,
+      });
+
+      result.insightsCreated++;
+      result.patternsIdentified.push(`Created: ${actionCategory} -> ${actionId}`);
+      console.log(`🆕 [Store Learning] Created new foundational insight for ${actionId}`);
+    }
+
+    console.log(`✅ [Store Learning] Foundational learning complete: ${result.insightsCreated} created, ${result.insightsUpdated} updated`);
+    return result;
   }
 }
 

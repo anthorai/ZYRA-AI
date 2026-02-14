@@ -2312,6 +2312,8 @@ export default function ZyraAtWork() {
         title: data?.success ? 'Optimization Complete' : 'Action Approved',
         description: data?.message || 'ZYRA has applied the improvements',
       });
+      // Clear previous activities before starting new execution
+      setExecutionActivities([]);
       // Start post-approval phase progression: execute → prove → learn → complete
       setApprovedPhase('execute');
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
@@ -2361,31 +2363,50 @@ export default function ZyraAtWork() {
     }
   }, [isDetecting, detectionStartTime]);
 
-  // Post-approval phase auto-progression: execute (3s) → prove (3s) → learn (3s) → complete
+  // Post-approval phase auto-progression: execute (3s) → prove (3s) → learn (activity-driven or 3s fallback) → complete
   useEffect(() => {
     if (approvedPhase === 'idle' || approvedPhase === 'complete') {
       return;
     }
     
-    // Clear any existing timeout
     if (approvedPhaseTimeoutRef.current) {
       clearTimeout(approvedPhaseTimeoutRef.current);
     }
     
-    // Set timeout for next phase transition
+    const hasLearnActivity = executionActivities.some(
+      a => a.phase === 'learn' && a.status === 'completed'
+    );
+    const hasProveActivity = executionActivities.some(
+      a => a.phase === 'prove' && a.status === 'completed'
+    );
+
+    if (approvedPhase === 'learn' && hasLearnActivity) {
+      console.log(`[ZYRA Phase] Learn activity detected - transitioning to complete`);
+      approvedPhaseTimeoutRef.current = setTimeout(() => {
+        setApprovedPhase('complete');
+        console.log('[ZYRA Phase] Loop completed - staying in complete state');
+      }, 800);
+      return () => { if (approvedPhaseTimeoutRef.current) clearTimeout(approvedPhaseTimeoutRef.current); };
+    }
+    
+    if (approvedPhase === 'prove' && hasProveActivity) {
+      console.log(`[ZYRA Phase] Prove activity detected - transitioning to learn`);
+      approvedPhaseTimeoutRef.current = setTimeout(() => {
+        setApprovedPhase('learn');
+      }, 800);
+      return () => { if (approvedPhaseTimeoutRef.current) clearTimeout(approvedPhaseTimeoutRef.current); };
+    }
+
     const phaseDelays = { execute: 3000, prove: 3000, learn: 3000 };
     const nextPhases = { execute: 'prove', prove: 'learn', learn: 'complete' } as const;
     
     approvedPhaseTimeoutRef.current = setTimeout(() => {
       const next = nextPhases[approvedPhase as keyof typeof nextPhases];
-      console.log(`[ZYRA Phase] Transitioning from ${approvedPhase} → ${next}`);
+      console.log(`[ZYRA Phase] Timer transitioning from ${approvedPhase} → ${next}`);
       setApprovedPhase(next);
       
-      // When complete, keep in completed state (don't refresh - this would show the button again)
       if (next === 'complete') {
         console.log('[ZYRA Phase] Loop completed - staying in complete state');
-        // Don't reset to idle - keep showing completed state
-        // The completedActionId will prevent the button from reappearing
       }
     }, phaseDelays[approvedPhase as keyof typeof phaseDelays]);
     
@@ -2394,7 +2415,7 @@ export default function ZyraAtWork() {
         clearTimeout(approvedPhaseTimeoutRef.current);
       }
     };
-  }, [approvedPhase]);
+  }, [approvedPhase, executionActivities]);
 
   // When detection-status query is disabled (isDetecting=false), use stats as primary source
   const detectionPhase = (isDetecting && detectionStatusData?.phase) || stats?.detection?.phase || 'idle';
