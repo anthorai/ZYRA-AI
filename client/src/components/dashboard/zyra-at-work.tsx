@@ -3271,32 +3271,33 @@ export default function ZyraAtWork() {
           const currentIndex = phaseOrder.indexOf(currentPhase);
           const phaseIndex = phaseOrder.indexOf(phase);
           
-          const isLoopComplete = isAutopilotEnabled && currentPhase === 'complete';
-          const isActive = isAutopilotEnabled && !isLoopComplete && currentPhase === phase;
-          const isCompleted = isAutopilotEnabled && isLoopComplete;
+          const isLoopComplete = currentPhase === 'complete';
+          const isActive = !isLoopComplete && currentPhase === phase;
+          const isPassed = !isLoopComplete && currentIndex > phaseIndex;
+          const isCompleted = isLoopComplete;
           
           return (
             <Card 
               key={phase}
-              className={`${isLoopComplete ? 'bg-emerald-500/10' : isActive ? 'bg-cyan-500/15 border-cyan-500/35' : config.bgColor} border-white/[0.06] transition-all duration-300 ${
+              className={`${isLoopComplete ? 'bg-emerald-500/10' : isActive ? 'bg-cyan-500/15 border-cyan-500/35' : isPassed ? 'bg-emerald-500/8 border-emerald-500/15' : config.bgColor} border-white/[0.06] transition-all duration-300 ${
                 isActive ? 'ring-1 ring-cyan-500/30' : ''
               } ${isLoopComplete ? 'ring-1 ring-emerald-400/30' : ''}`}
               style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
               data-testid={`phase-indicator-${phase}`}
             >
               <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center relative">
-                {isCompleted && (
+                {(isCompleted || isPassed) && (
                   <div className="absolute top-1 right-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                   </div>
                 )}
                 <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isLoopComplete ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  <Icon className={`w-5 h-5 ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : config.color}`} />
                 </div>
-                <span className={`text-xs font-medium ${isLoopComplete ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`text-xs font-medium ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
                   {config.label}
                 </span>
-                {isActive && isAutopilotEnabled && isStreamConnected && (
+                {isActive && (isStreamConnected || hasRealData) && (
                   <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Live
@@ -3547,15 +3548,30 @@ export default function ZyraAtWork() {
         
         {/* Core Loop Visualization */}
         <div className="flex items-center justify-center gap-1 text-[10px] font-mono py-2" data-testid="core-loop-visual">
-          <span className="text-blue-400">DETECT</span>
-          <ArrowRight className="w-3 h-3 text-slate-600" />
-          <span className="text-purple-400">DECIDE</span>
-          <ArrowRight className="w-3 h-3 text-slate-600" />
-          <span className="text-amber-400">EXECUTE</span>
-          <ArrowRight className="w-3 h-3 text-slate-600" />
-          <span className="text-emerald-400">PROVE</span>
-          <ArrowRight className="w-3 h-3 text-slate-600" />
-          <span className="text-cyan-400">LEARN</span>
+          {[
+            { phase: 'detect', label: 'DETECT', color: 'text-blue-400' },
+            { phase: 'decide', label: 'DECIDE', color: 'text-purple-400' },
+            { phase: 'execute', label: 'EXECUTE', color: 'text-amber-400' },
+            { phase: 'prove', label: 'PROVE', color: 'text-emerald-400' },
+            { phase: 'learn', label: 'LEARN', color: 'text-cyan-400' },
+          ].map((item, idx, arr) => {
+            const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
+            const ci = phaseOrder.indexOf(currentPhase);
+            const pi = phaseOrder.indexOf(item.phase);
+            const loopDone = currentPhase === 'complete';
+            const active = !loopDone && currentPhase === item.phase;
+            const passed = !loopDone && ci > pi;
+            return (
+              <span key={item.phase} className="flex items-center gap-1">
+                <span className={`${active ? 'font-bold scale-110 ' + item.color : passed || loopDone ? 'text-emerald-400' : 'text-slate-500'} transition-all duration-300`}>
+                  {item.label}
+                </span>
+                {idx < arr.length - 1 && (
+                  <ArrowRight className={`w-3 h-3 ${passed || (active && ci > 0) ? 'text-emerald-500' : 'text-slate-600'} transition-colors duration-300`} />
+                )}
+              </span>
+            );
+          })}
         </div>
         
         <p className="text-xs text-slate-400 text-center" data-testid="text-core-law">
