@@ -1,6 +1,6 @@
 import { requireDb } from '../db';
 import { getUserSubscription, getSubscriptionPlanById } from '../db';
-import { products, seoMeta, automationSettings, autonomousActions, activityLogs } from '@shared/schema';
+import { products, seoMeta, automationSettings, autonomousActions, activityLogs, actionLocks } from '@shared/schema';
 import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
@@ -214,7 +214,7 @@ export class FoundationalExecutionService {
         details: `Sub-actions: ${subActionNames.slice(0, 3).join(', ')} | Credits: ${creditCheck.creditsRemaining}`,
       });
 
-      // Prefer products that haven't been optimized yet (no optimizedTitle in seoMeta)
+      // Get products and check which ones are already locked for this specific action
       const allUserProducts = await db
         .select({
           product: products,
@@ -223,16 +223,33 @@ export class FoundationalExecutionService {
         .from(products)
         .leftJoin(seoMeta, eq(products.id, seoMeta.productId))
         .where(eq(products.userId, userId))
-        .limit(10);
+        .limit(20);
       
-      // Prioritize products without optimized SEO, then fall back to any products
-      const unoptimizedProducts = allUserProducts.filter(p => !p.hasOptimizedSeo).map(p => p.product);
-      const optimizedProducts = allUserProducts.filter(p => p.hasOptimizedSeo).map(p => p.product);
+      // Check which products already have this action locked
+      const lockedForAction = await db
+        .select({ entityId: actionLocks.entityId })
+        .from(actionLocks)
+        .where(and(
+          eq(actionLocks.userId, userId),
+          eq(actionLocks.entityType, 'product'),
+          eq(actionLocks.actionType, actionId),
+          eq(actionLocks.status, 'locked')
+        ));
+      const lockedProductIds = new Set(lockedForAction.map(l => l.entityId));
+
+      // Filter out products already locked for THIS action
+      const unlockedProducts = allUserProducts.filter(p => !lockedProductIds.has(p.product.id));
+      const lockedProducts = allUserProducts.filter(p => lockedProductIds.has(p.product.id));
+
+      // Among unlocked, prioritize those without optimized SEO
+      const unoptimizedUnlocked = unlockedProducts.filter(p => !p.hasOptimizedSeo).map(p => p.product);
+      const optimizedUnlocked = unlockedProducts.filter(p => p.hasOptimizedSeo).map(p => p.product);
       
-      // Take unoptimized first, then fill with optimized if needed
+      // Take unlocked-unoptimized first, then unlocked-optimized, then locked as fallback
       const userProducts = [
-        ...unoptimizedProducts.slice(0, 3),
-        ...optimizedProducts.slice(0, Math.max(0, 3 - unoptimizedProducts.length))
+        ...unoptimizedUnlocked,
+        ...optimizedUnlocked,
+        ...lockedProducts.map(p => p.product),
       ].slice(0, 3);
 
       if (userProducts.length === 0) {

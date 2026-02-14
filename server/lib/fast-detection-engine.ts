@@ -891,13 +891,41 @@ export class FastDetectionEngine {
       );
       console.log(`📋 [Rotation] Recent action types (mapped to legacy): ${Array.from(recentActionTypes).join(', ')}`);
       
+      // Check total add-to-cart activity to gate recovery_setup
+      // Only show Abandoned Cart Recovery when the store has 10+ add-to-carts
+      let totalStoreAddToCarts = 0;
+      try {
+        const [atcResult] = await db
+          .select({ total: sql<number>`COALESCE(SUM(${usageStats.totalOrders}), 0)` })
+          .from(usageStats)
+          .where(eq(usageStats.userId, userId));
+        totalStoreAddToCarts += (atcResult?.total || 0);
+
+        // Count products with meaningful traffic as a proxy for add-to-cart activity
+        const productsWithTraffic = allProducts.filter(p => 
+          (p.revenueHealthScore || 0) > 0
+        ).length;
+        totalStoreAddToCarts += productsWithTraffic;
+        
+        console.log(`🛒 [Cart Gate] Store add-to-cart activity: ${totalStoreAddToCarts} (threshold: 10)`);
+      } catch (err) {
+        console.log(`🛒 [Cart Gate] Could not determine add-to-cart count, defaulting to 0`);
+      }
+
       // Define action type priority order for new stores
-      const actionPriority: FoundationalActionType[] = [
-        'seo_basics',           // First: Help them get discovered
-        'product_copy_clarity', // Second: Make listings compelling
-        'trust_signals',        // Third: Build credibility
-        'recovery_setup'        // Fourth: Set up cart recovery
-      ];
+      // recovery_setup only available when store has 10+ add-to-carts
+      const actionPriority: FoundationalActionType[] = totalStoreAddToCarts >= 10
+        ? [
+            'seo_basics',           // First: Help them get discovered
+            'product_copy_clarity', // Second: Make listings compelling
+            'trust_signals',        // Third: Build credibility
+            'recovery_setup'        // Fourth: Set up cart recovery (only with 10+ add-to-carts)
+          ]
+        : [
+            'seo_basics',           // First: Help them get discovered
+            'product_copy_clarity', // Second: Make listings compelling
+            'trust_signals',        // Third: Build credibility
+          ];
       
       // Find the next action type that hasn't been recently executed
       let selectedType: FoundationalActionType = 'seo_basics';
@@ -1039,12 +1067,7 @@ export class FastDetectionEngine {
         
         // Smart rotation: find next action type that hasn't been done recently AND is unlocked
         const getNextAvailableAction = (): { actionType: FoundationalActionType; isLocked: boolean } => {
-          const rotationPriority: FoundationalActionType[] = [
-            'seo_basics',
-            'product_copy_clarity', 
-            'trust_signals',
-            'recovery_setup'
-          ];
+          const rotationPriority = actionPriority;
           
           // Find first action not recently done AND not locked
           for (const actionType of rotationPriority) {
@@ -1087,8 +1110,8 @@ export class FastDetectionEngine {
           }
         }
       } else {
-        // No products - suggest recovery setup
-        selectedType = 'recovery_setup';
+        // No products - suggest trust signals as default
+        selectedType = 'trust_signals';
         selectedCombinationIsLocked = false;
       }
       
@@ -1122,7 +1145,20 @@ export class FastDetectionEngine {
         recovery_setup: 'No recovery flow configured'
       };
 
-      const topProducts = userProducts.slice(0, 3).filter(p => p.id && p.name);
+      // Select products specifically eligible for the chosen action (not locked/in-cooldown)
+      // Start with the target product, then add other unlocked products
+      const eligibleProducts: typeof userProducts = [];
+      if (targetProduct && !isLocked(targetProduct.id, selectedType)) {
+        eligibleProducts.push(targetProduct);
+      }
+      for (const p of userProducts) {
+        if (eligibleProducts.length >= 3) break;
+        if (p.id === targetProduct?.id) continue; // Already added
+        if (!isLocked(p.id, selectedType)) {
+          eligibleProducts.push(p);
+        }
+      }
+      const topProducts = eligibleProducts.filter(p => p.id && p.name);
       const foundationalAction: FoundationalAction = {
         type: selectedType,
         category: registryAction.category,
