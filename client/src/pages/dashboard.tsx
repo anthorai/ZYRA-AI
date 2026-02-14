@@ -135,8 +135,9 @@ export default function Dashboard() {
     const shopifyConnected = urlParams.get('shopify_connected');
     const storeName = urlParams.get('store_name');
     
-    // Show success toast when redirected after Shopify store connection
     if (shopifyConnected === 'true') {
+      sessionStorage.removeItem('shopify_connecting');
+      sessionStorage.removeItem('shopify_connect_time');
       toast({
         title: "Store Connected Successfully",
         description: storeName 

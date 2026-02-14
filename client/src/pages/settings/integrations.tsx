@@ -211,6 +211,19 @@ export default function IntegrationsPage() {
                   : integration
               )
             );
+
+            const wasStillConnecting = sessionStorage.getItem('shopify_connecting');
+            if (wasStillConnecting) {
+              sessionStorage.removeItem('shopify_connecting');
+              sessionStorage.removeItem('shopify_connect_time');
+              setShowConnectionModal(true);
+              connectionProgress.setStep('syncing');
+              setTimeout(() => {
+                connectionProgress.setComplete(shopifyData.shopDomain || shopifyData.storeName || 'Your Shopify Store');
+                setShowSuccessBanner(true);
+                setTimeout(() => setShowSuccessBanner(false), 10000);
+              }, 800);
+            }
           }
         }
 
