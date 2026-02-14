@@ -363,18 +363,43 @@ export class RevenueImmuneScanner {
         )
       );
 
-    const totalIssues = weeklyScans.reduce((sum, scan) => sum + (scan.issuesDetected ?? 0), 0);
-    const totalFixes = weeklyScans.reduce((sum, scan) => sum + (scan.fixesApplied ?? 0), 0);
-    const totalRevenue = weeklyScans.reduce((sum, scan) => 
+    const scanIssues = weeklyScans.reduce((sum, scan) => sum + (scan.issuesDetected ?? 0), 0);
+    const scanFixes = weeklyScans.reduce((sum, scan) => sum + (scan.fixesApplied ?? 0), 0);
+    const scanRevenue = weeklyScans.reduce((sum, scan) => 
       sum + parseFloat(scan.estimatedRevenueProtected?.toString() ?? '0'), 0);
     const rollbacks = weeklyActions.filter(a => a.status === 'rolled_back').length;
 
+    const actionIssuesDetected = weeklyActions.length;
+    const actionFixesExecuted = weeklyActions.filter(a => a.status === 'completed').length;
+
+    const ACTION_REVENUE_ESTIMATES: Record<string, number> = {
+      optimize_seo: 150,
+      meta_optimization: 120,
+      product_title_optimization: 100,
+      product_description_clarity: 80,
+      trust_signal_enhancement: 200,
+      image_alt_text_optimization: 60,
+      search_intent_alignment: 130,
+      above_fold_optimization: 110,
+      stale_seo_refresh: 90,
+      value_proposition_alignment: 140,
+      fix_product: 100,
+      send_cart_recovery: 250,
+      abandoned_cart_recovery: 250,
+      post_purchase_upsell: 180,
+      checkout_dropoff_mitigation: 160,
+    };
+
+    const actionRevenue = weeklyActions
+      .filter(a => a.status === 'completed')
+      .reduce((sum, a) => sum + (ACTION_REVENUE_ESTIMATES[a.actionType] ?? 75), 0);
+
     return {
       scansPerformed: weeklyScans.length,
-      issuesDetected: totalIssues,
-      fixesExecuted: totalFixes,
+      issuesDetected: scanIssues + actionIssuesDetected,
+      fixesExecuted: scanFixes + actionFixesExecuted,
       rollbacksNeeded: rollbacks,
-      totalRevenueProtected: totalRevenue,
+      totalRevenueProtected: scanRevenue + actionRevenue,
     };
   }
 

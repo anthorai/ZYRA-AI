@@ -17097,14 +17097,14 @@ Output format: Markdown with clear section headings.`;
       const todayDetectedIssues: Array<{problemType: string; entityName: string; timestamp: string}> = [];
       const todayFixesExecuted: Array<{surfaceTouched: string; entityName: string; timestamp: string}> = [];
       
-      let preventedRevenue = 0;
+      let scanPreventedRevenue = 0;
       let totalScansToday = 0;
       let totalProductsScannedToday = 0;
       
       for (const scan of todayScans) {
         totalScansToday++;
         totalProductsScannedToday += scan.productsScanned ?? 0;
-        preventedRevenue += parseFloat(scan.estimatedRevenueProtected?.toString() ?? '0');
+        scanPreventedRevenue += parseFloat(scan.estimatedRevenueProtected?.toString() ?? '0');
         
         // Extract issues from scan
         const issueDetails = scan.issueDetails as Array<{type: string; productName: string; description: string}> | null;
@@ -17128,6 +17128,71 @@ Output format: Markdown with clear section headings.`;
               timestamp: scan.createdAt ? new Date(scan.createdAt).toISOString() : new Date().toISOString(),
             });
           }
+        }
+      }
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const monthlyActions = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            eq(autonomousActions.status, 'completed'),
+            gte(autonomousActions.createdAt, startOfMonth)
+          )
+        );
+
+      const ACTION_REVENUE_ESTIMATES: Record<string, number> = {
+        optimize_seo: 150,
+        meta_optimization: 120,
+        product_title_optimization: 100,
+        product_description_clarity: 80,
+        trust_signal_enhancement: 200,
+        image_alt_text_optimization: 60,
+        search_intent_alignment: 130,
+        above_fold_optimization: 110,
+        stale_seo_refresh: 90,
+        value_proposition_alignment: 140,
+        fix_product: 100,
+        send_cart_recovery: 250,
+        abandoned_cart_recovery: 250,
+        post_purchase_upsell: 180,
+        checkout_dropoff_mitigation: 160,
+      };
+
+      const actionPreventedRevenue = monthlyActions.reduce(
+        (sum, a) => sum + (ACTION_REVENUE_ESTIMATES[a.actionType] ?? 75), 0
+      );
+
+      const preventedRevenue = scanPreventedRevenue + actionPreventedRevenue;
+
+      const todayActions = await db
+        .select()
+        .from(autonomousActions)
+        .where(
+          and(
+            eq(autonomousActions.userId, userId),
+            gte(autonomousActions.createdAt, startOfToday)
+          )
+        );
+
+      for (const action of todayActions) {
+        const productName = (action.payload as any)?.productName || 'Product';
+        todayDetectedIssues.push({
+          problemType: action.actionType.replace(/_/g, ' '),
+          entityName: productName,
+          timestamp: action.createdAt ? new Date(action.createdAt).toISOString() : new Date().toISOString(),
+        });
+        if (action.status === 'completed') {
+          todayFixesExecuted.push({
+            surfaceTouched: action.actionType.replace(/_/g, ' '),
+            entityName: productName,
+            timestamp: action.createdAt ? new Date(action.createdAt).toISOString() : new Date().toISOString(),
+          });
         }
       }
       
