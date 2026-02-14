@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Package, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
 
 interface ProductIntelligenceSummary {
   totalProducts: number;
@@ -27,6 +28,7 @@ export function ProductIntelligenceSummaryBar() {
   const { data: summary, isLoading } = useQuery<ProductIntelligenceSummary>({
     queryKey: ['/api/products/intelligence/summary'],
   });
+  const { currency: storeCurrency } = useStoreCurrency();
   
   if (isLoading) {
     return (
@@ -55,7 +57,7 @@ export function ProductIntelligenceSummaryBar() {
     },
     {
       icon: Shield,
-      value: `$${(summary?.revenueProtected || 0).toLocaleString()}`,
+      value: new Intl.NumberFormat('en-US', { style: 'currency', currency: storeCurrency || 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(summary?.revenueProtected || 0),
       label: "Revenue Protected",
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-400",
