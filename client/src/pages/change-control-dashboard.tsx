@@ -1110,7 +1110,7 @@ export default function ChangeControlDashboard() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                {!change.publishedToShopify && (
+                                {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run") && (
                                   <Button
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}
@@ -1481,7 +1481,7 @@ export default function ChangeControlDashboard() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                {!change.publishedToShopify && (
+                                {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run") && (
                                   <Button
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}
