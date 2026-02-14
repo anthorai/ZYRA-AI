@@ -37,12 +37,15 @@ interface NavigationItem {
 
 interface HeroSectionProps {
   navigationItems?: NavigationItem[];
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
+  isLoggingOut?: boolean;
 }
 
-export function HeroSection({ navigationItems }: HeroSectionProps) {
+export function HeroSection({ navigationItems, isAuthenticated, onLogout, isLoggingOut }: HeroSectionProps) {
   return (
     <>
-      <HeroHeader navigationItems={navigationItems} />
+      <HeroHeader navigationItems={navigationItems} isAuthenticated={isAuthenticated} onLogout={onLogout} isLoggingOut={isLoggingOut} />
       <main className="overflow-hidden" style={{ backgroundColor: '#16162c' }}>
         {/* Floating gradient orbs */}
         <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -315,9 +318,12 @@ const defaultMenuItems: NavigationItem[] = [
 
 interface HeroHeaderProps {
   navigationItems?: NavigationItem[];
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
+  isLoggingOut?: boolean;
 }
 
-const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
+const HeroHeader = ({ navigationItems, isAuthenticated, onLogout, isLoggingOut }: HeroHeaderProps) => {
   const [menuState, setMenuState] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
 
@@ -422,47 +428,93 @@ const HeroHeader = ({ navigationItems }: HeroHeaderProps) => {
                 </ul>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 md:w-fit">
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "font-semibold tracking-wide",
-                    "border-primary/30 text-foreground/80",
-                    isScrolled && "lg:hidden"
-                  )}
-                  data-testid="button-header-login"
-                >
-                  <Link href="/auth">
-                    <span>Login</span>
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  className={cn(
-                    "gradient-button font-semibold tracking-wide",
-                    isScrolled && "lg:hidden"
-                  )}
-                  data-testid="button-header-signup"
-                >
-                  <Link href="/auth">
-                    <span>Sign Up</span>
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  className={cn(
-                    "gradient-button font-semibold tracking-wide",
-                    isScrolled ? "lg:inline-flex" : "hidden"
-                  )}
-                  data-testid="button-header-start"
-                >
-                  <Link href="/auth">
-                    <span>Get Started</span>
-                  </Link>
-                </Button>
+                {isAuthenticated ? (
+                  <>
+                    <Button
+                      asChild
+                      size="sm"
+                      className={cn(
+                        "gradient-button font-semibold tracking-wide",
+                        isScrolled && "lg:hidden"
+                      )}
+                      data-testid="button-header-dashboard"
+                    >
+                      <Link href="/dashboard">
+                        <span>Dashboard</span>
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "font-semibold tracking-wide border-primary/30 text-foreground/80",
+                        isScrolled && "lg:hidden"
+                      )}
+                      onClick={onLogout}
+                      disabled={isLoggingOut}
+                      data-testid="button-header-logout"
+                    >
+                      <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+                    </Button>
+                    <Button
+                      asChild
+                      size="sm"
+                      className={cn(
+                        "gradient-button font-semibold tracking-wide",
+                        isScrolled ? "lg:inline-flex" : "hidden"
+                      )}
+                      data-testid="button-header-dashboard-scrolled"
+                    >
+                      <Link href="/dashboard">
+                        <span>Dashboard</span>
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "font-semibold tracking-wide",
+                        "border-primary/30 text-foreground/80",
+                        isScrolled && "lg:hidden"
+                      )}
+                      data-testid="button-header-login"
+                    >
+                      <Link href="/auth">
+                        <span>Login</span>
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      size="sm"
+                      className={cn(
+                        "gradient-button font-semibold tracking-wide",
+                        isScrolled && "lg:hidden"
+                      )}
+                      data-testid="button-header-signup"
+                    >
+                      <Link href="/auth">
+                        <span>Sign Up</span>
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      size="sm"
+                      className={cn(
+                        "gradient-button font-semibold tracking-wide",
+                        isScrolled ? "lg:inline-flex" : "hidden"
+                      )}
+                      data-testid="button-header-start"
+                    >
+                      <Link href="/auth">
+                        <span>Get Started</span>
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

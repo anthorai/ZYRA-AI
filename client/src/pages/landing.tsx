@@ -96,9 +96,6 @@ export default function Landing() {
     { name: "HOW IT WORKS", href: "#how-it-works", external: true },
     { name: "PRICING", href: "/pricing" },
     { name: "FAQ", href: "#faq", external: true },
-    ...(loading ? [{ name: "LOG IN", href: "/auth" }] : 
-        isAuthenticated ? [{ name: isLoggingOut ? "LOGGING OUT..." : "LOGOUT", onClick: handleLogout, href: "#" }] : 
-        [{ name: "LOG IN", href: "/auth" }])
   ];
 
   return (
@@ -110,7 +107,7 @@ export default function Landing() {
         <meta property="og:description" content="One AI system that runs your revenue loop. ZYRA detects opportunities, executes safely, and proves real revenue impact." />
       </Helmet>
       
-      <HeroSection navigationItems={navigationItems} />
+      <HeroSection navigationItems={navigationItems} isAuthenticated={isAuthenticated} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <main>
         {/* PROBLEM SECTION */}
