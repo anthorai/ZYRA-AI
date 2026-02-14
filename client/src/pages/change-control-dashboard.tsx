@@ -94,7 +94,8 @@ import {
   Target,
   Image,
   Pause,
-  BarChart
+  BarChart,
+  Database
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -354,6 +355,10 @@ export default function ChangeControlDashboard() {
 
   const { data: changes, isLoading: changesLoading, refetch } = useQuery<ChangeItem[]>({
     queryKey: ["/api/autonomous-actions"],
+  });
+
+  const { data: learningStats } = useQuery<{ totalLearnings: number; snapshots: any[] }>({
+    queryKey: ["/api/learning-stats"],
   });
 
   const { data: settings } = useQuery<AutomationSettings>({
@@ -856,7 +861,9 @@ export default function ChangeControlDashboard() {
                   {(Object.keys(CATEGORY_CONFIG) as ActionCategory[]).map((category) => {
                     const config = CATEGORY_CONFIG[category];
                     const Icon = config.icon;
-                    const count = changesByCategory[category]?.length || 0;
+                    const count = category === "learning" 
+                      ? (changesByCategory[category]?.length || 0) + (learningStats?.totalLearnings || 0)
+                      : changesByCategory[category]?.length || 0;
                     const isActive = activeCategory === category;
                     
                     const activeBgClass: Record<ActionCategory, string> = {
@@ -949,7 +956,7 @@ export default function ChangeControlDashboard() {
                       <Skeleton key={i} className="h-48 w-full rounded-lg" />
                     ))}
                   </div>
-                ) : categoryFilteredChanges.length === 0 ? (
+                ) : categoryFilteredChanges.length === 0 && !(activeCategory === "learning" && learningStats && learningStats.totalLearnings > 0) ? (
                   <Card>
                     <CardContent className="py-12">
                       <div className="flex flex-col items-center justify-center text-center">
@@ -1172,47 +1179,90 @@ export default function ChangeControlDashboard() {
                     })}
                   </div>
                 ) : activeCategory === "learning" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-purple-500/5 border-purple-500/20">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <Brain className="w-10 h-10 text-purple-400 flex-shrink-0" />
-                          <div>
-                            <h4 className="font-medium">Store Conversion Pattern Learning</h4>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              ZYRA learns which product attributes drive conversions in your store
-                            </p>
-                            <Badge variant="outline" className="mt-3 bg-green-500/20 text-green-400 border-green-500/30">
-                              <Activity className="w-3 h-3 mr-1" />
-                              Active - Updating
-                            </Badge>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="bg-purple-500/5 border-purple-500/20">
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-3">
+                            <Brain className="w-10 h-10 text-purple-400 flex-shrink-0" />
+                            <div>
+                              <h4 className="font-medium">Store Conversion Pattern Learning</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                ZYRA learns which product attributes drive conversions in your store
+                              </p>
+                              <Badge variant="outline" className="mt-3 bg-green-500/20 text-green-400 border-green-500/30">
+                                <Activity className="w-3 h-3 mr-1" />
+                                Active - Updating
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-4 italic">
-                          Used internally to improve future decisions
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-sky-500/5 border-sky-500/20">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <BarChart className="w-10 h-10 text-sky-400 flex-shrink-0" />
-                          <div>
-                            <h4 className="font-medium">Product Performance Baseline Update</h4>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Continuously updates performance baselines for accurate impact measurement
-                            </p>
-                            <Badge variant="outline" className="mt-3 bg-green-500/20 text-green-400 border-green-500/30">
-                              <Activity className="w-3 h-3 mr-1" />
-                              Active - Updating
-                            </Badge>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-sky-500/5 border-sky-500/20">
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-3">
+                            <BarChart className="w-10 h-10 text-sky-400 flex-shrink-0" />
+                            <div>
+                              <h4 className="font-medium">Product Performance Baselines</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {learningStats?.totalLearnings || 0} product baselines captured for impact measurement
+                              </p>
+                              <Badge variant="outline" className="mt-3 bg-green-500/20 text-green-400 border-green-500/30">
+                                <Activity className="w-3 h-3 mr-1" />
+                                {learningStats?.totalLearnings || 0} Snapshots
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-4 italic">
-                          Used internally to improve future decisions
-                        </p>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    {learningStats && learningStats.snapshots.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Database className="w-4 h-4" />
+                          Performance Baseline Snapshots
+                        </h4>
+                        {learningStats.snapshots.map((snapshot: any) => (
+                          <Card key={snapshot.id} className="bg-slate-900/50 border-white/5">
+                            <CardContent className="py-4">
+                              <div className="flex items-start justify-between gap-4 flex-wrap">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                                    <BarChart className="w-4 h-4 text-violet-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">{snapshot.productTitle || "Unknown Product"}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Baseline captured on {new Date(snapshot.snapshotDate || snapshot.createdAt).toLocaleDateString()}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      {snapshot.pageViews !== null && snapshot.pageViews !== undefined && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {snapshot.pageViews} page views
+                                        </Badge>
+                                      )}
+                                      {snapshot.conversionRate !== null && snapshot.conversionRate !== undefined && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {Number(snapshot.conversionRate).toFixed(1)}% conversion
+                                        </Badge>
+                                      )}
+                                      {snapshot.seoHealthScore !== null && snapshot.seoHealthScore !== undefined && (
+                                        <Badge variant="outline" className="text-xs">
+                                          SEO: {snapshot.seoHealthScore}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30 text-xs flex-shrink-0">
+                                  Baseline Recorded
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : activeCategory === "revenue_protection" ? (
                   <div className="space-y-4">

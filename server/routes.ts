@@ -18171,6 +18171,37 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  app.get("/api/learning-stats", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { baselineSnapshots } = await import('@shared/schema');
+      
+      const snapshots = await db
+        .select()
+        .from(baselineSnapshots)
+        .where(eq(baselineSnapshots.userId, userId))
+        .orderBy(desc(baselineSnapshots.createdAt));
+
+      res.json({
+        totalLearnings: snapshots.length,
+        snapshots: snapshots.map(s => ({
+          id: s.id,
+          productId: s.productId,
+          productTitle: s.productTitle,
+          snapshotDate: s.snapshotDate,
+          conversionRate: s.conversionRate,
+          seoHealthScore: s.seoHealthScore,
+          pageViews: s.pageViews,
+          totalRevenue: s.totalRevenue,
+          createdAt: s.createdAt,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching learning stats:", error);
+      res.json({ totalLearnings: 0, snapshots: [] });
+    }
+  });
+
   // Get autonomous actions (activity timeline)
   app.get("/api/autonomous-actions", requireAuth, async (req, res) => {
     try {
