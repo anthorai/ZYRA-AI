@@ -24,9 +24,9 @@ export function RevenueDelta({
   
   const absAmount = Math.abs(amount);
   
-  const currencySymbol = currency === 'INR' ? '₹' : '$';
-  
   const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: absAmount >= 1000 ? 0 : 2,
   }).format(absAmount);
@@ -73,7 +73,7 @@ export function RevenueDelta({
       <span>
         {showSign && isPositive && '+'}
         {showSign && isNegative && '-'}
-        {currencySymbol}{formatted}
+        {formatted}
       </span>
     </span>
   );

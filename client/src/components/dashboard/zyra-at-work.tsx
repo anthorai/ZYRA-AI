@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 
 import { ZyraLearningInsights } from './zyra-learning-insights';
+import { useStoreCurrency } from "@/hooks/use-store-currency";
 
 // ============================================================================
 // TYPEWRITER TEXT COMPONENT - Shows AI "thinking" and "writing" in real-time
@@ -2116,6 +2117,8 @@ export default function ZyraAtWork() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
   
+  const { currency: storeCurrency } = useStoreCurrency();
+  
   // Real-time SSE activity stream for phase indicators
   const { events: streamEvents, isConnected: isStreamConnected, isReconnecting } = useZyraActivity();
   
@@ -2932,6 +2935,7 @@ export default function ZyraAtWork() {
               <p className="text-xs text-slate-400 mb-1">Today's Revenue Impact</p>
               <RevenueDelta 
                 amount={stats?.todayRevenueDelta || 0} 
+                currency={storeCurrency}
                 size="lg"
                 showSign={true}
               />
