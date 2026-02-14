@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { stripHtmlTags } from "@/components/product-selector";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -3135,14 +3136,14 @@ export default function ZyraAtWork() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div className="rounded-md bg-red-500/5 border border-red-500/20 p-2" data-testid={`card-before-${pIdx}-${cIdx}`}>
                                 <span className="text-[10px] font-bold text-red-400 uppercase">Before</span>
-                                <p className="text-xs text-slate-400 mt-1 line-clamp-2" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
-                                  {change.before || <span className="italic text-slate-600">(empty)</span>}
+                                <p className="text-xs text-slate-400 mt-1 whitespace-pre-wrap" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
+                                  {change.before ? stripHtmlTags(change.before) : <span className="italic text-slate-600">(empty)</span>}
                                 </p>
                               </div>
                               <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-2" data-testid={`card-after-${pIdx}-${cIdx}`}>
                                 <span className="text-[10px] font-bold text-emerald-400 uppercase">After</span>
-                                <p className="text-xs text-emerald-300 mt-1 line-clamp-2" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
-                                  {change.after}
+                                <p className="text-xs text-emerald-300 mt-1 whitespace-pre-wrap" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
+                                  {stripHtmlTags(change.after)}
                                 </p>
                               </div>
                             </div>

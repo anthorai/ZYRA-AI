@@ -10,11 +10,17 @@ import { Badge } from '@/components/ui/badge';
 // Utility function to strip HTML tags from text (exported for use in forms)
 export function stripHtmlTags(html: string | null | undefined): string {
   if (!html) return '';
-  // Create a temporary div element to parse HTML
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  // Get text content (automatically strips all HTML tags)
-  return tmp.textContent || tmp.innerText || '';
+  let text = html;
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+  text = text.replace(/<\/li>/gi, '\n');
+  text = text.replace(/<li[^>]*>/gi, '  \u2022 ');
+  text = text.replace(/<\/ul>|<\/ol>/gi, '\n');
+  text = text.replace(/<[^>]*>/g, '');
+  text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  return text.trim();
 }
 
 interface Product {
