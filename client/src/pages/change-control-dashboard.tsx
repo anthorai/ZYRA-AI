@@ -1093,30 +1093,30 @@ export default function ChangeControlDashboard() {
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent className="pt-2 space-y-3">
+                          <CardContent className="pt-2 space-y-4">
                             {allFields.map((field) => (
                               <div key={field}>
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                                   {field}
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                  <div className="p-3 rounded-lg bg-muted/50 border border-border min-h-0 h-auto">
                                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                       <X className="w-3 h-3 text-red-400" />
                                       Before
                                     </p>
-                                    <p className="text-sm whitespace-pre-wrap">
+                                    <div className="text-sm whitespace-pre-wrap break-words overflow-visible">
                                       {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
-                                    </p>
+                                    </div>
                                   </div>
-                                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 min-h-0 h-auto">
                                     <p className="text-xs text-blue-400 mb-1 flex items-center gap-1">
                                       <CheckCircle2 className="w-3 h-3" />
                                       After
                                     </p>
-                                    <p className="text-sm font-medium whitespace-pre-wrap">
+                                    <div className="text-sm font-medium whitespace-pre-wrap break-words overflow-visible">
                                       {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
-                                    </p>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -1459,30 +1459,30 @@ export default function ChangeControlDashboard() {
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent className="pt-2 space-y-3">
+                          <CardContent className="pt-2 space-y-4">
                             {allFields.map((field) => (
                               <div key={field}>
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                                   {field}
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                  <div className="p-3 rounded-lg bg-muted/50 border border-border min-h-0 h-auto">
                                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                       <X className="w-3 h-3 text-red-400" />
                                       Before
                                     </p>
-                                    <p className="text-sm whitespace-pre-wrap">
+                                    <div className="text-sm whitespace-pre-wrap break-words overflow-visible">
                                       {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
-                                    </p>
+                                    </div>
                                   </div>
-                                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 min-h-0 h-auto">
                                     <p className="text-xs text-green-400 mb-1 flex items-center gap-1">
                                       <CheckCircle2 className="w-3 h-3" />
                                       After
                                     </p>
-                                    <p className="text-sm font-medium whitespace-pre-wrap">
+                                    <div className="text-sm font-medium whitespace-pre-wrap break-words overflow-visible">
                                       {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
-                                    </p>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
