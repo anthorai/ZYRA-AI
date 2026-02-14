@@ -54,10 +54,17 @@ export default function Pricing() {
           { label: "Home", href: "/" },
           { label: "Pricing", href: "/pricing" },
           { label: "FAQ", href: "/#faq", external: true },
-          ...(isAuthenticated ? [{ label: isLoggingOut ? "Logging out..." : "Logout", onClick: handleLogout, disabled: isLoggingOut }] : [])
         ]}
-        secondaryAction={!isAuthenticated && !loading ? { label: "Log in", href: "/auth" } : undefined}
-        actionButton={{ label: "Start Free", scrolledLabel: "Get Started", href: "/auth" }}
+        secondaryAction={
+          isAuthenticated
+            ? { label: isLoggingOut ? "Logging out..." : "Logout", onClick: handleLogout }
+            : !loading ? { label: "Log in", href: "/auth" } : undefined
+        }
+        actionButton={
+          isAuthenticated
+            ? { label: "Dashboard", scrolledLabel: "Dashboard", href: "/dashboard" }
+            : { label: "Start Free", scrolledLabel: "Get Started", href: "/auth" }
+        }
         scrollAware
       />
 
