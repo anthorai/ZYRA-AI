@@ -1100,21 +1100,21 @@ export default function ChangeControlDashboard() {
                                   {field}
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div className="p-3 rounded-lg bg-muted/50 border border-border min-h-0 h-auto">
+                                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
                                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                       <X className="w-3 h-3 text-red-400" />
                                       Before
                                     </p>
-                                    <div className="text-base leading-relaxed whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                                       {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
-                                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 min-h-0 h-auto">
+                                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
                                     <p className="text-xs text-blue-400 mb-1 flex items-center gap-1">
                                       <CheckCircle2 className="w-3 h-3" />
                                       After
                                     </p>
-                                    <div className="text-base leading-relaxed font-medium whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">
                                       {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
@@ -1466,21 +1466,21 @@ export default function ChangeControlDashboard() {
                                   {field}
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                  <div className="p-3 rounded-lg bg-muted/50 border border-border min-h-0 h-auto">
+                                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
                                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                       <X className="w-3 h-3 text-red-400" />
                                       Before
                                     </p>
-                                    <div className="text-base leading-relaxed whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                                       {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
-                                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 min-h-0 h-auto">
+                                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                                     <p className="text-xs text-green-400 mb-1 flex items-center gap-1">
                                       <CheckCircle2 className="w-3 h-3" />
                                       After
                                     </p>
-                                    <div className="text-base leading-relaxed font-medium whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">
                                       {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
