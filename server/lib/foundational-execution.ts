@@ -610,10 +610,8 @@ export class FoundationalExecutionService {
         const beforeDesc = product.description || '(no description)';
         changes.push({
           field: 'Product Description',
-          before: beforeDesc.length > 100 ? beforeDesc.substring(0, 100) + '...' : beforeDesc,
-          after: optimized.improvedDescription.length > 100
-            ? optimized.improvedDescription.substring(0, 100) + '...'
-            : optimized.improvedDescription,
+          before: beforeDesc,
+          after: optimized.improvedDescription,
           reason: 'Optimized description with keywords and benefit-focused copy',
         });
 
@@ -718,10 +716,8 @@ export class FoundationalExecutionService {
 
         changes.push({
           field: 'Product Description',
-          before: beforeDesc.length > 100 ? beforeDesc.substring(0, 100) + '...' : beforeDesc,
-          after: optimized.improvedDescription.length > 100
-            ? optimized.improvedDescription.substring(0, 100) + '...'
-            : optimized.improvedDescription,
+          before: beforeDesc,
+          after: optimized.improvedDescription,
           reason: 'Rewrote to highlight benefits and create emotional connection with buyers',
         });
 

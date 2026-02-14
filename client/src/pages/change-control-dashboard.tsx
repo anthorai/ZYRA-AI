@@ -1105,7 +1105,7 @@ export default function ChangeControlDashboard() {
                                       <X className="w-3 h-3 text-red-400" />
                                       Before
                                     </p>
-                                    <div className="text-sm whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-base leading-relaxed whitespace-pre-wrap break-words overflow-visible">
                                       {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
@@ -1114,7 +1114,7 @@ export default function ChangeControlDashboard() {
                                       <CheckCircle2 className="w-3 h-3" />
                                       After
                                     </p>
-                                    <div className="text-sm font-medium whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-base leading-relaxed font-medium whitespace-pre-wrap break-words overflow-visible">
                                       {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
@@ -1471,7 +1471,7 @@ export default function ChangeControlDashboard() {
                                       <X className="w-3 h-3 text-red-400" />
                                       Before
                                     </p>
-                                    <div className="text-sm whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-base leading-relaxed whitespace-pre-wrap break-words overflow-visible">
                                       {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
@@ -1480,7 +1480,7 @@ export default function ChangeControlDashboard() {
                                       <CheckCircle2 className="w-3 h-3" />
                                       After
                                     </p>
-                                    <div className="text-sm font-medium whitespace-pre-wrap break-words overflow-visible">
+                                    <div className="text-base leading-relaxed font-medium whitespace-pre-wrap break-words overflow-visible">
                                       {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
                                     </div>
                                   </div>
@@ -1612,22 +1612,22 @@ export default function ChangeControlDashboard() {
                           }
 
                           return (
-                            <ScrollArea className="h-[300px] pr-2">
+                            <ScrollArea className="max-h-[500px] pr-2">
                               <div className="space-y-4">
                                 {Array.from(allFields).map(field => (
                                   <div key={field} className="space-y-2">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{field}</p>
                                     <div className="grid grid-cols-1 gap-2">
-                                      <div className="p-2 rounded border bg-card">
+                                      <div className="p-3 rounded border bg-card">
                                         <p className="text-xs text-muted-foreground mb-1">Before</p>
-                                        <p className="text-xs whitespace-pre-wrap">{before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
+                                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
                                       </div>
-                                      <div className="p-2 rounded border border-primary/30 bg-primary/5">
+                                      <div className="p-3 rounded border border-primary/30 bg-primary/5">
                                         <p className="text-xs text-primary mb-1 flex items-center gap-1">
                                           <ArrowRight className="w-3 h-3" />
                                           After
                                         </p>
-                                        <p className="text-xs font-medium whitespace-pre-wrap">{after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
+                                        <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">{after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
                                       </div>
                                     </div>
                                   </div>
