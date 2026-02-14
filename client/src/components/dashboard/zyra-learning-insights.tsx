@@ -4,9 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useLearningStats } from '@/hooks/useLearningStats';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useStoreCurrency } from '@/hooks/use-store-currency';
+import { formatCurrency } from '@/lib/utils';
 
 export function ZyraLearningInsights() {
   const { data: stats, isLoading, error } = useLearningStats();
+  const { currency } = useStoreCurrency();
 
   if (isLoading) {
     return (
@@ -112,7 +115,7 @@ export function ZyraLearningInsights() {
                 <span>Estimated Revenue Lift</span>
               </div>
               <div className="text-lg font-semibold text-emerald-400">
-                +${totalRevenueLiftNum.toFixed(2)}
+                +{formatCurrency(totalRevenueLiftNum, currency)}
               </div>
             </div>
           </div>

@@ -14,9 +14,12 @@ import {
   Package
 } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 
 export default function AIUpsellSuggestionsPage() {
   const { toast } = useToast();
+  const { currency } = useStoreCurrency();
 
   // Fetch real products from API
   const { data: products = [], isLoading } = useQuery<Product[]>({
@@ -132,7 +135,7 @@ export default function AIUpsellSuggestionsPage() {
                         {product.name}
                       </h4>
                       <p className="text-primary font-bold text-xl">
-                        ${Number(product.price).toFixed(2)}
+                        {formatCurrency(Number(product.price), currency)}
                       </p>
                     </div>
                     

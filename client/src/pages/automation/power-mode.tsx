@@ -26,6 +26,8 @@ import {
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/ui/standardized-layout";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -79,6 +81,7 @@ interface PowerModeResult {
 
 export default function PowerModePage() {
   const { toast } = useToast();
+  const { currency } = useStoreCurrency();
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [targetKeyword, setTargetKeyword] = useState<string>("");
   const [analysisResult, setAnalysisResult] = useState<PowerModeResult | null>(null);
@@ -277,7 +280,7 @@ export default function PowerModePage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{selectedProduct.title}</div>
-                          <div className="text-sm text-muted-foreground">${selectedProduct.price}</div>
+                          <div className="text-sm text-muted-foreground">{formatCurrency(parseFloat(selectedProduct.price), currency)}</div>
                           {selectedProduct.productType && (
                             <Badge variant="outline" className="mt-1">{selectedProduct.productType}</Badge>
                           )}

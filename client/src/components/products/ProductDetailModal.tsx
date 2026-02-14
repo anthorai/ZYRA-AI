@@ -28,6 +28,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Product } from "@shared/schema";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 
 interface ActionHistoryItem {
   id: string;
@@ -78,7 +80,7 @@ function ActionStatusBadge({ status }: { status: string }) {
   );
 }
 
-function ActionHistoryTimeline({ productId, userId }: { productId: string; userId: string }) {
+function ActionHistoryTimeline({ productId, userId, currency }: { productId: string; userId: string; currency: string }) {
   const { data: history, isLoading } = useQuery<ActionHistoryItem[]>({
     queryKey: ['/api/products/actions', productId],
     enabled: !!productId,
@@ -137,12 +139,12 @@ function ActionHistoryTimeline({ productId, userId }: { productId: string; userI
               </span>
               
               {expected !== null && (
-                <span>Expected: +${expected.toFixed(0)}</span>
+                <span>Expected: +{formatCurrency(expected, currency)}</span>
               )}
               
               {actual !== null && (
                 <span className="text-emerald-400 font-medium">
-                  Actual: +${actual.toFixed(0)}
+                  Actual: +{formatCurrency(actual, currency)}
                 </span>
               )}
             </div>
@@ -281,6 +283,7 @@ function AutonomyControl({
 }
 
 export function ProductDetailModal({ product, isOpen, onClose, userPlan }: ProductDetailModalProps) {
+  const { currency } = useStoreCurrency();
   if (!product) return null;
   
   const { data: intelligence } = useQuery({
@@ -307,7 +310,7 @@ export function ProductDetailModal({ product, isOpen, onClose, userPlan }: Produ
             <div>
               <span data-testid="modal-product-name">{product.name}</span>
               <p className="text-sm font-normal text-muted-foreground mt-0.5">
-                {product.category} • ${parseFloat(product.price).toFixed(2)}
+                {product.category} • {formatCurrency(parseFloat(product.price), currency)}
               </p>
             </div>
           </DialogTitle>
@@ -324,7 +327,7 @@ export function ProductDetailModal({ product, isOpen, onClose, userPlan }: Produ
               </div>
               <div>
                 <p className="text-lg font-bold text-emerald-400" data-testid="text-total-revenue">
-                  +${revenueAdded.toLocaleString()}
+                  +{formatCurrency(revenueAdded, currency)}
                 </p>
                 <p className="text-xs text-muted-foreground">Revenue by ZYRA</p>
               </div>
@@ -354,7 +357,7 @@ export function ProductDetailModal({ product, isOpen, onClose, userPlan }: Produ
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ActionHistoryTimeline productId={product.id} userId={product.userId} />
+            <ActionHistoryTimeline productId={product.id} userId={product.userId} currency={currency} />
           </CardContent>
         </Card>
         

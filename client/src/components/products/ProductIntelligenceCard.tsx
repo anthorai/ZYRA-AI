@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@shared/schema";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 
 interface ProductIntelligence {
   productId: string;
@@ -146,6 +148,7 @@ function ConfidenceIndicator({ confidence, trend }: { confidence: number; trend:
 export function ProductIntelligenceCard({ product, onClick }: ProductIntelligenceCardProps) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const { currency } = useStoreCurrency();
   
   const { data: intelligence, isLoading: intelligenceLoading } = useQuery<ProductIntelligence>({
     queryKey: ['/api/products/intelligence', product.id],
@@ -197,7 +200,7 @@ export function ProductIntelligenceCard({ product, onClick }: ProductIntelligenc
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs text-muted-foreground">{product.category}</span>
                   <span className="text-xs text-primary font-medium">
-                    ${parseFloat(product.price).toFixed(2)}
+                    {formatCurrency(parseFloat(product.price), currency)}
                   </span>
                 </div>
               </div>
@@ -233,7 +236,7 @@ export function ProductIntelligenceCard({ product, onClick }: ProductIntelligenc
                 >
                   <DollarSign className="w-4 h-4 text-emerald-400" />
                   <span className="text-sm font-semibold text-emerald-400">
-                    +${revenueAdded.toLocaleString()}
+                    +{formatCurrency(revenueAdded, currency)}
                   </span>
                   <span className="text-xs text-muted-foreground">by ZYRA</span>
                 </div>
