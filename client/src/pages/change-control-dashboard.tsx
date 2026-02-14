@@ -100,7 +100,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 type ActionStatus = "pending" | "running" | "completed" | "failed" | "rolled_back" | "dry_run";
-type ActionType = "optimize_seo" | "fix_product" | "send_cart_recovery" | "run_ab_test" | "adjust_price" | "content_refresh" | "discoverability" | "seo_basics" | "product_copy_clarity" | "trust_signals" | "cart_recovery" | "title_optimization" | "meta_optimization" | "search_intent_fix" | "alt_text_optimization" | "stale_content_refresh" | "description_clarity" | "value_proposition_fix" | "trust_signal_enhancement" | "friction_copy_removal" | "above_fold_optimization" | "abandoned_cart_recovery" | "post_purchase_upsell" | "checkout_drop_mitigation" | "underperforming_rollback" | "risky_optimization_freeze" | "conversion_pattern_learning" | "performance_baseline_update";
+type ActionType = "optimize_seo" | "fix_product" | "send_cart_recovery" | "run_ab_test" | "adjust_price" | "content_refresh" | "discoverability" | "seo_basics" | "product_copy_clarity" | "trust_signals" | "cart_recovery" | "title_optimization" | "meta_optimization" | "search_intent_fix" | "alt_text_optimization" | "image_alt_text_optimization" | "image_alt_text" | "stale_content_refresh" | "stale_seo_content_refresh" | "stale_seo_refresh" | "description_clarity" | "value_proposition_fix" | "value_proposition_alignment" | "value_proposition" | "trust_signal_enhancement" | "friction_copy_removal" | "above_fold_optimization" | "above_the_fold_optimization" | "product_title_optimization" | "product_description_clarity" | "search_intent_alignment" | "meta_title_description_tags" | "abandoned_cart_recovery" | "post_purchase_upsell" | "post_purchase_upsell_enablement" | "upsell" | "checkout_drop_mitigation" | "checkout_dropoff_mitigation" | "underperforming_rollback" | "risky_optimization_freeze" | "conversion_pattern_learning" | "performance_baseline_update" | "recovery_setup";
 type RiskLevel = "low" | "medium" | "high";
 type FilterStatus = "all" | "applied" | "pending" | "rolled_back";
 type ActionCategory = "seo" | "conversion" | "revenue_recovery" | "revenue_protection" | "learning";
@@ -108,7 +108,7 @@ type ActionCategory = "seo" | "conversion" | "revenue_recovery" | "revenue_prote
 interface ChangeItem {
   id: string;
   userId: string;
-  actionType: ActionType;
+  actionType: ActionType | string;
   entityType: string | null;
   entityId: string | null;
   status: ActionStatus;
@@ -150,8 +150,11 @@ const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: stri
   search_intent_fix: { label: "Search Intent Alignment Fix", icon: Target, color: "text-purple-400", category: "seo" },
   search_intent_alignment: { label: "Search Intent Alignment", icon: Target, color: "text-purple-400", category: "seo" },
   alt_text_optimization: { label: "Image Alt-Text Optimization", icon: Image, color: "text-emerald-400", category: "seo" },
+  image_alt_text_optimization: { label: "Image Alt-Text Optimization", icon: Image, color: "text-emerald-400", category: "seo" },
+  image_alt_text: { label: "Image Alt-Text Optimization", icon: Image, color: "text-emerald-400", category: "seo" },
   stale_content_refresh: { label: "Stale SEO Content Refresh", icon: RefreshCw, color: "text-amber-400", category: "seo" },
   stale_seo_content_refresh: { label: "Stale SEO Content Refresh", icon: RefreshCw, color: "text-amber-400", category: "seo" },
+  stale_seo_refresh: { label: "Stale SEO Content Refresh", icon: RefreshCw, color: "text-amber-400", category: "seo" },
   content_refresh: { label: "Content Refresh", icon: FileText, color: "text-cyan-400", category: "seo" },
   
   // Conversion Actions
@@ -159,7 +162,9 @@ const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: stri
   product_copy_clarity: { label: "Copy Clarity", icon: FileText, color: "text-green-400", category: "conversion" },
   product_description_clarity: { label: "Product Description Clarity", icon: FileText, color: "text-green-400", category: "conversion" },
   description_clarity: { label: "Product Description Clarity Upgrade", icon: FileText, color: "text-green-400", category: "conversion" },
-  value_proposition_fix: { label: "Value Proposition Alignment Fix", icon: Sparkles, color: "text-violet-400", category: "conversion" },
+  value_proposition_fix: { label: "Value Proposition Alignment", icon: Sparkles, color: "text-violet-400", category: "conversion" },
+  value_proposition_alignment: { label: "Value Proposition Alignment", icon: Sparkles, color: "text-violet-400", category: "conversion" },
+  value_proposition: { label: "Value Proposition Alignment", icon: Sparkles, color: "text-violet-400", category: "conversion" },
   trust_signals: { label: "Trust Signals", icon: Shield, color: "text-indigo-400", category: "conversion" },
   trust_signal_enhancement: { label: "Trust Signal Enhancement", icon: Shield, color: "text-indigo-400", category: "conversion" },
   friction_copy_removal: { label: "Friction Copy Removal", icon: X, color: "text-orange-400", category: "conversion" },
@@ -175,6 +180,7 @@ const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: stri
   post_purchase_upsell_enablement: { label: "Post-Purchase Upsell Enablement", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
   upsell: { label: "Upsell Opportunity", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
   checkout_drop_mitigation: { label: "Checkout Drop-Off Mitigation", icon: DollarSign, color: "text-rose-400", category: "revenue_recovery" },
+  checkout_dropoff_mitigation: { label: "Checkout Drop-Off Mitigation", icon: DollarSign, color: "text-rose-400", category: "revenue_recovery" },
   
   // Revenue Protection Actions
   underperforming_rollback: { label: "Underperforming Change Rollback", icon: RotateCcw, color: "text-red-400", category: "revenue_protection" },
@@ -399,7 +405,8 @@ export default function ChangeControlDashboard() {
   const categoryFilteredChanges = useMemo(() => {
     return filteredChanges.filter(change => {
       const config = ACTION_TYPE_CONFIG[change.actionType];
-      return config?.category === activeCategory;
+      const category = config?.category || "conversion";
+      return category === activeCategory;
     });
   }, [filteredChanges, activeCategory]);
 
@@ -414,9 +421,8 @@ export default function ChangeControlDashboard() {
     
     filteredChanges.forEach(change => {
       const config = ACTION_TYPE_CONFIG[change.actionType];
-      if (config?.category) {
-        byCategory[config.category].push(change);
-      }
+      const category = config?.category || "conversion";
+      byCategory[category].push(change);
     });
     
     return byCategory;
