@@ -111,7 +111,7 @@ export class BulkOptimizationService {
         model: "gpt-4o-mini", // Cost-optimized for bulk
         messages: [{ role: "user", content: comprehensivePrompt }],
         temperature: 0.7,
-        max_tokens: 1200,
+        max_tokens: 4000,
         response_format: { type: "json_object" },
       });
 

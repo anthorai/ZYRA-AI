@@ -560,13 +560,13 @@ export class FoundationalExecutionService {
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 1500 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 4000 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 1500,
+            max_tokens: 4000,
           });
           return response.choices[0]?.message?.content || '{}';
         }
@@ -697,13 +697,13 @@ export class FoundationalExecutionService {
 
     try {
       const content = await cachedTextGeneration(
-        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 1200 },
+        { prompt, model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 4000 },
         async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 1200,
+            max_tokens: 4000,
           });
           return response.choices[0]?.message?.content || '{}';
         }

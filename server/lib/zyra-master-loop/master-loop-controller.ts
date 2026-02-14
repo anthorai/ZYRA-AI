@@ -817,14 +817,14 @@ export class MasterLoopController {
           prompt,
           model: 'gpt-4o-mini',
           temperature: 0.7,
-          maxTokens: 1000,
+          maxTokens: 3000,
         },
         async () => {
           const res = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.7,
-            max_tokens: 1000,
+            max_tokens: 3000,
           });
           return res.choices[0]?.message?.content || '';
         }
