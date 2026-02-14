@@ -163,9 +163,19 @@ export async function updateUserSubscription(
       console.log(`[DB] Created user ${userId} in PostgreSQL with fullName: ${fullName}`);
     }
 
-    // Update user's plan
+    const isFreePlan = plan.planName.toLowerCase() === 'free' && !plan.planName.toLowerCase().includes('trial');
+    if (isFreePlan && existingUser.hasUsedFreePlan) {
+      console.log(`[DB] ⛔ User ${userId} already used their one-time Free plan. Blocking re-activation.`);
+      throw new Error('FREE_PLAN_ALREADY_USED');
+    }
+
+    // Update user's plan + mark free plan usage if applicable
+    const updateSet: Record<string, any> = { plan: plan.planName };
+    if (isFreePlan) {
+      updateSet.hasUsedFreePlan = true;
+    }
     const [updatedUser] = await db.update(users)
-      .set({ plan: plan.planName })
+      .set(updateSet)
       .where(eq(users.id, userId))
       .returning();
 

@@ -6263,6 +6263,9 @@ Output format: Markdown with clear section headings.`;
       const userId = (req as AuthenticatedRequest).user.id;
       let shopifyVerified = false; // Track if we successfully verified with Shopify
       
+      const neonUser = await getUserById(userId);
+      const userHasUsedFreePlan = neonUser?.hasUsedFreePlan || false;
+      
       // Step 1: Check if user has an active Shopify connection
       // If so, verify subscription status with Shopify FIRST (source of truth)
       const connections = await supabaseStorage.getStoreConnections(userId);
@@ -6308,11 +6311,22 @@ Output format: Markdown with clear section headings.`;
                   ? new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000)
                   : undefined;
                 
-                await updateUserSubscription(userId, matchedPlan.id, (req as AuthenticatedRequest).user.email, 'monthly', {
-                  shopifySubscriptionId: shopifySubscription.id,
-                  currentPeriodStart: periodStart,
-                  currentPeriodEnd: periodEnd
-                });
+                try {
+                  await updateUserSubscription(userId, matchedPlan.id, (req as AuthenticatedRequest).user.email, 'monthly', {
+                    shopifySubscriptionId: shopifySubscription.id,
+                    currentPeriodStart: periodStart,
+                    currentPeriodEnd: periodEnd
+                  });
+                } catch (err: any) {
+                  if (err.message === 'FREE_PLAN_ALREADY_USED') {
+                    console.log(`[API] ⛔ Free plan already used by user ${userId}. Skipping sync.`);
+                    return res.status(403).json({
+                      error: "Free plan already used",
+                      message: "The Free plan can only be activated once per account. Please upgrade to a paid plan."
+                    });
+                  }
+                  throw err;
+                }
               }
               
               const subscriptionResponse = {
@@ -6332,6 +6346,7 @@ Output format: Markdown with clear section headings.`;
                 isTrial: false,
                 isExpired: false,
                 verifiedWithShopify: true,
+                hasUsedFreePlan: userHasUsedFreePlan,
               };
               
               console.log(`[API] Returning Shopify-verified subscription for user ${userId}: ${matchedPlan.planName}`);
@@ -6382,6 +6397,7 @@ Output format: Markdown with clear section headings.`;
                 features: plan.features,
                 isTrial: false,
                 isExpired: false,
+                hasUsedFreePlan: userHasUsedFreePlan,
               };
               
               console.log(`[API] Returning non-Shopify subscription from DB for user ${userId}: ${plan.planName}`);
@@ -7077,16 +7093,25 @@ Output format: Markdown with clear section headings.`;
       if (Number(selectedPlan.price) === 0 || selectedPlan.planName === '7-Day Free Trial') {
         console.log("[SUBSCRIPTION] Free plan selected, updating directly");
         
-        // Update subscription directly for free plans
-        const updatedUser = await updateUserSubscription(userId, planId, userEmail);
-        await initializeUserCredits(userId, planId);
-        await NotificationService.notifySubscriptionChanged(userId, planId);
-        
-        return res.json({ 
-          success: true,
-          requiresShopifyBilling: false,
-          user: updatedUser 
-        });
+        try {
+          const updatedUser = await updateUserSubscription(userId, planId, userEmail);
+          await initializeUserCredits(userId, planId);
+          await NotificationService.notifySubscriptionChanged(userId, planId);
+          
+          return res.json({ 
+            success: true,
+            requiresShopifyBilling: false,
+            user: updatedUser 
+          });
+        } catch (err: any) {
+          if (err.message === 'FREE_PLAN_ALREADY_USED') {
+            return res.status(403).json({
+              error: "Free plan already used",
+              message: "The Free plan can only be activated once per account. Please choose a paid plan to continue."
+            });
+          }
+          throw err;
+        }
       }
       
       // For paid plans, use Shopify Managed Pricing (rules 1.2.1 and 4.2.1)
@@ -7447,7 +7472,15 @@ Output format: Markdown with clear section headings.`;
           };
           
           // Update user subscription with Shopify data
-          await updateUserSubscription(user.id, matchedPlan.id, user.email, 'monthly', shopifyOptions);
+          try {
+            await updateUserSubscription(user.id, matchedPlan.id, user.email, 'monthly', shopifyOptions);
+          } catch (err: any) {
+            if (err.message === 'FREE_PLAN_ALREADY_USED') {
+              console.log(`[SHOPIFY CALLBACK] ⛔ Free plan already used by user ${user.id}. Redirecting to pricing.`);
+              return res.redirect(`${frontendUrl}/pricing?error=free_plan_used`);
+            }
+            throw err;
+          }
           await initializeUserCredits(user.id, matchedPlan.id);
           
           // Get the subscription record for invoice creation
@@ -12450,8 +12483,16 @@ Output format: Markdown with clear section headings.`;
                   .limit(1);
                 
                 if (freePlan) {
-                  await updateUserSubscription(resolvedUserId, freePlan.id, shopOwnerEmail, 'monthly');
-                  console.log('✅ Free plan assigned to new user');
+                  try {
+                    await updateUserSubscription(resolvedUserId, freePlan.id, shopOwnerEmail, 'monthly');
+                    console.log('✅ Free plan assigned to new user');
+                  } catch (freePlanErr: any) {
+                    if (freePlanErr.message === 'FREE_PLAN_ALREADY_USED') {
+                      console.log('⛔ Free plan already used by this user, skipping assignment');
+                    } else {
+                      throw freePlanErr;
+                    }
+                  }
                 }
               }
             } catch (subError) {
@@ -16524,20 +16565,37 @@ Output format: Markdown with clear section headings.`;
         
         const user = await supabaseStorage.getUserById(userId);
         if (user) {
-          await updateUserSubscription(userId, matchedPlan.id, user.email);
-          await initializeUserCredits(userId, matchedPlan.id);
-          await NotificationService.notifySubscriptionChanged(userId, matchedPlan.id);
+          try {
+            await updateUserSubscription(userId, matchedPlan.id, user.email);
+            await initializeUserCredits(userId, matchedPlan.id);
+            await NotificationService.notifySubscriptionChanged(userId, matchedPlan.id);
+          } catch (err: any) {
+            if (err.message === 'FREE_PLAN_ALREADY_USED') {
+              console.log(`[APP_SUBSCRIPTIONS_UPDATE] ⛔ Free plan already used by user ${userId}. Ignoring activation.`);
+            } else {
+              throw err;
+            }
+          }
         }
       } else if (subscriptionStatus === 'CANCELLED' || subscriptionStatus === 'EXPIRED') {
-        // Subscription cancelled - downgrade to free tier
+        // Subscription cancelled - cancel but don't auto-downgrade to free if already used
         console.log(`⚠️ [APP_SUBSCRIPTIONS_UPDATE] Subscription ${subscriptionStatus} for user ${userId}`);
         
         const freePlan = plans.find(p => Number(p.price) === 0 || p.planName === '7-Day Free Trial');
         if (freePlan) {
           const user = await supabaseStorage.getUserById(userId);
           if (user) {
-            await updateUserSubscription(userId, freePlan.id, user.email);
-            await initializeUserCredits(userId, freePlan.id);
+            try {
+              await updateUserSubscription(userId, freePlan.id, user.email);
+              await initializeUserCredits(userId, freePlan.id);
+            } catch (err: any) {
+              if (err.message === 'FREE_PLAN_ALREADY_USED') {
+                console.log(`[APP_SUBSCRIPTIONS_UPDATE] ⛔ Free plan already used by user ${userId}. Cancelling subscription instead.`);
+                await cancelUserSubscription(userId, `${subscriptionStatus.toLowerCase()}_free_plan_exhausted`);
+              } else {
+                throw err;
+              }
+            }
           }
         }
       } else if (subscriptionStatus === 'DECLINED') {

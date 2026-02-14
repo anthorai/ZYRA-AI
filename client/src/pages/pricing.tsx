@@ -17,7 +17,7 @@ export default function Pricing() {
   const { isAuthenticated, loading, logout, isLoggingOut } = useAuth();
   const { toast } = useToast();
 
-  const { data: subscription } = useQuery<{ planName?: string; status?: string }>({
+  const { data: subscription } = useQuery<{ planName?: string; status?: string; hasUsedFreePlan?: boolean }>({
     queryKey: ["/api/subscription/current"],
     enabled: isAuthenticated && !loading,
   });
@@ -25,6 +25,7 @@ export default function Pricing() {
   const rawPlanName = subscription?.planName?.toLowerCase() || "";
   const currentPlanName = rawPlanName.includes('trial') ? 'free' : rawPlanName;
   const hasActivePlan = subscription?.status === 'active' || subscription?.status === 'trial';
+  const hasUsedFreePlan = subscription?.hasUsedFreePlan || false;
 
   const handleLogout = async () => {
     try {
@@ -348,6 +349,11 @@ export default function Pricing() {
                       <Button variant="outline" className="w-full border-emerald-500/40 text-emerald-300 bg-emerald-500/10 cursor-default" disabled data-testid="button-free-cta">
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         Active Plan
+                      </Button>
+                    ) : hasUsedFreePlan ? (
+                      <Button variant="outline" className="w-full border-gray-500/40 text-gray-400 bg-gray-500/10 cursor-not-allowed" disabled data-testid="button-free-cta">
+                        <Lock className="w-4 h-4 mr-2" />
+                        Already Used
                       </Button>
                     ) : (
                       <Button asChild variant="outline" className="w-full border-emerald-500/40 text-emerald-300 bg-emerald-500/5" data-testid="button-free-cta">
