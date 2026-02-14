@@ -179,6 +179,59 @@ const SYSTEM_CAPABILITIES = [
   },
 ];
 
+const LIVE_STATUS_MESSAGES = [
+  "Scanning product listings for SEO decay...",
+  "Analyzing conversion funnels for friction...",
+  "Monitoring keyword rankings for drift...",
+  "Checking cart recovery flow performance...",
+  "Auditing product descriptions for clarity...",
+  "Evaluating trust signal effectiveness...",
+  "Scanning meta tags for optimization gaps...",
+  "Monitoring competitor pricing changes...",
+  "Analyzing buyer intent alignment...",
+  "Checking email campaign deliverability...",
+];
+
+function ScanningHeartbeat() {
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setMessageIndex(prev => (prev + 1) % LIVE_STATUS_MESSAGES.length);
+        setIsTransitioning(false);
+      }, 400);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-full max-w-xs h-[2px] rounded-full bg-slate-800 overflow-hidden relative">
+        <div 
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+          style={{
+            width: '40%',
+            animation: 'scanLine 2s ease-in-out infinite',
+          }}
+        />
+      </div>
+      <div className="flex items-center gap-2 min-h-[20px]">
+        <Radar className="w-3 h-3 text-emerald-500/60 animate-spin" style={{ animationDuration: '3s' }} />
+        <p 
+          className={`text-[11px] font-mono text-emerald-400/60 transition-all duration-400 ${
+            isTransitioning ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'
+          }`}
+        >
+          {LIVE_STATUS_MESSAGES[messageIndex]}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function RevenueImmuneCard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -553,13 +606,33 @@ export default function RevenueImmuneCard() {
           <div className="p-6 sm:p-8 space-y-6">
 
           {/* LAYER 2 — PRIMARY METRIC (Revenue Impact) */}
-          <div className={`rounded-xl p-6 sm:p-8 text-center ${
+          <div className={`relative rounded-xl p-6 sm:p-8 text-center overflow-hidden ${
             isActive 
               ? 'bg-gradient-to-br from-emerald-500/8 via-[#111125] to-[#111125] border border-emerald-500/15' 
               : 'bg-[#111125] border border-slate-700/40'
           }`}>
-            <p className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-3">Revenue loss prevented this month</p>
-            <div className="flex items-baseline justify-center gap-1">
+            {isActive && (
+              <>
+                <div 
+                  className="absolute inset-0 rounded-xl opacity-30"
+                  style={{
+                    background: 'radial-gradient(ellipse at center, rgba(16,185,129,0.08) 0%, transparent 70%)',
+                    animation: 'pulseGlow 3s ease-in-out infinite',
+                  }}
+                />
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-emerald-400/70">Monitoring</span>
+                </div>
+              </>
+            )}
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-3 relative z-10">
+              Revenue generated with ZYRA this month
+            </p>
+            <div className="flex items-baseline justify-center gap-1 relative z-10">
               <span 
                 className={`text-5xl sm:text-6xl font-black tracking-tight ${isActive ? 'text-emerald-400' : 'text-white'}`}
                 style={isActive && preventedRevenue > 0 ? { textShadow: '0 0 30px rgba(16,185,129,0.3)' } : undefined}
@@ -568,8 +641,15 @@ export default function RevenueImmuneCard() {
                 {formatCompactCurrency(preventedRevenue)}
               </span>
             </div>
+
+            {isActive && (
+              <div className="mt-4 relative z-10">
+                <ScanningHeartbeat />
+              </div>
+            )}
+
             {preventedRevenue === 0 && (
-              <div className="mt-4">
+              <div className="mt-3 relative z-10">
                 <p className="text-sm text-slate-300 font-medium">No sales attributed yet</p>
                 <p className="text-xs text-slate-500 mt-1">Revenue will appear here when customers buy products ZYRA has optimized</p>
               </div>
@@ -580,11 +660,26 @@ export default function RevenueImmuneCard() {
           {isActive && (
             <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-4" data-testid="scan-explanation-bar">
               <div className="flex items-start gap-3">
-                <Radio className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5 animate-pulse" />
-                <p className="text-sm text-slate-400">
-                  ZYRA is continuously scanning your Shopify store for revenue decay, intent mismatch, 
-                  SEO erosion, and recovery flow fatigue -- automatically and silently.
-                </p>
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <Radio className="w-5 h-5 text-emerald-400" />
+                  <div className="absolute inset-0 animate-ping opacity-40">
+                    <Radio className="w-5 h-5 text-emerald-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-400">
+                    ZYRA is continuously scanning your Shopify store for revenue decay, intent mismatch, 
+                    SEO erosion, and recovery flow fatigue -- automatically and silently.
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" style={{ animationDelay: '300ms' }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" style={{ animationDelay: '600ms' }} />
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400/50 uppercase tracking-wider">Active Defense</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

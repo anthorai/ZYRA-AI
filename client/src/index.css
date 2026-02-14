@@ -734,4 +734,15 @@
   .meter-glow-starter {
     animation: meter-glow-starter 4s ease-in-out infinite;
   }
+
+  @keyframes scanLine {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(250%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.15; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(1.02); }
+  }
 }
