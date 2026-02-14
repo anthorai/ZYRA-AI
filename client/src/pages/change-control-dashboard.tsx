@@ -1102,8 +1102,8 @@ export default function ChangeControlDashboard() {
                                   <X className="w-3 h-3 text-red-400" />
                                   Before (Unoptimized)
                                 </p>
-                                <p className="text-sm">
-                                  {beforeText.length > 200 ? beforeText.substring(0, 200) + "..." : beforeText}
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {stripHtmlTags(beforeText)}
                                 </p>
                               </div>
                               <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
@@ -1111,8 +1111,8 @@ export default function ChangeControlDashboard() {
                                   <CheckCircle2 className="w-3 h-3" />
                                   After (Optimized)
                                 </p>
-                                <p className="text-sm font-medium">
-                                  {afterText.length > 200 ? afterText.substring(0, 200) + "..." : afterText}
+                                <p className="text-sm font-medium whitespace-pre-wrap">
+                                  {stripHtmlTags(afterText)}
                                 </p>
                               </div>
                             </div>
@@ -1463,8 +1463,8 @@ export default function ChangeControlDashboard() {
                                   <X className="w-3 h-3 text-red-400" />
                                   Before (Unoptimized)
                                 </p>
-                                <p className="text-sm">
-                                  {beforeText.length > 200 ? beforeText.substring(0, 200) + "..." : beforeText}
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {stripHtmlTags(beforeText)}
                                 </p>
                               </div>
                               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
@@ -1472,8 +1472,8 @@ export default function ChangeControlDashboard() {
                                   <CheckCircle2 className="w-3 h-3" />
                                   After (Optimized)
                                 </p>
-                                <p className="text-sm font-medium">
-                                  {afterText.length > 200 ? afterText.substring(0, 200) + "..." : afterText}
+                                <p className="text-sm font-medium whitespace-pre-wrap">
+                                  {stripHtmlTags(afterText)}
                                 </p>
                               </div>
                             </div>
