@@ -141,6 +141,36 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+function matchShopifyPlanName(shopifyName: string | undefined | null, plans: Array<{ planName: string; [key: string]: any }>): typeof plans[number] | undefined {
+  if (!shopifyName) return undefined;
+  const subLower = shopifyName.toLowerCase().trim();
+  const KNOWN_SUFFIXES = [' to install', ' plan', ' monthly', ' yearly', ' annual'];
+  let stripped = subLower;
+  for (const suffix of KNOWN_SUFFIXES) {
+    if (stripped.endsWith(suffix)) {
+      stripped = stripped.slice(0, -suffix.length).trim();
+      break;
+    }
+  }
+  let bestMatch: typeof plans[number] | undefined;
+  let bestLen = 0;
+  for (const plan of plans) {
+    const planLower = plan.planName.toLowerCase();
+    const handleLower = ((plan as any).shopifyPlanHandle || '').toLowerCase();
+    if (planLower === subLower || planLower === stripped) {
+      return plan;
+    }
+    if (handleLower && (handleLower === subLower || handleLower === stripped)) {
+      return plan;
+    }
+    if (stripped === planLower && planLower.length > bestLen) {
+      bestMatch = plan;
+      bestLen = planLower.length;
+    }
+  }
+  return bestMatch;
+}
+
 // Types for authenticated user from Supabase
 interface AuthenticatedUser {
   id: string;
@@ -6265,10 +6295,7 @@ Output format: Markdown with clear section headings.`;
             const subscriptionName = shopifySubscription.name;
             const plans = await getSubscriptionPlans();
             
-            const matchedPlan = plans.find(p => 
-              p.planName.toLowerCase() === subscriptionName?.toLowerCase() ||
-              (p as any).shopifyPlanHandle?.toLowerCase() === subscriptionName?.toLowerCase()
-            );
+            const matchedPlan = matchShopifyPlanName(subscriptionName, plans);
             
             if (matchedPlan) {
               // If DB is out of sync, update it
@@ -7321,10 +7348,7 @@ Output format: Markdown with clear section headings.`;
           
           // Shopify has active subscription
           const plans = await getSubscriptionPlans();
-          const matchedPlan = plans.find(p => 
-            p.planName.toLowerCase() === shopifySubscription.name?.toLowerCase() ||
-            (p as any).shopifyPlanHandle?.toLowerCase() === shopifySubscription.name?.toLowerCase()
-          );
+          const matchedPlan = matchShopifyPlanName(shopifySubscription.name, plans);
           
           return res.json({
             hasActiveSubscription: true,
@@ -7404,10 +7428,7 @@ Output format: Markdown with clear section headings.`;
         const subscriptionName = activeSubscription.name;
         const plans = await getSubscriptionPlans();
         
-        const matchedPlan = plans.find(p => 
-          p.planName.toLowerCase() === subscriptionName?.toLowerCase() ||
-          (p as any).shopifyPlanHandle?.toLowerCase() === subscriptionName?.toLowerCase()
-        );
+        const matchedPlan = matchShopifyPlanName(subscriptionName, plans);
         
         if (matchedPlan) {
           // Calculate period start from period end (approximately 30 days before)
@@ -16494,10 +16515,7 @@ Output format: Markdown with clear section headings.`;
       
       // Map Shopify subscription name to our plan
       const plans = await getSubscriptionPlans();
-      let matchedPlan = plans.find(p => 
-        p.planName.toLowerCase() === subscriptionName?.toLowerCase() ||
-        (p as any).shopifyPlanHandle?.toLowerCase() === subscriptionName?.toLowerCase()
-      );
+      let matchedPlan = matchShopifyPlanName(subscriptionName, plans);
       
       // Handle subscription status changes
       if (subscriptionStatus === 'ACTIVE' && matchedPlan) {

@@ -1,10 +1,11 @@
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Check, Shield, Lock, TrendingUp,
-  Zap, Activity, BarChart3, Eye, RefreshCcw, Cpu, Gift
+  Zap, Activity, BarChart3, Eye, RefreshCcw, Cpu, Gift, CheckCircle2
 } from "lucide-react";
 import ResponsiveNavbar from "@/components/responsive-navbar";
 import Footer from "@/components/ui/footer";
@@ -15,6 +16,15 @@ import { Helmet } from "react-helmet";
 export default function Pricing() {
   const { isAuthenticated, loading, logout, isLoggingOut } = useAuth();
   const { toast } = useToast();
+
+  const { data: subscription } = useQuery<{ planName?: string; status?: string }>({
+    queryKey: ["/api/subscription/current"],
+    enabled: isAuthenticated && !loading,
+  });
+
+  const rawPlanName = subscription?.planName?.toLowerCase() || "";
+  const currentPlanName = rawPlanName.includes('trial') ? 'free' : rawPlanName;
+  const hasActivePlan = subscription?.status === 'active' || subscription?.status === 'trial';
 
   const handleLogout = async () => {
     try {
@@ -270,8 +280,19 @@ export default function Pricing() {
               {/* ---- FREE: FREE TO INSTALL ---- */}
               <div className="relative group" data-testid="pricing-card-free">
                 <div className="absolute -inset-[1px] bg-gradient-to-b from-emerald-500/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <Card className="relative h-full bg-[#12122a] border-emerald-500/20 overflow-visible">
-                  <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+                <Card className={`relative h-full bg-[#12122a] overflow-visible ${hasActivePlan && currentPlanName === 'free' ? 'border-emerald-500/60 ring-1 ring-emerald-500/30' : 'border-emerald-500/20'}`}>
+                  {hasActivePlan && currentPlanName === 'free' && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <span
+                        className="no-default-hover-elevate no-default-active-elevate inline-flex items-center gap-1.5 px-4 py-1 text-xs font-bold uppercase tracking-widest rounded-full whitespace-nowrap bg-emerald-500 text-[#0a0a1a]"
+                        data-testid="badge-current-plan-free"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        Current Plan
+                      </span>
+                    </div>
+                  )}
+                  <CardContent className={`p-6 sm:p-8 flex flex-col h-full ${hasActivePlan && currentPlanName === 'free' ? 'pt-8' : ''}`}>
                     <div className="flex items-center gap-3 mb-5">
                       <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
                         <Gift className="w-6 h-6 text-emerald-400" />
@@ -323,9 +344,16 @@ export default function Pricing() {
                       </div>
                     </div>
 
-                    <Button asChild variant="outline" className="w-full border-emerald-500/40 text-emerald-300 bg-emerald-500/5" data-testid="button-free-cta">
-                      <Link href="/auth">Get Started Free</Link>
-                    </Button>
+                    {hasActivePlan && currentPlanName === 'free' ? (
+                      <Button variant="outline" className="w-full border-emerald-500/40 text-emerald-300 bg-emerald-500/10 cursor-default" disabled data-testid="button-free-cta">
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Active Plan
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" className="w-full border-emerald-500/40 text-emerald-300 bg-emerald-500/5" data-testid="button-free-cta">
+                        <Link href="/auth">Get Started Free</Link>
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -333,8 +361,19 @@ export default function Pricing() {
               {/* ---- STARTER: CONSERVATIVE CONTROL ---- */}
               <div className="relative group" data-testid="pricing-card-starter">
                 <div className="absolute -inset-[1px] bg-gradient-to-b from-blue-500/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <Card className="relative h-full bg-[#12122a] border-blue-500/20 overflow-visible">
-                  <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+                <Card className={`relative h-full bg-[#12122a] overflow-visible ${hasActivePlan && currentPlanName === 'starter' ? 'border-blue-500/60 ring-1 ring-blue-500/30' : 'border-blue-500/20'}`}>
+                  {hasActivePlan && currentPlanName === 'starter' && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <span
+                        className="no-default-hover-elevate no-default-active-elevate inline-flex items-center gap-1.5 px-4 py-1 text-xs font-bold uppercase tracking-widest rounded-full whitespace-nowrap bg-blue-500 text-[#0a0a1a]"
+                        data-testid="badge-current-plan-starter"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        Current Plan
+                      </span>
+                    </div>
+                  )}
+                  <CardContent className={`p-6 sm:p-8 flex flex-col h-full ${hasActivePlan && currentPlanName === 'starter' ? 'pt-8' : ''}`}>
                     {/* Icon + Label */}
                     <div className="flex items-center gap-3 mb-5">
                       <div className="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center">
@@ -388,9 +427,16 @@ export default function Pricing() {
                     </div>
 
                     {/* CTA */}
-                    <Button asChild variant="outline" className="w-full border-blue-500/40 text-blue-300 bg-blue-500/5" data-testid="button-starter-cta">
-                      <Link href="/auth">Start Safe</Link>
-                    </Button>
+                    {hasActivePlan && currentPlanName === 'starter' ? (
+                      <Button variant="outline" className="w-full border-blue-500/40 text-blue-300 bg-blue-500/10 cursor-default" disabled data-testid="button-starter-cta">
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Active Plan
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" className="w-full border-blue-500/40 text-blue-300 bg-blue-500/5" data-testid="button-starter-cta">
+                        <Link href="/auth">Start Safe</Link>
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -400,7 +446,7 @@ export default function Pricing() {
                 {/* Glow effect */}
                 <div className="absolute -inset-[2px] bg-gradient-to-b from-primary/40 via-primary/20 to-primary/5 rounded-2xl blur-sm" />
                 <Card className="relative h-full bg-[#12122a] border-primary ring-1 ring-primary/30 overflow-visible">
-                  {/* Most Popular badge */}
+                  {/* Most Popular / Current Plan badge */}
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
                     <span
                       className="no-default-hover-elevate no-default-active-elevate inline-flex items-center gap-1.5 px-5 py-1.5 text-xs font-bold uppercase tracking-widest rounded-full whitespace-nowrap"
@@ -410,10 +456,13 @@ export default function Pricing() {
                         boxShadow: '0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.15)',
                         letterSpacing: '0.12em',
                       }}
-                      data-testid="badge-most-popular"
+                      data-testid={hasActivePlan && currentPlanName === 'growth' ? 'badge-current-plan-growth' : 'badge-most-popular'}
                     >
-                      <Zap className="w-3 h-3" />
-                      Most Popular
+                      {hasActivePlan && currentPlanName === 'growth' ? (
+                        <><CheckCircle2 className="w-3 h-3" /> Current Plan</>
+                      ) : (
+                        <><Zap className="w-3 h-3" /> Most Popular</>
+                      )}
                     </span>
                   </div>
 
@@ -475,12 +524,19 @@ export default function Pricing() {
                     </div>
 
                     {/* CTA */}
-                    <Button asChild className="w-full gradient-button border border-primary/50" data-testid="button-growth-cta">
-                      <Link href="/auth">
-                        Unlock Growth
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Link>
-                    </Button>
+                    {hasActivePlan && currentPlanName === 'growth' ? (
+                      <Button className="w-full gradient-button border border-primary/50 cursor-default" disabled data-testid="button-growth-cta">
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Active Plan
+                      </Button>
+                    ) : (
+                      <Button asChild className="w-full gradient-button border border-primary/50" data-testid="button-growth-cta">
+                        <Link href="/auth">
+                          Unlock Growth
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Link>
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -488,8 +544,19 @@ export default function Pricing() {
               {/* ---- PRO: REVENUE PROTECTION SYSTEM ---- */}
               <div className="relative group" data-testid="pricing-card-pro">
                 <div className="absolute -inset-[1px] bg-gradient-to-b from-amber-500/25 to-transparent rounded-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-                <Card className="relative h-full bg-[#12122a] border-amber-500/30 overflow-visible">
-                  <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+                <Card className={`relative h-full bg-[#12122a] overflow-visible ${hasActivePlan && currentPlanName === 'pro' ? 'border-amber-500/60 ring-1 ring-amber-500/30' : 'border-amber-500/30'}`}>
+                  {hasActivePlan && currentPlanName === 'pro' && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <span
+                        className="no-default-hover-elevate no-default-active-elevate inline-flex items-center gap-1.5 px-4 py-1 text-xs font-bold uppercase tracking-widest rounded-full whitespace-nowrap bg-amber-500 text-[#0a0a1a]"
+                        data-testid="badge-current-plan-pro"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        Current Plan
+                      </span>
+                    </div>
+                  )}
+                  <CardContent className={`p-6 sm:p-8 flex flex-col h-full ${hasActivePlan && currentPlanName === 'pro' ? 'pt-8' : ''}`}>
                     {/* Icon + Label */}
                     <div className="flex items-center gap-3 mb-5">
                       <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center">
@@ -547,9 +614,16 @@ export default function Pricing() {
                     </div>
 
                     {/* CTA */}
-                    <Button asChild variant="outline" className="w-full border-amber-500/40 text-amber-300 bg-amber-500/5" data-testid="button-pro-cta">
-                      <Link href="/auth">Start Pro</Link>
-                    </Button>
+                    {hasActivePlan && currentPlanName === 'pro' ? (
+                      <Button variant="outline" className="w-full border-amber-500/40 text-amber-300 bg-amber-500/10 cursor-default" disabled data-testid="button-pro-cta">
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Active Plan
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" className="w-full border-amber-500/40 text-amber-300 bg-amber-500/5" data-testid="button-pro-cta">
+                        <Link href="/auth">Start Pro</Link>
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -576,11 +650,18 @@ export default function Pricing() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
               {/* ── FREE CARD ── */}
-              <Card className="glass-card border-emerald-500/20 hover-elevate transition-all duration-300" data-testid="control-card-free">
+              <Card className={`glass-card hover-elevate transition-all duration-300 ${hasActivePlan && currentPlanName === 'free' ? 'border-emerald-500/50 ring-1 ring-emerald-500/20' : 'border-emerald-500/20'}`} data-testid="control-card-free">
                 <CardContent className="p-6 flex flex-col h-full">
                   <div className="mb-5">
-                    <div className="w-11 h-11 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4">
-                      <Gift className="w-5 h-5 text-emerald-400" />
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-11 h-11 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <Gift className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      {hasActivePlan && currentPlanName === 'free' && (
+                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px]">
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> Active
+                        </Badge>
+                      )}
                     </div>
                     <h3 className="text-lg font-bold text-emerald-300" data-testid="text-control-name-free">Free</h3>
                     <span className="text-xs text-emerald-400/70 tracking-wide uppercase font-medium">Free to Install</span>
