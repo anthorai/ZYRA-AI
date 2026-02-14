@@ -18100,12 +18100,41 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
 
-      const { autonomousActions, products } = await import('@shared/schema');
+      const { autonomousActions, products, storeConnections } = await import('@shared/schema');
       
-      const limit = parseInt(req.query.limit as string) || 50;
-      const offset = parseInt(req.query.offset as string) || 0;
+      const limitNum = parseInt(req.query.limit as string) || 50;
+      const offsetNum = parseInt(req.query.offset as string) || 0;
 
-      // Join with products table to get real product names and images
+      const connections = await db
+        .select()
+        .from(storeConnections)
+        .where(and(
+          eq(storeConnections.userId, userId),
+          eq(storeConnections.platform, 'shopify'),
+          eq(storeConnections.status, 'active')
+        ))
+        .orderBy(desc(storeConnections.createdAt));
+      
+      const activeStore = connections[0];
+      const activeDomain = activeStore?.storeUrl?.replace('https://', '').replace('http://', '').replace(/\/$/, '') || '';
+
+      const storeWideTypes = [
+        'upsell', 'send_cart_recovery', 'cart_recovery', 
+        'abandoned_cart_recovery', 'checkout_drop_mitigation',
+        'recovery_setup'
+      ];
+
+      const whereConditions = activeDomain
+        ? and(
+            eq(autonomousActions.userId, userId),
+            or(
+              eq(autonomousActions.entityType, 'store'),
+              inArray(autonomousActions.actionType, storeWideTypes),
+              eq(products.shopDomain, activeDomain)
+            )
+          )
+        : eq(autonomousActions.userId, userId);
+
       const actions = await db
         .select({
           id: autonomousActions.id,
@@ -18131,10 +18160,10 @@ Output format: Markdown with clear section headings.`;
         })
         .from(autonomousActions)
         .leftJoin(products, eq(autonomousActions.entityId, products.id))
-        .where(eq(autonomousActions.userId, userId))
+        .where(whereConditions)
         .orderBy(desc(autonomousActions.createdAt))
-        .limit(limit)
-        .offset(offset);
+        .limit(limitNum)
+        .offset(offsetNum);
 
       res.json(actions);
     } catch (error) {
