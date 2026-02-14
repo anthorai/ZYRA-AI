@@ -237,7 +237,24 @@ export class FoundationalExecutionService {
         ));
       const lockedProductIds = new Set(lockedForAction.map(l => l.entityId));
 
-      // Filter out products already locked for THIS action
+      // PERMANENT BLOCK: Also check completed autonomousActions for this action type
+      // Never repeat the same action on the same product
+      const completedForAction = await db
+        .select({ entityId: autonomousActions.entityId })
+        .from(autonomousActions)
+        .where(and(
+          eq(autonomousActions.userId, userId),
+          eq(autonomousActions.entityType, 'product'),
+          eq(autonomousActions.actionType, actionId),
+          eq(autonomousActions.status, 'completed')
+        ));
+      for (const completed of completedForAction) {
+        if (completed.entityId) {
+          lockedProductIds.add(completed.entityId);
+        }
+      }
+
+      // Filter out products already locked/completed for THIS action
       const unlockedProducts = allUserProducts.filter(p => !lockedProductIds.has(p.product.id));
       const lockedProducts = allUserProducts.filter(p => lockedProductIds.has(p.product.id));
 

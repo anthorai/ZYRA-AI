@@ -932,40 +932,31 @@ export class FastDetectionEngine {
       let targetProduct = userProducts[0];
       let isAlreadyOptimized = false; // Track if we're showing a locked action
       
-      // RULE 8: Check per-action-type cooldowns for recently executed actions
-      // Uses ActionDeduplicationGuard's cooldown config instead of hardcoded duration
-      const cooldownCombinations = new Set<string>();
+      // RULE 8: PERMANENT BLOCK — Never repeat the same action on the same product
+      // Query ALL completed actions for this user (not just recent ones within cooldown)
+      // Same action + same product = permanently blocked unless material change unlocks it
+      const completedCombinations = new Set<string>();
       try {
-        const maxCooldownMs = actionDeduplicationGuard.getMaxCooldownMs();
-        const cooldownCutoff = new Date(Date.now() - maxCooldownMs);
-        
-        const recentExecutions = await db
+        const allCompletedActions = await db
           .select({
             entityId: autonomousActions.entityId,
             actionType: autonomousActions.actionType,
-            completedAt: autonomousActions.completedAt,
           })
           .from(autonomousActions)
           .where(and(
             eq(autonomousActions.userId, userId),
             eq(autonomousActions.status, 'completed'),
-            gte(autonomousActions.completedAt, cooldownCutoff)
+            eq(autonomousActions.entityType, 'product')
           ));
 
-        for (const exec of recentExecutions) {
-          if (exec.entityId && exec.actionType && exec.completedAt) {
-            const cooldownMs = actionDeduplicationGuard.getCooldownMs(exec.actionType);
-            const completedAt = new Date(exec.completedAt).getTime();
-            const cooldownExpiresAt = completedAt + cooldownMs;
-            
-            if (Date.now() < cooldownExpiresAt) {
-              cooldownCombinations.add(`${exec.entityId}:${exec.actionType}`);
-            }
+        for (const exec of allCompletedActions) {
+          if (exec.entityId && exec.actionType) {
+            completedCombinations.add(`${exec.entityId}:${exec.actionType}`);
           }
         }
-        console.log(`⏳ [Cooldown] Found ${cooldownCombinations.size} actions in cooldown for user ${userId}`);
+        console.log(`🚫 [Dedup] Found ${completedCombinations.size} permanently completed action+product combinations for user ${userId}`);
       } catch (error) {
-        console.error('[Cooldown] Error checking cooldowns:', error);
+        console.error('[Dedup] Error checking completed actions:', error);
       }
 
       // RULE 7: Check active actions per product (only ONE active action at a time)
@@ -989,12 +980,12 @@ export class FastDetectionEngine {
         console.error('[Product Protection] Error checking active actions:', error);
       }
 
-      // Helper function to check if a product+action is locked, in cooldown, or has active actions
+      // Helper function to check if a product+action is locked, already completed, or has active actions
       const isLocked = (productId: string | undefined, actionType: FoundationalActionType): boolean => {
         if (!productId) return false;
         const actionId = LEGACY_TO_ACTION_ID[actionType];
         if (lockedCombinations.has(`${productId}:${actionId}`)) return true;
-        if (cooldownCombinations.has(`${productId}:${actionId}`)) return true;
+        if (completedCombinations.has(`${productId}:${actionId}`)) return true;
         if (activeProductActions.has(productId)) return true;
         return false;
       };

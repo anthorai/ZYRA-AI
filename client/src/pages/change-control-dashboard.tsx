@@ -105,27 +105,35 @@ const ACTION_TYPE_CONFIG: Record<string, { label: string; icon: any; color: stri
   seo_basics: { label: "SEO Basics", icon: TrendingUp, color: "text-blue-400", category: "seo" },
   discoverability: { label: "Discoverability", icon: Eye, color: "text-orange-400", category: "seo" },
   title_optimization: { label: "Product Title Optimization", icon: Tag, color: "text-blue-400", category: "seo" },
+  product_title_optimization: { label: "Product Title Optimization", icon: Tag, color: "text-blue-400", category: "seo" },
   meta_optimization: { label: "Meta Title, Description & Tag", icon: Globe, color: "text-cyan-400", category: "seo" },
+  meta_title_description_tags: { label: "Meta Title, Description & Tags", icon: Globe, color: "text-cyan-400", category: "seo" },
   search_intent_fix: { label: "Search Intent Alignment Fix", icon: Target, color: "text-purple-400", category: "seo" },
+  search_intent_alignment: { label: "Search Intent Alignment", icon: Target, color: "text-purple-400", category: "seo" },
   alt_text_optimization: { label: "Image Alt-Text Optimization", icon: Image, color: "text-emerald-400", category: "seo" },
   stale_content_refresh: { label: "Stale SEO Content Refresh", icon: RefreshCw, color: "text-amber-400", category: "seo" },
+  stale_seo_content_refresh: { label: "Stale SEO Content Refresh", icon: RefreshCw, color: "text-amber-400", category: "seo" },
   content_refresh: { label: "Content Refresh", icon: FileText, color: "text-cyan-400", category: "seo" },
   
   // Conversion Actions
   fix_product: { label: "Content", icon: FileText, color: "text-green-400", category: "conversion" },
   product_copy_clarity: { label: "Copy Clarity", icon: FileText, color: "text-green-400", category: "conversion" },
+  product_description_clarity: { label: "Product Description Clarity", icon: FileText, color: "text-green-400", category: "conversion" },
   description_clarity: { label: "Product Description Clarity Upgrade", icon: FileText, color: "text-green-400", category: "conversion" },
   value_proposition_fix: { label: "Value Proposition Alignment Fix", icon: Sparkles, color: "text-violet-400", category: "conversion" },
   trust_signals: { label: "Trust Signals", icon: Shield, color: "text-indigo-400", category: "conversion" },
   trust_signal_enhancement: { label: "Trust Signal Enhancement", icon: Shield, color: "text-indigo-400", category: "conversion" },
   friction_copy_removal: { label: "Friction Copy Removal", icon: X, color: "text-orange-400", category: "conversion" },
   above_fold_optimization: { label: "Above-the-Fold Content Optimization", icon: Eye, color: "text-pink-400", category: "conversion" },
+  above_the_fold_optimization: { label: "Above-the-Fold Content Optimization", icon: Eye, color: "text-pink-400", category: "conversion" },
   
   // Revenue Recovery Actions
   send_cart_recovery: { label: "Recovery", icon: DollarSign, color: "text-yellow-400", category: "revenue_recovery" },
   cart_recovery: { label: "Cart Recovery", icon: DollarSign, color: "text-yellow-400", category: "revenue_recovery" },
+  recovery_setup: { label: "Recovery Setup", icon: DollarSign, color: "text-yellow-400", category: "revenue_recovery" },
   abandoned_cart_recovery: { label: "Abandoned Cart Recovery Activation", icon: ShoppingCart, color: "text-yellow-400", category: "revenue_recovery" },
   post_purchase_upsell: { label: "Post-Purchase Upsell Enablement", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
+  post_purchase_upsell_enablement: { label: "Post-Purchase Upsell Enablement", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
   upsell: { label: "Upsell Opportunity", icon: TrendingUp, color: "text-green-400", category: "revenue_recovery" },
   checkout_drop_mitigation: { label: "Checkout Drop-Off Mitigation", icon: DollarSign, color: "text-rose-400", category: "revenue_recovery" },
   
@@ -269,7 +277,6 @@ export default function ChangeControlDashboard() {
 
   const { data: changes, isLoading: changesLoading, refetch } = useQuery<ChangeItem[]>({
     queryKey: ["/api/autonomous-actions"],
-    enabled: storeReadiness?.state === 'ready',
   });
 
   const { data: settings } = useQuery<AutomationSettings>({
