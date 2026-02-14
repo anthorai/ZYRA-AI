@@ -570,8 +570,8 @@ export default function RevenueImmuneCard() {
             </div>
             {preventedRevenue === 0 && (
               <div className="mt-4">
-                <p className="text-sm text-slate-300 font-medium">No revenue decay detected yet</p>
-                <p className="text-xs text-slate-500 mt-1">Prevention happens before loss -- this is a good sign</p>
+                <p className="text-sm text-slate-300 font-medium">No sales attributed yet</p>
+                <p className="text-xs text-slate-500 mt-1">Revenue will appear here when customers buy products ZYRA has optimized</p>
               </div>
             )}
           </div>

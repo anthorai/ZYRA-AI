@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { products, seoMeta, scanActivity, automationSettings, autonomousActions } from '@shared/schema';
+import { products, seoMeta, scanActivity, automationSettings, autonomousActions, revenueAttribution } from '@shared/schema';
 import { eq, and, gte, desc, sql, lt, isNull, or } from 'drizzle-orm';
 import { ActionDeduplicationGuard } from './action-deduplication-guard';
 
@@ -365,41 +365,29 @@ export class RevenueImmuneScanner {
 
     const scanIssues = weeklyScans.reduce((sum, scan) => sum + (scan.issuesDetected ?? 0), 0);
     const scanFixes = weeklyScans.reduce((sum, scan) => sum + (scan.fixesApplied ?? 0), 0);
-    const scanRevenue = weeklyScans.reduce((sum, scan) => 
-      sum + parseFloat(scan.estimatedRevenueProtected?.toString() ?? '0'), 0);
     const rollbacks = weeklyActions.filter(a => a.status === 'rolled_back').length;
 
     const actionIssuesDetected = weeklyActions.length;
     const actionFixesExecuted = weeklyActions.filter(a => a.status === 'completed').length;
 
-    const ACTION_REVENUE_ESTIMATES: Record<string, number> = {
-      optimize_seo: 150,
-      meta_optimization: 120,
-      product_title_optimization: 100,
-      product_description_clarity: 80,
-      trust_signal_enhancement: 200,
-      image_alt_text_optimization: 60,
-      search_intent_alignment: 130,
-      above_fold_optimization: 110,
-      stale_seo_refresh: 90,
-      value_proposition_alignment: 140,
-      fix_product: 100,
-      send_cart_recovery: 250,
-      abandoned_cart_recovery: 250,
-      post_purchase_upsell: 180,
-      checkout_dropoff_mitigation: 160,
-    };
+    const weeklyAttributedRevenue = await db
+      .select({ total: sql<string>`COALESCE(SUM(${revenueAttribution.revenueAmount}), 0)` })
+      .from(revenueAttribution)
+      .where(
+        and(
+          eq(revenueAttribution.userId, userId),
+          gte(revenueAttribution.createdAt, startOfWeek)
+        )
+      );
 
-    const actionRevenue = weeklyActions
-      .filter(a => a.status === 'completed')
-      .reduce((sum, a) => sum + (ACTION_REVENUE_ESTIMATES[a.actionType] ?? 75), 0);
+    const realRevenue = parseFloat(weeklyAttributedRevenue[0]?.total ?? '0');
 
     return {
       scansPerformed: weeklyScans.length,
       issuesDetected: scanIssues + actionIssuesDetected,
       fixesExecuted: scanFixes + actionFixesExecuted,
       rollbacksNeeded: rollbacks,
-      totalRevenueProtected: scanRevenue + actionRevenue,
+      totalRevenueProtected: realRevenue,
     };
   }
 

@@ -17135,40 +17135,17 @@ Output format: Markdown with clear section headings.`;
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const monthlyActions = await db
-        .select()
-        .from(autonomousActions)
+      const monthlyAttributedRevenue = await db
+        .select({ total: sql<string>`COALESCE(SUM(${revenueAttribution.revenueAmount}), 0)` })
+        .from(revenueAttribution)
         .where(
           and(
-            eq(autonomousActions.userId, userId),
-            eq(autonomousActions.status, 'completed'),
-            gte(autonomousActions.createdAt, startOfMonth)
+            eq(revenueAttribution.userId, userId),
+            gte(revenueAttribution.createdAt, startOfMonth)
           )
         );
 
-      const ACTION_REVENUE_ESTIMATES: Record<string, number> = {
-        optimize_seo: 150,
-        meta_optimization: 120,
-        product_title_optimization: 100,
-        product_description_clarity: 80,
-        trust_signal_enhancement: 200,
-        image_alt_text_optimization: 60,
-        search_intent_alignment: 130,
-        above_fold_optimization: 110,
-        stale_seo_refresh: 90,
-        value_proposition_alignment: 140,
-        fix_product: 100,
-        send_cart_recovery: 250,
-        abandoned_cart_recovery: 250,
-        post_purchase_upsell: 180,
-        checkout_dropoff_mitigation: 160,
-      };
-
-      const actionPreventedRevenue = monthlyActions.reduce(
-        (sum, a) => sum + (ACTION_REVENUE_ESTIMATES[a.actionType] ?? 75), 0
-      );
-
-      const preventedRevenue = scanPreventedRevenue + actionPreventedRevenue;
+      const preventedRevenue = parseFloat(monthlyAttributedRevenue[0]?.total ?? '0');
 
       const todayActions = await db
         .select()
