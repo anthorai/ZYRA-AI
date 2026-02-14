@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { eq, and } from 'drizzle-orm';
 import type { IStorage } from '../storage';
 import type { BulkOptimizationJob, BulkOptimizationItem, InsertBulkOptimizationItem } from '../../shared/schema';
+import { buildMasterSEOPrompt } from './constants/seo-content-formats';
 
 let openai: OpenAI | null = null;
 
@@ -99,50 +100,11 @@ export class BulkOptimizationService {
   private async generateSEOContent(product: ProductInput): Promise<any> {
     const startTime = Date.now();
     
-    const comprehensivePrompt = `You are an expert SEO specialist. Generate comprehensive SEO content for this product:
-
-**Product Name:** ${product.productName}
-**Category:** ${product.category || 'General'}
-**Key Features:** ${product.keyFeatures || 'Premium quality product'}
-**Target Audience:** ${product.targetAudience || 'General consumers'}
-
-Generate ALL of the following in a single, optimized package:
-
-1. **SEO Title** (under 60 characters): Keyword-rich, click-worthy title for search engines
-2. **Full Product Description** (200-300 words): Structured, persuasive description with:
-   - Compelling opening that highlights main benefit
-   - Feature list with benefits
-   - Use case scenarios
-   - Call to action
-   - Natural keyword integration
-3. **Main Description** (150-250 words): Engaging product description for main product page with:
-   - Repeat the product name 3-4 times in **BOLD**
-   - Hook that highlights key benefit
-   - Feature-benefit pairs with product name in bold
-   - Why it's different
-   - Use cases
-   - Value proposition
-   - Use markdown formatting with **bold** for product name
-   - Structure with clear sections and line breaks
-4. **Meta Title** (under 60 characters): Optimized for search result previews
-5. **Meta Description** (under 160 characters): Compelling preview text for search results
-6. **SEO Keywords** (5-7 keywords): Most relevant keywords for this product
-7. **SEO Score** (0-100): Predicted ranking score based on optimization quality
-8. **Search Intent**: Primary search intent (commercial, informational, navigational, or transactional)
-9. **Suggested Keywords** (3-5): Additional high-value keywords to consider
-
-Respond with JSON in this exact format:
-{
-  "seoTitle": "your seo title",
-  "seoDescription": "your full product description with proper structure and formatting",
-  "mainDescription": "engaging product description with **bold product name repeated 3-4 times**, structured sections, and markdown formatting",
-  "metaTitle": "your meta title",
-  "metaDescription": "your meta description",
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "seoScore": 85,
-  "searchIntent": "commercial",
-  "suggestedKeywords": ["keyword6", "keyword7", "keyword8"]
-}`;
+    const comprehensivePrompt = buildMasterSEOPrompt({
+      name: product.productName,
+      description: product.keyFeatures,
+      category: product.category,
+    });
 
     try {
       const response = await getOpenAI().chat.completions.create({
@@ -165,6 +127,16 @@ Respond with JSON in this exact format:
       } catch (parseError) {
         console.error('JSON parse error:', messageContent);
         throw new Error('Failed to parse OpenAI response as JSON');
+      }
+
+      // Map centralized format fields to expected field names
+      if (!result.seoDescription && result.improvedDescription) result.seoDescription = result.improvedDescription;
+      if (!result.mainDescription && result.improvedDescription) result.mainDescription = result.improvedDescription;
+      if (!result.metaTitle && result.seoTitle) result.metaTitle = result.seoTitle;
+      if (!result.keywords && result.seoTags) result.keywords = result.seoTags;
+      if (!result.searchIntent) result.searchIntent = 'commercial';
+      if (!result.suggestedKeywords && result.keywordCluster) {
+        result.suggestedKeywords = result.keywordCluster.longTail || [];
       }
 
       // Validate required fields

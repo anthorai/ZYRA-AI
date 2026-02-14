@@ -9,6 +9,7 @@ import { ALL_ACTIONS, type ActionId, type MasterAction } from './zyra-master-loo
 import type { AIToolId } from '@shared/ai-credits';
 import { realLearningService } from './real-learning-service';
 import { storeLearningService } from './store-learning-service';
+import { buildMasterSEOPrompt, buildDescriptionPrompt } from './constants/seo-content-formats';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'placeholder-key',
@@ -550,38 +551,7 @@ export class FoundationalExecutionService {
     const db = requireDb();
     const changes: ContentChange[] = [];
 
-    const prompt = `You are a world-class e-commerce SEO strategist who specializes in making Shopify products rank #1 on Google and go viral in organic search. Apply the latest 2025 Google ranking factors (E-E-A-T, Helpful Content, mobile-first indexing) to fully optimize this product listing.
-
-Product Name: ${product.name}
-Description: ${product.description || 'No description'}
-Category: ${product.category || 'General'}
-Price: $${product.price}
-
-Generate ALL of the following using the VIRAL SEO PRODUCT DESCRIPTION FORMULA:
-
-1. SEO Title / Meta Title (50-60 chars, format: "Primary Keyword + Key Benefit | Brand")
-2. Meta Description (150-160 chars, include primary keyword + emotional benefit + CTA like "Shop now" or "Free shipping")
-3. Improved Product Title (format: "Brand/Product + Key Feature + Differentiator", keyword-rich, under 70 chars)
-4. Improved Product Description (150-300 words, structured as follows):
-   - HOOK PARAGRAPH (2-3 sentences): Lead with the #1 benefit and primary keyword. Answer "why should I buy this?" Create emotional connection.
-   - FEATURE-BENEFIT BULLETS (3-5 points): Each bullet starts with the BENEFIT, then explains the feature. Use long-tail keywords naturally. Format each as "Benefit — Feature explanation"
-   - VALUE PARAGRAPH (2-3 sentences): Use sensory/power words. Include semantic keywords (related terms buyers search for). Help the reader imagine using the product.
-   - MINI-FAQ (2 common buyer questions with short answers): Address top purchase objections. These trigger Google Featured Snippets.
-
-CRITICAL SEO RULES:
-- Use the primary keyword 2-4 times naturally (never stuff)
-- Include long-tail buyer-intent keywords (e.g., "best [product] for [use case]")
-- Write for humans first, Google second
-- Every sentence must add value — no filler
-- Use HTML formatting: <p> for paragraphs, <ul><li> for bullets, <strong> for emphasis, <h3> for FAQ header
-
-Respond ONLY with valid JSON:
-{
-  "seoTitle": "optimized meta title here",
-  "metaDescription": "compelling meta description with CTA here",
-  "improvedName": "keyword-rich product title",
-  "improvedDescription": "Full HTML-formatted description with hook + bullets + value paragraph + mini-FAQ"
-}`;
+    const prompt = buildMasterSEOPrompt(product);
 
     try {
       const content = await cachedTextGeneration(
@@ -720,35 +690,7 @@ Respond ONLY with valid JSON:
     const db = requireDb();
     const changes: ContentChange[] = [];
 
-    const prompt = `You are an elite e-commerce copywriter who writes product descriptions that rank on Google and convert browsers into buyers. Apply the 2025 viral SEO description formula to rewrite this product listing.
-
-Product: ${product.name}
-Current Description: ${product.description || 'No description available'}
-Category: ${product.category || 'General'}
-Price: $${product.price}
-
-Write using the VIRAL PRODUCT DESCRIPTION STRUCTURE (150-250 words total):
-
-1. IMPROVED DESCRIPTION with this exact structure:
-   a) OPENING HOOK (2-3 sentences): Start with the primary benefit. Use an emotional trigger — answer "how does this make my life better?" Include the main keyword naturally in the first sentence.
-   b) BENEFIT-DRIVEN BULLETS (3-5 points): Start each bullet with the BENEFIT in bold, then the feature. Use long-tail keywords buyers actually search for. Format: "<strong>Benefit</strong> — feature detail"
-   c) LIFESTYLE PARAGRAPH (2-3 sentences): Paint a picture of the buyer using this product. Use sensory language and power words (transform, effortless, premium, ultimate). Include semantic keywords related to the product category.
-   d) MINI-FAQ (2 questions): Address the top 2 purchase objections. These boost Google Featured Snippets ranking.
-
-2. COMPELLING HEADLINE: A benefit-first headline with a keyword (under 70 chars). Format: "Primary Benefit + Product Type + Differentiator"
-
-RULES:
-- Write for humans first, SEO second
-- Use HTML: <p>, <ul><li>, <strong>, <h3> for FAQ
-- Primary keyword appears 2-3 times naturally
-- No filler words, no fluff — every sentence sells
-- Tone: confident, helpful, authentic
-
-Respond ONLY with valid JSON:
-{
-  "improvedDescription": "Full HTML-formatted description with all sections",
-  "headline": "benefit-first keyword-rich headline"
-}`;
+    const prompt = buildDescriptionPrompt(product);
 
     try {
       const content = await cachedTextGeneration(

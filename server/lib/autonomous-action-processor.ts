@@ -12,6 +12,7 @@ import {
   getExecutionSpeedMultiplier,
   type ActionType 
 } from './plan-access-controller';
+import { buildQuickSEOPrompt } from './constants/seo-content-formats';
 
 // Initialize email and SMS clients
 if (process.env.SENDGRID_API_KEY) {
@@ -41,24 +42,7 @@ async function generateSEOContent(product: any): Promise<{
   metaDescription: string;
   seoScore: number;
 }> {
-  const prompt = `You are a world-class e-commerce SEO strategist. Apply the 2025 Google ranking factors (E-E-A-T, Helpful Content, mobile-first) to generate optimized SEO content that makes this product rank on Google.
-
-Product: ${product.name}
-Description: ${product.description || 'No description available'}
-Category: ${product.category}
-Price: ${product.price}
-
-Generate using the VIRAL SEO FORMULA:
-1. SEO Title (50-60 chars, format: "Primary Keyword + Key Benefit | Brand" — front-load the most important buyer-intent keyword)
-2. Meta Description (150-160 chars, include primary keyword + emotional benefit + CTA like "Shop now" or "Free shipping" — this appears in Google search results and must drive clicks)
-3. SEO Score (0-100) based on: keyword optimization, E-E-A-T signals, content quality, buyer-intent alignment
-
-Format your response as JSON:
-{
-  "seoTitle": "keyword-optimized meta title",
-  "metaDescription": "compelling description with keyword and CTA",
-  "seoScore": 85
-}`;
+  const prompt = buildQuickSEOPrompt(product);
 
   try {
     const content = await cachedTextGeneration(

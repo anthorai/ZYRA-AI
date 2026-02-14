@@ -12,6 +12,7 @@
  */
 
 import type { SERPAnalysis } from './serp-analyzer';
+import { SEO_CONTENT_FORMATS } from '../lib/constants/seo-content-formats';
 
 interface ProductInput {
   productName: string;
@@ -92,20 +93,18 @@ Your responsibilities:
    - SEO Title (rank-focused)
    - Meta Title (50–60 chars)
    - Meta Description (140–160 chars)
-   - High-conversion Product Description with sections:
-       * Product Description
-       * Why You'll Love It
-       * Perfect For
-       * Usage Examples
-       * Key Specifications
-       * Trust & Guarantee
+   - High-conversion Product Description with this EXACT structure:
+       * Hook Paragraph (2-3 sentences opening with primary benefit)
+       * Benefit-Driven Bullets (3-5 points, each starting with benefit in bold)
+       * Lifestyle/Value Paragraph (2-3 sentences with sensory language)
+       * Mini-FAQ (2 buyer objection questions — targets Featured Snippets)
    - Keyword Cluster:
        * Primary keyword
        * Secondary keyword
        * 3 Long-tail keywords
        * 5 LSI keywords
    - SEO Tags
-   - ALT-TEXT for images (if available)
+   - ALT-TEXT for images: Generate 2-3 variations using format "Product Name + Key Visual Feature + Context/Use Case" (max 125 chars each). Never start with "Image of" or "Photo of". Describe what is visually shown.
 
 6. Ranking Optimization Rules
    - Maximize CTR by using strong modifiers.
@@ -123,20 +122,20 @@ Your responsibilities:
    - Adapt tone based on product category and audience.
 
 8. Output Format
-   ALWAYS respond in clean structured JSON:
+   ALWAYS respond in clean structured JSON with these exact fields:
    {
-     "seo_title": "",
-     "meta_title": "",
-     "meta_description": "",
-     "product_description": "",
+     "seo_title": "SEO-optimized title for search results (50-70 chars)",
+     "meta_title": "Meta title for Google results (50-60 chars)",
+     "meta_description": "Compelling description with primary keyword + benefit + CTA (140-160 chars)",
+     "product_description": "Full HTML-formatted description with: Hook Paragraph → Benefit-Driven Bullets → Lifestyle/Value Paragraph → Mini-FAQ with answers. Use <p>, <ul><li>, <strong>, <h3> tags",
      "keyword_cluster": {
-       "primary": "",
-       "secondary": "",
-       "long_tail": [],
-       "lsi": []
+       "primary": "Main buyer-intent keyword",
+       "secondary": "Related keyword variation",
+       "long_tail": ["4+ word buyer phrase", "another long-tail phrase", "third long-tail phrase"],
+       "lsi": ["semantic keyword 1", "semantic keyword 2", "semantic keyword 3", "semantic keyword 4", "semantic keyword 5"]
      },
-     "seo_tags": [],
-     "alt_text": []
+     "seo_tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+     "alt_text": ["Product Name + Feature + Context (max 125 chars)", "Product Name + Different Feature + Use Case (max 125 chars)", "Product Name + Visual Detail + Context (max 125 chars)"]
    }
 
 Your goal:  
