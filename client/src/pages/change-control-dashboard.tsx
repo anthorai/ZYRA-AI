@@ -18,6 +18,28 @@ function stripHtmlTags(html: string): string {
   text = text.replace(/\n{3,}/g, '\n\n');
   return text.trim();
 }
+
+function isHistoricallyTruncated(text: string): boolean {
+  if (!text) return false;
+  const stripped = stripHtmlTags(text);
+  return stripped.endsWith('...') && stripped.length === 103;
+}
+
+function renderDescription(text: string | undefined | null, emptyLabel = '(empty)') {
+  if (!text) return <span className="italic text-muted-foreground">{emptyLabel}</span>;
+  const cleaned = stripHtmlTags(text);
+  const truncated = isHistoricallyTruncated(text);
+  if (truncated) {
+    const withoutEllipsis = cleaned.slice(0, -3);
+    return (
+      <span>
+        {withoutEllipsis}
+        <span className="inline-block ml-1 text-[10px] text-muted-foreground italic">(partial historical record)</span>
+      </span>
+    );
+  }
+  return cleaned;
+}
 import { ShopifyConnectionGate, WarmUpMode } from "@/components/zyra/store-connection-gate";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1106,7 +1128,7 @@ export default function ChangeControlDashboard() {
                                       Before
                                     </p>
                                     <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                      {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                      {renderDescription(before[field])}
                                     </div>
                                   </div>
                                   <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
@@ -1115,7 +1137,7 @@ export default function ChangeControlDashboard() {
                                       After
                                     </p>
                                     <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">
-                                      {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                      {renderDescription(after[field])}
                                     </div>
                                   </div>
                                 </div>
@@ -1472,7 +1494,7 @@ export default function ChangeControlDashboard() {
                                       Before
                                     </p>
                                     <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                      {before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                      {renderDescription(before[field])}
                                     </div>
                                   </div>
                                   <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
@@ -1481,7 +1503,7 @@ export default function ChangeControlDashboard() {
                                       After
                                     </p>
                                     <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">
-                                      {after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">(empty)</span>}
+                                      {renderDescription(after[field])}
                                     </div>
                                   </div>
                                 </div>
@@ -1620,14 +1642,14 @@ export default function ChangeControlDashboard() {
                                     <div className="grid grid-cols-1 gap-2">
                                       <div className="p-3 rounded border bg-card">
                                         <p className="text-xs text-muted-foreground mb-1">Before</p>
-                                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{before[field] ? stripHtmlTags(before[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
+                                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{renderDescription(before[field], 'Empty')}</p>
                                       </div>
                                       <div className="p-3 rounded border border-primary/30 bg-primary/5">
                                         <p className="text-xs text-primary mb-1 flex items-center gap-1">
                                           <ArrowRight className="w-3 h-3" />
                                           After
                                         </p>
-                                        <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">{after[field] ? stripHtmlTags(after[field]) : <span className="italic text-muted-foreground">Empty</span>}</p>
+                                        <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">{renderDescription(after[field], 'Empty')}</p>
                                       </div>
                                     </div>
                                   </div>

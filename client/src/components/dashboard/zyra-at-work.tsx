@@ -1,5 +1,21 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { stripHtmlTags } from "@/components/product-selector";
+
+function renderZyraDescription(text: string | undefined | null, emptyLabel = '(empty)') {
+  if (!text) return <span className="italic text-slate-600">{emptyLabel}</span>;
+  const cleaned = stripHtmlTags(text);
+  const isTruncated = cleaned.endsWith('...') && cleaned.length === 103;
+  if (isTruncated) {
+    const withoutEllipsis = cleaned.slice(0, -3);
+    return (
+      <span>
+        {withoutEllipsis}
+        <span className="inline-block ml-1 text-[10px] text-slate-500 italic">(partial historical record)</span>
+      </span>
+    );
+  }
+  return cleaned;
+}
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1730,11 +1746,11 @@ function ProgressStages({
                                 <div className="grid grid-cols-1 gap-1 ml-2">
                                   <div className="flex items-start gap-2">
                                     <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
-                                    <span className="text-slate-500 line-through">{change.before ? stripHtmlTags(change.before) : '(empty)'}</span>
+                                    <span className="text-slate-500 line-through whitespace-pre-wrap break-words">{renderZyraDescription(change.before)}</span>
                                   </div>
                                   <div className="flex items-start gap-2">
                                     <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
-                                    <span className="text-emerald-300">{stripHtmlTags(change.after)}</span>
+                                    <span className="text-emerald-300 whitespace-pre-wrap break-words">{renderZyraDescription(change.after)}</span>
                                   </div>
                                   <p className="text-slate-400 italic mt-1">{change.reason}</p>
                                 </div>
@@ -1947,11 +1963,11 @@ function ProgressStages({
                                 <div className="grid grid-cols-1 gap-1 ml-2">
                                   <div className="flex items-start gap-2">
                                     <span className="text-red-400/70 font-mono text-[10px] uppercase">Before:</span>
-                                    <span className="text-slate-500 line-through">{change.before ? stripHtmlTags(change.before) : '(empty)'}</span>
+                                    <span className="text-slate-500 line-through whitespace-pre-wrap break-words">{renderZyraDescription(change.before)}</span>
                                   </div>
                                   <div className="flex items-start gap-2">
                                     <span className="text-emerald-400/70 font-mono text-[10px] uppercase">After:</span>
-                                    <span className="text-emerald-300">{stripHtmlTags(change.after)}</span>
+                                    <span className="text-emerald-300 whitespace-pre-wrap break-words">{renderZyraDescription(change.after)}</span>
                                   </div>
                                   {change.reason && (
                                     <p className="text-slate-400 italic mt-1">{change.reason}</p>
@@ -3142,14 +3158,14 @@ export default function ZyraAtWork() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div className="rounded-md bg-red-500/5 border border-red-500/20 p-2" data-testid={`card-before-${pIdx}-${cIdx}`}>
                                 <span className="text-[10px] font-bold text-red-400 uppercase">Before</span>
-                                <p className="text-xs text-slate-400 mt-1 whitespace-pre-wrap" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
-                                  {change.before ? stripHtmlTags(change.before) : <span className="italic text-slate-600">(empty)</span>}
+                                <p className="text-xs text-slate-400 mt-1 whitespace-pre-wrap break-words" data-testid={`text-before-value-${pIdx}-${cIdx}`}>
+                                  {renderZyraDescription(change.before)}
                                 </p>
                               </div>
                               <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-2" data-testid={`card-after-${pIdx}-${cIdx}`}>
                                 <span className="text-[10px] font-bold text-emerald-400 uppercase">After</span>
-                                <p className="text-xs text-emerald-300 mt-1 whitespace-pre-wrap" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
-                                  {stripHtmlTags(change.after)}
+                                <p className="text-xs text-emerald-300 mt-1 whitespace-pre-wrap break-words" data-testid={`text-after-value-${pIdx}-${cIdx}`}>
+                                  {renderZyraDescription(change.after)}
                                 </p>
                               </div>
                             </div>

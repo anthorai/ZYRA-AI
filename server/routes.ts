@@ -18233,6 +18233,7 @@ Output format: Markdown with clear section headings.`;
           rolledBackAt: autonomousActions.rolledBackAt,
           productName: products.name,
           productImage: products.image,
+          productDescription: products.description,
         })
         .from(autonomousActions)
         .leftJoin(products, eq(autonomousActions.entityId, products.id))
@@ -18241,7 +18242,38 @@ Output format: Markdown with clear section headings.`;
         .limit(limitNum)
         .offset(offsetNum);
 
-      res.json(actions);
+      const latestActionPerProduct = new Map<string, string>();
+      for (const action of actions) {
+        if (action.entityId && !latestActionPerProduct.has(action.entityId)) {
+          latestActionPerProduct.set(action.entityId, action.id);
+        }
+      }
+
+      const enrichedActions = actions.map((action: any) => {
+        if (!action.payload?.changes || !Array.isArray(action.payload.changes)) {
+          const { productDescription, ...rest } = action;
+          return rest;
+        }
+
+        const isLatestForProduct = action.entityId && latestActionPerProduct.get(action.entityId) === action.id;
+        const fullDesc = action.productDescription;
+
+        const enrichedChanges = action.payload.changes.map((change: any) => {
+          if (change.field !== 'Product Description') return change;
+
+          const isTruncatedAfter = typeof change.after === 'string' && change.after.endsWith('...') && change.after.length === 103;
+
+          if (isTruncatedAfter && isLatestForProduct && fullDesc) {
+            return { ...change, after: fullDesc };
+          }
+          return change;
+        });
+
+        const { productDescription, ...rest } = action;
+        return { ...rest, payload: { ...action.payload, changes: enrichedChanges } };
+      });
+
+      res.json(enrichedActions);
     } catch (error) {
       console.error("Error fetching autonomous actions:", error);
       res.status(500).json({ error: "Failed to fetch autonomous actions" });
