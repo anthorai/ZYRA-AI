@@ -2216,6 +2216,12 @@ export default function ZyraAtWork() {
           'seo_foundation': 'meta_title_description_tags',
           'product_copy_clarity': 'product_description_clarity',
           'recovery_setup': 'abandoned_cart_recovery',
+          'meta_optimization': 'meta_title_description_tags',
+          'image_alt_text': 'image_alt_text_optimization',
+          'stale_seo_refresh': 'stale_seo_content_refresh',
+          'search_intent': 'search_intent_alignment',
+          'value_proposition': 'value_proposition_alignment',
+          'above_fold': 'above_the_fold_optimization',
         };
         const creditActionType = detectionToCreditTypeMap[rawActionType] || rawActionType;
         const actionType = rawActionType;

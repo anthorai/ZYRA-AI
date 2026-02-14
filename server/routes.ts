@@ -21757,7 +21757,11 @@ Return JSON array of segments only, no explanation text.`;
       const { foundationalExecutionService } = await import('./lib/foundational-execution');
       
       // Validate action type
-      const validTypes = ['seo_basics', 'product_copy_clarity', 'trust_signals', 'recovery_setup'];
+      const validTypes = [
+        'seo_basics', 'product_copy_clarity', 'trust_signals', 'recovery_setup',
+        'meta_optimization', 'image_alt_text', 'stale_seo_refresh',
+        'search_intent', 'value_proposition', 'above_fold'
+      ];
       if (!type || !validTypes.includes(type)) {
         return res.status(400).json({ 
           success: false, 
