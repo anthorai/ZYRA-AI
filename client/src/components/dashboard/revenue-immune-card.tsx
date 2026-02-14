@@ -23,6 +23,8 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useZyraActivity, ZyraActivityEvent } from "@/contexts/ZyraActivityContext";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { getCurrencySymbol } from "@/lib/utils";
 import {
   ShieldCheck,
   Info,
@@ -272,7 +274,8 @@ export default function RevenueImmuneCard() {
   const isActive = settings?.globalAutopilotEnabled ?? false;
   const sensitivity = (settings?.autopilotMode as "safe" | "balanced" | "aggressive") ?? "balanced";
   const preventedRevenue = immuneData?.preventedRevenue ?? 0;
-  const currency = immuneData?.currency ?? "₹";
+  const { currency: storeCurrency } = useStoreCurrency();
+  const currencySymbol = getCurrencySymbol(storeCurrency);
   const lastScanTimestamp = immuneData?.lastScanTimestamp;
   const totalProductsMonitored = immuneData?.totalProductsMonitored ?? 0;
   const weeklyStats = immuneData?.weeklyStats;
@@ -331,13 +334,13 @@ export default function RevenueImmuneCard() {
     }
   }, [activityLog]);
 
-  const formatCurrency = (amount: number) => {
+  const formatCompactCurrency = (amount: number) => {
     if (amount >= 100000) {
-      return `${currency}${(amount / 100000).toFixed(1)}L`;
+      return `${currencySymbol}${(amount / 100000).toFixed(1)}L`;
     } else if (amount >= 1000) {
-      return `${currency}${(amount / 1000).toFixed(1)}K`;
+      return `${currencySymbol}${(amount / 1000).toFixed(1)}K`;
     }
-    return `${currency}${amount.toFixed(0)}`;
+    return `${currencySymbol}${amount.toFixed(0)}`;
   };
 
   const getTimeSinceLastScan = () => {
@@ -562,7 +565,7 @@ export default function RevenueImmuneCard() {
                 style={isActive && preventedRevenue > 0 ? { textShadow: '0 0 30px rgba(16,185,129,0.3)' } : undefined}
                 data-testid="text-prevented-revenue"
               >
-                {formatCurrency(preventedRevenue)}
+                {formatCompactCurrency(preventedRevenue)}
               </span>
             </div>
             {preventedRevenue === 0 && (

@@ -16,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 import Sidebar from "@/components/dashboard/sidebar";
 import Footer from "@/components/ui/footer";
 import NotificationCenter from "@/components/dashboard/notification-center";
@@ -191,11 +193,12 @@ function getRiskLevel(item: ChangeItem): RiskLevel {
   return "low";
 }
 
+let _storeCurrencyCode = 'USD';
 function formatCurrency(value: number | string | undefined | null): string {
-  if (value === undefined || value === null) return "$0";
+  if (value === undefined || value === null) return formatCurrencyUtil(0, _storeCurrencyCode);
   const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "$0";
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+  if (isNaN(num)) return formatCurrencyUtil(0, _storeCurrencyCode);
+  return formatCurrencyUtil(num, _storeCurrencyCode);
 }
 
 function getBeforeAfterContent(change: ChangeItem) {
@@ -257,6 +260,8 @@ function getBeforeAfterContent(change: ChangeItem) {
 
 export default function ChangeControlDashboard() {
   const { toast } = useToast();
+  const { currency: storeCurrency } = useStoreCurrency();
+  _storeCurrencyCode = storeCurrency;
   const [selectedChange, setSelectedChange] = useState<ChangeItem | null>(null);
   const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

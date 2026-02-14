@@ -15,6 +15,8 @@ import {
   BarChart3,
   AlertCircle
 } from "lucide-react";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency } from "@/lib/utils";
 
 interface RevenueStats {
   totalRevenue: number;
@@ -32,6 +34,7 @@ interface RevenueStats {
 
 export default function RevenueImpact() {
   const [, setLocation] = useLocation();
+  const { currency } = useStoreCurrency();
 
   const { data: stats, isLoading, error } = useQuery<RevenueStats>({
     queryKey: ['/api/revenue-loop/stats'],
@@ -177,7 +180,7 @@ export default function RevenueImpact() {
             </div>
             <div>
               <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-                ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatCurrency(totalRevenue, currency)}
               </h2>
               <p className="text-xl text-muted-foreground mt-2">Total Revenue Added</p>
               {stats?.successfulProofs && stats.successfulProofs > 0 && (
@@ -223,7 +226,7 @@ export default function RevenueImpact() {
                   </div>
                   <div className="ml-6 text-right">
                     <p className="text-2xl font-bold text-foreground">
-                      ${item.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(item.revenue, currency)}
                     </p>
                   </div>
                 </div>
@@ -254,7 +257,7 @@ export default function RevenueImpact() {
                   Number(proof.revenueDelta) > 0 ? 'text-green-400' : 'text-muted-foreground'
                 }`}>
                   {Number(proof.revenueDelta) > 0 ? '+' : ''}
-                  ${Number(proof.revenueDelta).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCurrency(Number(proof.revenueDelta), currency)}
                 </span>
               </div>
             ))}

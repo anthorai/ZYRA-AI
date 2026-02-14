@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useStoreCurrency } from "@/hooks/use-store-currency";
+import { formatCurrency as formatCurrencyFn } from "@/lib/utils";
 import { useROISummary } from "@/hooks/use-roi-summary";
 import { CardGrid } from "@/components/ui/standardized-layout";
 import { GradientPageHeader } from "@/components/ui/page-hero";
@@ -66,6 +68,7 @@ export default function GrowthDashboard() {
   const { dashboardData, isLoading, error, trackToolAccess } = useDashboard();
   const queryClient = useQueryClient();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const { currency } = useStoreCurrency();
   
   // Fetch real growth summary stats with auto-refresh every 30 seconds
   const { data: growthSummary, isLoading: growthSummaryLoading } = useQuery<{
@@ -181,7 +184,7 @@ export default function GrowthDashboard() {
         title: 'Cart Recovery',
         description: 'Revenue recovered from abandoned cart recovery this month',
         icon: <ShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: `$${(cartRecoveryRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        value: formatCurrencyFn(cartRecoveryRevenue ?? 0, currency),
         change: recoveredCarts > 0 ? `${recoveredCarts} carts recovered` : 'No recoveries yet',
         trend: cartRecoveryRevenue > 0 ? 'up' : 'neutral',
         actionText: 'View Details',
@@ -192,7 +195,7 @@ export default function GrowthDashboard() {
         title: 'AI Optimization',
         description: 'Revenue lift from AI-enhanced product descriptions and SEO',
         icon: <Zap className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: `$${(aiOptimizationRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        value: formatCurrencyFn(aiOptimizationRevenue ?? 0, currency),
         change: usageStats.productsOptimized > 0 ? `${usageStats.productsOptimized} products optimized` : 'No optimizations yet',
         trend: aiOptimizationRevenue > 0 ? 'up' : 'neutral',
         actionText: 'View Optimized',
@@ -203,7 +206,7 @@ export default function GrowthDashboard() {
         title: 'Revenue Impact',
         description: 'Total revenue boost from Zyra AI optimizations this month',
         icon: <DollarSign className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />,
-        value: `$${usageStats.totalRevenue?.toLocaleString() || '0'}`,
+        value: formatCurrencyFn(usageStats.totalRevenue ?? 0, currency),
         change: usageStats.totalRevenue > 0 ? 'AI-driven growth' : 'Start optimizing',
         trend: usageStats.totalRevenue > 0 ? 'up' : 'neutral',
         actionText: 'View Breakdown',
@@ -545,7 +548,7 @@ export default function GrowthDashboard() {
                 <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-24 md:w-28 bg-slate-700" />
               ) : (
                 <h3 className="text-white font-bold text-base sm:text-lg md:text-xl truncate">
-                  ${(growthSummary?.totalAIImpact || 0).toLocaleString()}
+                  {formatCurrencyFn(growthSummary?.totalAIImpact || 0, currency)}
                 </h3>
               )}
               <p className="text-slate-300 text-[10px] sm:text-xs md:text-sm truncate">Total AI Impact</p>
@@ -679,7 +682,7 @@ export default function GrowthDashboard() {
                     <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
                       <p className="text-slate-400 text-[10px] sm:text-sm">Avg Revenue</p>
                       <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
-                        ${revenueTrends.summary.avgDailyRevenue.toLocaleString()}
+                        {formatCurrencyFn(revenueTrends.summary.avgDailyRevenue, currency)}
                       </p>
                     </div>
                     <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
@@ -699,7 +702,7 @@ export default function GrowthDashboard() {
                             })}
                           </p>
                           <p className="text-primary text-[9px] sm:text-xs mt-0.5">
-                            ${revenueTrends.summary.peakDay.revenue}
+                            {formatCurrencyFn(Number(revenueTrends.summary.peakDay.revenue) || 0, currency)}
                           </p>
                         </>
                       ) : (
@@ -798,13 +801,13 @@ export default function GrowthDashboard() {
                       <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
                         <p className="text-slate-400 text-[10px] sm:text-sm">Recovered</p>
                         <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
-                          ${cartRecoveryData.overview.recoveredValue}
+                          {formatCurrencyFn(Number(cartRecoveryData.overview.recoveredValue) || 0, currency)}
                         </p>
                       </div>
                       <div className="text-center p-2 sm:p-4 bg-slate-800/30 rounded-lg">
                         <p className="text-slate-400 text-[10px] sm:text-sm">Potential</p>
                         <p className="text-white font-bold text-xs sm:text-lg mt-0.5 sm:mt-1">
-                          ${cartRecoveryData.overview.potentialRevenue}
+                          {formatCurrencyFn(Number(cartRecoveryData.overview.potentialRevenue) || 0, currency)}
                         </p>
                       </div>
                     </div>
