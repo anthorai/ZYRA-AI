@@ -4,7 +4,6 @@ import { useLocation } from "wouter";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
@@ -965,28 +964,73 @@ export default function BillingPage() {
             </p>
             
             <div className="flex items-center justify-center gap-3 mt-6" data-testid="billing-toggle">
-              <span className="text-sm font-medium transition-colors" style={{ color: !isAnnual ? '#E6F7FF' : '#9AA6D6' }}>
-                Monthly
-              </span>
-              <Switch
-                checked={isAnnual}
-                onCheckedChange={setIsAnnual}
-                className="data-[state=checked]:bg-[#00F0FF]"
-                data-testid="switch-billing-period"
-              />
-              <span className="text-sm font-medium transition-colors" style={{ color: isAnnual ? '#E6F7FF' : '#9AA6D6' }}>
-                Annual
-              </span>
-              <Badge
-                className="no-default-hover-elevate no-default-active-elevate"
-                style={{
-                  background: 'rgba(34,197,94,0.18)',
-                  color: '#9EFFC3',
-                  border: '1px solid rgba(34,197,94,0.35)',
+              <button
+                onClick={() => setIsAnnual(false)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={!isAnnual ? {
+                  background: 'linear-gradient(135deg, rgba(0,240,255,0.12), rgba(99,102,241,0.08))',
+                  color: '#00F0FF',
+                  border: '1px solid rgba(0,240,255,0.3)',
+                  boxShadow: '0 0 16px rgba(0,240,255,0.1)',
+                } : {
+                  background: 'rgba(255,255,255,0.03)',
+                  color: '#7C86B8',
+                  border: '1px solid rgba(255,255,255,0.06)',
                 }}
+                data-testid="button-monthly"
               >
-                Save 20%
-              </Badge>
+                Monthly
+              </button>
+
+              <button
+                onClick={() => setIsAnnual(!isAnnual)}
+                className="relative w-14 h-8 rounded-full transition-all flex-shrink-0 focus:outline-none"
+                style={{
+                  background: isAnnual
+                    ? 'linear-gradient(135deg, #00F0FF, #00FFE5)'
+                    : 'rgba(255,255,255,0.1)',
+                  boxShadow: isAnnual ? '0 0 20px rgba(0,240,255,0.3)' : 'none',
+                  border: isAnnual ? '1px solid rgba(0,240,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                }}
+                data-testid="switch-billing-period"
+              >
+                <div
+                  className="absolute top-1 w-6 h-6 rounded-full transition-all duration-300 ease-out"
+                  style={{
+                    left: isAnnual ? '28px' : '4px',
+                    background: isAnnual ? '#04141C' : '#5A6490',
+                    boxShadow: isAnnual ? '0 0 8px rgba(0,240,255,0.5)' : 'none',
+                  }}
+                />
+              </button>
+
+              <button
+                onClick={() => setIsAnnual(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={isAnnual ? {
+                  background: 'linear-gradient(135deg, rgba(0,240,255,0.12), rgba(99,102,241,0.08))',
+                  color: '#00F0FF',
+                  border: '1px solid rgba(0,240,255,0.3)',
+                  boxShadow: '0 0 16px rgba(0,240,255,0.1)',
+                } : {
+                  background: 'rgba(255,255,255,0.03)',
+                  color: '#7C86B8',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+                data-testid="button-annual"
+              >
+                Annual
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                  style={{
+                    background: 'rgba(34,197,94,0.18)',
+                    color: '#9EFFC3',
+                    border: '1px solid rgba(34,197,94,0.35)',
+                  }}
+                >
+                  -20%
+                </span>
+              </button>
             </div>
           </div>
 
