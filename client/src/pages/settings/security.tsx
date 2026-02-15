@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -69,14 +68,6 @@ export default function SecurityPage() {
   const { data: sessions, isLoading: sessionsLoading } = useQuery<Session[]>({
     queryKey: ['/api/sessions'],
   });
-
-  const handleToggle2FA = (enabled: boolean) => {
-    if (enabled) {
-      setShowSetupInline(true);
-    } else {
-      setShowDisableDialog(true);
-    }
-  };
 
   const handle2FASuccess = () => {
     setShowSetupInline(false);
@@ -245,16 +236,38 @@ export default function SecurityPage() {
                   >
                     <div>
                       <Label className="font-medium" style={{ color: '#E6F7FF' }}>
-                        {twoFactorEnabled ? '2FA is protecting your account' : 'Enable 2FA for extra security'}
+                        {twoFactorEnabled ? '2FA is protecting your account' : 'Add extra security to your account'}
                       </Label>
                     </div>
-                    <Switch
-                      checked={twoFactorEnabled}
-                      onCheckedChange={handleToggle2FA}
-                      disabled={twoFactorLoading}
-                      className="data-[state=checked]:bg-[#00F0FF]"
-                      data-testid="switch-2fa"
-                    />
+                    {twoFactorEnabled ? (
+                      <Button
+                        onClick={() => setShowDisableDialog(true)}
+                        disabled={twoFactorLoading}
+                        variant="ghost"
+                        style={{
+                          background: 'rgba(239,68,68,0.1)',
+                          color: '#FCA5A5',
+                          border: '1px solid rgba(239,68,68,0.25)',
+                        }}
+                        data-testid="button-disable-2fa"
+                      >
+                        Disable
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => setShowSetupInline(true)}
+                        disabled={twoFactorLoading}
+                        className="border-0 font-semibold"
+                        style={{
+                          background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
+                          color: '#04141C',
+                        }}
+                        data-testid="button-enable-2fa"
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Enable 2FA
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div
