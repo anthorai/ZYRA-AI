@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -31,6 +31,7 @@ export function PageShell({
   contentClassName,
   headerActions
 }: PageShellProps) {
+  const [, setLocation] = useLocation();
   const maxWidthClasses = {
     sm: "max-w-2xl",
     md: "max-w-4xl",
@@ -79,16 +80,15 @@ export function PageShell({
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
                   ) : (
-                    <Link href={backTo!}>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="flex-shrink-0"
-                        data-testid="button-back"
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                      </Button>
-                    </Link>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="flex-shrink-0"
+                      data-testid="button-back"
+                      onClick={() => setLocation(backTo!)}
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </Button>
                   )
                 )}
                 
