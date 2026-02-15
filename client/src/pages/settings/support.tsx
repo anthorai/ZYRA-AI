@@ -23,8 +23,9 @@ const quickActions = [
     description: 'Get instant help',
     icon: MessageSquare,
     accent: '#22C55E',
-    toastTitle: 'Opening Live Chat',
-    toastDesc: 'Connecting to support team...',
+    toastTitle: 'Coming Soon',
+    toastDesc: 'Live chat will be available soon!',
+    comingSoon: true,
   },
   {
     id: 'documentation',
@@ -34,6 +35,7 @@ const quickActions = [
     accent: '#00F0FF',
     toastTitle: 'Opening Documentation',
     toastDesc: 'Loading help center...',
+    comingSoon: false,
   },
   {
     id: 'community',
@@ -43,6 +45,7 @@ const quickActions = [
     accent: '#A78BFA',
     toastTitle: 'Opening Community',
     toastDesc: 'Redirecting to community forum...',
+    comingSoon: false,
   },
 ];
 
@@ -151,11 +154,19 @@ export default function SupportPage() {
                 style={{ background: action.accent, borderRadius: '14px 0 0 14px' }}
               />
               <div className="p-5 flex flex-col items-center text-center space-y-3">
-                <div className="p-3 rounded-lg" style={{ background: `${action.accent}15` }}>
+                {action.comingSoon && (
+                  <span
+                    className="absolute top-2.5 right-2.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                    style={{ background: `${action.accent}20`, color: action.accent }}
+                  >
+                    Coming Soon
+                  </span>
+                )}
+                <div className="p-3 rounded-lg" style={{ background: `${action.accent}15`, opacity: action.comingSoon ? 0.5 : 1 }}>
                   <Icon className="w-6 h-6" style={{ color: `${action.accent}CC` }} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF' }}>
+                  <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF', opacity: action.comingSoon ? 0.6 : 1 }}>
                     {action.title}
                   </h3>
                   <p className="text-sm mt-1" style={{ color: '#7C86B8' }}>
@@ -391,15 +402,23 @@ export default function SupportPage() {
               <Button
                 variant="ghost"
                 size="sm"
+                disabled
                 style={{
                   background: 'transparent',
-                  border: '1px solid rgba(167,139,250,0.4)',
+                  border: '1px solid rgba(167,139,250,0.25)',
                   color: '#A78BFA',
+                  opacity: 0.6,
                 }}
                 data-testid="button-schedule-call"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Schedule a Call
+                <span
+                  className="ml-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{ background: 'rgba(167,139,250,0.15)', color: '#A78BFA' }}
+                >
+                  Soon
+                </span>
               </Button>
             </div>
           </div>
