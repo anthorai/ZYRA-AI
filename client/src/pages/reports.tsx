@@ -291,8 +291,7 @@ export default function Reports() {
       const groupKey = productName.toLowerCase();
       const existing = productMap.get(groupKey);
       const revenue = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
-      const actionAny = action as any;
-      const credits = actionAny.creditsUsed || actionAny.creditCost || 0;
+      const credits = (action as any).creditsUsed || 0;
       const isPositive = action.actualImpact?.status === "positive";
       const isNegative = action.actualImpact?.status === "negative";
       const isRolledBack = action.status === "rolled_back";
@@ -316,7 +315,7 @@ export default function Reports() {
         }
       } else {
         productMap.set(groupKey, {
-          productId: actionAny.productId || action.id,
+          productId: (action as any).productId || action.id,
           productName: productName,
           productImage: action.productImage || null,
           actions: [action],
@@ -743,10 +742,8 @@ export default function Reports() {
                                           {recordedChangesCount > 0 && (
                                             <div className="mb-3 space-y-2">
                                               {actionsWithChanges.map((action) => {
-                                                const actionAny = action as any;
                                                 const changes = action.payload?.changes as Array<{field?: string; before?: string; after?: string; reason?: string}> | undefined;
-                                                const rawCredits = actionAny.creditsUsed || actionAny.creditCost || 0;
-                                                const credits = rawCredits > 0 ? rawCredits : (action.status === "completed" || action.status === "rolled_back" ? 1 : 0);
+                                                const credits = (action as any).creditsUsed || 0;
                                                 const isRolledBack = action.status === "rolled_back";
                                                 const isCompleted = action.status === "completed";
                                                 const isNegative = action.actualImpact?.status === "negative";
@@ -926,9 +923,7 @@ export default function Reports() {
                                       {/* Credits consumed */}
                                       {(() => {
                                         const computedCredits = productGroup.actions.reduce((sum, a) => {
-                                          const aAny = a as any;
-                                          const raw = aAny.creditsUsed || aAny.creditCost || 0;
-                                          return sum + (raw > 0 ? raw : (a.status === "completed" || a.status === "rolled_back" ? 1 : 0));
+                                          return sum + ((a as any).creditsUsed || 0);
                                         }, 0);
                                         return (
                                           <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
