@@ -1824,10 +1824,16 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
     const ticketData = {
-      ...ticket,
       id: randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user_id: ticket.userId,
+      subject: ticket.subject,
+      message: ticket.message,
+      category: ticket.category || 'general',
+      priority: ticket.priority || 'medium',
+      status: ticket.status || 'open',
+      metadata: ticket.metadata || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -1843,7 +1849,7 @@ export class SupabaseStorage implements ISupabaseStorage {
   async updateSupportTicket(id: string, updates: Partial<SupportTicket>): Promise<SupportTicket> {
     const { data, error } = await supabase
       .from('support_tickets')
-      .update({ ...updates, updatedAt: new Date().toISOString() })
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
