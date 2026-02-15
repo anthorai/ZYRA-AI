@@ -938,35 +938,67 @@ export default function RevenueImmuneCard() {
                     const activity = engineActivity[engine.id];
                     const hasRecentActivity = activity?.recentCount > 0;
                     const engineStatus = isConnected ? 'live' : isReconnecting ? 'connecting' : 'offline';
+                    const engineColors = [
+                      { accent: '#00f0ff', glow: 'rgba(0,240,255,0.15)', border: 'rgba(0,240,255,0.25)' },
+                      { accent: '#a78bfa', glow: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.25)' },
+                      { accent: '#34d399', glow: 'rgba(52,211,153,0.15)', border: 'rgba(52,211,153,0.25)' },
+                      { accent: '#f472b6', glow: 'rgba(244,114,182,0.15)', border: 'rgba(244,114,182,0.25)' },
+                    ][idx];
                     
                     return (
                       <div 
                         key={engine.id}
                         data-testid={`card-engine-${engine.id}`}
-                        className="relative bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden group"
+                        className="relative rounded-lg overflow-hidden group"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(30,41,59,0.7), rgba(15,23,42,0.9))',
+                          border: `1px solid ${engineStatus === 'live' ? engineColors.border : 'rgba(71,85,105,0.3)'}`,
+                          boxShadow: engineStatus === 'live' ? `0 0 12px ${engineColors.glow}, inset 0 1px 0 ${engineColors.glow}` : 'none',
+                          animation: `fadeIn 0.4s ease-out ${idx * 100}ms both`,
+                        }}
                       >
+                        {engineStatus === 'live' && (
+                          <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                              background: `linear-gradient(90deg, transparent 0%, ${engineColors.accent}08 40%, ${engineColors.accent}12 50%, ${engineColors.accent}08 60%, transparent 100%)`,
+                              animation: `scan-sweep ${3 + idx * 0.5}s ease-in-out infinite`,
+                              animationDelay: `${idx * 0.8}s`,
+                            }}
+                          />
+                        )}
+
                         {/* Engine Header */}
-                        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-700/30">
+                        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-700/30 relative">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="relative flex-shrink-0">
-                              <div className={`p-1.5 rounded-md ${
-                                engineStatus === 'live' ? 'bg-green-500/10' : 
-                                engineStatus === 'connecting' ? 'bg-yellow-500/10' : 'bg-slate-600/20'
-                              }`}>
-                                <engine.icon className={`w-3.5 h-3.5 ${
-                                  engineStatus === 'live' ? 'text-green-400' : 
-                                  engineStatus === 'connecting' ? 'text-yellow-400' : 'text-slate-500'
-                                }`} />
+                              <div
+                                className="p-1.5 rounded-md"
+                                style={{
+                                  backgroundColor: engineStatus === 'live' ? `${engineColors.accent}15` : 
+                                    engineStatus === 'connecting' ? 'rgba(234,179,8,0.1)' : 'rgba(71,85,105,0.2)',
+                                }}
+                              >
+                                <engine.icon
+                                  className="w-3.5 h-3.5"
+                                  style={{
+                                    color: engineStatus === 'live' ? engineColors.accent : 
+                                      engineStatus === 'connecting' ? '#facc15' : '#64748b',
+                                  }}
+                                />
                               </div>
-                              {/* Status dot */}
                               <div className="absolute -top-0.5 -right-0.5">
                                 {engineStatus === 'live' ? (
                                   <span className="relative flex h-2 w-2">
-                                    <span 
-                                      className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-                                      style={{ animationDelay: `${idx * 200}ms` }}
+                                    <span
+                                      className="absolute inline-flex h-full w-full rounded-full opacity-75"
+                                      style={{
+                                        backgroundColor: engineColors.accent,
+                                        animation: `ping 1.5s cubic-bezier(0,0,0.2,1) infinite`,
+                                        animationDelay: `${idx * 300}ms`,
+                                      }}
                                     />
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: engineColors.accent }} />
                                   </span>
                                 ) : engineStatus === 'connecting' ? (
                                   <span className="relative flex h-2 w-2">
@@ -977,33 +1009,54 @@ export default function RevenueImmuneCard() {
                                 )}
                               </div>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[11px] sm:text-xs font-mono font-medium text-slate-200 truncate">
+                            <div className="min-w-0 flex items-center gap-1.5">
+                              <p className="text-[11px] sm:text-xs font-mono font-semibold truncate" style={{ color: engineStatus === 'live' ? engineColors.accent : '#cbd5e1' }}>
                                 {engine.shortName}
                               </p>
+                              {engineStatus === 'live' && (
+                                <div className="flex items-end gap-px">
+                                  {[0, 1, 2, 3, 4].map(i => {
+                                    const heights = [5, 9, 6, 11, 7];
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="w-0.5 rounded-full"
+                                        style={{
+                                          backgroundColor: engineColors.accent,
+                                          height: `${heights[i]}px`,
+                                          animation: `data-stream 1.2s ease-in-out ${i * 0.15 + idx * 0.3}s infinite alternate`,
+                                        }}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           </div>
-                          {/* Status Badge */}
-                          <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono uppercase tracking-wider ${
-                            engineStatus === 'live' 
-                              ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                              : engineStatus === 'connecting'
-                                ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                                : 'bg-slate-600/20 text-slate-500 border border-slate-600/30'
-                          }`}>
+                          <div
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-mono uppercase tracking-wider"
+                            style={{
+                              backgroundColor: engineStatus === 'live' ? `${engineColors.accent}15` :
+                                engineStatus === 'connecting' ? 'rgba(234,179,8,0.1)' : 'rgba(71,85,105,0.2)',
+                              color: engineStatus === 'live' ? engineColors.accent :
+                                engineStatus === 'connecting' ? '#facc15' : '#64748b',
+                              border: `1px solid ${engineStatus === 'live' ? `${engineColors.accent}30` :
+                                engineStatus === 'connecting' ? 'rgba(234,179,8,0.2)' : 'rgba(71,85,105,0.3)'}`,
+                            }}
+                          >
                             {engineStatus === 'live' ? (
                               <>
                                 <span className="inline-flex gap-0.5">
-                                  <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
-                                  <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '150ms' }} />
+                                  <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: engineColors.accent }} />
+                                  <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: engineColors.accent, animationDelay: '150ms' }} />
                                 </span>
                                 <span>LIVE</span>
                               </>
                             ) : engineStatus === 'connecting' ? (
                               <>
                                 <span className="inline-flex gap-0.5">
-                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
-                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400" style={{ animation: 'bounce-dot 0.6s ease-in-out infinite' }} />
+                                  <span className="w-1 h-1 rounded-full bg-yellow-400" style={{ animation: 'bounce-dot 0.6s ease-in-out 150ms infinite' }} />
                                 </span>
                                 <span>SYNC</span>
                               </>
@@ -1014,20 +1067,23 @@ export default function RevenueImmuneCard() {
                         </div>
 
                         {/* Engine Activity Body */}
-                        <div className="p-2.5 sm:p-3 font-mono text-[10px] sm:text-[11px] min-h-[52px]">
+                        <div className="p-2.5 sm:p-3 font-mono text-[10px] sm:text-[11px] min-h-[52px] relative">
                           {hasRecentActivity && activity?.lastEvent ? (
                             <div className="flex items-start gap-1.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-300">
-                              <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
-                              <span className="text-slate-400 break-words leading-relaxed">
+                              <span className="flex-shrink-0" style={{ color: engineColors.accent }}>{'>_'}</span>
+                              <span className="text-slate-300 break-words leading-relaxed">
                                 {activity.lastEvent.message.length > 60 
                                   ? activity.lastEvent.message.substring(0, 60) + '...'
                                   : activity.lastEvent.message}
                               </span>
-                              <span className="inline-block w-1.5 h-3 bg-cyan-400/70 animate-pulse ml-0.5 flex-shrink-0" />
+                              <span
+                                className="inline-block w-1.5 h-3 animate-pulse ml-0.5 flex-shrink-0"
+                                style={{ backgroundColor: `${engineColors.accent}b3` }}
+                              />
                             </div>
                           ) : (
                             <div className="flex items-start gap-1.5">
-                              <span className="text-slate-600 flex-shrink-0">{'>_'}</span>
+                              <span className="flex-shrink-0" style={{ color: engineStatus === 'live' ? `${engineColors.accent}80` : '#475569' }}>{'>_'}</span>
                               <span className="text-slate-500 break-words leading-relaxed">
                                 {engineStatus === 'live' 
                                   ? engine.description 
@@ -1035,20 +1091,38 @@ export default function RevenueImmuneCard() {
                                     ? 'Syncing with monitoring system...'
                                     : 'Engine offline'}
                               </span>
+                              {engineStatus === 'live' && (
+                                <span
+                                  className="inline-block w-1.5 h-3 ml-0.5 flex-shrink-0"
+                                  style={{
+                                    backgroundColor: `${engineColors.accent}50`,
+                                    animation: 'pulse 1s ease-in-out infinite',
+                                  }}
+                                />
+                              )}
                               {engineStatus === 'connecting' && (
                                 <span className="inline-flex gap-0.5 ml-1 flex-shrink-0">
-                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
-                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
-                                  <span className="w-1 h-1 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '300ms' }} />
+                                  {[0, 1, 2].map(i => (
+                                    <span key={i} className="w-1 h-1 rounded-full bg-yellow-400" style={{ animation: `bounce-dot 0.6s ease-in-out ${i * 150}ms infinite` }} />
+                                  ))}
                                 </span>
                               )}
                             </div>
                           )}
                         </div>
 
-                        {/* Activity indicator line */}
-                        {hasRecentActivity && engineStatus === 'live' && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-400/50 to-transparent animate-pulse" />
+                        {/* Animated bottom progress bar */}
+                        {engineStatus === 'live' && (
+                          <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                background: `linear-gradient(90deg, transparent, ${engineColors.accent}60, ${engineColors.accent}, ${engineColors.accent}60, transparent)`,
+                                animation: `scan-sweep ${2.5 + idx * 0.3}s ease-in-out infinite`,
+                                animationDelay: `${idx * 0.5}s`,
+                              }}
+                            />
+                          </div>
                         )}
                       </div>
                     );
