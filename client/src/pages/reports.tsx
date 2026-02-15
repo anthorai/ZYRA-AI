@@ -745,7 +745,8 @@ export default function Reports() {
                                               {actionsWithChanges.map((action) => {
                                                 const actionAny = action as any;
                                                 const changes = action.payload?.changes as Array<{field?: string; before?: string; after?: string; reason?: string}> | undefined;
-                                                const credits = actionAny.creditsUsed || actionAny.creditCost || 0;
+                                                const rawCredits = actionAny.creditsUsed || actionAny.creditCost || 0;
+                                                const credits = rawCredits > 0 ? rawCredits : (action.status === "completed" || action.status === "rolled_back" ? 1 : 0);
                                                 const isRolledBack = action.status === "rolled_back";
                                                 const isCompleted = action.status === "completed";
                                                 const isNegative = action.actualImpact?.status === "negative";
@@ -795,14 +796,9 @@ export default function Reports() {
                                                           </Badge>
                                                         )}
                                                       </div>
-                                                      <Badge className={cn(
-                                                        "text-xs border font-medium",
-                                                        credits > 0
-                                                          ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                                                          : "bg-muted/50 text-muted-foreground border-border/50"
-                                                      )}>
+                                                      <Badge className="text-xs border font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30">
                                                         <Coins className="w-3 h-3 mr-1" />
-                                                        {credits} {credits === 1 ? 'credit' : 'credits'}
+                                                        {credits} {credits === 1 ? 'credit' : 'credits'} consumed
                                                       </Badge>
                                                     </div>
                                                     
@@ -927,16 +923,20 @@ export default function Reports() {
                                         </Badge>
                                       )}
                                       
-                                      {/* Credits used */}
-                                      <Badge variant="outline" className={cn(
-                                        "text-xs",
-                                        productGroup.totalCredits > 0
-                                          ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                          : "bg-muted/30 text-muted-foreground border-border/30"
-                                      )}>
-                                        <Coins className="w-3 h-3 mr-1" />
-                                        {productGroup.totalCredits} {productGroup.totalCredits === 1 ? 'credit' : 'credits'} used
-                                      </Badge>
+                                      {/* Credits consumed */}
+                                      {(() => {
+                                        const computedCredits = productGroup.actions.reduce((sum, a) => {
+                                          const aAny = a as any;
+                                          const raw = aAny.creditsUsed || aAny.creditCost || 0;
+                                          return sum + (raw > 0 ? raw : (a.status === "completed" || a.status === "rolled_back" ? 1 : 0));
+                                        }, 0);
+                                        return (
+                                          <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
+                                            <Coins className="w-3 h-3 mr-1" />
+                                            {computedCredits} {computedCredits === 1 ? 'credit' : 'credits'} consumed
+                                          </Badge>
+                                        );
+                                      })()}
                                       
                                       <span className="text-xs text-muted-foreground">
                                         {formatDistanceToNow(productGroup.latestAction, { addSuffix: true })}
