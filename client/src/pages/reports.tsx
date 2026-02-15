@@ -48,7 +48,8 @@ import {
   FileText,
   Type,
   Tag,
-  ImageIcon
+  ImageIcon,
+  X
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -812,47 +813,66 @@ export default function Reports() {
                                                     
                                                     {/* Before/After content from changes array */}
                                                     {changes && changes.length > 0 ? (
-                                                      <div className="space-y-2">
+                                                      <div className="space-y-4">
                                                         {changes.map((change, idx) => (
-                                                          <div key={idx} className="grid grid-cols-2 gap-2">
-                                                            <div className="p-2 rounded bg-muted/50 border border-border/30">
-                                                              <p className="text-xs text-muted-foreground font-medium mb-1">
-                                                                Original {change.field && `(${change.field})`}
+                                                          <div key={idx}>
+                                                            {change.field && (
+                                                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                                                                {change.field}
                                                               </p>
-                                                              <p className="text-xs text-muted-foreground line-clamp-3">
-                                                                {change.before ? (change.before.length > 120 ? change.before.substring(0, 120) + '...' : change.before) : '-'}
-                                                              </p>
-                                                            </div>
-                                                            <div className={cn(
-                                                              "p-2 rounded border",
-                                                              isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
-                                                            )}>
-                                                              <p className={cn(
-                                                                "text-xs font-medium mb-1",
-                                                                isRolledBack ? "text-blue-400" : "text-primary"
-                                                              )}>Changed To</p>
-                                                              <p className="text-xs line-clamp-3">
-                                                                {change.after ? (change.after.length > 120 ? change.after.substring(0, 120) + '...' : change.after) : '-'}
-                                                              </p>
+                                                            )}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                                                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                                                  <X className="w-3 h-3 text-red-400" />
+                                                                  Before
+                                                                </p>
+                                                                <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                                                  {change.before || <span className="italic text-muted-foreground">(empty)</span>}
+                                                                </div>
+                                                              </div>
+                                                              <div className={cn(
+                                                                "p-3 rounded-lg border",
+                                                                isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-green-500/10 border-green-500/30"
+                                                              )}>
+                                                                <p className={cn(
+                                                                  "text-xs mb-1 flex items-center gap-1",
+                                                                  isRolledBack ? "text-blue-400" : "text-green-400"
+                                                                )}>
+                                                                  <CheckCircle2 className="w-3 h-3" />
+                                                                  After
+                                                                </p>
+                                                                <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">
+                                                                  {change.after || <span className="italic text-muted-foreground">(empty)</span>}
+                                                                </div>
+                                                              </div>
                                                             </div>
                                                           </div>
                                                         ))}
                                                       </div>
                                                     ) : (
-                                                      <div className="grid grid-cols-2 gap-2">
-                                                        <div className="p-2 rounded bg-muted/50 border border-border/30">
-                                                          <p className="text-xs text-muted-foreground font-medium mb-1">Original</p>
-                                                          <p className="text-xs text-muted-foreground italic">-</p>
-                                                        </div>
-                                                        <div className={cn(
-                                                          "p-2 rounded border",
-                                                          isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-primary/5 border-primary/30"
-                                                        )}>
-                                                          <p className={cn(
-                                                            "text-xs font-medium mb-1",
-                                                            isRolledBack ? "text-blue-400" : "text-primary"
-                                                          )}>Changed To</p>
-                                                          <p className="text-xs text-muted-foreground italic">-</p>
+                                                      <div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                                                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                                                              <X className="w-3 h-3 text-red-400" />
+                                                              Before
+                                                            </p>
+                                                            <span className="text-sm italic text-muted-foreground">(empty)</span>
+                                                          </div>
+                                                          <div className={cn(
+                                                            "p-3 rounded-lg border",
+                                                            isRolledBack ? "bg-blue-500/10 border-blue-500/30" : "bg-green-500/10 border-green-500/30"
+                                                          )}>
+                                                            <p className={cn(
+                                                              "text-xs mb-1 flex items-center gap-1",
+                                                              isRolledBack ? "text-blue-400" : "text-green-400"
+                                                            )}>
+                                                              <CheckCircle2 className="w-3 h-3" />
+                                                              After
+                                                            </p>
+                                                            <span className="text-sm italic text-muted-foreground">(empty)</span>
+                                                          </div>
                                                         </div>
                                                       </div>
                                                     )}
