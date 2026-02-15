@@ -687,42 +687,98 @@ export default function RevenueImmuneCard() {
           {/* Live Activity Log - Terminal Style */}
           {isActive && (
             <div 
-              className="rounded-[14px] overflow-hidden border border-slate-600/50" 
-              style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}
+              className="rounded-[14px] overflow-hidden relative" 
+              style={{ 
+                background: 'linear-gradient(135deg, #0a0f1e 0%, #131a2e 50%, #0a0f1e 100%)',
+                border: '1px solid rgba(0,240,255,0.15)',
+                boxShadow: '0 0 20px rgba(0,240,255,0.06), inset 0 1px 0 rgba(0,240,255,0.08)',
+              }}
               data-testid="live-activity-log"
             >
+              {/* Ambient scan line overlay */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ borderRadius: '14px' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(90deg, transparent, rgba(0,240,255,0.04), transparent)',
+                    animation: 'scan-sweep 4s ease-in-out infinite',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, transparent, rgba(0,240,255,0.2), transparent)',
+                    animation: 'terminal-scanline 6s linear infinite',
+                  }}
+                />
+              </div>
+
               {/* Terminal Top Bar */}
-              <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-slate-700/60">
+              <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b border-cyan-500/10 relative">
                 <div className="flex items-center gap-2">
-                  {/* macOS Window Buttons */}
                   <div className="flex items-center gap-1.5">
                     <div className="w-3 h-3 rounded-full bg-red-500/90 shadow-[0_0_4px_rgba(239,68,68,0.5)]" />
                     <div className="w-3 h-3 rounded-full bg-yellow-500/90 shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
                     <div className="w-3 h-3 rounded-full bg-green-500/90 shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
                   </div>
                   <span className="ml-3 text-xs font-mono text-slate-400 tracking-wide">ZYRA Activity Log</span>
+                  {isConnected && (
+                    <div className="flex items-end gap-px ml-2">
+                      {[0, 1, 2, 3, 4, 5, 6].map(i => {
+                        const heights = [3, 7, 5, 10, 4, 8, 6];
+                        return (
+                          <div
+                            key={i}
+                            className="w-0.5 rounded-full"
+                            style={{
+                              backgroundColor: '#00f0ff',
+                              height: `${heights[i]}px`,
+                              animation: `data-stream 1.5s ease-in-out ${i * 0.12}s infinite alternate`,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Connection Status */}
                   <div className="flex items-center gap-1.5">
                     {isConnected ? (
                       <div className="relative">
                         <Wifi className="w-3.5 h-3.5 text-green-400" />
-                        <div className="absolute inset-0 animate-ping">
+                        <div className="absolute inset-0" style={{ animation: 'ping 1.5s cubic-bezier(0,0,0.2,1) infinite' }}>
                           <Wifi className="w-3.5 h-3.5 text-green-400 opacity-40" />
                         </div>
                       </div>
                     ) : (
                       <WifiOff className="w-3.5 h-3.5 text-slate-500" />
                     )}
-                    <span 
-                      className={`text-[10px] font-mono uppercase tracking-wider ${
-                        isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-slate-500'
-                      }`}
-                      data-testid="badge-sse-status"
+                    <div
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: isConnected ? 'rgba(34,197,94,0.1)' : isReconnecting ? 'rgba(234,179,8,0.1)' : 'rgba(71,85,105,0.2)',
+                        border: `1px solid ${isConnected ? 'rgba(34,197,94,0.25)' : isReconnecting ? 'rgba(234,179,8,0.25)' : 'rgba(71,85,105,0.3)'}`,
+                      }}
                     >
-                      {isConnected ? "LIVE" : isReconnecting ? "RECONNECTING" : "CONNECTING"}
-                    </span>
+                      {isConnected && (
+                        <span className="inline-flex gap-0.5">
+                          <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+                          <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '200ms' }} />
+                        </span>
+                      )}
+                      <span 
+                        className={`text-[9px] sm:text-[10px] font-mono uppercase tracking-wider ${
+                          isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-slate-500'
+                        }`}
+                        data-testid="badge-sse-status"
+                      >
+                        {isConnected ? "LIVE" : isReconnecting ? "RECONNECTING" : "CONNECTING"}
+                      </span>
+                    </div>
                   </div>
                   <Lock className="w-3.5 h-3.5 text-slate-500" />
                 </div>
@@ -731,20 +787,18 @@ export default function RevenueImmuneCard() {
               {/* Terminal Log Body */}
               <div 
                 ref={logContainerRef}
-                className="p-3 sm:p-4 font-mono text-[11px] sm:text-[13px] leading-relaxed"
+                className="p-3 sm:p-4 font-mono text-[11px] sm:text-[13px] leading-relaxed relative"
                 data-testid="log-body"
               >
                 {activityLog.length === 0 ? (
                   <div className="space-y-2 sm:space-y-1.5">
-                    {/* Line 1: Initializing */}
-                    <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 duration-500">
+                    <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.5s ease-out both' }}>
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                       <span className="text-blue-300 flex-shrink-0">[INFO]</span>
                       <span className="text-slate-300 break-words">Initializing ZYRA monitoring engine...</span>
                     </div>
                     
-                    {/* Line 2: Connection status */}
-                    <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 duration-500 delay-150">
+                    <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.5s ease-out 150ms both' }}>
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                       <span className={`flex-shrink-0 ${isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-cyan-300'}`}>
                         [{isConnected ? 'OK' : isReconnecting ? 'RETRY' : 'SYSTEM'}]
@@ -756,9 +810,9 @@ export default function RevenueImmuneCard() {
                             <span className="hidden sm:inline">—</span>
                             <span>Listening for scanning events</span>
                             <span className="inline-flex gap-0.5 ml-1">
-                              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
-                              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '150ms' }} />
-                              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: '300ms' }} />
+                              {[0, 1, 2].map(i => (
+                                <span key={i} className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
+                              ))}
                             </span>
                           </>
                         ) : isReconnecting ? (
@@ -768,9 +822,9 @@ export default function RevenueImmuneCard() {
                               <span className="text-slate-500 text-[10px]">(attempt {retryCount})</span>
                             )}
                             <span className="inline-flex gap-0.5 ml-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
-                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
-                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '300ms' }} />
+                              {[0, 1, 2].map(i => (
+                                <span key={i} className="w-1.5 h-1.5 rounded-full bg-yellow-400" style={{ animation: `bounce-dot 0.6s ease-in-out ${i * 150}ms infinite` }} />
+                              ))}
                             </span>
                           </>
                         ) : (
@@ -778,18 +832,17 @@ export default function RevenueImmuneCard() {
                             <span>Establishing connection</span>
                             <span className="text-slate-500 text-[10px] ml-1">({connectionElapsed}s)</span>
                             <span className="inline-flex gap-0.5 ml-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s' }} />
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '150ms' }} />
-                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDuration: '0.6s', animationDelay: '300ms' }} />
+                              {[0, 1, 2].map(i => (
+                                <span key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400" style={{ animation: `bounce-dot 0.6s ease-in-out ${i * 150}ms infinite` }} />
+                              ))}
                             </span>
                           </>
                         )}
                       </span>
                     </div>
 
-                    {/* Line 3: Wait message or timeout warning */}
                     {!isConnected && (
-                      <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-500 delay-300">
+                      <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.5s ease-out 300ms both' }}>
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                         {connectionElapsed >= 10 ? (
                           <>
@@ -819,9 +872,8 @@ export default function RevenueImmuneCard() {
                       </div>
                     )}
 
-                    {/* Line 4: Additional status when connection is slow */}
                     {!isConnected && connectionElapsed >= 5 && (
-                      <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                      <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.4s ease-out 450ms both' }}>
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                         <span className="text-slate-600 flex-shrink-0">[DEBUG]</span>
                         <span className="text-slate-500 break-words text-[9px] sm:text-[11px]">
@@ -834,9 +886,8 @@ export default function RevenueImmuneCard() {
                       </div>
                     )}
 
-                    {/* Line 5: Network hint when very slow */}
                     {!isConnected && connectionElapsed >= 15 && (
-                      <div className="flex items-start gap-1.5 sm:gap-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                      <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.4s ease-out 600ms both' }}>
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                         <span className="text-slate-600 flex-shrink-0">[HINT]</span>
                         <span className="text-slate-500 break-words text-[9px] sm:text-[11px]">
@@ -864,26 +915,46 @@ export default function RevenueImmuneCard() {
                         : logLevel === 'WARNING' ? 'text-amber-400'
                         : logLevel === 'ERROR' ? 'text-red-400'
                         : 'text-amber-400';
+                      const levelGlow = logLevel === 'SUCCESS' ? 'rgba(34,197,94,0.08)'
+                        : logLevel === 'WARNING' ? 'rgba(245,158,11,0.06)'
+                        : logLevel === 'ERROR' ? 'rgba(239,68,68,0.06)'
+                        : 'transparent';
                       
                       return (
                         <div 
                           key={event.id}
                           data-testid={`row-activity-${event.id}`}
-                          className="flex items-start gap-2 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
-                          style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}
+                          className="flex items-start gap-2 rounded px-1.5 py-0.5 -mx-1.5"
+                          style={{ 
+                            wordBreak: 'break-word', 
+                            whiteSpace: 'pre-wrap',
+                            backgroundColor: isLast ? 'rgba(0,240,255,0.04)' : levelGlow,
+                            borderLeft: isLast ? '2px solid rgba(0,240,255,0.4)' : '2px solid transparent',
+                            animation: `fadeIn 0.3s ease-out both`,
+                          }}
                         >
                           <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                           <span className={`${levelColor} flex-shrink-0`}>[{logLevel}]</span>
                           <span className="text-slate-300">{event.message}</span>
-                          {/* Typing cursor on last entry */}
                           {isLast && (
-                            <span className="inline-block w-2 h-4 bg-cyan-400/80 animate-pulse ml-0.5" />
+                            <span className="inline-block w-2 h-4 bg-cyan-400/80 animate-pulse ml-0.5 flex-shrink-0" />
                           )}
                         </div>
                       );
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* Animated bottom edge */}
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden">
+                <div
+                  className="h-full"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(0,240,255,0.5), #00f0ff, rgba(0,240,255,0.5), transparent)',
+                    animation: 'scan-sweep 3s ease-in-out infinite',
+                  }}
+                />
               </div>
             </div>
           )}
