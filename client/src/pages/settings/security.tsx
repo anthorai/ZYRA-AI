@@ -198,17 +198,7 @@ export default function SecurityPage() {
         spacing="normal"
         useHistoryBack={true}
       >
-        {showSetupInline ? (
-          <Card className="border-0" style={sectionStyle} data-testid="card-2fa-setup">
-            <CardContent className="p-5 sm:p-6">
-              <TwoFactorSetupInline
-                onSuccess={handle2FASuccess}
-                onCancel={() => setShowSetupInline(false)}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
+        <div className="space-y-6">
             <Card className="border-0" style={sectionStyle} data-testid="card-2fa">
               <CardContent className="p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-5">
@@ -245,26 +235,42 @@ export default function SecurityPage() {
                   )}
                 </div>
 
-                <div
-                  className="flex items-center justify-between gap-3 p-4 rounded-xl"
-                  style={{
-                    background: '#0F152B',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <div>
-                    <Label className="font-medium" style={{ color: '#E6F7FF' }}>
-                      {twoFactorEnabled ? '2FA is protecting your account' : 'Enable 2FA for extra security'}
-                    </Label>
+                {!showSetupInline ? (
+                  <div
+                    className="flex items-center justify-between gap-3 p-4 rounded-xl"
+                    style={{
+                      background: '#0F152B',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    <div>
+                      <Label className="font-medium" style={{ color: '#E6F7FF' }}>
+                        {twoFactorEnabled ? '2FA is protecting your account' : 'Enable 2FA for extra security'}
+                      </Label>
+                    </div>
+                    <Switch
+                      checked={twoFactorEnabled}
+                      onCheckedChange={handleToggle2FA}
+                      disabled={twoFactorLoading}
+                      className="data-[state=checked]:bg-[#00F0FF]"
+                      data-testid="switch-2fa"
+                    />
                   </div>
-                  <Switch
-                    checked={twoFactorEnabled}
-                    onCheckedChange={handleToggle2FA}
-                    disabled={twoFactorLoading}
-                    className="data-[state=checked]:bg-[#00F0FF]"
-                    data-testid="switch-2fa"
-                  />
-                </div>
+                ) : (
+                  <div
+                    className="mt-4 p-4 rounded-xl"
+                    style={{
+                      background: '#0F152B',
+                      border: '1px solid rgba(0,240,255,0.15)',
+                    }}
+                    data-testid="card-2fa-setup"
+                  >
+                    <TwoFactorSetupInline
+                      onSuccess={handle2FASuccess}
+                      onCancel={() => setShowSetupInline(false)}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -580,7 +586,6 @@ export default function SecurityPage() {
               </CardContent>
             </Card>
           </div>
-        )}
       </PageShell>
     </>
   );
