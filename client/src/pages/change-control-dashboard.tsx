@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -227,6 +227,179 @@ const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bgColor: st
   medium: { label: "Medium Risk", color: "text-yellow-400", bgColor: "bg-yellow-500/20 border-yellow-500/30" },
   high: { label: "High Risk", color: "text-red-400", bgColor: "bg-red-500/20 border-red-500/30" },
 };
+
+function ZyraWatchingCard({
+  totalActions,
+  pendingCount,
+  appliedCount,
+  rolledBackCount,
+  totalLearnings,
+  revenueImpact,
+  latestAction,
+  settings,
+}: {
+  totalActions: number;
+  pendingCount: number;
+  appliedCount: number;
+  rolledBackCount: number;
+  totalLearnings: number;
+  revenueImpact: number;
+  latestAction: ChangeItem | null;
+  settings: AutomationSettings | undefined;
+}) {
+  const [pulsePhase, setPulsePhase] = useState(0);
+  const [activityIndex, setActivityIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setPulsePhase(p => (p + 1) % 3), 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const activityFeed = useMemo(() => {
+    const items: { text: string; icon: typeof Search; color: string }[] = [];
+    if (pendingCount > 0) items.push({ text: `Reviewing ${pendingCount} pending optimization${pendingCount > 1 ? 's' : ''}`, icon: Eye, color: '#F59E0B' });
+    if (appliedCount > 0) items.push({ text: `${appliedCount} optimization${appliedCount > 1 ? 's' : ''} applied successfully`, icon: CheckCircle2, color: '#22C55E' });
+    if (totalLearnings > 0) items.push({ text: `${totalLearnings} pattern${totalLearnings > 1 ? 's' : ''} learned from store data`, icon: Brain, color: '#A78BFA' });
+    if (latestAction) {
+      const cfg = ACTION_TYPE_CONFIG[latestAction.actionType];
+      const name = latestAction.productName || latestAction.payload?.productName;
+      if (cfg && name) items.push({ text: `Last: ${cfg.label} on "${name}"`, icon: cfg.icon, color: '#00F0FF' });
+    }
+    if (rolledBackCount > 0) items.push({ text: `${rolledBackCount} change${rolledBackCount > 1 ? 's' : ''} safely rolled back`, icon: RotateCcw, color: '#94A3B8' });
+    items.push({ text: 'Scanning store for revenue friction', icon: Search, color: '#00F0FF' });
+    items.push({ text: 'Monitoring SEO rankings & visibility', icon: Globe, color: '#06B6D4' });
+    items.push({ text: 'Analyzing conversion patterns', icon: Target, color: '#10B981' });
+    return items;
+  }, [pendingCount, appliedCount, totalLearnings, latestAction, rolledBackCount]);
+
+  useEffect(() => {
+    if (activityFeed.length === 0) return;
+    const interval = setInterval(() => setActivityIndex(i => (i + 1) % activityFeed.length), 3500);
+    return () => clearInterval(interval);
+  }, [activityFeed.length]);
+
+  const currentActivity = activityFeed[activityIndex];
+  const CurrentIcon = currentActivity?.icon || Search;
+  const modeLabel = settings?.autopilotMode === 'aggressive' ? 'Full Auto' : settings?.autopilotMode === 'balanced' ? 'Balanced' : 'Low-Risk';
+  const isAutopilot = settings?.autopilotEnabled;
+
+  return (
+    <Card className="border-white/5 relative group" style={{ background: 'linear-gradient(135deg, rgba(0,240,255,0.04), rgba(15,21,43,0.95), rgba(0,255,229,0.03))' }}>
+      <div
+        className="absolute inset-0 rounded-md pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at ${pulsePhase === 0 ? '20% 30%' : pulsePhase === 1 ? '80% 60%' : '50% 80%'}, rgba(0,240,255,0.06) 0%, transparent 70%)`,
+          transition: 'background 2s ease-in-out',
+        }}
+      />
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-md overflow-hidden">
+        <div
+          className="w-full h-full"
+          style={{
+            background: 'linear-gradient(180deg, #00F0FF, #00FFE5, #00F0FF)',
+            backgroundSize: '100% 200%',
+            animation: 'zyraBarPulse 3s ease-in-out infinite',
+          }}
+        />
+      </div>
+      <style>{`
+        @keyframes zyraBarPulse {
+          0%, 100% { background-position: 0% 0%; opacity: 0.7; }
+          50% { background-position: 0% 100%; opacity: 1; }
+        }
+        @keyframes zyraOrbitSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes zyraFadeSlide {
+          0% { opacity: 0; transform: translateY(6px); }
+          15% { opacity: 1; transform: translateY(0); }
+          85% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-6px); }
+        }
+        @keyframes zyraScanner {
+          0%, 100% { transform: translateX(-100%); opacity: 0; }
+          10% { opacity: 0.5; }
+          50% { opacity: 0.3; }
+          90% { opacity: 0.5; }
+          95% { transform: translateX(200%); opacity: 0; }
+        }
+      `}</style>
+      <CardContent className="pt-5 pb-4 pl-5 relative z-10">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="relative flex-shrink-0">
+            <div
+              className="absolute -inset-2 rounded-full pointer-events-none"
+              style={{
+                border: '1.5px solid rgba(0,240,255,0.15)',
+                animation: 'zyraOrbitSpin 8s linear infinite',
+              }}
+            />
+            <div
+              className="absolute -inset-3.5 rounded-full pointer-events-none"
+              style={{
+                border: '1px dashed rgba(0,255,229,0.1)',
+                animation: 'zyraOrbitSpin 12s linear infinite reverse',
+              }}
+            />
+            <div className="relative w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,240,255,0.12)' }}>
+              <Bot className="w-5 h-5" style={{ color: '#00F0FF' }} />
+              <div
+                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
+                style={{
+                  background: isAutopilot ? '#22C55E' : '#F59E0B',
+                  boxShadow: isAutopilot ? '0 0 8px rgba(34,197,94,0.6)' : '0 0 8px rgba(245,158,11,0.6)',
+                  animation: 'zyraBarPulse 2s ease-in-out infinite',
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="font-semibold text-sm" style={{ color: '#E6F7FF' }}>ZYRA is watching</h4>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/10" style={{ color: isAutopilot ? '#22C55E' : '#F59E0B' }}>
+                {isAutopilot ? modeLabel : 'Manual'}
+              </Badge>
+            </div>
+            <p className="text-[11px] mt-0.5" style={{ color: '#7C86B8' }}>
+              {totalActions > 0 ? `${totalActions} actions tracked` : 'Monitoring your store'} {revenueImpact > 0 ? ` \u00B7 ${formatCurrencyUtil(revenueImpact, _storeCurrencyCode)} revenue impact` : ''}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="rounded-lg px-3 py-2 flex items-center gap-2.5 relative"
+          style={{
+            background: 'rgba(0,240,255,0.04)',
+            border: '1px solid rgba(0,240,255,0.08)',
+            minHeight: '36px',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(0,240,255,0.04), transparent)',
+              animation: 'zyraScanner 4s ease-in-out infinite',
+            }}
+          />
+          <CurrentIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: currentActivity?.color || '#00F0FF' }} />
+          <span
+            key={activityIndex}
+            className="text-[11px] font-medium truncate"
+            style={{
+              color: '#A9B4E5',
+              animation: 'zyraFadeSlide 3.5s ease-in-out',
+            }}
+            data-testid="text-zyra-activity"
+          >
+            {currentActivity?.text}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function getRiskLevel(item: ChangeItem): RiskLevel {
   const impact = item.estimatedImpact;
@@ -1900,22 +2073,16 @@ export default function ChangeControlDashboard() {
                   )}
                 </Card>
 
-                <Card className="bg-slate-900/80 border-white/5 overflow-hidden">
-                  <div className="flex">
-                    <div className="w-[3px] flex-shrink-0 bg-primary" />
-                    <CardContent className="pt-6 flex-1">
-                      <div className="flex items-start gap-3">
-                        <Bot className="w-8 h-8 text-primary flex-shrink-0" />
-                        <div>
-                          <h4 className="font-medium mb-1 text-cyan-50">ZYRA is watching</h4>
-                          <p className="text-xs text-slate-400">
-                            Your AI growth manager is continuously analyzing your store and finding opportunities to increase revenue.
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </div>
-                </Card>
+                <ZyraWatchingCard
+                  totalActions={changes?.length || 0}
+                  pendingCount={pendingChanges.length}
+                  appliedCount={appliedChanges.length}
+                  rolledBackCount={rolledBackChanges.length}
+                  totalLearnings={learningStats?.totalLearnings || 0}
+                  revenueImpact={totalRevenueImpact}
+                  latestAction={changes?.[0] || null}
+                  settings={settings}
+                />
               </div>
             </div>
           </div>
