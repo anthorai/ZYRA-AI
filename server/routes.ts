@@ -18583,12 +18583,13 @@ Output format: Markdown with clear section headings.`;
         }
       }
 
-      // Mark action as rolled back
+      // Mark action as rolled back and reset publishedToShopify so it can be re-pushed
       await db
         .update(autonomousActions)
         .set({
           status: 'rolled_back' as any,
           rolledBackAt: new Date(),
+          publishedToShopify: false,
           result: {
             ...action[0].result,
             rolledBack: true,
@@ -18628,9 +18629,9 @@ Output format: Markdown with clear section headings.`;
 
       const actionData = action[0];
 
-      // Only allow pushing pending, dry_run, or completed (unpublished) actions
-      if (actionData.status !== 'pending' && actionData.status !== 'dry_run' && actionData.status !== 'completed') {
-        return res.status(400).json({ error: `Cannot push action with status '${actionData.status}'. Only pending, preview, or unpublished completed actions can be pushed.` });
+      // Only allow pushing pending, dry_run, completed (unpublished), or rolled_back actions
+      if (actionData.status !== 'pending' && actionData.status !== 'dry_run' && actionData.status !== 'completed' && actionData.status !== 'rolled_back') {
+        return res.status(400).json({ error: `Cannot push action with status '${actionData.status}'. Only pending, preview, unpublished completed, or rolled back actions can be pushed.` });
       }
       
       // If already published, don't push again

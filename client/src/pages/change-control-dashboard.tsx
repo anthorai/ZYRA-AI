@@ -649,7 +649,7 @@ export default function ChangeControlDashboard() {
     return Array.from(selectedIds).some(id => {
       const change = changes?.find(c => c.id === id);
       return change && !change.publishedToShopify && 
-        (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+        (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
     });
   }, [selectedIds, changes]);
 
@@ -823,7 +823,7 @@ export default function ChangeControlDashboard() {
                             const idsToPush = Array.from(selectedIds).filter(id => {
                               const change = changes?.find(c => c.id === id);
                               return change && !change.publishedToShopify && 
-                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
                             });
                             if (idsToPush.length > 0) {
                               bulkPushMutation.mutate(idsToPush);
@@ -837,7 +837,7 @@ export default function ChangeControlDashboard() {
                           Bulk Push to Shopify ({Array.from(selectedIds).filter(id => {
                             const change = changes?.find(c => c.id === id);
                             return change && !change.publishedToShopify && 
-                              (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                              (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
                           }).length})
                         </Button>
                       )}
@@ -1022,7 +1022,7 @@ export default function ChangeControlDashboard() {
                               const idsToPush = Array.from(selectedIds).filter(id => {
                                 const change = changes?.find(c => c.id === id);
                                 return change && !change.publishedToShopify && 
-                                  (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                                  (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
                               });
                               if (idsToPush.length > 0) {
                                 bulkPushMutation.mutate(idsToPush);
@@ -1036,7 +1036,7 @@ export default function ChangeControlDashboard() {
                             Push Selected ({Array.from(selectedIds).filter(id => {
                               const change = changes?.find(c => c.id === id);
                               return change && !change.publishedToShopify && 
-                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
                             }).length})
                           </Button>
                           <Button
@@ -1117,7 +1117,7 @@ export default function ChangeControlDashboard() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run") && (
+                                {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back") && (
                                   <Button
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}
@@ -1436,7 +1436,7 @@ export default function ChangeControlDashboard() {
                               const idsToPush = Array.from(selectedIds).filter(id => {
                                 const change = changes?.find(c => c.id === id);
                                 return change && !change.publishedToShopify && 
-                                  (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                                  (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
                               });
                               if (idsToPush.length > 0) {
                                 bulkPushMutation.mutate(idsToPush);
@@ -1450,7 +1450,7 @@ export default function ChangeControlDashboard() {
                             Push Selected ({Array.from(selectedIds).filter(id => {
                               const change = changes?.find(c => c.id === id);
                               return change && !change.publishedToShopify && 
-                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run");
+                                (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back");
                             }).length})
                           </Button>
                           <Button
@@ -1531,7 +1531,7 @@ export default function ChangeControlDashboard() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run") && (
+                                {!change.publishedToShopify && (change.status === "pending" || change.status === "completed" || change.status === "dry_run" || change.status === "rolled_back") && (
                                   <Button
                                     size="sm"
                                     onClick={() => pushToShopifyMutation.mutate(change.id)}

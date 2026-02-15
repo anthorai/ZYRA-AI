@@ -543,7 +543,7 @@ export default function ChangeDetailsPage() {
                       </Button>
                     </>
                   )}
-                  {(change.status === "completed" || change.status === "dry_run" || change.status === "pending") && 
+                  {(change.status === "completed" || change.status === "dry_run" || change.status === "pending" || change.status === "rolled_back") && 
                    !change.publishedToShopify && (
                     <Button 
                       variant="outline"
