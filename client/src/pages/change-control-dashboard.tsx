@@ -761,8 +761,28 @@ export default function ChangeControlDashboard() {
     mutationFn: async (newSettings: Partial<AutomationSettings>) => {
       return await apiRequest("PATCH", "/api/automation/settings", newSettings);
     },
-    onSuccess: () => {
+    onMutate: async (newSettings) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/automation/settings"] });
+      const previous = queryClient.getQueryData<AutomationSettings>(["/api/automation/settings"]);
+      if (previous) {
+        queryClient.setQueryData(["/api/automation/settings"], { ...previous, ...newSettings });
+      }
+      return { previous };
+    },
+    onError: (_err, _newSettings, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["/api/automation/settings"], context.previous);
+      }
+      toast({
+        title: "Update Failed",
+        description: "Could not save your settings. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/automation/settings"] });
+    },
+    onSuccess: () => {
       toast({
         title: "Settings Updated",
         description: "Your control preferences have been saved.",
@@ -1995,82 +2015,109 @@ export default function ChangeControlDashboard() {
                   </Card>
                 )}
 
-                <Card className="bg-slate-900/80 border-white/5">
-                  <CardHeader className="pb-3">
+                <Card className="border-white/5 relative" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.04), rgba(15,21,43,0.95), rgba(0,240,255,0.03))' }}>
+                  <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-md" style={{ background: settings?.autopilotEnabled ? 'linear-gradient(180deg, #6366F1, #00F0FF)' : 'linear-gradient(180deg, rgba(99,102,241,0.4), rgba(0,240,255,0.3))' }} />
+                  <CardHeader className="pb-2 pl-5">
                     <button 
                       onClick={() => setSettingsExpanded(!settingsExpanded)}
-                      className="w-full flex items-center justify-between"
+                      className="w-full flex items-center justify-between gap-3"
                       data-testid="button-toggle-settings"
                     >
-                      <div>
-                        <CardTitle className="text-lg flex items-center gap-2 text-cyan-50">
-                          <Shield className="w-5 h-5 text-primary" />
-                          Safety & Control
-                        </CardTitle>
-                        <CardDescription className="text-slate-400">Your automation preferences</CardDescription>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.12)' }}>
+                          <Shield className="w-5 h-5" style={{ color: '#818CF8' }} />
+                          {settings?.autopilotEnabled && (
+                            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full" style={{ background: '#22C55E', boxShadow: '0 0 8px rgba(34,197,94,0.6)' }} />
+                          )}
+                        </div>
+                        <div className="text-left min-w-0">
+                          <h4 className="text-sm font-semibold" style={{ color: '#E6F7FF' }}>Safety & Control</h4>
+                          <p className="text-[11px]" style={{ color: '#7C86B8' }}>
+                            {settings?.autopilotEnabled 
+                              ? `Autopilot ${settings?.autopilotMode === 'aggressive' ? 'Full Auto' : settings?.autopilotMode === 'balanced' ? 'Balanced' : 'Low-Risk'}`
+                              : 'Manual mode'}
+                            {settings?.dryRunMode ? ' \u00B7 Preview on' : ''}
+                          </p>
+                        </div>
                       </div>
-                      {settingsExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {updateSettingsMutation.isPending && (
+                          <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(0,240,255,0.4)', borderTopColor: 'transparent' }} />
+                        )}
+                        {settingsExpanded ? <ChevronUp className="w-4 h-4" style={{ color: '#7C86B8' }} /> : <ChevronDown className="w-4 h-4" style={{ color: '#7C86B8' }} />}
+                      </div>
                     </button>
                   </CardHeader>
-                  {settingsExpanded && (
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-sm text-cyan-50">Enable Autopilot</Label>
-                          <p className="text-xs text-slate-400">Let ZYRA auto-apply low-risk changes</p>
+                  <div
+                    className="overflow-hidden transition-all duration-300 ease-in-out"
+                    style={{
+                      maxHeight: settingsExpanded ? '500px' : '0px',
+                      opacity: settingsExpanded ? 1 : 0,
+                    }}
+                  >
+                    <CardContent className="space-y-3 pt-1 pl-5">
+                      {([
+                        { key: 'autopilot', label: 'Enable Autopilot', desc: 'Auto-apply low-risk changes', field: 'autopilotEnabled' as const, icon: Zap },
+                        { key: 'auto-publish', label: 'Auto-Publish to Shopify', desc: 'Push approved changes automatically', field: 'autoPublishEnabled' as const, icon: Upload },
+                        { key: 'dry-run', label: 'Preview Mode', desc: 'See changes before they go live', field: 'dryRunMode' as const, icon: Eye },
+                      ] as const).map(({ key, label, desc, field, icon: ItemIcon }, i) => (
+                        <div key={key}>
+                          <div className="flex items-center justify-between gap-3 py-1">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: settings?.[field] ? '#00F0FF' : '#4B5580' }} />
+                              <div className="min-w-0">
+                                <Label className="text-xs font-medium" style={{ color: '#C8D0EA' }}>{label}</Label>
+                                <p className="text-[10px] leading-tight" style={{ color: '#5A6490' }}>{desc}</p>
+                              </div>
+                            </div>
+                            <Switch 
+                              checked={settings?.[field] || false}
+                              onCheckedChange={(checked) => updateSettingsMutation.mutate({ [field]: checked })}
+                              className="data-[state=checked]:bg-[#00F0FF] scale-90"
+                              data-testid={`switch-${key}`}
+                            />
+                          </div>
+                          {i < 2 && <div className="h-px ml-6" style={{ background: 'rgba(255,255,255,0.04)' }} />}
                         </div>
-                        <Switch 
-                          checked={settings?.autopilotEnabled || false}
-                          onCheckedChange={(checked) => updateSettingsMutation.mutate({ autopilotEnabled: checked })}
-                          data-testid="switch-autopilot"
-                        />
-                      </div>
-                      <Separator className="opacity-10" />
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-sm text-cyan-50">Auto-Publish to Shopify</Label>
-                          <p className="text-xs text-slate-400">Automatically push approved changes</p>
-                        </div>
-                        <Switch 
-                          checked={settings?.autoPublishEnabled || false}
-                          onCheckedChange={(checked) => updateSettingsMutation.mutate({ autoPublishEnabled: checked })}
-                          data-testid="switch-auto-publish"
-                        />
-                      </div>
-                      <Separator className="opacity-10" />
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-sm text-cyan-50">Preview Mode</Label>
-                          <p className="text-xs text-slate-400">See changes before they go live</p>
-                        </div>
-                        <Switch 
-                          checked={settings?.dryRunMode || false}
-                          onCheckedChange={(checked) => updateSettingsMutation.mutate({ dryRunMode: checked })}
-                          data-testid="switch-dry-run"
-                        />
-                      </div>
-                      <Separator className="opacity-10" />
-                      <div className="space-y-2">
-                        <Label className="text-sm text-cyan-50">Autonomy Level</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {(["safe", "balanced", "aggressive"] as const).map((mode) => (
-                            <Button
-                              key={mode}
-                              variant={settings?.autopilotMode === mode ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => updateSettingsMutation.mutate({ autopilotMode: mode })}
-                              className="capitalize text-xs"
-                              data-testid={`button-mode-${mode}`}
-                            >
-                              {mode === "safe" && "Low-Risk"}
-                              {mode === "balanced" && "Balanced"}
-                              {mode === "aggressive" && "Full Auto"}
-                            </Button>
-                          ))}
+                      ))}
+
+                      <div className="pt-1">
+                        <Label className="text-xs font-medium flex items-center gap-1.5 mb-2" style={{ color: '#C8D0EA' }}>
+                          <Activity className="w-3.5 h-3.5" style={{ color: '#818CF8' }} />
+                          Autonomy Level
+                        </Label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {(["safe", "balanced", "aggressive"] as const).map((mode) => {
+                            const isActive = settings?.autopilotMode === mode;
+                            const labels = { safe: 'Low-Risk', balanced: 'Balanced', aggressive: 'Full Auto' };
+                            const icons = { safe: Shield, balanced: Target, aggressive: Zap };
+                            const ModeIcon = icons[mode];
+                            return (
+                              <button
+                                key={mode}
+                                onClick={() => updateSettingsMutation.mutate({ autopilotMode: mode })}
+                                className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[11px] font-medium transition-all"
+                                style={isActive ? {
+                                  background: 'linear-gradient(135deg, rgba(0,240,255,0.15), rgba(99,102,241,0.1))',
+                                  color: '#00F0FF',
+                                  border: '1px solid rgba(0,240,255,0.25)',
+                                  boxShadow: '0 0 12px rgba(0,240,255,0.1)',
+                                } : {
+                                  background: 'rgba(255,255,255,0.02)',
+                                  color: '#5A6490',
+                                  border: '1px solid rgba(255,255,255,0.06)',
+                                }}
+                                data-testid={`button-mode-${mode}`}
+                              >
+                                <ModeIcon className="w-3 h-3" />
+                                {labels[mode]}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </CardContent>
-                  )}
+                  </div>
                 </Card>
 
                 <ZyraWatchingCard
