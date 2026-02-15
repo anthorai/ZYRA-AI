@@ -617,6 +617,20 @@
     to { left: 100%; }
   }
 
+  @keyframes scan-sweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+
+  @keyframes ping {
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+
+  @keyframes bounce-dot {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-4px); }
+  }
+
   /* Micro-interaction for buttons */
   .btn-press {
     transition: transform 0.1s ease;

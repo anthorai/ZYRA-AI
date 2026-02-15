@@ -235,6 +235,20 @@ export default function Reports() {
 
   const userPlanId = subscriptionData?.planId || PLAN_IDS.FREE;
 
+  const { data: liveStats } = useQuery<{
+    activePhase?: string;
+    currentAction?: string;
+    productsAnalyzed?: number;
+    totalProducts?: number;
+    lastScanTime?: string;
+    nextScanTime?: string;
+    activeLoopId?: string;
+  }>({
+    queryKey: ["/api/zyra/live-stats"],
+    enabled: !!user,
+    refetchInterval: 15000,
+  });
+
   const { events: sseEvents, isConnected, isReconnecting } = useZyraActivity();
 
   const [todayReportExpanded, setTodayReportExpanded] = useState(true);
@@ -1040,38 +1054,104 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            {/* SECTION 6: NEXT EXPECTED VALUE */}
+            {/* SECTION 6: LIVE STORE ANALYSIS */}
             <Card className="border-0" style={{ background: '#11162A', boxShadow: '0 0 0 1px rgba(255,255,255,0.04)', borderRadius: '16px' }}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  Next Expected Value
+                  <Radio className="w-5 h-5 text-primary" style={{ animation: isConnected ? 'pulse 2s ease-in-out infinite' : 'none' }} />
+                  Live Store Analysis
+                  {isConnected && (
+                    <span className="relative flex h-2 w-2 ml-1">
+                      <span className="absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: '#00F0FF', animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: '#00F0FF' }} />
+                    </span>
+                  )}
                 </CardTitle>
-                <CardDescription>What ZYRA is monitoring</CardDescription>
+                <CardDescription>
+                  {isConnected ? 'Connected to live feed' : isReconnecting ? 'Reconnecting...' : 'Connecting...'}
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                {nextMonitoring ? (
-                  <div className="p-4 rounded-lg border-0" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
-                    <div className="flex items-start gap-3">
-                      <Target className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium" data-testid="text-next-monitoring">
-                          Monitoring {nextMonitoring.productName || "product"} for potential optimization
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {nextMonitoring.decisionReason || "Analyzing performance patterns"}
-                        </p>
+              <CardContent className="space-y-3">
+                {(() => {
+                  const latestEvent = sseEvents.length > 0 ? sseEvents[sseEvents.length - 1] : null;
+                  const activePhase = latestEvent?.phase || liveStats?.activePhase || 'detect';
+                  const phaseConfig: Record<string, { icon: typeof Search; label: string; color: string; glowColor: string }> = {
+                    detect: { icon: Search, label: 'Scanning Store', color: '#3B82F6', glowColor: 'rgba(59,130,246,0.3)' },
+                    decide: { icon: Brain, label: 'Making Decisions', color: '#A855F7', glowColor: 'rgba(168,85,247,0.3)' },
+                    execute: { icon: Zap, label: 'Executing Changes', color: '#F97316', glowColor: 'rgba(249,115,22,0.3)' },
+                    prove: { icon: Award, label: 'Measuring Results', color: '#22C55E', glowColor: 'rgba(34,197,94,0.3)' },
+                    learn: { icon: Lightbulb, label: 'Learning Patterns', color: '#EAB308', glowColor: 'rgba(234,179,8,0.3)' },
+                    standby: { icon: Eye, label: 'Monitoring', color: '#00F0FF', glowColor: 'rgba(0,240,255,0.3)' },
+                  };
+                  const phase = phaseConfig[activePhase] || phaseConfig.detect;
+                  const PhaseIcon = phase.icon;
+
+                  return (
+                    <>
+                      <div className="p-4 rounded-lg border-0 relative overflow-hidden" style={{ background: '#161C36', boxShadow: `0 0 0 1px ${phase.glowColor}, 0 0 20px ${phase.glowColor}`, borderRadius: '14px' }}>
+                        <div className="absolute inset-0 opacity-10" style={{ background: `linear-gradient(90deg, transparent, ${phase.color}, transparent)`, animation: 'scan-sweep 3s ease-in-out infinite' }} />
+                        <div className="relative flex items-center gap-3">
+                          <div className="p-2 rounded-full flex-shrink-0" style={{ backgroundColor: `${phase.color}20`, animation: 'pulse 2s ease-in-out infinite' }}>
+                            <PhaseIcon className="w-5 h-5" style={{ color: phase.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold" style={{ color: phase.color }} data-testid="text-active-phase">
+                                {phase.label}
+                              </p>
+                              <div className="flex gap-0.5">
+                                {[0, 1, 2].map(i => (
+                                  <div key={i} className="w-1 h-1 rounded-full" style={{ backgroundColor: phase.color, animation: `bounce-dot 1.4s ease-in-out ${i * 0.2}s infinite` }} />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate" data-testid="text-current-action">
+                              {latestEvent?.message || liveStats?.currentAction || 'Analyzing store performance metrics'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-lg border-0 text-center" style={{ background: '#161C36', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', borderRadius: '14px' }}>
-                    <Bot className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground" data-testid="text-no-monitoring">
-                      ZYRA is continuously analyzing your store for opportunities
-                    </p>
-                  </div>
-                )}
+
+                      {nextMonitoring && (
+                        <div className="p-3 rounded-lg border-0" style={{ background: '#10192E', borderLeft: `2px solid ${phase.color}`, borderRadius: '14px' }}>
+                          <div className="flex items-start gap-2">
+                            <Target className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: phase.color }} />
+                            <div>
+                              <p className="text-xs font-medium" data-testid="text-next-monitoring">
+                                Next: {nextMonitoring.productName || "product"} optimization
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {nextMonitoring.decisionReason || "Queued for analysis"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {liveActivityLog.length > 0 && (
+                        <div className="space-y-1.5 max-h-[120px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                          {liveActivityLog.slice(0, 3).map((event, idx) => (
+                            <div key={event.id || idx} className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs" style={{ background: idx === 0 ? '#161C36' : 'transparent', opacity: 1 - idx * 0.2 }}>
+                              <event.Icon className={cn("w-3 h-3 flex-shrink-0", event.color)} />
+                              <span className="truncate text-muted-foreground">{event.message}</span>
+                              <span className="ml-auto text-[10px] text-muted-foreground/50 flex-shrink-0 tabular-nums">
+                                {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground/60 pt-1">
+                        <span>{totalProductsMonitored > 0 ? `${totalProductsMonitored} products monitored` : 'Store connected'}</span>
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isConnected ? '#22C55E' : '#EF4444' }} />
+                          {isConnected ? 'Live' : 'Offline'}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
 
