@@ -77,8 +77,6 @@ export function PageShell({
                     onClick={() => {
                       if (backTo) {
                         setLocation(backTo);
-                      } else if (window.history.length > 1) {
-                        window.history.back();
                       } else {
                         setLocation('/dashboard');
                       }
