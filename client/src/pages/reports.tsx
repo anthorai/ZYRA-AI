@@ -54,6 +54,21 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
+function stripHtmlTags(html: string): string {
+  if (!html) return '';
+  let text = html;
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+  text = text.replace(/<\/li>/gi, '\n');
+  text = text.replace(/<li[^>]*>/gi, '  \u2022 ');
+  text = text.replace(/<\/ul>|<\/ol>/gi, '\n');
+  text = text.replace(/<[^>]*>/g, '');
+  text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  return text.trim();
+}
+
 interface TodayIssue {
   problemType: string;
   entityName: string;
@@ -828,7 +843,7 @@ export default function Reports() {
                                                                   Before
                                                                 </p>
                                                                 <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                                                  {change.before || <span className="italic text-muted-foreground">(empty)</span>}
+                                                                  {change.before ? stripHtmlTags(change.before) : <span className="italic text-muted-foreground">(empty)</span>}
                                                                 </div>
                                                               </div>
                                                               <div className={cn(
@@ -843,7 +858,7 @@ export default function Reports() {
                                                                   After
                                                                 </p>
                                                                 <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap break-words">
-                                                                  {change.after || <span className="italic text-muted-foreground">(empty)</span>}
+                                                                  {change.after ? stripHtmlTags(change.after) : <span className="italic text-muted-foreground">(empty)</span>}
                                                                 </div>
                                                               </div>
                                                             </div>
