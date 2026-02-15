@@ -60,19 +60,18 @@ export function PageShell({
           {/* Simple Page Header */}
           {(title || backTo) && (
             <div
-              className="rounded-md py-[17px] px-4 sm:px-6 mt-[-20px] mb-6 ml-[-22px] mr-[-22px]"
+              className="rounded-md py-3 sm:py-[17px] px-3 sm:px-6 mt-[-16px] sm:mt-[-20px] mb-4 sm:mb-6 ml-[-16px] sm:ml-[-22px] mr-[-16px] sm:mr-[-22px]"
               style={{
                 background: 'linear-gradient(180deg, #0F152B, #0B0E1A)',
                 boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)',
               }}
             >
-              <div className="flex items-start gap-4">
-                {/* Back Button */}
+              <div className="flex items-start gap-2 sm:gap-4">
                 {(backTo || useHistoryBack) && (
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 mt-0.5 sm:mt-0"
                     data-testid="button-back"
                     onClick={() => {
                       if (backTo) {
@@ -86,11 +85,10 @@ export function PageShell({
                   </Button>
                 )}
                 
-                {/* Title and Subtitle */}
                 {title && (
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h1 
-                      className="text-xl sm:text-2xl font-semibold"
+                      className="text-lg sm:text-xl md:text-2xl font-semibold truncate"
                       style={{ color: '#E6F7FF' }}
                       data-testid="page-title"
                     >
@@ -98,7 +96,7 @@ export function PageShell({
                     </h1>
                     {subtitle && (
                       <p 
-                        className="text-sm mt-1"
+                        className="text-xs sm:text-sm mt-0.5 sm:mt-1 line-clamp-2"
                         style={{ color: '#9AA6D6' }}
                         data-testid="page-subtitle"
                       >
@@ -108,7 +106,6 @@ export function PageShell({
                   </div>
                 )}
 
-                {/* Header Actions */}
                 {headerActions && (
                   <div className="flex-shrink-0" data-testid="header-actions">
                     {headerActions}
