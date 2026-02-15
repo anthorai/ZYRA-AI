@@ -4,12 +4,12 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
-import { Shield, Lock, Smartphone, Key, Download, Trash2, Chrome, Monitor, Laptop } from "lucide-react";
+import { Shield, Lock, Smartphone, Download, Trash2, Chrome, Monitor, Laptop, Loader2, AlertTriangle } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { AccessibleLoading } from "@/components/ui/accessible-loading";
 import type { Session } from "@shared/schema";
 import { TwoFactorSetupInline } from "@/components/security/TwoFactorSetupInline";
 import { TwoFactorDisableDialog } from "@/components/security/TwoFactorDisableDialog";
@@ -44,29 +44,9 @@ function formatLastSeen(lastSeenAt: Date | string | null) {
   return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 }
 
-const sectionAccents = {
-  twoFactor: '#22C55E',
-  password: '#00F0FF',
-  sessions: '#A78BFA',
-  data: '#EF4444',
-};
-
-const sectionCardStyle = {
+const sectionStyle = {
   background: '#121833',
-  border: '1px solid rgba(255,255,255,0.06)',
-  borderRadius: '14px',
-};
-
-const actionButtonStyle = {
-  background: '#1A2142',
-  color: '#E6F7FF',
-  border: '1px solid rgba(255,255,255,0.08)',
-};
-
-const destructiveButtonStyle = {
-  background: 'rgba(239,68,68,0.15)',
-  color: '#FCA5A5',
-  border: '1px solid rgba(239,68,68,0.35)',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
 };
 
 export default function SecurityPage() {
@@ -77,14 +57,16 @@ export default function SecurityPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showSetupInline, setShowSetupInline] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const { data: twoFactorStatus, isLoading: twoFactorLoading, error: twoFactorError } = useQuery<{ enabled: boolean }>({
+  const { data: twoFactorStatus, isLoading: twoFactorLoading } = useQuery<{ enabled: boolean }>({
     queryKey: ['/api/2fa/status'],
   });
 
   const twoFactorEnabled = twoFactorStatus?.enabled || false;
 
-  const { data: sessions, isLoading: sessionsLoading, error: sessionsError } = useQuery<Session[]>({
+  const { data: sessions, isLoading: sessionsLoading } = useQuery<Session[]>({
     queryKey: ['/api/sessions'],
   });
 
@@ -101,10 +83,6 @@ export default function SecurityPage() {
     queryClient.invalidateQueries({ queryKey: ['/api/2fa/status'] });
   };
 
-  const handle2FACancel = () => {
-    setShowSetupInline(false);
-  };
-
   const passwordChangeMutation = useMutation({
     mutationFn: async (data: { oldPassword: string; newPassword: string; confirmPassword: string }) => {
       const response = await apiRequest('POST', '/api/profile/change-password', data);
@@ -118,7 +96,6 @@ export default function SecurityPage() {
       toast({
         title: "Password Updated",
         description: "Your password has been changed successfully",
-        duration: 3000,
       });
       setShowPasswordForm(false);
       setCurrentPassword("");
@@ -127,32 +104,29 @@ export default function SecurityPage() {
     },
     onError: (error: any) => {
       let description = error.message || "Failed to change password";
-      if (error.feedback && error.feedback.length > 0) {
-        const feedbackList = error.feedback.map((f: string) => `• ${f}`).join('\n');
-        description = `${error.message}\n${feedbackList}`;
+      if (error.feedback?.length > 0) {
+        description = error.feedback.map((f: string) => `${f}`).join('. ');
       }
       toast({
         title: "Password Change Failed",
         description,
         variant: "destructive",
-        duration: 5000,
       });
     }
   });
 
   const handlePasswordUpdate = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({ title: "Missing Fields", description: "Please fill in all password fields", variant: "destructive", duration: 3000 });
+      toast({ title: "Missing Fields", description: "Please fill in all password fields", variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "Password Mismatch", description: "New passwords do not match", variant: "destructive", duration: 3000 });
+      toast({ title: "Password Mismatch", description: "New passwords do not match", variant: "destructive" });
       return;
     }
     const validation = PasswordValidation.validate(newPassword);
     if (!validation.isValid) {
-      const feedbackList = validation.feedback.map(f => `• ${f}`).join('\n');
-      toast({ title: "Password Too Weak", description: `Please address the following:\n${feedbackList}`, variant: "destructive", duration: 5000 });
+      toast({ title: "Password Too Weak", description: validation.feedback.join('. '), variant: "destructive" });
       return;
     }
     passwordChangeMutation.mutate({ oldPassword: currentPassword, newPassword, confirmPassword });
@@ -165,20 +139,49 @@ export default function SecurityPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sessions'] });
-      toast({ title: "Session Revoked", description: "The session has been logged out successfully", duration: 3000 });
+      toast({ title: "Session Revoked", description: "The device has been logged out" });
     },
     onError: (error: any) => {
-      toast({ title: "Failed to Revoke Session", description: error.message || "Unable to revoke the session", variant: "destructive", duration: 3000 });
+      toast({ title: "Failed", description: error.message || "Unable to revoke session", variant: "destructive" });
     }
   });
 
-  const handleRevokeSession = (sessionId: string) => {
-    revokeSessionMutation.mutate(sessionId);
-  };
+  const exportDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('GET', '/api/gdpr/export-data');
+      const disposition = response.headers.get('Content-Disposition');
+      const filenameMatch = disposition?.match(/filename="?([^"]+)"?/);
+      const filename = filenameMatch?.[1] || `zyra_data_export_${new Date().toISOString().split('T')[0]}.json`;
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onSuccess: () => {
+      toast({ title: "Data Exported", description: "Your data file has been downloaded" });
+    },
+    onError: () => {
+      toast({ title: "Export Failed", description: "Unable to export your data. Please try again.", variant: "destructive" });
+    }
+  });
 
-  const handleExportData = () => {
-    toast({ title: "Export Initiated", description: "Your data export will be ready in a few minutes", duration: 3000 });
-  };
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/gdpr/delete-account', { confirmation: deleteConfirmation });
+    },
+    onSuccess: () => {
+      toast({ title: "Account Deleted", description: "Your account and all data have been permanently deleted" });
+      window.location.href = '/auth';
+    },
+    onError: (error: any) => {
+      toast({ title: "Deletion Failed", description: error.message || "Unable to delete account", variant: "destructive" });
+    }
+  });
 
   return (
     <>
@@ -190,173 +193,117 @@ export default function SecurityPage() {
 
       <PageShell
         title="Security Settings"
-        subtitle="Protect your account with advanced security features"
+        subtitle="Protect your account"
         maxWidth="xl"
         spacing="normal"
         useHistoryBack={true}
       >
         {showSetupInline ? (
-          <div
-            className="relative overflow-hidden"
-            style={sectionCardStyle}
-            data-testid="card-2fa-setup"
-          >
-            <div
-              className="absolute top-0 left-0 bottom-0 w-[3px]"
-              style={{ background: sectionAccents.twoFactor, borderRadius: '14px 0 0 14px' }}
-            />
-            <div className="p-4 sm:p-5">
+          <Card className="border-0" style={sectionStyle} data-testid="card-2fa-setup">
+            <CardContent className="p-5 sm:p-6">
               <TwoFactorSetupInline
                 onSuccess={handle2FASuccess}
-                onCancel={handle2FACancel}
+                onCancel={() => setShowSetupInline(false)}
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ) : (
-          <>
-            {/* Two-Factor Authentication */}
-            <div
-              className="relative overflow-hidden"
-              style={sectionCardStyle}
-              data-testid="card-2fa"
-            >
-              <div
-                className="absolute top-0 left-0 bottom-0 w-[3px]"
-                style={{ background: sectionAccents.twoFactor, borderRadius: '14px 0 0 14px' }}
-              />
-              <div className="p-4 sm:p-5">
-                <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg" style={{ background: `${sectionAccents.twoFactor}15` }}>
-                      <Shield className="w-5 h-5" style={{ color: `${sectionAccents.twoFactor}CC` }} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF' }}>
-                        Two-Factor Authentication
-                      </h3>
-                      <p className="text-sm" style={{ color: '#A9B4E5' }}>
-                        Add an extra layer of security to your account
-                      </p>
-                    </div>
+          <div className="space-y-6">
+            <Card className="border-0" style={sectionStyle} data-testid="card-2fa">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2.5 rounded-xl" style={{ background: 'rgba(34,197,94,0.1)' }}>
+                    <Shield className="w-6 h-6" style={{ color: '#22C55E' }} />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }}>
+                      Two-Factor Authentication
+                    </h2>
+                    <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                      Require a code from your authenticator app when signing in
+                    </p>
                   </div>
                   {twoFactorLoading ? (
-                    <Badge variant="secondary" style={{ background: 'rgba(100,116,139,0.2)', color: '#94A3B8' }} data-testid="badge-2fa-status">
-                      Loading...
-                    </Badge>
-                  ) : twoFactorError ? (
-                    <Badge variant="secondary" style={{ background: 'rgba(239,68,68,0.15)', color: '#FCA5A5' }} data-testid="badge-2fa-status">
-                      Error
-                    </Badge>
-                  ) : twoFactorEnabled ? (
-                    <Badge
-                      variant="secondary"
-                      style={{
-                        background: 'rgba(34,197,94,0.15)',
-                        color: '#9EFFC3',
-                        border: '1px solid rgba(34,197,94,0.35)',
-                      }}
-                      data-testid="badge-2fa-status"
-                    >
-                      Enabled
-                    </Badge>
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#A9B4E5' }} />
                   ) : (
                     <Badge
                       variant="secondary"
-                      style={{
+                      className="text-xs"
+                      style={twoFactorEnabled ? {
+                        background: 'rgba(34,197,94,0.15)',
+                        color: '#22C55E',
+                        border: '1px solid rgba(34,197,94,0.3)',
+                      } : {
                         background: 'rgba(245,158,11,0.15)',
-                        color: '#FFD27D',
-                        border: '1px solid rgba(245,158,11,0.35)',
+                        color: '#F59E0B',
+                        border: '1px solid rgba(245,158,11,0.3)',
                       }}
                       data-testid="badge-2fa-status"
                     >
-                      Disabled
+                      {twoFactorEnabled ? 'Enabled' : 'Disabled'}
                     </Badge>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4" style={{ color: `${sectionAccents.twoFactor}CC` }} />
-                    <div>
-                      <Label className="font-medium" style={{ color: '#E6F7FF' }}>Enable 2FA</Label>
-                      <p className="text-sm" style={{ color: '#7C86B8' }}>
-                        Require a code from your authenticator app when signing in
-                      </p>
-                    </div>
+                <div
+                  className="flex items-center justify-between gap-3 p-4 rounded-xl"
+                  style={{
+                    background: '#0F152B',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  <div>
+                    <Label className="font-medium" style={{ color: '#E6F7FF' }}>
+                      {twoFactorEnabled ? '2FA is protecting your account' : 'Enable 2FA for extra security'}
+                    </Label>
                   </div>
                   <Switch
                     checked={twoFactorEnabled}
                     onCheckedChange={handleToggle2FA}
-                    disabled={twoFactorLoading || !!twoFactorError}
+                    disabled={twoFactorLoading}
+                    className="data-[state=checked]:bg-[#00F0FF]"
                     data-testid="switch-2fa"
                   />
                 </div>
+              </CardContent>
+            </Card>
 
-                {twoFactorEnabled && (
-                  <div
-                    className="mt-4 p-3 rounded-lg"
-                    style={{
-                      background: 'rgba(34,197,94,0.08)',
-                      border: '1px solid rgba(34,197,94,0.2)',
-                    }}
-                  >
-                    <p className="text-sm" style={{ color: '#9EFFC3' }}>
-                      Two-factor authentication is protecting your account. You'll need your authenticator app to sign in.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Password Management */}
-            <div
-              className="relative overflow-hidden"
-              style={sectionCardStyle}
-              data-testid="card-password"
-            >
-              <div
-                className="absolute top-0 left-0 bottom-0 w-[3px]"
-                style={{ background: sectionAccents.password, borderRadius: '14px 0 0 14px' }}
-              />
-              <div className="p-4 sm:p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg" style={{ background: `${sectionAccents.password}15` }}>
-                    <Lock className="w-5 h-5" style={{ color: `${sectionAccents.password}CC` }} />
+            <Card className="border-0" style={sectionStyle} data-testid="card-password">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2.5 rounded-xl" style={{ background: 'rgba(0,240,255,0.1)' }}>
+                    <Lock className="w-6 h-6" style={{ color: '#00F0FF' }} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF' }}>
+                    <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }}>
                       Password
-                    </h3>
-                    <p className="text-sm" style={{ color: '#A9B4E5' }}>
-                      Update your password regularly to keep your account secure
+                    </h2>
+                    <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                      Change your account password
                     </p>
                   </div>
                 </div>
 
                 {!showPasswordForm ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <Label className="font-medium" style={{ color: '#E6F7FF' }}>Password</Label>
-                      <p className="text-sm" style={{ color: '#7C86B8' }}>
-                        Last changed 30 days ago
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => setShowPasswordForm(true)}
-                      variant="ghost"
-                      style={actionButtonStyle}
-                      data-testid="button-change-password"
-                    >
-                      Change Password
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => setShowPasswordForm(true)}
+                    variant="outline"
+                    style={{
+                      background: '#0F152B',
+                      borderColor: 'rgba(255,255,255,0.08)',
+                      color: '#E6F7FF',
+                    }}
+                    data-testid="button-change-password"
+                  >
+                    Change Password
+                  </Button>
                 ) : (
                   <div
-                    className="space-y-4 p-4 rounded-lg"
-                    style={{ background: '#0F152B' }}
+                    className="space-y-4 p-4 rounded-xl"
+                    style={{ background: '#0F152B', border: '1px solid rgba(255,255,255,0.06)' }}
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="current-password" style={{ color: '#E6F7FF' }}>Current Password</Label>
+                      <Label htmlFor="current-password" className="text-sm" style={{ color: '#A9B4E5' }}>Current Password</Label>
                       <Input
                         id="current-password"
                         type="password"
@@ -367,7 +314,7 @@ export default function SecurityPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="new-password" style={{ color: '#E6F7FF' }}>New Password</Label>
+                      <Label htmlFor="new-password" className="text-sm" style={{ color: '#A9B4E5' }}>New Password</Label>
                       <Input
                         id="new-password"
                         type="password"
@@ -379,7 +326,7 @@ export default function SecurityPage() {
                       <PasswordStrengthMeter password={newPassword} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirm-password" style={{ color: '#E6F7FF' }}>Confirm New Password</Label>
+                      <Label htmlFor="confirm-password" className="text-sm" style={{ color: '#A9B4E5' }}>Confirm New Password</Label>
                       <Input
                         id="confirm-password"
                         type="password"
@@ -389,7 +336,7 @@ export default function SecurityPage() {
                         data-testid="input-confirm-password"
                       />
                     </div>
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 pt-2">
                       <Button
                         variant="ghost"
                         onClick={() => {
@@ -398,7 +345,6 @@ export default function SecurityPage() {
                           setNewPassword("");
                           setConfirmPassword("");
                         }}
-                        style={actionButtonStyle}
                         data-testid="button-cancel-password"
                       >
                         Cancel
@@ -410,62 +356,45 @@ export default function SecurityPage() {
                           !newPassword ||
                           !PasswordValidation.validate(newPassword).isValid
                         }
+                        className="border-0 font-semibold"
                         style={{
                           background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
                           color: '#04141C',
-                          fontWeight: 600,
                         }}
                         data-testid="button-update-password"
                       >
-                        {passwordChangeMutation.isPending ? "Updating..." : "Update Password"}
+                        {passwordChangeMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          'Update Password'
+                        )}
                       </Button>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Active Sessions */}
-            <div
-              className="relative overflow-hidden"
-              style={sectionCardStyle}
-              data-testid="card-active-sessions"
-            >
-              <div
-                className="absolute top-0 left-0 bottom-0 w-[3px]"
-                style={{ background: sectionAccents.sessions, borderRadius: '14px 0 0 14px' }}
-              />
-              <div className="p-4 sm:p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg" style={{ background: `${sectionAccents.sessions}15` }}>
-                    <Monitor className="w-5 h-5" style={{ color: `${sectionAccents.sessions}CC` }} />
+            {sessions && sessions.length > 0 && (
+              <Card className="border-0" style={sectionStyle} data-testid="card-active-sessions">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2.5 rounded-xl" style={{ background: 'rgba(167,139,250,0.1)' }}>
+                      <Monitor className="w-6 h-6" style={{ color: '#A78BFA' }} />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }}>
+                        Active Sessions
+                      </h2>
+                      <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                        Devices currently signed into your account
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF' }}>
-                      Active Sessions
-                    </h3>
-                    <p className="text-sm" style={{ color: '#A9B4E5' }}>
-                      Manage devices currently signed into your account
-                    </p>
-                  </div>
-                </div>
 
-                {sessionsLoading ? (
-                  <AccessibleLoading message="Loading active sessions..." />
-                ) : sessionsError ? (
-                  <div className="text-center py-4">
-                    <p className="mb-2" style={{ color: '#FCA5A5' }}>Failed to load active sessions</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/sessions'] })}
-                      style={actionButtonStyle}
-                      data-testid="button-retry-sessions"
-                    >
-                      Retry
-                    </Button>
-                  </div>
-                ) : sessions && sessions.length > 0 ? (
                   <div className="space-y-3">
                     {sessions.map((session: Session, index: number) => {
                       const deviceName = session.browser && session.os
@@ -475,114 +404,182 @@ export default function SecurityPage() {
                       return (
                         <div
                           key={session.sessionId}
-                          className="flex items-center justify-between gap-3 p-3 rounded-lg"
+                          className="flex items-center justify-between gap-3 p-3 rounded-xl"
                           style={{
                             background: '#0F152B',
                             border: index === 0 ? '1px solid rgba(167,139,250,0.2)' : '1px solid rgba(255,255,255,0.04)',
                           }}
+                          data-testid={`session-${session.sessionId}`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg" style={{ background: `${sectionAccents.sessions}15` }}>
-                              <div style={{ color: `${sectionAccents.sessions}CC` }}>
+                            <div className="p-2 rounded-lg" style={{ background: 'rgba(167,139,250,0.1)' }}>
+                              <div style={{ color: '#A78BFA' }}>
                                 {getDeviceIcon(session.deviceType, session.browser)}
                               </div>
                             </div>
                             <div>
-                              <p className="font-medium" style={{ color: '#E6F7FF' }}>{deviceName}</p>
-                              <p className="text-sm" style={{ color: '#7C86B8' }}>
-                                {session.location || session.ipAddress || 'Unknown location'}
-                              </p>
+                              <p className="font-medium text-sm" style={{ color: '#E6F7FF' }}>{deviceName}</p>
                               <p className="text-xs" style={{ color: '#7C86B8' }}>
-                                {formatLastSeen(session.lastSeenAt)}
+                                {session.location || session.ipAddress || 'Unknown location'} - {formatLastSeen(session.lastSeenAt)}
                               </p>
                             </div>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRevokeSession(session.sessionId)}
+                            onClick={() => revokeSessionMutation.mutate(session.sessionId)}
                             disabled={revokeSessionMutation.isPending}
-                            style={destructiveButtonStyle}
+                            style={{
+                              background: 'rgba(239,68,68,0.1)',
+                              color: '#FCA5A5',
+                              border: '1px solid rgba(239,68,68,0.25)',
+                            }}
                             data-testid={`button-revoke-session-${session.sessionId}`}
                           >
-                            {revokeSessionMutation.isPending ? "Revoking..." : "Revoke"}
+                            Revoke
                           </Button>
                         </div>
                       );
                     })}
                   </div>
-                ) : (
-                  <p className="text-center py-4" style={{ color: '#7C86B8' }}>No active sessions found</p>
-                )}
-              </div>
-            </div>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Data Management */}
-            <div
-              className="relative overflow-hidden"
-              style={sectionCardStyle}
-              data-testid="card-data-management"
-            >
-              <div
-                className="absolute top-0 left-0 bottom-0 w-[3px]"
-                style={{ background: sectionAccents.data, borderRadius: '14px 0 0 14px' }}
-              />
-              <div className="p-4 sm:p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg" style={{ background: `${sectionAccents.data}15` }}>
-                    <Key className="w-5 h-5" style={{ color: `${sectionAccents.data}CC` }} />
+            <Card className="border-0" style={sectionStyle} data-testid="card-data">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2.5 rounded-xl" style={{ background: 'rgba(239,68,68,0.1)' }}>
+                    <Download className="w-6 h-6" style={{ color: '#EF4444' }} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-base sm:text-lg" style={{ color: '#E6F7FF' }}>
-                      Data Management
-                    </h3>
-                    <p className="text-sm" style={{ color: '#A9B4E5' }}>
-                      Export or delete your account data (GDPR compliant)
+                    <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }}>
+                      Your Data
+                    </h2>
+                    <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                      Export or permanently delete your account data
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div
+                    className="flex items-center justify-between gap-3 p-4 rounded-xl"
+                    style={{ background: '#0F152B', border: '1px solid rgba(255,255,255,0.06)' }}
+                  >
                     <div>
                       <Label className="font-medium" style={{ color: '#E6F7FF' }}>Export Your Data</Label>
-                      <p className="text-sm" style={{ color: '#7C86B8' }}>
-                        Download a copy of all your account information
+                      <p className="text-xs" style={{ color: '#7C86B8' }}>
+                        Download all your account data as a JSON file
                       </p>
                     </div>
                     <Button
-                      onClick={handleExportData}
-                      variant="ghost"
-                      style={actionButtonStyle}
+                      onClick={() => exportDataMutation.mutate()}
+                      disabled={exportDataMutation.isPending}
+                      variant="outline"
+                      style={{
+                        background: '#0F152B',
+                        borderColor: 'rgba(255,255,255,0.08)',
+                        color: '#E6F7FF',
+                      }}
                       data-testid="button-export-data"
                     >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export
+                      {exportDataMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export
+                        </>
+                      )}
                     </Button>
                   </div>
 
-                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div>
-                      <Label className="font-medium" style={{ color: '#E6F7FF' }}>Delete Account</Label>
-                      <p className="text-sm" style={{ color: '#7C86B8' }}>
-                        Permanently delete your account and all associated data
-                      </p>
+                  <div
+                    className="p-4 rounded-xl"
+                    style={{ background: '#0F152B', border: '1px solid rgba(239,68,68,0.15)' }}
+                  >
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <div>
+                        <Label className="font-medium" style={{ color: '#E6F7FF' }}>Delete Account</Label>
+                        <p className="text-xs" style={{ color: '#7C86B8' }}>
+                          This permanently deletes all your data and cannot be undone
+                        </p>
+                      </div>
+                      {!showDeleteConfirm ? (
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShowDeleteConfirm(true)}
+                          style={{
+                            background: 'rgba(239,68,68,0.1)',
+                            color: '#FCA5A5',
+                            border: '1px solid rgba(239,68,68,0.25)',
+                          }}
+                          data-testid="button-delete-account"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </Button>
+                      ) : null}
                     </div>
-                    <Button
-                      variant="ghost"
-                      style={destructiveButtonStyle}
-                      data-testid="button-delete-account"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </Button>
+
+                    {showDeleteConfirm && (
+                      <div
+                        className="p-4 rounded-lg space-y-3"
+                        style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)' }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#EF4444' }} />
+                          <p className="text-sm" style={{ color: '#FCA5A5' }}>
+                            This will permanently delete your account, all products, campaigns, analytics, and connected store data. This action cannot be undone.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs" style={{ color: '#A9B4E5' }}>
+                            Type <span style={{ color: '#EF4444', fontWeight: 600 }}>DELETE MY ACCOUNT</span> to confirm
+                          </Label>
+                          <Input
+                            value={deleteConfirmation}
+                            onChange={(e) => setDeleteConfirmation(e.target.value)}
+                            placeholder="DELETE MY ACCOUNT"
+                            style={{ background: '#0B0E1A', borderColor: 'rgba(239,68,68,0.2)', color: '#E6F7FF' }}
+                            data-testid="input-delete-confirmation"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmation(""); }}
+                            data-testid="button-cancel-delete"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => deleteAccountMutation.mutate()}
+                            disabled={deleteConfirmation !== 'DELETE MY ACCOUNT' || deleteAccountMutation.isPending}
+                            data-testid="button-confirm-delete"
+                          >
+                            {deleteAccountMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Deleting...
+                              </>
+                            ) : (
+                              'Permanently Delete Account'
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
-          </>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </PageShell>
     </>
