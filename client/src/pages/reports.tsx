@@ -658,7 +658,7 @@ export default function Reports() {
                 <CardDescription>DETECT → DECIDE → EXECUTE → PROVE</CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-[600px] pr-4">
                   {actionsLoading ? (
                     <div className="space-y-4">
                       {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -741,7 +741,7 @@ export default function Reports() {
                                           
                                           {/* Detailed changes list - ONLY show if there are recorded changes */}
                                           {recordedChangesCount > 0 && (
-                                            <div className="mb-3 space-y-2 max-h-[300px] overflow-y-auto">
+                                            <div className="mb-3 space-y-2">
                                               {actionsWithChanges.map((action) => {
                                                 const actionAny = action as any;
                                                 const changes = action.payload?.changes as Array<{field?: string; before?: string; after?: string; reason?: string}> | undefined;
@@ -1067,7 +1067,7 @@ export default function Reports() {
                     {highImpactDecision.payload?.before?.description && (
                       <div>
                         <p className="text-xs text-muted-foreground">Description</p>
-                        <p className="text-sm line-clamp-2">{highImpactDecision.payload.before.description}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{stripHtmlTags(highImpactDecision.payload.before.description)}</p>
                       </div>
                     )}
                     {highImpactDecision.payload?.before?.seoTitle && (
@@ -1079,7 +1079,7 @@ export default function Reports() {
                     {highImpactDecision.payload?.before?.metaDescription && (
                       <div>
                         <p className="text-xs text-muted-foreground">Meta Description</p>
-                        <p className="text-sm line-clamp-2">{highImpactDecision.payload.before.metaDescription}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{stripHtmlTags(highImpactDecision.payload.before.metaDescription)}</p>
                       </div>
                     )}
                     {!highImpactDecision.payload?.before && (
@@ -1109,7 +1109,7 @@ export default function Reports() {
                     {highImpactDecision.payload?.after?.description && (
                       <div>
                         <p className="text-xs text-muted-foreground">Description</p>
-                        <p className="text-sm line-clamp-2">{highImpactDecision.payload.after.description}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{stripHtmlTags(highImpactDecision.payload.after.description)}</p>
                       </div>
                     )}
                     {(highImpactDecision.payload?.after?.seoTitle || highImpactDecision.result?.optimizedContent?.seoTitle) && (
@@ -1123,8 +1123,8 @@ export default function Reports() {
                     {(highImpactDecision.payload?.after?.metaDescription || highImpactDecision.result?.optimizedContent?.metaDescription) && (
                       <div>
                         <p className="text-xs text-muted-foreground">Meta Description</p>
-                        <p className="text-sm line-clamp-2">
-                          {highImpactDecision.payload?.after?.metaDescription || highImpactDecision.result?.optimizedContent?.metaDescription}
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {stripHtmlTags(highImpactDecision.payload?.after?.metaDescription || highImpactDecision.result?.optimizedContent?.metaDescription || '')}
                         </p>
                       </div>
                     )}
