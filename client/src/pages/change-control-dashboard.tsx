@@ -1118,16 +1118,38 @@ export default function ChangeControlDashboard() {
                 </TabsList>
               </Tabs>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={showLatestOnly}
-                    onCheckedChange={setShowLatestOnly}
-                    data-testid="switch-latest-only"
-                  />
-                  <Label className="text-xs text-muted-foreground whitespace-nowrap">
-                    Latest per product
-                  </Label>
-                </div>
+                <button
+                  onClick={() => setShowLatestOnly(!showLatestOnly)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={showLatestOnly ? {
+                    background: 'linear-gradient(135deg, rgba(0,240,255,0.12), rgba(99,102,241,0.08))',
+                    color: '#00F0FF',
+                    border: '1px solid rgba(0,240,255,0.25)',
+                    boxShadow: '0 0 10px rgba(0,240,255,0.08)',
+                  } : {
+                    background: 'rgba(255,255,255,0.03)',
+                    color: '#7C86B8',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                  data-testid="switch-latest-only"
+                >
+                  <div
+                    className="relative w-7 h-4 rounded-full transition-all flex-shrink-0"
+                    style={{
+                      background: showLatestOnly ? 'linear-gradient(135deg, #00F0FF, #00FFE5)' : 'rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <div
+                      className="absolute top-0.5 w-3 h-3 rounded-full transition-all duration-200"
+                      style={{
+                        left: showLatestOnly ? '14px' : '2px',
+                        background: showLatestOnly ? '#04141C' : '#5A6490',
+                        boxShadow: showLatestOnly ? '0 0 6px rgba(0,240,255,0.4)' : 'none',
+                      }}
+                    />
+                  </div>
+                  <span className="whitespace-nowrap">Latest per product</span>
+                </button>
                 <Button
                   variant="outline"
                   size="sm"
