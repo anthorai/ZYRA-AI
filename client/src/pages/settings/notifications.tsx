@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { NotificationChannel } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 
-export default function NotificationsPage() {
+export default function NotificationsPage({ embedded }: { embedded?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -146,6 +146,175 @@ export default function NotificationsPage() {
     }
   };
 
+  const content = isLoading ? (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#00F0FF' }} />
+      <span className="ml-3" style={{ color: '#A9B4E5' }}>Loading...</span>
+    </div>
+  ) : (
+    <div className="space-y-6">
+      <Card
+        className="border-0"
+        style={{
+          background: '#121833',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+        }}
+        data-testid="card-email-notifications"
+      >
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2.5 rounded-xl" style={{ background: 'rgba(0,240,255,0.1)' }}>
+              <Mail className="w-6 h-6" style={{ color: '#00F0FF' }} />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }}>
+                Email Notifications
+              </h2>
+              <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
+                Get notified about store activity, optimizations, and alerts
+              </p>
+            </div>
+          </div>
+
+          {hasEmail && !isEditing ? (
+            <div className="space-y-4">
+              <div
+                className="flex items-center justify-between gap-3 p-4 rounded-xl"
+                style={{
+                  background: '#0F152B',
+                  border: '1px solid rgba(0,240,255,0.15)',
+                }}
+                data-testid="email-configured"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#22C55E' }} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: '#E6F7FF' }} data-testid="text-email-value">
+                      {emailChannel?.channelValue}
+                    </p>
+                    <p className="text-xs" style={{ color: '#A9B4E5' }}>
+                      {emailEnabled ? 'Notifications active' : 'Notifications paused'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <Switch
+                    checked={emailEnabled}
+                    onCheckedChange={handleEmailToggle}
+                    className="data-[state=checked]:bg-[#00F0FF]"
+                    data-testid="switch-email-notifications"
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleEdit}
+                    data-testid="button-edit-email"
+                  >
+                    <Pencil className="w-4 h-4" style={{ color: '#A9B4E5' }} />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleRemove}
+                    disabled={deleteChannelMutation.isPending}
+                    data-testid="button-remove-email"
+                  >
+                    <Trash2 className="w-4 h-4" style={{ color: '#EF4444' }} />
+                  </Button>
+                </div>
+              </div>
+
+              {emailEnabled && (
+                <div
+                  className="p-4 rounded-xl"
+                  style={{
+                    background: 'rgba(34,197,94,0.05)',
+                    border: '1px solid rgba(34,197,94,0.15)',
+                  }}
+                  data-testid="text-notifications-active"
+                >
+                  <p className="text-sm" style={{ color: '#A9B4E5' }}>
+                    You'll receive emails for optimization results, store alerts, abandoned cart notifications, and weekly performance reports.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {!hasEmail && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#F59E0B' }}>
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Setup Required
+                  </Badge>
+                  <span className="text-xs" style={{ color: '#A9B4E5' }}>
+                    Add your email to start receiving notifications
+                  </span>
+                </div>
+              )}
+              <div
+                className="p-4 rounded-xl space-y-3"
+                style={{
+                  background: '#0F152B',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <Label htmlFor="email" className="text-sm" style={{ color: '#A9B4E5' }}>
+                  Email Address
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={emailAddress}
+                    onChange={(e) => setEmailAddress(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEmail()}
+                    data-testid="input-email-address"
+                    className="flex-1 focus:ring-1 focus:ring-[#00F0FF]/35 focus:border-[#00F0FF]"
+                    style={{ background: '#0B0E1A', border: '1px solid rgba(255,255,255,0.06)', color: '#E6F7FF' }}
+                  />
+                  <Button
+                    onClick={handleSaveEmail}
+                    disabled={createChannelMutation.isPending || updateChannelMutation.isPending || !emailAddress}
+                    data-testid="button-save-email"
+                    className="border-0 font-semibold"
+                    style={{
+                      background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
+                      color: '#04141C',
+                    }}
+                  >
+                    {(createChannelMutation.isPending || updateChannelMutation.isPending) ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save'
+                    )}
+                  </Button>
+                  {isEditing && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => { setIsEditing(false); setEmailAddress(""); }}
+                      data-testid="button-cancel-edit"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
   return (
     <PageShell
       title="Notification Settings"
@@ -154,170 +323,7 @@ export default function NotificationsPage() {
       spacing="normal"
       useHistoryBack={true}
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#00F0FF' }} />
-          <span className="ml-3" style={{ color: '#A9B4E5' }}>Loading...</span>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <Card
-            className="border-0"
-            style={{
-              background: '#121833',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-            }}
-            data-testid="card-email-notifications"
-          >
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="p-2.5 rounded-xl" style={{ background: 'rgba(0,240,255,0.1)' }}>
-                  <Mail className="w-6 h-6" style={{ color: '#00F0FF' }} />
-                </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-semibold" style={{ color: '#E6F7FF' }}>
-                    Email Notifications
-                  </h2>
-                  <p className="text-xs sm:text-sm" style={{ color: '#A9B4E5' }}>
-                    Get notified about store activity, optimizations, and alerts
-                  </p>
-                </div>
-              </div>
-
-              {hasEmail && !isEditing ? (
-                <div className="space-y-4">
-                  <div
-                    className="flex items-center justify-between gap-3 p-4 rounded-xl"
-                    style={{
-                      background: '#0F152B',
-                      border: '1px solid rgba(0,240,255,0.15)',
-                    }}
-                    data-testid="email-configured"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#22C55E' }} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate" style={{ color: '#E6F7FF' }} data-testid="text-email-value">
-                          {emailChannel?.channelValue}
-                        </p>
-                        <p className="text-xs" style={{ color: '#A9B4E5' }}>
-                          {emailEnabled ? 'Notifications active' : 'Notifications paused'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <Switch
-                        checked={emailEnabled}
-                        onCheckedChange={handleEmailToggle}
-                        className="data-[state=checked]:bg-[#00F0FF]"
-                        data-testid="switch-email-notifications"
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={handleEdit}
-                        data-testid="button-edit-email"
-                      >
-                        <Pencil className="w-4 h-4" style={{ color: '#A9B4E5' }} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={handleRemove}
-                        disabled={deleteChannelMutation.isPending}
-                        data-testid="button-remove-email"
-                      >
-                        <Trash2 className="w-4 h-4" style={{ color: '#EF4444' }} />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {emailEnabled && (
-                    <div
-                      className="p-4 rounded-xl"
-                      style={{
-                        background: 'rgba(34,197,94,0.05)',
-                        border: '1px solid rgba(34,197,94,0.15)',
-                      }}
-                      data-testid="text-notifications-active"
-                    >
-                      <p className="text-sm" style={{ color: '#A9B4E5' }}>
-                        You'll receive emails for optimization results, store alerts, abandoned cart notifications, and weekly performance reports.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {!hasEmail && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#F59E0B' }}>
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Setup Required
-                      </Badge>
-                      <span className="text-xs" style={{ color: '#A9B4E5' }}>
-                        Add your email to start receiving notifications
-                      </span>
-                    </div>
-                  )}
-                  <div
-                    className="p-4 rounded-xl space-y-3"
-                    style={{
-                      background: '#0F152B',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                    }}
-                  >
-                    <Label htmlFor="email" className="text-sm" style={{ color: '#A9B4E5' }}>
-                      Email Address
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        value={emailAddress}
-                        onChange={(e) => setEmailAddress(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEmail()}
-                        data-testid="input-email-address"
-                        className="flex-1 focus:ring-1 focus:ring-[#00F0FF]/35 focus:border-[#00F0FF]"
-                        style={{ background: '#0B0E1A', border: '1px solid rgba(255,255,255,0.06)', color: '#E6F7FF' }}
-                      />
-                      <Button
-                        onClick={handleSaveEmail}
-                        disabled={createChannelMutation.isPending || updateChannelMutation.isPending || !emailAddress}
-                        data-testid="button-save-email"
-                        className="border-0 font-semibold"
-                        style={{
-                          background: 'linear-gradient(135deg, #00F0FF, #00FFE5)',
-                          color: '#04141C',
-                        }}
-                      >
-                        {(createChannelMutation.isPending || updateChannelMutation.isPending) ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          'Save'
-                        )}
-                      </Button>
-                      {isEditing && (
-                        <Button
-                          variant="ghost"
-                          onClick={() => { setIsEditing(false); setEmailAddress(""); }}
-                          data-testid="button-cancel-edit"
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {content}
     </PageShell>
   );
 }

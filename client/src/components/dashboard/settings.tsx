@@ -9,8 +9,6 @@ import {
   Settings as SettingsIcon,
   User,
   CreditCard,
-  Brain,
-  Bell,
   Zap,
   Shield,
   HelpCircle,
@@ -19,10 +17,8 @@ import {
 import { StoreConnection, IntegrationSettings, SecuritySettings, UserPreferences } from "@shared/schema";
 
 const ACCENT_COLORS: Record<string, string> = {
-  'profile-account': '#00F0FF',
+  'profile-preferences': '#00F0FF',
   'subscription-billing': '#A78BFA',
-  'ai-preferences': '#22C55E',
-  'notifications-alerts': '#F59E0B',
   'security-integrations': '#3B82F6',
   'support-resources': '#06B6D4',
 };
@@ -59,12 +55,12 @@ export default function Settings() {
 
   const settingsCards: SettingsCard[] = [
     {
-      id: 'profile-account',
-      title: 'Profile & Account',
-      description: 'Manage your personal information, connected stores, and language preferences',
+      id: 'profile-preferences',
+      title: 'Profile & Preferences',
+      description: 'Manage your profile, AI behavior, brand voice, and notification settings',
       icon: <User className="w-5 h-5 stroke-2" />,
-      features: ['Edit Profile (name, email, image)', 'Change Password', 'Connected Stores (Shopify, WooCommerce)', 'Multi-language UI + Auto-translation'],
-      actionText: 'Manage Profile',
+      features: ['Edit Profile (name, email)', 'Brand Voice & Content Style', 'AI Speed & Quality', 'Email Notifications'],
+      actionText: 'Manage',
       category: 'account'
     },
     {
@@ -75,24 +71,6 @@ export default function Settings() {
       features: ['Current Plan Overview', 'Upgrade/Downgrade Plans', 'Billing History & Invoices', 'Payment Method Management'],
       actionText: 'View Billing',
       category: 'billing'
-    },
-    {
-      id: 'ai-preferences',
-      title: 'AI Preferences',
-      description: 'Customize AI behavior, brand voice, content style, and automation settings',
-      icon: <Brain className="w-5 h-5 stroke-2" />,
-      features: ['Brand Voice Memory (Luxury, Casual, Gen Z)', 'Default Content Style (Sales, SEO)', 'Auto-save AI Outputs', 'Scheduled AI Updates (3-6 months)'],
-      actionText: 'Configure AI',
-      category: 'preferences'
-    },
-    {
-      id: 'notifications-alerts',
-      title: 'Notifications & Alerts',
-      description: 'Control email notifications, in-app alerts, and mobile push settings',
-      icon: <Bell className="w-5 h-5 stroke-2" />,
-      features: ['Email Notifications (Campaigns, Billing)', 'In-app Performance Alerts', 'Mobile Push Notifications', 'AI Recommendation Alerts'],
-      actionText: 'Set Notifications',
-      category: 'preferences'
     },
     {
       id: 'security-integrations',
@@ -119,17 +97,11 @@ export default function Settings() {
     sessionStorage.setItem('navigationSource', 'settings');
     
     switch (cardId) {
-      case 'profile-account':
-        setLocation('/profile');
+      case 'profile-preferences':
+        setLocation('/settings/profile-preferences');
         break;
       case 'subscription-billing':
         setLocation('/billing');
-        break;
-      case 'ai-preferences':
-        setLocation('/settings/ai-preferences');
-        break;
-      case 'notifications-alerts':
-        setLocation('/settings/notifications');
         break;
       case 'security-integrations':
         setLocation('/settings/security-integrations');
@@ -163,9 +135,8 @@ export default function Settings() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {settingsCards.map((card) => {
           const isLoading = (
-            (card.id === 'ai-preferences' && preferencesLoading) ||
-            (card.id === 'security-integrations' && (securityLoading || integrationsLoading)) ||
-            (card.id === 'notifications-alerts' && preferencesLoading)
+            (card.id === 'profile-preferences' && preferencesLoading) ||
+            (card.id === 'security-integrations' && (securityLoading || integrationsLoading))
           );
 
           const accentColor = ACCENT_COLORS[card.id] || '#00F0FF';

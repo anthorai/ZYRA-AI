@@ -44,6 +44,7 @@ const Reports = lazy(() => import("@/pages/reports"));
 // Settings subpages
 const AIPreferencesPage = lazy(() => import("@/pages/settings/ai-preferences"));
 const NotificationsPage = lazy(() => import("@/pages/settings/notifications"));
+const ProfilePreferencesPage = lazy(() => import("@/pages/settings/profile-preferences"));
 const AdvancedNotificationSettings = lazy(() => import("@/pages/notifications/advanced-settings"));
 const IntegrationsPage = lazy(() => import("@/pages/settings/integrations"));
 const SecurityPage = lazy(() => import("@/pages/settings/security"));
@@ -337,11 +338,20 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
+      <Route path="/settings/profile-preferences" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <ProfilePreferencesPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
       <Route path="/profile" component={() => (
         <ProtectedRoute>
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
-              <Profile />
+              <ProfilePreferencesPage />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>
@@ -428,7 +438,7 @@ function Router() {
         <ProtectedRoute>
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
-              <AIPreferencesPage />
+              <ProfilePreferencesPage />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>
@@ -437,7 +447,7 @@ function Router() {
         <ProtectedRoute>
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
-              <NotificationsPage />
+              <ProfilePreferencesPage />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>
