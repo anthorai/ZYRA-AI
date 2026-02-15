@@ -795,12 +795,15 @@ export default function Reports() {
                                                           </Badge>
                                                         )}
                                                       </div>
-                                                      {credits > 0 && (
-                                                        <Badge className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-medium">
-                                                          <Coins className="w-3 h-3 mr-1" />
-                                                          {credits} {credits === 1 ? 'credit' : 'credits'}
-                                                        </Badge>
-                                                      )}
+                                                      <Badge className={cn(
+                                                        "text-xs border font-medium",
+                                                        credits > 0
+                                                          ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                                          : "bg-muted/50 text-muted-foreground border-border/50"
+                                                      )}>
+                                                        <Coins className="w-3 h-3 mr-1" />
+                                                        {credits} {credits === 1 ? 'credit' : 'credits'}
+                                                      </Badge>
                                                     </div>
                                                     
                                                     {/* Metadata row: date, time, executed by */}
@@ -925,12 +928,15 @@ export default function Reports() {
                                       )}
                                       
                                       {/* Credits used */}
-                                      {productGroup.totalCredits > 0 && (
-                                        <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
-                                          <Coins className="w-3 h-3 mr-1" />
-                                          {productGroup.totalCredits} credits
-                                        </Badge>
-                                      )}
+                                      <Badge variant="outline" className={cn(
+                                        "text-xs",
+                                        productGroup.totalCredits > 0
+                                          ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                          : "bg-muted/30 text-muted-foreground border-border/30"
+                                      )}>
+                                        <Coins className="w-3 h-3 mr-1" />
+                                        {productGroup.totalCredits} {productGroup.totalCredits === 1 ? 'credit' : 'credits'} used
+                                      </Badge>
                                       
                                       <span className="text-xs text-muted-foreground">
                                         {formatDistanceToNow(productGroup.latestAction, { addSuffix: true })}
