@@ -69,27 +69,23 @@ export function PageShell({
               <div className="flex items-start gap-4">
                 {/* Back Button */}
                 {(backTo || useHistoryBack) && (
-                  useHistoryBack ? (
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="flex-shrink-0"
-                      data-testid="button-back"
-                      onClick={() => window.history.back()}
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="flex-shrink-0"
-                      data-testid="button-back"
-                      onClick={() => setLocation(backTo!)}
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                    </Button>
-                  )
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="flex-shrink-0"
+                    data-testid="button-back"
+                    onClick={() => {
+                      if (backTo) {
+                        setLocation(backTo);
+                      } else if (window.history.length > 1) {
+                        window.history.back();
+                      } else {
+                        setLocation('/dashboard');
+                      }
+                    }}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
                 )}
                 
                 {/* Title and Subtitle */}
