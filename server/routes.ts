@@ -9727,8 +9727,65 @@ Output format: Markdown with clear section headings.`;
   app.post('/api/settings/support', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
+      const userEmail = (req as AuthenticatedRequest).user.email;
+      const userName = (req as AuthenticatedRequest).user.fullName || userEmail;
       const data = insertSupportTicketSchema.parse({ ...req.body, userId });
       const ticket = await supabaseStorage.createSupportTicket(data);
+
+      // Send email notifications via Brevo
+      try {
+        const { sendBrevoEmail } = await import('./lib/brevo-client');
+        const supportEmail = process.env.BREVO_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'team@zzyraai.com';
+
+        // Send confirmation to user
+        await sendBrevoEmail({
+          to: userEmail,
+          subject: `We received your message: ${data.subject}`,
+          htmlContent: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #0B0E1A; color: #E6F7FF; border-radius: 12px; overflow: hidden;">
+              <div style="background: linear-gradient(135deg, #00F0FF, #00FFE5); padding: 24px 32px;">
+                <h1 style="margin: 0; color: #04141C; font-size: 22px;">Zyra AI Support</h1>
+              </div>
+              <div style="padding: 32px;">
+                <p style="color: #A9B4E5; margin: 0 0 16px;">Hi ${userName},</p>
+                <p style="color: #E6F7FF; margin: 0 0 24px;">We've received your support request and our team will get back to you shortly.</p>
+                <div style="background: #121833; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                  <p style="color: #7C86B8; margin: 0 0 8px; font-size: 13px;">SUBJECT</p>
+                  <p style="color: #E6F7FF; margin: 0 0 16px; font-weight: 600;">${data.subject}</p>
+                  <p style="color: #7C86B8; margin: 0 0 8px; font-size: 13px;">YOUR MESSAGE</p>
+                  <p style="color: #A9B4E5; margin: 0; white-space: pre-wrap;">${data.message}</p>
+                </div>
+                <p style="color: #7C86B8; font-size: 13px; margin: 0;">Ticket ID: ${ticket.id}</p>
+              </div>
+            </div>
+          `
+        });
+
+        // Send notification to support team
+        await sendBrevoEmail({
+          to: supportEmail,
+          subject: `[Support Ticket] ${data.subject} - from ${userName}`,
+          htmlContent: `
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #1f2937;">New Support Ticket</h2>
+              <p><strong>From:</strong> ${userName} (${userEmail})</p>
+              <p><strong>User ID:</strong> ${userId}</p>
+              <p><strong>Subject:</strong> ${data.subject}</p>
+              <p><strong>Category:</strong> ${data.category || 'general'}</p>
+              <p><strong>Priority:</strong> ${data.priority || 'medium'}</p>
+              <hr style="border: 1px solid #e5e7eb;" />
+              <p><strong>Message:</strong></p>
+              <div style="background: #f9fafb; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${data.message}</div>
+              <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">Ticket ID: ${ticket.id}</p>
+            </div>
+          `
+        });
+
+        console.log(`✅ Support ticket emails sent for ticket ${ticket.id}`);
+      } catch (emailError: any) {
+        console.error('⚠️ Support ticket created but email failed:', emailError.message);
+      }
+
       res.json(ticket);
     } catch (error) {
       console.error('Create support ticket error:', error);
