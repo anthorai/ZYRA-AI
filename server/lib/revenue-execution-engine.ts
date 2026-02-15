@@ -10,6 +10,7 @@ import {
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { consumeAIToolCredits, checkAIToolCredits } from './credits';
+import { calculateActionCreditCost, mapNextMoveActionToType } from './constants/credit-consumption';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
 import { PowerModeService } from './power-mode-service';
@@ -60,8 +61,15 @@ export class RevenueExecutionEngine {
       };
     }
 
+    const actionTypeForCredits = mapNextMoveActionToType(opportunity.opportunityType);
+    const userSub = await db.query.subscriptions.findFirst({
+      where: eq(require('@shared/schema').subscriptions.userId, opportunity.userId),
+    });
+    const planId = userSub?.planId || '18f8da29-94cf-417b-83f8-07191b22f254';
+    const creditCost = settings.powerModeEnabled 
+      ? calculateActionCreditCost(actionTypeForCredits, planId, { isAutoExecuted: true }) * 2
+      : calculateActionCreditCost(actionTypeForCredits, planId, { isAutoExecuted: true });
     const creditToolId = settings.powerModeEnabled ? 'power-mode' : 'product-seo-engine';
-    const creditCost = settings.powerModeEnabled ? 5 : 1;
     const creditCheck = await checkAIToolCredits(opportunity.userId, creditToolId, creditCost);
     if (!creditCheck.hasEnoughCredits) {
       if (settings.powerModeEnabled) {
@@ -104,7 +112,7 @@ export class RevenueExecutionEngine {
 
       let creditsUsed = result.creditsUsed || 0;
       if (creditsUsed === 0) {
-        const creditResult = await consumeAIToolCredits(opportunity.userId, 'product-seo-engine', 1);
+        const creditResult = await consumeAIToolCredits(opportunity.userId, 'product-seo-engine', creditCost);
         creditsUsed = creditResult.creditsConsumed;
       }
 

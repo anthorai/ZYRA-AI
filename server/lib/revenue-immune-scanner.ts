@@ -1,7 +1,8 @@
-import { db } from '../db';
+import { db, getUserSubscription } from '../db';
 import { products, seoMeta, scanActivity, automationSettings, autonomousActions, revenueAttribution } from '@shared/schema';
 import { eq, and, gte, desc, sql, lt, isNull, or } from 'drizzle-orm';
 import { ActionDeduplicationGuard } from './action-deduplication-guard';
+import { calculateActionCreditCost, mapNextMoveActionToType } from './constants/credit-consumption';
 
 interface IssueDetail {
   type: string;
@@ -105,6 +106,14 @@ export class RevenueImmuneScanner {
         return null;
       }
 
+      let scanCredits = 1;
+      try {
+        const sub = await getUserSubscription(userId);
+        const pId = sub?.planId || '18f8da29-94cf-417b-83f8-07191b22f254';
+        const mappedType = mapNextMoveActionToType(mapping.actionType);
+        scanCredits = calculateActionCreditCost(mappedType, pId, { isAutoExecuted: true });
+      } catch {}
+
       const [action] = await db.insert(autonomousActions).values({
         userId,
         actionType: mapping.actionType,
@@ -113,7 +122,7 @@ export class RevenueImmuneScanner {
         status: 'pending',
         decisionReason: `Revenue Immune System: ${issue.description}`,
         executedBy: 'revenue_immune_system',
-        creditsUsed: 1,
+        creditsUsed: scanCredits,
         payload: {
           source: 'revenue_immune_scanner',
           scanId,

@@ -5,6 +5,7 @@ import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
 import { consumeAIToolCredits, checkAIToolCredits } from './credits';
+import { calculateActionCreditCost, mapNextMoveActionToType } from './constants/credit-consumption';
 import { ALL_ACTIONS, type ActionId, type MasterAction } from './zyra-master-loop/master-action-registry';
 import type { AIToolId } from '@shared/ai-credits';
 import { realLearningService } from './real-learning-service';
@@ -189,6 +190,11 @@ export class FoundationalExecutionService {
 
     try {
       const creditToolId = await this.getCreditToolId(userId);
+      let userPlanId = '18f8da29-94cf-417b-83f8-07191b22f254';
+      try {
+        const sub = await getUserSubscription(userId);
+        if (sub?.planId) userPlanId = sub.planId;
+      } catch {}
 
       const creditCheck = await checkAIToolCredits(userId, creditToolId, 1);
       if (!creditCheck.hasEnoughCredits) {
@@ -475,7 +481,12 @@ export class FoundationalExecutionService {
                 description: this.generateImpactSummary(actionId, optimized.changes.length),
               },
               executedBy: 'agent',
-              creditsUsed: 1,
+              creditsUsed: (() => {
+                try {
+                  const mappedType = mapNextMoveActionToType(actionId);
+                  return calculateActionCreditCost(mappedType, userPlanId || '18f8da29-94cf-417b-83f8-07191b22f254', { isAutoExecuted: true });
+                } catch { return 1; }
+              })(),
               dryRun: false,
               publishedToShopify: false,
               completedAt: new Date(),
