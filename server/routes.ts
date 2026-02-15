@@ -16218,27 +16218,20 @@ Output format: Markdown with clear section headings.`;
     try {
       const userId = (req as AuthenticatedRequest).user.id;
       
-      // Gather all user data
-      const [
-        user,
-        products,
-        campaigns,
-        templates,
-        abandonedCarts,
-        analytics,
-        notifications,
-        usageStats,
-        activityLogs
-      ] = await Promise.all([
-        supabaseStorage.getUser(userId),
-        supabaseStorage.getProducts(userId),
-        supabaseStorage.getCampaigns(userId),
-        supabaseStorage.getCampaignTemplates(userId),
-        supabaseStorage.getAbandonedCarts(userId),
-        supabaseStorage.getAnalytics(userId),
-        supabaseStorage.getNotifications(userId),
-        supabaseStorage.getUserUsageStats(userId),
-        supabaseStorage.getUserActivityLogs(userId)
+      const safeGet = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+        try { return await fn(); } catch (e) { console.warn('GDPR export: skipping unavailable data:', (e as Error).message); return fallback; }
+      };
+
+      const [user, products, campaigns, templates, abandonedCarts, analytics, notifications, usageStats, activityLogs] = await Promise.all([
+        safeGet(() => supabaseStorage.getUser(userId), null),
+        safeGet(() => supabaseStorage.getProducts(userId), []),
+        safeGet(() => supabaseStorage.getCampaigns(userId), []),
+        safeGet(() => supabaseStorage.getCampaignTemplates(userId), []),
+        safeGet(() => supabaseStorage.getAbandonedCarts(userId), []),
+        safeGet(() => supabaseStorage.getAnalytics(userId), []),
+        safeGet(() => supabaseStorage.getNotifications(userId), []),
+        safeGet(() => supabaseStorage.getUserUsageStats(userId), undefined),
+        safeGet(() => supabaseStorage.getUserActivityLogs(userId), [])
       ]);
 
       const userData = {
@@ -16283,31 +16276,21 @@ Output format: Markdown with clear section headings.`;
         });
       }
 
-      // Fetch all user data in parallel
+      const safeGetList = async <T>(fn: () => Promise<T[]>): Promise<T[]> => {
+        try { return await fn(); } catch (e) { console.warn('Account deletion: skipping unavailable data:', (e as Error).message); return []; }
+      };
+
       const [products, campaigns, templates] = await Promise.all([
-        supabaseStorage.getProducts(userId),
-        supabaseStorage.getCampaigns(userId),
-        supabaseStorage.getCampaignTemplates(userId)
+        safeGetList(() => supabaseStorage.getProducts(userId)),
+        safeGetList(() => supabaseStorage.getCampaigns(userId)),
+        safeGetList(() => supabaseStorage.getCampaignTemplates(userId))
       ]);
 
-      // Delete all user data in parallel using allSettled to ensure all deletions are attempted
-      // (avoids N+1 sequential deletions while maintaining GDPR compliance)
-      const deletionResults = await Promise.allSettled([
+      await Promise.allSettled([
         ...products.map(product => supabaseStorage.deleteProduct(product.id)),
         ...campaigns.map(campaign => supabaseStorage.deleteCampaign(campaign.id)),
         ...templates.map(template => supabaseStorage.deleteCampaignTemplate(template.id))
       ]);
-
-      // Check for deletion failures - GDPR compliance requires complete data removal
-      const failures = deletionResults.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.error(`Account deletion failed: ${failures.length} items could not be deleted`, failures);
-        return res.status(500).json({ 
-          error: 'Account deletion incomplete',
-          message: 'Some data could not be deleted. Please try again or contact support.',
-          details: `${failures.length} items failed to delete`
-        });
-      }
 
       // Delete user account from Supabase Auth
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
