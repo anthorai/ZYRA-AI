@@ -28,7 +28,7 @@ interface Integration {
   comingSoon?: boolean;
 }
 
-export default function IntegrationsPage() {
+export default function IntegrationsPage({ embedded }: { embedded?: boolean }) {
   const { toast } = useToast();
   
   const [integrations, setIntegrations] = useState<Integration[]>([
@@ -748,14 +748,8 @@ export default function IntegrationsPage() {
     }
   };
 
-  return (
-    <PageShell
-      title="Integrations"
-      subtitle="Connect third-party services to enhance your Zyra AI experience"
-      maxWidth="xl"
-      spacing="normal"
-      useHistoryBack={true}
-    >
+  const content = (
+    <>
       {/* Success Banner - Shows when store is connected */}
       {showSuccessBanner && (
         <Alert className="mb-6 bg-green-500/20 border-green-500/50" data-testid="alert-shopify-success">
@@ -1250,6 +1244,22 @@ export default function IntegrationsPage() {
         </DialogContent>
       </Dialog>
 
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-6">{content}</div>;
+  }
+
+  return (
+    <PageShell
+      title="Integrations"
+      subtitle="Connect third-party services to enhance your Zyra AI experience"
+      maxWidth="xl"
+      spacing="normal"
+      useHistoryBack={true}
+    >
+      {content}
     </PageShell>
   );
 }

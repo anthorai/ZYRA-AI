@@ -23,8 +23,7 @@ const ACCENT_COLORS: Record<string, string> = {
   'subscription-billing': '#A78BFA',
   'ai-preferences': '#22C55E',
   'notifications-alerts': '#F59E0B',
-  'integrations': '#3B82F6',
-  'security': '#EF4444',
+  'security-integrations': '#3B82F6',
   'support-resources': '#06B6D4',
 };
 
@@ -96,21 +95,12 @@ export default function Settings() {
       category: 'preferences'
     },
     {
-      id: 'integrations',
-      title: 'Integrations',
-      description: 'Connect email providers, SMS services, analytics tools, and automation platforms',
-      icon: <Zap className="w-5 h-5 stroke-2" />,
-      features: ['Email (Gmail, Outlook, SMTP)', 'SMS (Twilio, Vonage)', 'Analytics (Google Analytics, Meta Pixel)', 'Zapier / Make Automation'],
-      actionText: 'Manage Integrations',
-      category: 'integrations'
-    },
-    {
-      id: 'security',
-      title: 'Security',
-      description: 'Two-factor authentication, login activity, API keys, and data management',
+      id: 'security-integrations',
+      title: 'Security & Integrations',
+      description: 'Two-factor authentication, data management, connected services, and API configurations',
       icon: <Shield className="w-5 h-5 stroke-2" />,
-      features: ['Two-Factor Authentication (2FA)', 'Login Activity Log', 'API Key Management', 'Data Export/Delete (GDPR)'],
-      actionText: 'Security Settings',
+      features: ['Two-Factor Authentication (2FA)', 'Data Export/Delete (GDPR)', 'Email & SMS Services', 'Shopify & Analytics'],
+      actionText: 'Manage',
       category: 'security'
     },
     {
@@ -141,11 +131,8 @@ export default function Settings() {
       case 'notifications-alerts':
         setLocation('/settings/notifications');
         break;
-      case 'security':
-        setLocation('/settings/security');
-        break;
-      case 'integrations':
-        setLocation('/settings/integrations');
+      case 'security-integrations':
+        setLocation('/settings/security-integrations');
         break;
       case 'support-resources':
         setLocation('/settings/support');
@@ -177,8 +164,7 @@ export default function Settings() {
         {settingsCards.map((card) => {
           const isLoading = (
             (card.id === 'ai-preferences' && preferencesLoading) ||
-            (card.id === 'security' && securityLoading) ||
-            (card.id === 'integrations' && integrationsLoading) ||
+            (card.id === 'security-integrations' && (securityLoading || integrationsLoading)) ||
             (card.id === 'notifications-alerts' && preferencesLoading)
           );
 

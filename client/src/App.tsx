@@ -449,11 +449,20 @@ function Router() {
           </Suspense>
         </ProtectedRoute>
       )} />
+      <Route path="/settings/security-integrations" component={() => (
+        <ProtectedRoute>
+          <SettingsLayout>
+            <Suspense fallback={<PageLoader />}>
+              <SecurityPage />
+            </Suspense>
+          </SettingsLayout>
+        </ProtectedRoute>
+      )} />
       <Route path="/settings/integrations" component={() => (
         <ProtectedRoute>
           <SettingsLayout>
             <Suspense fallback={<PageLoader />}>
-              <IntegrationsPage />
+              <SecurityPage />
             </Suspense>
           </SettingsLayout>
         </ProtectedRoute>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,14 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { PageShell } from "@/components/ui/page-shell";
-import { Shield, Lock, Smartphone, Download, Trash2, Chrome, Monitor, Laptop, Loader2, AlertTriangle } from "lucide-react";
+import { Shield, Lock, Smartphone, Download, Trash2, Chrome, Monitor, Laptop, Loader2, AlertTriangle, Zap } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 import type { Session } from "@shared/schema";
 import { TwoFactorSetupInline } from "@/components/security/TwoFactorSetupInline";
 import { TwoFactorDisableDialog } from "@/components/security/TwoFactorDisableDialog";
 import { PasswordStrengthMeter } from "@/components/security/PasswordStrengthMeter";
 import { PasswordValidation } from "@shared/password-validation";
+
+const IntegrationsPage = lazy(() => import("@/pages/settings/integrations"));
 
 function getDeviceIcon(deviceType?: string | null, browser?: string | null) {
   const browserName = browser?.toLowerCase() ?? '';
@@ -50,6 +53,10 @@ const sectionStyle = {
 
 export default function SecurityPage() {
   const { toast } = useToast();
+  const [location] = useLocation();
+  const [activeTab, setActiveTab] = useState<'security' | 'integrations'>(
+    location.includes('/integrations') ? 'integrations' : 'security'
+  );
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -183,12 +190,57 @@ export default function SecurityPage() {
       />
 
       <PageShell
-        title="Security Settings"
-        subtitle="Protect your account"
+        title="Security & Integrations"
+        subtitle="Protect your account and manage connected services"
         maxWidth="xl"
         spacing="normal"
         useHistoryBack={true}
       >
+        <div
+          className="flex gap-1 p-1 rounded-xl mb-2"
+          style={{ background: '#0F152B', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <button
+            onClick={() => setActiveTab('security')}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
+            style={activeTab === 'security' ? {
+              background: 'linear-gradient(135deg, rgba(0,240,255,0.15), rgba(0,255,229,0.08))',
+              color: '#00F0FF',
+              border: '1px solid rgba(0,240,255,0.25)',
+            } : {
+              background: 'transparent',
+              color: '#7C86B8',
+              border: '1px solid transparent',
+            }}
+            data-testid="tab-security"
+          >
+            <Shield className="w-4 h-4" />
+            Security
+          </button>
+          <button
+            onClick={() => setActiveTab('integrations')}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
+            style={activeTab === 'integrations' ? {
+              background: 'linear-gradient(135deg, rgba(0,240,255,0.15), rgba(0,255,229,0.08))',
+              color: '#00F0FF',
+              border: '1px solid rgba(0,240,255,0.25)',
+            } : {
+              background: 'transparent',
+              color: '#7C86B8',
+              border: '1px solid transparent',
+            }}
+            data-testid="tab-integrations"
+          >
+            <Zap className="w-4 h-4" />
+            Integrations
+          </button>
+        </div>
+
+        {activeTab === 'integrations' ? (
+          <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" style={{ color: '#00F0FF' }} /></div>}>
+            <IntegrationsPage embedded />
+          </Suspense>
+        ) : (
         <div className="space-y-6">
             <Card className="border-0" style={sectionStyle} data-testid="card-2fa">
               <CardContent className="p-5 sm:p-6">
@@ -599,6 +651,7 @@ export default function SecurityPage() {
               </CardContent>
             </Card>
           </div>
+        )}
       </PageShell>
     </>
   );
