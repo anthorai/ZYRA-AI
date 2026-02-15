@@ -791,33 +791,86 @@ export default function RevenueImmuneCard() {
                 data-testid="log-body"
               >
                 {activityLog.length === 0 ? (
-                  <div className="space-y-2 sm:space-y-1.5">
-                    <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.5s ease-out both' }}>
+                  <div className="space-y-1 sm:space-y-0.5">
+                    {/* Boot line 1: Init */}
+                    <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out both' }}>
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
-                      <span className="text-blue-300 flex-shrink-0">[INFO]</span>
-                      <span className="text-slate-300 break-words">Initializing ZYRA monitoring engine...</span>
+                      <span className="text-blue-300 flex-shrink-0">[BOOT]</span>
+                      <span className="text-slate-300 break-words">Initializing ZYRA v2.4 defense core...</span>
                     </div>
-                    
-                    <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.5s ease-out 150ms both' }}>
+
+                    {/* Boot line 2: Engines loaded */}
+                    <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out 120ms both' }}>
+                      <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                      <span className="text-cyan-300 flex-shrink-0">[LOAD]</span>
+                      <span className="text-slate-400 break-words">
+                        Engines mounted: <span className="text-slate-200">{SCANNING_ENGINES.length}</span>
+                        <span className="text-slate-600 mx-1">|</span>
+                        Mode: <span className="text-slate-200">{sensitivity === 'safe' ? 'Conservative' : sensitivity === 'aggressive' ? 'Aggressive' : 'Balanced'}</span>
+                        <span className="text-slate-600 mx-1">|</span>
+                        Surfaces: <span className="text-slate-200">{protectedSurfaces.length}</span>
+                      </span>
+                    </div>
+
+                    {/* Boot line 3: Weekly stats */}
+                    {weeklyStats && (
+                      <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out 240ms both' }}>
+                        <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                        <span className="text-blue-300 flex-shrink-0">[STAT]</span>
+                        <span className="text-slate-400 break-words">
+                          7d scans: <span className="text-emerald-400">{weeklyStats.scansPerformed ?? 0}</span>
+                          <span className="text-slate-600 mx-1">|</span>
+                          Fixes: <span className="text-emerald-400">{weeklyStats.fixesExecuted ?? 0}</span>
+                          <span className="text-slate-600 mx-1">|</span>
+                          Rollbacks: <span className={`${(weeklyStats.rollbacksNeeded ?? 0) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>{weeklyStats.rollbacksNeeded ?? 0}</span>
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Boot line 4: Engine names */}
+                    <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out 360ms both' }}>
+                      <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
+                      <span className="text-cyan-300 flex-shrink-0">[ENGN]</span>
+                      <span className="text-slate-400 break-words flex items-center gap-1 flex-wrap">
+                        {SCANNING_ENGINES.map((e, i) => (
+                          <span key={e.id} className="inline-flex items-center">
+                            {i > 0 && <span className="text-slate-600 mx-0.5">·</span>}
+                            <span className="text-slate-300">{e.shortName}</span>
+                            <span className="text-green-400 text-[9px] ml-0.5">OK</span>
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+
+                    {/* Boot line 5: Connection status */}
+                    <div
+                      className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5"
+                      style={{
+                        animation: 'fadeIn 0.4s ease-out 480ms both',
+                        backgroundColor: isConnected ? 'rgba(34,197,94,0.05)' : 'transparent',
+                        borderLeft: isConnected ? '2px solid rgba(34,197,94,0.3)' : '2px solid transparent',
+                      }}
+                    >
                       <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                       <span className={`flex-shrink-0 ${isConnected ? 'text-green-400' : isReconnecting ? 'text-yellow-400' : 'text-cyan-300'}`}>
-                        [{isConnected ? 'OK' : isReconnecting ? 'RETRY' : 'SYSTEM'}]
+                        [{isConnected ? 'LIVE' : isReconnecting ? 'RETRY' : 'CONN'}]
                       </span>
                       <span className="text-slate-300 break-words flex items-center gap-1 flex-wrap">
                         {isConnected ? (
                           <>
-                            <span className="text-green-400">Connected</span>
-                            <span className="hidden sm:inline">—</span>
-                            <span>Listening for scanning events</span>
+                            <span className="text-green-400">Stream active</span>
+                            <span className="text-slate-600">—</span>
+                            <span className="text-slate-400">Awaiting next scan cycle</span>
                             <span className="inline-flex gap-0.5 ml-1">
                               {[0, 1, 2].map(i => (
                                 <span key={i} className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
                               ))}
                             </span>
+                            <span className="inline-block w-1.5 h-3.5 bg-green-400/70 animate-pulse ml-0.5 flex-shrink-0" />
                           </>
                         ) : isReconnecting ? (
                           <>
-                            <span className="text-yellow-400">Reconnecting</span>
+                            <span className="text-yellow-400">Reconnecting to event stream</span>
                             {retryCount > 0 && (
                               <span className="text-slate-500 text-[10px]">(attempt {retryCount})</span>
                             )}
@@ -829,7 +882,7 @@ export default function RevenueImmuneCard() {
                           </>
                         ) : (
                           <>
-                            <span>Establishing connection</span>
+                            <span>Establishing SSE connection</span>
                             <span className="text-slate-500 text-[10px] ml-1">({connectionElapsed}s)</span>
                             <span className="inline-flex gap-0.5 ml-1">
                               {[0, 1, 2].map(i => (
@@ -842,7 +895,7 @@ export default function RevenueImmuneCard() {
                     </div>
 
                     {!isConnected && (
-                      <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.5s ease-out 300ms both' }}>
+                      <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out 600ms both' }}>
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                         {connectionElapsed >= 10 ? (
                           <>
@@ -873,7 +926,7 @@ export default function RevenueImmuneCard() {
                     )}
 
                     {!isConnected && connectionElapsed >= 5 && (
-                      <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.4s ease-out 450ms both' }}>
+                      <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out 720ms both' }}>
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                         <span className="text-slate-600 flex-shrink-0">[DEBUG]</span>
                         <span className="text-slate-500 break-words text-[9px] sm:text-[11px]">
@@ -887,7 +940,7 @@ export default function RevenueImmuneCard() {
                     )}
 
                     {!isConnected && connectionElapsed >= 15 && (
-                      <div className="flex items-start gap-1.5 sm:gap-2" style={{ animation: 'fadeIn 0.4s ease-out 600ms both' }}>
+                      <div className="flex items-start gap-1.5 sm:gap-2 rounded px-1.5 py-0.5 -mx-1.5" style={{ animation: 'fadeIn 0.4s ease-out 840ms both' }}>
                         <span className="text-cyan-400 flex-shrink-0">{'>_'}</span>
                         <span className="text-slate-600 flex-shrink-0">[HINT]</span>
                         <span className="text-slate-500 break-words text-[9px] sm:text-[11px]">
