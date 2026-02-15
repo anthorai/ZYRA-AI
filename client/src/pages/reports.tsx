@@ -138,6 +138,62 @@ const ACTION_TYPE_LABELS: Record<string, string> = {
   ab_test: "A/B Test",
 };
 
+const PLAN_IDS = {
+  FREE: "18f8da29-94cf-417b-83f8-07191b22f254",
+  STARTER: "357abaf6-3035-4a25-b178-b5602c09fa8a",
+  GROWTH: "aaca603f-f064-44a7-87a4-485f84f19517",
+  SCALE: "5a02d7c5-031f-48fe-bbbd-42847b1c39df",
+};
+
+const ACTION_CREDIT_COSTS: Record<string, Record<string, number>> = {
+  product_seo_optimization: { [PLAN_IDS.FREE]: 60, [PLAN_IDS.STARTER]: 120, [PLAN_IDS.GROWTH]: 220, [PLAN_IDS.SCALE]: 350 },
+  bulk_product_optimization: { [PLAN_IDS.FREE]: 0, [PLAN_IDS.STARTER]: 0, [PLAN_IDS.GROWTH]: 400, [PLAN_IDS.SCALE]: 700 },
+  image_alt_text_optimization: { [PLAN_IDS.FREE]: 55, [PLAN_IDS.STARTER]: 30, [PLAN_IDS.GROWTH]: 60, [PLAN_IDS.SCALE]: 90 },
+  cart_recovery_setup: { [PLAN_IDS.FREE]: 62, [PLAN_IDS.STARTER]: 150, [PLAN_IDS.GROWTH]: 300, [PLAN_IDS.SCALE]: 450 },
+  post_purchase_upsell: { [PLAN_IDS.FREE]: 62, [PLAN_IDS.STARTER]: 120, [PLAN_IDS.GROWTH]: 250, [PLAN_IDS.SCALE]: 400 },
+  competitive_analysis: { [PLAN_IDS.FREE]: 62, [PLAN_IDS.STARTER]: 100, [PLAN_IDS.GROWTH]: 180, [PLAN_IDS.SCALE]: 280 },
+  email_campaign_optimization: { [PLAN_IDS.FREE]: 58, [PLAN_IDS.STARTER]: 80, [PLAN_IDS.GROWTH]: 150, [PLAN_IDS.SCALE]: 250 },
+  pricing_optimization: { [PLAN_IDS.FREE]: 60, [PLAN_IDS.STARTER]: 100, [PLAN_IDS.GROWTH]: 200, [PLAN_IDS.SCALE]: 320 },
+  marketing_automation: { [PLAN_IDS.FREE]: 60, [PLAN_IDS.STARTER]: 90, [PLAN_IDS.GROWTH]: 180, [PLAN_IDS.SCALE]: 300 },
+};
+
+const ACTION_TYPE_TO_CREDIT_KEY: Record<string, string> = {
+  optimize_seo: 'product_seo_optimization',
+  product_seo: 'product_seo_optimization',
+  seo_optimization: 'product_seo_optimization',
+  title_rewrite: 'product_seo_optimization',
+  description_enhancement: 'product_seo_optimization',
+  generate_description: 'product_seo_optimization',
+  fix_product: 'product_seo_optimization',
+  product_title_optimization: 'product_seo_optimization',
+  product_description_clarity: 'product_seo_optimization',
+  meta_optimization: 'product_seo_optimization',
+  trust_signal_enhancement: 'product_seo_optimization',
+  value_proposition: 'product_seo_optimization',
+  refresh: 'product_seo_optimization',
+  bulk_seo: 'bulk_product_optimization',
+  bulk_optimization: 'bulk_product_optimization',
+  image_optimization: 'image_alt_text_optimization',
+  image_alt_text_optimization: 'image_alt_text_optimization',
+  cart_recovery: 'cart_recovery_setup',
+  send_cart_recovery: 'cart_recovery_setup',
+  upsell: 'post_purchase_upsell',
+  upsell_optimization: 'post_purchase_upsell',
+  competitor_analysis: 'competitive_analysis',
+  competitive_analysis: 'competitive_analysis',
+  email_optimization: 'email_campaign_optimization',
+  price_optimization: 'pricing_optimization',
+  price_adjustment: 'pricing_optimization',
+  pricing_optimization: 'pricing_optimization',
+  marketing_campaign: 'marketing_automation',
+  ab_test: 'product_seo_optimization',
+};
+
+function getActionCreditCost(actionType: string, planId: string): number {
+  const creditKey = ACTION_TYPE_TO_CREDIT_KEY[actionType] || 'product_seo_optimization';
+  return ACTION_CREDIT_COSTS[creditKey]?.[planId] || ACTION_CREDIT_COSTS[creditKey]?.[PLAN_IDS.FREE] || 60;
+}
+
 const STORE_STATES = [
   { id: "preparing", label: "Preparing for Growth", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/10" },
   { id: "protecting", label: "Actively Protecting Revenue", icon: Shield, color: "text-green-400", bgColor: "bg-green-500/10" },
@@ -171,6 +227,13 @@ export default function Reports() {
     queryKey: ["/api/revenue-immune/status"],
     enabled: !!user,
   });
+
+  const { data: subscriptionData } = useQuery<{ planId?: string }>({
+    queryKey: ["/api/subscription/current"],
+    enabled: !!user,
+  });
+
+  const userPlanId = subscriptionData?.planId || PLAN_IDS.FREE;
 
   const { events: sseEvents, isConnected, isReconnecting } = useZyraActivity();
 
@@ -291,7 +354,8 @@ export default function Reports() {
       const groupKey = productName.toLowerCase();
       const existing = productMap.get(groupKey);
       const revenue = action.actualImpact?.revenue || action.estimatedImpact?.expectedRevenue || 0;
-      const credits = (action as any).creditsUsed || 0;
+      const rawCredits = (action as any).creditsUsed || 0;
+      const credits = rawCredits > 1 ? rawCredits : getActionCreditCost(action.actionType, userPlanId);
       const isPositive = action.actualImpact?.status === "positive";
       const isNegative = action.actualImpact?.status === "negative";
       const isRolledBack = action.status === "rolled_back";
@@ -743,7 +807,8 @@ export default function Reports() {
                                             <div className="mb-3 space-y-2">
                                               {actionsWithChanges.map((action) => {
                                                 const changes = action.payload?.changes as Array<{field?: string; before?: string; after?: string; reason?: string}> | undefined;
-                                                const credits = (action as any).creditsUsed || 0;
+                                                const rawCredits = (action as any).creditsUsed || 0;
+                                                const credits = rawCredits > 1 ? rawCredits : getActionCreditCost(action.actionType, userPlanId);
                                                 const isRolledBack = action.status === "rolled_back";
                                                 const isCompleted = action.status === "completed";
                                                 const isNegative = action.actualImpact?.status === "negative";
@@ -923,7 +988,8 @@ export default function Reports() {
                                       {/* Credits consumed */}
                                       {(() => {
                                         const computedCredits = productGroup.actions.reduce((sum, a) => {
-                                          return sum + ((a as any).creditsUsed || 0);
+                                          const raw = (a as any).creditsUsed || 0;
+                                          return sum + (raw > 1 ? raw : getActionCreditCost(a.actionType, userPlanId));
                                         }, 0);
                                         return (
                                           <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">
