@@ -84,6 +84,18 @@ export default function SupportPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
+  const testEmailMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/settings/test-email', {});
+    },
+    onSuccess: () => {
+      toast({ title: "Test Email Sent", description: "Check your inbox and spam folder for a test email from Zyra AI", duration: 5000 });
+    },
+    onError: (error: any) => {
+      toast({ title: "Test Email Failed", description: error.message || "Email service error", variant: "destructive", duration: 3000 });
+    }
+  });
+
   const submitTicketMutation = useMutation({
     mutationFn: async (data: { subject: string; message: string }) => {
       return await apiRequest('POST', '/api/settings/support', {
@@ -348,6 +360,21 @@ export default function SupportPage() {
               For critical issues or urgent support needs, you can reach our priority support team via live chat or email us directly at team@zzyraai.com
             </p>
             <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => testEmailMutation.mutate()}
+                disabled={testEmailMutation.isPending}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(0,240,255,0.4)',
+                  color: '#00F0FF',
+                }}
+                data-testid="button-test-email"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                {testEmailMutation.isPending ? "Sending..." : "Send Test Email"}
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

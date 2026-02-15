@@ -57,3 +57,5 @@ waitForPort = 5000
 [userenv.shared]
 SHOPIFY_HMAC_DEBUG = "1"
 SENDGRID_FROM_EMAIL = "team@zzyraai.com"
+BREVO_FROM_EMAIL = "team@zzyraai.com"
+BREVO_FROM_NAME = "ZYAR AI"

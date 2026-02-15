@@ -9724,6 +9724,25 @@ Output format: Markdown with clear section headings.`;
     }
   });
 
+  app.post('/api/settings/test-email', requireAuth, async (req, res) => {
+    try {
+      const userEmail = (req as AuthenticatedRequest).user.email;
+      const { sendBrevoEmail } = await import('./lib/brevo-client');
+      
+      const result = await sendBrevoEmail({
+        to: userEmail,
+        subject: 'Zyra AI - Test Email',
+        htmlContent: `<div style="font-family:sans-serif;padding:20px;"><h2>Test Email from Zyra AI</h2><p>If you can read this, email delivery is working correctly.</p><p>Sent to: ${userEmail}</p><p>Time: ${new Date().toISOString()}</p></div>`
+      });
+
+      console.log('Test email result:', result);
+      res.json({ success: true, messageId: result.messageId, sentTo: userEmail });
+    } catch (error: any) {
+      console.error('Test email error:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   app.post('/api/settings/support', requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
