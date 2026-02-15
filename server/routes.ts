@@ -18500,6 +18500,89 @@ Output format: Markdown with clear section headings.`;
         }
       }
 
+      // Also rollback on Shopify if the action was published
+      if (action[0].publishedToShopify && snapshotData.product?.shopifyId) {
+        try {
+          const { storeConnections } = await import('@shared/schema');
+          const storeConnection = await db
+            .select()
+            .from(storeConnections)
+            .where(eq(storeConnections.userId, userId))
+            .limit(1);
+
+          if (storeConnection.length > 0 && storeConnection[0].accessToken) {
+            let shopDomain = (storeConnection[0].storeUrl || '').trim().toLowerCase();
+            if (shopDomain.includes('admin.shopify.com/store/')) {
+              const storeMatch = shopDomain.match(/store\/([a-z0-9-]+)/i);
+              if (storeMatch?.[1]) shopDomain = `${storeMatch[1]}.myshopify.com`;
+            } else {
+              shopDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+              if (!shopDomain.endsWith('.myshopify.com')) {
+                shopDomain = `${shopDomain.split('.')[0]}.myshopify.com`;
+              }
+            }
+
+            const shopifyErrors: string[] = [];
+            const rollbackUpdate: any = {};
+            if (snapshotData.product.name) rollbackUpdate.title = snapshotData.product.name;
+            if (snapshotData.product.description) rollbackUpdate.body_html = snapshotData.product.description;
+
+            if (Object.keys(rollbackUpdate).length > 0) {
+              const productResp = await fetch(
+                `https://${shopDomain}/admin/api/2024-01/products/${snapshotData.product.shopifyId}.json`,
+                {
+                  method: 'PUT',
+                  headers: {
+                    'X-Shopify-Access-Token': storeConnection[0].accessToken,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ product: rollbackUpdate }),
+                }
+              );
+              if (!productResp.ok) {
+                const errText = await productResp.text();
+                shopifyErrors.push(`Product update failed: ${errText}`);
+              }
+            }
+
+            if (snapshotData.seoMeta?.seoTitle || snapshotData.seoMeta?.metaDescription) {
+              const metafields: any[] = [];
+              if (snapshotData.seoMeta.seoTitle) {
+                metafields.push({ namespace: "global", key: "title_tag", value: snapshotData.seoMeta.seoTitle, type: "single_line_text_field" });
+              }
+              if (snapshotData.seoMeta.metaDescription) {
+                metafields.push({ namespace: "global", key: "description_tag", value: snapshotData.seoMeta.metaDescription, type: "single_line_text_field" });
+              }
+              for (const metafield of metafields) {
+                const metaResp = await fetch(
+                  `https://${shopDomain}/admin/api/2024-01/products/${snapshotData.product.shopifyId}/metafields.json`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'X-Shopify-Access-Token': storeConnection[0].accessToken,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ metafield }),
+                  }
+                );
+                if (!metaResp.ok) {
+                  const errText = await metaResp.text();
+                  shopifyErrors.push(`Metafield ${metafield.key} failed: ${errText}`);
+                }
+              }
+            }
+
+            if (shopifyErrors.length > 0) {
+              console.error(`⚠️ [Rollback] Shopify partial failure:`, shopifyErrors);
+            } else {
+              console.log(`✅ [Rollback] Shopify product restored: ${snapshotData.product.shopifyId}`);
+            }
+          }
+        } catch (shopifyError) {
+          console.error('[Rollback] Failed to rollback on Shopify (local DB still restored):', shopifyError);
+        }
+      }
+
       // Mark action as rolled back
       await db
         .update(autonomousActions)
@@ -18525,7 +18608,7 @@ Output format: Markdown with clear section headings.`;
   app.post("/api/autonomous-actions/:id/push-to-shopify", requireAuth, async (req, res) => {
     try {
       const userId = (req as AuthenticatedRequest).user.id;
-      const { autonomousActions, seoMeta, products: productsTable, storeConnections } = await import('@shared/schema');
+      const { autonomousActions, seoMeta, products: productsTable, storeConnections, productSnapshots } = await import('@shared/schema');
       
       const actionId = req.params.id;
 
@@ -18619,6 +18702,39 @@ Output format: Markdown with clear section headings.`;
 
       const shopifyProductId = product[0].shopifyId;
       const accessToken = storeConnection[0].accessToken;
+
+      // Save snapshot BEFORE pushing changes (enables rollback)
+      const existingSeo = await db
+        .select()
+        .from(seoMeta)
+        .where(eq(seoMeta.productId, productId))
+        .limit(1);
+
+      const existingSnapshot = await db
+        .select()
+        .from(productSnapshots)
+        .where(and(
+          eq(productSnapshots.actionId, actionId),
+          eq(productSnapshots.reason, 'before_optimization')
+        ))
+        .limit(1);
+
+      if (existingSnapshot.length === 0) {
+        await db.insert(productSnapshots).values({
+          productId,
+          actionId,
+          snapshotData: {
+            product: {
+              id: product[0].id,
+              name: product[0].name,
+              description: product[0].description,
+              shopifyId: product[0].shopifyId,
+            },
+            seoMeta: existingSeo[0] || null,
+          },
+          reason: 'before_optimization',
+        });
+      }
 
       // Get optimized content from payload or result
       let optimizedContent = actionData.payload?.optimizedCopy || actionData.result?.optimizedContent || actionData.payload?.after;
