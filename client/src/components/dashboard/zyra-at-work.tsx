@@ -2259,39 +2259,43 @@ export default function ZyraAtWork() {
         
         console.log('[ZYRA Approve] Using productId:', productId, 'from foundationalAction:', !!foundationalAction);
         
-        // CRITICAL: Check lock status before consuming credits to prevent duplicates
+        // CRITICAL: Check lock status before executing to prevent duplicates
         if (foundationalAction?.isLocked) {
-          console.log('[ZYRA Approve] Action is locked - preventing duplicate credit consumption');
+          console.log('[ZYRA Approve] Action is locked - preventing duplicate execution');
           throw new Error(foundationalAction.lockMessage || 'This action has already been completed on this product');
         }
         
-        // Step 1: Consume credits through mode-credits system
-        try {
-          const creditResult = await executeActionMutation.mutateAsync({
-            actionType: creditActionType,
-            mode: executionMode,
-            entityType: 'product',
-            entityId: productId,
-            userConfirmed: true
-          });
-          
-          if (!creditResult.success) {
-            throw new Error(creditResult.message || 'Credit consumption failed');
-          }
-          
-          console.log('[ZYRA Approve] Credits consumed:', creditResult.creditsConsumed);
-        } catch (creditError) {
-          // If credits fail, don't proceed with execution
-          console.error('[ZYRA Approve] Credit check failed:', creditError);
-          throw new Error(creditError instanceof Error ? creditError.message : 'Insufficient credits for this action');
-        }
-        
-        // Step 2: Execute foundational action - returns real execution results
+        // Step 1: Execute foundational action FIRST - before consuming credits
+        // This ensures credits are NOT consumed if execution fails (e.g. 504 timeout)
+        console.log('[ZYRA Approve] Executing action BEFORE consuming credits...');
         const response = await apiRequest('POST', '/api/zyra/execute-foundational', { 
           type: actionType 
         });
         const result = await response.json();
         console.log('[ZYRA Approve] Foundational action result:', result);
+        
+        // Step 2: Only consume credits AFTER successful execution
+        if (result.success) {
+          try {
+            const creditResult = await executeActionMutation.mutateAsync({
+              actionType: creditActionType,
+              mode: executionMode,
+              entityType: 'product',
+              entityId: productId,
+              userConfirmed: true
+            });
+            
+            if (creditResult.success) {
+              console.log('[ZYRA Approve] Credits consumed after successful execution:', creditResult.creditsConsumed);
+            } else {
+              console.warn('[ZYRA Approve] Credit deduction failed but action succeeded - credits may need manual adjustment');
+            }
+          } catch (creditError) {
+            // Action already succeeded, so log the credit error but don't fail the whole operation
+            console.error('[ZYRA Approve] Credit deduction failed after successful execution:', creditError);
+          }
+        }
+        
         return result;
       }
       // Regular friction action - approve then execute
