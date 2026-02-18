@@ -383,37 +383,33 @@ async function startServer() {
     }
   });
 
-  // Test Supabase connection on startup
-  try {
-    log("🔄 Testing Supabase connection...");
-    const isConnected = await testSupabaseConnection();
-    if (isConnected) {
-      log("✅ Supabase connection successful");
-    } else {
-      log("⚠️ Supabase connection test failed - continuing anyway");
-    }
-  } catch (error) {
+  // Test Supabase connection on startup (non-blocking to speed up server start)
+  const supabaseTestPromise = Promise.race([
+    testSupabaseConnection(),
+    new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 8000))
+  ]).then(isConnected => {
+    log(isConnected ? "✅ Supabase connection successful" : "⚠️ Supabase connection test failed - continuing anyway");
+  }).catch(error => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log(`❌ Supabase connection failed: ${errorMessage}`);
-    // Don't exit - allow app to start anyway in case of DB issues
+  });
+
+  // Initialize database with timeout to prevent deployment hangs
+  // Routes depend on seeded data, so this must complete before serving requests
+  try {
+    await Promise.race([
+      (async () => {
+        const { initializeDatabase } = await import('./init-db');
+        await initializeDatabase();
+        const { seedDefaultAutonomousRules } = await import('./lib/default-autonomous-rules');
+        await seedDefaultAutonomousRules();
+      })(),
+      new Promise<void>((_, reject) => setTimeout(() => reject(new Error('DB init timeout after 15s')), 15000))
+    ]);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log(`⚠️ Database initialization warning: ${errorMessage}`);
   }
-
-  // Run database migrations in background (non-blocking)
-  // DISABLED: Using db:push for schema management instead
-  // runDatabaseMigrations().then(async () => {
-    // Initialize database after migrations complete
-    try {
-      const { initializeDatabase } = await import('./init-db');
-      await initializeDatabase();
-
-      // Seed default autonomous rules
-      const { seedDefaultAutonomousRules } = await import('./lib/default-autonomous-rules');
-      await seedDefaultAutonomousRules();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      log(`⚠️ Database initialization warning: ${errorMessage}`);
-    }
-  // });
 
   return await registerRoutes(app);
 }

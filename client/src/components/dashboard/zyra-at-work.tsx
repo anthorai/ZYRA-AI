@@ -3322,55 +3322,73 @@ export default function ZyraAtWork() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {Object.entries(PHASE_CONFIG).filter(([phase]) => phase !== 'complete' && phase !== 'idle').map(([phase, config]) => {
-          const Icon = config.icon;
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+        {(() => {
           const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
-          const currentIndex = phaseOrder.indexOf(currentPhase);
-          const phaseIndex = phaseOrder.indexOf(phase);
-          
+          const phaseColors = {
+            detect: { active: 'border-blue-500/40 bg-blue-500/10', icon: 'text-blue-400', ring: 'ring-blue-500/25' },
+            decide: { active: 'border-purple-500/40 bg-purple-500/10', icon: 'text-purple-400', ring: 'ring-purple-500/25' },
+            execute: { active: 'border-amber-500/40 bg-amber-500/10', icon: 'text-amber-400', ring: 'ring-amber-500/25' },
+            prove: { active: 'border-emerald-500/40 bg-emerald-500/10', icon: 'text-emerald-400', ring: 'ring-emerald-500/25' },
+            learn: { active: 'border-cyan-500/40 bg-cyan-500/10', icon: 'text-cyan-400', ring: 'ring-cyan-500/25' },
+          };
+          const ci = phaseOrder.indexOf(currentPhase);
           const isLoopComplete = currentPhase === 'complete';
           const isIdle = currentPhase === 'idle';
-          const isActive = !isLoopComplete && !isIdle && currentPhase === phase;
-          const isPassed = !isLoopComplete && !isIdle && currentIndex > phaseIndex;
-          const isCompleted = isLoopComplete;
-          
-          return (
-            <Card 
-              key={phase}
-              className={`${isLoopComplete ? 'bg-emerald-500/10' : isActive ? 'bg-cyan-500/15 border-cyan-500/35' : isPassed ? 'bg-emerald-500/8 border-emerald-500/15' : config.bgColor} border-white/[0.06] transition-all duration-300 ${
-                isActive ? 'ring-1 ring-cyan-500/30' : ''
-              } ${isLoopComplete ? 'ring-1 ring-emerald-400/30' : ''}`}
-              style={{ '--tw-ring-color': isActive ? 'currentColor' : 'transparent' } as any}
-              data-testid={`phase-indicator-${phase}`}
-            >
-              <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center relative">
-                {(isCompleted || isPassed) && (
+
+          return phaseOrder.map((phase, pi) => {
+            const config = PHASE_CONFIG[phase];
+            const colors = phaseColors[phase as keyof typeof phaseColors];
+            const Icon = config.icon;
+            const isActive = !isLoopComplete && !isIdle && currentPhase === phase;
+            const isPassed = !isLoopComplete && !isIdle && ci > pi;
+
+            return (
+              <div
+                key={phase}
+                className={`relative flex flex-col items-center text-center rounded-xl p-2.5 sm:p-3.5 border transition-all duration-500 ease-out ${
+                  isLoopComplete
+                    ? 'border-emerald-500/30 bg-emerald-500/8'
+                    : isActive
+                    ? `${colors.active} ring-1 ${colors.ring}`
+                    : isPassed
+                    ? 'border-emerald-500/15 bg-emerald-500/5'
+                    : isIdle
+                    ? 'border-slate-700/30 bg-slate-800/20'
+                    : 'border-white/[0.04] bg-slate-800/30'
+                }`}
+                data-testid={`phase-indicator-${phase}`}
+              >
+                {(isLoopComplete || isPassed) && (
                   <div className="absolute top-1 right-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                   </div>
                 )}
-                <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isIdle ? 'text-slate-600' : config.color}`} />
+                <div className={`p-2 rounded-lg mb-1.5 transition-all duration-500 ${
+                  isActive ? `bg-slate-900/60` : 'bg-slate-800/40'
+                }`}>
+                  <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-500 ${
+                    isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? colors.icon : isIdle ? 'text-slate-600' : 'text-slate-500'
+                  }`} />
                 </div>
-                <span className={`text-xs font-medium ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isIdle ? 'text-slate-600' : 'text-slate-500'}`}>
+                <span className={`text-[10px] sm:text-xs font-medium tracking-wide transition-colors duration-500 ${
+                  isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? colors.icon : isIdle ? 'text-slate-600' : 'text-slate-500'
+                }`}>
                   {config.label}
                 </span>
-                {isActive && (isStreamConnected || hasRealData) && (
-                  <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Live
+                {isActive && (
+                  <span className="mt-1 flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-current animate-pulse" style={{ color: 'inherit' }} />
+                    <span className="text-[9px] opacity-70">Active</span>
                   </span>
                 )}
-                {isIdle && phase === 'detect' && (
-                  <span className="mt-1 text-[10px] text-slate-500">
-                    Standby
-                  </span>
+                {isIdle && pi === 0 && (
+                  <span className="mt-1 text-[9px] text-slate-500">Standby</span>
                 )}
-              </CardContent>
-            </Card>
-          );
-        })}
+              </div>
+            );
+          });
+        })()}
       </div>
 
       {/* Optimization Mode Selector */}
@@ -3602,16 +3620,16 @@ export default function ZyraAtWork() {
       </div>
 
       {/* ZYRA CORE LOOP - DETECT → DECIDE → EXECUTE → PROVE → LEARN */}
-      <div className="pt-3 border-t border-slate-700/30 space-y-3" data-testid="section-zyra-core-loop">
-        <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-primary" />
-          <span className="text-sm text-slate-300 font-medium" data-testid="text-zyra-summary">
-            ZYRA at Work: Live Revenue Operating System
+      <div className="pt-4 border-t border-slate-700/20 space-y-3" data-testid="section-zyra-core-loop">
+        <div className="flex items-center justify-center gap-2">
+          <Brain className="w-4 h-4 text-primary/70" />
+          <span className="text-xs text-slate-400 font-medium tracking-wide uppercase" data-testid="text-zyra-summary">
+            Revenue Operating System
           </span>
         </div>
         
         {/* Core Loop Visualization */}
-        <div className="flex items-center justify-center gap-1 text-[10px] font-mono py-2" data-testid="core-loop-visual">
+        <div className="flex items-center justify-center gap-0.5 sm:gap-1 py-2" data-testid="core-loop-visual">
           {[
             { phase: 'detect', label: 'DETECT', color: 'text-blue-400' },
             { phase: 'decide', label: 'DECIDE', color: 'text-purple-400' },
@@ -3627,44 +3645,40 @@ export default function ZyraAtWork() {
             const active = !loopDone && !isIdle && currentPhase === item.phase;
             const passed = !loopDone && !isIdle && ci > pi;
             return (
-              <span key={item.phase} className="flex items-center gap-1">
-                <span className={`${active ? 'font-bold scale-110 ' + item.color : passed || loopDone ? 'text-emerald-400' : isIdle ? 'text-slate-600' : 'text-slate-500'} transition-all duration-300`}>
+              <span key={item.phase} className="flex items-center gap-0.5 sm:gap-1">
+                <span className={`text-[10px] sm:text-xs font-medium tracking-wider transition-all duration-500 ${
+                  active ? item.color + ' scale-105' : passed || loopDone ? 'text-emerald-400/80' : isIdle ? 'text-slate-600' : 'text-slate-500/70'
+                }`}>
                   {item.label}
                 </span>
                 {idx < arr.length - 1 && (
-                  <ArrowRight className={`w-3 h-3 ${passed || (active && ci > 0) ? 'text-emerald-500' : 'text-slate-600'} transition-colors duration-300`} />
+                  <ArrowRight className={`w-2.5 h-2.5 sm:w-3 sm:h-3 transition-colors duration-500 ${
+                    passed || (active && ci > 0) ? 'text-emerald-500/60' : 'text-slate-700'
+                  }`} />
                 )}
               </span>
             );
           })}
         </div>
         
-        <p className="text-xs text-slate-400 text-center" data-testid="text-core-law">
-          Core Law: If an action does NOT directly increase or protect revenue, ZYRA will NOT perform it.
+        <p className="text-[10px] text-slate-500 text-center" data-testid="text-core-law">
+          Every action must directly increase or protect revenue.
         </p>
         
         {/* Identity Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-thinks">
-            <Brain className="w-3 h-3 mr-1" />
-            Thinks
-          </Badge>
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-acts">
-            <Zap className="w-3 h-3 mr-1" />
-            Acts
-          </Badge>
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-explains">
-            <MessageSquare className="w-3 h-3 mr-1" />
-            Explains
-          </Badge>
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-proves">
-            <DollarSign className="w-3 h-3 mr-1" />
-            Proves
-          </Badge>
-          <Badge variant="outline" className="text-slate-400 border-slate-600" data-testid="badge-improves">
-            <Target className="w-3 h-3 mr-1" />
-            Improves
-          </Badge>
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {[
+            { icon: Brain, label: 'Thinks', id: 'thinks' },
+            { icon: Zap, label: 'Acts', id: 'acts' },
+            { icon: MessageSquare, label: 'Explains', id: 'explains' },
+            { icon: DollarSign, label: 'Proves', id: 'proves' },
+            { icon: Target, label: 'Improves', id: 'improves' },
+          ].map(({ icon: BadgeIcon, label, id }) => (
+            <Badge key={id} variant="outline" className="text-slate-500 border-slate-700/50 text-[10px] px-2 py-0.5" data-testid={`badge-${id}`}>
+              <BadgeIcon className="w-2.5 h-2.5 mr-1" />
+              {label}
+            </Badge>
+          ))}
         </div>
       </div>
     </div>
