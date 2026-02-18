@@ -580,19 +580,13 @@ if (!isVercelServerless) {
   // Initialize background product sync scheduler
   let productSyncSchedulerInitialized = false;
   
-  // Generate or use internal service token
-  const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN || 
-    (process.env.NODE_ENV === 'production' 
-      ? (() => { throw new Error('INTERNAL_SERVICE_TOKEN must be set in production'); })()
-      : `dev-internal-${Math.random().toString(36).substring(7)}`
-    );
-  
   if (!process.env.INTERNAL_SERVICE_TOKEN) {
+    const generated = `internal-${Date.now()}-${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`;
+    process.env.INTERNAL_SERVICE_TOKEN = generated;
     if (process.env.NODE_ENV === 'production') {
-      log("[Product Sync] ERROR: INTERNAL_SERVICE_TOKEN not set in production - scheduler disabled for security");
+      log("[Product Sync] WARNING: INTERNAL_SERVICE_TOKEN not set - using auto-generated token. Set this secret for better security.");
     } else {
-      log(`[Product Sync] Using development token (not for production)`);
-      process.env.INTERNAL_SERVICE_TOKEN = INTERNAL_SERVICE_TOKEN;
+      log("[Product Sync] Using auto-generated internal service token");
     }
   }
   

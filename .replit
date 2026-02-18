@@ -7,9 +7,9 @@ channel = "stable-25_05"
 packages = ["chromium", "imagemagick", "shopify-cli", "haskellPackages.daemons"]
 
 [deployment]
-deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-run = ["node", "./dist/index.cjs"]
+deploymentTarget = "vm"
+build = ["npm", "run", "build:all"]
+run = ["node", "dist/server/index.js"]
 
 [[ports]]
 localPort = 4370
