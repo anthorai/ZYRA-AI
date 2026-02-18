@@ -744,6 +744,15 @@ const PHASE_CONFIG: Record<string, {
     secondaryText: 'All phases finished successfully',
     statusMessage: 'Loop cycle completed successfully!'
   },
+  idle: { 
+    icon: Clock, 
+    label: 'STANDBY', 
+    color: 'text-slate-400', 
+    bgColor: 'bg-slate-500/10',
+    primaryText: 'ZYRA is on standby',
+    secondaryText: 'Waiting for the next optimization cycle',
+    statusMessage: 'Enable autopilot to start detecting revenue friction'
+  },
 };
 
 
@@ -902,7 +911,7 @@ function ProgressStages({
   onApprove?: (actionId: string) => void;
   isApproving?: boolean;
   onComplete?: () => void;
-  activePhase?: 'detect' | 'decide' | 'execute' | 'prove' | 'learn';
+  activePhase?: 'detect' | 'decide' | 'execute' | 'prove' | 'learn' | 'idle';
   executionResult?: ExecutionResult | null;
   executionActivities?: ExecutionActivityItem[];
   optimizationMode?: 'fast' | 'competitive';
@@ -1125,7 +1134,7 @@ function ProgressStages({
   }, [streamEvents, activePhase, foundationalAction, executionStatus]);
 
   // Get the current phase config for status display
-  const phaseConfig = PHASE_CONFIG[effectivePhase] || PHASE_CONFIG.detect;
+  const phaseConfig = PHASE_CONFIG[effectivePhase] || PHASE_CONFIG.idle;
   const PhaseIcon = phaseConfig.icon;
 
   // Map backend execution activity to log entry type
@@ -2752,13 +2761,11 @@ export default function ZyraAtWork() {
     // HIGHEST PRIORITY: Real-time SSE events - most authoritative source
     if (streamEvents.length > 0 && isStreamConnected) {
       const latestEvent = streamEvents[streamEvents.length - 1];
-      // Check for loop completion events first
       if (latestEvent.eventType === 'LOOP_COMPLETE' || 
           latestEvent.eventType === 'LEARN_COMPLETE' ||
           (latestEvent.phase as string) === 'complete') {
         return 'complete';
       }
-      // Map SSE event types to phases
       if (latestEvent.eventType.startsWith('DETECT_')) {
         return 'detect';
       } else if (latestEvent.eventType.startsWith('DECIDE_')) {
@@ -2768,13 +2775,11 @@ export default function ZyraAtWork() {
       } else if (latestEvent.eventType.startsWith('PROVE_')) {
         return 'prove';
       } else if (latestEvent.eventType.startsWith('LEARN_')) {
-        // Only return 'learn' for non-complete learn events
         if (!latestEvent.eventType.includes('COMPLETE')) {
           return 'learn';
         }
         return 'complete';
       }
-      // Use event's phase field if event type doesn't match
       if (latestEvent.phase) {
         return latestEvent.phase;
       }
@@ -2816,12 +2821,17 @@ export default function ZyraAtWork() {
     if (derivedExecutionStatus === 'pending' || isActivelyDetecting) {
       return 'detect';
     }
+    // Use the backend's activePhase from stats - it checks actual DB state
+    // (executing/proving/deciding opportunities)
+    if (stats?.activePhase && stats.activePhase !== 'detect') {
+      return stats.activePhase;
+    }
     // Fall back to events-based phase (non-SSE events)
     if (events.length > 0) {
       return events[events.length - 1].phase;
     }
-    // Default to detect
-    return 'detect';
+    // When truly idle (nothing happening), show 'idle' instead of faking 'detect'
+    return 'idle';
   })();
   const currentConfig = PHASE_CONFIG[currentPhase];
 
@@ -3294,7 +3304,7 @@ export default function ZyraAtWork() {
                 committedActionId={derivedCommittedActionId}
                 onApprove={(actionId) => approveActionMutation.mutate(actionId)}
                 isApproving={approveActionMutation.isPending}
-                activePhase={currentPhase as 'detect' | 'decide' | 'execute' | 'prove' | 'learn'}
+                activePhase={currentPhase as 'detect' | 'decide' | 'execute' | 'prove' | 'learn' | 'idle'}
                 executionResult={executionResult}
                 executionActivities={executionActivities}
                 optimizationMode={optimizationMode}
@@ -3313,15 +3323,16 @@ export default function ZyraAtWork() {
       </Card>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {Object.entries(PHASE_CONFIG).filter(([phase]) => phase !== 'complete').map(([phase, config]) => {
+        {Object.entries(PHASE_CONFIG).filter(([phase]) => phase !== 'complete' && phase !== 'idle').map(([phase, config]) => {
           const Icon = config.icon;
           const phaseOrder = ['detect', 'decide', 'execute', 'prove', 'learn'];
           const currentIndex = phaseOrder.indexOf(currentPhase);
           const phaseIndex = phaseOrder.indexOf(phase);
           
           const isLoopComplete = currentPhase === 'complete';
-          const isActive = !isLoopComplete && currentPhase === phase;
-          const isPassed = !isLoopComplete && currentIndex > phaseIndex;
+          const isIdle = currentPhase === 'idle';
+          const isActive = !isLoopComplete && !isIdle && currentPhase === phase;
+          const isPassed = !isLoopComplete && !isIdle && currentIndex > phaseIndex;
           const isCompleted = isLoopComplete;
           
           return (
@@ -3340,15 +3351,20 @@ export default function ZyraAtWork() {
                   </div>
                 )}
                 <div className={`p-2 rounded-lg bg-slate-800/50 mb-2 ${isActive ? 'animate-pulse' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : config.color}`} />
+                  <Icon className={`w-5 h-5 ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isIdle ? 'text-slate-600' : config.color}`} />
                 </div>
-                <span className={`text-xs font-medium ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
+                <span className={`text-xs font-medium ${isLoopComplete || isPassed ? 'text-emerald-400' : isActive ? 'text-cyan-400' : isIdle ? 'text-slate-600' : 'text-slate-500'}`}>
                   {config.label}
                 </span>
                 {isActive && (isStreamConnected || hasRealData) && (
                   <span className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Live
+                  </span>
+                )}
+                {isIdle && phase === 'detect' && (
+                  <span className="mt-1 text-[10px] text-slate-500">
+                    Standby
                   </span>
                 )}
               </CardContent>
@@ -3607,11 +3623,12 @@ export default function ZyraAtWork() {
             const ci = phaseOrder.indexOf(currentPhase);
             const pi = phaseOrder.indexOf(item.phase);
             const loopDone = currentPhase === 'complete';
-            const active = !loopDone && currentPhase === item.phase;
-            const passed = !loopDone && ci > pi;
+            const isIdle = currentPhase === 'idle';
+            const active = !loopDone && !isIdle && currentPhase === item.phase;
+            const passed = !loopDone && !isIdle && ci > pi;
             return (
               <span key={item.phase} className="flex items-center gap-1">
-                <span className={`${active ? 'font-bold scale-110 ' + item.color : passed || loopDone ? 'text-emerald-400' : 'text-slate-500'} transition-all duration-300`}>
+                <span className={`${active ? 'font-bold scale-110 ' + item.color : passed || loopDone ? 'text-emerald-400' : isIdle ? 'text-slate-600' : 'text-slate-500'} transition-all duration-300`}>
                   {item.label}
                 </span>
                 {idx < arr.length - 1 && (
