@@ -685,6 +685,28 @@
     .skeleton-pulse, .shimmer::after {
       animation: none;
     }
+
+    .brand-card-animated {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+
+    .brand-card-animated::before,
+    .brand-card-animated::after {
+      animation: none;
+    }
+
+    .brand-logo-glow {
+      animation: none;
+    }
+
+    .brand-text-shimmer {
+      animation: none;
+      background: none;
+      -webkit-text-fill-color: #ffffff;
+    }
   }
 
   /* Dark theme utility classes */
