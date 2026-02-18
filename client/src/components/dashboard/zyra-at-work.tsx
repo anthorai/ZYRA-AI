@@ -2538,6 +2538,59 @@ export default function ZyraAtWork() {
     }
   }, [liveActivitiesData]);
   
+  // Auto-reset loop state after learn/complete phase has been shown long enough
+  // This prevents the loop from getting permanently stuck on 'learn'
+  const learnResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevBackendPhaseRef = useRef<string>('idle');
+  
+  useEffect(() => {
+    if (learnResetTimeoutRef.current) {
+      clearTimeout(learnResetTimeoutRef.current);
+      learnResetTimeoutRef.current = null;
+    }
+    
+    const backendPhase = detectionStatusData?.executionPhase || stats?.executionPhase || 'idle';
+    const prevPhase = prevBackendPhaseRef.current;
+    prevBackendPhaseRef.current = backendPhase;
+    
+    // Clear execution state when backend transitions completed→idle (execution finished)
+    if (prevPhase === 'completed' && backendPhase === 'idle' && executionResult) {
+      learnResetTimeoutRef.current = setTimeout(() => {
+        console.log('[ZYRA Phase] Backend completed→idle transition - clearing execution state');
+        setExecutionResult(null);
+        setExecutionActivities([]);
+        setApprovedPhase('idle');
+        setCompletedActionId(null);
+      }, 15000);
+    }
+    // Also trigger reset when approvedPhase reaches complete (covers local-only execution flow)
+    else if (approvedPhase === 'complete' && executionResult) {
+      learnResetTimeoutRef.current = setTimeout(() => {
+        console.log('[ZYRA Phase] Auto-resetting loop state after complete phase (30s)');
+        setExecutionResult(null);
+        setExecutionActivities([]);
+        setApprovedPhase('idle');
+        setCompletedActionId(null);
+        queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
+      }, 30000);
+    }
+    // Safety net: if executionResult exists but both approvedPhase is idle and backend is idle,
+    // clear it after 10s (covers reload/stale state scenarios)
+    else if (executionResult && approvedPhase === 'idle' && backendPhase === 'idle') {
+      learnResetTimeoutRef.current = setTimeout(() => {
+        console.log('[ZYRA Phase] Safety net - clearing stale executionResult (idle state)');
+        setExecutionResult(null);
+        setExecutionActivities([]);
+        setCompletedActionId(null);
+      }, 10000);
+    }
+    
+    return () => {
+      if (learnResetTimeoutRef.current) clearTimeout(learnResetTimeoutRef.current);
+    };
+  }, [approvedPhase, executionResult, detectionStatusData?.executionPhase, stats?.executionPhase]);
+
   // 30-second fail-safe timer for stuck states
   // If execution is stuck in 'running' for too long, force refresh
   // For 'awaiting_approval', use a longer timeout (2 min) to give user time to respond
@@ -2633,7 +2686,11 @@ export default function ZyraAtWork() {
       return response.json();
     },
     onMutate: () => {
-      console.log('[ZYRA Detection] Starting detection - timer started');
+      console.log('[ZYRA Detection] Starting detection - resetting loop state');
+      setExecutionResult(null);
+      setExecutionActivities([]);
+      setApprovedPhase('idle');
+      setCompletedActionId(null);
       setIsDetecting(true);
       setDetectionStartTime(Date.now());
     },
@@ -2785,29 +2842,25 @@ export default function ZyraAtWork() {
       }
     }
     
-    // If we have VALIDATED execution results with real data, show 'learn'
-    if (executionResult && hasValidExecutionData(executionResult)) {
-      return 'learn';
+    // If local approvedPhase is actively progressing (execute → prove → learn), follow it
+    if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
+      return approvedPhase;
+    }
+    // If approvedPhase just completed, show learn briefly (auto-reset timer will clear it)
+    if (approvedPhase === 'complete') {
+      return hasValidExecutionData(executionResult) ? 'learn' : 'prove';
     }
     // Backend is executing - use its phase (synced with server)
     if (backendExecutionPhase !== 'idle' && backendExecutionPhase !== 'completed') {
       return mapBackendPhase(backendExecutionPhase);
     }
+    // Backend completed with valid results - show learn (only when approvedPhase hasn't reset)
+    if (backendExecutionPhase === 'completed' && executionResult && hasValidExecutionData(executionResult)) {
+      return 'learn';
+    }
     // Backend completed but no valid results - stay in prove phase (error state)
     if (backendExecutionPhase === 'completed' && !hasValidExecutionData(executionResult)) {
       return 'prove';
-    }
-    // Backend completed with valid results - show learn
-    if (backendExecutionPhase === 'completed') {
-      return 'learn';
-    }
-    // If local approvedPhase is active (fallback for fast UI updates)
-    if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
-      return approvedPhase;
-    }
-    // If approvedPhase just completed, check for valid results
-    if (approvedPhase === 'complete') {
-      return hasValidExecutionData(executionResult) ? 'learn' : 'prove';
     }
     // If actively executing, show execute phase
     if (derivedExecutionStatus === 'running') {
