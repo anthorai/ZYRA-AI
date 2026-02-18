@@ -1,6 +1,6 @@
 import { requireDb } from '../db';
 import { getUserSubscription, getSubscriptionPlanById } from '../db';
-import { products, seoMeta, automationSettings, autonomousActions, activityLogs, actionLocks } from '@shared/schema';
+import { products, seoMeta, automationSettings, autonomousActions, activityLogs, actionLocks, storeConnections } from '@shared/schema';
 import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
@@ -11,6 +11,7 @@ import type { AIToolId } from '@shared/ai-credits';
 import { realLearningService } from './real-learning-service';
 import { storeLearningService } from './store-learning-service';
 import { buildMasterSEOPrompt, buildDescriptionPrompt } from './constants/seo-content-formats';
+import { getShopifyClient } from './shopify-client';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY || 'placeholder-key',
@@ -122,6 +123,94 @@ export class FoundationalExecutionService {
   clearExecutionResult(userId: string): void {
     this.executionResults.delete(userId);
     this.executionInProgress.delete(userId);
+  }
+
+  private async pushToShopify(
+    userId: string,
+    product: typeof products.$inferSelect,
+    changes: ContentChange[]
+  ): Promise<{ pushed: boolean; error?: string }> {
+    if (!product.shopifyId) {
+      console.log(`[Shopify Sync] Product ${product.id} has no shopifyId - skipping Shopify push`);
+      return { pushed: false, error: 'Product not linked to Shopify' };
+    }
+
+    try {
+      const db = requireDb();
+
+      // Find the active store connection for this user
+      // Match by shopDomain in store_url if available, otherwise use any active connection
+      const activeStores = await db
+        .select()
+        .from(storeConnections)
+        .where(and(
+          eq(storeConnections.userId, userId),
+          eq(storeConnections.platform, 'shopify'),
+          eq(storeConnections.status, 'active')
+        ));
+
+      let matchedStore = activeStores[0];
+
+      // If product has a shopDomain, try to match it against store URLs
+      if (product.shopDomain && activeStores.length > 1) {
+        const domainMatch = activeStores.find(s => 
+          s.storeUrl?.includes(product.shopDomain!) || 
+          s.storeName?.toLowerCase().includes(product.shopDomain!.split('.')[0].toLowerCase())
+        );
+        if (domainMatch) matchedStore = domainMatch;
+      }
+
+      if (!matchedStore?.accessToken) {
+        console.log(`[Shopify Sync] No active Shopify store connection for user ${userId}`);
+        return { pushed: false, error: 'No active Shopify store connection' };
+      }
+
+      // Extract the myshopify domain from store_url (e.g., "https://store.myshopify.com" → "store.myshopify.com")
+      const shopDomain = matchedStore.storeUrl?.replace(/^https?:\/\//, '') || matchedStore.storeName;
+
+      return await this.doPushToShopify(shopDomain, matchedStore.accessToken, product.shopifyId, changes);
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[Shopify Sync] Error pushing product ${product.id} to Shopify:`, errMsg);
+      return { pushed: false, error: errMsg };
+    }
+  }
+
+  private async doPushToShopify(
+    shopDomain: string,
+    accessToken: string,
+    shopifyProductId: string,
+    changes: ContentChange[]
+  ): Promise<{ pushed: boolean; error?: string }> {
+    const client = await getShopifyClient(shopDomain, accessToken);
+
+    const content: {
+      title?: string;
+      description?: string;
+      seoTitle?: string;
+      metaDescription?: string;
+    } = {};
+
+    for (const change of changes) {
+      if (change.field === 'Product Title') {
+        content.title = change.after;
+      } else if (change.field === 'Product Description') {
+        content.description = change.after;
+      } else if (change.field === 'SEO Title') {
+        content.seoTitle = change.after;
+      } else if (change.field === 'Meta Description') {
+        content.metaDescription = change.after;
+      }
+    }
+
+    if (!content.title && !content.description && !content.seoTitle && !content.metaDescription) {
+      return { pushed: false, error: 'No relevant changes to push' };
+    }
+
+    console.log(`[Shopify Sync] Pushing changes to Shopify product ${shopifyProductId}:`, Object.keys(content));
+    await client.publishAIContent(shopifyProductId, content);
+    console.log(`[Shopify Sync] Successfully pushed to Shopify product ${shopifyProductId}`);
+    return { pushed: true };
   }
 
   private async getCreditToolId(userId: string): Promise<AIToolId> {
@@ -397,6 +486,19 @@ export class FoundationalExecutionService {
           await consumeAIToolCredits(userId, creditToolId, 1);
           totalCreditsConsumed += 1;
           
+          // Push changes to Shopify store
+          const shopifySync = await this.pushToShopify(userId, product, optimization.changes);
+          if (shopifySync.pushed) {
+            this.addActivity(userId, {
+              phase: 'execute',
+              message: `Synced to Shopify: ${product.name}`,
+              status: 'completed',
+              details: 'Changes are now live on your store',
+            });
+          } else if (product.shopifyId) {
+            console.warn(`[Shopify Sync] Could not push ${product.name}: ${shopifySync.error}`);
+          }
+
           productsOptimized.push(optimization);
           totalChanges += optimization.changes.length;
 
