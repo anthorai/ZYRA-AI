@@ -398,20 +398,20 @@ export default function Auth() {
         <div className="max-w-sm sm:max-w-md w-full">
 
           {/* Mobile brand header (shown below lg) */}
-          <Card className="lg:hidden mb-8 glass-card border-primary/20 text-center" data-testid="card-brand-mobile">
-            <CardContent className="p-6">
-              <div className="w-[4.5rem] h-[4.5rem] mx-auto mb-4 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
+          <Card className="lg:hidden mb-8 brand-card-animated rounded-2xl text-center" data-testid="card-brand-mobile">
+            <CardContent className="p-6 relative z-10">
+              <div className="w-[4.5rem] h-[4.5rem] mx-auto mb-4 rounded-xl flex items-center justify-center brand-logo-glow">
                 <img
                   src={zyraLogoUrl}
                   alt="Zyra AI"
-                  className="w-11 h-11 object-contain"
+                  className="w-11 h-11 object-contain drop-shadow-[0_0_8px_rgba(0,240,255,0.3)]"
                   data-testid="img-brand-logo-mobile"
                 />
               </div>
-              <h1 className="text-xl font-bold tracking-tight text-white mb-1">
-                ZYRA <span className="text-primary">AI</span>
+              <h1 className="text-xl font-bold tracking-tight mb-1 brand-text-shimmer">
+                ZYRA AI
               </h1>
-              <p className="text-[0.8rem] font-medium tracking-wide uppercase text-primary/60 mb-2">
+              <p className="text-[0.8rem] font-medium tracking-widest uppercase text-primary/60 mb-2">
                 Autonomous Store Intelligence
               </p>
               <p className="text-xs text-foreground/45 max-w-[16rem] mx-auto leading-relaxed">
