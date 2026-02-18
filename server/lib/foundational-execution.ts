@@ -1,6 +1,6 @@
 import { requireDb } from '../db';
 import { getUserSubscription, getSubscriptionPlanById } from '../db';
-import { products, seoMeta, automationSettings, autonomousActions, activityLogs, actionLocks, storeConnections } from '@shared/schema';
+import { products, seoMeta, automationSettings, autonomousActions, activityLogs, actionLocks, storeConnections, productSnapshots } from '@shared/schema';
 import { eq, and, asc, isNull, or, sql, lt } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { cachedTextGeneration } from './ai-cache';
@@ -425,6 +425,7 @@ export class FoundationalExecutionService {
       let totalChanges = 0;
       let totalCreditsConsumed = 0;
       const learningRecords: { productId: string; baselineId: string | null; changeIds: string[] }[] = [];
+      const shopifyPushedProducts = new Set<string>();
 
       for (const product of userProducts) {
         const creditCheck = await checkAIToolCredits(userId, creditToolId, 1);
@@ -489,6 +490,7 @@ export class FoundationalExecutionService {
           // Push changes to Shopify store
           const shopifySync = await this.pushToShopify(userId, product, optimization.changes);
           if (shopifySync.pushed) {
+            shopifyPushedProducts.add(product.id);
             this.addActivity(userId, {
               phase: 'execute',
               message: `Synced to Shopify: ${product.name}`,
@@ -583,9 +585,12 @@ export class FoundationalExecutionService {
       if (productsOptimized.length > 0) {
         try {
           for (const optimized of productsOptimized) {
-            await db.insert(autonomousActions).values({
+            const wasPublished = shopifyPushedProducts.has(optimized.productId);
+            const product = userProducts.find(p => p.id === optimized.productId);
+
+            const [insertedAction] = await db.insert(autonomousActions).values({
               userId,
-              actionType: actionId, // Use normalized actionId
+              actionType: actionId,
               entityType: 'product',
               entityId: optimized.productId,
               status: 'completed',
@@ -602,7 +607,7 @@ export class FoundationalExecutionService {
                 impactExplanation: optimized.impactExplanation,
               },
               estimatedImpact: {
-                type: actionId, // Use normalized actionId
+                type: actionId,
                 description: this.generateImpactSummary(actionId, optimized.changes.length),
               },
               executedBy: 'agent',
@@ -613,9 +618,51 @@ export class FoundationalExecutionService {
                 } catch { return 1; }
               })(),
               dryRun: false,
-              publishedToShopify: false,
+              publishedToShopify: wasPublished,
               completedAt: new Date(),
-            });
+            }).returning({ id: autonomousActions.id });
+
+            // Save product snapshot for rollback (includes shopifyId, original title, description, SEO)
+            if (insertedAction?.id && product) {
+              try {
+                // Get the ORIGINAL product data (before our changes) from the optimization's "before" fields
+                const originalName = optimized.changes.find(c => c.field === 'Product Title')?.before || product.name;
+                const originalDescription = optimized.changes.find(c => c.field === 'Product Description')?.before || product.description;
+                const originalSeoTitle = optimized.changes.find(c => c.field === 'SEO Title')?.before || null;
+                const originalMetaDescription = optimized.changes.find(c => c.field === 'Meta Description')?.before || null;
+
+                // Get current seoMeta for the product
+                const [currentSeo] = await db
+                  .select()
+                  .from(seoMeta)
+                  .where(eq(seoMeta.productId, product.id))
+                  .limit(1);
+
+                await db.insert(productSnapshots).values({
+                  productId: product.id,
+                  actionId: insertedAction.id,
+                  reason: 'before_optimization',
+                  snapshotData: {
+                    product: {
+                      name: originalName,
+                      description: originalDescription,
+                      shopifyId: product.shopifyId,
+                      shopDomain: product.shopDomain,
+                    },
+                    seoMeta: {
+                      seoTitle: originalSeoTitle !== '(none)' ? originalSeoTitle : currentSeo?.seoTitle || null,
+                      metaDescription: originalMetaDescription !== '(none)' ? originalMetaDescription : currentSeo?.metaDescription || null,
+                      optimizedTitle: currentSeo?.optimizedTitle || null,
+                      optimizedMeta: currentSeo?.optimizedMeta || null,
+                      seoScore: currentSeo?.seoScore || null,
+                    },
+                  },
+                });
+                console.log(`[Foundational] Saved rollback snapshot for ${optimized.productName} (action: ${insertedAction.id})`);
+              } catch (snapErr) {
+                console.error(`[Foundational] Snapshot save failed for ${optimized.productName}:`, snapErr);
+              }
+            }
           }
           console.log(`[Foundational Execution] Saved ${productsOptimized.length} actions to Change Control`);
         } catch (saveError) {

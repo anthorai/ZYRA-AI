@@ -14302,42 +14302,44 @@ Output format: Markdown with clear section headings.`;
       // Extract original content
       const originalContent: any = product.originalCopy;
 
-      // Restore original description to Shopify
-      const updatedProduct = await shopifyClient.updateProduct(product.shopifyId, {
-        body_html: originalContent.description
-      });
+      // Restore ALL original content to Shopify using publishAIContent
+      const rollbackContent: {
+        title?: string;
+        description?: string;
+        seoTitle?: string;
+        metaDescription?: string;
+        imageAltTexts?: Array<{ imageId: string; altText: string }>;
+      } = {};
 
-      // Restore SEO metadata if available
-      if (originalContent.seoTitle && originalContent.metaDescription) {
-        await shopifyClient.updateProductSEO(
-          product.shopifyId,
-          originalContent.seoTitle,
-          originalContent.metaDescription
-        );
-      }
-
-      // Restore image alt texts if available
+      if (originalContent.title) rollbackContent.title = originalContent.title;
+      if (originalContent.description) rollbackContent.description = originalContent.description;
+      if (originalContent.seoTitle) rollbackContent.seoTitle = originalContent.seoTitle;
+      if (originalContent.metaDescription) rollbackContent.metaDescription = originalContent.metaDescription;
       if (originalContent.images && originalContent.images.length > 0) {
-        for (const img of originalContent.images) {
-          if (img.id && img.alt) {
-            await shopifyClient.updateProductImage(product.shopifyId, img.id, img.alt);
-          }
-        }
+        rollbackContent.imageAltTexts = originalContent.images
+          .filter((img: any) => img.id && img.alt)
+          .map((img: any) => ({ imageId: img.id, altText: img.alt }));
       }
 
-      // Update product in Zyra database - clear optimizations
+      const updatedProduct = await shopifyClient.publishAIContent(product.shopifyId, rollbackContent);
+
+      // Update product in Zyra database - clear optimizations and restore original name
+      const dbUpdate: any = {
+        description: originalContent.description,
+        isOptimized: false,
+        optimizedCopy: null,
+        updatedAt: sql`NOW()`,
+      };
+      if (originalContent.title) {
+        dbUpdate.name = originalContent.title;
+      }
       await db.update(products)
-        .set({
-          description: originalContent.description,
-          isOptimized: false,
-          optimizedCopy: null,
-          updatedAt: sql`NOW()`
-        })
+        .set(dbUpdate)
         .where(eq(products.id, productId));
 
       res.json({
         success: true,
-        message: 'Product rolled back to original content successfully (description, SEO, and images restored)',
+        message: 'Product fully rolled back (title, description, SEO, and images restored)',
         shopifyProduct: updatedProduct
       });
 
@@ -18563,78 +18565,53 @@ Output format: Markdown with clear section headings.`;
       if (action[0].publishedToShopify && snapshotData.product?.shopifyId) {
         try {
           const { storeConnections } = await import('@shared/schema');
-          const storeConnection = await db
+          const { getShopifyClient } = await import('./lib/shopify-client');
+
+          const activeStores = await db
             .select()
             .from(storeConnections)
-            .where(eq(storeConnections.userId, userId))
-            .limit(1);
+            .where(and(
+              eq(storeConnections.userId, userId),
+              eq(storeConnections.platform, 'shopify'),
+              eq(storeConnections.status, 'active')
+            ));
 
-          if (storeConnection.length > 0 && storeConnection[0].accessToken) {
-            let shopDomain = (storeConnection[0].storeUrl || '').trim().toLowerCase();
-            if (shopDomain.includes('admin.shopify.com/store/')) {
-              const storeMatch = shopDomain.match(/store\/([a-z0-9-]+)/i);
-              if (storeMatch?.[1]) shopDomain = `${storeMatch[1]}.myshopify.com`;
-            } else {
-              shopDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-              if (!shopDomain.endsWith('.myshopify.com')) {
-                shopDomain = `${shopDomain.split('.')[0]}.myshopify.com`;
-              }
+          let matchedStore = activeStores[0];
+          if (snapshotData.product.shopDomain && activeStores.length > 1) {
+            const domainMatch = activeStores.find((s: any) =>
+              s.storeUrl?.includes(snapshotData.product.shopDomain)
+            );
+            if (domainMatch) matchedStore = domainMatch;
+          }
+
+          if (matchedStore?.accessToken) {
+            const shopDomain = (matchedStore.storeUrl || matchedStore.storeName).replace(/^https?:\/\//, '');
+            const shopifyClient = await getShopifyClient(shopDomain, matchedStore.accessToken);
+
+            // Restore product title and description via publishAIContent
+            const rollbackContent: {
+              title?: string;
+              description?: string;
+              seoTitle?: string;
+              metaDescription?: string;
+            } = {};
+
+            if (snapshotData.product.name) {
+              rollbackContent.title = snapshotData.product.name;
+            }
+            if (snapshotData.product.description) {
+              rollbackContent.description = snapshotData.product.description;
+            }
+            if (snapshotData.seoMeta?.seoTitle) {
+              rollbackContent.seoTitle = snapshotData.seoMeta.seoTitle;
+            }
+            if (snapshotData.seoMeta?.metaDescription) {
+              rollbackContent.metaDescription = snapshotData.seoMeta.metaDescription;
             }
 
-            const shopifyErrors: string[] = [];
-            const rollbackUpdate: any = {};
-            if (snapshotData.product.name) rollbackUpdate.title = snapshotData.product.name;
-            if (snapshotData.product.description) rollbackUpdate.body_html = snapshotData.product.description;
-
-            if (Object.keys(rollbackUpdate).length > 0) {
-              const productResp = await fetch(
-                `https://${shopDomain}/admin/api/2024-01/products/${snapshotData.product.shopifyId}.json`,
-                {
-                  method: 'PUT',
-                  headers: {
-                    'X-Shopify-Access-Token': storeConnection[0].accessToken,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ product: rollbackUpdate }),
-                }
-              );
-              if (!productResp.ok) {
-                const errText = await productResp.text();
-                shopifyErrors.push(`Product update failed: ${errText}`);
-              }
-            }
-
-            if (snapshotData.seoMeta?.seoTitle || snapshotData.seoMeta?.metaDescription) {
-              const metafields: any[] = [];
-              if (snapshotData.seoMeta.seoTitle) {
-                metafields.push({ namespace: "global", key: "title_tag", value: snapshotData.seoMeta.seoTitle, type: "single_line_text_field" });
-              }
-              if (snapshotData.seoMeta.metaDescription) {
-                metafields.push({ namespace: "global", key: "description_tag", value: snapshotData.seoMeta.metaDescription, type: "single_line_text_field" });
-              }
-              for (const metafield of metafields) {
-                const metaResp = await fetch(
-                  `https://${shopDomain}/admin/api/2024-01/products/${snapshotData.product.shopifyId}/metafields.json`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'X-Shopify-Access-Token': storeConnection[0].accessToken,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ metafield }),
-                  }
-                );
-                if (!metaResp.ok) {
-                  const errText = await metaResp.text();
-                  shopifyErrors.push(`Metafield ${metafield.key} failed: ${errText}`);
-                }
-              }
-            }
-
-            if (shopifyErrors.length > 0) {
-              console.error(`⚠️ [Rollback] Shopify partial failure:`, shopifyErrors);
-            } else {
-              console.log(`✅ [Rollback] Shopify product restored: ${snapshotData.product.shopifyId}`);
+            if (Object.keys(rollbackContent).length > 0) {
+              await shopifyClient.publishAIContent(snapshotData.product.shopifyId, rollbackContent);
+              console.log(`✅ [Rollback] Shopify product fully restored (title, description, SEO): ${snapshotData.product.shopifyId}`);
             }
           }
         } catch (shopifyError) {
