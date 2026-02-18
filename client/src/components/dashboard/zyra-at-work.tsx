@@ -2265,17 +2265,50 @@ export default function ZyraAtWork() {
           throw new Error(foundationalAction.lockMessage || 'This action has already been completed on this product');
         }
         
-        // Step 1: Execute foundational action FIRST - before consuming credits
-        // This ensures credits are NOT consumed if execution fails (e.g. 504 timeout)
-        console.log('[ZYRA Approve] Executing action BEFORE consuming credits...');
+        // Step 1: Start execution (returns immediately - runs in background)
+        console.log('[ZYRA Approve] Starting background execution...');
         const response = await apiRequest('POST', '/api/zyra/execute-foundational', { 
           type: actionType 
         });
-        const result = await response.json();
-        console.log('[ZYRA Approve] Foundational action result:', result);
+        const startResult = await response.json();
+        console.log('[ZYRA Approve] Execution started:', startResult);
         
-        // Step 2: Only consume credits AFTER successful execution
-        if (result.success) {
+        if (!startResult.success) {
+          throw new Error(startResult.error || 'Failed to start execution');
+        }
+        
+        // Step 2: Poll for completion (background execution)
+        const pollForResult = async (): Promise<any> => {
+          const maxPolls = 60;
+          let idleCount = 0;
+          for (let i = 0; i < maxPolls; i++) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            try {
+              const pollResponse = await fetch('/api/zyra/execution-result', { credentials: 'include' });
+              if (pollResponse.ok) {
+                const pollData = await pollResponse.json();
+                if (pollData.status === 'completed' && pollData.result) {
+                  return pollData.result;
+                }
+                if (pollData.status === 'idle') {
+                  idleCount++;
+                  if (idleCount >= 3) {
+                    return { success: false, message: 'Execution result not available', error: 'no_result' };
+                  }
+                }
+              }
+            } catch (pollErr) {
+              console.log('[ZYRA Approve] Poll error (will retry):', pollErr);
+            }
+          }
+          return { success: false, message: 'Execution timed out', error: 'timeout' };
+        };
+        
+        const finalResult = await pollForResult();
+        console.log('[ZYRA Approve] Final result:', finalResult);
+        
+        // Step 3: Only consume credits AFTER successful execution
+        if (finalResult.success) {
           try {
             const creditResult = await executeActionMutation.mutateAsync({
               actionType: creditActionType,
@@ -2287,16 +2320,13 @@ export default function ZyraAtWork() {
             
             if (creditResult.success) {
               console.log('[ZYRA Approve] Credits consumed after successful execution:', creditResult.creditsConsumed);
-            } else {
-              console.warn('[ZYRA Approve] Credit deduction failed but action succeeded - credits may need manual adjustment');
             }
           } catch (creditError) {
-            // Action already succeeded, so log the credit error but don't fail the whole operation
             console.error('[ZYRA Approve] Credit deduction failed after successful execution:', creditError);
           }
         }
         
-        return result;
+        return finalResult;
       }
       // Regular friction action - approve then execute
       const approveResponse = await apiRequest('POST', '/api/next-move/approve', { 

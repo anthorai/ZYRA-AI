@@ -22043,7 +22043,7 @@ Return JSON array of segments only, no explanation text.`;
       
       console.log(`[ZYRA Execute Foundational] Starting REAL execution: ${type} for user ${userId}`);
       
-      const { fastDetectionEngine, FOUNDATIONAL_ACTION_LABELS } = await import('./lib/fast-detection-engine');
+      const { fastDetectionEngine } = await import('./lib/fast-detection-engine');
       const { foundationalExecutionService } = await import('./lib/foundational-execution');
       
       // Validate action type
@@ -22059,42 +22059,83 @@ Return JSON array of segments only, no explanation text.`;
         });
       }
       
+      // Prevent duplicate execution
+      if (foundationalExecutionService.isExecuting(userId)) {
+        return res.json({ 
+          success: true, 
+          status: 'already_executing',
+          message: 'An action is already in progress' 
+        });
+      }
+      
       // Start execution tracking for UI phases
       const actionId = `foundational_${type}`;
       fastDetectionEngine.startExecution(userId, actionId, type);
       
-      // Execute REAL foundational action with AI
-      const result = await foundationalExecutionService.executeFoundationalAction(userId, type);
+      // FIRE AND FORGET: Execute in background to avoid 504 timeouts
+      // Results are stored in foundationalExecutionService and polled via /api/zyra/execution-result
+      foundationalExecutionService.executeFoundationalAction(userId, type)
+        .then(result => {
+          console.log(`✅ [ZYRA Execute Foundational] Completed ${type} for user ${userId}:`, {
+            success: result.success,
+            productsOptimized: result.productsOptimized.length,
+            totalChanges: result.totalChanges,
+          });
+        })
+        .catch(error => {
+          console.error(`[ZYRA Execute Foundational] Background execution error for ${type}:`, error);
+        });
       
-      console.log(`✅ [ZYRA Execute Foundational] Completed ${type} for user ${userId}:`, {
-        success: result.success,
-        productsOptimized: result.productsOptimized.length,
-        totalChanges: result.totalChanges,
-      });
-      
-      // Note: autonomousActions saving is handled in foundational-execution.ts
-      
-      // Return detailed results
+      // Return immediately - frontend will poll for results
       res.json({
-        success: result.success,
-        message: result.summary,
+        success: true,
+        status: 'executing',
+        message: 'Action started - optimizing your products...',
         type,
         executionPhase: 'executing',
-        result: {
-          actionLabel: result.actionLabel,
-          productsOptimized: result.productsOptimized,
-          totalChanges: result.totalChanges,
-          estimatedImpact: result.estimatedImpact,
-          executionTimeMs: result.executionTimeMs,
-        },
-        error: result.error,
       });
     } catch (error) {
       console.error("[ZYRA Execute Foundational] Error:", error);
       res.status(500).json({ 
         success: false, 
-        error: 'Failed to execute foundational action' 
+        error: 'Failed to start foundational action' 
       });
+    }
+  });
+
+  // Poll for execution result (background execution)
+  app.get("/api/zyra/execution-result", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user.id;
+      const { foundationalExecutionService } = await import('./lib/foundational-execution');
+      
+      const isExecuting = foundationalExecutionService.isExecuting(userId);
+      const result = foundationalExecutionService.getExecutionResult(userId);
+      
+      if (isExecuting) {
+        return res.json({ status: 'executing', result: null });
+      }
+      
+      if (result) {
+        return res.json({ 
+          status: 'completed', 
+          result: {
+            success: result.success,
+            message: result.summary,
+            actionLabel: result.actionLabel,
+            productsOptimized: result.productsOptimized,
+            totalChanges: result.totalChanges,
+            estimatedImpact: result.estimatedImpact,
+            executionTimeMs: result.executionTimeMs,
+            error: result.error,
+          }
+        });
+      }
+      
+      res.json({ status: 'idle', result: null });
+    } catch (error) {
+      console.error("[ZYRA Execution Result] Error:", error);
+      res.status(500).json({ status: 'error', result: null });
     }
   });
   

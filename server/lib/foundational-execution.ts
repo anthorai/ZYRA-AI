@@ -100,13 +100,28 @@ function getSubActionNames(actionId: ActionId): string[] {
 
 export class FoundationalExecutionService {
   private activityLog: Map<string, ExecutionActivity[]> = new Map();
+  private executionResults: Map<string, FoundationalExecutionResult> = new Map();
+  private executionInProgress: Map<string, boolean> = new Map();
 
   getActivities(userId: string): ExecutionActivity[] {
     return this.activityLog.get(userId) || [];
   }
 
+  getExecutionResult(userId: string): FoundationalExecutionResult | null {
+    return this.executionResults.get(userId) || null;
+  }
+
+  isExecuting(userId: string): boolean {
+    return this.executionInProgress.get(userId) || false;
+  }
+
   clearActivities(userId: string): void {
     this.activityLog.delete(userId);
+  }
+
+  clearExecutionResult(userId: string): void {
+    this.executionResults.delete(userId);
+    this.executionInProgress.delete(userId);
   }
 
   private async getCreditToolId(userId: string): Promise<AIToolId> {
@@ -147,6 +162,8 @@ export class FoundationalExecutionService {
     const db = requireDb();
 
     this.clearActivities(userId);
+    this.executionResults.delete(userId);
+    this.executionInProgress.set(userId, true);
 
     // Normalize legacy action types to ActionId - registry is the sole source of truth
     const actionId = normalizeToActionId(actionType);
@@ -154,8 +171,7 @@ export class FoundationalExecutionService {
     // Reject unknown actions - security: do not allow arbitrary action types
     if (!actionId) {
       console.error(`[Foundational Execution] Unknown action type: ${actionType} - not in registry`);
-      // Use fixed 3-item placeholder to maintain contract
-      return {
+      const earlyResult: FoundationalExecutionResult = {
         success: false,
         actionType,
         actionLabel: actionType,
@@ -167,6 +183,9 @@ export class FoundationalExecutionService {
         subActionsExecuted: ['Unknown action', 'Not in registry', 'Please contact support'],
         error: 'Unknown action type - not in master registry',
       };
+      this.executionResults.set(userId, earlyResult);
+      this.executionInProgress.set(userId, false);
+      return earlyResult;
     }
     
     // Get master action from registry (guaranteed to exist since normalization passed)
@@ -204,19 +223,21 @@ export class FoundationalExecutionService {
           status: 'warning',
           details: `You need at least 1 credit. Available: ${creditCheck.creditsRemaining}`,
         });
-        // Always return exactly 3 sub-actions for UI consistency - use normalized actionId
-        return {
+        const creditResult: FoundationalExecutionResult = {
           success: false,
-          actionType: actionId, // Use normalized actionId
+          actionType: actionId,
           actionLabel,
           summary: 'Insufficient credits to run optimization',
           productsOptimized: [],
           totalChanges: 0,
           estimatedImpact: 'N/A',
           executionTimeMs: Date.now() - startTime,
-          subActionsExecuted: subActionNames, // Use padded sub-actions
+          subActionsExecuted: subActionNames,
           error: 'Insufficient credits',
         };
+        this.executionResults.set(userId, creditResult);
+        this.executionInProgress.set(userId, false);
+        return creditResult;
       }
 
       this.addActivity(userId, {
@@ -288,19 +309,21 @@ export class FoundationalExecutionService {
           status: 'warning',
         });
 
-        // Always return exactly 3 sub-actions for UI consistency - use normalized actionId
-        return {
+        const noProductsResult: FoundationalExecutionResult = {
           success: false,
-          actionType: actionId, // Use normalized actionId
+          actionType: actionId,
           actionLabel,
           summary: 'No products found in your store',
           productsOptimized: [],
           totalChanges: 0,
           estimatedImpact: 'N/A',
           executionTimeMs: Date.now() - startTime,
-          subActionsExecuted: subActionNames, // Use padded sub-actions
+          subActionsExecuted: subActionNames,
           error: 'No products to optimize',
         };
+        this.executionResults.set(userId, noProductsResult);
+        this.executionInProgress.set(userId, false);
+        return noProductsResult;
       }
 
       this.addActivity(userId, {
@@ -521,9 +544,9 @@ export class FoundationalExecutionService {
       }
 
       // Return with normalized actionId for consistency
-      return {
+      const successResult: FoundationalExecutionResult = {
         success: true,
-        actionType: actionId, // Use normalized actionId
+        actionType: actionId,
         actionLabel,
         summary: `Successfully optimized ${productsOptimized.length} product${productsOptimized.length !== 1 ? 's' : ''} with ${totalChanges} improvement${totalChanges !== 1 ? 's' : ''}`,
         productsOptimized,
@@ -532,6 +555,9 @@ export class FoundationalExecutionService {
         executionTimeMs: Date.now() - startTime,
         subActionsExecuted: subActionNames,
       };
+      this.executionResults.set(userId, successResult);
+      this.executionInProgress.set(userId, false);
+      return successResult;
 
     } catch (error) {
       console.error(`[Foundational Execution] Error:`, error);
@@ -544,19 +570,21 @@ export class FoundationalExecutionService {
       });
 
       // Always return 3 sub-actions for consistency (use planned sub-actions even on error)
-      // Return with normalized actionId
-      return {
+      const errorResult: FoundationalExecutionResult = {
         success: false,
-        actionType: actionId, // Use normalized actionId
-        actionLabel,
+        actionType: actionId || actionType,
+        actionLabel: actionLabel || actionType,
         summary: 'Optimization failed',
         productsOptimized: [],
         totalChanges: 0,
         estimatedImpact: 'N/A',
-        subActionsExecuted: subActionNames, // Still show planned sub-actions
+        subActionsExecuted: subActionNames || [],
         executionTimeMs: Date.now() - startTime,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+      this.executionResults.set(userId, errorResult);
+      this.executionInProgress.set(userId, false);
+      return errorResult;
     }
   }
 
