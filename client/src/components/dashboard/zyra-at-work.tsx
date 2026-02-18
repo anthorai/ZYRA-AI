@@ -2432,7 +2432,7 @@ export default function ZyraAtWork() {
       return () => { if (approvedPhaseTimeoutRef.current) clearTimeout(approvedPhaseTimeoutRef.current); };
     }
 
-    const phaseDelays = { execute: 3000, prove: 3000, learn: 3000 };
+    const phaseDelays = { execute: 2500, prove: 2000, learn: 2000 };
     const nextPhases = { execute: 'prove', prove: 'learn', learn: 'complete' } as const;
     
     approvedPhaseTimeoutRef.current = setTimeout(() => {
@@ -2561,29 +2561,29 @@ export default function ZyraAtWork() {
         setExecutionActivities([]);
         setApprovedPhase('idle');
         setCompletedActionId(null);
-      }, 15000);
+      }, 5000);
     }
     // Also trigger reset when approvedPhase reaches complete (covers local-only execution flow)
     else if (approvedPhase === 'complete' && executionResult) {
       learnResetTimeoutRef.current = setTimeout(() => {
-        console.log('[ZYRA Phase] Auto-resetting loop state after complete phase (30s)');
+        console.log('[ZYRA Phase] Auto-resetting loop state after complete phase');
         setExecutionResult(null);
         setExecutionActivities([]);
         setApprovedPhase('idle');
         setCompletedActionId(null);
         queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
         queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
-      }, 30000);
+      }, 8000);
     }
     // Safety net: if executionResult exists but both approvedPhase is idle and backend is idle,
-    // clear it after 10s (covers reload/stale state scenarios)
+    // clear it quickly (covers reload/stale state scenarios)
     else if (executionResult && approvedPhase === 'idle' && backendPhase === 'idle') {
       learnResetTimeoutRef.current = setTimeout(() => {
         console.log('[ZYRA Phase] Safety net - clearing stale executionResult (idle state)');
         setExecutionResult(null);
         setExecutionActivities([]);
         setCompletedActionId(null);
-      }, 10000);
+      }, 5000);
     }
     
     return () => {

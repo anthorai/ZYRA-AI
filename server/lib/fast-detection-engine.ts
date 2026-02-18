@@ -174,7 +174,7 @@ export class FastDetectionEngine {
   // Auto-progress through execution phases
   private async progressExecutionPhases(userId: string): Promise<void> {
     const phases: ExecutionPhase[] = ['executing', 'proving', 'learning', 'completed'];
-    const phaseDelays = [2500, 2500, 2500]; // 2.5s for each phase
+    const phaseDelays = [2000, 1500, 1500]; // Quick phase progression
     const loopId = `exec_${userId}_${Date.now()}`;
     
     // Emit initial execution started event
