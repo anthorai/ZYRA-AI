@@ -2317,18 +2317,20 @@ export default function ZyraAtWork() {
       // Return real execution results from backend
       return executeData;
     },
+    onMutate: async (actionId) => {
+      console.log('[ZYRA Approve] onMutate - immediately starting phase progression for:', actionId);
+      setExecutionResult(null);
+      setExecutionActivities([]);
+      setApprovedPhase('execute');
+      setCompletedActionId(actionId);
+    },
     onSuccess: async (data, actionId) => {
       console.log('[ZYRA Approve] onSuccess called with data:', data, 'actionId:', actionId);
       
-      // Track this action as completed to prevent button from reappearing
-      setCompletedActionId(actionId);
-      
-      // Store execution results for display
       if (data?.result) {
         setExecutionResult(data.result);
       }
       
-      // Fetch execution activities for detailed log
       try {
         const activitiesResponse = await fetch('/api/zyra/execution-activities', {
           credentials: 'include',
@@ -2347,20 +2349,18 @@ export default function ZyraAtWork() {
         title: data?.success ? 'Optimization Complete' : 'Action Approved',
         description: data?.message || 'ZYRA has applied the improvements',
       });
-      // Clear previous activities before starting new execution
-      setExecutionActivities([]);
-      // Start post-approval phase progression: execute → prove → learn → complete
-      setApprovedPhase('execute');
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/detection-status'] });
       queryClient.invalidateQueries({ queryKey: ['/api/zyra/live-stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/revenue-loop/activity-feed'] });
-      // Invalidate credit-related queries after action execution
       queryClient.invalidateQueries({ queryKey: ['/api/credits/balance'] });
       queryClient.invalidateQueries({ queryKey: ['/api/mode-credits/lock-status'] });
       queryClient.invalidateQueries({ queryKey: ['/api/mode-credits/ci-usage'] });
     },
     onError: (error) => {
       console.error('[ZYRA Approve] Mutation error:', error);
+      setApprovedPhase('idle');
+      setCompletedActionId(null);
+      setExecutionActivities([]);
       toast({
         title: 'Approval Failed',
         description: error instanceof Error ? error.message : 'Could not approve the action. Please try again.',
@@ -2487,6 +2487,15 @@ export default function ZyraAtWork() {
   const currentActionId = detectionStatusData?.committedActionId || stats?.committedActionId;
   
   const derivedExecutionStatus = (() => {
+    // HIGHEST PRIORITY: If local approvedPhase is actively progressing, always show 'running'
+    // This prevents server polling from overriding the phase back to 'awaiting_approval'
+    if (!['idle', 'complete'].includes(approvedPhase)) {
+      return 'running';
+    }
+    // If mutation is currently in-flight, show 'running' to prevent flickering back to DECIDE
+    if (approveActionMutation.isPending) {
+      return 'running';
+    }
     // If we've already completed this exact action, show 'completed' instead of 'awaiting_approval'
     if (completedActionId && currentActionId === completedActionId) {
       return 'completed';
@@ -2497,10 +2506,6 @@ export default function ZyraAtWork() {
     }
     // Backend is actively executing - always show 'running'
     if (serverExecutionPhase !== 'idle' && serverExecutionPhase !== 'completed') {
-      return 'running';
-    }
-    // Local approvedPhase fallback for fast UI updates
-    if (!['idle', 'complete'].includes(approvedPhase)) {
       return 'running';
     }
     // CRITICAL FIX: If foundational action exists and detection is complete,
@@ -2843,8 +2848,12 @@ export default function ZyraAtWork() {
     }
     
     // If local approvedPhase is actively progressing (execute → prove → learn), follow it
+    // Also cover the brief window where mutation fired but approvedPhase hasn't been set yet
     if (approvedPhase !== 'idle' && approvedPhase !== 'complete') {
       return approvedPhase;
+    }
+    if (approveActionMutation.isPending) {
+      return 'execute';
     }
     // If approvedPhase just completed, show learn briefly (auto-reset timer will clear it)
     if (approvedPhase === 'complete') {
